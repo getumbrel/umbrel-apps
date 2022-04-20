@@ -1,0 +1,2 @@
+export APP_SYNAPSE_IP="10.21.21.44"
+export APP_SYNAPSE_PORT="8008"

@@ -1,0 +1,2 @@
+export APP_NODE_RED_IP="10.21.21.55"
+export APP_NODE_RED_PORT="1880"

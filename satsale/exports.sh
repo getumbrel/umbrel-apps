@@ -1,0 +1,2 @@
+export APP_SATSALE_PORT="5000"
+export APP_SATSALE_IP="10.21.21.67"
