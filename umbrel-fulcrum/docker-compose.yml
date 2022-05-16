@@ -1,0 +1,37 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: $APP_UMBREL_FULCRUM_IP
+      APP_PORT: 3006
+
+  app:
+    image: getumbrel/umbrel-fulcrum
+    depends_on:
+      - fulcrum
+    restart: on-failure
+    environment:
+      FULCRUM_HIDDEN_SERVICE: "${APP_HIDDEN_SERVICE}"
+      FULCRUM_LOCAL_SERVICE: "${DEVICE_DOMAIN_NAME}"
+      FULCRUM_HOST: "${APP_UMBREL_FULCRUM_NODE_IP}"
+      FULCRUM_STATS_PORT: 8080
+      BITCOIN_HOST: "${APP_UMBREL_BITCOIN_NODE_IP}"
+      RPC_USER: "${BITCOIN_RPC_USER}"
+      RPC_PASSWORD: "${BITCOIN_RPC_PASS}"
+      RPC_PORT: "${BITCOIN_RPC_PORT}"
+    networks:
+      default:
+        ipv4_address: $APP_UMBREL_FULCRUM_IP
+  
+  fulcrum:
+    image: cculianu/fulcrum
+    init: true
+    command: "${FULCRUM_COMMAND}"
+    volumes:
+      - "${BITCOIN_DATA_DIR}:/data/.bitcoin:ro"
+      - "${APP_DATA_DIR}/data:/data"
+    restart: always
+    networks:
+      default:
+        ipv4_address: $APP_UMBREL_FULCRUM_NODE_IP
