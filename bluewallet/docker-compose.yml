@@ -1,6 +1,11 @@
 version: "3.7"
 
 services:
+  app_proxy:
+    environment:
+      APP_HOST: $APP_BLUEWALLET_LNDHUB_IP
+      APP_PORT: $APP_BLUEWALLET_LNDHUB_PORT
+
   redis:
     image: "redis:6.2.2-buster@sha256:e10f55f92478715698a2cef97c2bbdc48df2a05081edd884938903aa60df6396"
     user: "1000:1000"
@@ -21,8 +26,6 @@ services:
     restart: "on-failure"
     stop_grace_period: "1m"
     init: true
-    ports:
-      - "${APP_BLUEWALLET_LNDHUB_PORT}:${APP_BLUEWALLET_LNDHUB_PORT}"
     volumes:
       - "${LND_DATA_DIR}:/lnd:ro"
     environment:

@@ -1,13 +1,16 @@
 version: "3.7"
 
 services:
+  app_proxy:
+    environment:
+      APP_HOST: $APP_THUNDERHUB_IP
+      APP_PORT: $APP_THUNDERHUB_PORT
+
   web:
     image: apotdevin/thunderhub:v0.12.31@sha256:f86341cb1987a3907f7227ccd4c00dead68d372e464b111414b8427228062276
     user: "1000:1000"
     restart: on-failure
     stop_grace_period: 1m
-    ports:
-      - "$APP_THUNDERHUB_PORT:$APP_THUNDERHUB_PORT"
     volumes:
       - ${LND_DATA_DIR}:/lnd:ro
       - ${APP_DATA_DIR}/data:/data

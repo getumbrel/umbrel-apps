@@ -1,12 +1,14 @@
 version: "3.7"
 
 services:
+  app_proxy:
+    environment:
+      APP_HOST: $APP_NODE_RED_IP
+      APP_PORT: $APP_NODE_RED_PORT
   web:
     image: nodered/node-red:2.0.6-12@sha256:c15bfeef73c2b348c0fb5f70d3b3013575a6ebf2af942a1d8196c7d7d842f6bb
     restart: on-failure
     stop_grace_period: 1m
-    ports:
-      - "${APP_NODE_RED_PORT}:${APP_NODE_RED_PORT}"
     volumes:
       - ${APP_DATA_DIR}/data:/data
       - ${LND_DATA_DIR}:/lnd:ro

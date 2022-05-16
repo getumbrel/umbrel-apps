@@ -1,13 +1,17 @@
 version: "3.7"
 
 services:
+  app_proxy:
+    environment:
+      APP_HOST: $APP_URBIT_BITCOIN_CONNECTOR_IP
+      APP_PORT: $APP_URBIT_BITCOIN_CONNECTOR_PORT
+
   web:
     image: matwet/urbit-btc-node:latest@sha256:930a1752684277f743d2b48a59b4b977da96423d49ed4b5076c14cd81fa5e286
     init: true
     restart: on-failure
     stop_grace_period: 1m
     ports:
-      - ${APP_URBIT_BITCOIN_CONNECTOR_PORT}:${APP_URBIT_BITCOIN_CONNECTOR_PORT}
       - ${APP_URBIT_BITCOIN_CONNECTOR_SERVER_PORT}:${APP_URBIT_BITCOIN_CONNECTOR_SERVER_PORT}
     environment:
       INTERNAL_IP: $APP_URBIT_BITCOIN_CONNECTOR_IP

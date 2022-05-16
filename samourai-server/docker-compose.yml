@@ -1,6 +1,10 @@
 version: "3.7"
 
 services:
+  app_proxy:
+    environment:
+      APP_HOST: $APP_SAMOURAI_SERVER_IP
+      APP_PORT: 8081
   db:
     image: louneskmt/dojo-db:1.5.0-low-mem@sha256:e82c23699196bcaf37fe021ca47eef1c53d18ba8a10290ae8dcfe7cb24dbb5e6
     init: true
@@ -132,7 +136,6 @@ services:
       WHIRLPOOL_API_KEY: $SAMOURAI_SERVER_WHIRLPOOL_API_KEY
     ports:
       - "$APP_SAMOURAI_SERVER_DOJO_PORT:80"
-      - "$APP_SAMOURAI_SERVER_CONNECT_PORT:8081"
     depends_on:
       - node
     networks:

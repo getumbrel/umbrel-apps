@@ -1,6 +1,11 @@
 version: "3.7"
 
 services:
+  app_proxy:
+    environment:
+      APP_HOST: $APP_SPHINX_RELAY_IP
+      APP_PORT: $APP_SPHINX_RELAY_PORT
+
   sphinx-relay:
     container_name: sphinx-relay
     image: sphinxlightning/sphinx-relay:v2.2.5@sha256:9c7b112ead4585a92b6d65ebaa6206cf64069813b382b361c6c928c0def8a682
@@ -10,8 +15,6 @@ services:
     volumes:
       - ${LND_DATA_DIR}:/lnd:ro
       - ${APP_DATA_DIR}/data:/relay/.lnd/
-    ports:
-      - "$APP_SPHINX_RELAY_PORT:$APP_SPHINX_RELAY_PORT"
     environment:
       PUBLIC_URL: "$APP_HIDDEN_SERVICE:$APP_SPHINX_RELAY_PORT"
       LND_IP: $LND_IP

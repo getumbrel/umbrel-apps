@@ -1,6 +1,11 @@
 version: "3.7"
 
 services:
+  app_proxy:
+    environment:
+      APP_HOST: $APP_BITFEED_IP
+      APP_PORT: 80
+
   web:
     image: ghcr.io/bitfeed-project/bitfeed-client:v2.2.1@sha256:70c89d49d20ba3da21c648c259f45a4b89e06bfe1d97374a092dce6f891d03c6
     restart: on-failure
@@ -11,8 +16,6 @@ services:
       TARGET: "umbrel"
       BACKEND_HOST: "$APP_BITFEED_API_IP"
       BACKEND_PORT: "$APP_BITFEED_API_PORT"
-    ports:
-      - "$APP_BITFEED_PORT:80"
     networks:
       default:
         ipv4_address: $APP_BITFEED_IP

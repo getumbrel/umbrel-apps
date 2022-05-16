@@ -1,12 +1,15 @@
 version: "3.7"
 
 services:
+  app_proxy:
+    environment:
+      APP_HOST: $APP_LNDG_IP
+      APP_PORT: $APP_LNDG_PORT
+
   web:
     image: ghcr.io/cryptosharks131/lndg:v1.0.5@sha256:cebb3cb42ebc26e7d148792e9f191dea78016cd514940a19143d3e51b5e023d2
     restart: on-failure
     stop_grace_period: 1m
-    ports:
-      - "${APP_LNDG_PORT}:${APP_LNDG_PORT}"
     volumes:
       - ${LND_DATA_DIR}:/root/.lnd:ro
       - ${APP_DATA_DIR}:/lndg/data

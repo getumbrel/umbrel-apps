@@ -1,6 +1,10 @@
 version: "3.7"
 
 services:
+  app_proxy:
+    environment:
+      APP_HOST: $APP_KOLLIDER_IP
+      APP_PORT: 3000
   backend:
     image: kolliderhq/kollider-lite-backend:v1.0.3@sha256:1229b8d800447ddd43b8e21e5dbbdc4773e873d3bc4f13a00976bc14607c393b
     init: true
@@ -41,8 +45,6 @@ services:
     stop_grace_period: 1m
     volumes:
       - ${APP_DATA_DIR}/data/cache/images:/app/.next/cache/images
-    ports:
-      - "$APP_KOLLIDER_PORT:3000"
     networks:
       default:
         ipv4_address: $APP_KOLLIDER_IP

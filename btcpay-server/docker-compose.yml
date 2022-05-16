@@ -1,6 +1,11 @@
 version: "3.7"
 
 services:
+  app_proxy:
+    environment:
+      APP_HOST: $APP_BTCPAY_SERVER_IP
+      APP_PORT: $APP_BTCPAY_SERVER_PORT
+
   nbxplorer:
     image: nicolasdorier/nbxplorer:2.2.20@sha256:8f0e7f68513596e0a2555990d262169088a70204abe397bf18ba921f9b0608f3
     user: "1000:1000"
@@ -30,8 +35,6 @@ services:
     stop_grace_period: 1m
     depends_on: [ nbxplorer, postgres ]
     entrypoint: [ "dotnet", "BTCPayServer.dll" ]
-    ports:
-        - "$APP_BTCPAY_SERVER_PORT:$APP_BTCPAY_SERVER_PORT"
     volumes:
         - ${APP_DATA_DIR}/data/btcpay:/data
         - ${APP_DATA_DIR}/data/nbxplorer:/data/.nbxplorer

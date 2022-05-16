@@ -1,6 +1,10 @@
 version: "3.7"
 
 services:
+  app_proxy:
+    environment:
+      APP_HOST: $APP_MEMPOOL_IP
+      APP_PORT: $APP_MEMPOOL_PORT
   web:
     image: mempool/frontend:v2.3.1@sha256:38c955caeb58014b266904b059bfabbdab8321d20b11e7cccb139be6dfc8e36e
     user: "1000:1000"
@@ -8,8 +12,6 @@ services:
     restart: on-failure
     stop_grace_period: 1m
     command: "./wait-for mariadb:3306 --timeout=720 -- nginx -g 'daemon off;'"
-    ports:
-      - ${APP_MEMPOOL_PORT}:${APP_MEMPOOL_PORT}
     environment:
       FRONTEND_HTTP_PORT: $APP_MEMPOOL_PORT
       BACKEND_MAINNET_HTTP_HOST: $APP_MEMPOOL_API_IP
