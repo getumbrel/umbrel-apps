@@ -8,11 +8,8 @@ export BITCOIN_ZMQ_RAWBLOCK_PORT="28332"
 export BITCOIN_ZMQ_RAWTX_PORT="28333"
 export BITCOIN_ZMQ_HASHBLOCK_PORT="28334"
 export BITCOIN_ZMQ_SEQUENCE_PORT="28335"
-export BITCOIN_MAINNET_ENABLED="0"
-export BITCOIN_TESTNET_ENABLED="0"
-export BITCOIN_SIGNET_ENABLED="0"
-export BITCOIN_REGTEST_ENABLED="0"
-export BITCOIN_CHAIN="main"
+
+BITCOIN_CHAIN="main"
 
 UMBREL_BITCOIN_ENV_FILE="${EXPORTS_APP_DIR}/.env"
 
@@ -37,17 +34,17 @@ fi
 . "${UMBREL_BITCOIN_ENV_FILE}"
 
 if [[ "${BITCOIN_NETWORK}" == "mainnet" ]]; then
-	export BITCOIN_CHAIN="main"
+	BITCOIN_CHAIN="main"
 elif [[ "${BITCOIN_NETWORK}" == "testnet" ]]; then
-	export BITCOIN_CHAIN="test"
+	BITCOIN_CHAIN="test"
 	export BITCOIN_RPC_PORT="18332"
 	export BITCOIN_P2P_PORT="18333"
 elif [[ "${BITCOIN_NETWORK}" == "signet" ]]; then
-	export BITCOIN_CHAIN="signet"
+	BITCOIN_CHAIN="signet"
 	export BITCOIN_RPC_PORT="38332"
 	export BITCOIN_P2P_PORT="38333"
 elif [[ "${BITCOIN_NETWORK}" == "regtest" ]]; then
-	export BITCOIN_CHAIN="regtest"
+	BITCOIN_CHAIN="regtest"
 	export BITCOIN_RPC_PORT="18443"
 	export BITCOIN_P2P_PORT="18444"
 else
