@@ -2,7 +2,7 @@ export APP_UMBREL_BITCOIN_IP="10.21.22.2"
 export APP_UMBREL_BITCOIN_NODE_IP="10.21.22.3"
 
 export APP_UMBREL_BITCOIN_DATA_DIR="${EXPORTS_APP_DIR}/data/bitcoin"
-export BITCOIN_RPC_PORT="8332"
+export APP_UMBREL_BITCOIN_RPC_PORT="8332"
 export BITCOIN_P2P_PORT="8333"
 export BITCOIN_ZMQ_RAWBLOCK_PORT="28332"
 export BITCOIN_ZMQ_RAWTX_PORT="28333"
@@ -36,15 +36,15 @@ if [[ "${BITCOIN_NETWORK}" == "mainnet" ]]; then
 	BITCOIN_CHAIN="main"
 elif [[ "${BITCOIN_NETWORK}" == "testnet" ]]; then
 	BITCOIN_CHAIN="test"
-	export BITCOIN_RPC_PORT="18332"
+	export APP_UMBREL_BITCOIN_RPC_PORT="18332"
 	export BITCOIN_P2P_PORT="18333"
 elif [[ "${BITCOIN_NETWORK}" == "signet" ]]; then
 	BITCOIN_CHAIN="signet"
-	export BITCOIN_RPC_PORT="38332"
+	export APP_UMBREL_BITCOIN_RPC_PORT="38332"
 	export BITCOIN_P2P_PORT="38333"
 elif [[ "${BITCOIN_NETWORK}" == "regtest" ]]; then
 	BITCOIN_CHAIN="regtest"
-	export BITCOIN_RPC_PORT="18443"
+	export APP_UMBREL_BITCOIN_RPC_PORT="18443"
 	export BITCOIN_P2P_PORT="18444"
 else
 	echo "Warning (${EXPORTS_APP_ID}): Bitcoin Network '${BITCOIN_NETWORK}' is not supported"
@@ -56,7 +56,7 @@ BIN_ARGS+=( "-proxy=${TOR_PROXY_IP}:${TOR_PROXY_PORT}" )
 BIN_ARGS+=( "-listen" )
 BIN_ARGS+=( "-bind=${APP_UMBREL_BITCOIN_NODE_IP}" )
 BIN_ARGS+=( "-port=${BITCOIN_P2P_PORT}" )
-BIN_ARGS+=( "-rpcport=${BITCOIN_RPC_PORT}" )
+BIN_ARGS+=( "-rpcport=${APP_UMBREL_BITCOIN_RPC_PORT}" )
 BIN_ARGS+=( "-rpcbind=${APP_UMBREL_BITCOIN_NODE_IP}" )
 BIN_ARGS+=( "-rpcbind=127.0.0.1" )
 BIN_ARGS+=( "-rpcallowip=${NETWORK_IP}/16" )
