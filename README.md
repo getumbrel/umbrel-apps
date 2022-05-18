@@ -131,7 +131,7 @@ services:
       # $APP_UMBREL_BITCOIN_NODE_IP - Local IP of Bitcoin Core
       # $APP_UMBREL_BITCOIN_P2P_PORT - P2P port
       # $APP_UMBREL_BITCOIN_RPC_PORT - RPC port
-      # $BITCOIN_RPC_USER - RPC username
+      # $APP_UMBREL_BITCOIN_RPC_USER - RPC username
       # $BITCOIN_RPC_PASS - RPC password
       # $BITCOIN_RPC_AUTH - RPC auth string
       #
@@ -201,7 +201,7 @@ services:
       # Bitcoin Core connection details
       BTCEXP_BITCOIND_HOST: $APP_UMBREL_BITCOIN_NODE_IP
       BTCEXP_BITCOIND_PORT: $APP_UMBREL_BITCOIN_RPC_PORT
-      BTCEXP_BITCOIND_USER: $BITCOIN_RPC_USER
+      BTCEXP_BITCOIND_USER: $APP_UMBREL_BITCOIN_RPC_USER
       BTCEXP_BITCOIND_PASS: $BITCOIN_RPC_PASS
 
       # Electrum connection details

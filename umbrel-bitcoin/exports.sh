@@ -25,7 +25,7 @@ if [[ ! -f "${BITCOIN_ENV_FILE}" ]]; then
 	fi
 
 	echo "export APP_UMBREL_BITCOIN_NETWORK='${BITCOIN_NETWORK}'"	>  "${BITCOIN_ENV_FILE}"
-	echo "export BITCOIN_RPC_USER='${BITCOIN_RPC_USER}'"			>> "${BITCOIN_ENV_FILE}"
+	echo "export APP_UMBREL_BITCOIN_RPC_USER='${BITCOIN_RPC_USER}'"	>> "${BITCOIN_ENV_FILE}"
 	echo "export BITCOIN_RPC_PASS='${BITCOIN_RPC_PASS}'"			>> "${BITCOIN_ENV_FILE}"
 	echo "export BITCOIN_RPC_AUTH='${BITCOIN_RPC_AUTH}'"			>> "${BITCOIN_ENV_FILE}"
 fi
