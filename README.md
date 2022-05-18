@@ -128,7 +128,7 @@ services:
       #
       # Bitcoin Core environment variables
       # $BITCOIN_NETWORK - Can be "mainnet", "testnet" or "regtest"
-      # $BITCOIN_IP - Local IP of Bitcoin Core
+      # $APP_UMBREL_BITCOIN_NODE_IP - Local IP of Bitcoin Core
       # $BITCOIN_P2P_PORT - P2P port
       # $BITCOIN_RPC_PORT - RPC port
       # $BITCOIN_RPC_USER - RPC username
@@ -199,7 +199,7 @@ services:
       - 3002:3002
     environment:
       # Bitcoin Core connection details
-      BTCEXP_BITCOIND_HOST: $BITCOIN_IP
+      BTCEXP_BITCOIND_HOST: $APP_UMBREL_BITCOIN_NODE_IP
       BTCEXP_BITCOIND_PORT: $BITCOIN_RPC_PORT
       BTCEXP_BITCOIND_USER: $BITCOIN_RPC_USER
       BTCEXP_BITCOIND_PASS: $BITCOIN_RPC_PASS
