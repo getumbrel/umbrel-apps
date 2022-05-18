@@ -75,9 +75,9 @@ BIN_ARGS+=( "-peerblockfilters=1" )
 BIN_ARGS+=( "-deprecatedrpc=addresses" )
 BIN_ARGS+=( "-rpcworkqueue=128" )
 
-export BITCOIN_COMMAND=$(IFS=" "; echo "${BIN_ARGS[@]}")
+export APP_UMBREL_BITCOIN_COMMAND=$(IFS=" "; echo "${BIN_ARGS[@]}")
 
-# echo "${BITCOIN_COMMAND}"
+# echo "${APP_UMBREL_BITCOIN_COMMAND}"
 
 rpc_hidden_service_file="${EXPORTS_TOR_DATA_DIR}/app-${EXPORTS_APP_ID}-rpc/hostname"
 p2p_hidden_service_file="${EXPORTS_TOR_DATA_DIR}/app-${EXPORTS_APP_ID}-p2p/hostname"
