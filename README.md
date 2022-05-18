@@ -127,7 +127,7 @@ services:
       # your app to connect to Bitcoin Core, LND, Electrum and Tor:
       #
       # Bitcoin Core environment variables
-      # $BITCOIN_NETWORK - Can be "mainnet", "testnet" or "regtest"
+      # $APP_UMBREL_BITCOIN_NETWORK - Can be "mainnet", "testnet" or "regtest"
       # $APP_UMBREL_BITCOIN_NODE_IP - Local IP of Bitcoin Core
       # $APP_UMBREL_BITCOIN_P2P_PORT - P2P port
       # $APP_UMBREL_BITCOIN_RPC_PORT - RPC port

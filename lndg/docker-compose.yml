@@ -16,7 +16,7 @@ services:
     command:
       - sh
       - -c
-      - python initialize.py -net '${BITCOIN_NETWORK}' -server '${LND_IP}:${LND_GRPC_PORT}' -pw '${APP_PASSWORD}' -d && supervisord && python manage.py runserver 0.0.0.0:${APP_LNDG_PORT}
+      - python initialize.py -net '${APP_UMBREL_BITCOIN_NETWORK}' -server '${LND_IP}:${LND_GRPC_PORT}' -pw '${APP_PASSWORD}' -d && supervisord && python manage.py runserver 0.0.0.0:${APP_LNDG_PORT}
     networks:
       default:
         ipv4_address: ${APP_LNDG_IP}

@@ -28,16 +28,16 @@ BIN_ARGS+=( "--bitcoind.zmqpubrawtx=tcp://${APP_UMBREL_BITCOIN_NODE_IP}:${APP_UM
 
 # [Bitcoin]
 BIN_ARGS+=( "--bitcoin.active" )
-if [[ "${BITCOIN_NETWORK}" == "mainnet" ]]; then
+if [[ "${APP_UMBREL_BITCOIN_NETWORK}" == "mainnet" ]]; then
 	BIN_ARGS+=( "--bitcoin.mainnet" )
-elif [[ "${BITCOIN_NETWORK}" == "testnet" ]]; then
+elif [[ "${APP_UMBREL_BITCOIN_NETWORK}" == "testnet" ]]; then
 	BIN_ARGS+=( "--bitcoin.testnet" )
-elif [[ "${BITCOIN_NETWORK}" == "signet" ]]; then
+elif [[ "${APP_UMBREL_BITCOIN_NETWORK}" == "signet" ]]; then
 	BIN_ARGS+=( "--bitcoin.signet" )
-elif [[ "${BITCOIN_NETWORK}" == "regtest" ]]; then
+elif [[ "${APP_UMBREL_BITCOIN_NETWORK}" == "regtest" ]]; then
 	BIN_ARGS+=( "--bitcoin.regtest" )
 else
-	echo "Warning (${EXPORTS_APP_ID}): Bitcoin Network '${BITCOIN_NETWORK}' is not supported"
+	echo "Warning (${EXPORTS_APP_ID}): Bitcoin Network '${APP_UMBREL_BITCOIN_NETWORK}' is not supported"
 fi
 BIN_ARGS+=( "--bitcoin.node=${LND_BITCOIN_NODE}" )
 
