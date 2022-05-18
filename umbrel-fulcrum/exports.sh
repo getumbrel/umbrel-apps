@@ -6,7 +6,7 @@ BIN_ARGS=()
 BIN_ARGS+=( "--datadir /data/${APP_UMBREL_BITCOIN_NETWORK}" )
 BIN_ARGS+=( "--bitcoind ${APP_UMBREL_BITCOIN_NODE_IP}:${APP_UMBREL_BITCOIN_RPC_PORT}" )
 BIN_ARGS+=( "--rpcuser ${APP_UMBREL_BITCOIN_RPC_USER}" )
-BIN_ARGS+=( "--rpcpassword ${BITCOIN_RPC_PASS}" )
+BIN_ARGS+=( "--rpcpassword ${APP_UMBREL_BITCOIN_RPC_PASS}" )
 BIN_ARGS+=( "--tcp 0.0.0.0:50001" )
 
 export FULCRUM_COMMAND="${BIN_NAME} $(IFS=" "; echo "${BIN_ARGS[@]}")"
