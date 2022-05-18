@@ -9,13 +9,12 @@ export APP_UMBREL_BITCOIN_ZMQ_RAWTX_PORT="28333"
 export APP_UMBREL_BITCOIN_ZMQ_HASHBLOCK_PORT="28334"
 export APP_UMBREL_BITCOIN_ZMQ_SEQUENCE_PORT="28335"
 
-export APP_UMBREL_BITCOIN_NETWORK="mainnet"
 BITCOIN_CHAIN="main"
 BITCOIN_ENV_FILE="${EXPORTS_APP_DIR}/.env"
 
 if [[ ! -f "${BITCOIN_ENV_FILE}" ]]; then
-	if [[ ! -z "${BITCOIN_NETWORK}" ]]; then
-		export APP_UMBREL_BITCOIN_NETWORK="${BITCOIN_NETWORK}"
+	if [[ -z "${BITCOIN_NETWORK}" ]]; then
+		BITCOIN_NETWORK="mainnet"
 	fi
 	
 	if [[ -z ${BITCOIN_RPC_USER+x} ]] || [[ -z ${BITCOIN_RPC_PASS+x} ]] || [[ -z ${BITCOIN_RPC_AUTH+x} ]]; then
@@ -25,10 +24,10 @@ if [[ ! -f "${BITCOIN_ENV_FILE}" ]]; then
 		BITCOIN_RPC_AUTH=$(echo "$BITCOIN_RPC_DETAILS" | head -2 | tail -1 | sed -e "s/^rpcauth=//")
 	fi
 
-	echo "export APP_UMBREL_BITCOIN_NETWORK='${APP_UMBREL_BITCOIN_NETWORK}'"		>  "${BITCOIN_ENV_FILE}"
-	echo "export BITCOIN_RPC_USER='${BITCOIN_RPC_USER}'"	>> "${BITCOIN_ENV_FILE}"
-	echo "export BITCOIN_RPC_PASS='${BITCOIN_RPC_PASS}'"	>> "${BITCOIN_ENV_FILE}"
-	echo "export BITCOIN_RPC_AUTH='${BITCOIN_RPC_AUTH}'"	>> "${BITCOIN_ENV_FILE}"
+	echo "export APP_UMBREL_BITCOIN_NETWORK='${BITCOIN_NETWORK}'"	>  "${BITCOIN_ENV_FILE}"
+	echo "export BITCOIN_RPC_USER='${BITCOIN_RPC_USER}'"			>> "${BITCOIN_ENV_FILE}"
+	echo "export BITCOIN_RPC_PASS='${BITCOIN_RPC_PASS}'"			>> "${BITCOIN_ENV_FILE}"
+	echo "export BITCOIN_RPC_AUTH='${BITCOIN_RPC_AUTH}'"			>> "${BITCOIN_ENV_FILE}"
 fi
 
 . "${BITCOIN_ENV_FILE}"
