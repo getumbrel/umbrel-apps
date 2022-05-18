@@ -133,7 +133,7 @@ services:
       # $APP_UMBREL_BITCOIN_RPC_PORT - RPC port
       # $APP_UMBREL_BITCOIN_RPC_USER - RPC username
       # $APP_UMBREL_BITCOIN_RPC_PASS - RPC password
-      # $BITCOIN_RPC_AUTH - RPC auth string
+      # $APP_UMBREL_BITCOIN_RPC_AUTH - RPC auth string
       #
       # LND environment variables
       # $LND_IP - Local IP of LND

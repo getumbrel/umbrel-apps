@@ -27,7 +27,7 @@ if [[ ! -f "${BITCOIN_ENV_FILE}" ]]; then
 	echo "export APP_UMBREL_BITCOIN_NETWORK='${BITCOIN_NETWORK}'"	>  "${BITCOIN_ENV_FILE}"
 	echo "export APP_UMBREL_BITCOIN_RPC_USER='${BITCOIN_RPC_USER}'"	>> "${BITCOIN_ENV_FILE}"
 	echo "export APP_UMBREL_BITCOIN_RPC_PASS='${BITCOIN_RPC_PASS}'"	>> "${BITCOIN_ENV_FILE}"
-	echo "export BITCOIN_RPC_AUTH='${BITCOIN_RPC_AUTH}'"			>> "${BITCOIN_ENV_FILE}"
+	echo "export APP_UMBREL_BITCOIN_RPC_AUTH='${BITCOIN_RPC_AUTH}'"			>> "${BITCOIN_ENV_FILE}"
 fi
 
 . "${BITCOIN_ENV_FILE}"
@@ -61,7 +61,7 @@ BIN_ARGS+=( "-rpcbind=${APP_UMBREL_BITCOIN_NODE_IP}" )
 BIN_ARGS+=( "-rpcbind=127.0.0.1" )
 BIN_ARGS+=( "-rpcallowip=${NETWORK_IP}/16" )
 BIN_ARGS+=( "-rpcallowip=127.0.0.1" )
-BIN_ARGS+=( "-rpcauth=\"${BITCOIN_RPC_AUTH}\"" )
+BIN_ARGS+=( "-rpcauth=\"${APP_UMBREL_BITCOIN_RPC_AUTH}\"" )
 BIN_ARGS+=( "-dbcache=200" )
 BIN_ARGS+=( "-maxmempool=300" )
 BIN_ARGS+=( "-zmqpubrawblock=tcp://0.0.0.0:${APP_UMBREL_BITCOIN_ZMQ_RAWBLOCK_PORT}" )
