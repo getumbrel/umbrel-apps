@@ -129,7 +129,7 @@ services:
       # Bitcoin Core environment variables
       # $BITCOIN_NETWORK - Can be "mainnet", "testnet" or "regtest"
       # $APP_UMBREL_BITCOIN_NODE_IP - Local IP of Bitcoin Core
-      # $BITCOIN_P2P_PORT - P2P port
+      # $APP_UMBREL_BITCOIN_P2P_PORT - P2P port
       # $APP_UMBREL_BITCOIN_RPC_PORT - RPC port
       # $BITCOIN_RPC_USER - RPC username
       # $BITCOIN_RPC_PASS - RPC password
