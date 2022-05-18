@@ -5,7 +5,7 @@ export APP_UMBREL_BITCOIN_DATA_DIR="${EXPORTS_APP_DIR}/data/bitcoin"
 export APP_UMBREL_BITCOIN_RPC_PORT="8332"
 export APP_UMBREL_BITCOIN_P2P_PORT="8333"
 export APP_UMBREL_BITCOIN_ZMQ_RAWBLOCK_PORT="28332"
-export BITCOIN_ZMQ_RAWTX_PORT="28333"
+export APP_UMBREL_BITCOIN_ZMQ_RAWTX_PORT="28333"
 export BITCOIN_ZMQ_HASHBLOCK_PORT="28334"
 export BITCOIN_ZMQ_SEQUENCE_PORT="28335"
 
@@ -65,7 +65,7 @@ BIN_ARGS+=( "-rpcauth=\"${BITCOIN_RPC_AUTH}\"" )
 BIN_ARGS+=( "-dbcache=200" )
 BIN_ARGS+=( "-maxmempool=300" )
 BIN_ARGS+=( "-zmqpubrawblock=tcp://0.0.0.0:${APP_UMBREL_BITCOIN_ZMQ_RAWBLOCK_PORT}" )
-BIN_ARGS+=( "-zmqpubrawtx=tcp://0.0.0.0:${BITCOIN_ZMQ_RAWTX_PORT}" )
+BIN_ARGS+=( "-zmqpubrawtx=tcp://0.0.0.0:${APP_UMBREL_BITCOIN_ZMQ_RAWTX_PORT}" )
 BIN_ARGS+=( "-zmqpubhashblock=tcp://0.0.0.0:${BITCOIN_ZMQ_HASHBLOCK_PORT}" )
 BIN_ARGS+=( "-zmqpubsequence=tcp://0.0.0.0:${BITCOIN_ZMQ_SEQUENCE_PORT}" )
 BIN_ARGS+=( "-txindex=1" )
