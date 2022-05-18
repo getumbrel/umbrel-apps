@@ -23,7 +23,7 @@ BIN_ARGS+=( "--tlsdisableautofill" )
 BIN_ARGS+=( "--bitcoind.rpchost=${APP_UMBREL_BITCOIN_NODE_IP}" )
 BIN_ARGS+=( "--bitcoind.rpcuser=${BITCOIN_RPC_USER}" )
 BIN_ARGS+=( "--bitcoind.rpcpass=${BITCOIN_RPC_PASS}" )
-BIN_ARGS+=( "--bitcoind.zmqpubrawblock=tcp://${APP_UMBREL_BITCOIN_NODE_IP}:${BITCOIN_ZMQ_RAWBLOCK_PORT}" )
+BIN_ARGS+=( "--bitcoind.zmqpubrawblock=tcp://${APP_UMBREL_BITCOIN_NODE_IP}:${APP_UMBREL_BITCOIN_ZMQ_RAWBLOCK_PORT}" )
 BIN_ARGS+=( "--bitcoind.zmqpubrawtx=tcp://${APP_UMBREL_BITCOIN_NODE_IP}:${BITCOIN_ZMQ_RAWTX_PORT}" )
 
 # [Bitcoin]
