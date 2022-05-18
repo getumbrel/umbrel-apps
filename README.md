@@ -118,7 +118,7 @@ services:
 
       # Uncomment to mount Bitcoin Core's data directory as
       # read-only inside the Docker container at path /bitcoin
-      # - ${BITCOIN_DATA_DIR}:/bitcoin:ro
+      # - ${APP_UMBREL_BITCOIN_DATA_DIR}:/bitcoin:ro
     environment:
       # Pass any environment variables to your app for configuration in the form:
       # VARIABLE_NAME: value
