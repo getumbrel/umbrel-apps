@@ -2,7 +2,7 @@ export APP_UMBREL_LIGHTNING_IP="10.21.22.4"
 export APP_UMBREL_LIGHTNING_NODE_IP="10.21.22.5"
 
 export APP_UMBREL_LIGHTNING_NODE_PORT="9735"
-export LND_GRPC_PORT="10009"
+export APP_UMBREL_LIGHTNING_NODE_GRPC_PORT="10009"
 export LND_REST_PORT="8080"
 export LND_DATA_DIR="${EXPORTS_APP_DIR}/data/lnd"
 
@@ -11,7 +11,7 @@ LND_BITCOIN_NODE="bitcoind"
 BIN_ARGS=()
 # [Application Options]
 BIN_ARGS+=( "--listen=0.0.0.0:${APP_UMBREL_LIGHTNING_NODE_PORT}" )
-BIN_ARGS+=( "--rpclisten=0.0.0.0:${LND_GRPC_PORT}" )
+BIN_ARGS+=( "--rpclisten=0.0.0.0:${APP_UMBREL_LIGHTNING_NODE_GRPC_PORT}" )
 BIN_ARGS+=( "--restlisten=0.0.0.0:${LND_REST_PORT}" )
 BIN_ARGS+=( "--restlisten=0.0.0.0:${LND_REST_PORT}" )
 BIN_ARGS+=( "--tlsextraip=${APP_UMBREL_LIGHTNING_NODE_IP}" )
