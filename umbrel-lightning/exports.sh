@@ -4,9 +4,9 @@ export APP_UMBREL_LIGHTNING_NODE_IP="10.21.22.5"
 export LND_NODE_PORT="9735"
 export LND_GRPC_PORT="10009"
 export LND_REST_PORT="8080"
-
 export LND_DATA_DIR="${EXPORTS_APP_DIR}/data/lnd"
-export LND_BITCOIN_NODE="bitcoind"
+
+LND_BITCOIN_NODE="bitcoind"
 
 BIN_ARGS=()
 # [Application Options]
@@ -49,9 +49,9 @@ BIN_ARGS+=( "--tor.socks=${TOR_PROXY_IP}:${TOR_PROXY_PORT}" )
 BIN_ARGS+=( "--tor.targetipaddress=${APP_UMBREL_LIGHTNING_NODE_IP}" )
 BIN_ARGS+=( "--tor.password=${TOR_PASSWORD}" )
 
-export APP_UMBREL_LIGHTNING_LND_COMMAND=$(IFS=" "; echo "${BIN_ARGS[@]}")
+export APP_UMBREL_LIGHTNING_COMMAND=$(IFS=" "; echo "${BIN_ARGS[@]}")
 
-# echo "${APP_UMBREL_LIGHTNING_LND_COMMAND}"
+# echo "${APP_UMBREL_LIGHTNING_COMMAND}"
 
 rest_hidden_service_file="${EXPORTS_TOR_DATA_DIR}/app-${EXPORTS_APP_ID}-rest/hostname"
 grpc_hidden_service_file="${EXPORTS_TOR_DATA_DIR}/app-${EXPORTS_APP_ID}-grpc/hostname"
