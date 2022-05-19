@@ -114,11 +114,11 @@ services:
 
       # Uncomment to mount LND's data directory as read-only
       # inside the Docker container at path /lnd
-      # - ${APP_UMBREL_LIGHTNING_NODE_DATA_DIR}:/lnd:ro
+      # - ${APP_LIGHTNING_NODE_DATA_DIR}:/lnd:ro
 
       # Uncomment to mount Bitcoin Core's data directory as
       # read-only inside the Docker container at path /bitcoin
-      # - ${APP_UMBREL_BITCOIN_DATA_DIR}:/bitcoin:ro
+      # - ${APP_BITCOIN_DATA_DIR}:/bitcoin:ro
     environment:
       # Pass any environment variables to your app for configuration in the form:
       # VARIABLE_NAME: value
@@ -127,22 +127,22 @@ services:
       # your app to connect to Bitcoin Core, LND, Electrum and Tor:
       #
       # Bitcoin Core environment variables
-      # $APP_UMBREL_BITCOIN_NETWORK - Can be "mainnet", "testnet" or "regtest"
-      # $APP_UMBREL_BITCOIN_NODE_IP - Local IP of Bitcoin Core
-      # $APP_UMBREL_BITCOIN_P2P_PORT - P2P port
-      # $APP_UMBREL_BITCOIN_RPC_PORT - RPC port
-      # $APP_UMBREL_BITCOIN_RPC_USER - RPC username
-      # $APP_UMBREL_BITCOIN_RPC_PASS - RPC password
-      # $APP_UMBREL_BITCOIN_RPC_AUTH - RPC auth string
+      # $APP_BITCOIN_NETWORK - Can be "mainnet", "testnet" or "regtest"
+      # $APP_BITCOIN_NODE_IP - Local IP of Bitcoin Core
+      # $APP_BITCOIN_P2P_PORT - P2P port
+      # $APP_BITCOIN_RPC_PORT - RPC port
+      # $APP_BITCOIN_RPC_USER - RPC username
+      # $APP_BITCOIN_RPC_PASS - RPC password
+      # $APP_BITCOIN_RPC_AUTH - RPC auth string
       #
       # LND environment variables
-      # $APP_UMBREL_LIGHTNING_NODE_IP - Local IP of LND
-      # $APP_UMBREL_LIGHTNING_NODE_GRPC_PORT - gRPC Port of LND
-      # $APP_UMBREL_LIGHTNING_NODE_REST_PORT - REST Port of LND
+      # $APP_LIGHTNING_NODE_IP - Local IP of LND
+      # $APP_LIGHTNING_NODE_GRPC_PORT - gRPC Port of LND
+      # $APP_LIGHTNING_NODE_REST_PORT - REST Port of LND
       #
       # Electrum server environment variables
-      # $APP_UMBREL_ELECTRS_NODE_IP - Local IP of Electrum server
-      # $APP_UMBREL_ELECTRS_NODE_PORT - Port of Electrum server
+      # $APP_ELECTRS_NODE_IP - Local IP of Electrum server
+      # $APP_ELECTRS_NODE_PORT - Port of Electrum server
       #
       # Tor proxy environment variables
       # $TOR_PROXY_IP - Local IP of Tor proxy
@@ -199,13 +199,13 @@ services:
       - 3002:3002
     environment:
       # Bitcoin Core connection details
-      BTCEXP_BITCOIND_HOST: $APP_UMBREL_BITCOIN_NODE_IP
-      BTCEXP_BITCOIND_PORT: $APP_UMBREL_BITCOIN_RPC_PORT
-      BTCEXP_BITCOIND_USER: $APP_UMBREL_BITCOIN_RPC_USER
-      BTCEXP_BITCOIND_PASS: $APP_UMBREL_BITCOIN_RPC_PASS
+      BTCEXP_BITCOIND_HOST: $APP_BITCOIN_NODE_IP
+      BTCEXP_BITCOIND_PORT: $APP_BITCOIN_RPC_PORT
+      BTCEXP_BITCOIND_USER: $APP_BITCOIN_RPC_USER
+      BTCEXP_BITCOIND_PASS: $APP_BITCOIN_RPC_PASS
 
       # Electrum connection details
-      BTCEXP_ELECTRUMX_SERVERS: "tcp://$APP_UMBREL_ELECTRS_NODE_IP:$APP_UMBREL_ELECTRS_NODE_PORT"
+      BTCEXP_ELECTRUMX_SERVERS: "tcp://$APP_ELECTRS_NODE_IP:$APP_ELECTRS_NODE_PORT"
 
       # App Config
       BTCEXP_HOST: 0.0.0.0

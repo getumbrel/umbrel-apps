@@ -13,7 +13,7 @@ services:
     stop_grace_period: 1m
     volumes:
       - ${APP_DATA_DIR}/data:/data
-      - ${APP_UMBREL_LIGHTNING_NODE_DATA_DIR}:/lnd:ro
+      - ${APP_LIGHTNING_NODE_DATA_DIR}:/lnd:ro
     environment:
       # Global
       LNBITS_HOST: "0.0.0.0"
@@ -22,9 +22,9 @@ services:
 
       # LND
       LNBITS_BACKEND_WALLET_CLASS: LndRestWallet
-      LND_REST_ENDPOINT: https://$APP_UMBREL_LIGHTNING_NODE_IP:$APP_UMBREL_LIGHTNING_NODE_REST_PORT/
+      LND_REST_ENDPOINT: https://$APP_LIGHTNING_NODE_IP:$APP_LIGHTNING_NODE_REST_PORT/
       LND_REST_CERT: "/lnd/tls.cert"
-      LND_REST_MACAROON: "/lnd/data/chain/bitcoin/$APP_UMBREL_BITCOIN_NETWORK/admin.macaroon"
+      LND_REST_MACAROON: "/lnd/data/chain/bitcoin/$APP_BITCOIN_NETWORK/admin.macaroon"
 
       # App
       LNBITS_SITE_TITLE: "LNbits - Umbrel"

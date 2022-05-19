@@ -14,16 +14,16 @@ services:
     stop_grace_period: 1m
     volumes:
       - ${APP_DATA_DIR}/data:/data
-      - ${APP_UMBREL_LIGHTNING_NODE_DATA_DIR}:/lnd:ro
+      - ${APP_LIGHTNING_NODE_DATA_DIR}:/lnd:ro
     environment:
       # Global
    
 
       # LND
-      LND_GRPC_ENDPOINT: $APP_UMBREL_LIGHTNING_NODE_IP
-      LND_GPRC_PORT: $APP_UMBREL_LIGHTNING_NODE_GRPC_PORT
+      LND_GRPC_ENDPOINT: $APP_LIGHTNING_NODE_IP
+      LND_GPRC_PORT: $APP_LIGHTNING_NODE_GRPC_PORT
       LND_GRPC_CERT: "/lnd/tls.cert"
-      LND_GRPC_MACAROON: "/lnd/data/chain/bitcoin/$APP_UMBREL_BITCOIN_NETWORK/admin.macaroon"
+      LND_GRPC_MACAROON: "/lnd/data/chain/bitcoin/$APP_BITCOIN_NETWORK/admin.macaroon"
 
       # App
       APP_HIDDEN_SERVICE: http://$APP_HIDDEN_SERVICE

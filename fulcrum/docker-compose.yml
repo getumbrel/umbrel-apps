@@ -3,7 +3,7 @@ version: "3.7"
 services:
   app_proxy:
     environment:
-      APP_HOST: $APP_UMBREL_FULCRUM_IP
+      APP_HOST: $APP_FULCRUM_IP
       APP_PORT: 3006
 
   app:
@@ -14,24 +14,24 @@ services:
     environment:
       FULCRUM_HIDDEN_SERVICE: "${APP_HIDDEN_SERVICE}"
       FULCRUM_LOCAL_SERVICE: "${DEVICE_DOMAIN_NAME}"
-      FULCRUM_HOST: "${APP_UMBREL_FULCRUM_NODE_IP}"
+      FULCRUM_HOST: "${APP_FULCRUM_NODE_IP}"
       FULCRUM_STATS_PORT: 8080
-      BITCOIN_HOST: "${APP_UMBREL_BITCOIN_NODE_IP}"
-      RPC_USER: "${APP_UMBREL_BITCOIN_RPC_USER}"
-      RPC_PASSWORD: "${APP_UMBREL_BITCOIN_RPC_PASS}"
-      RPC_PORT: "${APP_UMBREL_BITCOIN_RPC_PORT}"
+      BITCOIN_HOST: "${APP_BITCOIN_NODE_IP}"
+      RPC_USER: "${APP_BITCOIN_RPC_USER}"
+      RPC_PASSWORD: "${APP_BITCOIN_RPC_PASS}"
+      RPC_PORT: "${APP_BITCOIN_RPC_PORT}"
     networks:
       default:
-        ipv4_address: $APP_UMBREL_FULCRUM_IP
+        ipv4_address: $APP_FULCRUM_IP
   
   fulcrum:
     image: cculianu/fulcrum
     init: true
-    command: "${APP_UMBREL_FULCRUM_COMMAND}"
+    command: "${APP_FULCRUM_COMMAND}"
     volumes:
-      - "${APP_UMBREL_BITCOIN_DATA_DIR}:/data/.bitcoin:ro"
+      - "${APP_BITCOIN_DATA_DIR}:/data/.bitcoin:ro"
       - "${APP_DATA_DIR}/data:/data"
     restart: always
     networks:
       default:
-        ipv4_address: $APP_UMBREL_FULCRUM_NODE_IP
+        ipv4_address: $APP_FULCRUM_NODE_IP

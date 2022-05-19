@@ -3,7 +3,7 @@ version: "3.7"
 services:
   app_proxy:
     environment:
-      APP_HOST: $APP_UMBREL_BITCOIN_IP
+      APP_HOST: $APP_BITCOIN_IP
       APP_PORT: 3005
   
   server:
@@ -12,25 +12,25 @@ services:
     restart: on-failure
     environment:
       PORT: "3005"
-      BITCOIN_HOST: "${APP_UMBREL_BITCOIN_NODE_IP}"
-      RPC_PORT: "${APP_UMBREL_BITCOIN_RPC_PORT}"
-      RPC_USER: "${APP_UMBREL_BITCOIN_RPC_USER}"
-      RPC_PASSWORD: "${APP_UMBREL_BITCOIN_RPC_PASS}"
-      BITCOIN_RPC_HIDDEN_SERVICE: "${APP_UMBREL_BITCOIN_RPC_HIDDEN_SERVICE}"
-      BITCOIN_P2P_HIDDEN_SERVICE: "${APP_UMBREL_BITCOIN_P2P_HIDDEN_SERVICE}"
+      BITCOIN_HOST: "${APP_BITCOIN_NODE_IP}"
+      RPC_PORT: "${APP_BITCOIN_RPC_PORT}"
+      RPC_USER: "${APP_BITCOIN_RPC_USER}"
+      RPC_PASSWORD: "${APP_BITCOIN_RPC_PASS}"
+      BITCOIN_RPC_HIDDEN_SERVICE: "${APP_BITCOIN_RPC_HIDDEN_SERVICE}"
+      BITCOIN_P2P_HIDDEN_SERVICE: "${APP_BITCOIN_P2P_HIDDEN_SERVICE}"
     networks:
       default:
-        ipv4_address: $APP_UMBREL_BITCOIN_IP
+        ipv4_address: $APP_BITCOIN_IP
 
   bitcoind:
     image: lncm/bitcoind:v22.0@sha256:37a1adb29b3abc9f972f0d981f45e41e5fca2e22816a023faa9fdc0084aa4507
-    command: "${APP_UMBREL_BITCOIN_COMMAND}"
+    command: "${APP_BITCOIN_COMMAND}"
     restart: on-failure
     stop_grace_period: 15m30s
     volumes:
-      - "${APP_UMBREL_BITCOIN_DATA_DIR}:/data/.bitcoin"
+      - "${APP_BITCOIN_DATA_DIR}:/data/.bitcoin"
     ports:
-      - "${APP_UMBREL_BITCOIN_P2P_PORT}:${APP_UMBREL_BITCOIN_P2P_PORT}"
+      - "${APP_BITCOIN_P2P_PORT}:${APP_BITCOIN_P2P_PORT}"
     networks:
       default:
-        ipv4_address: $APP_UMBREL_BITCOIN_NODE_IP
+        ipv4_address: $APP_BITCOIN_NODE_IP

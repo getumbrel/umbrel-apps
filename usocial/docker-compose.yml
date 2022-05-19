@@ -11,13 +11,13 @@ services:
     restart: on-failure
     stop_grace_period: 1m
     volumes:
-      - ${APP_UMBREL_LIGHTNING_NODE_DATA_DIR}:/lnd:ro
+      - ${APP_LIGHTNING_NODE_DATA_DIR}:/lnd:ro
       - ${APP_DATA_DIR}/data:/instance
     environment:
         USOCIAL_JOB: "WEB"
         APP_PASSWORD: "${APP_PASSWORD}"
-        LND_IP: "${APP_UMBREL_LIGHTNING_NODE_IP}"
-        LND_GPRC_PORT: ${APP_UMBREL_LIGHTNING_NODE_GRPC_PORT}
+        LND_IP: "${APP_LIGHTNING_NODE_IP}"
+        LND_GPRC_PORT: ${APP_LIGHTNING_NODE_GRPC_PORT}
         LND_DIR: "/lnd"
     networks:
       default:

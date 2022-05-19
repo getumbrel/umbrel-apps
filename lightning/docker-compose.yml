@@ -3,50 +3,50 @@ version: "3.7"
 services:
   app_proxy:
     environment:
-      APP_HOST: $APP_UMBREL_LIGHTNING_IP
+      APP_HOST: $APP_LIGHTNING_IP
       APP_PORT: 3006
 
   app:
     image: cookiemonster123/umbrel-lightning:v1.0.2@sha256:41d651ec0ba1fba9173bd06cbf2a1093dd2ba0485432aea177a9255ae3211934
     restart: on-failure
     volumes:
-      - "${APP_UMBREL_LIGHTNING_NODE_DATA_DIR}:/data/.lnd"
+      - "${APP_LIGHTNING_NODE_DATA_DIR}:/data/.lnd"
       - "${APP_DATA_DIR}/data/lightning:/data"
       - "${UMBREL_ROOT}/statuses:/statuses"
     environment:
       PORT: "3006"
       TOR_PROXY_IP: "${TOR_PROXY_IP}"
       TOR_PROXY_PORT: "${TOR_PROXY_PORT}"
-      BITCOIN_HOST: "${APP_UMBREL_BITCOIN_NODE_IP}"
-      RPC_PORT: "${APP_UMBREL_BITCOIN_RPC_PORT}"
-      RPC_USER: "${APP_UMBREL_BITCOIN_RPC_USER}"
-      RPC_PASSWORD: "${APP_UMBREL_BITCOIN_RPC_PASS}"
-      LND_NETWORK: "${APP_UMBREL_BITCOIN_NETWORK}"
-      LND_HOST: "${APP_UMBREL_LIGHTNING_NODE_IP}"
-      LND_REST_HIDDEN_SERVICE_FILE: "${APP_UMBREL_LIGHTNING_REST_HIDDEN_SERVICE}"
-      LND_GRPC_HIDDEN_SERVICE_FILE: "${APP_UMBREL_LIGHTNING_GRPC_HIDDEN_SERVICE}"
+      BITCOIN_HOST: "${APP_BITCOIN_NODE_IP}"
+      RPC_PORT: "${APP_BITCOIN_RPC_PORT}"
+      RPC_USER: "${APP_BITCOIN_RPC_USER}"
+      RPC_PASSWORD: "${APP_BITCOIN_RPC_PASS}"
+      LND_NETWORK: "${APP_BITCOIN_NETWORK}"
+      LND_HOST: "${APP_LIGHTNING_NODE_IP}"
+      LND_REST_HIDDEN_SERVICE_FILE: "${APP_LIGHTNING_REST_HIDDEN_SERVICE}"
+      LND_GRPC_HIDDEN_SERVICE_FILE: "${APP_LIGHTNING_GRPC_HIDDEN_SERVICE}"
       TLS_FILE: "/data/.lnd/tls.cert"
-      MACAROON_DIR: "/data/.lnd/data/chain/bitcoin/${APP_UMBREL_BITCOIN_NETWORK}/"
-      CHANNEL_BACKUP_FILE: "/data/.lnd/data/chain/bitcoin/${APP_UMBREL_BITCOIN_NETWORK}/channel.backup"
+      MACAROON_DIR: "/data/.lnd/data/chain/bitcoin/${APP_BITCOIN_NETWORK}/"
+      CHANNEL_BACKUP_FILE: "/data/.lnd/data/chain/bitcoin/${APP_BITCOIN_NETWORK}/channel.backup"
       BACKUP_STATUS_FILE: "/statuses/backup-status.json"
       JSON_STORE_FILE: "/data/state.json"
     ports:
-      - "$APP_UMBREL_LIGHTNING_NODE_PORT:$APP_UMBREL_LIGHTNING_NODE_PORT"
-      - "$APP_UMBREL_LIGHTNING_NODE_REST_PORT:$APP_UMBREL_LIGHTNING_NODE_REST_PORT"
-      - "$APP_UMBREL_LIGHTNING_NODE_GRPC_PORT:$APP_UMBREL_LIGHTNING_NODE_GRPC_PORT"
+      - "$APP_LIGHTNING_NODE_PORT:$APP_LIGHTNING_NODE_PORT"
+      - "$APP_LIGHTNING_NODE_REST_PORT:$APP_LIGHTNING_NODE_REST_PORT"
+      - "$APP_LIGHTNING_NODE_GRPC_PORT:$APP_LIGHTNING_NODE_GRPC_PORT"
     networks:
       default:
-        ipv4_address: $APP_UMBREL_LIGHTNING_IP
+        ipv4_address: $APP_LIGHTNING_IP
   
   lnd:
     image: lightninglabs/lnd:v0.14.1-beta@sha256:810f290f4da51adaf57d53bc1f1e65b52b03c543f322da0b98fb8c47be94a27a
-    command: "${APP_UMBREL_LIGHTNING_COMMAND}"
+    command: "${APP_LIGHTNING_COMMAND}"
     user: 1000:1000
     restart: on-failure
     volumes:
-      - "${APP_UMBREL_LIGHTNING_NODE_DATA_DIR}:/data/.lnd"
+      - "${APP_LIGHTNING_NODE_DATA_DIR}:/data/.lnd"
     environment:
       HOME: /data
     networks:
       default:
-        ipv4_address: $APP_UMBREL_LIGHTNING_NODE_IP
+        ipv4_address: $APP_LIGHTNING_NODE_IP

@@ -11,12 +11,12 @@ services:
     restart: on-failure
     stop_grace_period: 1m
     volumes:
-      - ${APP_UMBREL_LIGHTNING_NODE_DATA_DIR}:/root/.lnd:ro
+      - ${APP_LIGHTNING_NODE_DATA_DIR}:/root/.lnd:ro
       - ${APP_DATA_DIR}:/lndg/data
     command:
       - sh
       - -c
-      - python initialize.py -net '${APP_UMBREL_BITCOIN_NETWORK}' -server '${APP_UMBREL_LIGHTNING_NODE_IP}:${APP_UMBREL_LIGHTNING_NODE_GRPC_PORT}' -pw '${APP_PASSWORD}' -d && supervisord && python manage.py runserver 0.0.0.0:${APP_LNDG_PORT}
+      - python initialize.py -net '${APP_BITCOIN_NETWORK}' -server '${APP_LIGHTNING_NODE_IP}:${APP_LIGHTNING_NODE_GRPC_PORT}' -pw '${APP_PASSWORD}' -d && supervisord && python manage.py runserver 0.0.0.0:${APP_LNDG_PORT}
     networks:
       default:
         ipv4_address: ${APP_LNDG_IP}

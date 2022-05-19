@@ -13,16 +13,16 @@ services:
     restart: on-failure
     stop_grace_period: 1m
     volumes:
-      - ${APP_UMBREL_LIGHTNING_NODE_DATA_DIR}:/lnd:ro
+      - ${APP_LIGHTNING_NODE_DATA_DIR}:/lnd:ro
       - ${APP_DATA_DIR}/data:/relay/.lnd/
     environment:
       PUBLIC_URL: "$APP_HIDDEN_SERVICE:$APP_SPHINX_RELAY_PORT"
-      LND_IP: $APP_UMBREL_LIGHTNING_NODE_IP
+      LND_IP: $APP_LIGHTNING_NODE_IP
       CONNECT_UI: "true"
-      LND_PORT: $APP_UMBREL_LIGHTNING_NODE_GRPC_PORT
+      LND_PORT: $APP_LIGHTNING_NODE_GRPC_PORT
       TLS_LOCATION: /lnd/tls.cert
-      MACAROON_LOCATION: /lnd/data/chain/bitcoin/${APP_UMBREL_BITCOIN_NETWORK}/admin.macaroon
-      LND_LOG_LOCATION: /lnd/logs/bitcoin/${APP_UMBREL_BITCOIN_NETWORK}/lnd.log
+      MACAROON_LOCATION: /lnd/data/chain/bitcoin/${APP_BITCOIN_NETWORK}/admin.macaroon
+      LND_LOG_LOCATION: /lnd/logs/bitcoin/${APP_BITCOIN_NETWORK}/lnd.log
     networks:
       default:
         ipv4_address: $APP_SPHINX_RELAY_IP

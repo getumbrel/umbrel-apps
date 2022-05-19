@@ -14,8 +14,8 @@ services:
       - ${APP_DATA_DIR}/rtl:/data
       - ${APP_DATA_DIR}/loop:/loop
       - ${APP_DATA_DIR}/boltz:/boltz:ro
-      - ${APP_UMBREL_LIGHTNING_NODE_DATA_DIR}:/lnd:ro
-      - ${APP_UMBREL_BITCOIN_DATA_DIR}:/bitcoin:ro
+      - ${APP_LIGHTNING_NODE_DATA_DIR}:/lnd:ro
+      - ${APP_BITCOIN_DATA_DIR}:/bitcoin:ro
     entrypoint: /data/entrypoint.sh
     environment:
         # App config
@@ -26,13 +26,13 @@ services:
         LN_IMPLEMENTATION: "LND"
 
         # LND connection details
-        LN_SERVER_URL: "https://$APP_UMBREL_LIGHTNING_NODE_IP:$APP_UMBREL_LIGHTNING_NODE_REST_PORT"
-        MACAROON_PATH: "/lnd/data/chain/bitcoin/$APP_UMBREL_BITCOIN_NETWORK"
+        LN_SERVER_URL: "https://$APP_LIGHTNING_NODE_IP:$APP_LIGHTNING_NODE_REST_PORT"
+        MACAROON_PATH: "/lnd/data/chain/bitcoin/$APP_BITCOIN_NETWORK"
         CONFIG_PATH: "/lnd/lnd.conf"
 
         # Loop
         SWAP_SERVER_URL: "https://$APP_RIDE_THE_LIGHTNING_LOOP_IP:8081"
-        SWAP_MACAROON_PATH: "/loop/.loop/$APP_UMBREL_BITCOIN_NETWORK"
+        SWAP_MACAROON_PATH: "/loop/.loop/$APP_BITCOIN_NETWORK"
 
         # Boltz
         BOLTZ_SERVER_URL: "https://$APP_RIDE_THE_LIGHTNING_BOLTZ_IP:9003"
@@ -48,13 +48,13 @@ services:
     stop_grace_period: 1m
     volumes:
       - ${APP_DATA_DIR}/loop:/data
-      - ${APP_UMBREL_LIGHTNING_NODE_DATA_DIR}:/lnd:ro
+      - ${APP_LIGHTNING_NODE_DATA_DIR}:/lnd:ro
     environment:
       HOME: "/data"
     command:
-      - --network=$APP_UMBREL_BITCOIN_NETWORK
-      - --lnd.host="$APP_UMBREL_LIGHTNING_NODE_IP:$APP_UMBREL_LIGHTNING_NODE_GRPC_PORT"
-      - --lnd.macaroonpath="/lnd/data/chain/bitcoin/$APP_UMBREL_BITCOIN_NETWORK/admin.macaroon"
+      - --network=$APP_BITCOIN_NETWORK
+      - --lnd.host="$APP_LIGHTNING_NODE_IP:$APP_LIGHTNING_NODE_GRPC_PORT"
+      - --lnd.macaroonpath="/lnd/data/chain/bitcoin/$APP_BITCOIN_NETWORK/admin.macaroon"
       - --lnd.tlspath="/lnd/tls.cert"
       - --restlisten=0.0.0.0:8081
     networks:
@@ -70,10 +70,10 @@ services:
       HOME: "/data"
     volumes:
       - "${APP_DATA_DIR}/boltz:/data"
-      - "${APP_UMBREL_LIGHTNING_NODE_DATA_DIR}:/lnd:ro"
+      - "${APP_LIGHTNING_NODE_DATA_DIR}:/lnd:ro"
     command:
-      - --lnd.host="$APP_UMBREL_LIGHTNING_NODE_IP"
-      - --lnd.macaroon="/lnd/data/chain/bitcoin/$APP_UMBREL_BITCOIN_NETWORK/admin.macaroon"
+      - --lnd.host="$APP_LIGHTNING_NODE_IP"
+      - --lnd.macaroon="/lnd/data/chain/bitcoin/$APP_BITCOIN_NETWORK/admin.macaroon"
       - --lnd.certificate="/lnd/tls.cert"
       - --rpc.rest.host="$APP_RIDE_THE_LIGHTNING_BOLTZ_IP"
       - --rpc.rest.port="9003"

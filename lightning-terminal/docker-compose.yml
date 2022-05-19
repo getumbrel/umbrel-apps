@@ -13,17 +13,17 @@ services:
     stop_grace_period: 1m
     volumes:
       - ${APP_DATA_DIR}/data:/data
-      - ${APP_UMBREL_LIGHTNING_NODE_DATA_DIR}:/lnd:ro
+      - ${APP_LIGHTNING_NODE_DATA_DIR}:/lnd:ro
     environment:
       HOME: "/data"
       APP_PASSWORD: "$APP_PASSWORD"
     command:
         - --uipassword_env=APP_PASSWORD
         - --insecure-httplisten=0.0.0.0:$APP_LIGHTNING_TERMINAL_PORT
-        - --network="$APP_UMBREL_BITCOIN_NETWORK"
+        - --network="$APP_BITCOIN_NETWORK"
         - --lnd-mode="remote"
-        - --remote.lnd.rpcserver=$APP_UMBREL_LIGHTNING_NODE_IP:$APP_UMBREL_LIGHTNING_NODE_GRPC_PORT
-        - --remote.lnd.macaroonpath="/lnd/data/chain/bitcoin/$APP_UMBREL_BITCOIN_NETWORK/admin.macaroon"
+        - --remote.lnd.rpcserver=$APP_LIGHTNING_NODE_IP:$APP_LIGHTNING_NODE_GRPC_PORT
+        - --remote.lnd.macaroonpath="/lnd/data/chain/bitcoin/$APP_BITCOIN_NETWORK/admin.macaroon"
         - --remote.lnd.tlscertpath="/lnd/tls.cert"
     networks:
       default:
