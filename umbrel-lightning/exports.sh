@@ -49,9 +49,9 @@ BIN_ARGS+=( "--tor.socks=${TOR_PROXY_IP}:${TOR_PROXY_PORT}" )
 BIN_ARGS+=( "--tor.targetipaddress=${APP_UMBREL_LIGHTNING_NODE_IP}" )
 BIN_ARGS+=( "--tor.password=${TOR_PASSWORD}" )
 
-export LND_COMMAND=$(IFS=" "; echo "${BIN_ARGS[@]}")
+export APP_UMBREL_LIGHTNING_LND_COMMAND=$(IFS=" "; echo "${BIN_ARGS[@]}")
 
-# echo "${LND_COMMAND}"
+# echo "${APP_UMBREL_LIGHTNING_LND_COMMAND}"
 
 rest_hidden_service_file="${EXPORTS_TOR_DATA_DIR}/app-${EXPORTS_APP_ID}-rest/hostname"
 grpc_hidden_service_file="${EXPORTS_TOR_DATA_DIR}/app-${EXPORTS_APP_ID}-grpc/hostname"
