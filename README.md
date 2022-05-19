@@ -138,7 +138,7 @@ services:
       # LND environment variables
       # $APP_UMBREL_LIGHTNING_NODE_IP - Local IP of LND
       # $APP_UMBREL_LIGHTNING_NODE_GRPC_PORT - gRPC Port of LND
-      # $LND_REST_PORT - REST Port of LND
+      # $APP_UMBREL_LIGHTNING_NODE_REST_PORT - REST Port of LND
       #
       # Electrum server environment variables
       # $ELECTRUM_IP - Local IP of Electrum server
