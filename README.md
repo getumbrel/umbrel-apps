@@ -142,7 +142,7 @@ services:
       #
       # Electrum server environment variables
       # $APP_UMBREL_ELECTRS_NODE_IP - Local IP of Electrum server
-      # $ELECTRUM_PORT - Port of Electrum server
+      # $APP_UMBREL_ELECTRS_NODE_PORT - Port of Electrum server
       #
       # Tor proxy environment variables
       # $TOR_PROXY_IP - Local IP of Tor proxy
@@ -205,7 +205,7 @@ services:
       BTCEXP_BITCOIND_PASS: $APP_UMBREL_BITCOIN_RPC_PASS
 
       # Electrum connection details
-      BTCEXP_ELECTRUMX_SERVERS: "tcp://$APP_UMBREL_ELECTRS_NODE_IP:$ELECTRUM_PORT"
+      BTCEXP_ELECTRUMX_SERVERS: "tcp://$APP_UMBREL_ELECTRS_NODE_IP:$APP_UMBREL_ELECTRS_NODE_PORT"
 
       # App Config
       BTCEXP_HOST: 0.0.0.0
