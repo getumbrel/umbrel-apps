@@ -33,7 +33,7 @@ services:
       TOR_URL: "${APP_HIDDEN_SERVICE}"
       LND_CERT_FILE: "/lnd/tls.cert"
       LND_ADMIN_MACAROON_FILE: "/lnd/data/chain/bitcoin/${APP_UMBREL_BITCOIN_NETWORK}/admin.macaroon"
-      CONFIG: '{ "rateLimit": 10000, "postRateLimit": 10000, "redis": { "port": 6379, "host": "$APP_BLUEWALLET_REDIS_IP", "family": 4, "password": "moneyprintergobrrr", "db": 0 }, "lnd": { "url": "$LND_IP:$LND_GRPC_PORT", "password": ""}}'
+      CONFIG: '{ "rateLimit": 10000, "postRateLimit": 10000, "redis": { "port": 6379, "host": "$APP_BLUEWALLET_REDIS_IP", "family": 4, "password": "moneyprintergobrrr", "db": 0 }, "lnd": { "url": "$APP_UMBREL_LIGHTNING_NODE_IP:$LND_GRPC_PORT", "password": ""}}'
     networks:
       default:
         ipv4_address: "${APP_BLUEWALLET_LNDHUB_IP}"

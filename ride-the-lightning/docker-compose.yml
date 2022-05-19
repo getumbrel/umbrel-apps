@@ -26,7 +26,7 @@ services:
         LN_IMPLEMENTATION: "LND"
 
         # LND connection details
-        LN_SERVER_URL: "https://$LND_IP:$LND_REST_PORT"
+        LN_SERVER_URL: "https://$APP_UMBREL_LIGHTNING_NODE_IP:$LND_REST_PORT"
         MACAROON_PATH: "/lnd/data/chain/bitcoin/$APP_UMBREL_BITCOIN_NETWORK"
         CONFIG_PATH: "/lnd/lnd.conf"
 
@@ -53,7 +53,7 @@ services:
       HOME: "/data"
     command:
       - --network=$APP_UMBREL_BITCOIN_NETWORK
-      - --lnd.host="$LND_IP:$LND_GRPC_PORT"
+      - --lnd.host="$APP_UMBREL_LIGHTNING_NODE_IP:$LND_GRPC_PORT"
       - --lnd.macaroonpath="/lnd/data/chain/bitcoin/$APP_UMBREL_BITCOIN_NETWORK/admin.macaroon"
       - --lnd.tlspath="/lnd/tls.cert"
       - --restlisten=0.0.0.0:8081
@@ -72,7 +72,7 @@ services:
       - "${APP_DATA_DIR}/boltz:/data"
       - "${LND_DATA_DIR}:/lnd:ro"
     command:
-      - --lnd.host="$LND_IP"
+      - --lnd.host="$APP_UMBREL_LIGHTNING_NODE_IP"
       - --lnd.macaroon="/lnd/data/chain/bitcoin/$APP_UMBREL_BITCOIN_NETWORK/admin.macaroon"
       - --lnd.certificate="/lnd/tls.cert"
       - --rpc.rest.host="$APP_RIDE_THE_LIGHTNING_BOLTZ_IP"

@@ -136,7 +136,7 @@ services:
       # $APP_UMBREL_BITCOIN_RPC_AUTH - RPC auth string
       #
       # LND environment variables
-      # $LND_IP - Local IP of LND
+      # $APP_UMBREL_LIGHTNING_NODE_IP - Local IP of LND
       # $LND_GRPC_PORT - gRPC Port of LND
       # $LND_REST_PORT - REST Port of LND
       #
