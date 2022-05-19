@@ -14,7 +14,7 @@ services:
       - ${APP_DATA_DIR}/rtl:/data
       - ${APP_DATA_DIR}/loop:/loop
       - ${APP_DATA_DIR}/boltz:/boltz:ro
-      - ${LND_DATA_DIR}:/lnd:ro
+      - ${APP_UMBREL_LIGHTNING_NODE_DATA_DIR}:/lnd:ro
       - ${APP_UMBREL_BITCOIN_DATA_DIR}:/bitcoin:ro
     entrypoint: /data/entrypoint.sh
     environment:
@@ -48,7 +48,7 @@ services:
     stop_grace_period: 1m
     volumes:
       - ${APP_DATA_DIR}/loop:/data
-      - ${LND_DATA_DIR}:/lnd:ro
+      - ${APP_UMBREL_LIGHTNING_NODE_DATA_DIR}:/lnd:ro
     environment:
       HOME: "/data"
     command:
@@ -70,7 +70,7 @@ services:
       HOME: "/data"
     volumes:
       - "${APP_DATA_DIR}/boltz:/data"
-      - "${LND_DATA_DIR}:/lnd:ro"
+      - "${APP_UMBREL_LIGHTNING_NODE_DATA_DIR}:/lnd:ro"
     command:
       - --lnd.host="$APP_UMBREL_LIGHTNING_NODE_IP"
       - --lnd.macaroon="/lnd/data/chain/bitcoin/$APP_UMBREL_BITCOIN_NETWORK/admin.macaroon"

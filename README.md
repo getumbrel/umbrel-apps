@@ -114,7 +114,7 @@ services:
 
       # Uncomment to mount LND's data directory as read-only
       # inside the Docker container at path /lnd
-      # - ${LND_DATA_DIR}:/lnd:ro
+      # - ${APP_UMBREL_LIGHTNING_NODE_DATA_DIR}:/lnd:ro
 
       # Uncomment to mount Bitcoin Core's data directory as
       # read-only inside the Docker container at path /bitcoin
