@@ -7,7 +7,7 @@ services:
       APP_PORT: $APP_PHOTOPRISM_PORT
   web:
     image: photoprism/photoprism:20210925@sha256:238e6955804d82097d08f0e4318835721f46bd844f9065a38aa7d112ab72906e
-    user: "1000:1000"
+    user: "${UMBREL_USER_GROUP_ID}"
     restart: on-failure
     stop_grace_period: "1m"
     volumes:
@@ -34,7 +34,7 @@ services:
 
   db:
     image: mariadb:10.5.12@sha256:dfcba5641bdbfd7cbf5b07eeed707e6a3672f46823695a0d3aba2e49bbd9b1dd
-    user: "1000:1000"
+    user: "${UMBREL_USER_GROUP_ID}"
     restart: on-failure
     stop_grace_period: "1m"
     command: mysqld --transaction-isolation=READ-COMMITTED --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --max-connections=512 --innodb-rollback-on-timeout=OFF --innodb-lock-wait-timeout=50

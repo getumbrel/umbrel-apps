@@ -7,7 +7,7 @@ services:
       APP_PORT: $APP_RIDE_THE_LIGHTNING_PORT
   web:
     image: shahanafarooqui/rtl:0.12.1@sha256:8589a880f6357e5ea5cc3826e1704f4e91de324067f34388586faa0395204725
-    user: "1000:1000"
+    user: "${UMBREL_USER_GROUP_ID}"
     restart: on-failure
     stop_grace_period: 1m
     volumes:
@@ -43,7 +43,7 @@ services:
 
   loop:
     image: louneskmt/loop:v0.12.1-beta@sha256:f57abd0cbccfaa741d6f0eb301421be1649e7dd42c1fc804a7759d7521866436
-    user: "1000:1000"
+    user: "${UMBREL_USER_GROUP_ID}"
     restart: on-failure
     stop_grace_period: 1m
     volumes:
@@ -63,7 +63,7 @@ services:
 
   boltz:
     image: boltz/boltz-lnd:1.2.6@sha256:01a56dd357a2460bfd0ecdd726d6db3ab59d78ee691250831d09ba5de3fec7ce
-    user: "1000:1000"
+    user: "${UMBREL_USER_GROUP_ID}"
     restart: "on-failure"
     stop_grace_period: "1m"
     environment:

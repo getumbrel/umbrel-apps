@@ -8,7 +8,7 @@ services:
   backend:
     image: kolliderhq/kollider-lite-backend:v1.0.3@sha256:1229b8d800447ddd43b8e21e5dbbdc4773e873d3bc4f13a00976bc14607c393b
     init: true
-    user: 1000:1000
+    user: "${UMBREL_USER_GROUP_ID}"
     restart: on-failure
     stop_grace_period: 1m
     volumes:
@@ -23,7 +23,7 @@ services:
   ws:
     image: kolliderhq/kollider-ws-client:v1.0.3@sha256:567ed821291e76fa6c9a0e4e5895375600d1bffc7876938d489f799fbbe0249f
     init: true
-    user: 1000:1000
+    user: "${UMBREL_USER_GROUP_ID}"
     restart: on-failure
     stop_grace_period: 1m
     ports:
@@ -40,7 +40,7 @@ services:
   web:
     image: kolliderhq/kollider-lite-app:v1.0.3@sha256:a7356b606e3062f74cf60bf0464fda736ae32e44920b7200bcf1f18c3eb1dd1a
     init: true
-    user: 1000:1000
+    user: "${UMBREL_USER_GROUP_ID}"
     restart: on-failure
     stop_grace_period: 1m
     volumes:

@@ -8,7 +8,7 @@ services:
 
   redis:
     image: "redis:6.2.2-buster@sha256:e10f55f92478715698a2cef97c2bbdc48df2a05081edd884938903aa60df6396"
-    user: "1000:1000"
+    user: "${UMBREL_USER_GROUP_ID}"
     command: "redis-server --requirepass moneyprintergobrrr"
     restart: "on-failure"
     stop_grace_period: "1m"
@@ -21,7 +21,7 @@ services:
 
   lndhub:
     image: "bluewalletorganization/lndhub:v1.4.1@sha256:db673a8d360982984d05f97303e26dc0e5a3eea36ba54d0abdae5bbbeef31d3a"
-    user: "1000:1000"
+    user: "${UMBREL_USER_GROUP_ID}"
     depends_on: [ "redis" ]
     restart: "on-failure"
     stop_grace_period: "1m"

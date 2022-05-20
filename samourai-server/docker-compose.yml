@@ -10,7 +10,7 @@ services:
     init: true
     restart: on-failure
     stop_grace_period: 5m
-    user: "1000:1000"
+    user: "${UMBREL_USER_GROUP_ID}"
     environment:
       MYSQL_DATABASE: samourai-main
       MYSQL_ROOT_PASSWORD: rootpassword
@@ -27,7 +27,7 @@ services:
     init: true
     restart: on-failure
     command: "/home/node/app/wait-for-it.sh ${APP_SAMOURAI_SERVER_DB_IP}:3306 --timeout=720 --strict -- /home/node/app/restart.sh"
-    user: "1000:1000"
+    user: "${UMBREL_USER_GROUP_ID}"
     environment:
       # GLOBAL
       COMMON_BTC_NETWORK: $BITCOIN_NETWORK
@@ -91,7 +91,7 @@ services:
     image: louneskmt/whirlpool:0.10.13@sha256:f978fde6b200cddabd42f2a1fcfaad0271e05c30409bb128bfc57935ef32976a
     init: true
     restart: on-failure
-    user: "1000:1000"
+    user: "${UMBREL_USER_GROUP_ID}"
     command:
       - "--listen"
       - "--cli.apiKey=$SAMOURAI_SERVER_WHIRLPOOL_API_KEY"

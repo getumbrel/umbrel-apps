@@ -7,7 +7,7 @@ services:
       APP_PORT: $APP_MEMPOOL_PORT
   web:
     image: mempool/frontend:v2.3.1@sha256:38c955caeb58014b266904b059bfabbdab8321d20b11e7cccb139be6dfc8e36e
-    user: "1000:1000"
+    user: "${UMBREL_USER_GROUP_ID}"
     init: true
     restart: on-failure
     stop_grace_period: 1m
@@ -20,7 +20,7 @@ services:
         ipv4_address: $APP_MEMPOOL_IP
   api:
     image: mempool/backend:v2.3.1@sha256:f7b16a6b00ea8aabf3b71a34ec05bb373fa0b6f1d31c7981b767edb2d1b7cf89
-    user: "1000:1000"
+    user: "${UMBREL_USER_GROUP_ID}"
     init: true
     restart: on-failure
     stop_grace_period: 1m
@@ -48,7 +48,7 @@ services:
          ipv4_address: $APP_MEMPOOL_API_IP
   mariadb:
     image: mariadb:10.5.12@sha256:dfcba5641bdbfd7cbf5b07eeed707e6a3672f46823695a0d3aba2e49bbd9b1dd
-    user: "1000:1000"
+    user: "${UMBREL_USER_GROUP_ID}"
     restart: on-failure
     stop_grace_period: 1m
     volumes:
