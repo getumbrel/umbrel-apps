@@ -1,0 +1,44 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: $APP_ELECTRS_IP
+      APP_PORT: 3006
+
+  app:
+    image: cookiemonster123/umbrel-electrs:v1.0.1@sha256:0a447406c64523b30429d8d70751e6bc19b3fdb830b778555d3904a6cce2f5b5
+    depends_on:
+      - electrs
+    restart: on-failure
+    environment:
+      ELECTRUM_HIDDEN_SERVICE: "${APP_HIDDEN_SERVICE}"
+      ELECTRUM_LOCAL_SERVICE: "${DEVICE_DOMAIN_NAME}"
+      ELECTRS_HOST: "${APP_ELECTRS_NODE_IP}"
+      BITCOIN_HOST: "${APP_BITCOIN_NODE_IP}"
+      RPC_USER: "${APP_BITCOIN_RPC_USER}"
+      RPC_PASSWORD: "${APP_BITCOIN_RPC_PASS}"
+    networks:
+      default:
+        ipv4_address: $APP_ELECTRS_IP
+  
+  electrs:
+    image: getumbrel/electrs:v0.9.4@sha256:b1590ac6cfb0e5b481c6a7af7f0626d76cbb91c63702b0f5c47e2829e9c37997
+    restart: always
+    environment:
+      ELECTRS_LOG_FILTERS: "INFO"
+      ELECTRS_NETWORK: "${APP_BITCOIN_NETWORK}"
+      ELECTRS_DAEMON_RPC_ADDR: "${APP_BITCOIN_NODE_IP}:${APP_BITCOIN_RPC_PORT}"
+      ELECTRS_DAEMON_P2P_ADDR: "${APP_BITCOIN_NODE_IP}:${APP_BITCOIN_P2P_PORT}"
+      ELECTRS_ELECTRUM_RPC_ADDR: "0.0.0.0:${APP_ELECTRS_NODE_PORT}"
+      ELECTRS_SERVER_BANNER: "Umbrel Electrs (${APP_VERSION})"
+      ELECTRS_DB_DIR: "/data/db"
+      ELECTRS_COOKIE_FILE: "/data/.bitcoin/${APP_BITCOIN_NETWORK}/.cookie"
+    volumes:
+      - "${APP_BITCOIN_DATA_DIR}:/data/.bitcoin:ro"
+      - "${APP_DATA_DIR}/data/electrs:/data"
+    ports:
+      - "${APP_ELECTRS_NODE_PORT}:${APP_ELECTRS_NODE_PORT}"
+    networks:
+      default:
+        ipv4_address: $APP_ELECTRS_NODE_IP
