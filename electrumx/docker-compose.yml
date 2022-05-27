@@ -4,19 +4,34 @@ services:
   app_proxy:
     environment:
       APP_HOST: $APP_ELECTRUMX_IP
-      APP_PORT: 50001
+      APP_PORT: 3007
 
-  server:
-    image: lukechilds/electrumx:v1.16.0@sha256:2949784536f8f85af229004e12e5b5c3a1d7428918a492f77b4e958035c2ae2a
-    user: "1000:1000"
-    init: true
+  app:
+    image: getumbrel/umbrel-electrumx
+    depends_on:
+      - electrumx
     restart: on-failure
-    stop_grace_period: 1m
+    environment:
+      ELECTRUM_HIDDEN_SERVICE: "${APP_HIDDEN_SERVICE}"
+      ELECTRUM_LOCAL_SERVICE: "${DEVICE_DOMAIN_NAME}"
+      ELECTRUM_HOST: "${APP_ELECTRUMX_NODE_IP}"
+      BITCOIN_HOST: "${APP_BITCOIN_NODE_IP}"
+      RPC_USER: "${APP_BITCOIN_RPC_USER}"
+      RPC_PASSWORD: "${APP_BITCOIN_RPC_PASS}"
+    networks:
+      default:
+        ipv4_address: $APP_ELECTRUMX_IP
+  
+  electrumx:
+    image: lukechilds/electrumx:v1.16.0@sha256:2949784536f8f85af229004e12e5b5c3a1d7428918a492f77b4e958035c2ae2a
+    init: true
+    environment:
+      DAEMON_URL: "http://${APP_BITCOIN_RPC_USER}:${APP_BITCOIN_RPC_PASS}@${APP_BITCOIN_NODE_IP}:${APP_BITCOIN_RPC_PORT}"
+      COIN: BitcoinSegwit
+      NET: "${APP_BITCOIN_NETWORK}"
     volumes:
       - ${APP_DATA_DIR}/data:/data
-    environment:
-      DAEMON_URL: http://${BITCOIN_RPC_USER}:${BITCOIN_RPC_PASS}@${BITCOIN_IP}:${BITCOIN_RPC_PORT}
-      COIN: BitcoinSegwit
+    restart: always
     networks:
-       default:
-         ipv4_address: $APP_ELECTRUMX_IP
+      default:
+        ipv4_address: $APP_ELECTRUMX_NODE_IP
