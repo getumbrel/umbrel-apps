@@ -24,18 +24,18 @@ services:
 
   agora:
     image: ghcr.io/agora-org/agora:sha-48d3205@sha256:35eda120a8d868c7fa3b9cbdcad7cc2245b9fe7e0c5356c8091bb0bf9a65222d
+    user: "${UMBREL_USER_GROUP_ID}"
     restart: on-failure
     init: true
     stop_grace_period: 1m
     volumes:
       - ${APP_DATA_DIR}/files:/files
-      - ${LND_DATA_DIR}:/lnd:ro
-    user: "${UMBREL_USER_GROUP_ID}"
+      - ${APP_LIGHTNING_NODE_DATA_DIR}:/lnd:ro
     environment:
       # LND environment variables
-      LND_RPC_AUTHORITY: "$LND_IP:$LND_GRPC_PORT"
+      LND_RPC_AUTHORITY: "$APP_LIGHTNING_NODE_IP:$APP_LIGHTNING_NODE_GRPC_PORT"
       TLS_CERT_PATH: "/lnd/tls.cert"
-      INVOICES_MACAROON_PATH: "/lnd/data/chain/bitcoin/$BITCOIN_NETWORK/invoice.macaroon"
+      INVOICES_MACAROON_PATH: "/lnd/data/chain/bitcoin/$APP_BITCOIN_NETWORK/invoice.macaroon"
 
       # App specific environment variables
       FILES_DIR: "/files"

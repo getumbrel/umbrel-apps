@@ -12,7 +12,7 @@ services:
     restart: on-failure
     stop_grace_period: 1m
     volumes:
-      - ${LND_DATA_DIR}:/lnd:ro
+      - ${APP_LIGHTNING_NODE_DATA_DIR}:/lnd:ro
       - ${APP_DATA_DIR}/data:/data
     entrypoint: /data/entrypoint.sh
     environment:
@@ -20,7 +20,7 @@ services:
       NO_VERSION_CHECK: "true"
       LOG_LEVEL: "debug"
       ACCOUNT_CONFIG_PATH: "/data/thubConfig.yaml"
-      YML_ENV_1: "$LND_IP:$LND_GRPC_PORT"
+      YML_ENV_1: "$APP_LIGHTNING_NODE_IP:$APP_LIGHTNING_NODE_GRPC_PORT"
       TOR_PROXY_SERVER: "socks://$TOR_PROXY_IP:$TOR_PROXY_PORT"
     networks:
       default:
