@@ -23,17 +23,13 @@ services:
       RPC_PASSWORD: "${APP_BITCOIN_RPC_PASS}"
       LND_NETWORK: "${APP_BITCOIN_NETWORK}"
       LND_HOST: "${APP_LIGHTNING_NODE_IP}"
-      LND_REST_HIDDEN_SERVICE_FILE: "${APP_LIGHTNING_REST_HIDDEN_SERVICE}"
-      LND_GRPC_HIDDEN_SERVICE_FILE: "${APP_LIGHTNING_GRPC_HIDDEN_SERVICE}"
+      LND_REST_HIDDEN_SERVICE: "${APP_LIGHTNING_REST_HIDDEN_SERVICE}"
+      LND_GRPC_HIDDEN_SERVICE: "${APP_LIGHTNING_GRPC_HIDDEN_SERVICE}"
       TLS_FILE: "/data/.lnd/tls.cert"
       MACAROON_DIR: "/data/.lnd/data/chain/bitcoin/${APP_BITCOIN_NETWORK}/"
       CHANNEL_BACKUP_FILE: "/data/.lnd/data/chain/bitcoin/${APP_BITCOIN_NETWORK}/channel.backup"
       BACKUP_STATUS_FILE: "/statuses/backup-status.json"
       JSON_STORE_FILE: "/data/state.json"
-    ports:
-      - "$APP_LIGHTNING_NODE_PORT:$APP_LIGHTNING_NODE_PORT"
-      - "$APP_LIGHTNING_NODE_REST_PORT:$APP_LIGHTNING_NODE_REST_PORT"
-      - "$APP_LIGHTNING_NODE_GRPC_PORT:$APP_LIGHTNING_NODE_GRPC_PORT"
     networks:
       default:
         ipv4_address: $APP_LIGHTNING_IP
@@ -43,6 +39,10 @@ services:
     command: "${APP_LIGHTNING_COMMAND}"
     user: 1000:1000
     restart: on-failure
+    ports:
+      - "$APP_LIGHTNING_NODE_PORT:$APP_LIGHTNING_NODE_PORT"
+      - "$APP_LIGHTNING_NODE_REST_PORT:$APP_LIGHTNING_NODE_REST_PORT"
+      - "$APP_LIGHTNING_NODE_GRPC_PORT:$APP_LIGHTNING_NODE_GRPC_PORT"
     volumes:
       - "${APP_LIGHTNING_NODE_DATA_DIR}:/data/.lnd"
     environment:

@@ -83,3 +83,9 @@ rpc_hidden_service_file="${EXPORTS_TOR_DATA_DIR}/app-${EXPORTS_APP_ID}-rpc/hostn
 p2p_hidden_service_file="${EXPORTS_TOR_DATA_DIR}/app-${EXPORTS_APP_ID}-p2p/hostname"
 export APP_BITCOIN_RPC_HIDDEN_SERVICE="$(cat "${rpc_hidden_service_file}" 2>/dev/null || echo "notyetset.onion")"
 export APP_BITCOIN_P2P_HIDDEN_SERVICE="$(cat "${p2p_hidden_service_file}" 2>/dev/null || echo "notyetset.onion")"
+
+# electrs compatible network param
+export APP_BITCOIN_NETWORK_ELECTRS=$APP_BITCOIN_NETWORK
+if [[ "${APP_BITCOIN_NETWORK_ELECTRS}" = "mainnet" ]]; then
+	APP_BITCOIN_NETWORK_ELECTRS="bitcoin"
+fi
