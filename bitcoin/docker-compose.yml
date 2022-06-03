@@ -22,6 +22,7 @@ services:
       BITCOIN_RPC_HIDDEN_SERVICE: "${APP_BITCOIN_RPC_HIDDEN_SERVICE}"
       BITCOIN_P2P_HIDDEN_SERVICE: "${APP_BITCOIN_P2P_HIDDEN_SERVICE}"
       BITCOIN_P2P_PORT: "${APP_BITCOIN_P2P_PORT}"
+      DEVICE_DOMAIN_NAME: "${DEVICE_DOMAIN_NAME}"
     networks:
       default:
         ipv4_address: $APP_BITCOIN_IP
@@ -35,6 +36,7 @@ services:
       - "${APP_BITCOIN_DATA_DIR}:/data/.bitcoin"
     ports:
       - "${APP_BITCOIN_P2P_PORT}:${APP_BITCOIN_P2P_PORT}"
+      - "${APP_BITCOIN_RPC_PORT}:${APP_BITCOIN_RPC_PORT}"
     networks:
       default:
         ipv4_address: $APP_BITCOIN_NODE_IP
