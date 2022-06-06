@@ -23,12 +23,13 @@ services:
   #   ports:
   #     - "3006:3006"
 
-  bitcoin_rtl:
+  rtl:
     image: shahanafarooqui/rtl:0.12.3
     restart: on-failure
     ports:
       - 1235:3000
     environment:
+      APP_PASSWORD: moneyprintergobrrr
       LN_IMPLEMENTATION: CLT
       LN_SERVER_URL: http://lightning-rest:3001/v1
       MACAROON_PATH: /c-lightning-rest/certs
