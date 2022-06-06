@@ -1,27 +1,27 @@
 version: "3.8"
 
 services:
-  app:
-    build:
-      dockerfile: ./Dockerfile
-      context: ./
-    command: npm run dev:backend
-    restart: on-failure
-    volumes:
-      - ${APP_DATA_DIR}/data/app:/data
-    environment:
-      PORT: "3006"
-      VUE_APP_API_URL:
-      BACKUP_STATUS_FILE: /data/backup-status.json
-      LND_REST_HIDDEN_SERVICE: rest.onion
-      LND_GRPC_HIDDEN_SERVICE: grpc.onion
-      LIGHTNING_NETWORK: "regtest"
-      LIGHTNING_PORT: 8001
-      JSON_STORE_FILE: /data/state.json
-      TOR_PROXY_IP: tor
-      TOR_PROXY_PORT: 9050
-    ports:
-      - "3006:3006"
+  # app:
+  #   build:
+  #     dockerfile: ./Dockerfile
+  #     context: ./
+  #   command: npm run dev:backend
+  #   restart: on-failure
+  #   volumes:
+  #     - ${APP_DATA_DIR}/data/app:/data
+  #   environment:
+  #     PORT: "3006"
+  #     VUE_APP_API_URL:
+  #     BACKUP_STATUS_FILE: /data/backup-status.json
+  #     LND_REST_HIDDEN_SERVICE: rest.onion
+  #     LND_GRPC_HIDDEN_SERVICE: grpc.onion
+  #     LIGHTNING_NETWORK: "regtest"
+  #     LIGHTNING_PORT: 8001
+  #     JSON_STORE_FILE: /data/state.json
+  #     TOR_PROXY_IP: tor
+  #     TOR_PROXY_PORT: 9050
+  #   ports:
+  #     - "3006:3006"
   
   lightning-rest:
     image: saubyk/c-lightning-rest:0.7.2
