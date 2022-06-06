@@ -33,9 +33,9 @@ services:
     image: elementsproject/lightningd:v0.11.1
     restart: on-failure
     command:
-      - --bitcoin-rpcconnect=bitcoind
-      - --bitcoin-rpcuser=umbrel
-      - --bitcoin-rpcpassword=moneyprintergobrrr
+      - --bitcoin-rpcconnect=${APP_BITCOIN_NODE_IP}
+      - --bitcoin-rpcuser=${APP_BITCOIN_RPC_USER}
+      - --bitcoin-rpcpassword=${APP_BITCOIN_RPC_PASS}
       - --log-level=debug
     volumes:
       - "${APP_DATA_DIR}/data/lightning/lightning:/root/.lightning"
