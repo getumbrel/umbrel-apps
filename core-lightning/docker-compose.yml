@@ -39,7 +39,7 @@ services:
       - "${APP_DATA_DIR}/data/rtl:/data"
       - "${APP_DATA_DIR}/data/c-lightning-rest/certs:/c-lightning-rest/certs"
   
-  lightning-rest:
+  c-lightning-rest:
     image: saubyk/c-lightning-rest:0.7.2
     restart: on-failure
     ports:
@@ -48,15 +48,21 @@ services:
       PROTOCOL: "http"
     volumes:
       - "${APP_DATA_DIR}/data/c-lightning-rest/certs:/usr/src/app/certs"
-      - "${APP_DATA_DIR}/data/lightning/lightning:/root/.lightning"
+      - "${APP_DATA_DIR}/data/lightningd/lightning:/root/.lightning"
 
-  lightning:
+  lightningd:
     image: elementsproject/lightningd:v0.11.1
     restart: on-failure
     command:
       - --bitcoin-rpcconnect=${APP_BITCOIN_NODE_IP}
       - --bitcoin-rpcuser=${APP_BITCOIN_RPC_USER}
       - --bitcoin-rpcpassword=${APP_BITCOIN_RPC_PASS}
-      - --log-level=debug
+      - --proxy=${TOR_PROXY_IP}:${TOR_PROXY_PORT}
+      - --bind-addr=10.21.21.123:9735
+      - --addr=statictor:${TOR_PROXY_IP}:29051
+      - --tor-service-password=${TOR_PASSWORD}
     volumes:
-      - "${APP_DATA_DIR}/data/lightning/lightning:/root/.lightning"
+      - "${APP_DATA_DIR}/data/lightningd:/root/.lightning"
+    networks:
+      default:
+        ipv4_address: 10.21.21.123
