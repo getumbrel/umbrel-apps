@@ -45,7 +45,7 @@ services:
         ipv4_address: ${APP_CORE_LIGHTNING_REST_IP}
 
   lightningd:
-    image: elementsproject/lightningd:v0.11.1@sha256:1e507809a2f669a8bec87d5641c7f6976bec1b5ad08c132713a91328949229a5
+    image: lncm/clightning:v0.11.0@sha256:75e0ce04d644f34b07bc8a3b92e58b3db4e3c06bdc0e0cecd1669bc3b2d53421
     restart: on-failure
     ports:
       - ${APP_CORE_LIGHTNING_DAEMON_PORT}:9735
@@ -57,9 +57,9 @@ services:
       - --bind-addr=${APP_CORE_LIGHTNING_DAEMON_IP}:9735
       - --addr=statictor:${TOR_PROXY_IP}:29051
       - --tor-service-password=${TOR_PASSWORD}
-      - --grpc-port=${APP_CORE_LIGHTNING_DAEMON_GRPC_PORT}
+      #- --grpc-port=${APP_CORE_LIGHTNING_DAEMON_GRPC_PORT}
     volumes:
-      - "${APP_DATA_DIR}/data/lightningd:/root/.lightning"
+      - "${APP_DATA_DIR}/data/lightningd:/data/.lightning"
     networks:
       default:
         ipv4_address: ${APP_CORE_LIGHTNING_DAEMON_IP}
