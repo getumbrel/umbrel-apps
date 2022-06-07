@@ -1,6 +1,11 @@
 version: "3.8"
 
 services:
+  app_proxy:
+    environment:
+      APP_HOST: $APP_CORE_LIGHTNING_IP
+      APP_PORT: $APP_CORE_LIGHTNING_PORT
+
   # app:
   #   build:
   #     dockerfile: ./Dockerfile
@@ -10,7 +15,7 @@ services:
   #   volumes:
   #     - ${APP_DATA_DIR}/data/app:/data
   #   environment:
-  #     PORT: "${APP_CORE_LIGHTNING_IP}"
+  #     PORT: "${APP_CORE_LIGHTNING_PORT}"
   #     VUE_APP_API_URL:
   #     BACKUP_STATUS_FILE: /data/backup-status.json
   #     LND_REST_HIDDEN_SERVICE: rest.onion
@@ -21,7 +26,7 @@ services:
   #     TOR_PROXY_IP: tor
   #     TOR_PROXY_PORT: 9050
   #   ports:
-  #     - "${APP_CORE_LIGHTNING_IP}:${APP_CORE_LIGHTNING_IP}"
+  #     - "${APP_CORE_LIGHTNING_PORT}:${APP_CORE_LIGHTNING_PORT}"
       # networks:
       #   default:
       #     ipv4_address: ${APP_CORE_LIGHTNING_IP}
