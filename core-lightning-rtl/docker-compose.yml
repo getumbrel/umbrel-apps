@@ -1,0 +1,25 @@
+version: "3.8"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: $APP_CORE_LIGHTNING_RTL_IP
+      APP_PORT: 3000
+
+  rtl:
+    image: shahanafarooqui/rtl:0.12.3
+    restart: on-failure
+    environment:
+      PORT: 3000
+      APP_PASSWORD: $APP_PASSWORD
+      LN_IMPLEMENTATION: CLT
+      LN_SERVER_URL: http://${APP_CORE_LIGHTNING_REST_IP}:${APP_CORE_LIGHTNING_REST_PORT}/v1
+      MACAROON_PATH: /c-lightning-rest/certs
+      RTL_CONFIG_PATH: /data/
+      RTL_COOKIE_PATH: /data/.cookie
+    volumes:
+      - "${APP_DATA_DIR}/data/rtl:/data"
+      - "${APP_CORE_LIGHTNING_REST_CERT_DIR}:/c-lightning-rest/certs"
+    networks:
+      default:
+        ipv4_address: ${APP_CORE_LIGHTNING_RTL_IP}

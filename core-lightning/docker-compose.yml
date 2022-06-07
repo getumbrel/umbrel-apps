@@ -30,23 +30,6 @@ services:
     networks:
       default:
         ipv4_address: ${APP_CORE_LIGHTNING_IP}
-
-
-  rtl:
-    image: shahanafarooqui/rtl:0.12.3
-    restart: on-failure
-    ports:
-      - 1235:3000
-    environment:
-      APP_PASSWORD: moneyprintergomoo
-      LN_IMPLEMENTATION: CLT
-      LN_SERVER_URL: http://${APP_CORE_LIGHTNING_REST_IP}:${APP_CORE_LIGHTNING_REST_PORT}/v1
-      MACAROON_PATH: /c-lightning-rest/certs
-      RTL_CONFIG_PATH: /data/
-      RTL_COOKIE_PATH: /data/.cookie
-    volumes:
-      - "${APP_DATA_DIR}/data/rtl:/data"
-      - "${APP_CORE_LIGHTNING_REST_CERT_DIR}:/c-lightning-rest/certs"
   
   c-lightning-rest:
     image: saubyk/c-lightning-rest:0.7.2
