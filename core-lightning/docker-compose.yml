@@ -13,7 +13,7 @@ services:
     command: npm run dev:backend
     restart: on-failure
     volumes:
-      - ${APP_DATA_DIR}/data/app:/data
+      - ${APP_DATA_DIR}/data/lightningd:/lightningd
       - "${APP_CORE_LIGHTNING_REST_CERT_DIR}:/c-lightning-rest/certs"
     environment:
       PORT: "${APP_CORE_LIGHTNING_PORT}"
@@ -24,6 +24,9 @@ services:
       LIGHTNING_REST_MACAROON_PATH: "/c-lightning-rest/certs/access.macaroon"
       LIGHTNING_REST_HIDDEN_SERVICE: http://${APP_CORE_LIGHTNING_REST_HIDDEN_SERVICE}
       LOCAL_HOST: http://${DEVICE_DOMAIN_NAME}
+      CA_CERT: /lightningd/bitcoin/ca.pem
+      CLIENT_KEY: /lightningd/bitcoin/client-key.pem
+      CLIENT_CERT: /lightningd/bitcoin/client.pem
     networks:
       default:
         ipv4_address: ${APP_CORE_LIGHTNING_IP}
