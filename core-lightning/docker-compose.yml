@@ -14,13 +14,14 @@ services:
     restart: on-failure
     volumes:
       - ${APP_DATA_DIR}/data/app:/data
+      - "${APP_CORE_LIGHTNING_REST_CERT_DIR}:/c-lightning-rest/certs"
     environment:
       PORT: "${APP_CORE_LIGHTNING_PORT}"
       LIGHTNING_HOST: ${APP_CORE_LIGHTNING_DAEMON_IP}
       LIGHTNING_NETWORK: bitcoin
       LIGHTNING_GRPC_PORT: ${APP_CORE_LIGHTNING_DAEMON_GRPC_PORT}
       LIGHTNING_REST_PORT: ${APP_CORE_LIGHTNING_REST_PORT}
-      LIGHTNING_REST_MACAROON_PATH: "${APP_CORE_LIGHTNING_REST_CERT_DIR}/access.macaroon"
+      LIGHTNING_REST_MACAROON_PATH: "/c-lightning-rest/certs/access.macaroon"
       LIGHTNING_REST_HIDDEN_SERVICE: ${APP_CORE_LIGHTNING_REST_HIDDEN_SERVICE}
       LOCAL_HOST: ${DEVICE_DOMAIN_NAME}
     networks:
