@@ -1,0 +1,53 @@
+version: "3.8"
+
+services:
+  app:
+    build:
+      dockerfile: ./Dockerfile
+      context: ./
+    command: npm run dev:backend
+    restart: on-failure
+    volumes:
+      - ./data:/data
+    environment:
+      PORT: "3006"
+      LIGHTNING_HOST: "lightning"
+      LIGHTNING_NETWORK: "regtest"
+      LIGHTNING_GRPC_PORT: 8001
+      LIGHTNING_REST_PORT: 3000
+      LIGHTNING_REST_MACAROON_PATH: /data/lightning/lightningd-regtest.pid
+      LIGHTNING_REST_HIDDEN_SERVICE: LIGHTNING_REST_HIDDEN_SERVICE.onion
+      LOCAL_HOST: core-lightning-test.local
+    ports:
+      - "3006:3006"
+  
+  # lightning-rest:
+  #   image: saubyk/c-lightning-rest:0.7.2
+  #   restart: on-failure
+  #   volumes:
+  #     - ./data/bitcoin:/root/.bitcoin
+  #     - ./data/lightning:/root/.lightning
+
+  lightning:
+    image: elementsproject/lightningd:v0.11.1
+    command:
+      - --bitcoin-rpcconnect=bitcoind
+      - --bitcoin-rpcuser=umbrel
+      - --bitcoin-rpcpassword=moneyprintergobrrr
+      - --network=regtest # c-lightning-rest doesn't work on regtest
+      - --log-level=debug
+      - --grpc-port=8001
+    volumes:
+      - ./data/lightning:/root/.lightning
+      - ./data/bitcoin:/root/.bitcoin
+
+  bitcoind:
+    image: lncm/bitcoind:v22.0
+    command:
+      - -regtest # c-lightning-rest doesn't work on regtest
+      - -rpcbind=0.0.0.0
+      - -rpcallowip=0.0.0.0/0
+      - -rpcauth=umbrel:5071d8b3ba93e53e414446ff9f1b7d7b$$375e9731abd2cd2c2c44d2327ec19f4f2644256fdeaf4fc5229bf98b778aafec
+    volumes:
+      - ${PWD}/data/bitcoin:/data/.bitcoin
+    restart: on-failure
