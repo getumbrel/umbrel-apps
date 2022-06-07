@@ -53,6 +53,9 @@ services:
   lightningd:
     image: elementsproject/lightningd:v0.11.1
     restart: on-failure
+    ports:
+      - 1236:1236
+      - 9734:9735
     command:
       - --bitcoin-rpcconnect=${APP_BITCOIN_NODE_IP}
       - --bitcoin-rpcuser=${APP_BITCOIN_RPC_USER}
@@ -61,6 +64,7 @@ services:
       - --bind-addr=10.21.21.123:9735
       - --addr=statictor:${TOR_PROXY_IP}:29051
       - --tor-service-password=${TOR_PASSWORD}
+      - --grpc-port 1236
     volumes:
       - "${APP_DATA_DIR}/data/lightningd:/root/.lightning"
     networks:
