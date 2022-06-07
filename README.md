@@ -70,12 +70,11 @@ ___
 
 ## 2. ☂️&nbsp;&nbsp;Packaging the app for Umbrel
 
-1\. Let's fork the [getumbrel/umbrel](https://github.com/getumbrel/umbrel) repo on GitHub, clone our fork locally, create a new branch for our app, and then switch to it:
+1\. Let's fork the [getumbrel/umbrel-apps](https://github.com/getumbrel/umbrel-apps) repo on GitHub, clone our fork locally, create a new branch for our app, and then switch to it:
 
 ```sh
-git clone https://github.com/<username>/umbrel.git
-cd umbrel
-git checkout -b btc-rpc-explorer
+git clone https://github.com/<username>/umbrel-apps.git
+cd umbrel-apps
 ```
 
 2\. It's now time to decide an ID for our app. An app ID should only contain lowercase alphabetical characters and dashes, and should be humanly recognizable. For this app we'll go with `btc-rpc-explorer`.
@@ -83,11 +82,17 @@ git checkout -b btc-rpc-explorer
 We need to create a new subdirectory in the apps directory with same name as our app ID and move into it:
 
 ```sh
-mkdir apps/btc-rpc-explorer
-cd apps/btc-rpc-explorer
+mkdir btc-rpc-explorer
+cd btc-rpc-explorer
 ```
 
-3\. We'll now create a `docker-compose.yml` file in this directory to define our application.
+3\. Within the app's directory, we'll now create the skeleton for our app will consist of:
+
+- `docker-compose.yml` - Used to start and stop your app's Docker containers
+- `umbrel-app.yml` - A app manifest file so that Umbrel knows the name and version of the app
+- `exports.sh` - A shell script to export environment variables used within `docker-compose.yml` and shared with other installed apps
+
+We'll now create a `docker-compose.yml` file in this directory to define our application.
 
 > New to Docker Compose? It's a simple tool for defining and running Docker applications that can have multiple containers. Follow along the tutorial, we promise it's not hard if you already understand the basics of Docker.
 
@@ -97,6 +102,11 @@ Let's copy-paste the following template `docker-compose.yml` file in a text edit
 version: "3.7"
 
 services:
+  app_proxy:
+    environment:
+      APP_HOST: <web-container-ip-address>
+      APP_PORT: <web-container-port-number>
+  
   web:
     image: <docker-image>:<tag>
     restart: on-failure
@@ -124,25 +134,10 @@ services:
       # VARIABLE_NAME: value
       #
       # Here are all the Umbrel provided variables that you can pass through to
-      # your app to connect to Bitcoin Core, LND, Electrum and Tor:
-      #
-      # Bitcoin Core environment variables
-      # $APP_BITCOIN_NETWORK - Can be "mainnet", "testnet" or "regtest"
-      # $APP_BITCOIN_NODE_IP - Local IP of Bitcoin Core
-      # $APP_BITCOIN_P2P_PORT - P2P port
-      # $APP_BITCOIN_RPC_PORT - RPC port
-      # $APP_BITCOIN_RPC_USER - RPC username
-      # $APP_BITCOIN_RPC_PASS - RPC password
-      # $APP_BITCOIN_RPC_AUTH - RPC auth string
-      #
-      # LND environment variables
-      # $APP_LIGHTNING_NODE_IP - Local IP of LND
-      # $APP_LIGHTNING_NODE_GRPC_PORT - gRPC Port of LND
-      # $APP_LIGHTNING_NODE_REST_PORT - REST Port of LND
-      #
-      # Electrum server environment variables
-      # $APP_ELECTRS_NODE_IP - Local IP of Electrum server
-      # $APP_ELECTRS_NODE_PORT - Port of Electrum server
+      # your app
+      # System level environment variables
+      # $DEVICE_HOSTNAME - Umbrel server device hostname (e.g. "umbrel")
+      # $DEVICE_DOMAIN_NAME - A .local domain name for the Umbrel server (e.g. "umbrel.local")
       #
       # Tor proxy environment variables
       # $TOR_PROXY_IP - Local IP of Tor proxy
@@ -150,7 +145,6 @@ services:
       #
       # App specific environment variables
       # $APP_HIDDEN_SERVICE - The address of the Tor hidden service your app will be exposed at
-      # $APP_DOMAIN - Local domain name of the app ("umbrel.local" on Umbrel OS)
       # $APP_PASSWORD - Unique plain text password that can be used for authentication in your app, shown to the user in the Umbrel UI
       # $APP_SEED - Unique 256 bit long hex string (128 bits of entropy) deterministically derived from user's Umbrel seed and your app's ID
   # If your app has more services, like a database container, you can define those
@@ -159,6 +153,50 @@ services:
   #   image: <docker-image>:<tag>
   #   ...
 
+```
+
+Our app manifest YAML file tells Umbrel details about our app such as name, description, dependencies, port number to access the app, etc.
+
+```
+manifestVersion: 1
+id: btc-rpc-explorer
+category: Explorers
+name: BTC RPC Explorer
+version: "3.3.0"
+tagline: Simple, database-free blockchain explorer
+description: >-
+  BTC RPC Explorer is a full-featured, self-hosted explorer for the
+  Bitcoin blockchain. With this explorer, you can explore not just the
+  blockchain database, but also explore the functional capabilities of your
+  Umbrel.
+
+  It comes with a network summary dashboard, detailed view of blocks, transactions, addresses, along with analysis tools for viewing stats on miner activity, mempool summary, with fee, size, and age breakdowns. You can also search by transaction ID, block hash/height, and addresses.
+
+  It's time to appreciate the "fullness" of your node.
+developer: Dan Janosik
+website: https://explorer.btc21.org
+dependencies:
+  - bitcoin
+  - electrs
+repo: https://github.com/janoside/btc-rpc-explorer
+support: https://github.com/janoside/btc-rpc-explorer/discussions
+port: 3002
+gallery:
+  - 1.jpg
+  - 2.jpg
+  - 3.jpg
+path: ""
+defaultUsername: ""
+defaultPassword: ""
+```
+
+The `dependencies` section within the app manifest gives Umbrel a list of app IDs that must be already installed in order for the user to install BTC RPC Explorer and also function.
+
+The `exports.sh` shell script is a simple script to export environmental variables that your `docker-compose.yml` can read. These env. vars. are also accessible when other apps start through their `docker-compose.yml` files.
+
+```
+export APP_BTC_RPC_EXPLORER_IP="10.21.21.12"
+export APP_BTC_RPC_EXPLORER_PORT="3002"
 ```
 
 4\. For our app, we'll update `<docker-image>` with `getumbrel/btc-rpc-explorer`, `<tag>` with `v2.0.2`, and `<port>` with `3002`. Since BTC RPC Explorer doesn't need to store any persistent data and doesn't require access to Bitcoin Core's or LND's data directories, we can remove the entire `volumes` block.
@@ -173,13 +211,19 @@ Updated `docker-compose.yml` file:
 version: "3.7"
 
 services:
+  app_proxy:
+    environment:
+      APP_HOST: $APP_BTC_RPC_EXPLORER_IP
+      APP_PORT: $APP_BTC_RPC_EXPLORER_PORT
+
   web:
     image: getumbrel/btc-rpc-explorer:v2.0.2
     restart: on-failure
     stop_grace_period: 1m
-    ports:
-      - 3002:3002
-    environment:
+    environment: ...
+    networks:
+      default:
+        ipv4_address: $APP_BTC_RPC_EXPLORER_IP
 
 ```
 
@@ -191,12 +235,15 @@ So the final version of `docker-compose.yml` would be:
 version: "3.7"
 
 services:
+  app_proxy:
+    environment:
+      APP_HOST: $APP_BTC_RPC_EXPLORER_IP
+      APP_PORT: $APP_BTC_RPC_EXPLORER_PORT
+      
   web:
     image: getumbrel/btc-rpc-explorer:v2.0.2
     restart: on-failure
     stop_grace_period: 1m
-    ports:
-      - 3002:3002
     environment:
       # Bitcoin Core connection details
       BTCEXP_BITCOIND_HOST: $APP_BITCOIN_NODE_IP
@@ -216,7 +263,10 @@ services:
       BTCEXP_PRIVACY_MODE: "true"
       BTCEXP_NO_RATES: "true"
       BTCEXP_RPC_ALLOWALL: "false"
-      BTCEXP_BASIC_AUTH_PASSWORD: ""      
+      BTCEXP_BASIC_AUTH_PASSWORD: ""  
+    networks:
+      default:
+        ipv4_address: $APP_BTC_RPC_EXPLORER_IP
 
 ```
 
@@ -225,12 +275,45 @@ services:
 ```sh
 git add .
 git commit -m "Add BTC RPC Explorer"
-git push origin btc-rpc-explorer
+git push
 ```
 
 ___
 
 ## 3. 🛠&nbsp;&nbsp;Testing the app on Umbrel
+
+### 3.1 Test using a low-cost cloud virtual machine (VM)
+
+Using a Ubuntu/Debian based VM from your favourite cloud vendor, you can SSH into the server (e.g. `ssh root@123.123.123.123`).
+
+1\. Install Umbrel with one command: `curl -L https://install.getumbrel.com | bash`.
+
+Once Umbrel has started, the Web UI will be accessible at the IP address of the VM (e.g. `http://123.123.123.123`)
+
+2\. We need to use your forked remote app repo:
+
+```sh
+cd umbrel
+./scripts/repo set https://github.com/<username>/umbrel-apps.git
+./scripts/repo update
+```
+
+3\. And finally, it's time to install our app:
+
+```sh
+./scripts/app install btc-rpc-explorer
+```
+
+That's it! Our BTC RPC Explorer app should now be accessible at http://umbrel-dev.local:3002
+
+4\. To make changes:
+
+Commit and push your changes to your forked Umbrel app repo then run:
+
+```sh
+./scripts/repo update
+./scripts/app update btc-rpc-explorer
+```
 
 ### 3.1 Testing the app on Umbrel development environment
 
@@ -256,32 +339,30 @@ umbrel-dev boot
 
 After the VM has booted, we can verify if the Umbrel dashboard is accessible at http://umbrel-dev.local in our browser to make sure everything is running fine.
 
-3\. We need to switch the Umbrel installation on `umbrel-dev` to our fork and branch:
+3\. We need to use your forked remote app repo:
 
 ```sh
 cd getumbrel/umbrel
-git remote add <username> git@github.com:<username>/umbrel.git
-git fetch <username> btc-rpc-explorer
-git checkout <username>/btc-rpc-explorer
+./scripts/repo set https://github.com/<username>/umbrel-apps.git
+./scripts/repo update
 ```
 
 4\. And finally, it's time to install our app:
 
 ```sh
-umbrel-dev app install btc-rpc-explorer
+./scripts/app install btc-rpc-explorer
 ```
 
 That's it! Our BTC RPC Explorer app should now be accessible at http://umbrel-dev.local:3002
 
 5\. To make changes:
 
-Edit your app files at `getumbrel/umbrel/apps/<app-id>/` and then run:
+Commit and push your changes to your forked Umbrel app repo then run:
 
 ```sh
-umbrel-dev reload
+./scripts/repo update
+./scripts/app update btc-rpc-explorer
 ```
-
-Once you're happy with your changes, just commit and push.
 
 >Don't forget to shutdown the `umbrel-dev` virtual machine after testing with `umbrel-dev shutdown`!
 
@@ -295,13 +376,14 @@ ssh umbrel@umbrel.local
 
 (SSH password is the same as your Umbrel's dashboard password)
 
-2\. Next, we'll switch the Umbrel installation to our fork and branch:
+2\. Next, we'll switch to the forked remote app repo:
 
 ```sh
-sudo scripts/update/update --repo <username>/umbrel#btc-rpc-explorer
+./scripts/repo set https://github.com/<username>/umbrel-apps.git
+./scripts/repo update
 ```
 
-3\. Once the installation has updated, it's time to test our app:
+3\. Once the repo has updated, it's time to test our app:
 
 ```sh
 scripts/app install btc-rpc-explorer
@@ -325,47 +407,13 @@ ___
 
 ## 4. 🚀&nbsp;&nbsp;Submitting the app
 
-We're now ready to open a pull request on the main [getumbrel/umbrel](https://github.com/getumbrel/umbrel) repo to submit our app. Let's copy-paste the following markdown for the pull request description, fill it up with the required details, and then open a pull request.
+We're now ready to open a pull request on the main [getumbrel/umbrel-apps](https://github.com/getumbrel/umbrel-apps) apps repo to submit our app. Let's copy-paste the following markdown for the pull request description, fill it up with the required details, and then open a pull request.
 
 ```
 # App Submission
 
 ### App name
 ...
-
-### Version
-...
-
-### One line description of the app
-_(max 50 characters)_
-
-...
-
-### Summary of the app
-_(50 to 200 words)_
-
-...
-
-### Developer name
-...
-
-### Developer website
-...
-
-### Source code link
-_(Link to your app's source code repository.)_
-
-...
-
-### Support link
-_(Link to your Telegram support channel, GitHub issues/discussions, support portal, or any other place where users could contact you for support.)_
-
-...
-
-### Requires
-- [ ] Bitcoin Core
-- [ ] Electrum server
-- [ ] LND
 
 ### 256x256 SVG icon
 _(Submit an icon with no rounded corners as it will be dynamically rounded with CSS. GitHub doesn't allow uploading SVGs directly, so please upload your icon to an alternate service, like https://svgur.com, and paste the link below.)_
@@ -388,11 +436,34 @@ This is where the above information is used when the app goes live in the Umbrel
 
 ![Umbrel App Store Labels](https://i.imgur.com/0CorPRK.png)
 
-**Here's our real pull request submitting the BTC RPC Explorer app — [getumbrel/umbrel#334](https://github.com/getumbrel/umbrel/pull/334).**
-
-> After you've submitted your app, we'll review your pull request, create the required Tor hidden services for it, make some adjustments in the `docker-compose.yml` file, such as removing any port conflicts with other apps, pinning Docker images to their sha256 digests, assigning unique IP addresses to the containers, etc before merging.
+> After you've submitted your app, we'll review your pull request, make some adjustments in the `docker-compose.yml` file, such as removing any port conflicts with other apps, pinning Docker images to their sha256 digests, assigning unique IP addresses to the containers, etc before merging.
 
 🎉 Congratulations! That's all you need to do to package, test and submit your app to Umbrel. We can't wait to have you onboard!
+
+---
+
+## Advanced configuration
+
+### App Proxy
+The Umbrel App Proxy automatically protects an app by requiring the user to enter their Umbrel password (either when they login into the main Web UI or by visiting an app directly e.g. `http://umbrel.local:3002`)
+
+##### Disable
+There could be cases where you wish to disable this authentication. That can be done by adding this env. var. to the `app_proxy` Docker Compose service:
+```
+PROXY_AUTH_ADD: "false"
+```
+
+##### Whitelist/blacklist
+Some apps host a user facing at the root of their web application and then an API at e.g. `/api`. And in this case we would like `/` to be protected by Umbrel and `/api` protected by the apps existing/inbuilt API token system. This can be achieved by adding this env. var. to the `app_proxy` Docker Compose service:
+```
+PROXY_AUTH_WHITELIST: "/api/*"
+```
+
+Another example could be that the root of the web application (`/`) should be publically accessible but the admin section by protected by Umbrel. This can be achieved by adding these env. vars. to the `app_proxy` Docker Compose service:
+```
+PROXY_AUTH_WHITELIST: "*"
+PROXY_AUTH_BLACKLIST: "/admin/*"
+```
 
 ---
 
@@ -400,12 +471,8 @@ This is where the above information is used when the app goes live in the Umbrel
 
 1. **How to push app updates?**
 
-    Every time you release a new version of your app, you should build, tag and push the new Docker images to Docker Hub. Then open a new PR on our main repo (getumbrel/umbrel) with your up-to-date docker image. For now, app updates are bundled together in the Umbrel releases. In the future, you'll be able to ship updates independently as soon as you make a new release.
-
-1. **How do users install apps?**
-
-    Users install apps via the Umbrel App Store. They do not use the `scripts/app` CLI directly as it's only meant for development use.
+    Every time you release a new version of your app, you should build, tag and push the new Docker images to Docker Hub. Then open a new PR on our main app repo (getumbrel/umbrel-apps) with your up-to-date docker image.
 
 1. **I need help with something else?**
 
-    Join our [developer chat](https://keybase.io/team/getumbrel) on Keybase, or get in touch with [@mayankchhabra](https://t.me/mayankchhabra) or [@lukechilds](https://t.me/lukechilds) on Telegram.
+    You can open an [issue](https://github.com/getumbrel/umbrel-apps/issues) on GitHub or get in touch with [@mayankchhabra](https://t.me/mayankchhabra) or [@lukechilds](https://t.me/lukechilds) on Telegram.
