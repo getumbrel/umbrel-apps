@@ -16,15 +16,13 @@ services:
       - ${APP_DATA_DIR}/data/app:/data
     environment:
       PORT: "${APP_CORE_LIGHTNING_PORT}"
-      VUE_APP_API_URL:
-      BACKUP_STATUS_FILE: /data/backup-status.json
-      LND_REST_HIDDEN_SERVICE: rest.onion
-      LND_GRPC_HIDDEN_SERVICE: grpc.onion
-      LIGHTNING_NETWORK: "regtest"
-      LIGHTNING_PORT: 8001
-      JSON_STORE_FILE: /data/state.json
-      TOR_PROXY_IP: tor
-      TOR_PROXY_PORT: 9050
+      LIGHTNING_HOST: ${APP_CORE_LIGHTNING_DAEMON_IP}
+      LIGHTNING_NETWORK: bitcoin
+      LIGHTNING_GRPC_PORT: ${APP_CORE_LIGHTNING_DAEMON_GRPC_PORT}
+      LIGHTNING_REST_PORT: ${APP_CORE_LIGHTNING_REST_PORT}
+      LIGHTNING_REST_MACAROON_PATH: "${APP_CORE_LIGHTNING_REST_CERT_DIR}/access.macaroon"
+      LIGHTNING_REST_HIDDEN_SERVICE: ${APP_CORE_LIGHTNING_REST_HIDDEN_SERVICE}
+      LOCAL_HOST: ${DEVICE_DOMAIN_NAME}
     networks:
       default:
         ipv4_address: ${APP_CORE_LIGHTNING_IP}
@@ -74,6 +72,7 @@ services:
       - --bind-addr=${APP_CORE_LIGHTNING_DAEMON_IP}:9735
       - --addr=statictor:${TOR_PROXY_IP}:29051
       - --tor-service-password=${TOR_PASSWORD}
+      - --grpc-port=${APP_CORE_LIGHTNING_DAEMON_GRPC_PORT}
     volumes:
       - "${APP_DATA_DIR}/data/lightningd:/root/.lightning"
     networks:
