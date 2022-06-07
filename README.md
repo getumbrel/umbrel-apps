@@ -284,13 +284,13 @@ ___
 
 ### 3.1 Test using a low-cost cloud virtual machine (VM)
 
-Using a Ubuntu/Debian based VM from your favourite cloud vendor, you can SSH into the server (e.g. `ssh root@123.123.123.123`).
+Using a Ubuntu/Debian based VM from your favourite cloud vendor, we can SSH into the server (e.g. `ssh root@123.123.123.123`).
 
-1\. Install Umbrel with one command: `curl -L https://install.getumbrel.com | bash`.
+1\. Install Umbrel with one command: `curl -L https://umbrel.sh | bash`.
 
 Once Umbrel has started, the Web UI will be accessible at the IP address of the VM (e.g. `http://123.123.123.123`)
 
-2\. We need to use your forked remote app repo:
+2\. We need to use our forked remote app repo:
 
 ```sh
 cd umbrel
@@ -308,7 +308,7 @@ That's it! Our BTC RPC Explorer app should now be accessible at http://umbrel-de
 
 4\. To make changes:
 
-Commit and push your changes to your forked Umbrel app repo then run:
+Let's commit and push our changes to our forked Umbrel app repo then run:
 
 ```sh
 ./scripts/repo update
@@ -339,7 +339,7 @@ umbrel-dev boot
 
 After the VM has booted, we can verify if the Umbrel dashboard is accessible at http://umbrel-dev.local in our browser to make sure everything is running fine.
 
-3\. We need to use your forked remote app repo:
+3\. We need to use our forked remote app repo:
 
 ```sh
 cd getumbrel/umbrel
@@ -357,7 +357,7 @@ That's it! Our BTC RPC Explorer app should now be accessible at http://umbrel-de
 
 5\. To make changes:
 
-Commit and push your changes to your forked Umbrel app repo then run:
+Let's commit and push our changes to our forked Umbrel app repo then run:
 
 ```sh
 ./scripts/repo update
