@@ -7,7 +7,7 @@ services:
       APP_PORT: 80
 
   web:
-    image: ghcr.io/bitfeed-project/bitfeed-client:v2.2.1@sha256:70c89d49d20ba3da21c648c259f45a4b89e06bfe1d97374a092dce6f891d03c6
+    image: ghcr.io/bitfeed-project/bitfeed-client:v2.3.3@sha256:f1caade65b546fc2feb0c5cabc9054758a0a9d5fb81ece1c3a7e543b9f4e848c
     restart: on-failure
     stop_grace_period: 1m
     depends_on:
@@ -21,7 +21,7 @@ services:
         ipv4_address: $APP_BITFEED_IP
 
   api:
-    image: ghcr.io/bitfeed-project/bitfeed-server:v2.2.1@sha256:60eae8109d3d6a377aec8a954f93b6be9ee48de717c9ab5810c2a5afcf688554
+    image: ghcr.io/bitfeed-project/bitfeed-server:v2.3.3@sha256:f57ac6a3f6b40de692cdd4c2905beba117b80918336e81bf2f383854afd67c29
     user: "1000:1000"
     restart: on-failure
     stop_grace_period: 1m
@@ -34,6 +34,7 @@ services:
       BITCOIN_RPC_PORT: "$APP_BITCOIN_RPC_PORT"
       BITCOIN_RPC_USER: "$APP_BITCOIN_RPC_USER"
       BITCOIN_RPC_PASS: "$APP_BITCOIN_RPC_PASS"
+      TARGET: "umbrel"
       RPC_POOLS: "1"
       RPC_POOL_SIZE: "16"
       LOG_LEVEL: "info"
