@@ -3,4 +3,4 @@
 # Set password
 sed -i 's/$APP_PASSWORD/'${APP_PASSWORD}'/' /data/thubConfig.yaml
 
-exec npm start
+exec npm run start:prod
