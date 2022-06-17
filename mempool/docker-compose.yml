@@ -5,8 +5,9 @@ services:
     environment:
       APP_HOST: $APP_MEMPOOL_IP
       APP_PORT: $APP_MEMPOOL_PORT
+      PROXY_AUTH_ADD: "false"
   web:
-    image: mempool/frontend:v2.3.1@sha256:38c955caeb58014b266904b059bfabbdab8321d20b11e7cccb139be6dfc8e36e
+    image: mempool/frontend:v2.4.0@sha256:f71722f1e3abfb3d8a3df6f2a32e384d39434e311bb83d810629077b4fa6ffaf
     user: "1000:1000"
     init: true
     restart: on-failure
@@ -19,7 +20,7 @@ services:
       default:
         ipv4_address: $APP_MEMPOOL_IP
   api:
-    image: mempool/backend:v2.3.1@sha256:f7b16a6b00ea8aabf3b71a34ec05bb373fa0b6f1d31c7981b767edb2d1b7cf89
+    image: mempool/backend:v2.4.0@sha256:6036cc6866b782efadc765e8189958940202b3fa1770eb35c35210c86efd2f47
     user: "1000:1000"
     init: true
     restart: on-failure
@@ -43,6 +44,8 @@ services:
       MEMPOOL_HTTP_PORT: "8999"
       MEMPOOL_CACHE_DIR: "/backend/cache"
       MEMPOOL_CLEAR_PROTECTION_MINUTES: "20"
+      MEMPOOL_INDEXING_BLOCKS_AMOUNT: "52560"
+      MEMPOOL_STDOUT_LOG_MIN_PRIORITY: "info"
     networks:
        default:
          ipv4_address: $APP_MEMPOOL_API_IP
