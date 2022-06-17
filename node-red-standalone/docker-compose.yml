@@ -1,0 +1,19 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: $APP_NODE_RED_STANDALONE_IP
+      APP_PORT: $APP_NODE_RED_STANDALONE_PORT
+  
+  web:
+    image: nodered/node-red:2.2.2-12@sha256:7b8e58892801f01af48acfb18c21b845a6f35029e7654ca6e19ba86bbe810d04
+    restart: on-failure
+    stop_grace_period: 1m
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+    environment:
+      PORT: $APP_NODE_RED_STANDALONE_PORT
+    networks:
+      default:
+          ipv4_address: $APP_NODE_RED_STANDALONE_IP
