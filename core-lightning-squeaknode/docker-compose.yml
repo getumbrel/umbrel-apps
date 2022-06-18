@@ -1,0 +1,49 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: $APP_CORE_LIGHTNING_SQUEAKNODE_IP
+      APP_PORT: $APP_CORE_LIGHTNING_SQUEAKNODE_PORT
+
+  web:
+    image: ghcr.io/squeaknode/squeaknode:v0.3.3@sha256:021688519fc112bdec5d3e614719a80192065dae569fb85d8f5cd377ee1f9d65
+    restart: on-failure
+    stop_grace_period: 1m
+    ports:
+      - "$APP_CORE_LIGHTNING_SQUEAKNODE_GRPC_PORT:$APP_CORE_LIGHTNING_SQUEAKNODE_GRPC_PORT
+    volumes:
+      - ${APP_DATA_DIR}/sqk:/sqk
+      - ${APP_LIGHTNING_NODE_DATA_DIR}:/lnd:ro
+    user: "1000:1000"
+    environment:
+      # Bitcoin Core connection details
+      SQUEAKNODE_BITCOIN_RPC_HOST: $APP_BITCOIN_NODE_IP
+      SQUEAKNODE_BITCOIN_RPC_PORT: $APP_BITCOIN_RPC_PORT
+      SQUEAKNODE_BITCOIN_RPC_USER: $APP_BITCOIN_RPC_USER
+      SQUEAKNODE_BITCOIN_RPC_PASS: $APP_BITCOIN_RPC_PASS
+
+      # LND environment variables
+      SQUEAKNODE_LIGHTNING_BACKEND: "clightning"
+      SQUEAKNODE_LIGHTNING_CLIGHTNING_RPC_FILE: $APP_CORE_LIGHTNING_RPC_FILE_PATH
+
+      # Tor environment variables
+      SQUEAKNODE_TOR_PROXY_IP: $TOR_PROXY_IP
+      SQUEAKNODE_TOR_PROXY_PORT: $TOR_PROXY_PORT
+
+      # App specific environment variables
+      SQUEAKNODE_WEBADMIN_ENABLED: "true"
+      SQUEAKNODE_WEBADMIN_USERNAME: "umbrel"
+      SQUEAKNODE_WEBADMIN_PASSWORD: "${APP_PASSWORD}"
+
+      SQUEAKNODE_NODE_NETWORK: "$APP_BITCOIN_NETWORK"
+      SQUEAKNODE_NODE_SQK_DIR_PATH: "/sqk"
+      SQUEAKNODE_NODE_MAX_SQUEAKS: 10000
+
+      SQUEAKNODE_SERVER_EXTERNAL_ADDRESS: $APP_CORE_LIGHTNING_SQUEAKNODE_P2P_HIDDEN_SERVICE
+      SQUEAKNODE_SERVER_EXTERNAL_PORT: 9555
+
+      DEBUG: "squeaknode:*"
+    networks:
+      default:
+        ipv4_address: $APP_CORE_LIGHTNING_SQUEAKNODE_IP
