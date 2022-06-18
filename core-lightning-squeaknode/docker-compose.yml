@@ -14,7 +14,7 @@ services:
       - "$APP_CORE_LIGHTNING_SQUEAKNODE_GRPC_PORT:$APP_CORE_LIGHTNING_SQUEAKNODE_GRPC_PORT"
     volumes:
       - ${APP_DATA_DIR}/sqk:/sqk
-      - ${APP_LIGHTNING_NODE_DATA_DIR}:/lnd:ro
+      - ${APP_CORE_LIGHTNING_RPC_FILE_PATH}:/c-lightning/lightning-rpc
     user: "1000:1000"
     environment:
       # Bitcoin Core connection details
@@ -23,9 +23,9 @@ services:
       SQUEAKNODE_BITCOIN_RPC_USER: $APP_BITCOIN_RPC_USER
       SQUEAKNODE_BITCOIN_RPC_PASS: $APP_BITCOIN_RPC_PASS
 
-      # LND environment variables
+      # lightning environment variables
       SQUEAKNODE_LIGHTNING_BACKEND: "clightning"
-      SQUEAKNODE_LIGHTNING_CLIGHTNING_RPC_FILE: $APP_CORE_LIGHTNING_RPC_FILE_PATH
+      SQUEAKNODE_LIGHTNING_CLIGHTNING_RPC_FILE: "/c-lightning/lightning-rpc"
 
       # Tor environment variables
       SQUEAKNODE_TOR_PROXY_IP: $TOR_PROXY_IP
