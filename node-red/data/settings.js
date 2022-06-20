@@ -23,6 +23,16 @@
 const fs = require("fs");
 const path = require("path");
 
+let adminCredentials;
+if (fs.existsSync(path.join(__dirname, "admin-credentials.json"))) {
+  try {
+    adminCredentials = require("./admin-credentials.json");
+  } catch (error) {
+    console.error("Failed to load admin-credentials.json");
+    throw error;
+  }
+}
+
 module.exports = {
 
 /*******************************************************************************
@@ -76,14 +86,12 @@ module.exports = {
     /** To password protect the Node-RED editor and admin API, the following
      * property can be used. See http://nodered.org/docs/security.html for details.
      */
-    /*
     adminAuth: {
         type: "credentials",
         users: [
-            
+            adminCredentials
         ].filter(Boolean)
     },
-    */
 
     /** The following property can be used to enable HTTPS
      * This property can be either an object, containing both a (private) key
