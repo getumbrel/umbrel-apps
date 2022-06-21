@@ -4,6 +4,7 @@ export APP_BITCOIN_NODE_IP="10.21.21.8"
 export APP_BITCOIN_DATA_DIR="${EXPORTS_APP_DIR}/data/bitcoin"
 export APP_BITCOIN_RPC_PORT="8332"
 export APP_BITCOIN_P2P_PORT="8333"
+export APP_BITCOIN_TOR_PORT="8334"
 export APP_BITCOIN_ZMQ_RAWBLOCK_PORT="28332"
 export APP_BITCOIN_ZMQ_RAWTX_PORT="28333"
 export APP_BITCOIN_ZMQ_HASHBLOCK_PORT="28334"
@@ -38,22 +39,20 @@ elif [[ "${APP_BITCOIN_NETWORK}" == "testnet" ]]; then
 	BITCOIN_CHAIN="test"
 	export APP_BITCOIN_RPC_PORT="18332"
 	export APP_BITCOIN_P2P_PORT="18333"
+	export APP_BITCOIN_TOR_PORT="18334"
 elif [[ "${APP_BITCOIN_NETWORK}" == "signet" ]]; then
 	BITCOIN_CHAIN="signet"
 	export APP_BITCOIN_RPC_PORT="38332"
 	export APP_BITCOIN_P2P_PORT="38333"
+	export APP_BITCOIN_TOR_PORT="38334"
 elif [[ "${APP_BITCOIN_NETWORK}" == "regtest" ]]; then
 	BITCOIN_CHAIN="regtest"
 	export APP_BITCOIN_RPC_PORT="18443"
 	export APP_BITCOIN_P2P_PORT="18444"
+	export APP_BITCOIN_TOR_PORT="18445"
 else
 	echo "Warning (${EXPORTS_APP_ID}): Bitcoin Network '${APP_BITCOIN_NETWORK}' is not supported"
 fi
-
-rpc_hidden_service_file="${EXPORTS_TOR_DATA_DIR}/app-${EXPORTS_APP_ID}-rpc/hostname"
-p2p_hidden_service_file="${EXPORTS_TOR_DATA_DIR}/app-${EXPORTS_APP_ID}-p2p/hostname"
-export APP_BITCOIN_RPC_HIDDEN_SERVICE="$(cat "${rpc_hidden_service_file}" 2>/dev/null || echo "notyetset.onion")"
-export APP_BITCOIN_P2P_HIDDEN_SERVICE="$(cat "${p2p_hidden_service_file}" 2>/dev/null || echo "notyetset.onion")"
 
 BIN_ARGS=()
 BIN_ARGS+=( "-chain=${BITCOIN_CHAIN}" )
@@ -61,7 +60,6 @@ BIN_ARGS+=( "-proxy=${TOR_PROXY_IP}:${TOR_PROXY_PORT}" )
 BIN_ARGS+=( "-listen" )
 BIN_ARGS+=( "-bind=${APP_BITCOIN_NODE_IP}" )
 BIN_ARGS+=( "-port=${APP_BITCOIN_P2P_PORT}" )
-BIN_ARGS+=( "-externalip=${APP_BITCOIN_P2P_HIDDEN_SERVICE}" )
 BIN_ARGS+=( "-rpcport=${APP_BITCOIN_RPC_PORT}" )
 BIN_ARGS+=( "-rpcbind=${APP_BITCOIN_NODE_IP}" )
 BIN_ARGS+=( "-rpcbind=127.0.0.1" )
@@ -82,6 +80,11 @@ BIN_ARGS+=( "-rpcworkqueue=128" )
 export APP_BITCOIN_COMMAND=$(IFS=" "; echo "${BIN_ARGS[@]}")
 
 # echo "${APP_BITCOIN_COMMAND}"
+
+rpc_hidden_service_file="${EXPORTS_TOR_DATA_DIR}/app-${EXPORTS_APP_ID}-rpc/hostname"
+p2p_hidden_service_file="${EXPORTS_TOR_DATA_DIR}/app-${EXPORTS_APP_ID}-p2p/hostname"
+export APP_BITCOIN_RPC_HIDDEN_SERVICE="$(cat "${rpc_hidden_service_file}" 2>/dev/null || echo "notyetset.onion")"
+export APP_BITCOIN_P2P_HIDDEN_SERVICE="$(cat "${p2p_hidden_service_file}" 2>/dev/null || echo "notyetset.onion")"
 
 # electrs compatible network param
 export APP_BITCOIN_NETWORK_ELECTRS=$APP_BITCOIN_NETWORK
