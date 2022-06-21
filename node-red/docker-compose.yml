@@ -5,8 +5,11 @@ services:
     environment:
       APP_HOST: $APP_NODE_RED_IP
       APP_PORT: $APP_NODE_RED_PORT
+      # Used to allow (HTTP In) flows to be publicly exposed
+      PROXY_AUTH_WHITELIST: "/public/*"
+  
   web:
-    image: nodered/node-red:2.0.6-12@sha256:c15bfeef73c2b348c0fb5f70d3b3013575a6ebf2af942a1d8196c7d7d842f6bb
+    image: nodered/node-red:2.2.2-12@sha256:7b8e58892801f01af48acfb18c21b845a6f35029e7654ca6e19ba86bbe810d04
     restart: on-failure
     stop_grace_period: 1m
     volumes:
