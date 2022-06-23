@@ -1,0 +1,2 @@
+export APP_ESPHOME_PORT="8093"
+export APP_ESPHOME_IP="10.21.21.102"

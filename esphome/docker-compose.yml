@@ -1,0 +1,22 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: $APP_ESPHOME_IP
+      APP_PORT: 6052
+      PROXY_AUTH_ADD: "true"
+
+  server:
+    image: esphome/esphome:2022.6.2@sha256:69d382af56b10006a833eb90d29339b12efdddfb93382764a379c17fe252eda6
+    volumes:
+      - ${APP_DATA_DIR}/data:/config
+      - /etc/localtime:/etc/localtime:ro
+      # Needed for flashing new ESPs
+      - /dev:/dev
+    networks:
+      default:
+        ipv4_address: $APP_ESPHOME_IP
+    restart: on-failure
+    # Needed for flashing new ESPs
+    privileged: true
