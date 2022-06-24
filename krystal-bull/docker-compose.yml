@@ -6,7 +6,7 @@ services:
       APP_HOST: $APP_KRYSTAL_BULL_IP
       APP_PORT: 3001
   web:
-    image: bitcoinscala/oracle-server-ui:1.9.2
+    image: bitcoinscala/oracle-server-ui:1.9.2@sha256:9b92f448cae7de4044f9a69df3a873f3fce6d27282b1a227c555a26210a063c9
     user: "1000:1000"
     restart: on-failure
     stop_grace_period: 1m
@@ -26,7 +26,7 @@ services:
     depends_on: 
       - oracleserver
   oracleserver:
-    image: bitcoinscala/bitcoin-s-oracle-server:1.9.2
+    image: bitcoinscala/bitcoin-s-oracle-server:1.9.2@sha256:a702308a3134be24cc5612b5255afb66f0296ca932bcd65f4faf96487de4a6e3
     restart: on-failure
     volumes:
       - ${APP_DATA_DIR}/data/oracleserver:/home/bitcoin-s/.bitcoin-s
