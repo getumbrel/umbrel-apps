@@ -157,7 +157,7 @@ services:
 
 Our app manifest YAML file tells Umbrel details about our app such as name, description, dependencies, port number to access the app, etc.
 
-```
+```yml
 manifestVersion: 1
 id: btc-rpc-explorer
 category: Explorers
@@ -194,7 +194,7 @@ The `dependencies` section within the app manifest gives Umbrel a list of app ID
 
 The `exports.sh` shell script is a simple script to export environmental variables that your `docker-compose.yml` can read. These env. vars. are also accessible when other apps start through their `docker-compose.yml` files.
 
-```
+```sh
 export APP_BTC_RPC_EXPLORER_IP="10.21.21.12"
 export APP_BTC_RPC_EXPLORER_PORT="3002"
 ```
