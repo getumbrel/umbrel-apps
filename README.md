@@ -157,7 +157,7 @@ services:
 
 Our app manifest YAML file tells Umbrel details about our app such as name, description, dependencies, port number to access the app, etc.
 
-```
+```yml
 manifestVersion: 1
 id: btc-rpc-explorer
 category: Explorers
@@ -194,7 +194,7 @@ The `dependencies` section within the app manifest gives Umbrel a list of app ID
 
 The `exports.sh` shell script is a simple script to export environmental variables that your `docker-compose.yml` can read. These env. vars. are also accessible when other apps start through their `docker-compose.yml` files.
 
-```
+```sh
 export APP_BTC_RPC_EXPLORER_IP="10.21.21.12"
 export APP_BTC_RPC_EXPLORER_PORT="3002"
 ```
@@ -294,14 +294,14 @@ Once Umbrel has started, the Web UI will be accessible at the IP address of the 
 
 ```sh
 cd umbrel
-./scripts/repo set https://github.com/<username>/umbrel-apps.git
-./scripts/repo update
+sudo ./scripts/repo set https://github.com/<username>/umbrel-apps.git
+sudo ./scripts/repo update
 ```
 
 3\. And finally, it's time to install our app:
 
 ```sh
-./scripts/app install btc-rpc-explorer
+sudo ./scripts/app install btc-rpc-explorer
 ```
 
 That's it! Our BTC RPC Explorer app should now be accessible at http://umbrel-dev.local:3002
@@ -311,8 +311,8 @@ That's it! Our BTC RPC Explorer app should now be accessible at http://umbrel-de
 Let's commit and push our changes to our forked Umbrel app repo then run:
 
 ```sh
-./scripts/repo update
-./scripts/app update btc-rpc-explorer
+sudo ./scripts/repo update
+sudo ./scripts/app update btc-rpc-explorer
 ```
 
 ### 3.1 Testing the app on Umbrel development environment
@@ -343,14 +343,14 @@ After the VM has booted, we can verify if the Umbrel dashboard is accessible at 
 
 ```sh
 cd getumbrel/umbrel
-./scripts/repo set https://github.com/<username>/umbrel-apps.git
-./scripts/repo update
+sudo ./scripts/repo set https://github.com/<username>/umbrel-apps.git
+sudo ./scripts/repo update
 ```
 
 4\. And finally, it's time to install our app:
 
 ```sh
-./scripts/app install btc-rpc-explorer
+sudo ./scripts/app install btc-rpc-explorer
 ```
 
 That's it! Our BTC RPC Explorer app should now be accessible at http://umbrel-dev.local:3002
@@ -360,8 +360,8 @@ That's it! Our BTC RPC Explorer app should now be accessible at http://umbrel-de
 Let's commit and push our changes to our forked Umbrel app repo then run:
 
 ```sh
-./scripts/repo update
-./scripts/app update btc-rpc-explorer
+sudo ./scripts/repo update
+sudo ./scripts/app update btc-rpc-explorer
 ```
 
 >Don't forget to shutdown the `umbrel-dev` virtual machine after testing with `umbrel-dev shutdown`!
@@ -379,14 +379,14 @@ ssh umbrel@umbrel.local
 2\. Next, we'll switch to the forked remote app repo:
 
 ```sh
-./scripts/repo set https://github.com/<username>/umbrel-apps.git
-./scripts/repo update
+sudo ./scripts/repo set https://github.com/<username>/umbrel-apps.git
+sudo ./scripts/repo update
 ```
 
 3\. Once the repo has updated, it's time to test our app:
 
 ```sh
-scripts/app install btc-rpc-explorer
+sudo ./scripts/app install btc-rpc-explorer
 ```
 
 The app should now be accessible at http://umbrel.local:3002
@@ -394,7 +394,7 @@ The app should now be accessible at http://umbrel.local:3002
 4\. To uninstall:
 
 ```sh
-scripts/app uninstall btc-rpc-explorer
+sudo ./scripts/app uninstall btc-rpc-explorer
 ```
 
 > When testing your app, make sure to verify that any application state that needs to be persisted is in-fact being persisted in volumes.
