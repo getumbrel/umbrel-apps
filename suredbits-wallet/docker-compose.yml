@@ -7,7 +7,7 @@ services:
       APP_PORT: 3002
 
   web:
-    image: bitcoinscala/wallet-server-ui:1.9.2-35969c2d-SNAPSHOT
+    image: bitcoinscala/wallet-server-ui:1.9.2-f44ad4a4-SNAPSHOT
     user: "1000:1000"
     restart: on-failure
     stop_grace_period: 1m
@@ -21,7 +21,7 @@ services:
       WALLET_SERVER_API_URL: "http://${APP_SUREDBITS_WALLET_SERVER_IP}:9999/"
       WALLET_SERVER_WS: "ws://${APP_SUREDBITS_WALLET_SERVER_IP}:19999/events"
       TOR_PROXY: socks5://${TOR_PROXY_IP}:${TOR_PROXY_PORT}
-      DEFAULT_UI_PASSWORD: $APP_PASSWORD
+      DEFAULT_UI_PASSWORD: "none" 
       BITCOIN_S_SERVER_RPC_PASSWORD: $APP_PASSWORD
     networks:
       default:
@@ -30,7 +30,7 @@ services:
       - walletserver
   
   walletserver:
-    image: bitcoinscala/bitcoin-s-server:1.9.2-37-6f6315c1-SNAPSHOT
+    image: bitcoinscala/bitcoin-s-server:1.9.2-42-83cff9a4-SNAPSHOT
     user: "1000:1000"
     restart: on-failure
     volumes:
