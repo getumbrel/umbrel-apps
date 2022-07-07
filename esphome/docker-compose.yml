@@ -10,7 +10,6 @@ services:
     image: esphome/esphome:2022.6.2@sha256:1fac6334b85e76c7fd936036891b7a7ee761ee73fd119662b2cb564c3faf818f
     volumes:
       - ${APP_DATA_DIR}/data:/config
-      - /etc/localtime:/etc/localtime:ro
       # Needed for flashing new ESPs
       - /dev:/dev
     networks:
@@ -18,4 +17,5 @@ services:
         ipv4_address: $APP_ESPHOME_IP
     restart: on-failure
     # Needed for flashing new ESPs
-    privileged: true
+    device_cgroup_rules:
+       - 'c 188:* rmw'
