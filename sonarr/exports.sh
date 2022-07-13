@@ -1,0 +1,3 @@
+export APP_SONARR_IP="10.21.21.12"
+export APP_SONARR_PORT="3002"
+

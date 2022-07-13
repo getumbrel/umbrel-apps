@@ -1,6 +1,10 @@
 version: "3.7"
 
 services:
+  app_proxy:
+  environment:
+      APP_HOST: $APP_SONARR_IP
+      APP_PORT: $APP_SONARR_PORT
   sonarr:
     container_name: sonarr
     image: cr.hotio.dev/hotio/sonarr
@@ -13,3 +17,6 @@ services:
       - TZ=Etc/UTC
     volumes:
       - ${APP_DATA_DIR}/data/sonarr:/config
+    networks:
+      default:
+        ipv4_address: $APP_SONARR_IP
