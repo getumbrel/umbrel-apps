@@ -173,6 +173,12 @@ description: >-
   It comes with a network summary dashboard, detailed view of blocks, transactions, addresses, along with analysis tools for viewing stats on miner activity, mempool summary, with fee, size, and age breakdowns. You can also search by transaction ID, block hash/height, and addresses.
 
   It's time to appreciate the "fullness" of your node.
+releaseNotes: >-
+  Dark mode is finally here! Easily switch between you preferred mode
+  in one click.
+
+  This version also includes lots of minor styling improvements, better
+  error handling improvements, and bugfixes.
 developer: Dan Janosik
 website: https://explorer.btc21.org
 dependencies:
@@ -471,7 +477,7 @@ PROXY_AUTH_BLACKLIST: "/admin/*"
 
 1. **How to push app updates?**
 
-    Every time you release a new version of your app, you should build, tag and push the new Docker images to Docker Hub. Then open a new PR on our main app repo (getumbrel/umbrel-apps) with your up-to-date docker image.
+    Every time you release a new version of your app, you should build, tag and push the new Docker images to Docker Hub. Then open a new PR on our main app repo (getumbrel/umbrel-apps) with your up-to-date docker image, and updated `version` and `releaseNotes` in your app's `umbrel-app.yml` file.
 
 1. **I need help with something else?**
 
