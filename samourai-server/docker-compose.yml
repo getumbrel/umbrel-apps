@@ -33,8 +33,8 @@ services:
       # GLOBAL
       COMMON_BTC_NETWORK: $APP_BITCOIN_NETWORK
       DOJO_VERSION_TAG: 1.15.0
-      NET_DOJO_TOR_IPV4: $TOR_PROXY_IP
-      TOR_SOCKS_PORT: $TOR_PROXY_PORT
+      NET_DOJO_TOR_IPV4: "${APP_ID}.tor"
+      TOR_SOCKS_PORT: 9050
       NET_DOJO_MYSQL_IPV4: $APP_SAMOURAI_SERVER_DB_IP
 
       # MYSQL
@@ -142,3 +142,14 @@ services:
     networks:
       default:
         ipv4_address: $APP_SAMOURAI_SERVER_IP
+
+  tor:
+    image: getumbrel/tor:0.4.7.8@sha256:2ace83f22501f58857fa9b403009f595137fa2e7986c4fda79d82a8119072b6a
+    user: "1000:1000"
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/torrc:/etc/tor/torrc:ro
+      - ${TOR_DATA_DIR}:/data
+    environment:
+      HOME: "/tmp"
+    hostname: "${APP_ID}.tor"
