@@ -8,6 +8,11 @@ export APP_LIGHTNING_NODE_DATA_DIR="${EXPORTS_APP_DIR}/data/lnd"
 
 LND_BITCOIN_NODE="bitcoind"
 
+TOR_PROXY_IP="${EXPORTS_APP_ID}.tor"
+TOR_PROXY_PORT="9050"
+TOR_PROXY_CONTROL_PORT="29051"
+TOR_PASSWORD="tortortor"
+
 BIN_ARGS=()
 # [Application Options]
 BIN_ARGS+=( "--listen=0.0.0.0:${APP_LIGHTNING_NODE_PORT}" )
@@ -43,7 +48,7 @@ BIN_ARGS+=( "--bitcoin.node=${LND_BITCOIN_NODE}" )
 # [tor]
 BIN_ARGS+=( "--tor.active" )
 BIN_ARGS+=( "--tor.v3" )
-BIN_ARGS+=( "--tor.control=${TOR_PROXY_IP}:29051" )
+BIN_ARGS+=( "--tor.control=${TOR_PROXY_IP}:${TOR_PROXY_CONTROL_PORT}" )
 BIN_ARGS+=( "--tor.socks=${TOR_PROXY_IP}:${TOR_PROXY_PORT}" )
 BIN_ARGS+=( "--tor.targetipaddress=${APP_LIGHTNING_NODE_IP}" )
 BIN_ARGS+=( "--tor.password=${TOR_PASSWORD}" )

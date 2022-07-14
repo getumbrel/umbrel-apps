@@ -15,8 +15,8 @@ services:
       - "${UMBREL_ROOT}/statuses:/statuses"
     environment:
       PORT: "3006"
-      TOR_PROXY_IP: "${TOR_PROXY_IP}"
-      TOR_PROXY_PORT: "${TOR_PROXY_PORT}"
+      TOR_PROXY_IP: "${APP_ID}.tor"
+      TOR_PROXY_PORT: "9050"
       BITCOIN_HOST: "${APP_BITCOIN_NODE_IP}"
       RPC_PORT: "${APP_BITCOIN_RPC_PORT}"
       RPC_USER: "${APP_BITCOIN_RPC_USER}"
@@ -51,3 +51,14 @@ services:
     networks:
       default:
         ipv4_address: $APP_LIGHTNING_NODE_IP
+  
+  tor:
+    image: getumbrel/tor:0.4.7.8@sha256:2ace83f22501f58857fa9b403009f595137fa2e7986c4fda79d82a8119072b6a
+    user: "1000:1000"
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/torrc:/etc/tor/torrc:ro
+      - ${TOR_DATA_DIR}:/data
+    environment:
+      HOME: "/tmp"
+    hostname: "${APP_ID}.tor"
