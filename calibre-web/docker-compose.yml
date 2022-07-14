@@ -9,6 +9,9 @@ services:
     image: linuxserver/calibre-web:0.6.18@sha256:4ddccf9ca8cba38dfb6e46ba56828395102253a3ff78a449aa2bc812877d9d16
     container_name: calibre-web
     stop_grace_period: 1m
+    environment:
+      - PUID=1000
+      - PGID=1000
     volumes:
       - ${APP_DATA_DIR}/data/config:/config
       - ${APP_DATA_DIR}/data/books:/books
