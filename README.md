@@ -178,7 +178,7 @@ releaseNotes: >-
   in one click.
 
   This version also includes lots of minor styling improvements, better
-  error handling improvements, and bugfixes.
+  error handling, and several bugfixes.
 developer: Dan Janosik
 website: https://explorer.btc21.org
 dependencies:
