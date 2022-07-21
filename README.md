@@ -174,7 +174,7 @@ description: >-
 
   It's time to appreciate the "fullness" of your node.
 releaseNotes: >-
-  Dark mode is finally here! Easily switch between you preferred mode
+  Dark mode is finally here! Easily switch between your preferred mode
   in one click.
 
   This version also includes lots of minor styling improvements, better
