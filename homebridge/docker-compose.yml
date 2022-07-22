@@ -1,0 +1,18 @@
+version: '2'
+services:
+  app_proxy:
+    environment:
+      APP_HOST: $APP_HOMEBRIDGE_WEB_IP
+      APP_PORT: $APP_HOMEBRIDGE_WEB_PORT
+  homebridge:
+    image: oznu/homebridge:2022-07-02-ubuntu@sha256:ef893c586d21d558b6cd0cefef6cc80d47eb43d08a43dbd7c1d05198433343a9
+    container_name: homebridge
+    restart: on-failure
+    network_mode: host
+    environment:
+      - HOMEBRIDGE_CONFIG_UI_PORT=8581
+    volumes:
+      - ${APP_DATA_DIR}/data:/homebridge
+    networks:
+      default:
+        ipv4_address: $APP_HOMEBRIDGE_WEB_IP
