@@ -1,0 +1,2 @@
+export APP_LNDBOSS_IP="10.21.21.47"
+export APP_LNDBOSS_PORT="8055"
