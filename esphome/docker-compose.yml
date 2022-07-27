@@ -10,12 +10,12 @@ services:
     image: esphome/esphome:2022.6.2@sha256:1fac6334b85e76c7fd936036891b7a7ee761ee73fd119662b2cb564c3faf818f
     volumes:
       - ${APP_DATA_DIR}/data:/config
-    devices:
-      - "/dev/ttyUSB0:/dev/ttyUSB0"
     networks:
       default:
         ipv4_address: $APP_ESPHOME_IP
     restart: on-failure
     # Needed for flashing new ESPs directly
+    devices:
+      - "/dev/ttyUSB0:/dev/ttyUSB0"
     device_cgroup_rules:
       - 'c 188:* rmw' 
