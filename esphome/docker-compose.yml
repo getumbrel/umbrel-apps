@@ -1,0 +1,21 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: $APP_ESPHOME_IP
+      APP_PORT: 6052
+
+  server:
+    image: esphome/esphome:2022.6.2@sha256:1fac6334b85e76c7fd936036891b7a7ee761ee73fd119662b2cb564c3faf818f
+    volumes:
+      - ${APP_DATA_DIR}/data:/config
+      # Needed for flashing new ESPs directly
+      - /dev/ttyUSB0:/dev/ttyUSB0
+    networks:
+      default:
+        ipv4_address: $APP_ESPHOME_IP
+    restart: on-failure
+    # Needed for flashing new ESPs directly
+    device_cgroup_rules:
+      - 'c 188:* rmw' 
