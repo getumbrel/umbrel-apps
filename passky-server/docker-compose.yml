@@ -2,12 +2,6 @@ version: "3.7"
 
 services:
 
-  app_proxy:
-    environment:
-      APP_HOST: $APP_PASSKY_SERVER_IP
-      APP_PORT: 80
-      PROXY_AUTH_ADD: "false"
-
   database:
     image: 'rabbitcompany/passky-database:v7.0.0'
     restart: on-failure
@@ -28,6 +22,8 @@ services:
     image: 'rabbitcompany/passky-api:v7.0.0'
     restart: on-failure
     stop_grace_period: 1m
+    ports:
+      - 5050:80
     environment:
       SERVER_LOCATION: "US"
       SERVER_CORES: 1
