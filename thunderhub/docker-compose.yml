@@ -8,7 +8,8 @@ services:
 
   web:
     image: apotdevin/thunderhub:v0.13.14@sha256:6ee592a8335ec203f9c7056ddd22f286f8135b5888005d84db70787a91e3e72f
-    user: "1000:1000"
+    # We now have to run as root to avoid schema.gql permission errors
+    # user: "1000:1000"
     restart: on-failure
     stop_grace_period: 1m
     volumes:
