@@ -1,2 +1,2 @@
-export APP_OAK_NODE_IP="10.21.21.99"
+export APP_OAK_NODE_IP="10.21.21.105"
 export APP_OAK_NODE_PORT="8100"
