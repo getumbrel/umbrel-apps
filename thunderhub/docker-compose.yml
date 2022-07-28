@@ -14,9 +14,8 @@ services:
     volumes:
       - ${APP_LIGHTNING_NODE_DATA_DIR}:/lnd:ro
       - ${APP_DATA_DIR}/data:/data
-    entrypoint: /data/entrypoint.sh
     environment:
-      APP_PASSWORD: "$APP_PASSWORD"
+      MASTER_PASSWORD_OVERRIDE: "$APP_PASSWORD"
       NO_VERSION_CHECK: "true"
       LOG_LEVEL: "debug"
       ACCOUNT_CONFIG_PATH: "/data/thubConfig.yaml"
