@@ -12,12 +12,10 @@ services:
     restart: on-failure
     stop_grace_period: 1m
     environment:
-      # Database
       - MYSQL_DATABASE: "passky"
       - MYSQL_USER: "passky"
       - MYSQL_PASSWORD: "${APP_PASSWORD}"
       - MYSQL_ROOT_PASSWORD: "${APP_PASSWORD}"
-      # Backup
       - BACKUP_ENABLED: false
     volumes:
       - ${APP_DATA_DIR}/data/passky:/var/lib/mysql
@@ -32,26 +30,19 @@ services:
     ports:
       - 80:80
     environment:
-      # Server
       - SERVER_LOCATION: "US"
       - SERVER_CORES: 1
-      # Admin Panel
       - ADMIN_USERNAME: "admin"
       - ADMIN_PASSWORD: "${APP_PASSWORD}"
-      # Database
       - MYSQL_HOST: "${APP_PASSKY_DB_IP}"
       - MYSQL_DATABASE: "passky"
       - MYSQL_USER: "passky"
       - MYSQL_PASSWORD: "${APP_PASSWORD}"
-      # Mail
       - MAIL_ENABLED: false
-      # Account
       - ACCOUNT_MAX: 100
       - ACCOUNT_MAX_PASSWORDS: 1000
-      # YUBICO
       - YUBI_CLOUD: "https://api.yubico.com/wsapi/2.0/verify"
       - YUBI_ID: 67857
-      # Limiter
       - LIMITER_ENABLED: true
       - LIMITER_GET_INFO: 1
       - LIMITER_GET_STATS: 1
