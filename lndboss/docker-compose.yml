@@ -13,6 +13,9 @@ services:
     volumes:
       - ${APP_LIGHTNING_NODE_DATA_DIR}:/home/node/.lnd:ro
       - ${APP_DATA_DIR}/.bosgui:/home/node/.bosgui
+    extra_hosts:
+      - "umbrel.local:${APP_LIGHTNING_NODE_IP}"
+      - "localhost:${APP_LIGHTNING_NODE_IP}"
     environment:
       BOS_DATA_PATH: "/home/node/.bosgui"
       NODE_ENV: "production"
