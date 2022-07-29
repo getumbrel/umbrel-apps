@@ -5,21 +5,18 @@ services:
     environment:
       APP_HOST: $APP_LNDBOSS_IP
       APP_PORT: $APP_LNDBOSS_PORT
-
   web:
-    image: niteshbalusu/lndboss:v1.15.1@sha256:df0e99fac53df68204420c2ad40baf247e274dbf77264c1f0701645a26f9cea0
+    image: niteshbalusu/lndboss:v1.15.2@sha256:c6fecdb6a4a0c1960d6ae22eba9ad73abaed45224d3c3cfd3d6f1d04f52a1c36
     restart: on-failure
     stop_grace_period: 1m
     volumes:
       - ${APP_LIGHTNING_NODE_DATA_DIR}:/home/node/.lnd:ro
       - ${APP_DATA_DIR}/.bosgui:/home/node/.bosgui
-    extra_hosts:
-      - "umbrel.local:${APP_LIGHTNING_NODE_IP}"
-      - "localhost:${APP_LIGHTNING_NODE_IP}"
     environment:
       BOS_DATA_PATH: "/home/node/.bosgui"
       NODE_ENV: "production"
       PORT: $APP_LNDBOSS_PORT
+      BOS_DEFAULT_LND_SOCKET: $APP_LIGHTNING_NODE_IP:$APP_LIGHTNING_NODE_GRPC_PORT
     networks:
       default:
         ipv4_address: $APP_LNDBOSS_IP
