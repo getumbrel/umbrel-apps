@@ -13,18 +13,18 @@ services:
     restart: on-failure
     stop_grace_period: 1m
     volumes:
-        - ${APP_DATA_DIR}/data/nbxplorer:/data
+      - ${APP_DATA_DIR}/data/nbxplorer:/data
     environment:
-        NBXPLORER_DATADIR: "/data"
-        NBXPLORER_NETWORK: "$APP_BITCOIN_NETWORK"
-        NBXPLORER_PORT: 32838
-        NBXPLORER_BIND: 0.0.0.0
-        NBXPLORER_CHAINS: "btc"
-        NBXPLORER_SIGNALFILEDIR: "/data"
-        NBXPLORER_BTCRPCURL: "http://$APP_BITCOIN_NODE_IP:$APP_BITCOIN_RPC_PORT"
-        NBXPLORER_BTCNODEENDPOINT: $APP_BITCOIN_NODE_IP:$APP_BITCOIN_P2P_PORT
-        NBXPLORER_BTCRPCUSER: $APP_BITCOIN_RPC_USER
-        NBXPLORER_BTCRPCPASSWORD: $APP_BITCOIN_RPC_PASS
+      NBXPLORER_DATADIR: "/data"
+      NBXPLORER_NETWORK: "$APP_BITCOIN_NETWORK"
+      NBXPLORER_PORT: 32838
+      NBXPLORER_BIND: 0.0.0.0
+      NBXPLORER_CHAINS: "btc"
+      NBXPLORER_SIGNALFILEDIR: "/data"
+      NBXPLORER_BTCRPCURL: "http://$APP_BITCOIN_NODE_IP:$APP_BITCOIN_RPC_PORT"
+      NBXPLORER_BTCNODEENDPOINT: $APP_BITCOIN_NODE_IP:$APP_BITCOIN_P2P_PORT
+      NBXPLORER_BTCRPCUSER: $APP_BITCOIN_RPC_USER
+      NBXPLORER_BTCRPCPASSWORD: $APP_BITCOIN_RPC_PASS
     networks:
       default:
         ipv4_address: $APP_BTCPAY_SERVER_NBXPLORER_IP
@@ -34,24 +34,24 @@ services:
     user: "1000:1000"
     restart: on-failure
     stop_grace_period: 1m
-    depends_on: [ nbxplorer, postgres ]
-    entrypoint: [ "dotnet", "BTCPayServer.dll" ]
+    depends_on: [nbxplorer, postgres]
+    entrypoint: ["dotnet", "BTCPayServer.dll"]
     volumes:
-        - ${APP_DATA_DIR}/data/btcpay:/data
-        - ${APP_DATA_DIR}/data/nbxplorer:/data/.nbxplorer
-        - ${APP_LIGHTNING_NODE_DATA_DIR}:/lnd:ro
+      - ${APP_DATA_DIR}/data/btcpay:/data
+      - ${APP_DATA_DIR}/data/nbxplorer:/data/.nbxplorer
+      - ${APP_LIGHTNING_NODE_DATA_DIR}:/lnd:ro
     environment:
-        HOME: "/data"
-        BTCPAY_DATADIR: "/data"
-        BTCPAY_PLUGINDIR: "/data/plugins"
-        BTCPAY_DOCKERDEPLOYMENT: "false"
-        BTCPAY_POSTGRES: "User ID=postgres;Host=$APP_BTCPAY_SERVER_DB_IP;Port=5432;Database=btcpayserver$APP_BITCOIN_NETWORK"
-        BTCPAY_NETWORK: "$APP_BITCOIN_NETWORK"
-        BTCPAY_BIND: 0.0.0.0:$APP_BTCPAY_SERVER_PORT
-        BTCPAY_CHAINS: "btc"
-        BTCPAY_BTCEXPLORERURL: "http://$APP_BTCPAY_SERVER_NBXPLORER_IP:32838"
-        BTCPAY_BTCLIGHTNING: "type=lnd-rest;server=https://$APP_LIGHTNING_NODE_IP:$APP_LIGHTNING_NODE_REST_PORT/;macaroonfilepath=/lnd/data/chain/bitcoin/$APP_BITCOIN_NETWORK/admin.macaroon;allowinsecure=true"
-        BTCPAY_SOCKSENDPOINT: $TOR_PROXY_IP:$TOR_PROXY_PORT
+      HOME: "/data"
+      BTCPAY_DATADIR: "/data"
+      BTCPAY_PLUGINDIR: "/data/plugins"
+      BTCPAY_DOCKERDEPLOYMENT: "false"
+      BTCPAY_POSTGRES: "User ID=postgres;Host=$APP_BTCPAY_SERVER_DB_IP;Port=5432;Database=btcpayserver$APP_BITCOIN_NETWORK"
+      BTCPAY_NETWORK: "$APP_BITCOIN_NETWORK"
+      BTCPAY_BIND: 0.0.0.0:$APP_BTCPAY_SERVER_PORT
+      BTCPAY_CHAINS: "btc"
+      BTCPAY_BTCEXPLORERURL: "http://$APP_BTCPAY_SERVER_NBXPLORER_IP:32838"
+      BTCPAY_BTCLIGHTNING: "type=lnd-rest;server=https://$APP_LIGHTNING_NODE_IP:$APP_LIGHTNING_NODE_REST_PORT/;macaroonfilepath=/lnd/data/chain/bitcoin/$APP_BITCOIN_NETWORK/admin.macaroon;allowinsecure=true"
+      BTCPAY_SOCKSENDPOINT: $TOR_PROXY_IP:$TOR_PROXY_PORT
     networks:
       default:
         ipv4_address: $APP_BTCPAY_SERVER_IP
@@ -65,9 +65,9 @@ services:
     command: ["-c", "random_page_cost=1.0", "-c", "shared_preload_libraries=pg_stat_statements"]
     stop_grace_period: 1m
     environment:
-        POSTGRES_HOST_AUTH_METHOD: trust
+      POSTGRES_HOST_AUTH_METHOD: trust
     volumes:
-        - ${APP_DATA_DIR}/data/postgres:/var/lib/postgresql/data
+      - ${APP_DATA_DIR}/data/postgres:/var/lib/postgresql/data
     networks:
       default:
         ipv4_address: $APP_BTCPAY_SERVER_DB_IP
