@@ -8,23 +8,26 @@ services:
       PROXY_AUTH_ADD: "false"
 
   nbxplorer:
-    image: nicolasdorier/nbxplorer:2.2.33@sha256:70741f1ecf96de31a4606e0a453d8a25caf5bd8aaf8d345f20740c837f04e6fb
+    image: nicolasdorier/nbxplorer:2.3.33@sha256:70741f1ecf96de31a4606e0a453d8a25caf5bd8aaf8d345f20740c837f04e6fb
     user: "1000:1000"
     restart: on-failure
     stop_grace_period: 1m
+    depends_on: [postgres]
     volumes:
       - ${APP_DATA_DIR}/data/nbxplorer:/data
     environment:
       NBXPLORER_DATADIR: "/data"
       NBXPLORER_NETWORK: "$APP_BITCOIN_NETWORK"
-      NBXPLORER_PORT: 32838
-      NBXPLORER_BIND: 0.0.0.0
+      NBXPLORER_BIND: 0.0.0.0:32838
       NBXPLORER_CHAINS: "btc"
       NBXPLORER_SIGNALFILEDIR: "/data"
       NBXPLORER_BTCRPCURL: "http://$APP_BITCOIN_NODE_IP:$APP_BITCOIN_RPC_PORT"
       NBXPLORER_BTCNODEENDPOINT: $APP_BITCOIN_NODE_IP:$APP_BITCOIN_P2P_PORT
       NBXPLORER_BTCRPCUSER: $APP_BITCOIN_RPC_USER
       NBXPLORER_BTCRPCPASSWORD: $APP_BITCOIN_RPC_PASS
+      NBXPLORER_POSTGRES: User ID=postgres;Host=$APP_BTCPAY_SERVER_DB_IP;Port=5432;Application Name=nbxplorer;MaxPoolSize=20;Database=nbxplorer$APP_BITCOIN_NETWORK
+      NBXPLORER_AUTOMIGRATE: 1
+      NBXPLORER_NOMIGRATEEVTS: 1
     networks:
       default:
         ipv4_address: $APP_BTCPAY_SERVER_NBXPLORER_IP
