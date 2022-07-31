@@ -7,7 +7,7 @@ services:
       APP_PORT: $APP_OAK_NODE_PORT
 
   web:
-    image: oak-node.net/oak:v0.3.1@sha256:f78f19763705dfb2237fd8a5c78f27052a848a5e56d89b3ffbcdc1edef0ba57e
+    image: oak-node.net/oak:v0.3.2@sha256:ed6dc77c36032b036b7182b02305b76312fa6c89c7cafc6047cb59d32ab1e507
     user: "1000:1000"
     restart: on-failure
     stop_grace_period: 1m
@@ -22,6 +22,8 @@ services:
       OAK_LND_REST_API_URL: https://$APP_LIGHTNING_NODE_IP:$APP_LIGHTNING_NODE_REST_PORT
       OAK_LND_MACAROON_PATH: /lnd-dir/data/chain/bitcoin/$APP_BITCOIN_NETWORK/admin.macaroon
       OAK_LND_CERT_PATH: /lnd-dir/tls.cert
+      OAK_ONION_SOCKS5_HOST: $TOR_PROXY_IP
+      OAK_ONION_SOCKS5_PORT: $TOR_PROXY_PORT
     networks:
       default:
         ipv4_address: $APP_OAK_NODE_IP
