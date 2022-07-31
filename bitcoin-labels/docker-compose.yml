@@ -1,0 +1,14 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: $APP_BIT_TABLE_IP
+      APP_PORT: $APP_BIT_TABLE_PORT
+
+  web:
+    image: abhishandy/bit-table:v0.2.1
+    restart: on-failure
+    stop_grace_period: 1m
+    ports:
+      - $APP_BIT_TABLE_PORT:$APP_BIT_TABLE_PORT
