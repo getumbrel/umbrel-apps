@@ -6,6 +6,7 @@ services:
       APP_HOST: $APP_LNBITS_IP
       APP_PORT: $APP_LNBITS_PORT
       PROXY_AUTH_ADD: "false"
+      PROXY_TRUST_UPSTREAM: "true
   web:
     image: lnbitsdocker/lnbits-legend:0.8.0@sha256:3426e326bac347d09b4e018780cb1ecd8e5eac35851383d476076769ab4a9b2e
     user: 1000:1000
@@ -32,6 +33,7 @@ services:
       LNBITS_DEFAULT_WALLET_NAME: "LNbits wallet"
       LNBITS_DISABLED_EXTENSIONS: "amilk"
       LNBITS_ADMIN_EXTENSIONS: "ngrok"
+    command: uvicorn lnbits.__main__:app --port $APP_LNBITS_PORT --host "0.0.0.0" --forwarded-allow-ips="*"
     networks:
         default:
           ipv4_address: $APP_LNBITS_IP
