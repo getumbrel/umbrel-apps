@@ -25,10 +25,10 @@ if [[ ! -f "${BITCOIN_ENV_FILE}" ]]; then
 		BITCOIN_RPC_AUTH=$(echo "$BITCOIN_RPC_DETAILS" | head -2 | tail -1 | sed -e "s/^rpcauth=//")
 	fi
 
-	echo "export APP_BITCOIN_NETWORK='${BITCOIN_NETWORK}'"	>  "${BITCOIN_ENV_FILE}"
+	echo "export APP_BITCOIN_NETWORK='${BITCOIN_NETWORK}'"		>  "${BITCOIN_ENV_FILE}"
 	echo "export APP_BITCOIN_RPC_USER='${BITCOIN_RPC_USER}'"	>> "${BITCOIN_ENV_FILE}"
 	echo "export APP_BITCOIN_RPC_PASS='${BITCOIN_RPC_PASS}'"	>> "${BITCOIN_ENV_FILE}"
-	echo "export APP_BITCOIN_RPC_AUTH='${BITCOIN_RPC_AUTH}'"			>> "${BITCOIN_ENV_FILE}"
+	echo "export APP_BITCOIN_RPC_AUTH='${BITCOIN_RPC_AUTH}'"	>> "${BITCOIN_ENV_FILE}"
 fi
 
 . "${BITCOIN_ENV_FILE}"
