@@ -75,7 +75,6 @@ BIN_ARGS+=( "-txindex=1" )
 BIN_ARGS+=( "-blockfilterindex=1" )
 BIN_ARGS+=( "-peerbloomfilters=1" )
 BIN_ARGS+=( "-peerblockfilters=1" )
-BIN_ARGS+=( "-deprecatedrpc=addresses" )
 BIN_ARGS+=( "-rpcworkqueue=128" )
 
 export APP_BITCOIN_COMMAND=$(IFS=" "; echo "${BIN_ARGS[@]}")
