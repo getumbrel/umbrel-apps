@@ -50,9 +50,6 @@ else
 	echo "Warning (${EXPORTS_APP_ID}): Bitcoin Network '${APP_BITCOIN_NETWORK}' is not supported"
 fi
 
-TOR_PROXY_IP="${EXPORTS_APP_ID}.tor"
-TOR_PROXY_PORT="9050"
-
 BIN_ARGS=()
 BIN_ARGS+=( "-chain=${BITCOIN_CHAIN}" )
 BIN_ARGS+=( "-proxy=${TOR_PROXY_IP}:${TOR_PROXY_PORT}" )
