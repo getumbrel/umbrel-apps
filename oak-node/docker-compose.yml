@@ -1,0 +1,29 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: $APP_OAK_NODE_IP
+      APP_PORT: $APP_OAK_NODE_PORT
+
+  web:
+    image: oak-node.net/oak:v0.3.3@sha256:484ef07889cf2eab5db85c4feecc94fc5e86c76e17ae658bd5aa11972db5678d
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 1m
+    volumes:
+      - $APP_LIGHTNING_NODE_DATA_DIR:/lnd-dir:ro
+      - ${APP_DATA_DIR}/data:/data
+      - ${APP_DATA_DIR}/log:/oak/log
+    environment:
+      ROCKET_PORT: $APP_OAK_NODE_PORT
+      ROCKET_ADDRESS: 0.0.0.0
+      OAK_DATA_DIR: /data
+      OAK_LND_REST_API_URL: https://$APP_LIGHTNING_NODE_IP:$APP_LIGHTNING_NODE_REST_PORT
+      OAK_LND_MACAROON_PATH: /lnd-dir/data/chain/bitcoin/$APP_BITCOIN_NETWORK/admin.macaroon
+      OAK_LND_CERT_PATH: /lnd-dir/tls.cert
+      OAK_ONION_SOCKS5_HOST: $TOR_PROXY_IP
+      OAK_ONION_SOCKS5_PORT: $TOR_PROXY_PORT
+    networks:
+      default:
+        ipv4_address: $APP_OAK_NODE_IP

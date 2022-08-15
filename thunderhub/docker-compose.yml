@@ -7,16 +7,16 @@ services:
       APP_PORT: $APP_THUNDERHUB_PORT
 
   web:
-    image: apotdevin/thunderhub:v0.12.31@sha256:f86341cb1987a3907f7227ccd4c00dead68d372e464b111414b8427228062276
-    user: "1000:1000"
+    image: apotdevin/thunderhub:v0.13.14@sha256:6ee592a8335ec203f9c7056ddd22f286f8135b5888005d84db70787a91e3e72f
+    # We now have to run as root to avoid schema.gql permission errors
+    # user: "1000:1000"
     restart: on-failure
     stop_grace_period: 1m
     volumes:
       - ${APP_LIGHTNING_NODE_DATA_DIR}:/lnd:ro
       - ${APP_DATA_DIR}/data:/data
-    entrypoint: /data/entrypoint.sh
     environment:
-      APP_PASSWORD: "$APP_PASSWORD"
+      MASTER_PASSWORD_OVERRIDE: "$APP_PASSWORD"
       NO_VERSION_CHECK: "true"
       LOG_LEVEL: "debug"
       ACCOUNT_CONFIG_PATH: "/data/thubConfig.yaml"

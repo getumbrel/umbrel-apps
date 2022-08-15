@@ -7,7 +7,7 @@ services:
       APP_PORT: 3001
   
   web:
-    image: bitcoinscala/oracle-server-ui:1.9.2@sha256:9b92f448cae7de4044f9a69df3a873f3fce6d27282b1a227c555a26210a063c9
+    image: bitcoinscala/oracle-server-ui:1.9.2-f44ad4a4-SNAPSHOT@sha256:aa128ad3e4134585390127c092bad09d1632055108f459c248048246c1cabab7
     user: "1000:1000"
     restart: on-failure
     stop_grace_period: 1m
@@ -18,8 +18,8 @@ services:
       LOG_PATH: "/log/"
       BITCOIN_S_HOME: "/home/bitcoin-s/.bitcoin-s/"
       ORACLE_SERVER_API_URL: "http://${APP_KRYSTAL_BULL_SERVER_IP}:9998/"
-      TOR_PROXY: "socks5://${APP_ID}.tor:9050"
-      DEFAULT_UI_PASSWORD: $APP_PASSWORD
+      TOR_PROXY: socks5://${TOR_PROXY_IP}:${TOR_PROXY_PORT}
+      DEFAULT_UI_PASSWORD: "none"
       BITCOIN_S_ORACLE_RPC_PASSWORD: $APP_PASSWORD
     networks:
       default:
@@ -28,7 +28,7 @@ services:
       - oracleserver
   
   oracleserver:
-    image: bitcoinscala/bitcoin-s-oracle-server:1.9.2@sha256:a702308a3134be24cc5612b5255afb66f0296ca932bcd65f4faf96487de4a6e3
+    image: bitcoinscala/bitcoin-s-oracle-server:1.9.2-42-83cff9a4-SNAPSHOT@sha256:bbe1673878fe44e1a1554279e049f24e81a4f771e81928d59d2add236734d350
     restart: on-failure
     volumes:
       - ${APP_DATA_DIR}/data/oracleserver:/home/bitcoin-s/.bitcoin-s
@@ -38,14 +38,3 @@ services:
     networks:
       default:
         ipv4_address: $APP_KRYSTAL_BULL_SERVER_IP
-
-  tor:
-    image: getumbrel/tor:0.4.7.8@sha256:2ace83f22501f58857fa9b403009f595137fa2e7986c4fda79d82a8119072b6a
-    user: "1000:1000"
-    restart: on-failure
-    volumes:
-      - ${APP_DATA_DIR}/torrc:/etc/tor/torrc:ro
-      - ${TOR_DATA_DIR}:/data
-    environment:
-      HOME: "/tmp"
-    hostname: "${APP_ID}.tor"

@@ -7,7 +7,7 @@ services:
       APP_PORT: 8000
 
   web:
-    image: ghcr.io/itchysats/itchysats/taker:0.4.16@sha256:f404ace4baf85b9799bfa709c9481b35fabe22d6dcaf7fb8f664730c09230bc2
+    image: ghcr.io/itchysats/itchysats/taker:0.5.4@sha256:9fa1a461cbe9760944c5a471343064177a5ad3a497787ddcee72b598006d3bcb
     restart: on-failure
     stop_grace_period: 1m
     volumes:
@@ -17,6 +17,8 @@ services:
       - --umbrel-seed=$APP_SEED
       - $APP_BITCOIN_NETWORK
       - --electrum=tcp://$APP_ELECTRS_NODE_IP:$APP_ELECTRS_NODE_PORT
+    environment:
+      - ITCHYSATS_ENV=umbrel
 
     networks:
       default:
