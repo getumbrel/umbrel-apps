@@ -31,10 +31,11 @@ services:
   
   walletserver:
     image: bitcoinscala/bitcoin-s-server:1.9.2-160-85c01f7a-SNAPSHOT
+    entrypoint: ["/opt/docker/bin/bitcoin-s-server", "--datadir", "/home/bitcoin-s/.bitcoin-s", "--conf", "/opt/docker/docker-application.conf"]
     user: "1000:0"
     restart: on-failure
     volumes:
-      - ${APP_DATA_DIR}/data/wallet:/home/demiourgos728/.bitcoin-s
+      - ${APP_DATA_DIR}/data/wallet:/home/bitcoin-s/.bitcoin-s
     environment:
       BITCOIN_S_NODE_MODE: "bitcoind"
       BITCOIN_S_NETWORK: $APP_BITCOIN_NETWORK
