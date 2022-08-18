@@ -1,0 +1,20 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: $APP_LIBREDDIT_IP
+      APP_PORT: $APP_LIBREDDIT_PORT
+      PROXY_AUTH_ADD: "false"
+
+  web:
+    image: ceramicwhite/libreddit:latest@sha256:00a133da4ae8eb1b7d3ce9af0ca387e2dd929dc6b490736532b5d998a025c362
+    restart: on-failure
+    stop_grace_period: 1m
+    user: "1000:1000"
+    ports:
+      - $APP_LIBREDDIT_PORT:$APP_LIBREDDIT_PORT
+
+    networks:
+      default:
+        ipv4_address: $APP_LIBREDDIT_IP
