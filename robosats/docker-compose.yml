@@ -1,0 +1,19 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: ${APP_ROBOSATS_IP}
+      APP_PORT: ${APP_ROBOSATS_PORT}
+      ROBOSATS_ONION: robosats6tkf3eva7x2voqso3a5wcorsnw34jveyxfqi2fu7oyheasid.onion
+
+  web:
+    image: recksato/robosats-client:latest
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      TOR_PROXY_IP: ${TOR_PROXY_IP}
+      TOR_PROXY_PORT: ${TOR_PROXY_PORT}
+    networks:
+      default:
+        ipv4_address: ${APP_ROBOSATS_IP}
