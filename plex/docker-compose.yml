@@ -1,0 +1,21 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: $APP_PLEX_IP
+      APP_PORT: $APP_PLEX_PORT
+
+  server:
+    image: ghcr.io/linuxserver/plex:version-1.28.1.6104-788f82488
+    user: "1000:1000"
+    restart: on-failure
+    environment:
+      - PUID=1001
+      - PGID=100
+      - VERSION=docker
+    volumes:
+      - ${APP_DATA_DIR}/downloads:/downloads
+    networks:
+      default:
+        ipv4_address: $APP_PLEX_IP
