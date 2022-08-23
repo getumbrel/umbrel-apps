@@ -30,7 +30,7 @@ services:
       - walletserver
   
   walletserver:
-    image: bitcoinscala/bitcoin-s-server:1.9.2-178-2c2e03b2-SNAPSHOT
+    image: bitcoinscala/bitcoin-s-server:1.9.2-183-2001e86a-SNAPSHOT
     entrypoint: ["/opt/docker/bin/bitcoin-s-server", "--datadir", "/home/bitcoin-s/.bitcoin-s", "--conf", "/opt/docker/docker-application.conf"]
     user: "1000:1000"
     restart: on-failure
@@ -52,6 +52,7 @@ services:
       BITCOIN_S_BITCOIND_PASSWORD: $APP_BITCOIN_RPC_PASS
       BITCOIN_S_SERVER_RPC_PASSWORD: $APP_PASSWORD
       JAVA_OPTS: "-Xmx756m"
+      DISABLE_JLINK: "1"
     ports:
       - "$APP_SUREDBITS_WALLET_P2P_PORT:$APP_SUREDBITS_WALLET_P2P_PORT"
     networks:
