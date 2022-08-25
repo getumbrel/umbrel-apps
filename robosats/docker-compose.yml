@@ -5,15 +5,15 @@ services:
     environment:
       APP_HOST: ${APP_ROBOSATS_IP}
       APP_PORT: ${APP_ROBOSATS_PORT}
-      ROBOSATS_ONION: robosats6tkf3eva7x2voqso3a5wcorsnw34jveyxfqi2fu7oyheasid.onion
 
   web:
-    image: recksato/robosats-client:latest
+    image: recksato/robosats-client:7083423@sha256:35e06c9583f1efbf6765eb91d31420c5deb875e67b22443d6eb8f2ae56c5d483
     restart: on-failure
     stop_grace_period: 1m
     environment:
       TOR_PROXY_IP: ${TOR_PROXY_IP}
       TOR_PROXY_PORT: ${TOR_PROXY_PORT}
+      ROBOSATS_ONION: robosats6tkf3eva7x2voqso3a5wcorsnw34jveyxfqi2fu7oyheasid.onion
     networks:
       default:
         ipv4_address: ${APP_ROBOSATS_IP}
