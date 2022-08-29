@@ -12,8 +12,8 @@ services:
     restart: on-failure
     stop_grace_period: 1m
     volumes:
-      - bitcoin-s-backend-datadir:/home/bitcoin-s/.bitcoin-s
-      - bitcoin-s-frontend-log:/log
+      - ${APP_DATA_DIR}/data/wallet:/home/bitcoin-s/.bitcoin-s
+      - ${APP_DATA_DIR}/data/log:/home/bitcoin-s/.bitcoin-s
     environment:
       LOG_PATH: "/log/"
       BITCOIN_S_HOME: "/home/bitcoin-s/.bitcoin-s/"
@@ -31,11 +31,11 @@ services:
   
   walletserver:
     image: bitcoinscala/bitcoin-s-server:1.9.2-196-c266ba84-SNAPSHOT
-    entrypoint: ["/opt/docker/bin/bitcoin-s-server", "--datadir", "/home/bitcoin-s/.bitcoin-s", "--conf", "/opt/docker/docker-application.conf"]
+    entrypoint: ["/opt/docker/bin/bitcoin-s-server", "--datadir", "/bitcoin-s", "--conf", "/opt/docker/docker-application.conf"]
     user: "1000:1000"
     restart: on-failure
     volumes:
-      - bitcoin-s-backend-datadir:/home/bitcoin-s/.bitcoin-s
+      - ${APP_DATA_DIR}/data/wallet:/bitcoin-s
     environment:
       BITCOIN_S_NODE_MODE: "bitcoind"
       BITCOIN_S_NETWORK: $APP_BITCOIN_NETWORK
@@ -58,22 +58,3 @@ services:
     networks:
       default:
         ipv4_address: $APP_SUREDBITS_WALLET_SERVER_IP
-
-
-volumes:
-  bitcoin-s-backend-datadir:
-    name: "bitcoin-s-backend-datadir"
-    driver: local
-    external: false
-    driver_opts:
-      o: bind
-      type: none
-      device: ${APP_DATA_DIR}/data/wallet
-  bitcoin-s-frontend-log:
-    name: "bitcoin-s-frontend-log"
-    driver: local
-    external: false
-    driver_opts:
-      o: bind
-      type: none
-      device: ${APP_DATA_DIR}/data/log
