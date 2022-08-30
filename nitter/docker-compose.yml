@@ -6,10 +6,13 @@ services:
       PROXY_AUTH_ADD: "false"
 
   web:
+    # Official Nim image used as base image for nitter doesn't offer Arm variant so using a custom image
+    # https://github.com/zedeus/nitter/issues/399#issuecomment-997263495
     image: quay.io/unixfox/nitter@sha256:87fd0349a3d3479bc6b9718441534d2f6b243d676de4ecf449ba66c3ed3ad345
     restart: on-failure
     stop_grace_period: 1m
     init: true
+    # to pleb to figure out how to run non-root
     #user: "1000:1000"
     environment:
       REDIS_HOST: "redis"
