@@ -10,6 +10,7 @@ services:
     image: ceramicwhite/invidious:0.20.1@sha256:03428897ccbb999a3049085e0edeb3f82b71998871db0dd290a407d02e2d98cd
     restart: on-failure
     stop_grace_period: 1m
+    user: "1000:1000"
     init: true
     ports:
       - "3000:3000"
@@ -37,6 +38,7 @@ services:
     image: docker.io/library/postgres:14
     restart: on-failure
     stop_grace_period: 1m
+    user: "1000:1000"
     init: true
     volumes:
       - ${APP_DATA_DIR}/data/postgresdata:/var/lib/postgresql/data
