@@ -2,24 +2,22 @@ services:
   app_proxy:
     environment:
       APP_HOST: $APP_NITTER_IP
-      APP_PORT: $APP_NITTER_PORT
+      APP_PORT: 8080
       PROXY_AUTH_ADD: "false"
 
   web:
     image: quay.io/unixfox/nitter@sha256:87fd0349a3d3479bc6b9718441534d2f6b243d676de4ecf449ba66c3ed3ad345
     restart: on-failure
-    stop_grace_period: 1s
+    stop_grace_period: 1m
     init: true
     #user: "1000:1000"
-    ports:
-      - 8080:8080
     environment:
-      #EXPOSE-PORT: $APP_NITTER_PORT
       REDIS_HOST: "redis"
-      NITTER_HOST: http://${DEVICE_IP}:$APP_NITTER_PORT
     volumes:
       - ${APP_DATA_DIR}/data/nitter:/data
     entrypoint: /entrypoint.sh
+    healthcheck:
+      disable: true
     depends_on:
       - redis
     networks:
@@ -28,10 +26,10 @@ services:
   redis:
     image: redis:6.2.2-buster@sha256:e10f55f92478715698a2cef97c2bbdc48df2a05081edd884938903aa60df6396
     user: "1000:1000"
-    command: "redis-server --save 60 1 --loglevel warning"
+    command: "redis-server --requirepass moneyprintergobrrr"
     restart: "on-failure"
     init: true
-    stop_grace_period: "1s"
+    stop_grace_period: 1m
     volumes:
       - ${APP_DATA_DIR}/data/redis:/data
     networks:
