@@ -1,0 +1,56 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: $APP_INVIDIOUS_IP
+      APP_PORT: $APP_INVIDIOUS_PORT
+
+  invidious:
+    image: quay.io/invidious/invidious:latest
+    # image: quay.io/invidious/invidious:latest-arm64 # ARM64/AArch64 devices
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      # Please read the following file for a comprehensive list of all available
+      # configuration options and their associated syntax:
+      # https://github.com/iv-org/invidious/blob/master/config/config.example.yml
+      INVIDIOUS_CONFIG: |
+        db:
+          dbname: invidious
+          user: umbrel
+          password: moneyprintergobrrr
+          host: invidious-db
+          port: 5432
+        check_tables: true
+        # external_port:
+        # domain:
+        # https_only: false
+        # statistics_enabled: false
+    healthcheck:
+      #test: wget -nv --tries=1 --spider http://127.0.0.1:3000/api/v1/comments/jNQXAC9IVRw || exit 1
+      #interval: 30s
+      #timeout: 5s
+      #retries: 2
+      disable: true
+    depends_on:
+      - invidious-db
+
+  invidious-db:
+    image: docker.io/library/postgres:14
+    restart: unless-stopped
+    volumes:
+      - ${APP_DATA_DIR}/data/postgresdata:/var/lib/postgresql/data
+      - ${APP_DATA_DIR}/data/config/sql:/config/sql
+      - ${APP_DATA_DIR}/data/config/sql/init-invidious-db.sh:/docker-entrypoint-initdb.d/init-invidious-db.sh
+    environment:
+      POSTGRES_DB: invidious
+      POSTGRES_USER: umbrel
+      POSTGRES_PASSWORD: moneyprintergobrrr
+    healthcheck:
+      #test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      disable: true
+
+volumes:
+  postgresdata:
