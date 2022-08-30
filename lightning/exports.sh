@@ -15,6 +15,10 @@ BIN_ARGS+=( "--rpclisten=0.0.0.0:${APP_LIGHTNING_NODE_GRPC_PORT}" )
 BIN_ARGS+=( "--restlisten=0.0.0.0:${APP_LIGHTNING_NODE_REST_PORT}" )
 BIN_ARGS+=( "--tlsautorefresh" )
 
+# Enable database migration for v0.15.1+
+# See https://github.com/lightningnetwork/lnd/releases/tag/v0.15.1-beta
+BIN_ARGS+=( "--db.prune-revocation" )
+
 # We recently added this to the default lnd.conf
 # Adding here too as a super simple way to enable for all existing users.
 # If users want to disable this we should remove this and instead insert it in
