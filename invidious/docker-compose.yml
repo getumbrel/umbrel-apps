@@ -7,35 +7,32 @@ services:
       APP_PORT: 3000
 
   web:
-    image: quay.io/invidious/invidious:latest
-    # image: quay.io/invidious/invidious:latest-arm64 # ARM64/AArch64 devices
+    image: ceramicwhite/invidious:0.20.1@sha256:03428897ccbb999a3049085e0edeb3f82b71998871db0dd290a407d02e2d98cd
     restart: on-failure
     stop_grace_period: 1m
     init: true
     ports:
       - "3000:3000"
     environment:
-      # Please read the following file for a comprehensive list of all available
-      # configuration options and their associated syntax:
-      # https://github.com/iv-org/invidious/blob/master/config/config.example.yml
       INVIDIOUS_CONFIG: |
         db:
           dbname: invidious
           user: umbrel
           password: moneyprintergobrrr
-          host: invidious-db
+          host: postgres
           port: 5432
         check_tables: true
-        # external_port:
-        # domain:
-        # https_only: false
-        # statistics_enabled: false
+        external_port: $APP_INVIDIOUS_PORT
+        domain: http://${DEVICE_HOSTNAME}.local
     healthcheck:
       disable: true
     depends_on:
-      - invidious-db
+      - postgres
+    networks:
+      default:
+        ipv4_address: $APP_INVIDIOUS_IP
 
-  db:
+  postgres:
     image: docker.io/library/postgres:14
     restart: on-failure
     stop_grace_period: 1m
@@ -50,6 +47,6 @@ services:
       POSTGRES_PASSWORD: moneyprintergobrrr
     healthcheck:
       disable: true
-
-
-
+    networks:
+      default:
+        ipv4_address: $APP_INVIDIOUS_DB_IP
