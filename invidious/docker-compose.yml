@@ -12,8 +12,6 @@ services:
     stop_grace_period: 1m
     user: "1000:1000"
     init: true
-    ports:
-      - "3000:3000"
     environment:
       INVIDIOUS_CONFIG: |
         db:
@@ -35,7 +33,7 @@ services:
         ipv4_address: $APP_INVIDIOUS_IP
 
   postgres:
-    image: docker.io/library/postgres:14
+    image: docker.io/library/postgres:14@sha256:befb4cdc1d944bd89784b9caa287cf025f0720f9a02436038124163accd177dc
     restart: on-failure
     stop_grace_period: 1m
     #user: "1000:1000"
