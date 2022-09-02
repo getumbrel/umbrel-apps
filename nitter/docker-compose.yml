@@ -10,14 +10,16 @@ services:
     image: quay.io/unixfox/nitter:build-20220830@sha256:d93da20aea7dbcf117e0f15bb309f5fc55729b19693d203c1c9708a2fe001582
     restart: on-failure
     stop_grace_period: 1m
-    init: true
+    #Image has Tini
+    #init: true
     # to pleb to figure out how to run non-root
     #user: "1000:1000"
     environment:
-      REDIS_HOST: "redis"
+      REDIS_PASS: "moneyprintergobrrr"
+      NITTER_THEME: "auto_(twitter).css"
+      REPLACE_YOUTUBE: "piped.kevin.rock"
     volumes:
       - ${APP_DATA_DIR}/data/nitter:/data
-    entrypoint: /entrypoint.sh
     healthcheck:
       disable: true
     depends_on:
@@ -28,7 +30,7 @@ services:
   redis:
     image: redis:6.2.2-buster@sha256:e10f55f92478715698a2cef97c2bbdc48df2a05081edd884938903aa60df6396
     user: "1000:1000"
-    command: "redis-server --requirepass moneyprintergobrrr"
+    command: "redis-server --save 60 1 --loglevel warning --requirepass moneyprintergobrrr"
     restart: "on-failure"
     init: true
     stop_grace_period: 1m
