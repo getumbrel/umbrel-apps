@@ -1,0 +1,32 @@
+version: "3.7"
+
+services:
+  server:
+    image: ghcr.io/linuxserver/plex:version-1.28.2.6151-914ddd2b3@sha256:d52ffd41863d5731e1b116c8c82e836ffb0b4c2ba41a08108dc82f7030a05294
+    restart: on-failure
+    hostname: "${DEVICE_HOSTNAME}"
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - VERSION=docker
+    ports:
+      - 32400:32400
+      # Plex Companion
+      - 3005:3005/tcp
+      # Roku via Plex Companion
+      - 8324:8324/tcp
+      # Plex DLNA Server
+      - 32469:32469/tcp 
+      - 1900:1900/udp
+      # Network discovery
+      - 32410:32410/udp
+      - 32412:32412/udp
+      - 32413:32413/udp
+      - 32414:32414/udp
+    volumes:
+      - ${APP_DATA_DIR}/data/config:/config
+      - ${APP_DATA_DIR}/data/transcode:/transcode
+      - ${UMBREL_ROOT}/data/storage/downloads:/downloads
+    networks:
+      default:
+        ipv4_address: $APP_PLEX_IP

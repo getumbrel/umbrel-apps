@@ -1,0 +1,1 @@
+export APP_JELLYFIN_IP="10.21.25.4"
