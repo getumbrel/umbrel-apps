@@ -5,24 +5,20 @@ services:
       APP_PORT: 8080
 
   web:
-    # Official Nim image used as base image for nitter doesn't offer Arm variant so using a custom image
-    # https://github.com/zedeus/nitter/issues/399#issuecomment-997263495
-    image: quay.io/unixfox/nitter:build-20220830@sha256:d93da20aea7dbcf117e0f15bb309f5fc55729b19693d203c1c9708a2fe001582
+    # Official Nim image used as base image for nitter doesn't offer Arm variant so using a custom image w/ patch for umbrel
+    # https://github.com/ceramicwhite/umbrel-patch-ci/blob/master/nitter/umbrel.patch
+    image: ceramicwhite/nitter:build-20220906@sha256:6ddb53fe66846ffcded344d1919bee3149b705f04a9347c37b8eaa562695ce81
     restart: on-failure
     stop_grace_period: 1m
-    #Image has Tini
-    #init: true
-    # to pleb to figure out how to run non-root
+    init: true
+    # app is run with su-exec to drop privileges to a non-root user
     #user: "1000:1000"
     environment:
       REDIS_HOST: "${APP_NITTER_REDIS_IP}"
       REDIS_PASS: "moneyprintergobrrr"
       NITTER_THEME: "auto_(twitter).css"
-      REPLACE_YOUTUBE: "piped.kevin.rock"
     volumes:
       - ${APP_DATA_DIR}/data/nitter:/data
-    healthcheck:
-      disable: true
     depends_on:
       - redis
     networks:
@@ -31,10 +27,10 @@ services:
   redis:
     image: redis:6.2.2-buster@sha256:e10f55f92478715698a2cef97c2bbdc48df2a05081edd884938903aa60df6396
     user: "1000:1000"
-    command: "redis-server --save 60 1 --loglevel warning --requirepass moneyprintergobrrr"
     restart: "on-failure"
     init: true
     stop_grace_period: 1m
+    command: "redis-server --save 60 1 --loglevel warning --requirepass moneyprintergobrrr"
     volumes:
       - ${APP_DATA_DIR}/data/redis:/data
     networks:
