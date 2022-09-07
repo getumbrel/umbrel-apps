@@ -5,8 +5,9 @@ services:
     environment:
       APP_HOST: $APP_KRYSTAL_BULL_IP
       APP_PORT: 3001
+  
   web:
-    image: bitcoinscala/oracle-server-ui:1.9.3@sha256:b11c4cc48c126e80bae0c63b263add838b315dea56689954e5e771aa9d3ac0fd
+    image: bitcoinscala/oracle-server-ui:1.9.3@sha256:82eacff09b2a5b7f8bcc5ab61353861cf6674af0164df8c011e102ac501d77c4
     user: "1000:1000"
     restart: on-failure
     stop_grace_period: 1m
@@ -25,8 +26,9 @@ services:
         ipv4_address: $APP_KRYSTAL_BULL_IP
     depends_on: 
       - oracleserver
+  
   oracleserver:
-    image: bitcoinscala/bitcoin-s-oracle-server:1.9.3@sha256:ee3fee0469666b98e29dc753745b29668c640ed16e9abc06e251ff87001822b2
+    image: bitcoinscala/bitcoin-s-oracle-server:1.9.3@sha256:fd1d1460bc3299422bcf30b5b694514a812f6986e549c690e04a5393b0d8e7b0
     entrypoint: ["/opt/docker/bin/bitcoin-s-oracle-server", "--datadir", "/bitcoin-s", "--conf", "/opt/docker/docker-application.conf"]   
     user: "1000:1000"
     restart: on-failure
