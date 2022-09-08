@@ -22,7 +22,11 @@ services:
           port: 5432
         check_tables: true
         external_port: $APP_INVIDIOUS_PORT
-        statistics_enabled: true
+        captcha_enabled: false
+        admins: ["umbrel"]
+        default_user_preferences:
+          feed_menu: ["Trending", "Subscriptions", "Playlists"]
+          default_home: Search
     healthcheck:
       disable: true
     depends_on:
@@ -46,3 +50,4 @@ services:
     networks:
       default:
         ipv4_address: $APP_INVIDIOUS_DB_IP
+        
