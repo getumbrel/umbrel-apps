@@ -1,0 +1,46 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: invidious_web_1
+      APP_PORT: 3000
+
+  web:
+    image: ceramicwhite/invidious:build-53fb6ad@sha256:f4527d65cfcc6e6395c73d3f0c398aecf6c77c95c032f8e7d97d08349cc44385
+    restart: on-failure
+    stop_grace_period: 1m
+    user: "1000:1000"
+    init: true
+    environment:
+      INVIDIOUS_CONFIG: |
+        db:
+          dbname: invidious
+          user: umbrel
+          password: moneyprintergobrrr
+          host: invidious_postgres_1
+          port: 5432
+        check_tables: true
+        external_port: 3420
+        captcha_enabled: false
+        admins: ["umbrel"]
+        default_user_preferences:
+          feed_menu: ["Trending", "Subscriptions", "Playlists"]
+          default_home: Trending
+    healthcheck:
+      disable: true
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:13.7@sha256:03652c675ae177af98ddd50f9f4b4b2cf8ad38d0e116aa68fe670fbc2cf250fc
+    restart: on-failure
+    user: "1000:1000"
+    stop_grace_period: 1m
+    init: true
+    volumes:
+      - ${APP_DATA_DIR}/data/db:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: invidious
+      POSTGRES_USER: umbrel
+      POSTGRES_PASSWORD: moneyprintergobrrr
