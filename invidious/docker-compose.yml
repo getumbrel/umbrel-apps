@@ -3,7 +3,7 @@ version: "3.7"
 services:
   app_proxy:
     environment:
-      APP_HOST: $APP_INVIDIOUS_IP
+      APP_HOST: invidious_web_1
       APP_PORT: 3000
 
   web:
@@ -18,10 +18,10 @@ services:
           dbname: invidious
           user: umbrel
           password: moneyprintergobrrr
-          host: $APP_INVIDIOUS_DB_IP
+          host: invidious_postgres_1
           port: 5432
         check_tables: true
-        external_port: $APP_INVIDIOUS_PORT
+        external_port: 3420
         captcha_enabled: false
         admins: ["umbrel"]
         default_user_preferences:
@@ -31,9 +31,6 @@ services:
       disable: true
     depends_on:
       - postgres
-    networks:
-      default:
-        ipv4_address: $APP_INVIDIOUS_IP
 
   postgres:
     image: postgres:13.7@sha256:03652c675ae177af98ddd50f9f4b4b2cf8ad38d0e116aa68fe670fbc2cf250fc
@@ -47,6 +44,3 @@ services:
       POSTGRES_DB: invidious
       POSTGRES_USER: umbrel
       POSTGRES_PASSWORD: moneyprintergobrrr
-    networks:
-      default:
-        ipv4_address: $APP_INVIDIOUS_DB_IP
