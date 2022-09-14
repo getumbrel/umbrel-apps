@@ -5,4 +5,4 @@ export APP_NEXTCLOUD_REDIS_IP="10.21.21.34"
 export APP_NEXTCLOUD_CRON_IP="10.21.21.35"
 
 local_ips=$(hostname --all-ip-addresses 2> /dev/null) || local_ips=""
-export APP_NEXTCLOUD_TRUSTED_DOMAINS="${APP_DOMAIN}:${APP_NEXTCLOUD_PORT} ${APP_HIDDEN_SERVICE} ${DEVICE_HOSTNAME}:${APP_NEXTCLOUD_PORT} ${local_ips}"
+export APP_NEXTCLOUD_LOCAL_IPS="${local_ips}"
