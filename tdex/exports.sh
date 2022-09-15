@@ -1,0 +1,2 @@
+export APP_TDEX_CONNECT_IP="x.x.x.x"
+export APP_TDEX_CONNECT_PORT="9999"
