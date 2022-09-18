@@ -1,0 +1,18 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: libreddit_web_1
+      APP_PORT: 7420
+
+  web:
+    image: ceramicwhite/libreddit:0.22.9@sha256:00a133da4ae8eb1b7d3ce9af0ca387e2dd929dc6b490736532b5d998a025c362
+    restart: on-failure
+    stop_grace_period: 1m
+    init: true
+    user: "1000:1000"
+    environment:
+      PORT: 7420
+    healthcheck:
+      disable: true
