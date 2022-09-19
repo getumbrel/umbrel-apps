@@ -1,0 +1,2 @@
+export APP_LIDARR_IP="10.21.25.7"
+export APP_LIDARR_PORT=8686

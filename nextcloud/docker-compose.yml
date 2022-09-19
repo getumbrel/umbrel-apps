@@ -34,7 +34,7 @@ services:
         ipv4_address: $APP_NEXTCLOUD_REDIS_IP
 
   web:
-    image: nextcloud:22.1.1-apache@sha256:99d94124b2024c9f7f38dc12144a92bc0d68d110bcfd374169ebb7e8df0adf8e
+    image: nextcloud:22.2.10-apache@sha256:71c4fb75d7c035ea2c840ebc1adf0da144b0c69e39ce925f4a2ea84b7c06db18
     # Currently needs to be run as root, if we run as uid 1000 this fails
     # https://github.com/nextcloud/docker/blob/05026b029d37fc5cd488d4a4a2a79480e39841ba/21.0/apache/entrypoint.sh#L53-L77
     # user: "1000:1000"
@@ -49,7 +49,7 @@ services:
       - MYSQL_USER=nextcloud
       - NEXTCLOUD_ADMIN_USER=umbrel
       - NEXTCLOUD_ADMIN_PASSWORD=${APP_PASSWORD}
-      - NEXTCLOUD_TRUSTED_DOMAINS=${APP_DOMAIN}:${APP_NEXTCLOUD_PORT} ${APP_HIDDEN_SERVICE} ${DEVICE_HOSTNAME}:${APP_NEXTCLOUD_PORT}
+      - NEXTCLOUD_TRUSTED_DOMAINS=${APP_DOMAIN}:${APP_NEXTCLOUD_PORT} ${APP_HIDDEN_SERVICE} ${DEVICE_HOSTNAME}:${APP_NEXTCLOUD_PORT} ${APP_NEXTCLOUD_LOCAL_IPS}
     depends_on:
       - db
       - redis
@@ -58,7 +58,7 @@ services:
         ipv4_address: $APP_NEXTCLOUD_IP
 
   cron:
-    image: nextcloud:22.0.0-apache@sha256:55de721417c16ff110720217406778e16f1b63154d2e8d42fc7913c37dbe6d50
+    image: nextcloud:22.2.10-apache@sha256:71c4fb75d7c035ea2c840ebc1adf0da144b0c69e39ce925f4a2ea84b7c06db18
     # Currently needs to be run as root, if we run as uid 1000 this fails
     # https://github.com/nextcloud/docker/blob/05026b029d37fc5cd488d4a4a2a79480e39841ba/21.0/apache/entrypoint.sh#L53-L77
     # user: "1000:1000"

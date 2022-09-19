@@ -7,7 +7,7 @@ services:
       APP_PORT: 80
 
   jam:
-    image: ghcr.io/joinmarket-webui/joinmarket-webui-standalone:v0.0.9-clientserver-v0.9.6@sha256:f36da8ed2f75b8db8dca34783b1e1ed11d0048270140b1c2cc072b15191e6b6c
+    image: ghcr.io/joinmarket-webui/jam-standalone:v0.1.0-clientserver-v0.9.8@sha256:4067e86e97b4342ee27021b31de8b31394d640e066f850acbcf4fc9e72c56302
     restart: on-failure
     stop_grace_period: 1m
     init: true
@@ -19,31 +19,14 @@ services:
       ENSURE_WALLET: "true"
       APP_USER: umbrel
       APP_PASSWORD: "${APP_PASSWORD}"
-      jm_tor_control_host: "${APP_ID}.tor"
-      jm_tor_control_port: 29051
-      jm_onion_socks5_host: "${TOR_PROXY_IP}"
-      jm_onion_socks5_port: "${TOR_PROXY_PORT}"
-      jm_socks5_host: "${TOR_PROXY_IP}"
-      jm_socks5_port: "${TOR_PROXY_PORT}"
+      jm_network: $APP_BITCOIN_NETWORK
       jm_rpc_host: $APP_BITCOIN_NODE_IP
       jm_rpc_port: $APP_BITCOIN_RPC_PORT
       jm_rpc_user: $APP_BITCOIN_RPC_USER
       jm_rpc_password: "${APP_BITCOIN_RPC_PASS}"
       jm_rpc_wallet_file: jam_default
-      jm_network: $APP_BITCOIN_NETWORK
       jm_max_cj_fee_abs: 300000 # in sats
       jm_max_cj_fee_rel: 0.0003 # 0.03%
     networks:
       default:
         ipv4_address: $APP_JAM_IP
-
-  tor:
-    image: getumbrel/tor:0.4.7.8@sha256:2ace83f22501f58857fa9b403009f595137fa2e7986c4fda79d82a8119072b6a
-    user: "1000:1000"
-    restart: on-failure
-    volumes:
-      - ${APP_DATA_DIR}/torrc:/etc/tor/torrc:ro
-      - ${TOR_DATA_DIR}:/data
-    environment:
-      HOME: "/tmp"
-    hostname: "${APP_ID}.tor"

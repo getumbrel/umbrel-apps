@@ -1,0 +1,2 @@
+export APP_RADARR_IP="10.21.25.5"
+export APP_RADARR_PORT=7878
