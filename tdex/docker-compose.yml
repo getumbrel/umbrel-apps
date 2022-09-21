@@ -3,8 +3,8 @@ version: "3.8"
 services:
   app_proxy:
     environment:
-      APP_HOST: $APP_TDEX_CONNECT_IP
-      APP_PORT: $APP_TDEX_CONNECT_PORT
+      APP_HOST: tdex_dashboard_1
+      APP_PORT: 8080
   
   tdexd:
     image: ghcr.io/tdex-network/tdexd:v0.8.16@sha256:5e8122f25a7ab924a177cefab9609a28a7842ec9e6bd5511ad77c3aa61ffa21b
@@ -12,7 +12,7 @@ services:
     restart: on-failure
     stop_grace_period: 1m
     ports:
-      - 9090:9090
+      - 9095:9090
     volumes:
       - ${APP_DATA_DIR}/tdex-data:/home/tdex/.tdex-daemon
     environment:
@@ -29,5 +29,3 @@ services:
     restart: on-failure
     environment:
       USE_PROXY: "false"
-    ports:
-      - 8080:8080
