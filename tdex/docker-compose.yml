@@ -7,7 +7,7 @@ services:
       APP_PORT: 8080
   
   tdexd:
-    image: ghcr.io/tdex-network/tdexd:v0.8.16@sha256:5e8122f25a7ab924a177cefab9609a28a7842ec9e6bd5511ad77c3aa61ffa21b
+    image: ghcr.io/tdex-network/tdexd:v0.8.17@sha256:10c648982648c71c7c31456c1fc64a3f5c03763a1879cc926e321cd6081c2415
     tty: true
     restart: on-failure
     stop_grace_period: 1m
@@ -25,7 +25,9 @@ services:
       TDEX_CONNECT_PROTO: http
 
   dashboard:
-    image: ghcr.io/tdex-network/dashboard:v0.1.35@sha256:9f388375966e7ac6ad1909b0acb2922a7650ab0f7305862935140a5a155dca83
+    image: ghcr.io/tdex-network/dashboard:v0.1.36@sha256:57bc9a2d1a4db7dfe4208de6bbec9edbfaad69133ef80c788a984466b9ebbc90
     restart: on-failure
     environment:
       USE_PROXY: "false"
+      IS_PACKAGED: "true"
+      TDEX_DAEMON_URL: "tdexd:9090"
