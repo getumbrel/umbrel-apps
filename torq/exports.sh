@@ -1,0 +1,3 @@
+export APP_TORQ_IP="10.21.21.109"
+export APP_TORQ_PORT="7028"
+export APP_TORQ_DATA_DIR="${EXPORTS_APP_DIR}/data/torq"
