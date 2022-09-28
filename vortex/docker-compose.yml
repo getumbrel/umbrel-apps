@@ -1,0 +1,47 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: $APP_VORTEX_IP
+      APP_PORT: 3000
+
+  gui:
+    image: lnvortex/vortex-gui:master
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      VORTEX_RPC_URL: "http://${APP_VORTEX_SERVER_IP}:2522"
+      VORTEX_RPC_USER: "user"
+      VORTEX_RPC_PASSWORD: $APP_PASSWORD
+    networks:
+      default:
+        ipv4_address: $APP_VORTEX_IP
+    depends_on: 
+      - vortexd
+
+  vortexd:
+    image: lnvortex/vortexd:master
+    entrypoint: [ "/opt/docker/bin/vortexd", "--datadir", "/ln-vortex", "--conf", "/opt/docker/docker-application.conf" ]
+    user: "1000:1000"
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data:/ln-vortex
+      - ${APP_LIGHTNING_NODE_DATA_DIR}:/lnd:ro
+    environment:
+      BITCOIN_S_NETWORK: $APP_BITCOIN_NETWORK
+      BITCOIN_S_PROXY_ENABLED: "true"
+      BITCOIN_S_TOR_ENABLED: "false"
+      BITCOIN_S_TOR_PROVIDED: "true"
+      BITCOIN_S_SOCKS5_PROXY: "${TOR_PROXY_IP}:${TOR_PROXY_PORT}"
+
+      VORTEX_RPC_USER: "user"
+      VORTEX_RPC_PASSWORD: $APP_PASSWORD
+      VORTEX_RPC_PORT: "2522"
+
+      VORTEX_LND_RPC_URI: "$APP_LIGHTNING_NODE_IP:$APP_LIGHTNING_NODE_GRPC_PORT"
+      VORTEX_LND_DATADIR: "/lnd/"
+    networks:
+      default:
+        ipv4_address: $APP_VORTEX_SERVER_IP
