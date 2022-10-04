@@ -4,10 +4,10 @@ services:
   app_proxy:
     environment:
       APP_HOST: tdex_dashboard_1
-      APP_PORT: 8080
+      APP_PORT: 3030
   
   tdexd:
-    image: ghcr.io/tdex-network/tdexd:v0.8.17@sha256:10c648982648c71c7c31456c1fc64a3f5c03763a1879cc926e321cd6081c2415
+    image: ghcr.io/tdex-network/tdexd:v0.8.19@sha256:5a2c0db9f74812e67aa98f50f396e81edd23ef49cb6797b084027ba6124db707
     tty: true
     restart: on-failure
     stop_grace_period: 1m
@@ -21,13 +21,18 @@ services:
       TDEX_OPERATOR_LISTENING_PORT: 9090
       TDEX_TRADE_LISTENING_PORT:  9090
       TDEX_NO_OPERATOR_TLS: "true"
-      TDEX_CONNECT_ADDR: "tdexd:9090"
-      TDEX_CONNECT_PROTO: http
 
   dashboard:
-    image: ghcr.io/tdex-network/dashboard:v0.1.36@sha256:57bc9a2d1a4db7dfe4208de6bbec9edbfaad69133ef80c788a984466b9ebbc90
+    image: ghcr.io/tdex-network/dashboard:v0.1.39@sha256:4888ec6f1baa2244d068edbb0b0d532f67399cfef838ab3fe536b8c4280cd036
     restart: on-failure
     environment:
       USE_PROXY: "false"
       IS_PACKAGED: "true"
-      TDEX_DAEMON_URL: "tdexd:9090"
+  
+  caddy:
+    image: caddy:alpine
+    restart: on-failure
+    ports:
+      - "3030:3030"
+    volumes:
+      - ${APP_DATA_DIR}/caddy-data/Caddyfile:/etc/caddy/Caddyfile
