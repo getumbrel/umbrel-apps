@@ -104,7 +104,10 @@ version: "3.7"
 services:
   app_proxy:
     environment:
-      APP_HOST: <web-container-ip-address>
+      # <app-id>_<web-container-name>_1
+      # e.g. 'btc-rpc-explorer_web_1'
+      # Note that the '_1' at the end is needed
+      APP_HOST: <web-container-dns-name>
       APP_PORT: <web-container-port-number>
   
   web:
@@ -250,7 +253,7 @@ services:
     stop_grace_period: 1m
     environment:
       PORT: 8080
-      
+
       # Bitcoin Core connection details
       BTCEXP_BITCOIND_HOST: $APP_BITCOIN_NODE_IP
       BTCEXP_BITCOIND_PORT: $APP_BITCOIN_RPC_PORT
