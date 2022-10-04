@@ -198,11 +198,11 @@ defaultPassword: ""
 
 The `dependencies` section within the app manifest gives Umbrel a list of app IDs that must be already installed in order for the user to install BTC RPC Explorer and also function.
 
-The `exports.sh` shell script is a simple script to export environmental variables that your `docker-compose.yml` can read. These env. vars. are also accessible when other apps start through their `docker-compose.yml` files.
+The `exports.sh` shell script is a simple script to export environmental variables that your `docker-compose.yml` can read. These env. vars. are also accessible when other apps start through their `docker-compose.yml` files. Most applications will not require this feature.
 
+For example:
 ```sh
-export APP_BTC_RPC_EXPLORER_IP="10.21.21.12"
-export APP_BTC_RPC_EXPLORER_PORT="3002"
+export APP_BTC_RPC_EXPLORER_ADDRESS_API="electrumx"
 ```
 
 4\. For our app, we'll update `<docker-image>` with `getumbrel/btc-rpc-explorer`, `<tag>` with `v2.0.2`, and `<port>` with `3002`. Since BTC RPC Explorer doesn't need to store any persistent data and doesn't require access to Bitcoin Core's or LND's data directories, we can remove the entire `volumes` block.
@@ -219,17 +219,15 @@ version: "3.7"
 services:
   app_proxy:
     environment:
-      APP_HOST: $APP_BTC_RPC_EXPLORER_IP
-      APP_PORT: $APP_BTC_RPC_EXPLORER_PORT
+      APP_HOST: btc-rpc-explorer_web_1
+      APP_PORT: 8080
 
   web:
     image: getumbrel/btc-rpc-explorer:v2.0.2
     restart: on-failure
     stop_grace_period: 1m
-    environment: ...
-    networks:
-      default:
-        ipv4_address: $APP_BTC_RPC_EXPLORER_IP
+    environment:
+      PORT: 8080
 
 ```
 
@@ -243,14 +241,16 @@ version: "3.7"
 services:
   app_proxy:
     environment:
-      APP_HOST: $APP_BTC_RPC_EXPLORER_IP
-      APP_PORT: $APP_BTC_RPC_EXPLORER_PORT
+      APP_HOST: btc-rpc-explorer_web_1
+      APP_PORT: 8080
       
   web:
     image: getumbrel/btc-rpc-explorer:v2.0.2
     restart: on-failure
     stop_grace_period: 1m
     environment:
+      PORT: 8080
+      
       # Bitcoin Core connection details
       BTCEXP_BITCOIND_HOST: $APP_BITCOIN_NODE_IP
       BTCEXP_BITCOIND_PORT: $APP_BITCOIN_RPC_PORT
@@ -270,9 +270,6 @@ services:
       BTCEXP_NO_RATES: "true"
       BTCEXP_RPC_ALLOWALL: "false"
       BTCEXP_BASIC_AUTH_PASSWORD: ""  
-    networks:
-      default:
-        ipv4_address: $APP_BTC_RPC_EXPLORER_IP
 
 ```
 
