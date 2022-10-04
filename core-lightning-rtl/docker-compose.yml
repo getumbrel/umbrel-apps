@@ -7,12 +7,12 @@ services:
       APP_PORT: 3000
 
   rtl:
-    image: shahanafarooqui/rtl:0.12.3@sha256:b1327ecfddae5f40c4c985e31c2bc158c4697a274b61bf84acfb27486d05c5bf
+    image: shahanafarooqui/rtl:0.13.1@sha256:68f837be0acae9a19fed4c4e6de0408f809b8866a360fc39e274ea2a2d61cc88
     restart: on-failure
     environment:
       PORT: 3000
       APP_PASSWORD: $APP_PASSWORD
-      LN_IMPLEMENTATION: CLT
+      LN_IMPLEMENTATION: CLN
       LN_SERVER_URL: http://${APP_CORE_LIGHTNING_REST_IP}:${APP_CORE_LIGHTNING_REST_PORT}/v1
       MACAROON_PATH: /c-lightning-rest/certs
       RTL_CONFIG_PATH: /data/
