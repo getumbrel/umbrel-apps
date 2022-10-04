@@ -7,14 +7,14 @@ services:
       APP_PORT: 8000
 
   web:
-    image: ghcr.io/itchysats/itchysats/taker:0.6.1@sha256:5ad0baea350bee41b6e828030ff37f7bb61359d381c7afd15f874ee2bf9d6c62
+    image: ghcr.io/itchysats/itchysats/taker:0.7.0@sha256:0c29162897a6c2bc2093373306f920400a0718960e1e4b1d80bd44beb485a498
     restart: on-failure
     stop_grace_period: 1m
     volumes:
       - ${APP_DATA_DIR}/data:/data
     command:
       - --password=$APP_PASSWORD
-      - --umbrel-seed=$APP_SEED
+      - --app-seed=$APP_SEED
       - $APP_BITCOIN_NETWORK
       - --electrum=tcp://$APP_ELECTRS_NODE_IP:$APP_ELECTRS_NODE_PORT
     environment:
