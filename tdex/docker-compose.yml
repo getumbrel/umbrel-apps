@@ -21,7 +21,7 @@ services:
       # these vars are used to generate the connect URL
       # we assume to always show the external endpoint
       # reachable remotely by other dashboards via Tor
-      TDEX_CONNECT_ADDR: "$APP_HIDDEN_SERVICE"
+      TDEX_CONNECT_ADDR: "$APP_TDEX_DAEMON_HIDDEN_SERVICE"
       TDEX_CONNECT_PROTO: http
     
   dashboard:
@@ -30,7 +30,7 @@ services:
     environment:
       USE_PROXY: "false"
       IS_PACKAGED: "true"
-      TRADER_HIDDEN_SERVICE:  "$APP_TDEX_TRADER_HIDDEN_SERVICE"
+      TRADER_HIDDEN_SERVICE:  "$APP_TDEX_DAEMON_HIDDEN_SERVICE"
   
   caddy:
     image: caddy:2.6.1-alpine@sha256:21dbf9101c1eae0e2228f386eefab509d462710c2da97ba45d61c083f3e74fc1
