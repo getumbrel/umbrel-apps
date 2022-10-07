@@ -1,0 +1,40 @@
+version: "3.8"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: tdex_caddy_1
+      APP_PORT: 8080
+  
+  tdexd:
+    image: ghcr.io/tdex-network/tdexd:v0.8.19@sha256:5a2c0db9f74812e67aa98f50f396e81edd23ef49cb6797b084027ba6124db707
+    tty: true
+    restart: on-failure
+    stop_grace_period: 1m
+    volumes:
+      - ${APP_DATA_DIR}/tdex-data:/home/tdex/.tdex-daemon
+    environment:
+      TDEX_LOG_LEVEL: 5
+      TDEX_EXPLORER_ENDPOINT: https://liquid.network/liquid/api
+      TDEX_OPERATOR_LISTENING_PORT: 9090
+      TDEX_TRADE_LISTENING_PORT:  9090
+      TDEX_NO_OPERATOR_TLS: "true"
+      # these vars are used to generate the connect URL
+      # we assume to always show the external endpoint
+      # reachable remotely by other dashboards via Tor
+      TDEX_CONNECT_ADDR: "$APP_HIDDEN_SERVICE"
+      TDEX_CONNECT_PROTO: http
+
+  dashboard:
+    image: ghcr.io/tdex-network/dashboard:v0.1.41@sha256:8c21afc39b9bcad02724ed084e4540c60b3ae04c1f085a06f854f1e0dcb857cb
+    restart: on-failure
+    environment:
+      USE_PROXY: "false"
+      IS_PACKAGED: "true"
+      TRADER_HIDDEN_SERVICE:  "$APP_TDEX_TRADER_HIDDEN_SERVICE"
+  
+  caddy:
+    image: caddy:2.6.1-alpine@sha256:21dbf9101c1eae0e2228f386eefab509d462710c2da97ba45d61c083f3e74fc1
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/caddy-data/Caddyfile:/etc/caddy/Caddyfile
