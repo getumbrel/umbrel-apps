@@ -203,7 +203,7 @@ The `dependencies` section within the app manifest gives Umbrel a list of app ID
 
 The `exports.sh` shell script is a simple script to export environmental variables that your `docker-compose.yml` can read. These env. vars. are also accessible when other apps start through their `docker-compose.yml` files. Most applications will not require this feature.
 
-For example:
+If we (for example) wanted to share BTC RPC Explorer's Address API with other apps; that would look like this:
 ```sh
 export APP_BTC_RPC_EXPLORER_ADDRESS_API="electrumx"
 ```
@@ -230,7 +230,7 @@ services:
     restart: on-failure
     stop_grace_period: 1m
     environment:
-      PORT: 8080
+      BTCEXP_PORT: 8080
 
 ```
 
