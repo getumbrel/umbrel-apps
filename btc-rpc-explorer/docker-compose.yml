@@ -3,8 +3,8 @@ version: "3.7"
 services:
   app_proxy:
     environment:
-      APP_HOST: $APP_BTC_RPC_EXPLORER_IP
-      APP_PORT: $APP_BTC_RPC_EXPLORER_PORT
+      APP_HOST: btc-rpc-explorer_web_1
+      APP_PORT: 8080
 
   web:
     image: getumbrel/btc-rpc-explorer:v3.3.0@sha256:cfd14f8e722cfbf1ad106ba224569c8babe685422461a641abc210e13913c636
@@ -13,6 +13,7 @@ services:
     environment:
       # Docker requirements
       BTCEXP_HOST: 0.0.0.0
+      BTCEXP_PORT: 8080
       # Bitcoin Core
       BTCEXP_BITCOIND_HOST: $APP_BITCOIN_NODE_IP
       BTCEXP_BITCOIND_PORT: $APP_BITCOIN_RPC_PORT
@@ -32,6 +33,3 @@ services:
       # Disable RPC
       BTCEXP_RPC_ALLOWALL: "false"
       BTCEXP_BASIC_AUTH_PASSWORD: ""
-    networks:
-      default:
-        ipv4_address: $APP_BTC_RPC_EXPLORER_IP
