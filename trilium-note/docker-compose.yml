@@ -1,0 +1,17 @@
+version: "3.7"
+
+services:
+  server:
+    image: zadam/trilium:0.55.1@sha256:9bf48a49359cd567bb8e9ce87c1d310713ba98ac8d517d75b07b8de907525077
+    restart: on-failure
+    hostname: "${DEVICE_HOSTNAME}"
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - VERSION=docker
+      - TRILIUM_DATA_DIR=/home/node/trilium-data
+    ports:
+      - 8080:8080
+    volumes:
+      - ${UMBREL_ROOT}/data/storage/trilium:/home/node/trilium-data
+
