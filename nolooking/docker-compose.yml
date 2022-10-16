@@ -1,0 +1,29 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      # nolooking_1
+      APP_HOST: $APP_NOLOOKING_IP
+      APP_PORT: 4444
+      PROXY_AUTH_ADD: "false"
+  
+  nolooking:
+    image: satsale/nolooking:0.1.0
+    restart: on-failure
+    stop_grace_period: 1m
+    volumes:
+      - ${APP_LIGHTNING_NODE_DATA_DIR}:/lnd:ro
+    environment:
+      LND_DATA_DIR: $APP_LIGHTNING_NODE_DATA_DIR
+      LND_HOST: $APP_LIGHTNING_NODE_IP
+      DEVICE_DOMAIN_NAME: $DEVICE_DOMAIN_NAME
+      LND_GRPC_PORT: $APP_LIGHTNING_NODE_GRPC_PORT
+      MACAROON_FILE: /lnd/data/chain/bitcoin/${APP_BITCOIN_NETWORK}/admin.macaroon
+      TLS_FILE: /lnd/tls.cert
+      APP_PASSWORD: $APP_PASSWORD
+      APP_HIDDEN_SERVICE: $APP_HIDDEN_SERVICE
+
+    networks:
+        default:
+          ipv4_address: $APP_NOLOOKING_IP
