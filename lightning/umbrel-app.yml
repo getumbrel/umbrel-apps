@@ -2,7 +2,7 @@ manifestVersion: 1
 id: lightning
 category: Finance
 name: Lightning Node
-version: "0.15.2-beta"
+version: "0.15.3-beta"
 tagline: Run your personal Lightning Network node
 description: >-
   Run your personal Lightning Network node, and join the future of Bitcoin today.
@@ -22,10 +22,16 @@ description: >-
 
   An official app from Umbrel.
 releaseNotes: >-
-  This update includes LND v0.15.2, an emergency hotfix release to fix a bug that can cause LND nodes to be unable to parse certain large blocks.
-
   
-  This release contains no major features, and is instead just a hotfix applied on top of the last version.
+  - Bugfix: A bug has been fixed where the responder of a zero-conf channel could forget about the channel after a hard-coded 2016 blocks.
+
+  - Bugfix: A bug where LND wouldn't send a ChannelUpdate during a channel open has been fixed.
+
+  - Bugfix: A bug has been fixed that caused fee estimation to be incorrect for taproot inputs when using the SendOutputs call.
+
+  - Bugfix: A bug has been fixed that could cause lnd to underpay for co-op close transaction when or both of the outputs used a P2TR addresss.
+
+  - Taproot: Add p2tr address type to account import.
 developer: Umbrel
 website: https://umbrel.com
 dependencies:
