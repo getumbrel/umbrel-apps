@@ -1,6 +1,11 @@
 version: "3.7"
 
 services:
+  app_proxy:
+    environment:
+      APP_HOST: trilium-note_server_1
+      APP_PORT: 8080
+
   server:
     image: zadam/trilium:0.55.1@sha256:9bf48a49359cd567bb8e9ce87c1d310713ba98ac8d517d75b07b8de907525077
     restart: on-failure
@@ -10,8 +15,5 @@ services:
       - PGID=1000
       - VERSION=docker
       - TRILIUM_DATA_DIR=/data
-    ports:
-      - 8080:8080
     volumes:
       - ${APP_DATA_DIR}/data:/data
-
