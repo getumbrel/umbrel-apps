@@ -1,1 +1,2 @@
 export APP_LNPLUS_IP="10.21.21.77"
+export APP_LNPLUS_PORT="3777"
