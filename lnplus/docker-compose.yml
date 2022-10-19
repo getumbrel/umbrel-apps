@@ -3,16 +3,16 @@ version: "3.7"
 services:
   app_proxy:
     environment:
-      APP_HOST: $APP_LNPLUS_IP
-      APP_PORT: $APP_LNPLUS_PORT
+      APP_HOST: lnplus_web_1
+      APP_PORT: 3777
   web:
-    image: lightningnetworkplus/lnpclient:v0.1.12@sha256:fbd6deb094972b399ac693faee461bfb2808f183b36ad765e93dac9dab361418
+    image: lightningnetworkplus/lnpclient:v0.1.13@sha256:80bf9ab775fd397dbe7cdecbb928b9978cbb973578692cce9e508b1bb1b22780
     restart: on-failure
     stop_grace_period: 1m
     volumes:
       - ${APP_LIGHTNING_NODE_DATA_DIR}:/lnd:ro
     environment:
-      APP_LNPLUS_RAILS_ENVIRONMENT: $APP_LNPLUS_RAILS_ENVIRONMENT
+      RAILS_ENV: "production"
       LN_IMPLEMENTATION: "LND"
       LN_SERVER_URL: $APP_LIGHTNING_NODE_IP:$APP_LIGHTNING_NODE_GRPC_PORT/
       MACAROON_PATH: "/lnd/data/chain/bitcoin/$APP_BITCOIN_NETWORK/admin.macaroon"
