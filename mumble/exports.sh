@@ -1,0 +1,2 @@
+export APP_MUMBLE_IP="10.21.21.82"
+export APP_MUMBLE_PORT="64738"

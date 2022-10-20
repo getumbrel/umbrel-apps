@@ -1,0 +1,31 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: $APP_MUMBLE_IP
+      APP_PORT: $APP_MUMBLE_PORT
+  
+  server:
+    image: olwe1/mumble-server:latest@sha256:822aed078cbe6f558718bf724807b1970964b3e49098a50dc6c4f080a78384e3
+    restart: on-failure
+    stop_grace_period: 1m
+    ports:
+      - ${APP_MUMBLE_PORT}:${APP_MUMBLE_PORT}
+      - ${APP_MUMBLE_PORT}:${APP_MUMBLE_PORT}/udp
+    volumes:
+      - ${APP_DATA_DIR}/data:/mumble
+    environment:
+      - VIRTUAL_HOST=${APP_DOMAIN}
+      - MUMBLE_SUPERUSER_PASSWORD=${APP_PASSWORD}
+
+  web:
+    image: getumbrel/gotty:v1.0.1@sha256:100571d271cfbae25603acac216afce511eece9961218c6db427e0fa4a58716a
+    restart: on-failure
+    stop_grace_period: 1m
+    command: --port $APP_MUMBLE_PORT --index "/mumble/index.html" --title-format "Mumble Server" bash -c 'tail -n 10000 -f /mumble/mumble.log'
+    volumes:
+      - ${APP_DATA_DIR}/data:/mumble
+    networks:
+      default:
+        ipv4_address: $APP_MUMBLE_IP
