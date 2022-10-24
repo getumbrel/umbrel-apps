@@ -1,0 +1,15 @@
+version: "2.1"
+
+services:
+  server:
+    image: linuxserver/mylar3:0.6.9@sha256:d07a8e6311fa24770c59c4f4690857b833ba2e9c087ec70b3c6684ea14e774ca
+    restart: on-failure
+    environment:
+      - PUID=1000
+      - PGID=1000
+    volumes:
+      - ${APP_DATA_DIR}/data/config:/config
+      - ${APP_DATA_DIR}/data/comics:/comics
+      - ${APP_DATA_DIR}/data/downloads:/downloads
+    ports:
+      - 8090:8090
