@@ -1,0 +1,31 @@
+version: "2.1"
+
+services:
+  server:
+    image: linuxserver/piwigo:13.1.0
+    restart: on-failure
+    environment:
+      - PUID=1000
+      - PGID=1000
+    depends_on:
+      - db
+    volumes:
+      - ${APP_DATA_DIR}/data/config:/config
+      - ${APP_DATA_DIR}/data/gallery:/gallery
+    ports:
+      - 8334:80
+
+  db:
+    image: mariadb:10.5.12
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - MYSQL_ROOT_PASSWORD=password
+      - MYSQL_DATABASE=piwigo #optional
+      - MYSQL_USER=piwigo #optional
+      - MYSQL_PASSWORD=piwigo
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data/db:/config
+    ports:
+      - 3301:3306
