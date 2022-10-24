@@ -1,0 +1,14 @@
+version: "2.1"
+
+services:
+  server:
+    image: linuxserver/kdenlive:421.12.3
+    restart: on-failure
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - SUBFOLDER=/
+    volumes:
+      - ${APP_DATA_DIR}/data/config:/config
+    ports:
+      - 3000:3000
