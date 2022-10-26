@@ -2,12 +2,12 @@ version: "2.1"
 
 services:
   server:
-    image: linuxserver/piwigo:13.1.0
+    image: linuxserver/piwigo:13.1.0@sha256:6dae3dccb7bb4fb2bcdcd6fdfd329713692464c0e8cf2be96eb2b3eba0f96b4a
     restart: on-failure
     environment:
       - PUID=1000
       - PGID=1000
-    depends_on:
+    links:
       - db
     volumes:
       - ${APP_DATA_DIR}/data/config:/config
@@ -16,7 +16,10 @@ services:
       - 8334:80
 
   db:
-    image: mariadb:10.5.12
+    image: mariadb:10.5.12@sha256:f0e9a95a715f5f1233f0513b6ccc83e2d5692cd787bc9425e11cef667cf086ec
+    container_name: piwigo-db
+    volumes:
+       - ./piwigo-db:/var/lib/mysql
     environment:
       - PUID=1000
       - PGID=1000
@@ -25,7 +28,3 @@ services:
       - MYSQL_USER=piwigo #optional
       - MYSQL_PASSWORD=piwigo
     restart: on-failure
-    volumes:
-      - ${APP_DATA_DIR}/data/db:/config
-    ports:
-      - 3301:3306
