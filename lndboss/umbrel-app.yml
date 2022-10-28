@@ -2,12 +2,13 @@ manifestVersion: 1
 id: lndboss
 category: Lightning Node Management
 name: LndBoss
-version: "2.0.1"
+version: "2.9.2"
 tagline: A GUI for BalanceOfSatoshis
 description: LndBoss is a GUI for BalanceOfSatoshis.
   It is a tool that makes it easy to run your favorite
   bos commands and helps manage your lightning node.
   You can schedule jobs to automatically rebalance channels,
+  auto update fees based on policies, open balanced/group channels with other nodes,
   integration with amboss to post updates and much more.
 developer: Nitesh Balusu
 website: https://github.com/niteshbalusu11
@@ -24,49 +25,46 @@ path: ""
 defaultUsername: ""
 defaultPassword: ""
 releaseNotes: >
-  - 2.0.1 (2022-09-06)
-    Fixed a bug where cronjob schedule is not getting parsed
+  - 2.9.2 (2022-10-26)
+    (Important Bug Fix): Fix batch open command where opens are failing with amount parsing
+    and wrong rows getting dropped.
+    Update bos dependency to fix create and open group channel commands for taproot inputs.
 
-  - 2.0.0 (2022-09-06)
-    Breaking change: Drop support for scheduled rebalances encoding in invoices and move to a JSON file in .bosgui directory.
+  - 2.8.1 (2022-10-25)
+    Added support for auto fee policy based on channel inactivity periods.
+    Fixed positioning of inactivity period of fees scheduler page.
 
-  - 1.25.0 (2022-09-02)
-    Support for peers and tags in rebalances
+  - 2.7.1 (2022-10-23)
+    Fixed a bug where fee policy updates don't work for new channels.
 
-  - 1.24.0 (2022-09-02)
-    Added ability to turn amboss health check and automated rebalancing from UI.
+  - 2.7.0 (2022-10-11)
+    Added support for bos create-group-channel
+    Added support for bos join-group-channel
+    Bump dependencies
 
-  - 1.23.0 (2022-08-30)
-    Added month to date accounting on dashboard
-    Added copy to clipboard on dashboard and for chain-deposit command output
-    Fixed a bug which caused validation issues in call command
-    Fixed loading dialog timing issue on dashboard
+  - 2.6.0 (2022-10-06)
+    Add openChannel, closeChannel and sendToChainAddress to call command.
+    Fixed a bug where numbers and boolean types were not getting converted.
 
-  - 1.22.0 (2022-08-28)
-    Added support for bos call command
+  - 2.5.0 (2022-10-05)
+    Added filter variable BLOCKS_SINCE_LAST_CHANNEL in peers command.
+    Added support for tags in bos forwards command.
+    Bumps several dependencies.
 
-  - 1.21.1 (2022-08-24)
-    Fix npmignore file
+  - 2.4.0 (2022-10-04)
+    Added support for scheduling automated fee/channel policies based on conditions.
+    Fixed tags command client page.
+    Fixed error messages on dashboard page.
 
-  - 1.21.0 (2022-08-24)
-    Added start and end flags to chart commands
-      Better connection check on dashboard
+  - 2.3.0 (2022-09-23)
+    Added support for bos fees command
+    Bump dependencies
 
-  - 1.20.0 (2022-08-22)
-    Added support for bos lnurl command (auth, channel, pay, withdraw)
+  - 2.2.0 (2022-09-19)
+    Added for and query flags for chart-payments-received command
+    Change password validation requirements to only support length of 10 characters
 
-  - 1.19.0 (2022-08-19)
-    Added support for bos pay command
-      Fixed bug for auto rebalance parsing.
-
-  - 1.18.0 (2022-08-15)
-    Added support for a dashboard page to view node and accounting summary.
-      Removed react-jss and strip-ansi dependencies.
-
-  - 1.17.2 (2022-08-08)
-    Added support for graph summary for bos graph command.
-
-  - 1.17.0 (2022-08-08)
-    Added support for bos graph command
+  - 2.1.0 (2022-09-16)
+    Support for bos open command for batch open and zero conf channels
 submitter: Nitesh Balusu
 submission: https://github.com/getumbrel/umbrel-apps/pull/65
