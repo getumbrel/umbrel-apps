@@ -300,8 +300,7 @@ Once Umbrel has started, the Web UI will be accessible at the IP address of the 
 
 ```sh
 cd umbrel
-sudo ./scripts/repo set https://github.com/<username>/umbrel-apps.git
-sudo ./scripts/repo update
+sudo ./scripts/repo checkout https://github.com/<username>/umbrel-apps.git
 ```
 
 3\. And finally, it's time to install our app:
@@ -349,8 +348,7 @@ After the VM has booted, we can verify if the Umbrel dashboard is accessible at 
 
 ```sh
 cd getumbrel/umbrel
-sudo ./scripts/repo set https://github.com/<username>/umbrel-apps.git
-sudo ./scripts/repo update
+sudo ./scripts/repo checkout https://github.com/<username>/umbrel-apps.git
 ```
 
 4\. And finally, it's time to install our app:
@@ -385,8 +383,7 @@ ssh umbrel@umbrel.local
 2\. Next, we'll switch to the forked remote app repo:
 
 ```sh
-sudo ./scripts/repo set https://github.com/<username>/umbrel-apps.git
-sudo ./scripts/repo update
+sudo ./scripts/repo checkout https://github.com/<username>/umbrel-apps.git
 ```
 
 3\. Once the repo has updated, it's time to test our app:
