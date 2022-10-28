@@ -316,7 +316,7 @@ That's it! Our BTC RPC Explorer app should now be accessible at http://umbrel-de
 Let's commit and push our changes to our forked Umbrel app repo then run:
 
 ```sh
-sudo ./scripts/repo update
+sudo ./scripts/repo checkout https://github.com/<username>/umbrel-apps.git
 sudo ./scripts/app update btc-rpc-explorer
 ```
 
@@ -364,7 +364,7 @@ That's it! Our BTC RPC Explorer app should now be accessible at http://umbrel-de
 Let's commit and push our changes to our forked Umbrel app repo then run:
 
 ```sh
-sudo ./scripts/repo update
+sudo ./scripts/repo checkout https://github.com/<username>/umbrel-apps.git
 sudo ./scripts/app update btc-rpc-explorer
 ```
 
