@@ -55,6 +55,7 @@ services:
       BTCPAY_BTCEXPLORERURL: "http://$APP_BTCPAY_SERVER_NBXPLORER_IP:32838"
       BTCPAY_BTCLIGHTNING: "type=lnd-rest;server=https://$APP_LIGHTNING_NODE_IP:$APP_LIGHTNING_NODE_REST_PORT/;macaroonfilepath=/lnd/data/chain/bitcoin/$APP_BITCOIN_NETWORK/admin.macaroon;allowinsecure=true"
       BTCPAY_SOCKSENDPOINT: $TOR_PROXY_IP:$TOR_PROXY_PORT
+      BTCPAY_EXPLORERPOSTGRES: User ID=postgres;Host=$APP_BTCPAY_SERVER_DB_IP;Port=5432;Application Name=nbxplorer;MaxPoolSize=20;Database=nbxplorer$APP_BITCOIN_NETWORK
     networks:
       default:
         ipv4_address: $APP_BTCPAY_SERVER_IP
