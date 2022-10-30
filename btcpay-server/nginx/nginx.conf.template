@@ -6,6 +6,13 @@ http {
         ''      close;
     }
 
+    map $http_host $conditional_scheme {
+        ~*\.onion "http";
+        ~*\.local "http";
+        ~*\.[a-z] "https";
+        default "http";
+    }
+
     server {
         listen 80;
         server_name _;
@@ -13,7 +20,7 @@ http {
         location / {
             proxy_pass http://${APP_BTCPAY_SERVER_IP}:${APP_BTCPAY_SERVER_PORT};
             proxy_set_header X-Forwarded-For $remote_addr;
-            proxy_set_header X-Forwarded-Proto "https";
+            proxy_set_header X-Forwarded-Proto $conditional_scheme;
             proxy_set_header Upgrade $http_upgrade;
             proxy_set_header Connection $connection_upgrade;
         }
