@@ -3,9 +3,25 @@ version: "3.7"
 services:
   app_proxy:
     environment:
-      APP_HOST: $APP_BTCPAY_SERVER_IP
-      APP_PORT: $APP_BTCPAY_SERVER_PORT
+      APP_HOST: $APP_BTCPAY_IP
+      APP_PORT: 80
       PROXY_AUTH_ADD: "false"
+
+  nginx:
+    image: nginx:1.19-alpine@sha256:07ab71a2c8e4ecb19a5a5abcfb3a4f175946c001c8af288b1aa766d67b0d05d2
+    init: true
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/nginx/nginx.conf.template:/etc/nginx/templates/nginx.conf.template
+    environment:
+      NGINX_ENVSUBST_OUTPUT_DIR: /etc/nginx/
+      APP_BTCPAY_SERVER_IP: $APP_BTCPAY_SERVER_IP
+      APP_BTCPAY_SERVER_PORT: $APP_BTCPAY_SERVER_PORT
+    depends_on:
+      - web
+    networks:
+      default:
+        ipv4_address: $APP_BTCPAY_IP
 
   nbxplorer:
     image: nicolasdorier/nbxplorer:2.3.42@sha256:c6b255498b1bad64cdf874459edd163c6a84f9b39118ecc4ad0816900f7647d4
