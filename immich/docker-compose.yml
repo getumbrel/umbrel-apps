@@ -9,6 +9,7 @@ services:
 
   immich-server:
     container_name: immich-server
+    hostname: immich-server
     image: "altran1502/immich-server:${APP_IMMICH_VERSION}"
     entrypoint: ["/bin/sh", "./start-server.sh"]
     volumes:
@@ -32,6 +33,7 @@ services:
 
   immich-microservices:
     container_name: immich-microservices
+    hostname: immich-microservices
     image: "altran1502/immich-server:${APP_IMMICH_VERSION}"
     entrypoint: ["/bin/sh", "./start-microservices.sh"]
     volumes:
@@ -55,6 +57,7 @@ services:
 
   immich-machine-learning:
     container_name: immich-machine-learning
+    hostname: immich-machine-learning
     image: "altran1502/immich-machine-learning:${APP_IMMICH_VERSION}"
     entrypoint: ["/bin/sh", "./entrypoint.sh"]
     volumes:
@@ -77,6 +80,7 @@ services:
 
   immich-web:
     container_name: immich-web
+    hostname: immich-web
     image: "altran1502/immich-web:${APP_IMMICH_VERSION}"
     entrypoint: ["/bin/sh", "./entrypoint.sh"]
     environment:
@@ -94,11 +98,13 @@ services:
 
   redis:
     container_name: immich-redis
+    hostname: immich-redis
     image: redis:6.2
     restart: always
 
   postgres:
     container_name: immich-postgres
+    hostname: immich-postgres
     image: postgres:14
     environment:
       POSTGRES_USER: ${APP_IMMICH_DB_USERNAME}
@@ -111,6 +117,7 @@ services:
 
   immich-proxy:
     container_name: immich-proxy
+    hostname: immich-proxy
     image: altran1502/immich-proxy:release
     # expose:
     #   - 8080
