@@ -48,15 +48,18 @@ services:
     image: lncm/clightning:v0.11.0@sha256:75e0ce04d644f34b07bc8a3b92e58b3db4e3c06bdc0e0cecd1669bc3b2d53421
     restart: on-failure
     ports:
-      - ${APP_CORE_LIGHTNING_DAEMON_PORT}:9735
+      - ${APP_CORE_LIGHTNING_DAEMON_PORT}:${APP_CORE_LIGHTNING_DAEMON_PORT}
+    environment:
+      LIGHTNINGD_NETWORK: ${APP_CORE_LIGHTNING_BITCOIN_CHAIN}
     command:
       - --bitcoin-rpcconnect=${APP_BITCOIN_NODE_IP}
       - --bitcoin-rpcuser=${APP_BITCOIN_RPC_USER}
       - --bitcoin-rpcpassword=${APP_BITCOIN_RPC_PASS}
       - --proxy=${TOR_PROXY_IP}:${TOR_PROXY_PORT}
-      - --bind-addr=${APP_CORE_LIGHTNING_DAEMON_IP}:9735
+      - --bind-addr=${APP_CORE_LIGHTNING_DAEMON_IP}:${APP_CORE_LIGHTNING_DAEMON_PORT}
       - --addr=statictor:${TOR_PROXY_IP}:29051
       - --tor-service-password=${TOR_PASSWORD}
+      - --always-use-proxy=true
       #- --grpc-port=${APP_CORE_LIGHTNING_DAEMON_GRPC_PORT}
     volumes:
       - "${APP_DATA_DIR}/data/lightningd:/data/.lightning"
