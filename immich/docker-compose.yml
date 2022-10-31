@@ -3,22 +3,23 @@ version: "3.7"
 services:
   app_proxy:
     environment:
-      APP_HOST: immich_immich-proxy_1
+      APP_HOST: immich-proxy
       APP_PORT: 8080
       PROXY_AUTH_ADD: "false"
 
   immich-server:
+    container_name: immich-server
     image: "altran1502/immich-server:${APP_IMMICH_VERSION}"
     entrypoint: ["/bin/sh", "./start-server.sh"]
     volumes:
       - ${APP_DATA_DIR}/upload:/usr/src/app/upload
     environment:
       NODE_ENV: production
-      DB_HOSTNAME: immich_postgres_1
+      DB_HOSTNAME: immich-postgres
       DB_USERNAME: ${APP_IMMICH_DB_USERNAME}
       DB_PASSWORD: ${APP_IMMICH_DB_PASSWORD}
       DB_DATABASE_NAME: ${APP_IMMICH_DB_DATABASE_NAME}
-      REDIS_HOSTNAME: immich_redis_1
+      REDIS_HOSTNAME: immich-redis
       LOG_LEVEL: ${APP_IMMICH_LOG_LEVEL}
       JWT_SECRET: ${APP_SEED}
       DISABLE_REVERSE_GEOCODING: ${APP_IMMICH_DISABLE_REVERSE_GEOCODING}
@@ -30,17 +31,18 @@ services:
     restart: always
 
   immich-microservices:
+    container_name: immich-microservices
     image: "altran1502/immich-server:${APP_IMMICH_VERSION}"
     entrypoint: ["/bin/sh", "./start-microservices.sh"]
     volumes:
       - ${APP_DATA_DIR}/upload:/usr/src/app/upload
     environment:
       NODE_ENV: production
-      DB_HOSTNAME: immich_postgres_1
+      DB_HOSTNAME: immich-postgres
       DB_USERNAME: ${APP_IMMICH_DB_USERNAME}
       DB_PASSWORD: ${APP_IMMICH_DB_PASSWORD}
       DB_DATABASE_NAME: ${APP_IMMICH_DB_DATABASE_NAME}
-      REDIS_HOSTNAME: immich_redis_1
+      REDIS_HOSTNAME: immich-redis
       LOG_LEVEL: ${APP_IMMICH_LOG_LEVEL}
       JWT_SECRET: ${APP_SEED}
       DISABLE_REVERSE_GEOCODING: ${APP_IMMICH_DISABLE_REVERSE_GEOCODING}
@@ -52,17 +54,18 @@ services:
     restart: always
 
   immich-machine-learning:
+    container_name: immich-machine-learning
     image: "altran1502/immich-machine-learning:${APP_IMMICH_VERSION}"
     entrypoint: ["/bin/sh", "./entrypoint.sh"]
     volumes:
       - ${APP_DATA_DIR}/upload:/usr/src/app/upload
     environment:
       NODE_ENV: production
-      DB_HOSTNAME: immich_postgres_1
+      DB_HOSTNAME: immich-postgres
       DB_USERNAME: ${APP_IMMICH_DB_USERNAME}
       DB_PASSWORD: ${APP_IMMICH_DB_PASSWORD}
       DB_DATABASE_NAME: ${APP_IMMICH_DB_DATABASE_NAME}
-      REDIS_HOSTNAME: immich_redis_1
+      REDIS_HOSTNAME: immich-redis
       LOG_LEVEL: ${APP_IMMICH_LOG_LEVEL}
       JWT_SECRET: ${APP_SEED}
       DISABLE_REVERSE_GEOCODING: ${APP_IMMICH_DISABLE_REVERSE_GEOCODING}
@@ -73,14 +76,15 @@ services:
     restart: always
 
   immich-web:
+    container_name: immich-web
     image: "altran1502/immich-web:${APP_IMMICH_VERSION}"
     entrypoint: ["/bin/sh", "./entrypoint.sh"]
     environment:
-      DB_HOSTNAME: immich_postgres_1
+      DB_HOSTNAME: immich-postgres
       DB_USERNAME: ${APP_IMMICH_DB_USERNAME}
       DB_PASSWORD: ${APP_IMMICH_DB_PASSWORD}
       DB_DATABASE_NAME: ${APP_IMMICH_DB_DATABASE_NAME}
-      REDIS_HOSTNAME: immich_redis_1
+      REDIS_HOSTNAME: immich-redis
       LOG_LEVEL: ${APP_IMMICH_LOG_LEVEL}
       JWT_SECRET: ${APP_SEED}
       DISABLE_REVERSE_GEOCODING: ${APP_IMMICH_DISABLE_REVERSE_GEOCODING}
@@ -89,12 +93,12 @@ services:
     restart: always
 
   redis:
-    container_name: immich_redis
+    container_name: immich-redis
     image: redis:6.2
     restart: always
 
   postgres:
-    container_name: immich_postgres
+    container_name: immich-postgres
     image: postgres:14
     environment:
       POSTGRES_USER: ${APP_IMMICH_DB_USERNAME}
@@ -106,7 +110,7 @@ services:
     restart: always
 
   immich-proxy:
-    container_name: immich_proxy
+    container_name: immich-proxy
     image: altran1502/immich-proxy:release
     # expose:
     #   - 8080
