@@ -8,18 +8,20 @@ export APP_CORE_LIGHTNING_DAEMON_GRPC_PORT="2105"
 
 export APP_CORE_LIGHTNING_REST_CERT_DIR="${EXPORTS_APP_DIR}/data/c-lightning-rest/certs"
 
-if [[ "${BITCOIN_NETWORK}" == "mainnet" ]]; then
+if [[ "${APP_BITCOIN_NETWORK}" == "mainnet" ]]; then
 	export APP_CORE_LIGHTNING_BITCOIN_CHAIN="bitcoin"
 	export APP_CORE_LIGHTNING_DAEMON_PORT="9735"
-elif [[ "${BITCOIN_NETWORK}" == "testnet" ]]; then
+elif [[ "${APP_BITCOIN_NETWORK}" == "testnet" ]]; then
 	export APP_CORE_LIGHTNING_BITCOIN_CHAIN="testnet"
 	export APP_CORE_LIGHTNING_DAEMON_PORT="19735"
-elif [[ "${BITCOIN_NETWORK}" == "signet" ]]; then
+elif [[ "${APP_BITCOIN_NETWORK}" == "signet" ]]; then
 	export APP_CORE_LIGHTNING_BITCOIN_CHAIN="signet"
 	export APP_CORE_LIGHTNING_DAEMON_PORT="39735"
-elif [[ "${BITCOIN_NETWORK}" == "regtest" ]]; then
+elif [[ "${APP_BITCOIN_NETWORK}" == "regtest" ]]; then
 	export APP_CORE_LIGHTNING_BITCOIN_CHAIN="regtest"
 	export APP_CORE_LIGHTNING_DAEMON_PORT="19846"
+else
+	echo "Warning (${EXPORTS_APP_ID}): Bitcoin Network '${APP_BITCOIN_NETWORK}' is not supported"
 fi
 
 rest_hidden_service_file="${EXPORTS_TOR_DATA_DIR}/app-${EXPORTS_APP_ID}-rest/hostname"
