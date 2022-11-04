@@ -1,19 +1,19 @@
-version: "2.1"
+version: "3.7"
 
 services:
+  app_proxy:
+    environment:
+      APP_HOST: piwigo_app_proxy
+      APP_PORT: 80
+
   server:
     image: linuxserver/piwigo:13.1.0@sha256:6dae3dccb7bb4fb2bcdcd6fdfd329713692464c0e8cf2be96eb2b3eba0f96b4a
     restart: on-failure
-    environment:
-      - PUID=1000
-      - PGID=1000
     links:
       - db
     volumes:
       - ${APP_DATA_DIR}/data/config:/config
       - ${APP_DATA_DIR}/data/gallery:/gallery
-    ports:
-      - 8334:80
 
   db:
     image: mariadb:10.5.12@sha256:f0e9a95a715f5f1233f0513b6ccc83e2d5692cd787bc9425e11cef667cf086ec
