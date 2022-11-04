@@ -1,7 +1,12 @@
-version: "3"
+version: "3.7"
 
 services:
+  app_proxy:
+    environment:
+      APP_HOST: nginx_proxy_manager_app_proxy
+      APP_PORT: 81
   server:
+
     image: jc21/nginx-proxy-manager:latest
     restart: on-failure
     ports:
