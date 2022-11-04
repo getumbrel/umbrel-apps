@@ -1,0 +1,14 @@
+version: "3.7"
+
+services:
+  server:
+    image: linuxserver/firefox:101.0.1
+    restart: on-failure
+    environment:
+      - PUID=1000
+      - PGID=1000
+    volumes:
+      - ${APP_DATA_DIR}/data/config:/config
+    ports:
+      - 3333:3000
+    shm_size: "1gb"
