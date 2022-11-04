@@ -8,6 +8,9 @@ services:
   server:
     image: linuxserver/airsonic-advanced:11.0.0@sha256:44b5e281f064650033201feef1ee858e95067f6624b8de0b03341e994bdccc7c
     restart: on-failure
+    environment:
+      - PUID=1000
+      - PGID=1000
     volumes:
       - ${APP_DATA_DIR}/data/config:/config
       - ${APP_DATA_DIR}/data/music:/music
