@@ -1,12 +1,14 @@
 version: "3.7"
 
 services:
+
   app_proxy:
     environment:
-      APP_HOST: piwigo_app_proxy
+      APP_HOST: piwigo
       APP_PORT: 80
 
   server:
+    container_name: piwigo
     image: linuxserver/piwigo:13.1.0@sha256:6dae3dccb7bb4fb2bcdcd6fdfd329713692464c0e8cf2be96eb2b3eba0f96b4a
     restart: on-failure
     links:
@@ -24,7 +26,7 @@ services:
       - PUID=1000
       - PGID=1000
       - MYSQL_ROOT_PASSWORD=password
-      - MYSQL_DATABASE=piwigo #optional
-      - MYSQL_USER=piwigo #optional
+      - MYSQL_DATABASE=piwigo 
+      - MYSQL_USER=piwigo
       - MYSQL_PASSWORD=piwigo
     restart: on-failure
