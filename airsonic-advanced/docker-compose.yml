@@ -1,12 +1,15 @@
 version: "3.7"
 
 services:
+
   app_proxy:
     environment:
-      APP_HOST: airsonic_adv_app_proxy
+      APP_HOST: airsonic-advanced
       APP_PORT: 4040
+
   server:
-    image: linuxserver/airsonic-advanced:latest
+    container_name: airsonic-advanced
+    image: linuxserver/airsonic-advanced:11.0.0@sha256:44b5e281f064650033201feef1ee858e95067f6624b8de0b03341e994bdccc7c
     restart: on-failure
     environment:
       - PUID=1000
