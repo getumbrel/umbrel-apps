@@ -3,21 +3,20 @@ services:
   app_proxy:
     environment:
       APP_HOST: $APP_ROTKI_IP
-      APP_PORT: $APP_ROTKI_PORT
+      APP_PORT: 80
+      PROXY_AUTH_ADD: "false"
 
   rotki-web:
-    container_name: rotki-web
+    container_name: rotki
     stop_grace_period: 1m
     environment:
-      - TZ=Europe/London 
+      - TZ=Europe/London
       - PUID=1000
       - PGID=1000
     image: rotki/rotki:v1.26.1@sha256:14ac75dc4acdedd762bc13e6d62c9a46d3ef9f9e395fb24fc4086b5cb2eca733
-    networks:
-      - rotki-net
     volumes:
       - ${APP_DATA_DIR}/data/data:/data
       - ${APP_DATA_DIR}/data/logs:/logs
-networks:
-  rotki-net:
-    ipv4_address: $APP_ROTKI_IP
+    networks:
+      default:
+        ipv4_address: $APP_ROTKI_IP
