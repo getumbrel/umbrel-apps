@@ -1,2 +1,0 @@
-export APP_ROTKI_IP="10.21.52.40"
-export APP_ROTKI_PORT="80"
