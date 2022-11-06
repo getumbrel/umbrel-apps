@@ -1,11 +1,13 @@
 version: "3.7"
 
 services:
-  appsmith:
-    image: appsmith/appsmith-ce:v1.8.7
-    ports:
-      - "1180:80"
-      - "1443:443"
+  app_proxy:
+    environment:
+      APP_HOST: appsmith
+      APP_PORT: 80
+  server:
+    container_name: appsmith
+    image: appsmith/appsmith-ce:v1.8.7@sha256:4ed2a9125b422dc099bbdfaa5bd1f26adc07bacbd89fc7b3dcc6111a5cfc21a7
     volumes:
       - ${APP_DATA_DIR}/stacks:/appsmith-stacks
     restart: on-failure
