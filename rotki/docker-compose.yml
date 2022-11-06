@@ -9,10 +9,8 @@ services:
   web:
     image: rotki/rotki:v1.26.1@sha256:14ac75dc4acdedd762bc13e6d62c9a46d3ef9f9e395fb24fc4086b5cb2eca733
     stop_grace_period: 1m
-    environment:
-      - TZ=Europe/London
-      - PUID=1000
-      - PGID=1000
+    user: "1000:1000"
+    init: true
     volumes:
       - ${APP_DATA_DIR}/data/data:/data
       - ${APP_DATA_DIR}/data/logs:/logs
