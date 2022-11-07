@@ -1,0 +1,25 @@
+version: '3'
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: solid-invoice_server_1
+      APP_PORT: 80
+  db:
+    image: "mysql:8.0"
+    volumes:
+      - ${APP_DATA_DIR}/db_data:/var/lib/mysql
+    restart: always
+    environment:
+      MYSQL_DATABASE: solidinvoice
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_USER: admin
+      MYSQL_PASSWORD: admin
+  server:
+    image: solidinvoice/solidinvoice:2.1.1@sha256:3b209cdec81021e1482e72ed7788459fa0a549a35dc31f63835f8e13ce943d64
+    links:
+      - db
+    restart: on-failure
+
+volumes:
+  db_data: {}
