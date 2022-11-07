@@ -1,0 +1,18 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: wikijs
+      APP_PORT: 3000
+  server:
+    container_name: wikijs
+    image: linuxserver/wikijs:2.5.290@sha256:407bf312e4414467214c274ea86ce424656b5671237954436c69e5749614dac6
+    restart: on-failure
+
+    environment:
+      - PUID=1000
+      - PGID=1000
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+      - ${APP_DATA_DIR}/config:/config
