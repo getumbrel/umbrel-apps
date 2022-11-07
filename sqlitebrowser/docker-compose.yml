@@ -1,0 +1,16 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: sqlitebrowser
+      APP_PORT: 3000
+  server:
+    container_name: sqlitebrowser
+    image: linuxserver/sqlitebrowser:3.12.2@sha256:a69be9e9dd8ea7db86165c4b5623999ff408175d9b559d25b3aefb51d899bb41
+    environment:
+      - PUID=1000
+      - PGID=1000
+    volumes:
+      - ${APP_DATA_DIR}/data/config:/config
+    restart: on-failure
