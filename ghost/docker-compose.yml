@@ -1,0 +1,24 @@
+version: '3.1'
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: ghost_server_1
+      APP_PORT: 2368
+
+  server:
+    image: ghost:5.22.9
+    restart: on-failure
+    environment:
+      database__client: mysql
+      database__connection__host: db
+      database__connection__user: root
+      database__connection__password: ghost
+      database__connection__database: ghost
+      url: http://umbrel.local
+
+  db:
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ghost
