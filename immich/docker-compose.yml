@@ -11,7 +11,7 @@ services:
     image: altran1502/immich-server:v1.34.0_53-dev@sha256:959a1770049335afa4e2870a47854646cbbe4047699e1ad7a0ae73327719bc12
     entrypoint: ["/bin/sh", "./start-server.sh"]
     volumes:
-      - ${APP_DATA_DIR}/upload:/usr/src/app/upload
+      - ${APP_DATA_DIR}/data/upload:/usr/src/app/upload
     environment:
       NODE_ENV: production
       DB_HOSTNAME: immich_postgres_1
@@ -33,7 +33,7 @@ services:
     image: altran1502/immich-server:v1.34.0_53-dev@sha256:959a1770049335afa4e2870a47854646cbbe4047699e1ad7a0ae73327719bc12
     entrypoint: ["/bin/sh", "./start-microservices.sh"]
     volumes:
-      - ${APP_DATA_DIR}/upload:/usr/src/app/upload
+      - ${APP_DATA_DIR}/data/upload:/usr/src/app/upload
     environment:
       NODE_ENV: production
       DB_HOSTNAME: immich_postgres_1
@@ -55,7 +55,7 @@ services:
     image: altran1502/immich-machine-learning:v1.34.0_53-dev@sha256:944984e95540c0453742289170ae3759c8f6ac80d3d34adaa6c7f49c27413974
     entrypoint: ["/bin/sh", "./entrypoint.sh"]
     volumes:
-      - ${APP_DATA_DIR}/upload:/usr/src/app/upload
+      - ${APP_DATA_DIR}/data/upload:/usr/src/app/upload
     environment:
       NODE_ENV: production
       DB_HOSTNAME: immich_postgres_1
@@ -104,7 +104,7 @@ services:
       POSTGRES_DB: ${APP_IMMICH_DB_DATABASE_NAME}
       PG_DATA: /var/lib/postgresql/data
     volumes:
-      - ${APP_DATA_DIR}/pgdata:/var/lib/postgresql/data
+      - ${APP_DATA_DIR}/data/postgres:/var/lib/postgresql/data
     restart: on-failure
 
   immich-proxy:
