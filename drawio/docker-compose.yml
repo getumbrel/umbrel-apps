@@ -1,0 +1,13 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: drawio
+      APP_PORT: 8080
+  server:
+    container_name: drawio
+    image: jgraph/drawio:20.5.2@sha256:a8f3d2ffb6f0105d52105c20ac783cc6062fec3f4b5ce51315d15676f1446f08
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
