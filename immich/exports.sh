@@ -1,4 +1,3 @@
-export APP_IMMICH_VERSION="v1.33.1_52-dev"
 export APP_IMMICH_DB_USERNAME="postgres"
 export APP_IMMICH_DB_PASSWORD="postgres"
 export APP_IMMICH_DB_DATABASE_NAME="immich"
