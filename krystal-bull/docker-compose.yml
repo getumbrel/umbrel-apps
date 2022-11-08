@@ -28,7 +28,7 @@ services:
       - oracleserver
   
   oracleserver:
-    image: bitcoinscala/bitcoin-s-oracle-server:1.9.6@sha256:d6dbf6a54d66c998050e4f219189a8f8ab0fcb03a7fa52a688da4f7ed69c07f5
+    image: bitcoinscala/bitcoin-s-oracle-server:1.9.6-44-0035c643-SNAPSHOT
     entrypoint: ["/opt/docker/bin/bitcoin-s-oracle-server", "--datadir", "/bitcoin-s", "--conf", "/opt/docker/docker-application.conf"]   
     user: "1000:1000"
     restart: on-failure
@@ -38,6 +38,7 @@ services:
       BITCOIN_S_KEYMANAGER_ENTROPY: $APP_SEED
       BITCOIN_S_ORACLE_RPC_PASSWORD: $APP_PASSWORD
       DISABLE_JLINK: "1"
+      JAVA_OPTS: "-Xmx256m"
     networks:
       default:
         ipv4_address: $APP_KRYSTAL_BULL_SERVER_IP
