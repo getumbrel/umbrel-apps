@@ -1,6 +1,19 @@
 version: "0.7.23"
 services:
   web:
-    image: layer2tech/mercury-wallet:latest
+    image: layer2tech/mercury-wallet-ui:latest
+    user: "1000:1000"
     restart: on-failure
     stop_grace_period: 1m
+    ports:
+      - 3000
+    expose:
+      - 3000
+  walletserver:
+    image: layer2tech/mercury-tor-adapter:latest
+    user: "1000:1000"
+    restart: on-failure
+    ports:
+      - 3001
+    expose:
+      - 3001
