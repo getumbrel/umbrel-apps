@@ -1,7 +1,14 @@
 version: "3.7"
 
 services:
+
+  app_proxy:
+    environment:
+      APP_HOST: firefox
+      APP_PORT: 3000
+
   server:
+    container_name: firefox
     image: linuxserver/firefox:101.0.1@sha256:04124c6961be68a869f95cfccd509d3a63be157a59a5407f9eaa39dbf19b34a6
     restart: on-failure
     environment:
@@ -9,6 +16,4 @@ services:
       - PGID=1000
     volumes:
       - ${APP_DATA_DIR}/data/config:/config
-    ports:
-      - 3333:3000
     shm_size: "1gb"
