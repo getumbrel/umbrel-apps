@@ -21,6 +21,9 @@ BIN_ARGS+=( "--tlsautorefresh" )
 # lnd.conf for existing users via a migration.
 BIN_ARGS+=( "--accept-amp" )
 
+# Lightning Terminal (litd) now requires this flag to be set or it will not startup
+BIN_ARGS+=( "--rpcmiddleware.enable" )
+
 # [Bitcoind]
 BIN_ARGS+=( "--bitcoind.rpchost=${APP_BITCOIN_NODE_IP}" )
 BIN_ARGS+=( "--bitcoind.rpcuser=${APP_BITCOIN_RPC_USER}" )
