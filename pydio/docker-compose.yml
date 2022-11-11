@@ -1,0 +1,19 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: pydio
+      APP_PORT: 443
+
+  server:
+    container_name: pydio
+    image: lscr.io/linuxserver/pydio:latest
+    environment:
+      - PUID=1000
+      - PGID=1000
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+      - ${APP_DATA_DIR}/config:/config
+    restart: on-failure
+
