@@ -1,0 +1,26 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: duplicati
+      APP_PORT: 8200
+  server:
+    container_name: duplicati
+    image: linuxserver/duplicati:2.0.6@sha256:c229ce5805a1961a50f48ac1bff81caec4f109f9ade6c9ae98e5e3b80e438683
+    restart: on-failure
+    environment:
+      - PUID=1000
+      - PGID=1000
+    volumes:
+      - ${APP_DATA_DIR}/config:/config
+      - ${APP_DATA_DIR}/data:/tmp
+      - ${APP_DATA_DIR}/data:/backups
+      - ${APP_DATA_DIR}/data:/source
+
+  volume-permissions-fixer:
+      image: bash:4.4@sha256:32e77d804c70816a62b37ab0f71e51f54f170effc12c3cd2882f7e55743159c4
+      command: chown 1000:1000 -R /tmp
+      volumes:
+        - ${APP_DATA_DIR}/data:/tmp
+
