@@ -1,0 +1,20 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: speedtest
+      APP_PORT: 80
+  speedtest:
+    container_name: speedtest
+    image: henrywhitaker3/speedtest-tracker:dev-arm@sha256:489492b7965ebe5711cbcb838ec81a507aa18818206ec01365d54cbfb2794247
+    volumes:
+      - ${APP_DATA_DIR}/data:/config
+    environment:
+      - OOKLA_EULA_GDPR=true
+    logging:
+      driver: "json-file"
+      options:
+        max-file: "10"
+        max-size: "200k"
+    restart: unless-stopped
