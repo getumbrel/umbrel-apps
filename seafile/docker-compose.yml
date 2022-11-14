@@ -1,0 +1,39 @@
+version: "3.7"
+
+services:
+  db:
+    image: mariadb:10.9.4@sha256:5e2a3416f8633f8ca25778d13439cfcee4172743e1bd2a45cd1def0dceff6d3b
+    container_name: seafile-mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=wiufh%woi&rwioj*q
+      - MYSQL_LOG_CONSOLE=true
+    volumes:
+      - ${APP_DATA_DIR}/data/store:/var/lib/mysql
+    networks:
+      - seafile-net
+
+  memcached:
+    image: memcached:1.5.6@sha256:375aa6d08b4ad5efe55421237ce8598e006505b4bd9ff14806359daff5334f91
+    container_name: seafile-memcached
+    entrypoint: memcached -m 256
+    networks:
+      - seafile-net
+
+  seafile:
+    image: seafileltd/seafile-mc:9.0.9@sha256:7ac833196f60753c5b465e1862894458b0ebd1cd35f5fac923a4be13da0fa330
+    container_name: seafile
+    ports:
+      - "8920:80"
+    volumes:
+      - ${APP_DATA_DIR}/seafile-data:/shared
+    environment:
+      - DB_HOST=db
+      - DB_ROOT_PASSWD=wiufh%woi&rwioj*q
+    depends_on:
+      - db
+      - memcached
+    networks:
+      - seafile-net
+
+networks:
+  seafile-net:
