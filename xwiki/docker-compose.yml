@@ -1,0 +1,37 @@
+version: '3.7'
+networks:
+  bridge:
+    driver: bridge
+
+services:
+  web:
+    image: "xwiki:lts-postgres-tomcat@sha256:580d64e552964f18a3684036a1bf41137285f89473b7f86ce89023d5b3f07250"
+    container_name: xwiki-postgres-tomcat-web
+    depends_on:
+      - db
+    ports:
+      - "8186:8080"
+    environment:
+      - DB_USER=xwiki
+      - DB_PASSWORD=xwiki
+      - DB_HOST=xwiki-postgres-db
+    volumes:
+      - ${APP_DATA_DIR}/xwiki-data:/usr/local/xwiki
+    networks:
+      - bridge
+  db:
+    image: "postgres:13@sha256:7a5bfbee9ace4a7ef125ecd0c557f5987f5617699fae006fb7ca0e29cf3adc7f"
+    container_name: xwiki-postgres-db
+    volumes:
+      - ${APP_DATA_DIR}/postgres-data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_ROOT_PASSWORD=xwiki
+      - POSTGRES_PASSWORD=xwiki
+      - POSTGRES_USER=xwiki
+      - POSTGRES_DB=xwiki
+      - POSTGRES_INITDB_ARGS="--encoding=UTF8"
+    networks:
+      - bridge
+volumes:
+  postgres-data: {}
+  xwiki-data: {}
