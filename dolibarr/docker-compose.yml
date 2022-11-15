@@ -1,0 +1,29 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: dolibarr
+      APP_PORT: 80
+
+  mariadb:
+    image: mariadb:10.9.4@sha256:5e2a3416f8633f8ca25778d13439cfcee4172743e1bd2a45cd1def0dceff6d3b
+    environment:
+      MYSQL_USER: user
+      MYSQL_PASSWORD: root
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: dolibarr
+
+  server:
+    container_name: dolibarr
+    image: tuxgasy/dolibarr:16@sha256:4b95cecd5d06590e0079109f99ecf49c388c2e0ca08b9ff08d56f1b1ea67185d
+    environment:
+      DOLI_ADMIN_LOGIN: user
+      DOLI_ADMIN_PASSWORD: umbrel
+      DOLI_DB_HOST: mariadb
+      DOLI_DB_USER: user
+      DOLI_DB_PASSWORD: root
+      DOLI_DB_NAME: dolibarr
+      DOLI_URL_ROOT: 'http://0.0.0.0'
+    links:
+      - mariadb
