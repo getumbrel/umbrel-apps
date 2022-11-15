@@ -1,0 +1,14 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: remmina
+      APP_PORT: 3000
+
+  server:
+    image: lscr.io/linuxserver/remmina:1.4.2@sha256:75e116a8c3fa0a74b4354bb80944e89f893e6e238ca800ab9483edfe2279b37d
+    container_name: remmina
+    volumes:
+      - ${APP_DATA_DIR}/data/config:/config
+    restart: on-failure
