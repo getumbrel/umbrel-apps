@@ -1,0 +1,20 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: $APP_N8N_IP
+      APP_PORT: $APP_N8N_PORT
+
+  server:
+    container_name: n8n
+    image: n8nio/n8n:0.202.1@sha256:5241a77b9b3e9b484387eefc37c8ec4750364e76a072b9adc3711473758ce605
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data:/home/node/.n8n
+    stop_grace_period: 1m
+    environment:
+      - WEBHOOK_URL=http://$APP_N8N_IP:$APP_N8N_PORT
+      - EXECUTIONS_PROCESS=main
+
+
