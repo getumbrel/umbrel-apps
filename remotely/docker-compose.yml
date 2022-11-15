@@ -1,0 +1,13 @@
+version: '3.7'
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: remotely
+      APP_PORT: 5000
+
+  server:
+    container_name: remotely
+    image: translucency/remotely:1300@sha256:3b351aed7a8cbc0a8b157db59f1ccb2ef18ea8e4b64e18793c4344e3aee5cb1a
+    volumes:
+      - ${APP_DATA_DIR}/data:/remotely-data
