@@ -1,0 +1,15 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: snapdrop
+      APP_PORT: 80
+
+  snapdrop:
+    image: lscr.io/linuxserver/snapdrop:version-89b0bcc2@sha256:1724466cb95b080027122dbfbf281d49d119a01daef295b77a1f1b978d39151f
+    container_name: snapdrop
+    volumes:
+      - ${APP_DATA_DIR}/data/config:/config
+    restart: on-failure
+
