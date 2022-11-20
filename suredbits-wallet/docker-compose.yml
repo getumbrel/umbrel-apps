@@ -7,7 +7,7 @@ services:
       APP_PORT: 3002
 
   web:
-    image: bitcoinscala/wallet-server-ui:1.9.7
+    image: bitcoinscala/wallet-server-ui:1.9.7@sha256:50da55b6d607d03775041aa2c056c5fe281a33f0e471d58e07a99dd2670718e3
     user: "1000:1000"
     restart: on-failure
     stop_grace_period: 1m
@@ -30,7 +30,7 @@ services:
       - walletserver
   
   walletserver:
-    image: bitcoinscala/bitcoin-s-server:1.9.7
+    image: bitcoinscala/bitcoin-s-server:1.9.7@sha256:cee2c4682d6172d6af2f0edfae016e3cc7aacc15ba56eb0652d9d65d31e7baf3
     entrypoint: ["/opt/docker/bin/bitcoin-s-server", "--datadir", "/bitcoin-s", "--conf", "/opt/docker/docker-application.conf"]
     user: "1000:1000"
     restart: on-failure
