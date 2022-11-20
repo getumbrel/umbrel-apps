@@ -3,10 +3,10 @@ version: "3.7"
 services:
   app_proxy:
     environment:
-      APP_HOST: $APP_TORQ_IP
-      APP_PORT: $APP_TORQ_PORT
+      APP_HOST: torq_web_1
+      APP_PORT: 7028
   
-  torq:
+  web:
     image: lncapital/torq:0.10.3@sha256:cacd93adc606f9e1e6740c9402a00caeb9490971b7715b8d1316a66a1af12749
     user: "1000:1000"
     restart: on-failure
@@ -17,11 +17,11 @@ services:
       - "torq_db"
     command:
       - --torq.port
-      - ${APP_TORQ_PORT}
+      - 7028
       - --db.host
       - torq_db
       - --db.password
-      - torq_db_password
+      - moneyprintergobrrr
       - --torq.password
       - ${APP_PASSWORD}
       - --lnd.url
@@ -31,9 +31,6 @@ services:
       - --lnd.tls-path
       - /lnd/tls.cert
       - start
-    networks:
-      default:
-        ipv4_address: $APP_TORQ_IP
   
   torq_db:
     image: timescale/timescaledb:2.8.1-pg14@sha256:96c3a5587a24bb336437403b394f5927f639322cf3fcc0eff4ee0294da540dd7
@@ -41,7 +38,7 @@ services:
     restart: on-failure
     stop_grace_period: 1m
     environment:
-      POSTGRES_PASSWORD: torq_db_password
+      POSTGRES_PASSWORD: moneyprintergobrrr
     volumes:
-      - ${APP_TORQ_DATA_DIR}:/var/lib/postgresql/data
+      - ${APP_DATA_DIR}/data/torq:/var/lib/postgresql/data
       - /etc/passwd:/etc/passwd:ro #enables postgres to init on user 1000
