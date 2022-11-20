@@ -7,7 +7,7 @@ services:
       APP_PORT: 3001
   
   web:
-    image: bitcoinscala/oracle-server-ui:1.9.7
+    image: bitcoinscala/oracle-server-ui:1.9.7@sha256:883df7037be517b4dc8155a1bfcd4101b7e47f7825367f53f3ac2bf15ffdc15e
     user: "1000:1000"
     restart: on-failure
     stop_grace_period: 1m
@@ -28,7 +28,7 @@ services:
       - oracleserver
   
   oracleserver:
-    image: bitcoinscala/bitcoin-s-oracle-server:1.9.7
+    image: bitcoinscala/bitcoin-s-oracle-server:1.9.7@sha256:a7f5dd31bc5afa2a075563433862851d5bea8f894c1634a56426c34648001308
     entrypoint: ["/opt/docker/bin/bitcoin-s-oracle-server", "--datadir", "/bitcoin-s", "--conf", "/opt/docker/docker-application.conf"]   
     user: "1000:1000"
     restart: on-failure
