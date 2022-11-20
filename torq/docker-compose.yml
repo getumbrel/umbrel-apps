@@ -13,13 +13,11 @@ services:
     stop_grace_period: 1m
     volumes:
       - ${APP_LIGHTNING_NODE_DATA_DIR}:/lnd:ro
-    depends_on:
-      - "torq_db"
     command:
       - --torq.port
       - 7028
       - --db.host
-      - torq_db
+      - torq_db_1
       - --db.password
       - moneyprintergobrrr
       - --torq.password
@@ -32,7 +30,7 @@ services:
       - /lnd/tls.cert
       - start
   
-  torq_db:
+  db:
     image: timescale/timescaledb:2.8.1-pg14@sha256:96c3a5587a24bb336437403b394f5927f639322cf3fcc0eff4ee0294da540dd7
     user: "1000:1000"
     restart: on-failure
