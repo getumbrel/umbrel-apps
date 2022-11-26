@@ -26,6 +26,8 @@ fi
 # Now check if `LimitRequestBody 0` already exists within the .htaccess file
 if ! cat "${DOT_HTACCESS_FILE}" | grep --quiet 'LimitRequestBody'
 then
+	echo "Writing 'LimitRequestBody 0' config. to .htaccess"
+
 	echo > "${DOT_HTACCESS_FILE}"
 	echo "LimitRequestBody 0" > "${DOT_HTACCESS_FILE}"
 fi
