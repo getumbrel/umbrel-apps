@@ -3,8 +3,8 @@ version: "3.7"
 services:
   app_proxy:
     environment:
-      APP_HOST: $APP_GITEA_IP
-      APP_PORT: $APP_GITEA_PORT
+      APP_HOST: gitea_server_1
+      APP_PORT: 8085
       PROXY_AUTH_ADD: "false"
 
   server:
@@ -19,19 +19,16 @@ services:
     environment:
       GITEA__security__INSTALL_LOCK: "true"
       GITEA__server__DOMAIN: "${APP_DOMAIN}"
-      GITEA__server__HTTP_PORT: "${APP_GITEA_PORT}"
+      GITEA__server__HTTP_PORT: 8085
       GITEA__server__SSH_DOMAIN: "${APP_DOMAIN}"
       GITEA__server__SSH_PORT: "${APP_GITEA_SSH_PORT}"
       GITEA__server__SSH_LISTEN_PORT: "${APP_GITEA_SSH_PORT}"
       GITEA__server__START_SSH_SERVER: "true"
       GITEA__database__DB_TYPE: "mysql"
-      GITEA__database__HOST: "${APP_GITEA_DB_IP}:3306"
+      GITEA__database__HOST: "gitea_db_1:3306"
       GITEA__database__NAME: "gitea"
       GITEA__database__USER: "gitea"
       GITEA__database__PASSWD: "moneyprintergobrrr"
-    networks:
-      default:
-        ipv4_address: $APP_GITEA_IP
 
   db:
     image: mariadb:10.5.12@sha256:dfcba5641bdbfd7cbf5b07eeed707e6a3672f46823695a0d3aba2e49bbd9b1dd
@@ -44,6 +41,3 @@ services:
       MYSQL_USER: "gitea"
       MYSQL_PASSWORD: "moneyprintergobrrr"
       MYSQL_DATABASE: "gitea"
-    networks:
-      default:
-        ipv4_address: $APP_GITEA_DB_IP
