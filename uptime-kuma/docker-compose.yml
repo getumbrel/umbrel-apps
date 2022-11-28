@@ -3,15 +3,12 @@ version: "3.7"
 services:
   app_proxy:
     environment:
-      APP_HOST: $APP_UPTIME_KUMA_IP
+      APP_HOST: uptime-kuma_server_1
       APP_PORT: 3001
 
-  uptime-kuma:
+  server:
     image: louislam/uptime-kuma:1.18.5@sha256:a84767d7934f833010b886f3dfc57b9d23ca69e85e48f378b28b5c25c5043e1d
     restart: on-failure
     stop_grace_period: 1m
     volumes:
       - ${APP_DATA_DIR}/data/uptime-kuma:/app/data
-    networks:
-      default:
-        ipv4_address: $APP_UPTIME_KUMA_IP
