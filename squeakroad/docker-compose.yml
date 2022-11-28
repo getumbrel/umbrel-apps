@@ -3,8 +3,8 @@ version: "3.7"
 services:
   app_proxy:
     environment:
-      APP_HOST: $APP_SQUEAKROAD_IP
-      APP_PORT: $APP_SQUEAKROAD_PORT
+      APP_HOST: squeakroad_web_1
+      APP_PORT: 18200
       PROXY_AUTH_ADD: "false"
 
   web:
@@ -16,7 +16,7 @@ services:
       - $APP_LIGHTNING_NODE_DATA_DIR:/lnd-dir:ro
       - ${APP_DATA_DIR}/data:/data
     environment:
-      ROCKET_PORT: $APP_SQUEAKROAD_PORT
+      ROCKET_PORT: 18200
       ROCKET_ADDRESS: 0.0.0.0
       SQUEAKROAD_DB_URL: /data/db.sqlite
       SQUEAKROAD_ADMIN_USERNAME: umbrel
@@ -25,6 +25,3 @@ services:
       SQUEAKROAD_LND_PORT: $APP_LIGHTNING_NODE_GRPC_PORT
       SQUEAKROAD_LND_TLS_CERT_PATH: /lnd-dir/tls.cert
       SQUEAKROAD_LND_MACAROON_PATH: /lnd-dir/data/chain/bitcoin/$APP_BITCOIN_NETWORK/admin.macaroon
-    networks:
-      default:
-        ipv4_address: $APP_SQUEAKROAD_IP
