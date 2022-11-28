@@ -3,8 +3,8 @@ version: "3.7"
 services:
   app_proxy:
     environment:
-      APP_HOST: $APP_LIGHTNING_TERMINAL_IP
-      APP_PORT: $APP_LIGHTNING_TERMINAL_PORT
+      APP_HOST: lightning-terminal_web_1
+      APP_PORT: 3004
 
   web:
     image: lightninglabs/lightning-terminal:v0.8.3-alpha@sha256:467a4e73b1bc1dd64e32ee75bea5d2343a5b500efa97d61205da18eeb4768723
@@ -19,12 +19,9 @@ services:
       APP_PASSWORD: "$APP_PASSWORD"
     command:
         - --uipassword_env=APP_PASSWORD
-        - --insecure-httplisten=0.0.0.0:$APP_LIGHTNING_TERMINAL_PORT
+        - --insecure-httplisten=0.0.0.0:3004
         - --network="$APP_BITCOIN_NETWORK"
         - --lnd-mode="remote"
         - --remote.lnd.rpcserver=$APP_LIGHTNING_NODE_IP:$APP_LIGHTNING_NODE_GRPC_PORT
         - --remote.lnd.macaroonpath="/lnd/data/chain/bitcoin/$APP_BITCOIN_NETWORK/admin.macaroon"
         - --remote.lnd.tlscertpath="/lnd/tls.cert"
-    networks:
-      default:
-        ipv4_address: $APP_LIGHTNING_TERMINAL_IP
