@@ -28,7 +28,7 @@ services:
       - "${APP_DATA_DIR}/data/redis:/data"
 
   web:
-    image: nextcloud:22.2.10-apache@sha256:71c4fb75d7c035ea2c840ebc1adf0da144b0c69e39ce925f4a2ea84b7c06db18
+    image: nextcloud:25.0.1-apache@sha256:a200319b132c01ec3486e0dcaf052092b560ec30ac9b78115607696dd201f704
     # Currently needs to be run as root, if we run as uid 1000 this fails
     # https://github.com/nextcloud/docker/blob/05026b029d37fc5cd488d4a4a2a79480e39841ba/21.0/apache/entrypoint.sh#L53-L77
     # user: "1000:1000"
@@ -41,6 +41,7 @@ services:
       - MYSQL_PASSWORD=moneyprintergobrrr
       - MYSQL_DATABASE=nextcloud
       - MYSQL_USER=nextcloud
+      - TRUSTED_PROXIES="${NETWORK_IP}/16"
       - NEXTCLOUD_ADMIN_USER=umbrel
       - NEXTCLOUD_ADMIN_PASSWORD=${APP_PASSWORD}
       - NEXTCLOUD_TRUSTED_DOMAINS=${APP_DOMAIN}:${APP_NEXTCLOUD_PORT} ${APP_HIDDEN_SERVICE} ${DEVICE_HOSTNAME}:${APP_NEXTCLOUD_PORT} ${APP_NEXTCLOUD_LOCAL_IPS}
@@ -50,7 +51,7 @@ services:
       - redis
 
   cron:
-    image: nextcloud:22.2.10-apache@sha256:71c4fb75d7c035ea2c840ebc1adf0da144b0c69e39ce925f4a2ea84b7c06db18
+    image: nextcloud:25.0.1-apache@sha256:a200319b132c01ec3486e0dcaf052092b560ec30ac9b78115607696dd201f704
     # Currently needs to be run as root, if we run as uid 1000 this fails
     # https://github.com/nextcloud/docker/blob/05026b029d37fc5cd488d4a4a2a79480e39841ba/21.0/apache/entrypoint.sh#L53-L77
     # user: "1000:1000"
