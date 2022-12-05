@@ -3,7 +3,7 @@ version: "3.7"
 services:
   app_proxy:
     environment:
-      APP_HOST: $APP_NEXTCLOUD_IP
+      APP_HOST: nextcloud_web_1
       APP_PORT: 80
       PROXY_AUTH_ADD: "false"
   
@@ -19,9 +19,6 @@ services:
       - MYSQL_PASSWORD=moneyprintergobrrr
       - MYSQL_DATABASE=nextcloud
       - MYSQL_USER=nextcloud
-    networks:
-      default:
-        ipv4_address: $APP_NEXTCLOUD_DB_IP
 
   redis:
     image: redis:6.2.2-buster@sha256:e10f55f92478715698a2cef97c2bbdc48df2a05081edd884938903aa60df6396
@@ -29,9 +26,6 @@ services:
     restart: on-failure
     volumes:
       - "${APP_DATA_DIR}/data/redis:/data"
-    networks:
-      default:
-        ipv4_address: $APP_NEXTCLOUD_REDIS_IP
 
   web:
     image: nextcloud:25.0.1-apache@sha256:a200319b132c01ec3486e0dcaf052092b560ec30ac9b78115607696dd201f704
@@ -42,8 +36,8 @@ services:
     volumes:
       - ${APP_DATA_DIR}/data/nextcloud:/var/www/html
     environment:
-      - MYSQL_HOST=${APP_NEXTCLOUD_DB_IP}
-      - REDIS_HOST=${APP_NEXTCLOUD_REDIS_IP}
+      - MYSQL_HOST=nextcloud_db_1
+      - REDIS_HOST=nextcloud_redis_1
       - MYSQL_PASSWORD=moneyprintergobrrr
       - MYSQL_DATABASE=nextcloud
       - MYSQL_USER=nextcloud
@@ -55,9 +49,6 @@ services:
     depends_on:
       - db
       - redis
-    networks:
-      default:
-        ipv4_address: $APP_NEXTCLOUD_IP
 
   cron:
     image: nextcloud:25.0.1-apache@sha256:a200319b132c01ec3486e0dcaf052092b560ec30ac9b78115607696dd201f704
@@ -71,6 +62,3 @@ services:
     depends_on:
       - db
       - redis
-    networks:
-      default:
-        ipv4_address: $APP_NEXTCLOUD_CRON_IP

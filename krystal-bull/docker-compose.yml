@@ -3,7 +3,7 @@ version: "3.7"
 services:
   app_proxy:
     environment:
-      APP_HOST: $APP_KRYSTAL_BULL_IP
+      APP_HOST: krystal-bull_web_1
       APP_PORT: 3001
   
   web:
@@ -17,13 +17,10 @@ services:
     environment:
       LOG_PATH: "/log/"
       BITCOIN_S_HOME: "/bitcoin-s/"
-      ORACLE_SERVER_API_URL: "http://${APP_KRYSTAL_BULL_SERVER_IP}:9998/"
+      ORACLE_SERVER_API_URL: "http://krystal-bull_oracleserver_1:9998/"
       TOR_PROXY: socks5://${TOR_PROXY_IP}:${TOR_PROXY_PORT}
       DEFAULT_UI_PASSWORD: "none"
       BITCOIN_S_ORACLE_RPC_PASSWORD: $APP_PASSWORD
-    networks:
-      default:
-        ipv4_address: $APP_KRYSTAL_BULL_IP
     depends_on: 
       - oracleserver
   
@@ -39,6 +36,3 @@ services:
       BITCOIN_S_ORACLE_RPC_PASSWORD: $APP_PASSWORD
       DISABLE_JLINK: "1"
       JAVA_OPTS: "-Xmx256m"
-    networks:
-      default:
-        ipv4_address: $APP_KRYSTAL_BULL_SERVER_IP

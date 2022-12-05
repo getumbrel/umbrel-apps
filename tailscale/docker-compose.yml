@@ -6,6 +6,6 @@ services:
     image: tailscale/tailscale:v1.33.158@sha256:e5610d019e82ac1929a9318ca928f0ed4bceaeb4c47541eff690a375995866a2
     restart: on-failure
     stop_grace_period: 1m
-    command: "sh -c 'tailscale web --listen 0.0.0.0:${APP_TAILSCALE_PORT} & exec tailscaled --tun=userspace-networking'"
+    command: "sh -c 'tailscale web --listen 0.0.0.0:8240 & exec tailscaled --tun=userspace-networking'"
     volumes:
       - ${APP_DATA_DIR}/data:/var/lib
