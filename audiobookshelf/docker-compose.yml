@@ -15,11 +15,13 @@ services:
     healthcheck:
       disable: true
     environment:
+      - CONFIG_PATH=/home/node/config
+      - METADATA_PATH=/home/node/metadata
       - AUDIOBOOKSHELF_UID=1000
       - AUDIOBOOKSHELF_GID=1000
     volumes:
-      - ${APP_DATA_DIR}/data/config:/config
-      - ${APP_DATA_DIR}/data/metadata:/metadata
+      - ${APP_DATA_DIR}/data/config:/home/node/config
+      - ${APP_DATA_DIR}/data/metadata:/home/node/metadata
       - ${UMBREL_ROOT}/data/storage/downloads/audiobooks:/audiobooks
       - ${UMBREL_ROOT}/data/storage/downloads/podcasts:/podcasts
 
