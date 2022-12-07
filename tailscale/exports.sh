@@ -1,8 +1,5 @@
-export APP_TAILSCALE_IP="10.21.21.80"
-export APP_TAILSCALE_PORT="8240"
-
 # Detect we are running in a tailscale install
-if ! cat "${UMBREL_ROOT}/db/user.json" | grep '"tailscale"'
+if ! cat "${UMBREL_ROOT}/db/user.json" | grep --quiet '"tailscale"'
 then
 
     # Only patch unmodified v0.5.0 app script to prevent infinite loop or making weird changes to future app scripts

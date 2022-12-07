@@ -3,10 +3,11 @@ version: "3.7"
 services:
   app_proxy:
     environment:
-      APP_HOST: $APP_RIDE_THE_LIGHTNING_IP
-      APP_PORT: $APP_RIDE_THE_LIGHTNING_PORT
+      APP_HOST: ride-the-lightning_web_1
+      APP_PORT: 3001
+  
   web:
-    image: shahanafarooqui/rtl:0.13.1@sha256:68f837be0acae9a19fed4c4e6de0408f809b8866a360fc39e274ea2a2d61cc88
+    image: shahanafarooqui/rtl:0.13.2@sha256:07d4c1f263c05c32270dcaab3625fc68ef985efce652e7850fbf57f65d36366f
     user: "1000:1000"
     restart: on-failure
     stop_grace_period: 1m
@@ -19,7 +20,7 @@ services:
     environment:
         # App config
         APP_PASSWORD: $APP_PASSWORD
-        PORT: $APP_RIDE_THE_LIGHTNING_PORT
+        PORT: 3001
         RTL_CONFIG_PATH: "/data"
         CHANNEL_BACKUP_PATH: "/data/backup"
         LN_IMPLEMENTATION: "LND"
@@ -30,11 +31,8 @@ services:
         CONFIG_PATH: "/lnd/lnd.conf"
 
         # Boltz
-        BOLTZ_SERVER_URL: "https://$APP_RIDE_THE_LIGHTNING_BOLTZ_IP:9003"
+        BOLTZ_SERVER_URL: "https://ride-the-lightning_boltz_1:9003"
         BOLTZ_MACAROON_PATH: "/boltz/.boltz-lnd/macaroons"
-    networks:
-      default:
-        ipv4_address: $APP_RIDE_THE_LIGHTNING_IP
 
   boltz:
     image: boltz/boltz-lnd:1.2.6@sha256:01a56dd357a2460bfd0ecdd726d6db3ab59d78ee691250831d09ba5de3fec7ce
@@ -50,8 +48,5 @@ services:
       - --lnd.host="$APP_LIGHTNING_NODE_IP"
       - --lnd.macaroon="/lnd/data/chain/bitcoin/$APP_BITCOIN_NETWORK/admin.macaroon"
       - --lnd.certificate="/lnd/tls.cert"
-      - --rpc.rest.host="$APP_RIDE_THE_LIGHTNING_BOLTZ_IP"
+      - --rpc.rest.host="0.0.0.0"
       - --rpc.rest.port="9003"
-    networks:
-      default:
-        ipv4_address: $APP_RIDE_THE_LIGHTNING_BOLTZ_IP

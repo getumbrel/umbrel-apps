@@ -3,13 +3,12 @@ version: "3.7"
 services:
   app_proxy:
     environment:
-      APP_HOST: $APP_SPHINX_RELAY_IP
+      APP_HOST: sphinx-relay_server_1
       APP_PORT: $APP_SPHINX_RELAY_PORT
       PROXY_AUTH_ADD: "false"
 
-  sphinx-relay:
-    container_name: sphinx-relay
-    image: sphinxlightning/sphinx-relay:v2.2.10@sha256:8dbf8848fbeab9d0577c0772d5512f25eb2396eb8b74fb4e7be255abff63cf34
+  server:
+    image: sphinxlightning/sphinx-relay:v2.2.12@sha256:96778f56fc3b2c7703ec6d0d3162a9fe4c82b0d57179819c90efc479cdc1620a
     init: true
     restart: on-failure
     stop_grace_period: 1m
@@ -24,6 +23,3 @@ services:
       TLS_LOCATION: /lnd/tls.cert
       MACAROON_LOCATION: /lnd/data/chain/bitcoin/${APP_BITCOIN_NETWORK}/admin.macaroon
       LND_LOG_LOCATION: /lnd/logs/bitcoin/${APP_BITCOIN_NETWORK}/lnd.log
-    networks:
-      default:
-        ipv4_address: $APP_SPHINX_RELAY_IP

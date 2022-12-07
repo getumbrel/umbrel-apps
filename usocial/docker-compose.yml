@@ -3,7 +3,7 @@ version: "3.7"
 services:
   app_proxy:
     environment:
-      APP_HOST: $APP_USOCIAL_IP
+      APP_HOST: usocial_web_1
       APP_PORT: 5000
 
   web:
@@ -19,9 +19,6 @@ services:
         LND_IP: "${APP_LIGHTNING_NODE_IP}"
         LND_GRPC_PORT: ${APP_LIGHTNING_NODE_GRPC_PORT}
         LND_DIR: "/lnd"
-    networks:
-      default:
-          ipv4_address: $APP_USOCIAL_IP
   
   fetcher:
     depends_on:
@@ -33,6 +30,3 @@ services:
       - ${APP_DATA_DIR}/data:/instance
     environment:
         USOCIAL_JOB: "FETCH_FEEDS"
-    networks:
-      default:
-          ipv4_address: $APP_USOCIAL_FETCHER_IP

@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# To allow large files to be uploaded, Nextcloud's 
+# Apache instance must be configured with 'LimitRequestBody 0'
+# inside the .htaccess file
+
+APP_DATA_DIR="$(readlink -f $(dirname "${BASH_SOURCE[0]}")/..)"
+DOT_HTACCESS_FILE="${APP_DATA_DIR}/data/nextcloud/.htaccess"
+
+echo "Waiting for file (${DOT_HTACCESS_FILE}) to exist..."
+
+# Wait up to 30 seconds...
+for attempt in $(seq 1 300); do
+	if [[ -f "${DOT_HTACCESS_FILE}" ]]; then
+		echo ".htaccess file exists"
+		break
+	fi
+	sleep 0.1
+done
+
+if [[ ! -f "${DOT_HTACCESS_FILE}" ]]; then
+	echo ".htaccess was never created. Something is likely wrong with the Nextcloud app"
+	exit
+fi
+
+# Now check if `LimitRequestBody 0` already exists within the .htaccess file
+if ! cat "${DOT_HTACCESS_FILE}" | grep --quiet '^LimitRequestBody'
+then
+	echo "Writing 'LimitRequestBody 0' config. to .htaccess"
+
+	echo >> "${DOT_HTACCESS_FILE}"
+	echo "LimitRequestBody 0" >> "${DOT_HTACCESS_FILE}"
+fi

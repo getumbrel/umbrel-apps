@@ -3,8 +3,8 @@ version: "3.7"
 services:
   app_proxy:
     environment:
-      APP_HOST: $APP_OAK_NODE_IP
-      APP_PORT: $APP_OAK_NODE_PORT
+      APP_HOST: oak-node_web_1
+      APP_PORT: 8100
 
   web:
     image: oak-node.net/oak:v0.3.4@sha256:b4f218a453a10174492a1b03c66329dff89bdece26c0b024e1bffe9340141048
@@ -16,7 +16,7 @@ services:
       - ${APP_DATA_DIR}/data:/data
       - ${APP_DATA_DIR}/log:/oak/log
     environment:
-      ROCKET_PORT: $APP_OAK_NODE_PORT
+      ROCKET_PORT: 8100
       ROCKET_ADDRESS: 0.0.0.0
       OAK_DATA_DIR: /data
       OAK_LND_REST_API_URL: https://$APP_LIGHTNING_NODE_IP:$APP_LIGHTNING_NODE_REST_PORT
@@ -24,6 +24,3 @@ services:
       OAK_LND_CERT_PATH: /lnd-dir/tls.cert
       OAK_ONION_SOCKS5_HOST: $TOR_PROXY_IP
       OAK_ONION_SOCKS5_PORT: $TOR_PROXY_PORT
-    networks:
-      default:
-        ipv4_address: $APP_OAK_NODE_IP
