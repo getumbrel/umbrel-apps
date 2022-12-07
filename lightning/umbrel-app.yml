@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: lightning
 category: Finance
 name: Lightning Node
-version: "0.15.4-beta-build-2"
+version: "0.15.5-beta"
 tagline: Run your personal Lightning Network node
 description: >-
   Run your personal Lightning Network node, and join the future of Bitcoin today.
@@ -22,7 +22,20 @@ description: >-
 
   An official app from Umbrel.
 releaseNotes: >-
-  - Enable RPC middleware in LND
+  Bug Fixes:
+
+  - A Taproot related key tweak issue was fixed in btcd that affected remote signing setups.
+
+  - Taproot changes addresses are now used by default for the SendCoins RPC.
+
+  - A 1 second interval has been added between FundingLocked receipt checks. This reduces idle CPU usage for pending/dangling funding attempts.
+
+  - The wallet birthday is now used properly when creating a watch-only wallet to avoid scanning the whole chain.
+
+  - Taproot outputs are now correctly shown as SCRIPT_TYPE_WITNESS_V1_TAPROOT in the output of GetTransactions (lncli listchaintxns).
+
+
+  Full changelog can be found here: https://github.com/lightningnetwork/lnd/blob/v0-15-5-branch/docs/release-notes/release-notes-0.15.5.md
 developer: Umbrel
 website: https://umbrel.com
 dependencies:
