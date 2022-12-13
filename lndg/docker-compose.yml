@@ -7,9 +7,10 @@ services:
       APP_PORT: $APP_LNDG_PORT
 
   web:
-    image: ghcr.io/cryptosharks131/lndg:v1.2.1@sha256:4c06dcf97b0b80324d775acdb6272a12559fbb318fe7b0fb4549e29dd0b2a7a5
+    image: ghcr.io/cryptosharks131/lndg:v1.4.0@sha256:9b97efa9a4329a4fdaf2025124433b40eb329526e13c73180c472de26bfd43df
     restart: on-failure
     stop_grace_period: 1m
+    init: true
     volumes:
       - ${APP_LIGHTNING_NODE_DATA_DIR}:/root/.lnd:ro
       - ${APP_DATA_DIR}:/lndg/data

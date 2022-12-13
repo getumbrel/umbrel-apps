@@ -3,9 +3,10 @@ version: "3.7"
 services:
   app_proxy:
     environment:
-      APP_HOST: $APP_SAMOURAI_SERVER_IP
+      APP_HOST: samourai-server_nginx_1
       APP_PORT: 8081
       PROXY_AUTH_ADD: "false"
+  
   db:
     image: louneskmt/dojo-db:1.5.0-low-mem@sha256:5af4f90818d55360e572033fcc493cd945143e7a3aaef91fa7e102f3c66c7a5b
     init: true
@@ -19,15 +20,12 @@ services:
       MYSQL_PASSWORD: password
     volumes:
       - ${APP_DATA_DIR}/mysql/data:/var/lib/mysql
-    networks:
-      default:
-        ipv4_address: $APP_SAMOURAI_SERVER_DB_IP
 
   node:
     image: louneskmt/dojo-nodejs:1.16.1@sha256:49de92774ecfcb88af1dc67f8d498641d750c4ec9acaab3c448d70c4f2d4bfe7
     init: true
     restart: on-failure
-    command: "/home/node/app/wait-for-it.sh ${APP_SAMOURAI_SERVER_DB_IP}:3306 --timeout=720 --strict -- /home/node/app/restart.sh"
+    command: "/home/node/app/wait-for-it.sh samourai-server_db_1:3306 --timeout=720 --strict -- /home/node/app/restart.sh"
     user: "1000:1000"
     environment:
       # GLOBAL
@@ -35,7 +33,7 @@ services:
       DOJO_VERSION_TAG: 1.16.1
       NET_DOJO_TOR_IPV4: $TOR_PROXY_IP
       TOR_SOCKS_PORT: $TOR_PROXY_PORT
-      NET_DOJO_MYSQL_IPV4: $APP_SAMOURAI_SERVER_DB_IP
+      NET_DOJO_MYSQL_IPV4: samourai-server_db_1
 
       # MYSQL
       MYSQL_DATABASE: samourai-main
@@ -84,9 +82,6 @@ services:
       INDEXER_BATCH_SUPPORT: inactive # 'active' for ElectrumX, 'inactive' otherwise
     depends_on:
       - db
-    networks:
-      default:
-        ipv4_address: $APP_SAMOURAI_SERVER_NODE_IP
 
   whirlpool:
     image: louneskmt/whirlpool:0.10.15@sha256:3b766327dfa4c2ae40f190c18afa1f3c9cb9101d7964049dc79bdcb89fd21a90
@@ -97,7 +92,7 @@ services:
       - "--listen"
       - "--cli.apiKey=$APP_SAMOURAI_SERVER_WHIRLPOOL_API_KEY"
       - "--cli.api.http-enable=true"
-      - "--cli.api.http-port=$APP_SAMOURAI_SERVER_WHIRLPOOL_PORT"
+      - "--cli.api.http-port=8898"
       - "--cli.tor=true"
       - "--cli.torConfig.coordinator.enabled=true"
       - "--cli.torConfig.coordinator.onion=true"
@@ -109,14 +104,11 @@ services:
     environment:
       WHIRLPOOL_BITCOIN_NETWORK: $APP_BITCOIN_NETWORK
       WHIRLPOOL_DOJO: "on"
-      WHIRLPOOL_DOJO_IP: $APP_SAMOURAI_SERVER_IP
+      WHIRLPOOL_DOJO_IP: "samourai-server_nginx_1"
     depends_on:
       - node
     volumes:
       - ${APP_DATA_DIR}/whirlpool:/home/whirlpool/.whirlpool-cli
-    networks:
-      default:
-        ipv4_address: $APP_SAMOURAI_SERVER_WHIRLPOOL_IP
 
   nginx:
     image: nginx:1.21-alpine@sha256:686aac2769fd6e7bab67663fd38750c135b72d993d0bb0a942ab02ef647fc9c3
@@ -131,16 +123,23 @@ services:
       - ${APP_DATA_DIR}/nginx/connect:/var/www/connect
     environment:
       COMMON_BTC_NETWORK: $APP_BITCOIN_NETWORK
-      DOJO_LOCAL_PORT: $APP_SAMOURAI_SERVER_DOJO_PORT
+      DOJO_LOCAL_PORT: 3009
       DOJO_HIDDEN_SERVICE: $APP_SAMOURAI_SERVER_DOJO_HIDDEN_SERVICE
       WHIRLPOOL_HIDDEN_SERVICE: $APP_SAMOURAI_SERVER_WHIRLPOOL_HIDDEN_SERVICE
       NODE_PREFIX_SUPPORT: support
       NODE_ADMIN_KEY: $APP_SAMOURAI_SERVER_NODE_ADMIN_KEY
       WHIRLPOOL_API_KEY: $APP_SAMOURAI_SERVER_WHIRLPOOL_API_KEY
     ports:
-      - "$APP_SAMOURAI_SERVER_DOJO_PORT:80"
+      - "3009:80"
     depends_on:
       - node
-    networks:
-      default:
-        ipv4_address: $APP_SAMOURAI_SERVER_IP
+
+  tor:
+    image: getumbrel/tor:0.4.7.8@sha256:2ace83f22501f58857fa9b403009f595137fa2e7986c4fda79d82a8119072b6a
+    user: "1000:1000"
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/torrc:/etc/tor/torrc:ro
+      - ${TOR_DATA_DIR}:/data
+    environment:
+      HOME: "/tmp"

@@ -3,38 +3,36 @@ version: "3.7"
 services:
   app_proxy:
     environment:
-      APP_HOST: $APP_SUREDBITS_WALLET_IP
+      APP_HOST: suredbits-wallet_web_1
       APP_PORT: 3002
 
   web:
-    image: bitcoinscala/wallet-server-ui:1.9.2-f44ad4a4-SNAPSHOT@sha256:61d0f156202314cdfe00e184affa72f98c23fa79b8c9f56eed93f5802b0c2f82
+    image: bitcoinscala/wallet-server-ui:1.9.7@sha256:50da55b6d607d03775041aa2c056c5fe281a33f0e471d58e07a99dd2670718e3
     user: "1000:1000"
     restart: on-failure
     stop_grace_period: 1m
     volumes:
-      - ${APP_DATA_DIR}/data/wallet:/home/bitcoin-s/.bitcoin-s
+      - ${APP_DATA_DIR}/data/wallet:/bitcoin-s
       - ${APP_DATA_DIR}/data/log:/log
     environment:
       LOG_PATH: "/log/"
-      BITCOIN_S_HOME: "/home/bitcoin-s/.bitcoin-s/"
-     #MEMPOOL_API_URL: "http://umbrel.local:${APP_MEMPOOL_PORT}/api"
-      WALLET_SERVER_API_URL: "http://${APP_SUREDBITS_WALLET_SERVER_IP}:9999/"
-      WALLET_SERVER_WS: "ws://${APP_SUREDBITS_WALLET_SERVER_IP}:19999/events"
+      BITCOIN_S_HOME: "/bitcoin-s/"
+      #MEMPOOL_API_URL: "http://umbrel.local:${APP_MEMPOOL_PORT}/api"
+      WALLET_SERVER_API_URL: "http://suredbits-wallet_walletserver_1:9999/"
+      WALLET_SERVER_WS: "ws://suredbits-wallet_walletserver_1:19999/events"
       TOR_PROXY: socks5://${TOR_PROXY_IP}:${TOR_PROXY_PORT}
       DEFAULT_UI_PASSWORD: "none" 
       BITCOIN_S_SERVER_RPC_PASSWORD: $APP_PASSWORD
-    networks:
-      default:
-        ipv4_address: $APP_SUREDBITS_WALLET_IP
     depends_on: 
       - walletserver
   
   walletserver:
-    image: bitcoinscala/bitcoin-s-server:1.9.2-66-b16a8ca6-SNAPSHOT@sha256:bde3cbb50c4e5e8e4a5f28ae90e84718f093506e4f8ae6e9c3d0894bd7e102f5
+    image: bitcoinscala/bitcoin-s-server:1.9.7@sha256:cee2c4682d6172d6af2f0edfae016e3cc7aacc15ba56eb0652d9d65d31e7baf3
+    entrypoint: ["/opt/docker/bin/bitcoin-s-server", "--datadir", "/bitcoin-s", "--conf", "/opt/docker/docker-application.conf"]
     user: "1000:1000"
     restart: on-failure
     volumes:
-      - ${APP_DATA_DIR}/data/wallet:/home/bitcoin-s/.bitcoin-s
+      - ${APP_DATA_DIR}/data/wallet:/bitcoin-s
     environment:
       BITCOIN_S_NODE_MODE: "bitcoind"
       BITCOIN_S_NETWORK: $APP_BITCOIN_NETWORK
@@ -51,8 +49,16 @@ services:
       BITCOIN_S_BITCOIND_PASSWORD: $APP_BITCOIN_RPC_PASS
       BITCOIN_S_SERVER_RPC_PASSWORD: $APP_PASSWORD
       JAVA_OPTS: "-Xmx756m"
+      DISABLE_JLINK: "1"
     ports:
       - "$APP_SUREDBITS_WALLET_P2P_PORT:$APP_SUREDBITS_WALLET_P2P_PORT"
-    networks:
-      default:
-        ipv4_address: $APP_SUREDBITS_WALLET_SERVER_IP
+  
+  tor:
+    image: getumbrel/tor:0.4.7.8@sha256:2ace83f22501f58857fa9b403009f595137fa2e7986c4fda79d82a8119072b6a
+    user: "1000:1000"
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/torrc:/etc/tor/torrc:ro
+      - ${TOR_DATA_DIR}:/data
+    environment:
+      HOME: "/tmp"

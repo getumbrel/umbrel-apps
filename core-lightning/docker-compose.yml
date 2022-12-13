@@ -1,4 +1,4 @@
-version: "3.8"
+version: "3.7"
 
 services:
   app_proxy:
@@ -30,7 +30,7 @@ services:
         ipv4_address: ${APP_CORE_LIGHTNING_IP}
   
   c-lightning-rest:
-    image: saubyk/c-lightning-rest:0.7.2@sha256:7943ca9bf7b3952e4956b322405890788b6ddda553908c3a284438ef4e616768
+    image: saubyk/c-lightning-rest:0.9.0@sha256:00b40443f1f455378587abb37649fdb7c7b1efb43ed64bc9fe78d9bf6ffb4371
     restart: on-failure
     ports:
       - ${APP_CORE_LIGHTNING_REST_PORT}:${APP_CORE_LIGHTNING_REST_PORT}
@@ -57,9 +57,20 @@ services:
       - --bind-addr=${APP_CORE_LIGHTNING_DAEMON_IP}:9735
       - --addr=statictor:${TOR_PROXY_IP}:29051
       - --tor-service-password=${TOR_PASSWORD}
+      - --network=${APP_CORE_LIGHTNING_BITCOIN_NETWORK}
       #- --grpc-port=${APP_CORE_LIGHTNING_DAEMON_GRPC_PORT}
     volumes:
       - "${APP_DATA_DIR}/data/lightningd:/data/.lightning"
     networks:
       default:
         ipv4_address: ${APP_CORE_LIGHTNING_DAEMON_IP}
+
+  tor:
+    image: getumbrel/tor:0.4.7.8@sha256:2ace83f22501f58857fa9b403009f595137fa2e7986c4fda79d82a8119072b6a
+    user: "1000:1000"
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/torrc:/etc/tor/torrc:ro
+      - ${TOR_DATA_DIR}:/data
+    environment:
+      HOME: "/tmp"

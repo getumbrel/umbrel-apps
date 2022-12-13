@@ -3,23 +3,19 @@ version: "3.7"
 services:
   app_proxy:
     environment:
-      APP_HOST: $APP_ITCHYSATS_IP
+      APP_HOST: itchysats_web_1
       APP_PORT: 8000
 
   web:
-    image: ghcr.io/itchysats/itchysats/taker:0.5.4@sha256:9fa1a461cbe9760944c5a471343064177a5ad3a497787ddcee72b598006d3bcb
+    image: ghcr.io/itchysats/itchysats/taker:0.7.0@sha256:0c29162897a6c2bc2093373306f920400a0718960e1e4b1d80bd44beb485a498
     restart: on-failure
     stop_grace_period: 1m
     volumes:
       - ${APP_DATA_DIR}/data:/data
     command:
       - --password=$APP_PASSWORD
-      - --umbrel-seed=$APP_SEED
+      - --app-seed=$APP_SEED
       - $APP_BITCOIN_NETWORK
       - --electrum=tcp://$APP_ELECTRS_NODE_IP:$APP_ELECTRS_NODE_PORT
     environment:
       - ITCHYSATS_ENV=umbrel
-
-    networks:
-      default:
-        ipv4_address: $APP_ITCHYSATS_IP

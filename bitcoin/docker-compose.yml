@@ -28,7 +28,7 @@ services:
         ipv4_address: $APP_BITCOIN_IP
 
   bitcoind:
-    image: lncm/bitcoind:v22.0@sha256:37a1adb29b3abc9f972f0d981f45e41e5fca2e22816a023faa9fdc0084aa4507
+    image: lncm/bitcoind:v24.0@sha256:db19fe46f30acd3854f4f0d239278137d828ce3728f925c8d92faaab1ba8556a
     command: "${APP_BITCOIN_COMMAND}"
     restart: on-failure
     stop_grace_period: 15m30s
@@ -40,3 +40,13 @@ services:
     networks:
       default:
         ipv4_address: $APP_BITCOIN_NODE_IP
+
+  tor:
+    image: getumbrel/tor:0.4.7.8@sha256:2ace83f22501f58857fa9b403009f595137fa2e7986c4fda79d82a8119072b6a
+    user: "1000:1000"
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/torrc:/etc/tor/torrc:ro
+      - ${TOR_DATA_DIR}:/data
+    environment:
+      HOME: "/tmp"
