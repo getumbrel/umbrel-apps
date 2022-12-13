@@ -9,7 +9,7 @@ services:
       PROXY_AUTH_ADD: "false"
 
   database:
-    image: 'rabbitcompany/passky-database:v7.1.0@sha256:3092a9b88a5a443bbbfe566856a197f336dacfc543e4e4a66df4d2cd5423fa27'
+    image: 'rabbitcompany/passky-database:v8.0.2@sha256:3b9f4fdfc36a846686fc90887b3bfaa173cb8f91b88f8824f3890fbacb29c38d'
     restart: on-failure
     stop_grace_period: 1m
     environment:
@@ -25,7 +25,7 @@ services:
         ipv4_address: $APP_PASSKY_DB_IP
 
   api:
-    image: 'rabbitcompany/passky-api:v7.1.0@sha256:99f6fa64977f8bbcf6357317f8c6426e6b109ad157e981ebf25f762f4259a90c'
+    image: 'rabbitcompany/passky-api:v8.0.2@sha256:e574091f75db967c26d17bc1ba58c037d808a1017ab80304cfe99d6276a1734b'
     restart: on-failure
     stop_grace_period: 1m
     environment:
@@ -33,23 +33,37 @@ services:
       SERVER_CORES: 1
       ADMIN_USERNAME: "admin"
       ADMIN_PASSWORD: "${APP_PASSWORD}"
+      CF_TURNSTILE_SITE_KEY: "1x00000000000000000000AA"
+      CF_TURNSTILE_SECRET_KEY: "1x0000000000000000000000000000000AA"
       MYSQL_HOST: "${APP_PASSKY_DB_IP}"
+      MYSQL_PORT: 3306
       MYSQL_DATABASE: "passky"
       MYSQL_USER: "passky"
       MYSQL_PASSWORD: "${APP_PASSWORD}"
+      MYSQL_SSL: "false"
+      MYSQL_SSL_CA: "/etc/ssl/certs/ca-certificates.crt"
+      MYSQL_CACHE_MODE: 0
+      REDIS_HOST: "127.0.0.1"
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ""
+      REDIS_LOCAL_HOST: "127.0.0.1"
+      REDIS_LOCAL_PORT: 6379
+      REDIS_LOCAL_PASSWORD: ""
       MAIL_ENABLED: "false"
       ACCOUNT_MAX: 100
       ACCOUNT_MAX_PASSWORDS: 1000
+      ACCOUNT_PREMIUM: -1
       YUBI_CLOUD: "https://api.yubico.com/wsapi/2.0/verify"
       YUBI_ID: 67857
       LIMITER_ENABLED: "true"
-      LIMITER_GET_INFO: 1
-      LIMITER_GET_STATS: 1
+      LIMITER_GET_INFO: -1
+      LIMITER_GET_STATS: -1
       LIMITER_GET_TOKEN: 3
       LIMITER_GET_PASSWORDS: 2
       LIMITER_SAVE_PASSWORD: 2
       LIMITER_EDIT_PASSWORD: 2
       LIMITER_DELETE_PASSWORD: 2
+      LIMITER_DELETE_PASSWORDS: 10
       LIMITER_CREATE_ACCOUNT: 10
       LIMITER_DELETE_ACCOUNT: 10
       LIMITER_IMPORT_PASSWORDS: 10
@@ -58,6 +72,8 @@ services:
       LIMITER_DISABLE_2FA: 10
       LIMITER_ADD_YUBIKEY: 10
       LIMITER_REMOVE_YUBIKEY: 10
+      LIMITER_UPGRADE_ACCOUNT: 10
+      LIMITER_GET_REPORT: -1
     networks:
       default:
         ipv4_address: $APP_PASSKY_SERVER_IP
