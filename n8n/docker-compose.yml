@@ -5,6 +5,9 @@ services:
     environment:
       APP_HOST: n8n_server_1
       APP_PORT: 5678
+      # These webhook endpoints are protected using Basic or Header Auth
+      # More details here: https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.webhook/
+      PROXY_AUTH_WHITELIST: "/webhook-test/*,/webhook/*"
 
   server:
     image: n8nio/n8n:0.207.1@sha256:a4702a77217b449723a98030e3c47a0267c0ceee97a8684184fdfebec0712b5f
