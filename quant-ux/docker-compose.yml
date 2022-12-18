@@ -16,12 +16,16 @@ services:
   frontend:
     image: bmcgonag/qux-fe:1.4.0@sha256:e7da7bf60dccda9f29d261bfd7baa22a37ed7adc3d5869c4495300d2991e0660
     restart: on-failure
+    # Image uploads break if we run as non-root
+    # user: 1000:1000
     environment:
       - QUX_PROXY_URL=http://quant-ux_backend_1:8080
   
   backend:
     image: bmcgonag/qux-be:1.4.0@sha256:be51255ec422e508e227056c1bc89f746462aca20cfdf89bb9bef796a96481cf
     restart: on-failure
+    # Image uploads break if we run as non-root
+    # user: 1000:1000
     volumes:
       - ${APP_DATA_DIR}/data/images/user:/qux-images-user
       - ${APP_DATA_DIR}/data/images/apps:/qux-images-apps
