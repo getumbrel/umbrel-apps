@@ -22,11 +22,14 @@ services:
   backend:
     image: bmcgonag/qux-be:1.4.0@sha256:be51255ec422e508e227056c1bc89f746462aca20cfdf89bb9bef796a96481cf
     restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data/images/user:/qux-images-user
+      - ${APP_DATA_DIR}/data/images/apps:/qux-images-apps
     environment:
       - QUX_HTTP_HOST=http://quant-ux_frontend_1:8082
       - QUX_HTTP_PORT=8080
       - QUX_MONGO_DB_NAME=quantux
       - QUX_MONGO_TABLE_PREFIX=quantux
       - QUX_MONGO_CONNECTION_STRING=mongodb://quant-ux_db_1:27017
-      - QUX_IMAGE_FOLDER_USER=/qux-images
-      - QUX_IMAGE_FOLDER_APPS=/qux-image-apps
+      - QUX_IMAGE_FOLDER_USER=/qux-images-user
+      - QUX_IMAGE_FOLDER_APPS=/qux-images-apps
