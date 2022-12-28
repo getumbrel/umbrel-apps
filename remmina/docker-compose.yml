@@ -1,0 +1,16 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: remmina_server_1
+      APP_PORT: 3000
+
+  server:
+    image: linuxserver/remmina:1.4.2@sha256:dc9972f1707e86ffec0544e296071a64feb6919e245d3b04068ce6549acfc0d9
+    volumes:
+      - ${APP_DATA_DIR}/data/config:/config
+    restart: on-failure
+    environment:
+      - PUID=1000
+      - PGID=1000
