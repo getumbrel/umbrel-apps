@@ -16,13 +16,12 @@ services:
 
   app:
     image: invoiceninja/invoiceninja:5.5.49@sha256:10307534133c73cf2372527f5a005f26ffa637eab4702d91227a4043c136456c
-    user: "1000:1000"
     restart: on-failure
     volumes:
       - ${APP_DATA_DIR}/data/public:/var/www/app/public:rw,delegated
       - ${APP_DATA_DIR}/data/storage:/var/www/app/storage:rw,delegated
     environment:
-      APP_URL: $APP_DOMAIN
+      APP_URL: "http://${APP_DOMAIN}"
       DB_HOST: invoice-ninja_db_1
       DB_DATABASE: invoiceninja
       DB_USERNAME: invoiceninja
