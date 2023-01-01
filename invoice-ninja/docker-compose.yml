@@ -1,0 +1,42 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: invoice-ninja_nginx_1
+      APP_PORT: 80
+
+  nginx:
+    image: nginx:1.21-alpine@sha256:686aac2769fd6e7bab67663fd38750c135b72d993d0bb0a942ab02ef647fc9c3
+    init: true
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/config/nginx.conf:/etc/nginx/conf.d/nginx.conf:ro
+      - ${APP_DATA_DIR}/data/public:/var/www/app/public:ro
+
+  app:
+    image: invoiceninja/invoiceninja:5.5.49@sha256:10307534133c73cf2372527f5a005f26ffa637eab4702d91227a4043c136456c
+    user: "1000:1000"
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data/public:/var/www/app/public:rw,delegated
+      - ${APP_DATA_DIR}/data/storage:/var/www/app/storage:rw,delegated
+    environment:
+      APP_URL: $APP_DOMAIN
+      DB_HOST: invoice-ninja_db_1
+      DB_DATABASE: invoiceninja
+      DB_USERNAME: invoiceninja
+      DB_PASSWORD: moneyprintergobrrr
+
+  db:
+    image: mariadb:10.5.12@sha256:dfcba5641bdbfd7cbf5b07eeed707e6a3672f46823695a0d3aba2e49bbd9b1dd
+    user: "1000:1000"
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data/db:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: invoiceninja
+      MYSQL_USER: invoiceninja
+      MYSQL_PASSWORD: moneyprintergobrrr
+      MYSQL_DATABASE: invoiceninja
+
