@@ -8,7 +8,7 @@ services:
       PROXY_AUTH_ADD: "false"
 
   immich-server:
-    image: altran1502/immich-server:v1.34.0_53-dev@sha256:959a1770049335afa4e2870a47854646cbbe4047699e1ad7a0ae73327719bc12
+    image: altran1502/immich-server:v1.40.0_63-dev@sha256:c61f6c5373efb4544db8d04e6e090b77561b71b07d4f272821a6349a18531e37
     hostname: immich-server
     entrypoint: ["/bin/sh", "./start-server.sh"]
     volumes:
@@ -31,7 +31,7 @@ services:
     restart: on-failure
 
   immich-microservices:
-    image: altran1502/immich-server:v1.34.0_53-dev@sha256:959a1770049335afa4e2870a47854646cbbe4047699e1ad7a0ae73327719bc12
+    image: altran1502/immich-server:v1.40.0_63-dev@sha256:c61f6c5373efb4544db8d04e6e090b77561b71b07d4f272821a6349a18531e37
     entrypoint: ["/bin/sh", "./start-microservices.sh"]
     volumes:
       - ${APP_DATA_DIR}/data/upload:/usr/src/app/upload
@@ -53,7 +53,7 @@ services:
     restart: on-failure
 
   immich-machine-learning:
-    image: altran1502/immich-machine-learning:v1.34.0_53-dev@sha256:944984e95540c0453742289170ae3759c8f6ac80d3d34adaa6c7f49c27413974
+    image: altran1502/immich-machine-learning:v1.40.0_63-dev@sha256:a5e660247a5a3c1d1b4ab9d160629def546d7e86e534a55d5ebc0e0eee5cef1a
     entrypoint: ["/bin/sh", "./entrypoint.sh"]
     volumes:
       - ${APP_DATA_DIR}/data/upload:/usr/src/app/upload
@@ -74,7 +74,7 @@ services:
     restart: on-failure
 
   immich-web:
-    image: altran1502/immich-web:v1.34.0_53-dev@sha256:4bb4184a4b9723651b06fd2b8802c40d83e75a46e963a73e36f53e88d088e5fc
+    image: altran1502/immich-web:v1.40.0_63-dev@sha256:abad6488afaa1d0b4b8ea818221b86e7b45bf72a1ea328d8c0f35ad266b9e544
     hostname: immich-web
     entrypoint: ["/bin/sh", "./entrypoint.sh"]
     environment:
@@ -88,6 +88,12 @@ services:
       DISABLE_REVERSE_GEOCODING: ${APP_IMMICH_DISABLE_REVERSE_GEOCODING}
       REVERSE_GEOCODING_PRECISION: ${APP_IMMICH_REVERSE_GEOCODING_PRECISION}
       PUBLIC_LOGIN_PAGE_MESSAGE: ${APP_IMMICH_PUBLIC_LOGIN_PAGE_MESSAGE}
+    restart: on-failure
+
+  immich-proxy:
+    image: altran1502/immich-proxy:v1.40.0_63-dev@sha256:f779b86497b3d4b8822ec0d7341cfd2d1f1688b8859c70a9b16bd36d01468865
+    depends_on:
+      - immich-server
     restart: on-failure
 
   redis:
@@ -107,10 +113,4 @@ services:
       PG_DATA: /var/lib/postgresql/data
     volumes:
       - ${APP_DATA_DIR}/data/postgres:/var/lib/postgresql/data
-    restart: on-failure
-
-  immich-proxy:
-    image: altran1502/immich-proxy:1.34.0_53-dev@sha256:79d9fe3e96e04a83c153bd26fd2f70e901a7ce7726372f0e4beddaf1175f75f6
-    depends_on:
-      - immich-server
     restart: on-failure
