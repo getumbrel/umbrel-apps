@@ -37,3 +37,5 @@ if [[ ! -d "${LOCAL_DOWNLOADS_DIR}" ]]; then
 	exit
 fi
 
+# Move contents of local downloads folder to Umbrel shared downloads folder
+rsync -vau --remove-source-files "${LOCAL_DOWNLOADS_DIR}/" "${UMBREL_DATA_STORAGE_DOWNLOADS_DIR}/"
