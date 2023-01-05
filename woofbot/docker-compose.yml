@@ -7,7 +7,7 @@ services:
       APP_PORT: 8080
   
   web:
-    image: woofbot/woofbot:v0.4.6@sha256:dd6cf833c0f5ffc3003550671228ba610e66c300cb7889b72923e6070f67d5dc
+    image: woofbot/woofbot:v0.5.2@sha256:55647a3ea53433047f86f2ed2bd69369e935b92609af2840abceecd0a010be10
     restart: on-failure
     stop_grace_period: 1m
     environment:
@@ -19,6 +19,8 @@ services:
       APP_BITCOIN_RPC_PASS: $APP_BITCOIN_RPC_PASS
       APP_BITCOIN_RPC_PORT: $APP_BITCOIN_RPC_PORT
       SERVER_LOGS_FILEPATH: /app/logs/server.log
+    volumes:
+      - ${APP_DATA_DIR}/data/server-logs:/app/logs
     depends_on:
       - mongodb
   
