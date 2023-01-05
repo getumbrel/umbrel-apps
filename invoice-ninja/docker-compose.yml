@@ -17,6 +17,9 @@ services:
 
   app:
     image: invoiceninja/invoiceninja:5.5.49@sha256:10307534133c73cf2372527f5a005f26ffa637eab4702d91227a4043c136456c
+    # We're forced to run user/group 1500
+    # More detail here: https://github.com/invoiceninja/dockerfiles/blob/ad3ffc227d63740330f761dad6e8c87768577847/alpine/5/Dockerfile#L70-L80
+    user: "1500:1500"
     restart: on-failure
     volumes:
       - ${APP_DATA_DIR}/data/public:/var/www/app/public:rw,delegated
