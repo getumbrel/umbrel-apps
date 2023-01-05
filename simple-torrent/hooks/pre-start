@@ -33,7 +33,7 @@ simpletorrent_correct_permission "${UMBREL_DATA_STORAGE_DOWNLOADS_DIR}"
 LOCAL_DOWNLOADS_DIR="${APP_DATA_DIR}/data/downloads"
 
 if [[ ! -d "${LOCAL_DOWNLOADS_DIR}" ]]; then
-	echo "No local download directory found. Skipping migration..."
+	echo "No local downloads directory found. Skipping migration..."
 	exit
 fi
 
@@ -41,3 +41,5 @@ fi
 rsync -vau --remove-source-files --exclude=".*" "${LOCAL_DOWNLOADS_DIR}/" "${UMBREL_DATA_STORAGE_DOWNLOADS_DIR}/"
 
 rm -rf "${LOCAL_DOWNLOADS_DIR}"
+
+echo "Local downloads directory successfully migrated"
