@@ -2,7 +2,7 @@ manifestVersion: 1
 id: urbit
 category: Networking
 name: Urbit
-version: "0.4.1"
+version: "1.15"
 tagline: Run Urbit on your Umbrel
 description: >-
   Urbit is a personal server for self-sovereign personal & networked
@@ -34,3 +34,19 @@ deterministicPassword: true
 torOnly: false
 submitter: ~mopfel-winrux
 submission: https://github.com/getumbrel/umbrel/pull/1246
+releaseNotes: >-
+  - v1.15 is a revert to v1.13
+
+  From v1.13:
+
+  - Supports setting the loom size on startup. sizes are specified in exponents of 2, from 1MB (20) to 4GB (32); can differ between processes (--loom and --urth-loom); and can be set for relevant subcommands (meld, pack, next, &c).
+
+  - Improves bit-slice performance (for noun de/serialization and many atom jets) by ensuring that implementation inner loops can be vectorized.
+
+  - Adds the vile command, for exporting the keyfile from a ship
+
+  - Adds the %xray hint, for printing the bytecode of a given expression (ty ~topfet-parmed!)
+
+  - Adds the eval command, for running hoon (from stdin) without booting a ship (ty ~mopfel-winrux!)
+
+  - Adds a better error message when a ship is already running as root (ty ~dinleb-rambep!)
