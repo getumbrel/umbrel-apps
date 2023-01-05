@@ -4,6 +4,8 @@ set -euo pipefail
 APP_DATA_DIR="$(readlink -f $(dirname "${BASH_SOURCE[0]}")/..)"
 UMBREL_ROOT="${APP_DATA_DIR}/../.."
 
+# We need to ensure Umbrel's shared download folder
+# exists and is owned by the correct user
 UMBREL_DATA_DIR="${UMBREL_ROOT}/data"
 UMBREL_DATA_STORAGE_DIR="${UMBREL_DATA_DIR}/storage"
 UMBREL_DATA_STORAGE_DOWNLOADS_DIR="${UMBREL_DATA_STORAGE_DIR}/downloads"
@@ -37,7 +39,7 @@ if [[ ! -d "${LOCAL_DOWNLOADS_DIR}" ]]; then
 	exit
 fi
 
-# Move contents of local downloads folder to Umbrel shared downloads folder
+# Move contents of local downloads folder to Umbrel's shared downloads folder
 rsync -vau --remove-source-files --exclude=".*" "${LOCAL_DOWNLOADS_DIR}/" "${UMBREL_DATA_STORAGE_DOWNLOADS_DIR}/"
 
 rm -rf "${LOCAL_DOWNLOADS_DIR}"
