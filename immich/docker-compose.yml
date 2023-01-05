@@ -9,7 +9,6 @@ services:
 
   immich-server:
     image: altran1502/immich-server:v1.40.0_63-dev@sha256:c61f6c5373efb4544db8d04e6e090b77561b71b07d4f272821a6349a18531e37
-    hostname: immich-server
     entrypoint: ["/bin/sh", "./start-server.sh"]
     volumes:
       - ${APP_DATA_DIR}/data/upload:/usr/src/app/upload
@@ -75,7 +74,6 @@ services:
 
   immich-web:
     image: altran1502/immich-web:v1.40.0_63-dev@sha256:abad6488afaa1d0b4b8ea818221b86e7b45bf72a1ea328d8c0f35ad266b9e544
-    hostname: immich-web
     entrypoint: ["/bin/sh", "./entrypoint.sh"]
     environment:
       DB_HOSTNAME: immich_postgres_1
@@ -92,6 +90,9 @@ services:
 
   immich-proxy:
     image: altran1502/immich-proxy:v1.40.0_63-dev@sha256:f779b86497b3d4b8822ec0d7341cfd2d1f1688b8859c70a9b16bd36d01468865
+    environment:
+      IMMICH_WEB_URL: "http://immich_immich-web_1"
+      IMMICH_SERVER_URL: "http://immich_immich-server_1"
     depends_on:
       - immich-server
     restart: on-failure
