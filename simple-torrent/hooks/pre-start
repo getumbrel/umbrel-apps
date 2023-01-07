@@ -44,7 +44,7 @@ if [[ ! -d "${LOCAL_DOWNLOADS_DIR}" ]]; then
 fi
 
 # Check if local downloads is not empty
-if [[ "$(ls -A "${LOCAL_DOWNLOADS_DIR}")" ]]; then
+if [[ "$(ls -l "${LOCAL_DOWNLOADS_DIR}" | wc -l)" -gt "1" ]]; then
 	# Move contents of local downloads folder to Umbrel's shared downloads folder
 	mv --verbose "${LOCAL_DOWNLOADS_DIR}/"* "${UMBREL_DATA_STORAGE_DOWNLOADS_DIR}"
 fi
