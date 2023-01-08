@@ -49,6 +49,13 @@ if [[ "$(ls -l "${LOCAL_DOWNLOADS_DIR}" | wc -l)" -gt "1" ]]; then
 	mv --verbose "${LOCAL_DOWNLOADS_DIR}/"* "${UMBREL_DATA_STORAGE_DOWNLOADS_DIR}"
 fi
 
+# Check if the local downloads directory is now empty
+if [[ "$(ls -l "${LOCAL_DOWNLOADS_DIR}" | wc -l)" -gt "1" ]]; then
+	echo "Failed to migrate local downloads directory: ${LOCAL_DOWNLOADS_DIR}"
+	echo "This directory still contains files/folders..."
+	exit
+fi
+
 rm -rf "${LOCAL_DOWNLOADS_DIR}"
 
 echo "Local downloads directory successfully migrated"
