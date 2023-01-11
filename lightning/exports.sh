@@ -25,7 +25,7 @@ BIN_ARGS+=( "--accept-amp" )
 BIN_ARGS+=( "--rpcmiddleware.enable" )
 
 # [Bitcoind]
-BIN_ARGS+=( "--bitcoind.rpchost=${APP_BITCOIN_NODE_IP}" )
+BIN_ARGS+=( "--bitcoind.rpchost=${APP_BITCOIN_NODE_IP}:${APP_BITCOIN_RPC_PORT}" )
 BIN_ARGS+=( "--bitcoind.rpcuser=${APP_BITCOIN_RPC_USER}" )
 BIN_ARGS+=( "--bitcoind.rpcpass=${APP_BITCOIN_RPC_PASS}" )
 BIN_ARGS+=( "--bitcoind.zmqpubrawblock=tcp://${APP_BITCOIN_NODE_IP}:${APP_BITCOIN_ZMQ_RAWBLOCK_PORT}" )
