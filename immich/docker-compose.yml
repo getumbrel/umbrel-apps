@@ -31,6 +31,9 @@ services:
 
   microservices:
     image: altran1502/immich-server:v1.40.0_63-dev@sha256:c61f6c5373efb4544db8d04e6e090b77561b71b07d4f272821a6349a18531e37
+    # This service cannot run under 1000:1000
+    # And because the uploads are shared
+    # We'll run immich specific services as root
     entrypoint: ["/bin/sh", "./start-microservices.sh"]
     volumes:
       - ${APP_DATA_DIR}/data/upload:/usr/src/app/upload
