@@ -1,20 +1,21 @@
 version: "3.7"
 
 services:
+  app_proxy:
+    environment:
+      APP_HOST: mercury-wallet_web_1
+      APP_PORT: 3000
+      
   web:
     image: layer2tech/mercury-wallet-ui:latest
     user: "1000:1000"
     restart: on-failure
     stop_grace_period: 1m
     ports:
-      - 3000
-    expose:
-      - 3000
+      - 3000:3000
   walletserver:
     image: layer2tech/mercury-tor-adapter:latest
     user: "1000:1000"
     restart: on-failure
     ports:
-      - 3001
-    expose:
-      - 3001
+      - 3001:3001
