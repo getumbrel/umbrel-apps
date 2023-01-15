@@ -2,7 +2,7 @@ manifestVersion: 1
 id: torq
 category: Lightning Node Management
 name: Torq
-version: "v0.16.3"
+version: "v0.16.6"
 tagline: Capital management for routing nodes on the lightning network
 description: >-
   Operating a routing node requires managing capital efficiently. If you look past the technical challenges, what you are trying to do is stack sats and support the network by routing liquidity. No matter your motivation, efficiently managing your capital is essential.
@@ -30,6 +30,9 @@ description: >-
   - Fetch and analyse data from any point in time
 
   - Navigate through time (days, weeks, months) to track your progress
+  
+  - Tag channels and nodes with custom labels (Exchange, Routing node, Sink, Source, or anything else)
+
 developer: LN Capital
 website: https://ln.capital
 dependencies:
@@ -43,17 +46,20 @@ gallery:
   - 3.jpg
   - 4.jpg
 releaseNotes: >-
-  This release fixes excessive memory consumption when importing invoices and drifting channel balances.
+  This release switches over to using admin.macaroon allowing the user to update, close and open channels.
+  We also fix a series of minor bugs and adds filtering of channel and node tags.
 
-  New features:
+  * Add admin.macaroon support
+  
+  * You can now filter on tags
 
-  Tags! You can now tag channels and nodes!
+  * Missing opening and closing channel time is fetched from Torq Vector
+  
+  * Closed channels no longer logs errors on new forwards
+  
+  * Fixed timestamp issue prevented fetching from being returned for channel and summary pages.
+  
 
-  Navigate using the flow diagram!
-
-  Quicker inspection of channels from both the forwards and channels page using pop out modal.
-
-  Update and close channels from the forwards page
 path: ""
 defaultUsername: ""
 deterministicPassword: true
