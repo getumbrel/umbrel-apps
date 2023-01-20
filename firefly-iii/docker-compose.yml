@@ -1,0 +1,35 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: firefly-iii_server_1
+      APP_PORT: 8080
+
+  server:
+    image: fireflyiii/core:version-5.7.18@sha256:f72a0dfcc2e12fb96d4a7f1e64834518692914ce40565904473f64401c1bda58
+    user: "1000:1000"
+    restart: on-failure
+    environment:
+      APP_KEY: EGyAqs9c8X9sPgaWac9X0uYnh3vLyJz0
+      DB_HOST: firefly-iii_db_1
+      DB_PORT: 3306
+      DB_CONNECTION: mysql
+      DB_DATABASE: fireflyiii
+      DB_USERNAME: fireflyiii
+      DB_PASSWORD: moneyprintergobrrr
+    volumes:
+      - ${APP_DATA_DIR}/data/upload:/var/www/html/storage/upload
+  
+  db:
+    image: mariadb:10.5.12@sha256:dfcba5641bdbfd7cbf5b07eeed707e6a3672f46823695a0d3aba2e49bbd9b1dd
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 1m
+    volumes:
+      - ${APP_DATA_DIR}/data/mysql:/var/lib/mysql
+    environment:
+      MYSQL_DATABASE: "fireflyiii"
+      MYSQL_USER: "fireflyiii"
+      MYSQL_PASSWORD: "fireflyiii"
+      MYSQL_ROOT_PASSWORD: "moneyprintergobrrr"
