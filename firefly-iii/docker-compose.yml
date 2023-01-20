@@ -8,7 +8,7 @@ services:
 
   server:
     image: fireflyiii/core:version-5.7.18@sha256:f72a0dfcc2e12fb96d4a7f1e64834518692914ce40565904473f64401c1bda58
-    user: "1000:1000"
+    # user: "1000:1000"
     restart: on-failure
     environment:
       APP_KEY: EGyAqs9c8X9sPgaWac9X0uYnh3vLyJz0
@@ -20,6 +20,7 @@ services:
       DB_PASSWORD: moneyprintergobrrr
     volumes:
       - ${APP_DATA_DIR}/data/upload:/var/www/html/storage/upload
+      - ${APP_DATA_DIR}/data/logs:/var/www/html/storage/logs
   
   db:
     image: mariadb:10.5.12@sha256:dfcba5641bdbfd7cbf5b07eeed707e6a3672f46823695a0d3aba2e49bbd9b1dd
