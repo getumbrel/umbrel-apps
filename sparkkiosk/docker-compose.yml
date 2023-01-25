@@ -3,9 +3,9 @@ version: "3.7"
 services:
   app_proxy:
     environment:
-      PROXY_AUTH_ADD: "false"
-      APP_HOST: $APP_SPARKKIOSK_IP
+      APP_HOST: sparkkiosk_web_1
       APP_PORT: 21214
+      PROXY_AUTH_ADD: "false"
 
   web:
     image: jensgertsen/sparkkiosk:v1.0.0@sha256:d49500ce9c47d04436e64dae7e336416aa32f83673058154aa8a983e1420008c
@@ -17,9 +17,6 @@ services:
       - ${APP_DATA_DIR}/data:/data
       - ${APP_LIGHTNING_NODE_DATA_DIR}:/lnd:ro
     environment:
-      # Global
-   
-
       # LND
       LND_GRPC_ENDPOINT: $APP_LIGHTNING_NODE_IP
       LND_GRPC_PORT: $APP_LIGHTNING_NODE_GRPC_PORT
@@ -30,6 +27,3 @@ services:
       APP_HIDDEN_SERVICE: http://$APP_HIDDEN_SERVICE
       APP_PASSWORD: $APP_PASSWORD
       APP_DOMAIN: $APP_DOMAIN
-    networks:
-      default:
-        ipv4_address: $APP_SPARKKIOSK_IP

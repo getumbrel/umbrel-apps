@@ -1,0 +1,32 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: sonarr_server_1
+      APP_PORT: 8989
+      PROXY_AUTH_WHITELIST: "/api/*"
+
+  server:
+    image: linuxserver/sonarr:3.0.9@sha256:acd113ad8514ac08e87da01f6cd9a48c3ac30e3c6b77e5f2ea13b80fe1a119d9
+    environment:
+      - PUID=1000
+      - PGID=1000
+    volumes:
+      - ${APP_DATA_DIR}/data/config:/config
+      - ${UMBREL_ROOT}/data/storage/downloads:/downloads
+    restart: on-failure
+
+  mac:
+    image: getumbrel/media-app-configurator:v1.0.0@sha256:e3d8b18e0186f76dd3f3d4acacc9101b4abbf302d8f2afbb47cdd3879b1a1008
+    user: "1000:1000"
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data/config:/config
+      - ${UMBREL_ROOT}/data/storage/downloads:/downloads
+    environment:
+      DOWNLOAD_CLIENT_API_URL: "http://sonarr_server_1:8989/api/v3/downloadclient"
+      ROOT_FOLDER_API_URL: "http://sonarr_server_1:8989/api/v3/rootfolder"
+      TRANSMISSION_HOST: "transmission_server_1"
+      TRANSMISSION_PORT: 9091
+      ROOT_FOLDER: "/downloads/shows"

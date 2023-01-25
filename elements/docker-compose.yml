@@ -1,9 +1,9 @@
-version: "3.8"
+version: "3.7"
 
 services:
   app_proxy:
     environment:
-      APP_HOST: $APP_ELEMENTS_IP
+      APP_HOST: elements_web_1
       APP_PORT: 8080
 
   node:
@@ -38,9 +38,6 @@ services:
       - -port=$APP_ELEMENTS_NODE_P2P_PORT
       - -blockfilterindex=1
       - -peerblockfilters=1
-    networks:
-      default:
-        ipv4_address: $APP_ELEMENTS_NODE_IP
   
   web: 
     image: ghcr.io/tiero/elements-web:v0.0.3@sha256:b80dc0df2a4693668a97b874aad6d0a8d3239d03f4d05b4342600166934d0b87
@@ -51,13 +48,18 @@ services:
       RPC_USER: elements
       RPC_PASS: $APP_PASSWORD
       RPC_PORT: $APP_ELEMENTS_NODE_RPC_PORT
-      RPC_HOST: $APP_ELEMENTS_NODE_IP
+      RPC_HOST: elements_node_1
       P2P_PORT: $APP_ELEMENTS_NODE_P2P_PORT
       # Remote 
       REMOTE_RPC_HOST: $APP_ELEMENTS_RPC_HIDDEN_SERVICE
       REMOTE_P2P_HOST: $APP_ELEMENTS_P2P_HIDDEN_SERVICE
-    networks:
-      default:
-        ipv4_address: $APP_ELEMENTS_IP
-
   
+  tor:
+    image: getumbrel/tor:0.4.7.8@sha256:2ace83f22501f58857fa9b403009f595137fa2e7986c4fda79d82a8119072b6a
+    user: "1000:1000"
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/torrc:/etc/tor/torrc:ro
+      - ${TOR_DATA_DIR}:/data
+    environment:
+      HOME: "/tmp"

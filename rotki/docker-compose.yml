@@ -1,0 +1,16 @@
+version: '3.7'
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: rotki_web_1
+      APP_PORT: 80
+
+  web:
+    image: rotki/rotki:v1.26.3@sha256:d7ec69fbaf1866268792dec0ffe3dc54537a99b8d9a31037810f1b6c61c9480d
+    restart: on-failure
+    stop_grace_period: 1m
+    init: true
+    volumes:
+      - ${APP_DATA_DIR}/data/data:/data
+      - ${APP_DATA_DIR}/data/logs:/logs

@@ -1,0 +1,16 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: whoogle-search_web_1
+      APP_PORT: 6420
+
+  web:
+    image: benbusby/whoogle-search:0.8.0@sha256:05ddde51df8d9b6ec8af2432c7ae669a63a6db99e3a140b3c92843e2539b055a
+    restart: on-failure
+    stop_grace_period: 1m
+    init: true
+    user: "927:927"
+    environment:
+      EXPOSE_PORT: 6420

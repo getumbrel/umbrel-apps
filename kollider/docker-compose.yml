@@ -3,11 +3,11 @@ version: "3.7"
 services:
   app_proxy:
     environment:
-      APP_HOST: $APP_KOLLIDER_IP
+      APP_HOST: kollider_web_1
       APP_PORT: 3000
-  
+
   backend:
-    image: kolliderhq/kollider-lite-backend:v1.0.6@sha256:5558948e716fe31956ef1e3985aede704b0bcd9b3af2532395c8774cffdf1666
+    image: kolliderhq/kollider-lite-backend:v1.0.7@sha256:b50c548f32022cc32e3b4a10e8c686414f4b31311771ae14c4fbaea40feedb44
     init: true
     user: 1000:1000
     restart: on-failure
@@ -17,37 +17,28 @@ services:
       - ${APP_DATA_DIR}/data/logs:/app/logs
     environment:
       LND_IP: $APP_LIGHTNING_NODE_IP
-      LND_ZMQ_SUB_ADDRESS: "tcp://${APP_KOLLIDER_WS_IP}:5556"
-    networks:
-      default:
-        ipv4_address: $APP_KOLLIDER_HH_IP
-  
+      LND_ZMQ_SUB_ADDRESS: "tcp://kollider_ws_1:5556"
+
   ws:
-    image: kolliderhq/kollider-ws-client:v1.0.6@sha256:05f3d1ddf9949b377788e442a1050457559291a50510f5d6dfa66a28c283a80a
+    image: kolliderhq/kollider-ws-client:v1.0.7@sha256:8a68f15a8f15ce4957629f02346d3202e685781f2af026ab2c1c028179b42830
     init: true
     user: 1000:1000
     restart: on-failure
     stop_grace_period: 1m
     ports:
-      - "$APP_KOLLIDER_WS_PORT:8080"
+      - "4244:8080"
     environment:
       APP_PASSWORD: $APP_PASSWORD
       KOLLIDER_ZMQ_PUB_ADDRESS: "tcp://*:5556"
-      KOLLIDER_ZMQ_SUB_ADDRESS: "tcp://${APP_KOLLIDER_HH_IP}:5557"
-      KOLLIDER_ZMQ_HEDGER_ADDRESS: "tcp://${APP_KOLLIDER_HH_IP}:5558"
-      KOLLIDER_ZMQ_HEDGER_SUB_ADDRESS: "tcp://${APP_KOLLIDER_HH_IP}:5559"
-    networks:
-      default:
-        ipv4_address: $APP_KOLLIDER_WS_IP
-  
+      KOLLIDER_ZMQ_SUB_ADDRESS: "tcp://kollider_backend_1:5557"
+      KOLLIDER_ZMQ_HEDGER_ADDRESS: "tcp://kollider_backend_1:5558"
+      KOLLIDER_ZMQ_HEDGER_SUB_ADDRESS: "tcp://kollider_backend_1:5559"
+
   web:
-    image: kolliderhq/kollider-lite-app:v1.0.6@sha256:f5bbbea86ed4d03c9a7c66527edbcda05228986ba5721e65c08a885edb74151a
+    image: kolliderhq/kollider-lite-app:v1.0.7@sha256:e459ae26485c52fb2967d7e9c2afeca19b51845c8f4739d02feda9e01db3037a
     init: true
     user: 1000:1000
     restart: on-failure
     stop_grace_period: 1m
     volumes:
       - ${APP_DATA_DIR}/data/cache/images:/app/.next/cache/images
-    networks:
-      default:
-        ipv4_address: $APP_KOLLIDER_IP

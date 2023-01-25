@@ -3,7 +3,7 @@ version: "3.7"
 services:
   app_proxy:
     environment:
-      APP_HOST: $APP_SQUEAKNODE_IP
+      APP_HOST: squeaknode_web_1
       APP_PORT: $APP_SQUEAKNODE_PORT
 
   web:
@@ -31,8 +31,8 @@ services:
       SQUEAKNODE_LIGHTNING_LND_MACAROON_PATH: "/lnd/data/chain/bitcoin/$APP_BITCOIN_NETWORK/admin.macaroon"
 
       # Tor environment variables
-      SQUEAKNODE_TOR_PROXY_IP: $TOR_PROXY_IP
-      SQUEAKNODE_TOR_PROXY_PORT: $TOR_PROXY_PORT
+      SQUEAKNODE_TOR_PROXY_IP: "${TOR_PROXY_IP}"
+      SQUEAKNODE_TOR_PROXY_PORT: "${TOR_PROXY_PORT}"
 
       # App specific environment variables
       SQUEAKNODE_WEBADMIN_ENABLED: "true"
@@ -46,6 +46,13 @@ services:
       SQUEAKNODE_SERVER_EXTERNAL_ADDRESS: $APP_SQUEAKNODE_P2P_HIDDEN_SERVICE
 
       DEBUG: "squeaknode:*"
-    networks:
-      default:
-        ipv4_address: $APP_SQUEAKNODE_IP
+
+  tor:
+    image: getumbrel/tor:0.4.7.8@sha256:2ace83f22501f58857fa9b403009f595137fa2e7986c4fda79d82a8119072b6a
+    user: "1000:1000"
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/torrc:/etc/tor/torrc:ro
+      - ${TOR_DATA_DIR}:/data
+    environment:
+      HOME: "/tmp"

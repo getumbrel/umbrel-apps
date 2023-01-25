@@ -3,7 +3,7 @@ version: "3.7"
 services:
   app_proxy:
     environment:
-      APP_HOST: $APP_BITFEED_IP
+      APP_HOST: bitfeed_web_1
       APP_PORT: 80
 
   web:
@@ -14,11 +14,8 @@ services:
       - "api"
     environment:
       TARGET: "umbrel"
-      BACKEND_HOST: "$APP_BITFEED_API_IP"
-      BACKEND_PORT: "$APP_BITFEED_API_PORT"
-    networks:
-      default:
-        ipv4_address: $APP_BITFEED_IP
+      BACKEND_HOST: bitfeed_api_1
+      BACKEND_PORT: 8315
 
   api:
     image: ghcr.io/bitfeed-project/bitfeed-server:v2.3.4@sha256:e38a2e07389cf6d0c519e856291e535fdd10a1e50143d528c82bfe0baf06894f
@@ -26,7 +23,7 @@ services:
     restart: on-failure
     stop_grace_period: 1m
     environment:
-      PORT: "$APP_BITFEED_API_PORT"
+      PORT: 8315
       BITCOIN_HOST: "$APP_BITCOIN_NODE_IP"
       BITCOIN_ZMQ_RAWTX_PORT: "$APP_BITCOIN_ZMQ_RAWTX_PORT"
       BITCOIN_ZMQ_RAWBLOCK_PORT: "$APP_BITCOIN_ZMQ_RAWBLOCK_PORT"
@@ -40,6 +37,3 @@ services:
       LOG_LEVEL: "info"
     volumes:
       - ${APP_DATA_DIR}/data:/app/data
-    networks:
-      default:
-        ipv4_address: $APP_BITFEED_API_IP

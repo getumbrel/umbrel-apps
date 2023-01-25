@@ -24,7 +24,7 @@ services:
         ipv4_address: $APP_ELECTRS_IP
   
   electrs:
-    image: getumbrel/electrs:v0.9.4@sha256:b1590ac6cfb0e5b481c6a7af7f0626d76cbb91c63702b0f5c47e2829e9c37997
+    image: getumbrel/electrs:v0.9.10@sha256:7b64bf93f2137fcd040fc512a302abda17dd1b4cad8181a14fa34c15361f1334
     restart: always
     environment:
       ELECTRS_LOG_FILTERS: "INFO"
@@ -42,3 +42,13 @@ services:
     networks:
       default:
         ipv4_address: $APP_ELECTRS_NODE_IP
+
+  tor:
+    image: getumbrel/tor:0.4.7.8@sha256:2ace83f22501f58857fa9b403009f595137fa2e7986c4fda79d82a8119072b6a
+    user: "1000:1000"
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/torrc:/etc/tor/torrc:ro
+      - ${TOR_DATA_DIR}:/data
+    environment:
+      HOME: "/tmp"
