@@ -8,24 +8,8 @@ services:
       APP_PORT: 80
       PROXY_AUTH_ADD: "false"
 
-  database:
-    image: 'rabbitcompany/passky-database:v8.0.2@sha256:3b9f4fdfc36a846686fc90887b3bfaa173cb8f91b88f8824f3890fbacb29c38d'
-    restart: on-failure
-    stop_grace_period: 1m
-    environment:
-      MYSQL_DATABASE: "passky"
-      MYSQL_USER: "passky"
-      MYSQL_PASSWORD: "${APP_PASSWORD}"
-      MYSQL_ROOT_PASSWORD: "${APP_PASSWORD}"
-      BACKUP_ENABLED: "false"
-    volumes:
-      - ${APP_DATA_DIR}/data/passky:/var/lib/mysql
-    networks:
-      default:
-        ipv4_address: $APP_PASSKY_DB_IP
-
-  api:
-    image: 'rabbitcompany/passky-api:v8.0.2@sha256:e574091f75db967c26d17bc1ba58c037d808a1017ab80304cfe99d6276a1734b'
+  server:
+    image: 'rabbitcompany/passky-server:8.1.0@sha256:5b6c40d97af4a91e398122331d5446d7012bef0441aee88dcc980856b6503a74'
     restart: on-failure
     stop_grace_period: 1m
     environment:
@@ -35,11 +19,13 @@ services:
       ADMIN_PASSWORD: "${APP_PASSWORD}"
       CF_TURNSTILE_SITE_KEY: "1x00000000000000000000AA"
       CF_TURNSTILE_SECRET_KEY: "1x0000000000000000000000000000000AA"
-      MYSQL_HOST: "${APP_PASSKY_DB_IP}"
+      DATABASE_ENGINE: sqlite
+      DATABASE_FILE: passky
+      MYSQL_HOST: ""
       MYSQL_PORT: 3306
       MYSQL_DATABASE: "passky"
       MYSQL_USER: "passky"
-      MYSQL_PASSWORD: "${APP_PASSWORD}"
+      MYSQL_PASSWORD: ""
       MYSQL_SSL: "false"
       MYSQL_SSL_CA: "/etc/ssl/certs/ca-certificates.crt"
       MYSQL_CACHE_MODE: 0
@@ -74,6 +60,8 @@ services:
       LIMITER_REMOVE_YUBIKEY: 10
       LIMITER_UPGRADE_ACCOUNT: 10
       LIMITER_GET_REPORT: -1
+    volumes:
+      - ${APP_DATA_DIR}/data/passky:/var/www/html/databases
     networks:
       default:
         ipv4_address: $APP_PASSKY_SERVER_IP
