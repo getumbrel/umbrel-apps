@@ -1,0 +1,150 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+APP_DATA_DIR="$(readlink -f $(dirname "${BASH_SOURCE[0]}")/..)"
+UMBREL_ROOT="${APP_DATA_DIR}/../.."
+
+CONFIG_PHP_FILE="${APP_DATA_DIR}/data/nextcloud/config/config.php"
+
+APP_COMPOSE_FILE="${APP_DATA_DIR}/docker-compose.yml"
+APP_COMPOSE_BACKUP_FILE="${APP_DATA_DIR}/docker-compose.yml.bak"
+
+# Supported list of Nextcloud migrations
+VERSIONS=()
+VERSIONS+=( "22.1.1.2" )
+VERSIONS+=( "22.2.10.2" )
+VERSIONS+=( "23.0.11.1" )
+VERSIONS+=( "24.0.7.1" )
+VERSIONS+=( "25.0.1.1" )
+
+IMAGES=()
+IMAGES+=( "nextcloud:22.1.1-apache@sha256:99d94124b2024c9f7f38dc12144a92bc0d68d110bcfd374169ebb7e8df0adf8e" )
+IMAGES+=( "nextcloud:22.2.10-apache@sha256:71c4fb75d7c035ea2c840ebc1adf0da144b0c69e39ce925f4a2ea84b7c06db18" )
+IMAGES+=( "nextcloud:23.0.11-apache@sha256:671ed70c7b204c63cb56d5c0d5dd624abec5eadeacd492191e65e834ddffef26" )
+IMAGES+=( "nextcloud:24.0.7-apache@sha256:f95a21b598b7470b788251db5b0bbe9516992fdb865e7a8978980585e36eb715" )
+IMAGES+=( "nextcloud:25.0.1-apache@sha256:a200319b132c01ec3486e0dcaf052092b560ec30ac9b78115607696dd201f704" )
+
+find_index() {
+	local -r value="${1}"
+	shift
+	local -r array=("$@")
+
+	for i in "${!array[@]}"; do
+		if [[ "${array[$i]}" == "${value}" ]]; then
+			echo $i
+			exit
+		fi
+	done
+
+	echo -1
+}
+
+wait_for_value_in_file () {
+	local -r file="${1}"
+	local -r str="${2}"
+	local -r max_seconds="${3}"
+
+	echo "Searching for '${str}' inside: ${file}"
+
+	for i in $(seq 1 "${max_seconds}"); do
+		echo "Attempt: ${i}"
+		if cat "${file}" | grep --quiet "${str}"; then
+			return
+		fi
+		sleep 1
+	done
+
+	echo "Failed after ${max_seconds} seconds to find '${str}' inside: ${file}"
+	exit 1
+}
+
+check_compose_file () {
+	local -r image="${1}"
+
+	web_image=$(cat "${APP_COMPOSE_FILE}" 2> /dev/null | yq '.services.web.image' || true)
+	cron_image=$(cat "${APP_COMPOSE_FILE}" 2> /dev/null | yq '.services.cron.image' || true)
+
+	if [[ "${web_image}" != "${image}" ]] || [[ "${cron_image}" != "${image}" ]]; then
+		echo "The docker-compose.yml now looks bad. Restoring..."
+
+		mv "${APP_COMPOSE_BACKUP_FILE}" "${APP_COMPOSE_FILE}"
+
+		exit
+	fi
+}
+
+get_version() {
+	cat "${CONFIG_PHP_FILE}" | grep "'version'[[:space:]]=>[[:space:]]" | awk -F"'" '{print $4}'
+}
+
+# If a Nextcloud config file does not yet exist
+# Then it's likely a new install
+# Therefore there is nothing to do
+if [[ ! -f "${CONFIG_PHP_FILE}" ]]; then
+	exit
+fi
+
+nextcloud_version=$(get_version)
+
+echo "Active Nextcloud Version: ${nextcloud_version}"
+
+# Check if active version is in migration list
+active_version_idx=$(find_index "${nextcloud_version}" "${VERSIONS[@]}")
+if [[ "${active_version_idx}" == "-1" ]]; then
+	echo "Active version is not supported in the list of migrations"
+	exit
+fi
+
+# Check if already up to date
+if [[ "${VERSIONS[-1]}" == "${nextcloud_version}" ]]; then
+	echo "Nextcloud is up-to-date"
+	exit
+fi
+
+# Loop through versions, ignoring past versions
+for i in "${!VERSIONS[@]}"; do
+	[[ "${i}" -le "${active_version_idx}" ]] && continue
+
+	version="${VERSIONS[$i]}"
+	image="${IMAGES[$i]}"
+
+	echo "Migrating to: ${version} (${image})"
+	echo
+
+	cp --archive "${APP_COMPOSE_FILE}" "${APP_COMPOSE_BACKUP_FILE}"
+
+	yq -i ".services.web.image = \"${image}\"" "${APP_COMPOSE_FILE}"
+	yq -i ".services.cron.image = \"${image}\"" "${APP_COMPOSE_FILE}"
+
+	check_compose_file "${image}"
+
+	nextcloud_version=$(get_version)
+	sed -i "s/${nextcloud_version}/${nextcloud_version}-patch/" "${CONFIG_PHP_FILE}"
+
+	"${UMBREL_ROOT}/scripts/app" start nextcloud
+
+	echo "Waiting for update to complete..."
+
+	# Wait for Nextcloud to enter maintenance mode
+	# Indicating their update process has started
+	wait_for_value_in_file "${CONFIG_PHP_FILE}" "'maintenance'[[:space:]]=>[[:space:]]true" 300
+
+	# Wait for Nextcloud to exit maintenance mode
+	# Indicating their update process has finished
+	wait_for_value_in_file "${CONFIG_PHP_FILE}" "'maintenance'[[:space:]]=>[[:space:]]false" 300
+
+	"${UMBREL_ROOT}/scripts/app" stop nextcloud
+
+	# Delete image of intermediate version
+	# Unless it's the latest image
+	# Otherwise it will have to be re-downloaded
+	if [[ "${version}" != "${VERSIONS[-1]}" ]]; then
+		echo "Deleting intermediary image: ${image}"
+
+		docker rmi "${image}" || true
+	fi
+done
+
+rm -rf "${APP_COMPOSE_BACKUP_FILE}"
+
+echo "Migration completed successfully"

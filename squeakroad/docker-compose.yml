@@ -1,0 +1,27 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: squeakroad_web_1
+      APP_PORT: 18200
+      PROXY_AUTH_ADD: "false"
+
+  web:
+    image: ghcr.io/yzernik/squeakroad:v0.1.14@sha256:8530514170ce43f85020f10cf2143d49d24b0c57ecc137b879118a03789fde61
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 1m
+    volumes:
+      - $APP_LIGHTNING_NODE_DATA_DIR:/lnd-dir:ro
+      - ${APP_DATA_DIR}/data:/data
+    environment:
+      ROCKET_PORT: 18200
+      ROCKET_ADDRESS: 0.0.0.0
+      SQUEAKROAD_DB_URL: /data/db.sqlite
+      SQUEAKROAD_ADMIN_USERNAME: umbrel
+      SQUEAKROAD_ADMIN_PASSWORD: ${APP_PASSWORD}
+      SQUEAKROAD_LND_HOST: $APP_LIGHTNING_NODE_IP
+      SQUEAKROAD_LND_PORT: $APP_LIGHTNING_NODE_GRPC_PORT
+      SQUEAKROAD_LND_TLS_CERT_PATH: /lnd-dir/tls.cert
+      SQUEAKROAD_LND_MACAROON_PATH: /lnd-dir/data/chain/bitcoin/$APP_BITCOIN_NETWORK/admin.macaroon

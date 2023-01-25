@@ -1,0 +1,42 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: torq_web_1
+      APP_PORT: 7028
+
+  web:
+    image: lncapital/torq:0.17.3@sha256:5a7da465ba7dc038e61439d92b7881adc37b9b00b06e69740c27d12c92d50b89
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 1m
+    volumes:
+      - ${APP_LIGHTNING_NODE_DATA_DIR}:/lnd:ro
+    command:
+      - --torq.port
+      - "7028"
+      - --db.host
+      - torq_db_1
+      - --db.password
+      - moneyprintergobrrr
+      - --torq.password
+      - ${APP_PASSWORD}
+      - --lnd.url
+      - ${APP_LIGHTNING_NODE_IP}:${APP_LIGHTNING_NODE_GRPC_PORT}
+      - --lnd.macaroon-path
+      - /lnd/data/chain/bitcoin/${APP_BITCOIN_NETWORK}/admin.macaroon
+      - --lnd.tls-path
+      - /lnd/tls.cert
+      - start
+
+  db:
+    image: timescale/timescaledb:2.8.1-pg14@sha256:96c3a5587a24bb336437403b394f5927f639322cf3fcc0eff4ee0294da540dd7
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      POSTGRES_PASSWORD: moneyprintergobrrr
+    volumes:
+      - ${APP_DATA_DIR}/data/torq:/var/lib/postgresql/data
+      - ${APP_DATA_DIR}/data/passwd:/etc/passwd:ro # Enables postgres to init on user 1000

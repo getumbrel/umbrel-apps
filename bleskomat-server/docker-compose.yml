@@ -3,8 +3,8 @@ version: "3.7"
 services:
   app_proxy:
     environment:
-      APP_HOST: $APP_BLESKOMAT_SERVER_IP
-      APP_PORT: $APP_BLESKOMAT_SERVER_PORT
+      APP_HOST: bleskomat-server_web_1
+      APP_PORT: 3333
       PROXY_AUTH_ADD: "false"
 
   db:
@@ -14,9 +14,6 @@ services:
     stop_grace_period: 1m
     volumes:
         - $APP_DATA_DIR/data/db:/var/lib/postgresql/data
-    networks:
-      default:
-        ipv4_address: $APP_BLESKOMAT_SERVER_DB_IP
     environment:
       - POSTGRES_USER=bleskomat_server
       - POSTGRES_DB=bleskomat_server
@@ -35,17 +32,13 @@ services:
     environment:
       DEBUG: "bleskomat-server*,lnurl*"
       BLESKOMAT_SERVER_HOST: "0.0.0.0"
-      BLESKOMAT_SERVER_PORT: "$APP_BLESKOMAT_SERVER_PORT"
+      BLESKOMAT_SERVER_PORT: 3333
       BLESKOMAT_SERVER_URL: "$APP_HIDDEN_SERVICE"
       BLESKOMAT_SERVER_ENDPOINT: "/u"
       BLESKOMAT_SERVER_AUTH_API_KEYS: '[]'
       BLESKOMAT_SERVER_LIGHTNING: '{"backend":"lnd","config":{"cert":"/lnd/tls.cert","protocol":"https","hostname":"$APP_LIGHTNING_NODE_IP:$APP_LIGHTNING_NODE_REST_PORT","macaroon":"/lnd/data/chain/bitcoin/$APP_BITCOIN_NETWORK/admin.macaroon"}}'
-      BLESKOMAT_SERVER_STORE: '{"backend":"knex","config":{"client":"postgres","connection":{"host":"$APP_BLESKOMAT_SERVER_DB_IP","port":5432,"user":"bleskomat_server","password":"moneyprintergobrrr","database":"bleskomat_server"}}}'
+      BLESKOMAT_SERVER_STORE: '{"backend":"knex","config":{"client":"postgres","connection":{"host":"bleskomat-server_db_1","port":5432,"user":"bleskomat_server","password":"moneyprintergobrrr","database":"bleskomat_server"}}}'
       BLESKOMAT_SERVER_COINRATES_DEFAULTS_PROVIDER: "coinbase"
       BLESKOMAT_SERVER_ADMIN_WEB: "true"
       BLESKOMAT_SERVER_ADMIN_PASSWORD_PLAINTEXT: "$APP_PASSWORD"
       BLESKOMAT_SERVER_ENV_FILEPATH: "./data/.env"
-
-    networks:
-      default:
-        ipv4_address: $APP_BLESKOMAT_SERVER_IP

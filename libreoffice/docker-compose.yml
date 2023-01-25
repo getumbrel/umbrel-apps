@@ -1,0 +1,17 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: libreoffice_server_1
+      APP_PORT: 3000
+
+  server:
+    image: linuxserver/libreoffice:7.2.7@sha256:1f434cd23a010dce12af364cc0a7e71e4fdb8299bcc6f9b022ae7890b5475562
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      - PUID=1000
+      - PGID=1000
+    volumes:
+      - ${APP_DATA_DIR}/data/config:/config

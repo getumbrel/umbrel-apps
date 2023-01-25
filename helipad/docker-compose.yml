@@ -3,7 +3,7 @@ version: "3.7"
 services:
   app_proxy:
     environment:
-      APP_HOST: $APP_HELIPAD_IP
+      APP_HOST: helipad_web_1
       APP_PORT: 2112
 
   web:
@@ -17,6 +17,3 @@ services:
       - ${APP_LIGHTNING_NODE_DATA_DIR}:/lnd:ro
     environment:
       LND_URL: "$APP_LIGHTNING_NODE_IP:$APP_LIGHTNING_NODE_GRPC_PORT"
-    networks:
-      default:
-        ipv4_address: $APP_HELIPAD_IP

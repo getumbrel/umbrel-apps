@@ -3,33 +3,27 @@ version: "3.7"
 services:
   app_proxy:
     environment:
-      APP_HOST: $APP_LN_VISUALIZER_WEB_IP
+      APP_HOST: ln-visualizer_web_1
       APP_PORT: 80
 
   web:
-    image: maxkotlan/ln-visualizer-web:v0.0.25@sha256:c349a106a6fb69c6d56301ae87f9844687a5ec28df9a104fb0b7585a67264092
+    image: maxkotlan/ln-visualizer-web:v0.0.26@sha256:704dadfc6869c660c87010f9837a269786d6576788b1c1ea983e7d77b456a45b
     init: true
     restart: on-failure
     stop_grace_period: 1m
     environment:
-      LN_VISUALIZER_API_URL: "http://${APP_LN_VISUALIZER_API_IP}:5647"
-    networks:
-      default:
-        ipv4_address: "${APP_LN_VISUALIZER_WEB_IP}"
+      LN_VISUALIZER_API_URL: "http://ln-visualizer_api_1:5647"
 
   api:
-    image: maxkotlan/ln-visualizer-api:v0.0.25@sha256:839a53dd2fe230743cdc6edcd34811b7ec41644f433e8d52777482df57a72408
+    image: maxkotlan/ln-visualizer-api:v0.0.26@sha256:818357452e3a16682b1abd3bc513b30c313703f6fd6e26d6e0c15267a248138b
     init: true
     restart: on-failure
     stop_grace_period: 1m
     user: 1000:1000
     volumes:
-      - "${APP_LIGHTNING_NODE_DATA_DIR}:/lnd:ro"
+      - "${APP_LIGHTNING_NODE_DATA_DIR}/tls.cert:/lnd/tls.cert:ro"
+      - "${APP_LIGHTNING_NODE_DATA_DIR}/data/chain/bitcoin/${APP_BITCOIN_NETWORK}/readonly.macaroon:/lnd/data/chain/bitcoin/${APP_BITCOIN_NETWORK}/readonly.macaroon:ro"
     environment:
       LND_CERT_FILE: "/lnd/tls.cert"
       LND_MACAROON_FILE: "/lnd/data/chain/bitcoin/${APP_BITCOIN_NETWORK}/readonly.macaroon"
       LND_SOCKET: "${APP_LIGHTNING_NODE_IP}:${APP_LIGHTNING_NODE_GRPC_PORT}"
-
-    networks:
-      default:
-        ipv4_address: "${APP_LN_VISUALIZER_API_IP}"
