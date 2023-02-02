@@ -3,27 +3,21 @@ version: "3.7"
 services:
   app_proxy:
     environment:
-      APP_HOST: $APP_SNOWFLAKE_IP
-      APP_PORT: $APP_SNOWFLAKE_PORT
+      APP_HOST: snowflake_web_1
+      APP_PORT: 3800
 
   proxy:
-    image: getumbrel/snowflake:v2.1.0@sha256:875a513540a132752a4b09f5d6de4ed41399c5331265d6576dcfb5952bb22053
+    image: getumbrel/snowflake:v2.4.1@sha256:36b666435f4f3952dd10afa948e760e46f7e3f6f30b6a6f16c6b0cbeba358916
     restart: on-failure
     stop_grace_period: 1m
     command: "-log /data/snowflake.log -verbose"
     volumes:
       - ${APP_DATA_DIR}/data:/data
-    networks:
-      default:
-        ipv4_address: $APP_SNOWFLAKE_PROXY_IP
 
   web:
     image: getumbrel/gotty:v1.0.1@sha256:100571d271cfbae25603acac216afce511eece9961218c6db427e0fa4a58716a
     restart: on-failure
     stop_grace_period: 1m
-    command: --port $APP_SNOWFLAKE_PORT --index "/snowflake/index.html" --title-format "Tor Snowflake Proxy" bash -c 'tail -n 10000 -f /snowflake/snowflake.log | grep "Traffic Relayed"'
+    command: --port 3800 --index "/snowflake/index.html" --title-format "Tor Snowflake Proxy" bash -c 'tail -n 10000 -f /snowflake/snowflake.log | grep "Traffic Relayed"'
     volumes:
       - ${APP_DATA_DIR}/data:/snowflake
-    networks:
-      default:
-        ipv4_address: $APP_SNOWFLAKE_IP

@@ -3,11 +3,11 @@ version: "3.7"
 services:
   app_proxy:
     environment:
-      APP_HOST: $APP_SYNCTHING_IP
-      APP_PORT: $APP_SYNCTHING_PORT
+      APP_HOST: syncthing_server_1
+      APP_PORT: 8384
 
   server:
-    image: syncthing/syncthing:1.18.4@sha256:97fc6221819aceab9055d120a01d2981a30d3aef962f1ec5eda2b21cfaa883c8
+    image: syncthing/syncthing:1.23.0@sha256:57699adea5bae30edd2c4f83d5c311969e3255c3d23e7de747638dffbc3a8bc2
     restart: on-failure
     stop_grace_period: 1m
     hostname: umbrel
@@ -17,9 +17,6 @@ services:
     volumes:
       - ${APP_DATA_DIR}/data:/var/syncthing
     ports:
-      - ${APP_SYNCTHING_SYNC_PORT}:${APP_SYNCTHING_SYNC_PORT}/tcp
-      - ${APP_SYNCTHING_SYNC_PORT}:${APP_SYNCTHING_SYNC_PORT}/udp
-    networks:
-      default:
-        ipv4_address: ${APP_SYNCTHING_IP}
+      - 22000:22000/tcp
+      - 22000:22000/udp
       

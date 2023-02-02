@@ -1,13 +1,13 @@
-version: "2.1"
+version: "3.7"
+
 services:
   app_proxy:
     environment:
-      APP_HOST: $APP_CALIBRE_WEB_IP
-      APP_PORT: $APP_CALIBRE_WEB_PORT
+      APP_HOST: calibre-web_server_1
+      APP_PORT: 8083
 
-  calibre-web:
+  server:
     image: linuxserver/calibre-web:0.6.19@sha256:898987a2276b7f175f9ae787ef2b7f3f91103a3e621dffe7b67b3a9feae1b922
-    container_name: calibre-web
     stop_grace_period: 1m
     environment:
       - PUID=1000
@@ -16,6 +16,3 @@ services:
       - ${APP_DATA_DIR}/data/config:/config
       - ${APP_DATA_DIR}/data/books:/books
     restart: on-failure
-    networks:
-      default:
-        ipv4_address: $APP_CALIBRE_WEB_IP

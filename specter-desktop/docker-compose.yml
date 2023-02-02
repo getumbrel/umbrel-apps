@@ -3,11 +3,11 @@ version: "3.7"
 services:
   app_proxy:
     environment:
-      APP_HOST: $APP_SPECTER_DESKTOP_IP
-      APP_PORT: $APP_SPECTER_DESKTOP_PORT
+      APP_HOST: specter-desktop_web_1
+      APP_PORT: 25441
 
   web:
-    image: lncm/specter-desktop:v1.13.1@sha256:d277dec2a54fc77f3ccbc0f082183abce31e655b50f21da8d098f90fb734a15b
+    image: lncm/specter-desktop:v1.14.2@sha256:47e18789aaf87dbfd1f313346cbde4d8fc982dace28f889f78c96f0d87b3ad9a
     stop_signal: SIGINT
     restart: on-failure
     stop_grace_period: 1m
@@ -23,6 +23,3 @@ services:
       BTC_RPC_HOST: $APP_BITCOIN_NODE_IP
       BTC_RPC_PORT: $APP_BITCOIN_RPC_PORT
       BTC_RPC_PROTOCOL: http
-    networks:
-      default:
-        ipv4_address: $APP_SPECTER_DESKTOP_IP
