@@ -1,5 +1,3 @@
-export APP_PLEX_IP="10.21.25.2"
-
 # As Plex does not use the app proxy
 # There is a bug when generating the Tor HS
 # This 'fix' will create a fake HS hostname

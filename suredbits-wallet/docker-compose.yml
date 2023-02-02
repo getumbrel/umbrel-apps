@@ -3,7 +3,7 @@ version: "3.7"
 services:
   app_proxy:
     environment:
-      APP_HOST: $APP_SUREDBITS_WALLET_IP
+      APP_HOST: suredbits-wallet_web_1
       APP_PORT: 3002
 
   web:
@@ -17,15 +17,12 @@ services:
     environment:
       LOG_PATH: "/log/"
       BITCOIN_S_HOME: "/bitcoin-s/"
-     #MEMPOOL_API_URL: "http://umbrel.local:${APP_MEMPOOL_PORT}/api"
-      WALLET_SERVER_API_URL: "http://${APP_SUREDBITS_WALLET_SERVER_IP}:9999/"
-      WALLET_SERVER_WS: "ws://${APP_SUREDBITS_WALLET_SERVER_IP}:19999/events"
+      #MEMPOOL_API_URL: "http://umbrel.local:${APP_MEMPOOL_PORT}/api"
+      WALLET_SERVER_API_URL: "http://suredbits-wallet_walletserver_1:9999/"
+      WALLET_SERVER_WS: "ws://suredbits-wallet_walletserver_1:19999/events"
       TOR_PROXY: socks5://${TOR_PROXY_IP}:${TOR_PROXY_PORT}
       DEFAULT_UI_PASSWORD: "none" 
       BITCOIN_S_SERVER_RPC_PASSWORD: $APP_PASSWORD
-    networks:
-      default:
-        ipv4_address: $APP_SUREDBITS_WALLET_IP
     depends_on: 
       - walletserver
   
@@ -55,9 +52,6 @@ services:
       DISABLE_JLINK: "1"
     ports:
       - "$APP_SUREDBITS_WALLET_P2P_PORT:$APP_SUREDBITS_WALLET_P2P_PORT"
-    networks:
-      default:
-        ipv4_address: $APP_SUREDBITS_WALLET_SERVER_IP
   
   tor:
     image: getumbrel/tor:0.4.7.8@sha256:2ace83f22501f58857fa9b403009f595137fa2e7986c4fda79d82a8119072b6a

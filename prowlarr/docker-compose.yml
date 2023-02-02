@@ -3,8 +3,8 @@ version: "3.7"
 services:
   app_proxy:
     environment:
-      APP_HOST: $APP_PROWLARR_IP
-      APP_PORT: $APP_PROWLARR_PORT
+      APP_HOST: prowlarr_server_1
+      APP_PORT: 9696
       PROXY_AUTH_WHITELIST: "/api/*"
 
   server:
@@ -16,9 +16,6 @@ services:
       - ${APP_DATA_DIR}/data/config:/config
       - ${UMBREL_ROOT}/data/storage/downloads:/downloads
     restart: on-failure
-    networks:
-      default:
-        ipv4_address: $APP_PROWLARR_IP
 
   mac:
     image: getumbrel/media-app-configurator:v1.1.0@sha256:987f6a02367adf86ab1cff38e1e2d43d85e17a6fc130aae4af196fb571dff06a

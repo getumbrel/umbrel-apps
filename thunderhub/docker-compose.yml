@@ -3,11 +3,11 @@ version: "3.7"
 services:
   app_proxy:
     environment:
-      APP_HOST: $APP_THUNDERHUB_IP
-      APP_PORT: $APP_THUNDERHUB_PORT
+      APP_HOST: thunderhub_web_1
+      APP_PORT: 3000
 
   web:
-    image: apotdevin/thunderhub:v0.13.16@sha256:d45013f00eabd59aabb649bc1afb5aee40b25e96f3a86112fe7ff28cc89f5d62
+    image: apotdevin/thunderhub:v0.13.18@sha256:cb41292102ed8fceea59cd6375e28317e1a61f7fc2523285fbb01a696e3a0a16
     # We now have to run as root to avoid schema.gql permission errors
     # user: "1000:1000"
     restart: on-failure
@@ -22,6 +22,3 @@ services:
       ACCOUNT_CONFIG_PATH: "/data/thubConfig.yaml"
       YML_ENV_1: "$APP_LIGHTNING_NODE_IP:$APP_LIGHTNING_NODE_GRPC_PORT"
       TOR_PROXY_SERVER: "socks://$TOR_PROXY_IP:$TOR_PROXY_PORT"
-    networks:
-      default:
-        ipv4_address: $APP_THUNDERHUB_IP
