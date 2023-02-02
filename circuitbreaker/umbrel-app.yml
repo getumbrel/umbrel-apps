@@ -19,22 +19,24 @@ description: >-
   Operating modes
 
 
-  - There are multiple modes in which circuitbreaker can operate. A default mode and per-peer overrides can be configured via the web ui.
+  There are multiple modes in which circuitbreaker can operate. A default mode and per-peer overrides can be configured via the web ui:
 
+  
   - fail: Fail back HTLCs when limits are exceeded. This minimizes the lock-up of liquidity on the incoming side, but does affect your reputation as a routing node.
 
+  
   - queue: Queue HTLCs when limits are exceeded. Items are popped from the queue when the number of pending HTLCs is below the maximum and the rate limit allows another forward. This mode penalizes upstream nodes for the bad traffic that the deliver by locking up liquidity along the route. This may push upstream nodes to install a firewall too and constrain the mishaving node.
 
   Even in case of circuit breaker malfunction, queue mode should never cause channel force closes because of lnd's built-in protection that auto-fails HTLCs that aren't resolved.
 
-  - WARNING: Auto-fail is not yet released and scheduled for lnd 0.16. With earlier lnd versions, you risk force-closes!
+  WARNING: Auto-fail is not yet released and scheduled for lnd 0.16. With earlier lnd versions, you risk force-closes!
 
+  
   - queue_peer_initiated: This mode is also queuing HTLCs, but only those that come in through channels for which we aren't the channel open initiator. Not being the initiator means that the remote node is carrying the cost of a potential force-closure with stuck HTLCs. For channels that we initiated, the safer fail mode is used.
 
-  - WARNING: See queue mode warning.
+  WARNING: See queue mode warning.
 releaseNotes: >-
-  - Initial release on the umbrel app store
-  
+  - Initial release on the Umbrel App Store
 developer: Joost Jager
 website: https://github.com/joostjager
 dependencies: 
