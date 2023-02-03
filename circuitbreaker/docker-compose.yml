@@ -1,0 +1,18 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: circuitbreaker_web_1
+      APP_PORT: 9235
+      
+  web:
+    image: ghcr.io/lightningequipment/circuitbreaker:v0.4.1@sha256:cecd9f17ee6de44127a9cdbeb47a6cbdb63b4b720411df6e9cb51cab433219bc
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 1m
+    init: true
+    volumes:
+      - ${APP_LIGHTNING_NODE_DATA_DIR}:/data/.lnd:ro
+      - ${APP_DATA_DIR}/data:/data/.circuitbreaker
+    command: [ "--configdir=/data/.circuitbreaker", "--network=${APP_BITCOIN_NETWORK}", "--lnddir=/data/.lnd",  "--rpcserver=${APP_LIGHTNING_NODE_IP}:${APP_LIGHTNING_NODE_GRPC_PORT}", "--httplisten=0.0.0.0:9235" ]

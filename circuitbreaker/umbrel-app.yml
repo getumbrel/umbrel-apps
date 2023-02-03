@@ -1,0 +1,55 @@
+manifestVersion: 1
+id: circuitbreaker
+category: Lightning Node Management
+name: Circuit Breaker
+version: "v0.4.1"
+tagline: Your Lightning Node's Firewall
+description: >-
+  It allows nodes to protect themselves from being flooded with HTLCs. 
+  With circuitbreaker a maximum to the number of in-flight HTLCs can be set on a per-peer basis.
+  Known and trusted peers for example can be assigned a higher maximum, while a new channel from a previously unseen node may be limited to only a few pending HTLCs.
+  Furthermore it is possible to apply rate limits to the number of forwarded HTLCs. 
+  This offers protection against DoS/spam attacks that rely on large numbers of fast-resolving HTLCs. 
+  Rate limiting is implemented with a Token bucket. 
+  Via the UI the minimum interval between HTLCs can be specified.
+  Large numbers of HTLCs are also required for probing channel balances. 
+  Reducing the information leakage through probing could be another reason to put in place a rate limit for untrusted peers.
+  
+
+  Operating modes
+
+
+  There are multiple modes in which circuitbreaker can operate. A default mode and per-peer overrides can be configured via the web ui:
+
+  
+  - fail: Fail back HTLCs when limits are exceeded. This minimizes the lock-up of liquidity on the incoming side, but does affect your reputation as a routing node.
+
+  
+  - queue: Queue HTLCs when limits are exceeded. Items are popped from the queue when the number of pending HTLCs is below the maximum and the rate limit allows another forward. This mode penalizes upstream nodes for the bad traffic that the deliver by locking up liquidity along the route. This may push upstream nodes to install a firewall too and constrain the mishaving node.
+
+  Even in case of circuit breaker malfunction, queue mode should never cause channel force closes because of lnd's built-in protection that auto-fails HTLCs that aren't resolved.
+
+  WARNING: Auto-fail is not yet released and scheduled for lnd 0.16. With earlier lnd versions, you risk force-closes!
+
+  
+  - queue_peer_initiated: This mode is also queuing HTLCs, but only those that come in through channels for which we aren't the channel open initiator. Not being the initiator means that the remote node is carrying the cost of a potential force-closure with stuck HTLCs. For channels that we initiated, the safer fail mode is used.
+
+  WARNING: See queue mode warning.
+releaseNotes: >-
+  - Initial release on the Umbrel App Store
+developer: Joost Jager
+website: https://github.com/joostjager
+dependencies: 
+  - lightning
+repo: https://github.com/lightningequipment/circuitbreaker
+support: https://github.com/lightningequipment/circuitbreaker/issues
+port: 9235
+gallery:
+  - 1.jpg
+  - 2.jpg
+  - 3.jpg
+path: ""
+defaultUsername: ""
+defaultPassword: ""
+submitter: Joost Jager
+submission: https://github.com/getumbrel/umbrel-apps/pull/394
