@@ -3,15 +3,14 @@ version: "3.7"
 services:
   app_proxy:
     environment:
-      APP_HOST: heimdall
+      APP_HOST: heimdall_server_1
       APP_PORT: 80
-  heimdall:
-    container_name: heimdall
-    image: lscr.io/linuxserver/heimdall:latest
+
+  server:
+    image: lscr.io/linuxserver/heimdall:2.5.5@sha256:656efe8ee113ebcf8214d53e69cc25645ec11b020dec63e619bd379361cee58e
     volumes:
       - ${APP_DATA_DIR}/config:/config
     environment:
       - PUID=1000
       - PGID=1000
-      - TZ=Europe/London
-    restart: unless-stopped
+    restart: on-failure
