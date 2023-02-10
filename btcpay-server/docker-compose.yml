@@ -8,7 +8,7 @@ services:
       PROXY_AUTH_ADD: "false"
 
   nbxplorer:
-    image: nicolasdorier/nbxplorer:2.3.58@sha256:e67e7b8953c8567860fe4972046af84c62c5878bb7b299c330db8a816f2d91af
+    image: nbxplorer:2.3.60@sha256:19bc931c9b6d18ee2a5b9c26ba41985deb7cce8bdded85c0e4577a0e2a5a34da
     user: "1000:1000"
     restart: on-failure
     stop_grace_period: 1m
@@ -28,9 +28,10 @@ services:
       NBXPLORER_POSTGRES: User ID=postgres;Host=btcpay-server_postgres_1;Port=5432;Application Name=nbxplorer;MaxPoolSize=20;Database=nbxplorer$APP_BITCOIN_NETWORK
       NBXPLORER_AUTOMIGRATE: 1
       NBXPLORER_NOMIGRATEEVTS: 1
+      NBXPLORER_BTCHASTXINDEX: 1
 
   web:
-    image: btcpayserver/btcpayserver:1.7.5@sha256:dd7732a0e24c85c1317b67ba4eeb9f0f0af97ed953679b29ee06178b2e797892
+    image: btcpayserver/btcpayserver:1.7.9@sha256:d91a008f3a7706c47f6a0f2718090e1bba662f6dd3c2c371e206d6d491428826
     user: "1000:1000"
     restart: on-failure
     stop_grace_period: 1m
