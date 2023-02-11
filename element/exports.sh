@@ -1,2 +1,0 @@
-export APP_ELEMENT_IP="10.21.21.45"
-export APP_ELEMENT_PORT="8088"

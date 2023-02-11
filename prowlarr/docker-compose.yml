@@ -1,0 +1,36 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: prowlarr_server_1
+      APP_PORT: 9696
+      PROXY_AUTH_WHITELIST: "/api/*"
+
+  server:
+    image: linuxserver/prowlarr:0.4.4-nightly@sha256:053efaf2ede2a8e85a960f6db0d6a54e2ca29b13910dc3575eb5a86c686ed302
+    environment:
+      - PUID=1000
+      - PGID=1000
+    volumes:
+      - ${APP_DATA_DIR}/data/config:/config
+      - ${UMBREL_ROOT}/data/storage/downloads:/downloads
+    restart: on-failure
+
+  mac:
+    image: getumbrel/media-app-configurator:v1.1.0@sha256:987f6a02367adf86ab1cff38e1e2d43d85e17a6fc130aae4af196fb571dff06a
+    user: "1000:1000"
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data/config:/config
+    environment:
+      APP_ID: "prowlarr"
+      APP_URL: "http://prowlarr_server_1:9696"
+      TRANSMISSION_HOST: "transmission_server_1"
+      TRANSMISSION_PORT: 9091
+      RADARR_URL: "http://radarr_server_1:7878"
+      RADARR_CONFIG_XML: "${APP_PROWLARR_RADARR_CONFIG_XML}"
+      LIDARR_URL: "http://lidarr_server_1:8686"
+      LIDARR_CONFIG_XML: "${APP_PROWLARR_LIDARR_CONFIG_XML}"
+      SONARR_URL: "http://sonarr_server_1:8989"
+      SONARR_CONFIG_XML: "${APP_PROWLARR_SONARR_CONFIG_XML}"

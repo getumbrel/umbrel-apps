@@ -3,11 +3,12 @@ version: "3.7"
 services:
   app_proxy:
     environment:
-      APP_HOST: $APP_PI_HOLE_IP
+      APP_HOST: pi-hole_server_1
       APP_PORT: 80
       PROXY_AUTH_ADD: "false"
+  
   server:
-    image: pihole/pihole:2022.05@sha256:dcd0885a3fe050da005cb544904444cc098017636d6d495ac8770a9aa523a0ef
+    image: pihole/pihole:2022.12@sha256:773ed874ca7244b04da6470eb1e596c5c8960afe14fda3162e29ab4d79c3d239
     # Pi-hole doesn't currently support running as non-root
     # https://github.com/pi-hole/docker-pi-hole/issues/685
     # user: "1000:1000"
@@ -21,6 +22,3 @@ services:
     environment:
       - VIRTUAL_HOST=${APP_DOMAIN}
       - WEBPASSWORD=${APP_PASSWORD}
-    networks:
-      default:
-        ipv4_address: $APP_PI_HOLE_IP

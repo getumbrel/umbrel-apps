@@ -3,35 +3,25 @@ version: "3.7"
 services:
   app_proxy:
     environment:
-      APP_HOST: $APP_JAM_IP
+      APP_HOST: jam_web_1
       APP_PORT: 80
 
-  jam:
-    image: ghcr.io/joinmarket-webui/joinmarket-webui-standalone:v0.0.8-clientserver-v0.9.6@sha256:f86c4b2546d0f1e7d5c87e6ac597023d671bdb77270008b8aee91c2658b75992
+  web:
+    image: ghcr.io/joinmarket-webui/jam-standalone:v0.1.4-clientserver-v0.9.8@sha256:0c7ea1a7d6d9eb8256c5f76753e7425b405ede58f597b04059dd804def60914a
     restart: on-failure
     stop_grace_period: 1m
     init: true
     volumes:
       - ${APP_DATA_DIR}/data/joinmarket:/root/.joinmarket
     environment:
-      ENSURE_WALLET: 1
-      RESTORE_DEFAULT_CONFIG: 1
+      RESTORE_DEFAULT_CONFIG: "true"
+      REMOVE_LOCK_FILES: "true"
+      ENSURE_WALLET: "true"
       APP_USER: umbrel
       APP_PASSWORD: "${APP_PASSWORD}"
-      jm_tor_control_host: $TOR_PROXY_IP
-      jm_tor_control_port: 29051
-      jm_onion_socks5_host: $TOR_PROXY_IP
-      jm_onion_socks5_port: $TOR_PROXY_PORT
-      jm_socks5_host: $TOR_PROXY_IP
-      jm_socks5_port: $TOR_PROXY_PORT
+      jm_network: $APP_BITCOIN_NETWORK
       jm_rpc_host: $APP_BITCOIN_NODE_IP
       jm_rpc_port: $APP_BITCOIN_RPC_PORT
       jm_rpc_user: $APP_BITCOIN_RPC_USER
       jm_rpc_password: "${APP_BITCOIN_RPC_PASS}"
       jm_rpc_wallet_file: jam_default
-      jm_network: $APP_BITCOIN_NETWORK
-      jm_max_cj_fee_abs: 300000 # in sats
-      jm_max_cj_fee_rel: 0.0003 # 0.03%
-    networks:
-      default:
-        ipv4_address: $APP_JAM_IP

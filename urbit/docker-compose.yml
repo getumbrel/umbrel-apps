@@ -2,19 +2,16 @@ version: "3.3"
 services:
   app_proxy:
     environment:
-      APP_HOST: $APP_URBIT_IP
+      APP_HOST: urbit_manager_1
       APP_PORT: 8090
-
+  
   manager:
-    image: mopfelwinrux/urbit-umbrel:v0.4.1@sha256:083db8cdb2109f29c65e186b47eeecdacd5d8021ce1c4593cf8a9f945f646171
+    image: mopfelwinrux/urbit-umbrel:v1.19@sha256:b19b72b528d88a7918ba727ef7f6ebc4b759e17673b11f20382bc4d499ad4f0e
     ports:
-      - "${APP_URBIT_P2P_PORT}:34343"
+      - "34343:34343"
     volumes:
       - ${APP_DATA_DIR}/piers:/data/piers
       - ${APP_DATA_DIR}/keys:/data/keys
     environment:
       FLASK_APP: app
       APP_PASSWORD: ${APP_PASSWORD}
-    networks:
-      default:
-        ipv4_address: $APP_URBIT_IP

@@ -104,7 +104,10 @@ version: "3.7"
 services:
   app_proxy:
     environment:
-      APP_HOST: <web-container-ip-address>
+      # <app-id>_<web-container-name>_1
+      # e.g. 'btc-rpc-explorer_web_1'
+      # Note that the '_1' at the end is needed
+      APP_HOST: <web-container-dns-name>
       APP_PORT: <web-container-port-number>
   
   web:
@@ -173,6 +176,12 @@ description: >-
   It comes with a network summary dashboard, detailed view of blocks, transactions, addresses, along with analysis tools for viewing stats on miner activity, mempool summary, with fee, size, and age breakdowns. You can also search by transaction ID, block hash/height, and addresses.
 
   It's time to appreciate the "fullness" of your node.
+releaseNotes: >-
+  Dark mode is finally here! Easily switch between your preferred mode
+  in one click.
+
+  This version also includes lots of minor styling improvements, better
+  error handling, and several bugfixes.
 developer: Dan Janosik
 website: https://explorer.btc21.org
 dependencies:
@@ -192,11 +201,11 @@ defaultPassword: ""
 
 The `dependencies` section within the app manifest gives Umbrel a list of app IDs that must be already installed in order for the user to install BTC RPC Explorer and also function.
 
-The `exports.sh` shell script is a simple script to export environmental variables that your `docker-compose.yml` can read. These env. vars. are also accessible when other apps start through their `docker-compose.yml` files.
+The `exports.sh` shell script is a simple script to export environmental variables that your `docker-compose.yml` can read. These env. vars. are also accessible when other apps start through their `docker-compose.yml` files. Most applications will not require this feature.
 
+If we (for example) wanted to share BTC RPC Explorer's Address API with other apps; that would look like this:
 ```sh
-export APP_BTC_RPC_EXPLORER_IP="10.21.21.12"
-export APP_BTC_RPC_EXPLORER_PORT="3002"
+export APP_BTC_RPC_EXPLORER_ADDRESS_API="electrumx"
 ```
 
 4\. For our app, we'll update `<docker-image>` with `getumbrel/btc-rpc-explorer`, `<tag>` with `v2.0.2`, and `<port>` with `3002`. Since BTC RPC Explorer doesn't need to store any persistent data and doesn't require access to Bitcoin Core's or LND's data directories, we can remove the entire `volumes` block.
@@ -213,17 +222,15 @@ version: "3.7"
 services:
   app_proxy:
     environment:
-      APP_HOST: $APP_BTC_RPC_EXPLORER_IP
-      APP_PORT: $APP_BTC_RPC_EXPLORER_PORT
+      APP_HOST: btc-rpc-explorer_web_1
+      APP_PORT: 8080
 
   web:
     image: getumbrel/btc-rpc-explorer:v2.0.2
     restart: on-failure
     stop_grace_period: 1m
-    environment: ...
-    networks:
-      default:
-        ipv4_address: $APP_BTC_RPC_EXPLORER_IP
+    environment:
+      BTCEXP_PORT: 8080
 
 ```
 
@@ -237,14 +244,16 @@ version: "3.7"
 services:
   app_proxy:
     environment:
-      APP_HOST: $APP_BTC_RPC_EXPLORER_IP
-      APP_PORT: $APP_BTC_RPC_EXPLORER_PORT
+      APP_HOST: btc-rpc-explorer_web_1
+      APP_PORT: 8080
       
   web:
     image: getumbrel/btc-rpc-explorer:v2.0.2
     restart: on-failure
     stop_grace_period: 1m
     environment:
+      PORT: 8080
+
       # Bitcoin Core connection details
       BTCEXP_BITCOIND_HOST: $APP_BITCOIN_NODE_IP
       BTCEXP_BITCOIND_PORT: $APP_BITCOIN_RPC_PORT
@@ -264,9 +273,6 @@ services:
       BTCEXP_NO_RATES: "true"
       BTCEXP_RPC_ALLOWALL: "false"
       BTCEXP_BASIC_AUTH_PASSWORD: ""  
-    networks:
-      default:
-        ipv4_address: $APP_BTC_RPC_EXPLORER_IP
 
 ```
 
@@ -294,8 +300,7 @@ Once Umbrel has started, the Web UI will be accessible at the IP address of the 
 
 ```sh
 cd umbrel
-sudo ./scripts/repo set https://github.com/<username>/umbrel-apps.git
-sudo ./scripts/repo update
+sudo ./scripts/repo checkout https://github.com/<username>/umbrel-apps.git
 ```
 
 3\. And finally, it's time to install our app:
@@ -311,7 +316,7 @@ That's it! Our BTC RPC Explorer app should now be accessible at http://umbrel-de
 Let's commit and push our changes to our forked Umbrel app repo then run:
 
 ```sh
-sudo ./scripts/repo update
+sudo ./scripts/repo checkout https://github.com/<username>/umbrel-apps.git
 sudo ./scripts/app update btc-rpc-explorer
 ```
 
@@ -343,8 +348,7 @@ After the VM has booted, we can verify if the Umbrel dashboard is accessible at 
 
 ```sh
 cd getumbrel/umbrel
-sudo ./scripts/repo set https://github.com/<username>/umbrel-apps.git
-sudo ./scripts/repo update
+sudo ./scripts/repo checkout https://github.com/<username>/umbrel-apps.git
 ```
 
 4\. And finally, it's time to install our app:
@@ -360,7 +364,7 @@ That's it! Our BTC RPC Explorer app should now be accessible at http://umbrel-de
 Let's commit and push our changes to our forked Umbrel app repo then run:
 
 ```sh
-sudo ./scripts/repo update
+sudo ./scripts/repo checkout https://github.com/<username>/umbrel-apps.git
 sudo ./scripts/app update btc-rpc-explorer
 ```
 
@@ -379,8 +383,7 @@ ssh umbrel@umbrel.local
 2\. Next, we'll switch to the forked remote app repo:
 
 ```sh
-sudo ./scripts/repo set https://github.com/<username>/umbrel-apps.git
-sudo ./scripts/repo update
+sudo ./scripts/repo checkout https://github.com/<username>/umbrel-apps.git
 ```
 
 3\. Once the repo has updated, it's time to test our app:
@@ -471,7 +474,7 @@ PROXY_AUTH_BLACKLIST: "/admin/*"
 
 1. **How to push app updates?**
 
-    Every time you release a new version of your app, you should build, tag and push the new Docker images to Docker Hub. Then open a new PR on our main app repo (getumbrel/umbrel-apps) with your up-to-date docker image.
+    Every time you release a new version of your app, you should build, tag and push the new Docker images to Docker Hub. Then open a new PR on our main app repo (getumbrel/umbrel-apps) with your up-to-date docker image, and updated `version` and `releaseNotes` in your app's `umbrel-app.yml` file.
 
 1. **I need help with something else?**
 
