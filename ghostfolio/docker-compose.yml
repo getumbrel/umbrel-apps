@@ -13,7 +13,7 @@ services:
       NODE_ENV: production
       HOST: 0.0.0.0
       PORT: 3334
-      ACCESS_TOKEN_SALT: $APP_PASSWORD
+      ACCESS_TOKEN_SALT: $APP_GHOSTFOLIO_ACCESS_TOKEN_SALT
       BASE_CURRENCY: USD
       DATABASE_URL: postgresql://${APP_GHOSTFOLIO_DB_USERNAME}:${APP_GHOSTFOLIO_DB_PASSWORD}@ghostfolio_postgres_1:5432/${APP_GHOSTFOLIO_DB_DATABASE_NAME}?sslmode=prefer
       JWT_SECRET_KEY: ${APP_SEED}
@@ -23,11 +23,9 @@ services:
       REDIS_HOST: ghostfolio_redis_1
       REDIS_PASSWORD: ${APP_GHOSTFOLIO_REDIS_PASSWORD}
       REDIS_PORT: 6379
-    volumes:
-      - ${APP_DATA_DIR}/data/config:/config
   
   postgres:
-    image: postgres:14-bullseye@sha256:135c62a8134dcef829a1e4f5568bfae44bcfa2c75659ff948f43c71964366aa4
+    image: postgres:14-bullseye@sha256:c2a30d08a6f9e6c365595fd086c9e0436064c52425f15f72379ecf0807bac518
     restart: on-failure
     stop_grace_period: 1m
     user: "1000:1000"
@@ -40,7 +38,7 @@ services:
       - ${APP_DATA_DIR}/data/postgres:/var/lib/postgresql/data
 
   redis:
-    image: redis:6.2-bullseye@sha256:ffd3d04c8f7832ccdda89616ebaf3cb38414b645ebbf76dbef1fc9c36a72a2d1
+    image: redis:6.2-bullseye@sha256:5cdb2ac6f780e1d250787f4a887c1ed1166e3389757189ea913059409acc6f7c
     restart: on-failure
     user: "1000:1000"
     command: >

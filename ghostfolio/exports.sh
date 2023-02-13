@@ -1,5 +1,5 @@
-export APP_GHOSTFOLIO_ACCESS_TOKEN_SALT="FWhm9Lr4YvczQ2YPa7Emqh6iPofafIn3"
+export APP_GHOSTFOLIO_ACCESS_TOKEN_SALT=$(derive_entropy "env-${app_entropy_identifier}-APP_ACCESS_TOKEN_SALT" | head -c32)
 export APP_GHOSTFOLIO_DB_DATABASE_NAME="ghostfolio"
 export APP_GHOSTFOLIO_DB_USERNAME="ghostfolio"
-export APP_GHOSTFOLIO_DB_PASSWORD="jlLltyl8Tbj9AZieGjhjOyQomToPbexs"
-export APP_GHOSTFOLIO_REDIS_PASSWORD="fn5ckxbSAvu8p7JSlvmvJLl0WFWIzlJf9h0BSK4K"
+export APP_GHOSTFOLIO_DB_PASSWORD="moneyprintergobrrr"
+export APP_GHOSTFOLIO_REDIS_PASSWORD="moneyprintergobrrr"
