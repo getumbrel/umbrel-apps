@@ -91,6 +91,7 @@ cd btc-rpc-explorer
 - `docker-compose.yml` - Used to start and stop your app's Docker containers
 - `umbrel-app.yml` - A app manifest file so that Umbrel knows the name and version of the app
 - `exports.sh` - A shell script to export environment variables used within `docker-compose.yml` and shared with other installed apps
+- `.env` - Used for the auto updater
 
 We'll now create a `docker-compose.yml` file in this directory to define our application.
 
@@ -206,6 +207,15 @@ The `exports.sh` shell script is a simple script to export environmental variabl
 If we (for example) wanted to share BTC RPC Explorer's Address API with other apps; that would look like this:
 ```sh
 export APP_BTC_RPC_EXPLORER_ADDRESS_API="electrumx"
+```
+
+The `.env` file defines the variables our auto updater uses to fetch the latest container version
+
+```sh
+ID=<same as the folder name>
+NAME=<Friendly name>
+GITHUB=<GitHub/repo>
+DOCKER=<docker/image>
 ```
 
 4\. For our app, we'll update `<docker-image>` with `getumbrel/btc-rpc-explorer`, `<tag>` with `v2.0.2`, and `<port>` with `3002`. Since BTC RPC Explorer doesn't need to store any persistent data and doesn't require access to Bitcoin Core's or LND's data directories, we can remove the entire `volumes` block.

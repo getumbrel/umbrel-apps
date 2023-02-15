@@ -1,0 +1,72 @@
+name: Auto Updater
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+jobs:
+    generateInputPaths:
+        name: List all app folders
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v3
+
+            - name: Generate matrix with all the apps in this repo
+              id: set-matrix
+              run: echo "matrix=$(ls -d ./*/ | jq --raw-input --slurp --compact-output 'split("\n")[:-1]')" >> $GITHUB_OUTPUT
+        outputs:
+            matrix: ${{ steps.set-matrix.outputs.matrix }}
+
+    update:
+        needs: generateInputPaths
+        runs-on: ubuntu-latest
+        strategy:
+            max-parallel: 1
+            fail-fast: false
+            matrix:
+                path: ${{ fromJson(needs.generateInputPaths.outputs.matrix) }}
+
+        steps:
+            - uses: actions/checkout@v3
+
+            - name: Check file existence
+              id: check_files
+              uses: andstor/file-existence-action@v2
+              with:
+                files: ${{ github.workspace }}/${{ matrix.path }}/.env
+                ignore_case: false
+            
+            - name: Load .env file
+              if: steps.check_files.outputs.files_exists == 'true'
+              uses: xom9ikk/dotenv@v2
+              with:
+                path: ${{ github.workspace }}/${{ matrix.path }}
+
+            - name: Fetch the latest version
+              id: get_latest
+              if: steps.check_files.outputs.files_exists == 'true'
+              run: echo "latest=$(curl -sL https://api.github.com/repos/${{ env.GITHUB }}/releases/latest | jq -r ".tag_name")" >> $GITHUB_OUTPUT
+            
+            - name: Fetch the latest digest
+              id: get_hash
+              if: ${{ steps.get_latest.outputs.latest != 'null' && steps.check_files.outputs.files_exists == 'true' }}
+              run: echo "hash=$(curl -sL https://hub.docker.com/v2/repositories/${{ env.DOCKER }}/tags/${{ steps.get_latest.outputs.latest }} | jq -r .digest)" >> $GITHUB_OUTPUT
+
+            - name: Update the version
+              uses: fjogeleit/yaml-update-action@main
+              if: ${{ steps.get_latest.outputs.latest != 'null' && steps.check_files.outputs.files_exists == 'true' }}
+              with:
+                valueFile: '${{ env.ID }}/umbrel-app.yml'
+                changes: |
+                    {
+                        "${{ env.ID }}/umbrel-app.yml": {
+                            "version": "${{ steps.get_latest.outputs.latest }}"
+                        },
+                        "${{ env.ID }}/docker-compose.yml": {
+                            "services.server.image": "${{ env.DOCKER }}:${{ steps.get_latest.outputs.latest }}@${{ steps.get_hash.outputs.hash }}"
+                        }
+                    }
+                commitChange: true
+                branch: master
+                message: 'Updated ${{ env.NAME }} to ${{ steps.get_latest.outputs.latest }}'
