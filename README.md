@@ -211,11 +211,12 @@ export APP_BTC_RPC_EXPLORER_ADDRESS_API="electrumx"
 
 The `.env` file defines the variables our auto updater uses to fetch the latest container version
 
-```sh
+```env
 ID=<same as the folder name>
 NAME=<Friendly name>
 GITHUB=<GitHub/repo>
 DOCKER=<docker/image>
+MAIN=<ID of the main container in docker-compose>
 ```
 
 4\. For our app, we'll update `<docker-image>` with `getumbrel/btc-rpc-explorer`, `<tag>` with `v2.0.2`, and `<port>` with `3002`. Since BTC RPC Explorer doesn't need to store any persistent data and doesn't require access to Bitcoin Core's or LND's data directories, we can remove the entire `volumes` block.
