@@ -1,0 +1,21 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+# DCRDEX uses its own auth
+      PROXY_AUTH_ADD: "false"  
+      APP_HOST: decred-dcrdex_web_1
+      APP_PORT: 5758
+  
+  web:
+    image: decred/dcrdex:v0.5.9
+    restart: on-failure
+    ports:
+      - 5758
+    volumes:
+      - ${APP_DATA_DIR}:/dex/.dexc
+# When a trade is being settled, the DEX client requires time
+# to shut down cleanly due to the time sensitive nature of atomic
+# swaps, hence the long stop_grace_period value.
+    stop_grace_period: 15m
