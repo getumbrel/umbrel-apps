@@ -1,14 +1,12 @@
 #!/usr/bin/env bash
 
 # Delay booting TDEX until the Tor Hidden Service is ready
-
-HIDDEN_SERVICE_FILE="${TOR_DATA_DIR}/app-${APP_ID}-grpc/hostname"
+HIDDEN_SERVICE_FILE="${TOR_DATA_DIR}/app-${APP_ID}/hostname"
 
 if [[ -f "${HIDDEN_SERVICE_FILE}" ]]; then
 	exit
 fi
 
-"${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" up --detach lnd
 "${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" up --detach tor
 
 echo "App: ${APP_ID} - Generating Tor Hidden Service..."
