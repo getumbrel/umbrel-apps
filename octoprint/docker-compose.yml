@@ -1,0 +1,14 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: octoprint_server_1
+      APP_PORT: 5000
+      PROXY_AUTH_ADD: "false"
+
+  server:
+    image: octoprint/octoprint:1.8.7@sha256:f4a649c27917ad0624d16779f36b3a7e60626eddefccc51ec367a52a4288492c
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+    restart: on-failure
