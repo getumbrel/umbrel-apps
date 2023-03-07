@@ -3,11 +3,11 @@ version: "3.7"
 services:
   app_proxy:
     environment:
-      APP_HOST: $APP_SUREDBITS_WALLET_IP
+      APP_HOST: suredbits-wallet_web_1
       APP_PORT: 3002
 
   web:
-    image: bitcoinscala/wallet-server-ui:1.9.3@sha256:dfbded611403fb03dac45fe915320079933e8f864e0942b7fb3ddea017e2b8dd
+    image: bitcoinscala/wallet-server-ui:1.9.7@sha256:50da55b6d607d03775041aa2c056c5fe281a33f0e471d58e07a99dd2670718e3
     user: "1000:1000"
     restart: on-failure
     stop_grace_period: 1m
@@ -17,20 +17,17 @@ services:
     environment:
       LOG_PATH: "/log/"
       BITCOIN_S_HOME: "/bitcoin-s/"
-     #MEMPOOL_API_URL: "http://umbrel.local:${APP_MEMPOOL_PORT}/api"
-      WALLET_SERVER_API_URL: "http://${APP_SUREDBITS_WALLET_SERVER_IP}:9999/"
-      WALLET_SERVER_WS: "ws://${APP_SUREDBITS_WALLET_SERVER_IP}:19999/events"
+      #MEMPOOL_API_URL: "http://umbrel.local:${APP_MEMPOOL_PORT}/api"
+      WALLET_SERVER_API_URL: "http://suredbits-wallet_walletserver_1:9999/"
+      WALLET_SERVER_WS: "ws://suredbits-wallet_walletserver_1:19999/events"
       TOR_PROXY: socks5://${TOR_PROXY_IP}:${TOR_PROXY_PORT}
       DEFAULT_UI_PASSWORD: "none" 
       BITCOIN_S_SERVER_RPC_PASSWORD: $APP_PASSWORD
-    networks:
-      default:
-        ipv4_address: $APP_SUREDBITS_WALLET_IP
     depends_on: 
       - walletserver
   
   walletserver:
-    image: bitcoinscala/bitcoin-s-server:1.9.3@sha256:db995d23ed6cd5a31de5fffe06c6edff5c420c77b63440169c41c2016c89993c
+    image: bitcoinscala/bitcoin-s-server:1.9.7@sha256:cee2c4682d6172d6af2f0edfae016e3cc7aacc15ba56eb0652d9d65d31e7baf3
     entrypoint: ["/opt/docker/bin/bitcoin-s-server", "--datadir", "/bitcoin-s", "--conf", "/opt/docker/docker-application.conf"]
     user: "1000:1000"
     restart: on-failure
@@ -55,6 +52,13 @@ services:
       DISABLE_JLINK: "1"
     ports:
       - "$APP_SUREDBITS_WALLET_P2P_PORT:$APP_SUREDBITS_WALLET_P2P_PORT"
-    networks:
-      default:
-        ipv4_address: $APP_SUREDBITS_WALLET_SERVER_IP
+  
+  tor:
+    image: getumbrel/tor:0.4.7.8@sha256:2ace83f22501f58857fa9b403009f595137fa2e7986c4fda79d82a8119072b6a
+    user: "1000:1000"
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/torrc:/etc/tor/torrc:ro
+      - ${TOR_DATA_DIR}:/data
+    environment:
+      HOME: "/tmp"

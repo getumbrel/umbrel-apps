@@ -1,0 +1,29 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: audiobookshelf_web_1
+      APP_PORT: 80
+      PROXY_AUTH_ADD: "false"
+
+
+  web:
+    image: ghcr.io/advplyr/audiobookshelf:2.2.11@sha256:6a3a3dceeb669b477851ce54d96c2140868e19606b0193ccbb3e98151e5b8e5e
+    user: 1000:1000
+    init: true
+    restart: on-failure
+    stop_grace_period: 1m
+    healthcheck:
+      disable: true
+    environment:
+      - CONFIG_PATH=/home/node/config
+      - METADATA_PATH=/home/node/metadata
+      - AUDIOBOOKSHELF_UID=1000
+      - AUDIOBOOKSHELF_GID=1000
+    volumes:
+      - ${APP_DATA_DIR}/data/config:/home/node/config
+      - ${APP_DATA_DIR}/data/metadata:/home/node/metadata
+      - ${UMBREL_ROOT}/data/storage/downloads/audiobooks:/audiobooks
+      - ${UMBREL_ROOT}/data/storage/downloads/podcasts:/podcasts
+

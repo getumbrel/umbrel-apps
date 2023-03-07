@@ -1,0 +1,16 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: trilium-notes_server_1
+      APP_PORT: 8080
+      PROXY_AUTH_WHITELIST: "/api/*"
+
+  server:
+    image: zadam/trilium:0.55.1@sha256:9bf48a49359cd567bb8e9ce87c1d310713ba98ac8d517d75b07b8de907525077
+    restart: on-failure
+    environment:
+      - TRILIUM_DATA_DIR=/data
+    volumes:
+      - ${APP_DATA_DIR}/data:/data

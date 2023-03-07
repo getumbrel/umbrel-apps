@@ -6,27 +6,12 @@ export APP_LIGHTNING_NODE_GRPC_PORT="10009"
 export APP_LIGHTNING_NODE_REST_PORT="8080"
 export APP_LIGHTNING_NODE_DATA_DIR="${EXPORTS_APP_DIR}/data/lnd"
 
-LND_BITCOIN_NODE="bitcoind"
-
 BIN_ARGS=()
+BIN_ARGS+=( "--configfile=/data/.lnd/umbrel-lnd.conf" )
 # [Application Options]
 BIN_ARGS+=( "--listen=0.0.0.0:${APP_LIGHTNING_NODE_PORT}" )
 BIN_ARGS+=( "--rpclisten=0.0.0.0:${APP_LIGHTNING_NODE_GRPC_PORT}" )
 BIN_ARGS+=( "--restlisten=0.0.0.0:${APP_LIGHTNING_NODE_REST_PORT}" )
-BIN_ARGS+=( "--tlsautorefresh" )
-
-# We recently added this to the default lnd.conf
-# Adding here too as a super simple way to enable for all existing users.
-# If users want to disable this we should remove this and instead insert it in
-# lnd.conf for existing users via a migration.
-BIN_ARGS+=( "--accept-amp" )
-
-# [Bitcoind]
-BIN_ARGS+=( "--bitcoind.rpchost=${APP_BITCOIN_NODE_IP}" )
-BIN_ARGS+=( "--bitcoind.rpcuser=${APP_BITCOIN_RPC_USER}" )
-BIN_ARGS+=( "--bitcoind.rpcpass=${APP_BITCOIN_RPC_PASS}" )
-BIN_ARGS+=( "--bitcoind.zmqpubrawblock=tcp://${APP_BITCOIN_NODE_IP}:${APP_BITCOIN_ZMQ_RAWBLOCK_PORT}" )
-BIN_ARGS+=( "--bitcoind.zmqpubrawtx=tcp://${APP_BITCOIN_NODE_IP}:${APP_BITCOIN_ZMQ_RAWTX_PORT}" )
 
 # [Bitcoin]
 BIN_ARGS+=( "--bitcoin.active" )
@@ -41,7 +26,14 @@ elif [[ "${APP_BITCOIN_NETWORK}" == "regtest" ]]; then
 else
 	echo "Warning (${EXPORTS_APP_ID}): Bitcoin Network '${APP_BITCOIN_NETWORK}' is not supported"
 fi
-BIN_ARGS+=( "--bitcoin.node=${LND_BITCOIN_NODE}" )
+BIN_ARGS+=( "--bitcoin.node=bitcoind" )
+
+# [Bitcoind]
+BIN_ARGS+=( "--bitcoind.rpchost=${APP_BITCOIN_NODE_IP}:${APP_BITCOIN_RPC_PORT}" )
+BIN_ARGS+=( "--bitcoind.rpcuser=${APP_BITCOIN_RPC_USER}" )
+BIN_ARGS+=( "--bitcoind.rpcpass=${APP_BITCOIN_RPC_PASS}" )
+BIN_ARGS+=( "--bitcoind.zmqpubrawblock=tcp://${APP_BITCOIN_NODE_IP}:${APP_BITCOIN_ZMQ_RAWBLOCK_PORT}" )
+BIN_ARGS+=( "--bitcoind.zmqpubrawtx=tcp://${APP_BITCOIN_NODE_IP}:${APP_BITCOIN_ZMQ_RAWTX_PORT}" )
 
 # [tor]
 BIN_ARGS+=( "--tor.active" )

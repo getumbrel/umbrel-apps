@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# The purpose of this pre-start hook is to migrate
+# the local downloads folder for existing installations
+# to Umbrel's shared downloads folder
+
+APP_DATA_DIR="$(readlink -f $(dirname "${BASH_SOURCE[0]}")/..)"
+UMBREL_ROOT="${APP_DATA_DIR}/../.."
+
+# We need to ensure Umbrel's shared download folder
+# exists and is owned by the correct user
+UMBREL_DATA_DIR="${UMBREL_ROOT}/data"
+UMBREL_DATA_STORAGE_DIR="${UMBREL_DATA_DIR}/storage"
+UMBREL_DATA_STORAGE_DOWNLOADS_DIR="${UMBREL_DATA_STORAGE_DIR}/downloads"
+DESIRED_OWNER="1000:1000"
+
+if [[ ! -d "${UMBREL_DATA_STORAGE_DOWNLOADS_DIR}" ]]; then
+	mkdir -p "${UMBREL_DATA_STORAGE_DOWNLOADS_DIR}"
+fi
+
+simpletorrent_correct_permission() {
+	local -r path="${1}"
+
+	if [[ -d "${path}" ]]; then
+		owner=$(stat -c "%u:%g" "${path}")
+
+		if [[ "${owner}" != "${DESIRED_OWNER}" ]]; then
+			chown "${DESIRED_OWNER}" "${path}"
+		fi
+	fi
+}
+
+simpletorrent_correct_permission "${UMBREL_DATA_DIR}"
+simpletorrent_correct_permission "${UMBREL_DATA_STORAGE_DIR}"
+simpletorrent_correct_permission "${UMBREL_DATA_STORAGE_DOWNLOADS_DIR}"
+
+# Migrate existing installations to use the shared downloads directory
+LOCAL_DOWNLOADS_DIR="${APP_DATA_DIR}/data/downloads"
+
+if [[ ! -d "${LOCAL_DOWNLOADS_DIR}" ]]; then
+	echo "No local downloads directory found. Skipping migration..."
+	exit
+fi
+
+# Check if local downloads is not empty
+if [[ "$(ls -l "${LOCAL_DOWNLOADS_DIR}" | wc -l)" -gt "1" ]]; then
+	# Move contents of local downloads folder to Umbrel's shared downloads folder
+	mv --verbose "${LOCAL_DOWNLOADS_DIR}/"* "${UMBREL_DATA_STORAGE_DOWNLOADS_DIR}"
+fi
+
+# Check if the local downloads directory is now empty
+if [[ "$(ls -l "${LOCAL_DOWNLOADS_DIR}" | wc -l)" -gt "1" ]]; then
+	echo "Failed to migrate local downloads directory: ${LOCAL_DOWNLOADS_DIR}"
+	echo "This directory still contains files/folders..."
+	exit
+fi
+
+rm -rf "${LOCAL_DOWNLOADS_DIR}"
+
+echo "Local downloads directory successfully migrated"

@@ -3,20 +3,17 @@ version: "3.7"
 services:
   app_proxy:
     environment:
-      APP_HOST: $APP_SIMPLE_TORRENT_IP
-      APP_PORT: $APP_SIMPLE_TORRENT_PORT
+      APP_HOST: simple-torrent_server_1
+      APP_PORT: 8086
 
   server:
     image: boypt/cloud-torrent:1.3.9@sha256:90cc62869ebaabbdba31535cdff4c66ede98b341956d2ebcd6650610a37e9819
     user: "1000:1000"
     restart: on-failure
     command: >
-      --port=${APP_SIMPLE_TORRENT_PORT}
+      --port=8086
       --config-path /config/simple-torrent.json
     volumes:
       - ${APP_DATA_DIR}/data/torrents:/torrents
-      - ${APP_DATA_DIR}/data/downloads:/downloads
+      - ${UMBREL_ROOT}/data/storage/downloads:/downloads
       - ${APP_DATA_DIR}/data/config:/config
-    networks:
-      default:
-        ipv4_address: $APP_SIMPLE_TORRENT_IP
