@@ -1,0 +1,15 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: ttyd_web_1
+      APP_PORT: 7681
+
+  web:
+    image: tsl0922/ttyd:1.7.3
+    restart: on-failure
+    stop_grace_period: 1m
+    volumes:
+      # We should access to all umbrel files from ttyd terminal
+      # - ${UMBREL_ROOT}
