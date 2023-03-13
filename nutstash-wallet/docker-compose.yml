@@ -1,0 +1,15 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: nutstash-wallet_web_1
+      APP_PORT: 4173
+      PROXY_AUTH_ADD: "false"
+      
+  web:
+    image: ghcr.io/gandlafbtc/nutstash-wallet:0.1.6@sha256:1fc859c57c15918c19774c95325c67e12a10191dc3e2f09c184241dffe478776
+    restart: on-failure
+    stop_grace_period: 1m
+    init: true
+    
