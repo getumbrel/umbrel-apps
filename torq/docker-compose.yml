@@ -7,7 +7,7 @@ services:
       APP_PORT: 7028
 
   web:
-    image: lncapital/torq:0.17.3@sha256:5a7da465ba7dc038e61439d92b7881adc37b9b00b06e69740c27d12c92d50b89
+    image: lncapital/torq:0.18.19@sha256:0439b903cf3c1af7e602e8b6516a3b7e34dce61ff01d8f1882ba0d3fcab0457f
     user: "1000:1000"
     restart: on-failure
     stop_grace_period: 1m
@@ -28,6 +28,7 @@ services:
       - /lnd/data/chain/bitcoin/${APP_BITCOIN_NETWORK}/admin.macaroon
       - --lnd.tls-path
       - /lnd/tls.cert
+      - --torq.auto-login
       - start
 
   db:
