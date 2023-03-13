@@ -8,7 +8,7 @@ services:
       PROXY_AUTH_ADD: "false"
   
   server:
-    image: pihole/pihole:2022.12@sha256:773ed874ca7244b04da6470eb1e596c5c8960afe14fda3162e29ab4d79c3d239
+    image: pihole/pihole:2023.02.2@sha256:9abbf1c218f32a4084e614150a44714f046f73c40a9d2889a0e6edf01ff0a387
     # Pi-hole doesn't currently support running as non-root
     # https://github.com/pi-hole/docker-pi-hole/issues/685
     # user: "1000:1000"
@@ -16,9 +16,12 @@ services:
     ports:
       - 53:53
       - 53:53/udp
+      - 67:67/udp
     volumes:
       - ${APP_DATA_DIR}/data/pihole:/etc/pihole/
       - ${APP_DATA_DIR}/data/dnsmasq:/etc/dnsmasq.d/
     environment:
       - VIRTUAL_HOST=${APP_DOMAIN}
       - WEBPASSWORD=${APP_PASSWORD}
+    cap_add:
+      - NET_ADMIN
