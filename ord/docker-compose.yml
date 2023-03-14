@@ -9,9 +9,10 @@ services:
 
   ord:
     image: nmfretz/ord:v0.5.1@sha256:0bbe9b14a8b05b783f0f2d967845a213e85f89f1b6ae3434bd2a8d60a271fddf
+    # TODO: this seems to need to run as root
     # user: "1000:1000"
     restart: on-failure
-    command: "--first-inscription-height 770112 --data-dir /var/lib/ord --bitcoin-data-dir /var/lib/bitcoind --rpc-url ${APP_BITCOIN_NODE_IP}:${APP_BITCOIN_RPC_PORT} --chain ${APP_BITCOIN_NETWORK} server --http"
+    command: "--data-dir /var/lib/ord --bitcoin-data-dir /var/lib/bitcoind --rpc-url ${APP_BITCOIN_NODE_IP}:${APP_BITCOIN_RPC_PORT} --chain ${APP_BITCOIN_NETWORK} server --http --first-inscription-height 770112"
     volumes:
       - ${APP_DATA_DIR}/data:/var/lib/ord
       - ${APP_BITCOIN_DATA_DIR}:/var/lib/bitcoind:ro
