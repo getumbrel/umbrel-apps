@@ -8,8 +8,7 @@ services:
       PROXY_AUTH_ADD: "false"
 
   ord:
-    # add mult-arch sha256 when available
-    image: nmfretz/ord:v0.5.1
+    image: nmfretz/ord:v0.5.1@sha256:0bbe9b14a8b05b783f0f2d967845a213e85f89f1b6ae3434bd2a8d60a271fddf
     # user: "1000:1000"
     restart: on-failure
     command: "--first-inscription-height 770112 --data-dir /var/lib/ord --bitcoin-data-dir /var/lib/bitcoind --rpc-url ${APP_BITCOIN_NODE_IP}:${APP_BITCOIN_RPC_PORT} --chain ${APP_BITCOIN_NETWORK} server --http"
