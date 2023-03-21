@@ -16,9 +16,12 @@ services:
     ports:
       - 53:53
       - 53:53/udp
+      - 67:67/udp
     volumes:
       - ${APP_DATA_DIR}/data/pihole:/etc/pihole/
       - ${APP_DATA_DIR}/data/dnsmasq:/etc/dnsmasq.d/
     environment:
       - VIRTUAL_HOST=${APP_DOMAIN}
       - WEBPASSWORD=${APP_PASSWORD}
+    cap_add:
+      - NET_ADMIN
