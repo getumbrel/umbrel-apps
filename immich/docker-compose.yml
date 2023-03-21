@@ -7,90 +7,179 @@ services:
       APP_PORT: 8080
       PROXY_AUTH_WHITELIST: "/api/*"
 
-  immich-server:
+  server:
     container_name: immich_server
     image: altran1502/immich-server:release
     entrypoint: [ "/bin/sh", "./start-server.sh" ]
     volumes:
-      - ${UPLOAD_LOCATION}:/usr/src/app/upload
-    env_file:
-      - .env
+      - ${APP_DATA_DIR}/data/upload:/usr/src/app/upload
     environment:
-      - NODE_ENV=production
+      NODE_ENV: production
+      DB_HOSTNAME: immich_postgres
+      DB_USERNAME: ${APP_IMMICH_DB_USERNAME}
+      DB_PASSWORD: ${APP_IMMICH_DB_PASSWORD}
+      DB_DATABASE_NAME: ${APP_IMMICH_DB_DATABASE_NAME}
+      REDIS_HOSTNAME: immich_redis
+      LOG_LEVEL: ${APP_IMMICH_LOG_LEVEL}
+      JWT_SECRET: ${APP_SEED}
+      DISABLE_REVERSE_GEOCODING: ${APP_IMMICH_DISABLE_REVERSE_GEOCODING}
+      REVERSE_GEOCODING_PRECISION: ${APP_IMMICH_REVERSE_GEOCODING_PRECISION}
+      PUBLIC_LOGIN_PAGE_MESSAGE: ${APP_IMMICH_PUBLIC_LOGIN_PAGE_MESSAGE}
     depends_on:
       - redis
-      - database
-    restart: always
+      - postgres
+    restart: on-failure
+#    volumes:
+#      - ${UPLOAD_LOCATION}:/usr/src/app/upload
+#    env_file:
+#      - .env
+#    environment:
+#      - NODE_ENV=production
+#    depends_on:
+#      - redis
+#      - database
+#    restart: always
 
-  immich-microservices:
+  microservices:
     container_name: immich_microservices
     image: altran1502/immich-server:release
     entrypoint: [ "/bin/sh", "./start-microservices.sh" ]
     volumes:
-      - ${UPLOAD_LOCATION}:/usr/src/app/upload
-    env_file:
-      - .env
+      - ${APP_DATA_DIR}/data/upload:/usr/src/app/upload
     environment:
-      - NODE_ENV=production
+      NODE_ENV: production
+      DB_HOSTNAME: immich_postgres
+      DB_USERNAME: ${APP_IMMICH_DB_USERNAME}
+      DB_PASSWORD: ${APP_IMMICH_DB_PASSWORD}
+      DB_DATABASE_NAME: ${APP_IMMICH_DB_DATABASE_NAME}
+      REDIS_HOSTNAME: immich_redis
+      LOG_LEVEL: ${APP_IMMICH_LOG_LEVEL}
+      JWT_SECRET: ${APP_SEED}
+      DISABLE_REVERSE_GEOCODING: ${APP_IMMICH_DISABLE_REVERSE_GEOCODING}
+      REVERSE_GEOCODING_PRECISION: ${APP_IMMICH_REVERSE_GEOCODING_PRECISION}
+      PUBLIC_LOGIN_PAGE_MESSAGE: ${APP_IMMICH_PUBLIC_LOGIN_PAGE_MESSAGE}
     depends_on:
       - redis
-      - database
-    restart: always
+      - postgres
+    restart: on-failure
 
-  immich-machine-learning:
+#    volumes:
+#      - ${UPLOAD_LOCATION}:/usr/src/app/upload
+#    env_file:
+#      - .env
+#    environment:
+#      - NODE_ENV=production
+#    depends_on:
+#      - redis
+#      - database
+#    restart: always
+
+  machine-learning:
     container_name: immich_machine_learning
     image: altran1502/immich-machine-learning:release
     volumes:
-      - ${UPLOAD_LOCATION}:/usr/src/app/upload
-      - model-cache:/cache
-    env_file:
-      - .env
+      - ${APP_DATA_DIR}/data/upload:/usr/src/app/upload
     environment:
-      - NODE_ENV=production
-    restart: always
+      NODE_ENV: production
+      DB_HOSTNAME: immich_postgres
+      DB_USERNAME: ${APP_IMMICH_DB_USERNAME}
+      DB_PASSWORD: ${APP_IMMICH_DB_PASSWORD}
+      DB_DATABASE_NAME: ${APP_IMMICH_DB_DATABASE_NAME}
+      REDIS_HOSTNAME: immich_redis
+      LOG_LEVEL: ${APP_IMMICH_LOG_LEVEL}
+      JWT_SECRET: ${APP_SEED}
+      DISABLE_REVERSE_GEOCODING: ${APP_IMMICH_DISABLE_REVERSE_GEOCODING}
+      REVERSE_GEOCODING_PRECISION: ${APP_IMMICH_REVERSE_GEOCODING_PRECISION}
+      PUBLIC_LOGIN_PAGE_MESSAGE: ${APP_IMMICH_PUBLIC_LOGIN_PAGE_MESSAGE}
+    depends_on:
+      - postgres
+    restart: on-failure
+#    volumes:
+#      - ${UPLOAD_LOCATION}:/usr/src/app/upload
+#      - model-cache:/cache
+#    env_file:
+#      - .env
+#    environment:
+#      - NODE_ENV=production
+#    restart: always
 
-  immich-web:
+  web:
     container_name: immich_web
     image: altran1502/immich-web:release
     entrypoint: [ "/bin/sh", "./entrypoint.sh" ]
-    env_file:
-      - .env
-    restart: always
+    environment:
+      DB_HOSTNAME: immich_postgres
+      DB_USERNAME: ${APP_IMMICH_DB_USERNAME}
+      DB_PASSWORD: ${APP_IMMICH_DB_PASSWORD}
+      DB_DATABASE_NAME: ${APP_IMMICH_DB_DATABASE_NAME}
+      REDIS_HOSTNAME: immich_redis
+      LOG_LEVEL: ${APP_IMMICH_LOG_LEVEL}
+      JWT_SECRET: ${APP_SEED}
+      DISABLE_REVERSE_GEOCODING: ${APP_IMMICH_DISABLE_REVERSE_GEOCODING}
+      REVERSE_GEOCODING_PRECISION: ${APP_IMMICH_REVERSE_GEOCODING_PRECISION}
+      PUBLIC_LOGIN_PAGE_MESSAGE: ${APP_IMMICH_PUBLIC_LOGIN_PAGE_MESSAGE}
+      PUBLIC_IMMICH_SERVER_URL: "http://immich_server:3001"
+    restart: on-failure
+
+#    env_file:
+#      - .env
+#    restart: always
 
   redis:
     container_name: immich_redis
     image: redis:6.2
-    restart: always
+    user: "1000:1000"
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data/redis:/data
 
-  database:
+#    restart: always
+
+  postgres:
     container_name: immich_postgres
     image: postgres:14
-    env_file:
-      - .env
+    user: "1000:1000"
     environment:
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_USER: ${DB_USERNAME}
-      POSTGRES_DB: ${DB_DATABASE_NAME}
+      POSTGRES_USER: ${APP_IMMICH_DB_USERNAME}
+      POSTGRES_PASSWORD: ${APP_IMMICH_DB_PASSWORD}
+      POSTGRES_DB: ${APP_IMMICH_DB_DATABASE_NAME}
       PG_DATA: /var/lib/postgresql/data
     volumes:
-      - pgdata:/var/lib/postgresql/data
-    restart: always
+      - ${APP_DATA_DIR}/data/postgres:/var/lib/postgresql/data
+    restart: on-failure
 
-  immich-proxy:
+#    env_file:
+#      - .env
+#    environment:
+#      POSTGRES_PASSWORD: ${DB_PASSWORD}
+#      POSTGRES_USER: ${DB_USERNAME}
+#      POSTGRES_DB: ${DB_DATABASE_NAME}
+#      PG_DATA: /var/lib/postgresql/data
+#    volumes:
+#      - pgdata:/var/lib/postgresql/data
+#    restart: always
+
+  proxy:
     container_name: immich_proxy
     image: altran1502/immich-proxy:release
     environment:
-      # Make sure these values get passed through from the env file
-      - IMMICH_SERVER_URL
-      - IMMICH_WEB_URL
-    ports:
-      - 2283:8080
-    logging:
-      driver: none
+      IMMICH_WEB_URL: "http://immich_web:3000"
+      IMMICH_SERVER_URL: "http://immich_server:3001"
     depends_on:
-      - immich-server
-    restart: always
+      - server
+    restart: on-failure
+#    environment:
+#      # Make sure these values get passed through from the env file
+#      - IMMICH_SERVER_URL
+#      - IMMICH_WEB_URL
+#    ports:
+#      - 2283:8080
+#    logging:
+#      driver: none
+#    depends_on:
+#      - immich-server
+#    restart: always
 
-volumes:
-  pgdata:
-  model-cache:
+#volumes:
+#  pgdata:
+#  model-cache:
