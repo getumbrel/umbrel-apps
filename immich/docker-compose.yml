@@ -62,7 +62,7 @@ services:
     logging:
       driver: none
     volumes:
-      - {APP_DATA_DIR}/tsdata:/data
+      - ${APP_DATA_DIR}/tsdata:/data
 
   redis:
     container_name: immich_redis
@@ -80,7 +80,7 @@ services:
       POSTGRES_DB: ${DB_DATABASE_NAME}
       PG_DATA: /var/lib/postgresql/data
     volumes:
-      - {APP_DATA_DIR}/pgdata:/var/lib/postgresql/data
+      - ${APP_DATA_DIR}/pgdata:/var/lib/postgresql/data
     restart: always
 
   immich-proxy:
