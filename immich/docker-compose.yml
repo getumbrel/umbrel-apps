@@ -124,10 +124,10 @@ services:
 #    env_file:
 #      - exports.sh
     environment:
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_USER=postgres
-      - POSTGRES_DB=immich
-      - PG_DATA="/var/lib/postgresql/data"
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_DB: immich
+      PG_DATA: /var/lib/postgresql/data
     volumes:
       - ${APP_DATA_DIR}/pgdata:/var/lib/postgresql/data
     restart: always
@@ -137,15 +137,15 @@ services:
     image: ghcr.io/immich-app/immich-proxy:release
     environment:
       # Make sure these values get passed through from the env file
-      - IMMICH_SERVER_URL="http://immich_server:3001"
-      - IMMICH_WEB_URL="http://immich_web:3000"
-      - IMMICH_MACHINE_LEARNING_URL="http://immich_machine_learning:3003"
+      IMMICH_SERVER_URL: "http://immich_server:3001"
+      IMMICH_WEB_URL: "http://immich_web:3000"
+      IMMICH_MACHINE_LEARNING_URL: "http://immich_machine_learning:3003"
 #      - IMMICH_API_URL_EXTERNAL="http://localhost:3001"
 #      - TYPESENSE_API_KEY=qwertyasdfgzxcvb
     ports:
       - 2283:8080
-    logging:
-      driver: none
+#    logging:
+#      driver: none
     depends_on:
       - immich-server
     restart: always
