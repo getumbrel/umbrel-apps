@@ -7,10 +7,19 @@ services:
     entrypoint: [ "/bin/sh", "./start-server.sh" ]
     volumes:
       - ${APP_DATA_DIR}/data/upload:/usr/src/app/upload
-    env_file:
-      - exports.sh
+#    env_file:
+#      - exports.sh
     environment:
       - NODE_ENV=production
+      - DB_HOSTNAME=immich_postgres
+      - DB_USERNAME="postgres"
+      - DB_PASSWORD="postgres"
+      - DB_DATABASE_NAME="immich"
+      - REDIS_HOSTNAME=immich_redis
+      - LOG_LEVEL="simple"
+      - DISABLE_REVERSE_GEOCODING="false"
+      - REVERSE_GEOCODING_PRECISION="3"
+      - PUBLIC_LOGIN_PAGE_MESSAGE="Welcome to Immich Photo Backup"
     depends_on:
       - redis
       - database
@@ -23,10 +32,19 @@ services:
     entrypoint: [ "/bin/sh", "./start-microservices.sh" ]
     volumes:
       - ${APP_DATA_DIR}/data/upload:/usr/src/app/upload
-    env_file:
-      - exports.sh
+#    env_file:
+#      - exports.sh
     environment:
       - NODE_ENV=production
+      - DB_HOSTNAME=immich_postgres
+      - DB_USERNAME="postgres"
+      - DB_PASSWORD="postgres"
+      - DB_DATABASE_NAME="immich"
+      - REDIS_HOSTNAME=immich_redis
+      - LOG_LEVEL="simple"
+      - DISABLE_REVERSE_GEOCODING="false"
+      - REVERSE_GEOCODING_PRECISION="3"
+      - PUBLIC_LOGIN_PAGE_MESSAGE="Welcome to Immich Photo Backup"
     depends_on:
       - redis
       - database
@@ -39,25 +57,45 @@ services:
     volumes:
       - ${APP_DATA_DIR}/data/upload:/usr/src/app/upload
       - ${APP_DATA_DIR}/model-cache:/cache
-    env_file:
-      - exports.sh
+#    env_file:
+#      - exports.sh
     environment:
       - NODE_ENV=production
+      - DB_HOSTNAME=immich_postgres
+      - DB_USERNAME="postgres"
+      - DB_PASSWORD="postgres"
+      - DB_DATABASE_NAME="immich"
+      - REDIS_HOSTNAME=immich_redis
+      - LOG_LEVEL="simple"
+      - DISABLE_REVERSE_GEOCODING="false"
+      - REVERSE_GEOCODING_PRECISION="3"
+      - PUBLIC_LOGIN_PAGE_MESSAGE="Welcome to Immich Photo Backup"
     restart: always
 
   immich-web:
     container_name: immich_web
     image: ghcr.io/immich-app/immich-web:release
     entrypoint: [ "/bin/sh", "./entrypoint.sh" ]
-    env_file:
-      - exports.sh
+#    env_file:
+#      - exports.sh
+    environment:
+      - NODE_ENV=production
+      - DB_HOSTNAME=immich_postgres
+      - DB_USERNAME="postgres"
+      - DB_PASSWORD="postgres"
+      - DB_DATABASE_NAME="immich"
+      - REDIS_HOSTNAME=immich_redis
+      - LOG_LEVEL="simple"
+      - DISABLE_REVERSE_GEOCODING="false"
+      - REVERSE_GEOCODING_PRECISION="3"
+      - PUBLIC_LOGIN_PAGE_MESSAGE="Welcome to Immich Photo Backup"
     restart: always
 
   typesense:
     container_name: immich_typesense
     image: typesense/typesense:0.24.0
     environment:
-      - TYPESENSE_API_KEY=${TYPESENSE_API_KEY}
+      - TYPESENSE_API_KEY="some-random_text"
       - TYPESENSE_DATA_DIR=/data
     logging:
       driver: none
@@ -75,10 +113,10 @@ services:
     env_file:
       - exports.sh
     environment:
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_USER: ${DB_USERNAME}
-      POSTGRES_DB: ${DB_DATABASE_NAME}
-      PG_DATA: /var/lib/postgresql/data
+      - POSTGRES_PASSWORD="postgres"
+      - POSTGRES_USER="postgres"
+      - POSTGRES_DB="iimich"
+      - PG_DATA: /var/lib/postgresql/data
     volumes:
       - ${APP_DATA_DIR}/pgdata:/var/lib/postgresql/data
     restart: always
@@ -88,8 +126,8 @@ services:
     image: ghcr.io/immich-app/immich-proxy:release
     environment:
       # Make sure these values get passed through from the env file
-      - IMMICH_SERVER_URL
-      - IMMICH_WEB_URL
+      - IMMICH_SERVER_URL="http://immich-server:3001"
+      - IMMICH_WEB_URL="http://immich-web:3000"
     ports:
       - 2283:8080
     logging:

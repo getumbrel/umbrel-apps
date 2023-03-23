@@ -1,15 +1,15 @@
-export DB_HOSTNAME=immich_postgres
-export DB_USERNAME=postgres
-export DB_PASSWORD=postgres
-export DB_DATABASE_NAME=immich
-export REDIS_HOSTNAME=immich_redis
-export UPLOAD_LOCATION=/home/zix/immich/data/upload
-export TYPESENSE_API_KEY=some-random-text
-export PUBLIC_LOGIN_PAGE_MESSAGE=
-export IMMICH_WEB_URL=http://immich-web:3000
-export IMMICH_SERVER_URL=http://immich-server:3001
-export IMMICH_MACHINE_LEARNING_URL=http://immich-machine-learning:3003
-export IMMICH_API_URL_EXTERNAL=http://localhost:3001
+DB_HOSTNAME=immich_postgres
+DB_USERNAME=postgres
+DB_PASSWORD=postgres
+DB_DATABASE_NAME=immich
+REDIS_HOSTNAME=immich_redis
+UPLOAD_LOCATION=/home/zix/immich/data/upload
+TYPESENSE_API_KEY=some-random-text
+PUBLIC_LOGIN_PAGE_MESSAGE=
+IMMICH_WEB_URL=http://immich-web:3000
+IMMICH_SERVER_URL=http://immich-server:3001
+IMMICH_MACHINE_LEARNING_URL=http://immich-machine-learning:3003
+IMMICH_API_URL_EXTERNAL=http://localhost:3001
 
 #export APP_IMMICH_DB_USERNAME="immich"
 #export APP_IMMICH_DB_PASSWORD="Adex64bit"
