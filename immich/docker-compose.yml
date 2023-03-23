@@ -20,6 +20,7 @@ services:
       - DISABLE_REVERSE_GEOCODING=false
       - REVERSE_GEOCODING_PRECISION=3
       - PUBLIC_LOGIN_PAGE_MESSAGE="Welcome to Immich Photo Backup"
+      - TYPESENSE_API_KEY=qwertyasdfgzxcvb
     depends_on:
       - redis
       - database
@@ -45,6 +46,7 @@ services:
       - DISABLE_REVERSE_GEOCODING=false
       - REVERSE_GEOCODING_PRECISION=3
       - PUBLIC_LOGIN_PAGE_MESSAGE="Welcome to Immich Photo Backup"
+      - TYPESENSE_API_KEY=qwertyasdfgzxcvb
     depends_on:
       - redis
       - database
@@ -70,6 +72,7 @@ services:
       - DISABLE_REVERSE_GEOCODING=false
       - REVERSE_GEOCODING_PRECISION=3
       - PUBLIC_LOGIN_PAGE_MESSAGE="Welcome to Immich Photo Backup"
+      - TYPESENSE_API_KEY=qwertyasdfgzxcvb
     restart: always
 
   immich-web:
@@ -89,14 +92,15 @@ services:
       - DISABLE_REVERSE_GEOCODING=false
       - REVERSE_GEOCODING_PRECISION=3
       - PUBLIC_LOGIN_PAGE_MESSAGE="Welcome to Immich Photo Backup"
+      - TYPESENSE_API_KEY=qwertyasdfgzxcvb
     restart: always
 
   typesense:
     container_name: immich_typesense
     image: typesense/typesense:0.24.0
     environment:
-      - TYPESENSE_API_KEY="some-random-text"
-#      - TYPESENSE_API_KEY=qwertyasdfgzxcvb
+#      - TYPESENSE_API_KEY="some-random-text"
+      - TYPESENSE_API_KEY=qwertyasdfgzxcvb
       - TYPESENSE_DATA_DIR=/data
     logging:
       driver: none
@@ -129,6 +133,8 @@ services:
       # Make sure these values get passed through from the env file
       - IMMICH_SERVER_URL="http://immich-server:3001"
       - IMMICH_WEB_URL="http://immich-web:3000"
+      - IMMICH_MACHINE_LEARNING_URL="http://immich-machine-learning:3003"
+      - IMMICH_API_URL_EXTERNAL="http://localhost:3001"
     ports:
       - 2283:8080
     logging:
