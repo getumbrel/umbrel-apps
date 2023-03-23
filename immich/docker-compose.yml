@@ -1,6 +1,12 @@
 version: "3.8"
 
 services:
+  app_proxy:
+    environment:
+      APP_HOST: immich_proxy_1
+      APP_PORT: 8080
+      PROXY_AUTH_WHITELIST: "/api/*"
+
   immich-server:
     container_name: immich_server
     image: ghcr.io/immich-app/immich-server:release
@@ -131,10 +137,10 @@ services:
     image: ghcr.io/immich-app/immich-proxy:release
     environment:
       # Make sure these values get passed through from the env file
-      - IMMICH_SERVER_URL="http://immich-server:3001"
-      - IMMICH_WEB_URL="http://immich-web:3000"
-      - IMMICH_MACHINE_LEARNING_URL="http://immich-machine-learning:3003"
-#      - IMMICH_API_URL_EXTERNAL="http://localhost:3001"
+      - IMMICH_SERVER_URL="http://immich_server:3001"
+      - IMMICH_WEB_URL="http://immich_web:3000"
+      - IMMICH_MACHINE_LEARNING_URL="http://immich_machine_learning:3003"
+      - IMMICH_API_URL_EXTERNAL="http://localhost:3001"
 #      - TYPESENSE_API_KEY=qwertyasdfgzxcvb
     ports:
       - 2283:8080
