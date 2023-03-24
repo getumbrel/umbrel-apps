@@ -1,0 +1,1 @@
+#export APP_BTC_RPC_EXPLORER_ADDRESS_API="electrumx"
