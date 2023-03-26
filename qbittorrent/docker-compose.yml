@@ -4,19 +4,17 @@ services:
   app_proxy:
     environment:
       APP_HOST: qbittorrent_server_1
-      APP_PORT: 8094
+      APP_PORT: 8080
 
-  server:
-    image: linuxserver/qbittorrent:4.5.2
+  qbittorrent:
+    container_name: qbittorrent
+    image: cr.hotio.dev/hotio/qbittorrent
     environment:
       - PUID=1000
       - PGID=1000
-      - WEBUI_PORT=8094
+      - UMASK=002
     volumes:
       - ${APP_DATA_DIR}/data/config:/config
       - ${UMBREL_ROOT}/data/storage/downloads:/downloads
     ports:
-      - 8094:8094
-      - 6881:6881
-      - 6881:6881/udp
-    restart: on-failure
+      - "8080:8080"
