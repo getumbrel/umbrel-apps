@@ -2,7 +2,7 @@ manifestVersion: 1
 id: circuitbreaker
 category: Lightning Node Management
 name: Circuit Breaker
-version: "v0.4.1"
+version: "v0.4.3"
 tagline: Your Lightning Node's Firewall
 description: >-
   It allows nodes to protect themselves from being flooded with HTLCs. 
@@ -34,9 +34,17 @@ description: >-
   
   - queue_peer_initiated: This mode is also queuing HTLCs, but only those that come in through channels for which we aren't the channel open initiator. Not being the initiator means that the remote node is carrying the cost of a potential force-closure with stuck HTLCs. For channels that we initiated, the safer fail mode is used.
 
+  - blocked: This mode blocks all incoming traffic from a peer.
+
   WARNING: See queue mode warning.
 releaseNotes: >-
-  - Initial release on the Umbrel App Store
+  - Improved web interface.
+
+  - Edit limits for multiple nodes in one operation.
+
+  - Added BLOCKED mode to completely block traffic from a peer.
+
+  - Fixed bug where Circuit Breaker wouldn't restart after a failure.
 developer: Joost Jager
 website: https://github.com/joostjager
 dependencies: 
