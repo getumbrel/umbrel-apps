@@ -7,7 +7,7 @@ services:
       APP_PORT: $APP_MEMPOOL_PORT
       PROXY_AUTH_ADD: "false"
   web:
-    image: mempool/frontend:v2.4.0@sha256:f71722f1e3abfb3d8a3df6f2a32e384d39434e311bb83d810629077b4fa6ffaf
+    image: mempool/frontend:v2.5.0@sha256:559b4542fc414a28db69bbda143e6be1c404e3f1b637c9e6f30526c10f4c75a7
     user: "1000:1000"
     init: true
     restart: on-failure
@@ -16,11 +16,14 @@ services:
     environment:
       FRONTEND_HTTP_PORT: $APP_MEMPOOL_PORT
       BACKEND_MAINNET_HTTP_HOST: $APP_MEMPOOL_API_IP
+      NGINX_PORT: $APP_MEMPOOL_PORT
+      NGINX_HOSTNAME: $APP_MEMPOOL_API_IP
+      LIGHTNING_DETECTED_PORT: $APP_LIGHTNING_NODE_PORT
     networks:
       default:
         ipv4_address: $APP_MEMPOOL_IP
   api:
-    image: mempool/backend:v2.4.0@sha256:6036cc6866b782efadc765e8189958940202b3fa1770eb35c35210c86efd2f47
+    image: mempool/backend:v2.5.0@sha256:c58996a3bfd382cb782da5d93e4b8f65f9c02c7a6bb10df4dda0bdf52ba8ed88
     user: "1000:1000"
     init: true
     restart: on-failure
@@ -28,6 +31,7 @@ services:
     command: "./wait-for-it.sh mariadb:3306 --timeout=720 --strict -- ./start.sh"
     volumes:
       - ${APP_DATA_DIR}/data:/backend/cache
+      - ${UMBREL_ROOT}/app-data/lightning/data/lnd:/lnd:ro
     environment:
       CORE_RPC_HOST: $APP_BITCOIN_NODE_IP
       CORE_RPC_PORT: $APP_BITCOIN_RPC_PORT
@@ -46,6 +50,14 @@ services:
       MEMPOOL_CLEAR_PROTECTION_MINUTES: "20"
       MEMPOOL_INDEXING_BLOCKS_AMOUNT: "52560"
       MEMPOOL_STDOUT_LOG_MIN_PRIORITY: "info"
+      LIGHTNING_ENABLED: "true"
+      LIGHTNING_BACKEND: "lnd"
+      LIGHTNING_STATS_REFRESH_INTERVAL: 3600
+      LIGHTNING_GRAPH_REFRESH_INTERVAL: 3600
+      LND_TLS_CERT_PATH: "/lnd/tls.cert"
+      LND_MACAROON_PATH: "/lnd/data/chain/bitcoin/$APP_BITCOIN_NETWORK/readonly.macaroon"
+      LND_REST_API_URL: "https://$APP_LIGHTNING_NODE_IP:$APP_LIGHTNING_NODE_REST_PORT"
+      LND_TIMEOUT: 120000
     networks:
        default:
          ipv4_address: $APP_MEMPOOL_API_IP
