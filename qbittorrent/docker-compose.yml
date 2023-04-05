@@ -8,16 +8,16 @@ services:
       PROXY_AUTH_ADD: "false"
 
   server:
-    container_name: qbittorrent
-    image: cr.hotio.dev/hotio/qbittorrent
+    image: linuxserver/qbittorrent:4.5.2
     environment:
       - PUID=1000
       - PGID=1000
-      - UMASK=002
-      - WEBUI_PORTS=8094/tcp,8094/udp
+      - WEBUI_PORT=8094
     volumes:
       - ${APP_DATA_DIR}/data/config:/config
       - ${UMBREL_ROOT}/data/storage/downloads:/downloads
     ports:
       - 8094:8094
+      - 6881:6881
+      - 6881:6881/udp
     restart: on-failure
