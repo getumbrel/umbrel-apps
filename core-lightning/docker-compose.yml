@@ -7,13 +7,13 @@ services:
       APP_PORT: $APP_CORE_LIGHTNING_PORT
 
   app:
-    image: ghcr.io/elementsproject/umbrel-core-lightning:refs-tags-v0.0.1@sha256:6e5bda321f946a5f7ec55ae2201f293be30b3e8d161f06f2ce9e43e73c77151a
+    image: ghcr.io/elementsproject/umbrel-core-lightning:refs-tags-v0.0.2@sha256:bce1fa1eaf6ce4189e0ebbbfc5848f6178559c52ae96545118c1887e47595634
     command: npm run start
     restart: on-failure
     volumes:
-      - ${APP_DATA_DIR}/data/app:/data/app
-      - ${APP_DATA_DIR}/data/lightningd:/root/.lightning
-      - "${APP_CORE_LIGHTNING_REST_CERT_DIR}:/c-lightning-rest/certs"
+      - ${APP_DATA_DIR}/data/app:${APP_CONFIG_DIR}
+      - ${APP_DATA_DIR}/data/lightningd:${APP_CORE_LIGHTNING_DATA_DIR}
+      - ${APP_CORE_LIGHTNING_REST_CERT_DIR}:${APP_REST_CERT_VOLUME_DIR}
     environment:
       APP_CORE_LIGHTNING_IP: ${APP_CORE_LIGHTNING_IP}
       APP_CORE_LIGHTNING_PORT: ${APP_CORE_LIGHTNING_PORT}
@@ -22,15 +22,15 @@ services:
       APP_CORE_LIGHTNING_DAEMON_GRPC_PORT: ${APP_CORE_LIGHTNING_DAEMON_GRPC_PORT}
       APP_CORE_LIGHTNING_WEBSOCKET_PORT: ${APP_CORE_LIGHTNING_WEBSOCKET_PORT}
       APP_CORE_LIGHTNING_REST_PORT: ${APP_CORE_LIGHTNING_REST_PORT}
-      APP_CORE_LIGHTNING_REST_CERT_DIR: "/c-lightning-rest/certs"
+      APP_CORE_LIGHTNING_REST_CERT_DIR: ${APP_REST_CERT_VOLUME_DIR}
       APP_CORE_LIGHTNING_REST_HIDDEN_SERVICE: http://${APP_CORE_LIGHTNING_REST_HIDDEN_SERVICE}
-      APP_CORE_LIGHTNING_COMMANDO_ENV_DIR: ${APP_CORE_LIGHTNING_COMMANDO_ENV_DIR}
+      APP_CORE_LIGHTNING_COMMANDO_ENV_DIR: ${APP_CORE_LIGHTNING_DATA_DIR}
       APP_CONFIG_DIR: ${APP_CONFIG_DIR}
-      APP_MODE: "production"
+      APP_MODE: ${APP_MODE}
       LOCAL_HOST: http://${DEVICE_DOMAIN_NAME}
-      CA_CERT: /root/.lightning/bitcoin/ca.pem
-      CLIENT_KEY: /root/.lightning/bitcoin/client-key.pem
-      CLIENT_CERT: /root/.lightning/bitcoin/client.pem
+      CA_CERT: ${APP_CORE_LIGHTNING_DATA_DIR}/bitcoin/ca.pem
+      CLIENT_KEY: ${APP_CORE_LIGHTNING_DATA_DIR}/bitcoin/client-key.pem
+      CLIENT_CERT: ${APP_CORE_LIGHTNING_DATA_DIR}/bitcoin/client.pem
     networks:
       default:
         ipv4_address: ${APP_CORE_LIGHTNING_IP}

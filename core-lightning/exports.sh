@@ -19,4 +19,5 @@ export APP_CORE_LIGHTNING_REST_HIDDEN_SERVICE="$(cat "${rest_hidden_service_file
 
 export APP_CONFIG_DIR="/data/app"
 export APP_MODE="production"
-export APP_CORE_LIGHTNING_COMMANDO_ENV_DIR="/root/.lightning"
+export APP_CORE_LIGHTNING_DATA_DIR="/root/.lightning"
+export APP_REST_CERT_VOLUME_DIR="/c-lightning-rest/certs"
