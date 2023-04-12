@@ -3,12 +3,12 @@ version: "3.7"
 services:
   app_proxy:
     environment:
-      APP_HOST: $APP_JELLYFIN_IP
+      APP_HOST: jellyfin_server_1
       APP_PORT: 8096
       PROXY_AUTH_ADD: "false"
 
   server:
-    image: linuxserver/jellyfin:10.8.4@sha256:f5f4e11e7d56eaad47a3bd26a7f44b65fc46ae4d2c4b8b039402dfcae791a665
+    image: linuxserver/jellyfin:10.8.9@sha256:af281e1b23198076a2ce848d710e8c7ee6f96134d18c61e9c23128e3419d9e86
     restart: on-failure
     hostname: "${DEVICE_HOSTNAME}"
     environment:
@@ -20,6 +20,3 @@ services:
     ports:
       # Service auto-discovery
       - 7359:7359/udp
-    networks:
-      default:
-        ipv4_address: $APP_JELLYFIN_IP

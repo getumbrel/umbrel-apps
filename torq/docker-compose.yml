@@ -5,9 +5,9 @@ services:
     environment:
       APP_HOST: torq_web_1
       APP_PORT: 7028
-  
+
   web:
-    image: lncapital/torq:0.11.1@sha256:a077ceb0796eba9a5bd11fe29038d9eb33e3e92b172ef52a281e730eafe4cbe7
+    image: lncapital/torq:0.19.2@sha256:463851d9743e97a0524f0fddbc0f4c14d793f49aa6985f970776c3af4737b063
     user: "1000:1000"
     restart: on-failure
     stop_grace_period: 1m
@@ -25,11 +25,12 @@ services:
       - --lnd.url
       - ${APP_LIGHTNING_NODE_IP}:${APP_LIGHTNING_NODE_GRPC_PORT}
       - --lnd.macaroon-path
-      - /lnd/data/chain/bitcoin/${APP_BITCOIN_NETWORK}/readonly.macaroon
+      - /lnd/data/chain/bitcoin/${APP_BITCOIN_NETWORK}/admin.macaroon
       - --lnd.tls-path
       - /lnd/tls.cert
+      - --torq.auto-login
       - start
-  
+
   db:
     image: timescale/timescaledb:2.8.1-pg14@sha256:96c3a5587a24bb336437403b394f5927f639322cf3fcc0eff4ee0294da540dd7
     user: "1000:1000"

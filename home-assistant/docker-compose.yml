@@ -3,15 +3,12 @@ version: "3.7"
 services:
   app_proxy:
     environment:
-      APP_HOST: $APP_HOME_ASSISTANT_IP
+      APP_HOST: home-assistant_server_1
       APP_PORT: 8123
       PROXY_AUTH_ADD: "false"
 
   server:
-    image: homeassistant/home-assistant:2022.11.2@sha256:5e3d2dde141812a4a54c140f3cbf52b9c74168bf25e8560978f499578902a363
+    image: homeassistant/home-assistant:2023.2.0@sha256:a4a9f614a1edcd414d63decd99813a2ff9910d876db1e04641540a0c75d20918
     volumes:
       - ${APP_DATA_DIR}/data:/config
       - ${APP_DATA_DIR}/configuration.yaml:/config/configuration.yaml
-    networks:
-      default:
-        ipv4_address: $APP_HOME_ASSISTANT_IP

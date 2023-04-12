@@ -1,0 +1,47 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: invoice-ninja_nginx_1
+      APP_PORT: 80
+      PROXY_AUTH_WHITELIST: "/api/*"
+
+  nginx:
+    image: nginx:1.21-alpine@sha256:686aac2769fd6e7bab67663fd38750c135b72d993d0bb0a942ab02ef647fc9c3
+    init: true
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/config/nginx.conf:/etc/nginx/conf.d/nginx.conf:ro
+      - ${APP_DATA_DIR}/data/public:/var/www/app/public:ro
+
+  app:
+    image: invoiceninja/invoiceninja:5.5.93@sha256:59af42c410467154e6c50322f1d2ab048297b2d01e862f41bc9f1db4829c6086
+    # We're forced to run user/group 1500
+    # More detail here: https://github.com/invoiceninja/dockerfiles/blob/ad3ffc227d63740330f761dad6e8c87768577847/alpine/5/Dockerfile#L70-L80
+    user: "1500:1500"
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data/public:/var/www/app/public:rw,delegated
+      - ${APP_DATA_DIR}/data/storage:/var/www/app/storage:rw,delegated
+    environment:
+      APP_URL: "http://${APP_DOMAIN}"
+      DB_HOST: invoice-ninja_db_1
+      DB_DATABASE: invoiceninja
+      DB_USERNAME: invoiceninja
+      DB_PASSWORD: moneyprintergobrrr
+      IN_USER_EMAIL: "admin@example.com"
+      IN_PASSWORD: $APP_PASSWORD
+
+  db:
+    image: mariadb:10.5.12@sha256:dfcba5641bdbfd7cbf5b07eeed707e6a3672f46823695a0d3aba2e49bbd9b1dd
+    user: "1000:1000"
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data/db:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: invoiceninja
+      MYSQL_USER: invoiceninja
+      MYSQL_PASSWORD: moneyprintergobrrr
+      MYSQL_DATABASE: invoiceninja
+

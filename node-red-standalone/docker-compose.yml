@@ -3,8 +3,8 @@ version: "3.7"
 services:
   app_proxy:
     environment:
-      APP_HOST: $APP_NODE_RED_STANDALONE_IP
-      APP_PORT: $APP_NODE_RED_STANDALONE_PORT
+      APP_HOST: node-red-standalone_web_1
+      APP_PORT: 1881
       # Used to allow (HTTP In) flows to be publicly exposed
       PROXY_AUTH_WHITELIST: "/public/*"
   
@@ -15,7 +15,4 @@ services:
     volumes:
       - ${APP_DATA_DIR}/data:/data
     environment:
-      PORT: $APP_NODE_RED_STANDALONE_PORT
-    networks:
-      default:
-          ipv4_address: $APP_NODE_RED_STANDALONE_IP
+      PORT: 1881

@@ -3,8 +3,8 @@ version: "3.7"
 services:
   app_proxy:
     environment:
-      APP_HOST: $APP_NODE_RED_IP
-      APP_PORT: $APP_NODE_RED_PORT
+      APP_HOST: node-red_web_1
+      APP_PORT: 1880
       # Used to allow (HTTP In) flows to be publicly exposed
       PROXY_AUTH_WHITELIST: "/public/*"
   
@@ -16,7 +16,7 @@ services:
       - ${APP_DATA_DIR}/data:/data
       - ${APP_LIGHTNING_NODE_DATA_DIR}:/lnd:ro
     environment:
-      PORT: $APP_NODE_RED_PORT
+      PORT: 1880
       BITCOIN_NETWORK: $APP_BITCOIN_NETWORK
       BITCOIN_IP: $APP_BITCOIN_NODE_IP
       BITCOIN_RPC_PORT: $APP_BITCOIN_RPC_PORT
@@ -26,6 +26,3 @@ services:
       LND_GRPC_PORT: $APP_LIGHTNING_NODE_GRPC_PORT
       ELECTRUM_IP: $APP_ELECTRS_NODE_IP
       ELECTRUM_PORT: $APP_ELECTRS_NODE_PORT
-    networks:
-      default:
-          ipv4_address: $APP_NODE_RED_IP

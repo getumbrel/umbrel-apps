@@ -1,2 +1,0 @@
-export APP_JAM_IP="10.21.21.84"
-export APP_JAM_PORT="5002"
