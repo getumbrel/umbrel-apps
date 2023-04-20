@@ -5,9 +5,9 @@ services:
     environment:
       APP_HOST: tdex_caddy_1
       APP_PORT: 8080
-  
+
   tdexd:
-    image: ghcr.io/tdex-network/tdexd:v0.9.0@sha256:77729e6c0019752059cc5bf624675e261abd8b856e0a7e8f59889b7ec0a35eb3
+    image: ghcr.io/tdex-network/tdexd:v0.9.1@sha256:5078897b9a505fc3dfac5b3d51537150941c075f5279ae81de1c6b1c21112544
     tty: true
     restart: on-failure
     stop_grace_period: 1m
@@ -15,35 +15,35 @@ services:
       - ${APP_DATA_DIR}/tdex-data:/home/tdex/.tdex-daemon
     environment:
       TDEX_LOG_LEVEL: 5
-      TDEX_OPERATOR_LISTENING_PORT: 9090
-      TDEX_TRADE_LISTENING_PORT:  9090
+      TDEX_OPERATOR_LISTENING_PORT: "${APP_TDEX_PORT}"
+      TDEX_TRADE_LISTENING_PORT: "${APP_TDEX_PORT}"
       TDEX_NO_OPERATOR_TLS: "true"
       # these vars are used to generate the connect URL
       # we assume to always show the external endpoint
       # reachable remotely by other dashboards via Tor
-      TDEX_CONNECT_ADDR: "$APP_TDEX_DAEMON_HIDDEN_SERVICE"
+      TDEX_CONNECT_ADDR: "${APP_TDEX_DAEMON_HIDDEN_SERVICE}"
       TDEX_CONNECT_PROTO: http
-    
+
   dashboard:
-    image: ghcr.io/tdex-network/dashboard:v0.1.54@sha256:b57c700bfc03d0de87df519d81747e7b2a1d9b7213f2b437d1fac73d12623461
+    image: ghcr.io/tdex-network/dashboard:v0.1.55@sha256:dfa7cdb75117c97e671285fc9754a6cabafc7f74760c314e6625c33067509beb
     restart: on-failure
     environment:
       USE_PROXY: "false"
       IS_PACKAGED: "true"
-      TRADER_HIDDEN_SERVICE:  "$APP_TDEX_DAEMON_HIDDEN_SERVICE"
-  
+      TRADER_HIDDEN_SERVICE:  "${APP_TDEX_DAEMON_HIDDEN_SERVICE}"
+
   caddy:
-    image: caddy:2.6.1-alpine@sha256:21dbf9101c1eae0e2228f386eefab509d462710c2da97ba45d61c083f3e74fc1
+    image: caddy:2.6.4-alpine@sha256:5acae6b87b26a591d6d14ec2704b7f2cd94b888ad62af16a02356d3124198ede
     restart: on-failure
     volumes:
       - ${APP_DATA_DIR}/caddy-data/Caddyfile:/etc/caddy/Caddyfile
-  
-  tor: 
-   image: getumbrel/tor:0.4.7.8@sha256:2ace83f22501f58857fa9b403009f595137fa2e7986c4fda79d82a8119072b6a 
-   user: "1000:1000" 
-   restart: on-failure 
-   volumes: 
-     - ${APP_DATA_DIR}/torrc:/etc/tor/torrc:ro 
-     - ${TOR_DATA_DIR}:/data 
-   environment: 
+
+  tor:
+   image: getumbrel/tor:0.4.7.8@sha256:2ace83f22501f58857fa9b403009f595137fa2e7986c4fda79d82a8119072b6a
+   user: "1000:1000"
+   restart: on-failure
+   volumes:
+     - ${APP_DATA_DIR}/torrc:/etc/tor/torrc:ro
+     - ${TOR_DATA_DIR}:/data
+   environment:
     HOME: "/tmp"
