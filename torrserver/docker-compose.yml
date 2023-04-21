@@ -1,0 +1,15 @@
+version: "3.7"
+services:
+  torrserver:
+    image: solopasha/torrserver:latest
+    container_name: torrservermatrix
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=ASIA/Almaty
+    volumes:
+      - ${APP_DATA_DIR}/db:/torrserver/db
+    ports:
+      - 8090:8090
+    restart: unless-stopped
+
