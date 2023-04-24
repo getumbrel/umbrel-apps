@@ -3,11 +3,11 @@ version: "3.7"
 services:
   app_proxy:
     environment:
-      APP_HOST: $APP_CORE_LIGHTNING_RTL_IP
+      APP_HOST: core-lightning-rtl_web_1
       APP_PORT: 3000
 
-  rtl:
-    image: shahanafarooqui/rtl:0.13.1@sha256:68f837be0acae9a19fed4c4e6de0408f809b8866a360fc39e274ea2a2d61cc88
+  web:
+    image: shahanafarooqui/rtl:0.13.2@sha256:07d4c1f263c05c32270dcaab3625fc68ef985efce652e7850fbf57f65d36366f
     restart: on-failure
     environment:
       PORT: 3000
@@ -20,6 +20,3 @@ services:
     volumes:
       - "${APP_DATA_DIR}/data/rtl:/data"
       - "${APP_CORE_LIGHTNING_REST_CERT_DIR}:/c-lightning-rest/certs"
-    networks:
-      default:
-        ipv4_address: ${APP_CORE_LIGHTNING_RTL_IP}

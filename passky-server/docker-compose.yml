@@ -1,0 +1,63 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: passky-server_server_1
+      APP_PORT: 80
+      PROXY_AUTH_ADD: "false"
+
+  server:
+    image: rabbitcompany/passky-server:8.1.4@sha256:82127289fa8509e432430606e6c9e6dabd49c7c6efe5318f6671568193361969
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      SERVER_LOCATION: "US"
+      SERVER_CORES: 1
+      ADMIN_USERNAME: "admin"
+      ADMIN_PASSWORD: "${APP_PASSWORD}"
+      CF_TURNSTILE_SITE_KEY: "1x00000000000000000000AA"
+      CF_TURNSTILE_SECRET_KEY: "1x0000000000000000000000000000000AA"
+      DATABASE_ENGINE: sqlite
+      DATABASE_FILE: passky
+      MYSQL_HOST: ""
+      MYSQL_PORT: 3306
+      MYSQL_DATABASE: "passky"
+      MYSQL_USER: "passky"
+      MYSQL_PASSWORD: ""
+      MYSQL_SSL: "false"
+      MYSQL_SSL_CA: "/etc/ssl/certs/ca-certificates.crt"
+      MYSQL_CACHE_MODE: 0
+      REDIS_HOST: "127.0.0.1"
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ""
+      REDIS_LOCAL_HOST: "127.0.0.1"
+      REDIS_LOCAL_PORT: 6379
+      REDIS_LOCAL_PASSWORD: ""
+      MAIL_ENABLED: "false"
+      ACCOUNT_MAX: 100
+      ACCOUNT_MAX_PASSWORDS: 1000
+      ACCOUNT_PREMIUM: -1
+      YUBI_CLOUD: "https://api.yubico.com/wsapi/2.0/verify"
+      YUBI_ID: 67857
+      LIMITER_ENABLED: "true"
+      LIMITER_GET_INFO: -1
+      LIMITER_GET_STATS: -1
+      LIMITER_GET_TOKEN: 3
+      LIMITER_GET_PASSWORDS: 2
+      LIMITER_SAVE_PASSWORD: 2
+      LIMITER_EDIT_PASSWORD: 2
+      LIMITER_DELETE_PASSWORD: 2
+      LIMITER_DELETE_PASSWORDS: 10
+      LIMITER_CREATE_ACCOUNT: 10
+      LIMITER_DELETE_ACCOUNT: 10
+      LIMITER_IMPORT_PASSWORDS: 10
+      LIMITER_FORGOT_USERNAME: 60
+      LIMITER_ENABLE_2FA: 10
+      LIMITER_DISABLE_2FA: 10
+      LIMITER_ADD_YUBIKEY: 10
+      LIMITER_REMOVE_YUBIKEY: 10
+      LIMITER_UPGRADE_ACCOUNT: 10
+      LIMITER_GET_REPORT: -1
+    volumes:
+      - ${APP_DATA_DIR}/data/passky:/var/www/html/databases

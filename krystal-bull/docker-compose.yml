@@ -3,11 +3,11 @@ version: "3.7"
 services:
   app_proxy:
     environment:
-      APP_HOST: $APP_KRYSTAL_BULL_IP
+      APP_HOST: krystal-bull_web_1
       APP_PORT: 3001
   
   web:
-    image: bitcoinscala/oracle-server-ui:1.9.6@sha256:c0443803456ced18798a0687e364d5826f7dde81b684e43ba231c8464943ef4d
+    image: bitcoinscala/oracle-server-ui:1.9.7@sha256:883df7037be517b4dc8155a1bfcd4101b7e47f7825367f53f3ac2bf15ffdc15e
     user: "1000:1000"
     restart: on-failure
     stop_grace_period: 1m
@@ -17,18 +17,15 @@ services:
     environment:
       LOG_PATH: "/log/"
       BITCOIN_S_HOME: "/bitcoin-s/"
-      ORACLE_SERVER_API_URL: "http://${APP_KRYSTAL_BULL_SERVER_IP}:9998/"
+      ORACLE_SERVER_API_URL: "http://krystal-bull_oracleserver_1:9998/"
       TOR_PROXY: socks5://${TOR_PROXY_IP}:${TOR_PROXY_PORT}
       DEFAULT_UI_PASSWORD: "none"
       BITCOIN_S_ORACLE_RPC_PASSWORD: $APP_PASSWORD
-    networks:
-      default:
-        ipv4_address: $APP_KRYSTAL_BULL_IP
     depends_on: 
       - oracleserver
   
   oracleserver:
-    image: bitcoinscala/bitcoin-s-oracle-server:1.9.6@sha256:d6dbf6a54d66c998050e4f219189a8f8ab0fcb03a7fa52a688da4f7ed69c07f5
+    image: bitcoinscala/bitcoin-s-oracle-server:1.9.7@sha256:a7f5dd31bc5afa2a075563433862851d5bea8f894c1634a56426c34648001308
     entrypoint: ["/opt/docker/bin/bitcoin-s-oracle-server", "--datadir", "/bitcoin-s", "--conf", "/opt/docker/docker-application.conf"]   
     user: "1000:1000"
     restart: on-failure
@@ -38,6 +35,4 @@ services:
       BITCOIN_S_KEYMANAGER_ENTROPY: $APP_SEED
       BITCOIN_S_ORACLE_RPC_PASSWORD: $APP_PASSWORD
       DISABLE_JLINK: "1"
-    networks:
-      default:
-        ipv4_address: $APP_KRYSTAL_BULL_SERVER_IP
+      JAVA_OPTS: "-Xmx256m"

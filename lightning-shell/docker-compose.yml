@@ -3,8 +3,9 @@ version: "3.7"
 services:
   app_proxy:
     environment:
-      APP_HOST: $APP_LIGHTNING_SHELL_IP
+      APP_HOST: lightning-shell_web_1
       APP_PORT: 7681
+  
   web:
     image: ghcr.io/ibz/lightning-shell:v0.1.10-buster-slim@sha256:4ea6aafee8ddd092b27850bccef71458d9e382e63d12b159d075bfde328ebef3
     restart: on-failure
@@ -20,6 +21,3 @@ services:
         BITCOIN_RPC_PASS: "${APP_BITCOIN_RPC_PASS}"
         LND_IP: "${APP_LIGHTNING_NODE_IP}"
         LND_GRPC_PORT: ${APP_LIGHTNING_NODE_GRPC_PORT}
-    networks:
-      default:
-        ipv4_address: $APP_LIGHTNING_SHELL_IP

@@ -7,11 +7,12 @@ services:
       APP_PORT: 3000
 
   web:
-    image: ceramicwhite/invidious:build-53fb6ad@sha256:f4527d65cfcc6e6395c73d3f0c398aecf6c77c95c032f8e7d97d08349cc44385
+    image: ceramicwhite/invidious:build-961cae2@sha256:8974d6de8a7c9f5a431662eb95d9beb754e2df03e90c6b7d354001bdbec2582a
     restart: on-failure
     stop_grace_period: 1m
     user: "1000:1000"
-    init: true
+    # Using official images that include tini
+    #init: true
     environment:
       INVIDIOUS_CONFIG: |
         db:
