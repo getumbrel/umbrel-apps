@@ -1,0 +1,34 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: joplin_web_1
+      APP_PORT: 22300
+
+  web:
+    image: joplin/server:2.10.10-beta
+    restart: on-failure
+    stop_grace_period: 1m
+    ports:
+      - "22300:22300"
+    environment:
+      - APP_PORT=22300
+      - DB_CLIENT=pg
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_DATABASE=joplin
+      - POSTGRES_PORT=5432
+      - POSTGRES_HOST=db
+    depends_on:
+      - db
+
+  db:
+    image: postgres:15
+    volumes:
+      - ${APP_DATA_DIR}/data/postgres:/var/lib/postgresql/data
+    restart: unless-stopped
+    environment:
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=joplin
