@@ -3,18 +3,16 @@ version: "3.7"
 services:
   app_proxy:
     environment:
-      APP_HOST: joplin_web_1
+      APP_HOST: joplin-server_web_1
       APP_PORT: 22300
 
   web:
     image: joplin/server:2.10.10-beta
     restart: on-failure
     stop_grace_period: 1m
-    ports:
-      - "22300:22300"
     environment:
       - APP_PORT=22300
-      - APP_BASE_URL=
+      - APP_BASE_URL=http://${APP_JOPLIN_SERVER_PUBLIC_IP}:3778
       - DB_CLIENT=pg
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_USER=postgres
