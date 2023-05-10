@@ -8,7 +8,7 @@ services:
       PROXY_AUTH_ADD: "false"
 
   server:
-    image: linuxserver/qbittorrent:4.5.2
+    image: linuxserver/qbittorrent:4.5.2@sha256:cdaafa308ed8362e937ade724a9e83da92f08716e5c83a421e097dfbed2b2633
     environment:
       - PUID=1000
       - PGID=1000
@@ -17,7 +17,6 @@ services:
       - ${APP_DATA_DIR}/data/config:/config
       - ${UMBREL_ROOT}/data/storage/downloads:/downloads
     ports:
-      - 8094:8094
       - 6881:6881
       - 6881:6881/udp
     restart: on-failure
