@@ -1,0 +1,49 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: tdex_caddy_1
+      APP_PORT: 8080
+
+  tdexd:
+    image: ghcr.io/tdex-network/tdexd:v0.9.1@sha256:5078897b9a505fc3dfac5b3d51537150941c075f5279ae81de1c6b1c21112544
+    tty: true
+    restart: on-failure
+    stop_grace_period: 1m
+    volumes:
+      - ${APP_DATA_DIR}/tdex-data:/home/tdex/.tdex-daemon
+    environment:
+      TDEX_LOG_LEVEL: 5
+      TDEX_OPERATOR_LISTENING_PORT: "${APP_TDEX_PORT}"
+      TDEX_TRADE_LISTENING_PORT: "${APP_TDEX_PORT}"
+      TDEX_NO_OPERATOR_TLS: "true"
+      # these vars are used to generate the connect URL
+      # we assume to always show the external endpoint
+      # reachable remotely by other dashboards via Tor
+      TDEX_CONNECT_ADDR: "${APP_TDEX_DAEMON_HIDDEN_SERVICE}"
+      TDEX_CONNECT_PROTO: http
+
+  dashboard:
+    image: ghcr.io/tdex-network/dashboard:v0.1.55@sha256:dfa7cdb75117c97e671285fc9754a6cabafc7f74760c314e6625c33067509beb
+    restart: on-failure
+    environment:
+      USE_PROXY: "false"
+      IS_PACKAGED: "true"
+      TRADER_HIDDEN_SERVICE:  "${APP_TDEX_DAEMON_HIDDEN_SERVICE}"
+
+  caddy:
+    image: caddy:2.6.4-alpine@sha256:4dfec6c3b22c36b63ea4a3633c7cdbdaa9926d1324c27db2b0e2b70ef9cd105a
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/caddy-data/Caddyfile:/etc/caddy/Caddyfile
+
+  tor:
+   image: getumbrel/tor:0.4.7.8@sha256:2ace83f22501f58857fa9b403009f595137fa2e7986c4fda79d82a8119072b6a
+   user: "1000:1000"
+   restart: on-failure
+   volumes:
+     - ${APP_DATA_DIR}/torrc:/etc/tor/torrc:ro
+     - ${TOR_DATA_DIR}:/data
+   environment:
+    HOME: "/tmp"
