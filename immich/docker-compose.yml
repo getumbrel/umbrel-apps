@@ -8,7 +8,7 @@ services:
       PROXY_AUTH_WHITELIST: "/api/*"
 
   server:
-    image: altran1502/immich-server:v1.54.1@sha256:d85dc0db39433e7f354a7082d5df8c57af93024f77ce4daa79aecefb2bb0decd
+    image: altran1502/immich-server:v1.55.1@sha256:af321b3a1eb9922079ad456f6b696ac76e9f1fc72ecc4d17c55dabc3223365c4
     entrypoint: ["/bin/sh", "./start-server.sh"]
     volumes:
       - ${APP_DATA_DIR}/data/upload:/usr/src/app/upload
@@ -30,7 +30,7 @@ services:
     restart: on-failure
 
   microservices:
-    image: altran1502/immich-server:v1.54.1@sha256:d85dc0db39433e7f354a7082d5df8c57af93024f77ce4daa79aecefb2bb0decd
+    image: altran1502/immich-server:v1.55.1@sha256:af321b3a1eb9922079ad456f6b696ac76e9f1fc72ecc4d17c55dabc3223365c4
     # This service cannot run under 1000:1000
     # And because the uploads are shared
     # We'll run immich specific services as root
@@ -55,7 +55,7 @@ services:
     restart: on-failure
 
   machine-learning:
-    image: altran1502/immich-machine-learning:v1.54.1@sha256:a6ce45adf8b8ea3637dd456bc70e9b7421a904c56801f54a6e3fb7247bc6d8e5
+    image: altran1502/immich-machine-learning:v1.55.1@sha256:461e51ebeea082eb2c634cba0f5aa999fdabc50aa35513f3c802a7742ce1a5bb
     entrypoint: ["/bin/sh", "./entrypoint.sh"]
     volumes:
       - ${APP_DATA_DIR}/data/upload:/usr/src/app/upload
@@ -76,7 +76,7 @@ services:
     restart: on-failure
 
   web:
-    image: altran1502/immich-web:v1.54.1@sha256:3fbdfd4426ebf9428e7539d68218f829a219a063168797889986362c7ef0c698
+    image: altran1502/immich-web:v1.55.1@sha256:2bae0a4c71d7d1d7a7fc7fd7c382f521c80aeedfb5860514570b3fcf9a393c86
     entrypoint: ["/bin/sh", "./entrypoint.sh"]
     environment:
       DB_HOSTNAME: immich_postgres_1
@@ -93,7 +93,7 @@ services:
     restart: on-failure
 
   proxy:
-    image: altran1502/immich-proxy:vv1.54.1@sha256:d9b8bc167a3f2cf5e222a40bd1e30ce2c69775801e845fb0f7489f4b401ccb64
+    image: altran1502/immich-proxy:v1.55.1@sha256:4e6e3fa041c40002adeffdbbd24dbf259a399fe71cd61a5d269a07fbc3dee16c
     environment:
       IMMICH_WEB_URL: "http://immich_web_1:3000"
       IMMICH_SERVER_URL: "http://immich_server_1:3001"
