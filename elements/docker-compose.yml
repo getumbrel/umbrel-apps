@@ -7,7 +7,7 @@ services:
       APP_PORT: 8080
 
   node:
-    image: ghcr.io/vulpemventures/elements:0.21.0.2@sha256:60f082b13b366743ef3cd113cb20397b586fd7032c0eb9c0a2a242ebc528f537
+    image: ghcr.io/vulpemventures/elements:22.1.1@sha256:7cb6c86df3a9332dd950e1774b2b34e33084b81fde08f2655334adc2285d90ac
     restart: on-failure
     stop_grace_period: 1m
     ports:
@@ -16,11 +16,12 @@ services:
     volumes:
       - ${APP_DATA_DIR}/data:/home/elements/.elements
     command:
-      - -listen=1
+      - -listen=0
       - -txindex=1
+      - -trim_headers=1
       # Current Elements Core requires >8GB of RAM to verify confidential proofs during IBD
       # We skip historical block verification for now, as we don't have a way to set the memory limit
-      - -assumevalid=d4046e2c27e32e8582af39e402528e5df6ede1e1dd3c551764699e02e50bbf1e
+      - -assumevalid=d5c8278b7c1c926eea46776445aaa94906a0e2a753fa007bda1841139cfb6543
       - -validatepegin=1
       - -fallbackfee=0.000001
       # Attach to Bitcoin network
