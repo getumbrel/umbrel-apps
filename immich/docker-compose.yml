@@ -24,10 +24,11 @@ services:
       DISABLE_REVERSE_GEOCODING: ${APP_IMMICH_DISABLE_REVERSE_GEOCODING}
       REVERSE_GEOCODING_PRECISION: ${APP_IMMICH_REVERSE_GEOCODING_PRECISION}
       PUBLIC_LOGIN_PAGE_MESSAGE: ${APP_IMMICH_PUBLIC_LOGIN_PAGE_MESSAGE}
-      TYPESENSE_ENABLED: "false"
+      TYPESENSE_API_KEY: ${APP_IMMICH_TYPESENSE_API_KEY}
     depends_on:
       - redis
       - postgres
+      - typesense
     restart: on-failure
 
   microservices:
@@ -50,10 +51,11 @@ services:
       DISABLE_REVERSE_GEOCODING: ${APP_IMMICH_DISABLE_REVERSE_GEOCODING}
       REVERSE_GEOCODING_PRECISION: ${APP_IMMICH_REVERSE_GEOCODING_PRECISION}
       PUBLIC_LOGIN_PAGE_MESSAGE: ${APP_IMMICH_PUBLIC_LOGIN_PAGE_MESSAGE}
-      TYPESENSE_ENABLED: "false"
+      TYPESENSE_API_KEY: ${APP_IMMICH_TYPESENSE_API_KEY}
     depends_on:
       - redis
       - postgres
+      - typesense
     restart: on-failure
 
   machine-learning:
@@ -91,6 +93,15 @@ services:
       REVERSE_GEOCODING_PRECISION: ${APP_IMMICH_REVERSE_GEOCODING_PRECISION}
       PUBLIC_LOGIN_PAGE_MESSAGE: ${APP_IMMICH_PUBLIC_LOGIN_PAGE_MESSAGE}
       PUBLIC_IMMICH_SERVER_URL: "http://immich_server_1:3001"
+    restart: on-failure
+
+  typesense:
+    image: typesense/typesense:0.24.0@sha256:3cc1251f09ef6c75a5b1f2751c04e7265c770c0f2b69cba1f9a9f20da57cfa28
+    environment:
+      TYPESENSE_API_KEY: ${APP_IMMICH_TYPESENSE_API_KEY}
+      TYPESENSE_DATA_DIR: "/data"
+    volumes:
+      - ${APP_DATA_DIR}/data/tsdata:/data
     restart: on-failure
 
   proxy:
