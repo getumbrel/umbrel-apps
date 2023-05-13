@@ -7,7 +7,7 @@ services:
       APP_PORT: $APP_CORE_LIGHTNING_PORT
 
   app:
-    image: ghcr.io/elementsproject/umbrel-core-lightning:refs-tags-v0.0.2@sha256:bce1fa1eaf6ce4189e0ebbbfc5848f6178559c52ae96545118c1887e47595634
+    image: ghcr.io/elementsproject/cln-application:0.0.1@sha256:5fd7f01067a5fe5d983c85259cd23f72fff17e42a664721d174690fb20018cc8
     command: npm run start
     restart: on-failure
     volumes:
@@ -24,7 +24,8 @@ services:
       APP_CORE_LIGHTNING_REST_PORT: ${APP_CORE_LIGHTNING_REST_PORT}
       APP_CORE_LIGHTNING_REST_CERT_DIR: ${APP_REST_CERT_VOLUME_DIR}
       APP_CORE_LIGHTNING_REST_HIDDEN_SERVICE: http://${APP_CORE_LIGHTNING_REST_HIDDEN_SERVICE}
-      APP_CORE_LIGHTNING_COMMANDO_ENV_DIR: ${APP_CORE_LIGHTNING_DATA_DIR}
+      CORE_LIGHTNING_PATH: ${CORE_LIGHTNING_PATH}
+      COMMANDO_CONFIG: ${COMMANDO_CONFIG}
       APP_CONFIG_DIR: ${APP_CONFIG_DIR}
       APP_MODE: ${APP_MODE}
       LOCAL_HOST: http://${DEVICE_DOMAIN_NAME}
