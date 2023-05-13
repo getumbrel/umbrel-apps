@@ -1,33 +1,5 @@
 #!/usr/bin/env bash
 
-# Ensure the ${APP_DATA_DIR}/app directory exists and is owned by the user (1000:1000).
-# This is required for app updates to new Blockstream app.
-
-set -euo pipefail
-
-APP_DATA_DIR="$(readlink -f $(dirname "${BASH_SOURCE[0]}")/..)/data"
-
-[ ! -d "${APP_DATA_DIR}" ] && mkdir -p "${APP_DATA_DIR}" && chown 1000:1000 "${APP_DATA_DIR}"
-
-APP_SUBDIR="${APP_DATA_DIR}/app"
-
-[ ! -d "${APP_SUBDIR}" ] && mkdir -p "${APP_SUBDIR}" && chown 1000:1000 "${APP_SUBDIR}"
-
-# Create and set ownership for config.json file if it doesn't exist
-CONFIG_FILE_DESTINATION="${APP_SUBDIR}/config.json"
-CONFIG_FILE_CONTENTS='{
-  "unit": "SATS",
-  "fiatUnit": "USD",
-  "appMode": "DARK",
-  "isLoading": false,
-  "error": null
-}'
-
-if [ ! -f "${CONFIG_FILE_DESTINATION}" ]; then
-    echo "${CONFIG_FILE_CONTENTS}" > "${CONFIG_FILE_DESTINATION}"
-    chown 1000:1000 "${CONFIG_FILE_DESTINATION}"
-fi
-
 # Delay booting Core Lightning until the REST Tor Hidden Service is ready
 
 HIDDEN_SERVICE_FILE="${TOR_DATA_DIR}/app-${APP_ID}-rest/hostname"
