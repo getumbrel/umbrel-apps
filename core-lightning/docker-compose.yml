@@ -7,7 +7,7 @@ services:
       APP_PORT: $APP_CORE_LIGHTNING_PORT
 
   app:
-    image: ghcr.io/elementsproject/cln-application:0.0.1@sha256:d1f15a91e38020cc80c45228181231bb836b8d1f1ede7007aaec50d2e1629c5f
+    image: ghcr.io/elementsproject/cln-application:0.0.2@sha256:97cd49f94a05cbf2908572d2427d1c6de3227863df5bfa1e9fe2ba6138a1e185
     command: npm run start
     restart: on-failure
     volumes:
@@ -28,6 +28,7 @@ services:
       COMMANDO_CONFIG: ${COMMANDO_CONFIG}
       APP_CONFIG_DIR: ${APP_CONFIG_DIR}
       APP_MODE: ${APP_MODE}
+      DEVICE_DOMAIN_NAME: ${DEVICE_DOMAIN_NAME} 
       LOCAL_HOST: http://${DEVICE_DOMAIN_NAME}
       CA_CERT: ${APP_CORE_LIGHTNING_DATA_DIR}/bitcoin/ca.pem
       CLIENT_KEY: ${APP_CORE_LIGHTNING_DATA_DIR}/bitcoin/client-key.pem
@@ -56,6 +57,7 @@ services:
     restart: on-failure
     ports:
       - ${APP_CORE_LIGHTNING_DAEMON_PORT}:9735
+      - ${APP_CORE_LIGHTNING_WEBSOCKET_PORT}:${APP_CORE_LIGHTNING_WEBSOCKET_PORT}
     command:
       - --bitcoin-rpcconnect=${APP_BITCOIN_NODE_IP}
       - --bitcoin-rpcuser=${APP_BITCOIN_RPC_USER}
