@@ -8,7 +8,11 @@ services:
       PROXY_AUTH_ADD: "false"
       
   web:
-    image: ghcr.io/gandlafbtc/nutstash-wallet:0.1.10@sha256:8a585c4a6545e68e9a1c8fcf2a0a15ef401ad040accf925234451fe1b838d180
+    image: ghcr.io/gandlafbtc/nutstash-wallet:0.1.12@sha256:6694139731ccd120ab2b90073eaa7c28ea9286355b4dce9cd5764872b762ca06
     restart: on-failure
     stop_grace_period: 1m
+    volumes:
+      - ${APP_DATA_DIR}/data/mints.json:/etc/nutstash/mints.json
+      - ${APP_DATA_DIR}/data/tokens.json:/etc/nutstash/tokens.json
+
     
