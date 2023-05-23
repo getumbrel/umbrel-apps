@@ -1,0 +1,15 @@
+## alert_rules.yml ##
+
+groups:
+  - name: JVMMemory
+    rules:
+      - alert: JVMMemoryThresholdCrossed
+        # Condition for alerting
+        expr: jvm_memory_committed_bytes{region="heap"}/jvm_memory_max_bytes{region="heap"} > 0.8
+        # Annotation - additional informational labels to store more information
+        annotations:
+          title: 'Instance  has crossed 80% heap memory usage'
+          description: ' of job  has crossed 80% heap memory usage'
+        # Labels - additional labels to be attached to the alert
+        labels:
+          severity: 'critical'
