@@ -1,0 +1,19 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: qbittorrent_server_1
+      APP_PORT: 8080
+      PROXY_AUTH_ADD: "false"
+
+  server:
+    image: hotio/qbittorrent:release-4.5.2@sha256:43b975dc4f44c6bd9ff8a63e86b1878d5a0b3b39fa3168aab8d81b7455e79adc
+    environment:
+      - PUID=1000
+      - PGID=1000
+      # - UMASK=002
+    volumes:
+      - ${APP_DATA_DIR}/data/config:/config
+      - ${UMBREL_ROOT}/data/storage/downloads:/downloads
+    restart: on-failure
