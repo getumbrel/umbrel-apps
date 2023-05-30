@@ -383,13 +383,13 @@ ssh umbrel@umbrel.local
 2\. Next, we'll switch to the forked remote app repo:
 
 ```sh
-sudo ./scripts/repo checkout https://github.com/<username>/umbrel-apps.git
+sudo ./umbrel/scripts/repo checkout https://github.com/<username>/umbrel-apps.git
 ```
 
 3\. Once the repo has updated, it's time to test our app:
 
 ```sh
-sudo ./scripts/app install btc-rpc-explorer
+sudo ./umbrel/scripts/app install btc-rpc-explorer
 ```
 
 The app should now be accessible at http://umbrel.local:3002
@@ -397,12 +397,12 @@ The app should now be accessible at http://umbrel.local:3002
 4\. To uninstall:
 
 ```sh
-sudo ./scripts/app uninstall btc-rpc-explorer
+sudo ./umbrel/scripts/app uninstall btc-rpc-explorer
 ```
 
 > When testing your app, make sure to verify that any application state that needs to be persisted is in-fact being persisted in volumes.
 >
-> A good way to test this is to restart the app with `scripts/app stop <app-id> && scripts/app start <app-id>`. If any state is lost, it means that state should be mapped to a persistent volume.
+> A good way to test this is to restart the app with `./umbrel/scripts/app stop <app-id> && ./umbrel/scripts/app start <app-id>`. If any state is lost, it means that state should be mapped to a persistent volume.
 >
 > When stopping/starting the app, all data in volumes will be persisted and anything else will be discarded. When uninstalling/installing an app, even persistent data will be discarded.
 
