@@ -1,0 +1,31 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      # <app-id>_<web-container-name>_1
+      # e.g. 'btc-rpc-explorer_web_1'
+      # Note that the '_1' at the end is needed
+      APP_HOST: monero-node_monerod_1
+      APP_PORT: 18089
+      PROXY_AUTH_ADD: "false"
+  
+  monerod:
+    image: sethsimmons/simple-monerod:v0.18.2.2
+    command: "--rpc-restricted-bind-ip=0.0.0.0 --rpc-restricted-bind-port=18089 --public-node --no-igd --no-zmq --enable-dns-blocklist"
+    restart: unless-stopped
+    stop_grace_period: 15m30s
+    volumes:
+      - "${APP_MONERO_DATA_DIR}:/home/monero/.bitmonero"
+    ports:
+      - "${APP_MONERO_P2P_PORT}:${APP_MONERO_P2P_PORT}"
+      # - "${APP_MONERO_RPC_PORT}:${APP_MONERO_RPC_PORT}"
+    networks:
+      default:
+        ipv4_address: $APP_MONERO_NODE_IP
+  # If your app has more services, like a database container, you can define those
+  # services below:
+  # db:
+  #   image: <docker-image>:<tag>
+  #   ...
+
