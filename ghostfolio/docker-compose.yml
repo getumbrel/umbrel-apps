@@ -8,6 +8,7 @@ services:
 
   server:
     image: ghostfolio/ghostfolio:1.269.0@sha256:096ea10a7e9c8c471701da78d3aeb8434879e465b36b3564d6bb424bc47c2b3d
+    hostname: ghostfolio_server_1
     restart: on-failure
     environment:
       NODE_ENV: production
@@ -25,6 +26,7 @@ services:
   
   postgres:
     image: postgres:14-bullseye@sha256:c2a30d08a6f9e6c365595fd086c9e0436064c52425f15f72379ecf0807bac518
+    hostname: ghostfolio_postgres_1
     restart: on-failure
     stop_grace_period: 1m
     user: "1000:1000"
@@ -38,6 +40,7 @@ services:
 
   redis:
     image: redis:6.2-bullseye@sha256:5cdb2ac6f780e1d250787f4a887c1ed1166e3389757189ea913059409acc6f7c
+    hostname: ghostfolio_redis_1
     restart: on-failure
     user: "1000:1000"
     command: >
