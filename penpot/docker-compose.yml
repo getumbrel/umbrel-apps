@@ -1,0 +1,66 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: penpot_penpot-frontend_1
+      APP_PORT: 80
+      # Can consider disabling auth all together. Penpot has its own auth system.
+      PROXY_AUTH_WHITELIST: "/api/*"
+
+  penpot-frontend:
+    image: penpotapp/frontend:1.18.3@sha256:9cea5dfeceed55533a3aacf3acf65a833bc7da3fd30c7c2e9c1acddcc7d4b7a1
+    volumes:
+      - ${APP_DATA_DIR}/data/assets:/opt/data/assets
+    environment:
+      - PENPOT_FLAGS=enable-registration enable-login-with-password
+    depends_on:
+      - penpot-backend
+      - penpot-exporter
+    restart: on-failure
+
+  penpot-backend:
+    image: penpotapp/backend:1.18.3@sha256:a744cc44f8305fb9be2a878ce2e29c7d370d370f0ec39a3e623c70014b7387c9
+    # user 1000:1000 to avoid permission issues when importing libraries and templates
+    user: "1000:1000"
+    volumes:
+      - ${APP_DATA_DIR}/data/assets:/opt/data/assets
+    environment:
+      - PENPOT_FLAGS=enable-registration enable-login-with-password disable-email-verification disable-smtp enable-prepl-server disable-secure-session-cookies
+      - PENPOT_DATABASE_URI=postgresql://penpot-postgres/penpot
+      - PENPOT_DATABASE_USERNAME=penpot
+      - PENPOT_DATABASE_PASSWORD=penpot
+      - PENPOT_REDIS_URI=redis://penpot-redis/0
+      - PENPOT_ASSETS_STORAGE_BACKEND=assets-fs
+      - PENPOT_STORAGE_ASSETS_FS_DIRECTORY=/opt/data/assets
+      - PENPOT_TELEMETRY_ENABLED=false
+    depends_on:
+      - penpot-postgres
+      - penpot-redis
+    restart: on-failure
+
+  penpot-exporter:
+    image: penpotapp/exporter:1.18.3@sha256:c5daee8f7b966f91aaee0a286956ea1859b6d3a77a62da9359ed454ed4dc196b
+    user: "1000:1000"
+    environment:
+      - PENPOT_PUBLIC_URI=http://penpot-frontend
+      - PENPOT_REDIS_URI=redis://penpot-redis/0
+    restart: on-failure
+
+  penpot-postgres:
+    image: postgres:15@sha256:546445ad21cb5893c0997080b831ee45945e798c4359270e16413c8bd93575db
+    user: "1000:1000"
+    stop_signal: SIGINT
+    volumes:
+      - ${APP_DATA_DIR}/data/postgres:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_INITDB_ARGS=--data-checksums
+      - POSTGRES_DB=penpot
+      - POSTGRES_USER=penpot
+      - POSTGRES_PASSWORD=penpot
+    restart: on-failure
+
+  penpot-redis:
+    image: redis:7@sha256:45bfd95117a171ff9c1b5304bdae80a7a61eb5bbf0793d6a86c9078526ad88fa
+    user: "1000:1000"
+    restart: on-failure
