@@ -1,0 +1,37 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: adguard_server_1
+      APP_PORT: 3000
+      PROXY_AUTH_ADD: "false"
+  
+  server:
+    image: adguard/adguardhome:v0.107.29@sha256:ce8b9ae82365edcd4c91d0a3763091fac6a9541a1ef36d9b65274078517745b2
+    # Adguard must run as root
+    # user: "1000:1000"
+    restart: on-failure
+    ports:
+    # plain DNS
+      - 53:53/tcp
+      - 53:53/udp
+    # DHCP Server
+      - 67:67/udp
+      - 68:68/tcp
+      - 68:68/udp
+    # DNS-over-HTTPS
+      # - 443:443/tcp
+      # - 443:443/udp
+    # DNS-over-TLS
+      - 853:853/tcp
+    # DNS-over-QUIC
+      - 784:784/udp
+      - 853:853/udp
+      - 8853:8853/udp
+    # DNSCrypt
+      # - 5443:5443/tcp
+      # - 5443:5443/udp
+    volumes:
+      - ${APP_DATA_DIR}/data/work:/opt/adguardhome/work
+      - ${APP_DATA_DIR}/data/conf:/opt/adguardhome/conf
