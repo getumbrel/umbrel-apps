@@ -25,7 +25,7 @@ services:
       REVERSE_GEOCODING_PRECISION: ${APP_IMMICH_REVERSE_GEOCODING_PRECISION}
       PUBLIC_LOGIN_PAGE_MESSAGE: ${APP_IMMICH_PUBLIC_LOGIN_PAGE_MESSAGE}
       TYPESENSE_API_KEY: ${APP_IMMICH_TYPESENSE_API_KEY}
-      IMMICH_MACHINE_LEARNING_URL: "http://immich_machine-learning_1:3003"
+      IMMICH_MACHINE_LEARNING_URL: "http://immich_immich-machine-learning_1:3003"
     depends_on:
       - redis
       - postgres
@@ -59,8 +59,8 @@ services:
       - typesense
     restart: on-failure
 
-  machine-learning:
-    image: altran1502/immich-machine-learning:v1.59.1@sha256:0b16898ac1572d154673fb242e0727d0d1c82cba5948c0f1882c0ee7f56f94f2
+  immich-machine-learning:
+    image: altran1502/immich-immich-machine-learning:v1.59.1@sha256:0b16898ac1572d154673fb242e0727d0d1c82cba5948c0f1882c0ee7f56f94f2
     volumes:
       - ${APP_DATA_DIR}/data/upload:/usr/src/app/upload
       - ${APP_DATA_DIR}/data/model-cache:/cache
@@ -112,7 +112,7 @@ services:
     environment:
       IMMICH_WEB_URL: "http://immich_web_1:3000"
       IMMICH_SERVER_URL: "http://immich_server_1:3001"
-      IMMICH_MACHINE_LEARNING_URL: "http://immich_machine-learning_1:3003"
+      IMMICH_MACHINE_LEARNING_URL: "http://immich_immich-machine-learning_1:3003"
     depends_on:
       - server
     restart: on-failure
