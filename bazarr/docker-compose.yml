@@ -1,0 +1,17 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: bazarr_server_1
+      APP_PORT: 6767
+      PROXY_AUTH_WHITELIST: "/api/*"
+
+  server:
+    image: linuxserver/bazarr:1.2.1@sha256:dbc3c7e9ba92becf5450bdb4ea377ffddda6ce7a08e40a81b9344de27db9e52d
+    environment:
+      - PUID=1000
+      - PGID=1000
+    volumes:
+      - ${APP_DATA_DIR}/data/config:/config
+    restart: on-failure
