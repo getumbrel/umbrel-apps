@@ -1,0 +1,15 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: quetre_web_1
+      APP_PORT: 3000
+
+  web:
+    image: ceramicwhite/quetre:v7.0.0@sha256:3b699fec4e49fbf4a70c65666cfebd6bbd85cb97633a52cb4ebd4bec5aefd806
+    restart: on-failure
+    stop_grace_period: 1m
+    init: true
+    user: 1000:1000
+    environment:
+      - NODE_ENV=production
+      #- PORT=3000
