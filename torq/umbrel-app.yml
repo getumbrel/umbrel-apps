@@ -2,24 +2,26 @@ manifestVersion: 1
 id: torq
 category: Lightning Node Management
 name: Torq
-version: "v0.22.4"
-tagline: Capital management for routing nodes on the lightning network
+version: "v0.23.1"
+tagline: Scalable Node Management Software
 description: >-
-  Operating a routing node requires managing capital efficiently. If you look past the technical challenges, what you are trying to do is stack sats and support the network by routing liquidity. No matter your motivation, efficiently managing your capital is essential.
+  Operating a Lightning node requires a lot of work. You need to monitor your channels, rebalance them, keep track of your fees and much more.
 
 
-  With Torq, you can collect routing data and you analyze your data with increasingly advanced tools.
+  With Torq, you can collect and analyze your data with increasingly advanced tools.
 
 
   Features:
 
-  - Channel and Channel group inspection
+  - Workflow based automation.
+
+  - Channel and Channel group inspection, even with more than 1000 channels.
+  
+  - Advanced charts and visualizations of aggregated forwarding statistics
 
   - See the channel balance (inbound/outbound capacity) over time
 
-  - Advanced charts and visualizations of aggregated forwarding statistics
-
-  - Visualization of sources and destinations for traffic
+  - Manage multiple nodes at once.
 
   - Stores all events from your node including HTLC events, fee rate changes and channel enable/disable events
 
@@ -33,7 +35,7 @@ description: >-
 
   - Tag channels and nodes with custom labels (Exchange, Routing node, Sink, Source, or anything else)
 
-  - Automation of channel policy (fee rate etc.) and add or remove tags
+  
 
 developer: LN Capital
 website: https://ln.capital
@@ -49,34 +51,35 @@ gallery:
   - 4.jpg
   - 5.jpg
 releaseNotes: >-
-  Torq can now we used with CLN! It is still an experimental version, so expect some issues. Here are some known limitations:
+  New features:
+  
+  - Open telemetry instrumentation
+  
+  - Jaeger tracing
+  
+  - Prometheus export
+  
+  - Peers' page now supports multi-node setups
+  
+  - Custom mempool.space URL
+  
+  - Inspect a closed/closing channel
+  
+  - Pagination added to all channel table pages and forwarding pages
   
   
-  - CLN v023.05 is required for CLN nodes added to Torq.
+  Bugfixes:
+  
+  - Fix Amboss ping service
+  
+  - Increase initial channel data import throughput
+  
+  - LND maximum message size increase to 150M
+  
+  - CLN fixes (thanks to borsche-hfsp.com)
+  
+  - And more...
 
-  - For very large nodes it might be problematic to import all payments, invoices and forwards, since CLN does not provide any way of paginating requests.
-
-  - Rebalancing is currently disabled to CLN nodes as pathfinding is not complete.
-  
-  
-  Other changes:
-  
-  
-  - Function to move funds between nodes (for multiple nodes).
-
-  - Tables containing node specific data, like the channels table, now has a color code. This can be chosen in the node settings.
-
-  - Peers Table improved.
-
-  - Nodes can be added from the dashboard.
-
-  - Improved adding and removing tags.
-  
-  - Forwards table is much faster.
-
-  - Chart configurations are now remembered.
-  
-  - Torq is now closed source.
 path: ""
 defaultUsername: ""
 deterministicPassword: false
