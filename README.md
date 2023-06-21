@@ -163,7 +163,7 @@ Our app manifest YAML file tells Umbrel details about our app such as name, desc
 ```yml
 manifestVersion: 1
 id: btc-rpc-explorer
-category: Explorers
+category: finance
 name: BTC RPC Explorer
 version: "3.3.0"
 tagline: Simple, database-free blockchain explorer
