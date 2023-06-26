@@ -1,0 +1,17 @@
+version: "3.7"
+
+services:
+
+  app_proxy:
+    environment:
+      APP_HOST: databag_1
+      APP_PORT: 7000
+      
+  web:
+    image: balzack/databag:latest
+    restart: on-failure
+    stop_grace_period: 1m
+    ports:
+      - "7000:7000"
+    volumes:
+      - ${APP_DATA_DIR}/databag-data:/var/lib/databag
