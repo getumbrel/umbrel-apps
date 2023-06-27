@@ -7,19 +7,18 @@ services:
       APP_PORT: 8080
 
   web:
-    # Official Nim image used as base image for nitter doesn't offer Arm variant so using a custom image w/ patch for umbrel
-    # https://github.com/ceramicwhite/umbrel-patch-ci/blob/master/nitter/umbrel.patch
-    image: ceramicwhite/nitter:build-20220908@sha256:cfb1227aca5014804c47d10d7ff77f24416a3fd571549eaeee9850f915507447
+    image: ceramicwhite/nitter:build-38985af@sha256:594a184c3a834c29957ddd917800d61f3d560411d26fa6cf389bef350d4c4ac6
     restart: on-failure
     stop_grace_period: 1m
     init: true
     user: 1000:1000
-    environment:
-      REDIS_HOST: "nitter_redis_1"
-      REDIS_PASS: "moneyprintergobrrr"
-      NITTER_THEME: '"auto_(twitter)"'
-    volumes:
-      - ${APP_DATA_DIR}/data/nitter:/data
+    command: >
+      /bin/sh -c "sed -i 
+      -e 's/localhost/nitter_redis_1/g' 
+      -e 's/redisPassword = \"\"/redisPassword = \"moneyprintergobrrr\"/g' 
+      -e 's/theme = \"Nitter\"/theme = \"auto_(twitter)\"/g' 
+      /src/nitter.conf
+      && ./nitter"
     depends_on:
       - redis
   
