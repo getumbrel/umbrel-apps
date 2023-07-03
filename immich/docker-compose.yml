@@ -25,7 +25,7 @@ services:
       PROXY_AUTH_WHITELIST: "/api/*,/search/*"
 
   server:
-    image: altran1502/immich-server:v1.61.0@sha256:c04710ed178b8418bf67ef9e069f5ecc3104955fa54f279fb91941786681a355
+    image: altran1502/immich-server:v1.65.0@sha256:92b21221e62129505e24adc8f42ecf867b5b00155668a9a15bf4039e7ef75e65
     entrypoint: ["/bin/sh", "./start-server.sh"]
     volumes:
       - ${APP_DATA_DIR}/data/upload:/usr/src/app/upload
@@ -38,7 +38,7 @@ services:
     restart: on-failure
 
   microservices:
-    image: altran1502/immich-server:v1.61.0@sha256:c04710ed178b8418bf67ef9e069f5ecc3104955fa54f279fb91941786681a355
+    image: altran1502/immich-server:v1.65.0@sha256:92b21221e62129505e24adc8f42ecf867b5b00155668a9a15bf4039e7ef75e65
     # This service cannot run under 1000:1000
     # And because the uploads are shared
     # We'll run immich specific services as root
@@ -54,7 +54,7 @@ services:
     restart: on-failure
 
   machine-learning:
-    image: altran1502/immich-machine-learning:v1.61.0@sha256:c86e77729444f9da4e97af9e392359afa24e201b0003dafe0f1f769f263095f1
+    image: altran1502/immich-machine-learning:v1.65.0@sha256:f62ec3fcbfb24ebc0a428563697fadab0e7f25815e563b20cbf2800b724f291a
     volumes:
       - ${APP_DATA_DIR}/data/upload:/usr/src/app/upload
       - ${APP_DATA_DIR}/data/model-cache:/cache
@@ -65,7 +65,7 @@ services:
     restart: on-failure
 
   web:
-    image: altran1502/immich-web:v1.61.0@sha256:7d631ccb35ef45a1dd80706ea9f2532fbb865e7dbb8eb3c322bb893a306780c2
+    image: altran1502/immich-web:v1.65.0@sha256:7a421679201e731bb226847a5849c9cd5e68c99cb9b1896c04cebbcabf738a25
     entrypoint: ["/bin/sh", "./entrypoint.sh"]
     environment:
       <<: *env
@@ -81,7 +81,7 @@ services:
     restart: on-failure
 
   proxy:
-    image: altran1502/immich-proxy:v1.61.0@sha256:3f5802339c86e2aeae463b2d6ef5a2014805b0aba3818b91b05dab59766fef78
+    image: altran1502/immich-proxy:v1.65.0@sha256:8b38f16df60113b3f56122091fb85cb59dd4176c3aadf6027603c2fda397095e
     environment:
       IMMICH_SERVER_URL: *immich_server_url
       IMMICH_WEB_URL: *immich_web_url
