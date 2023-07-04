@@ -1,0 +1,18 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: jackett_server_1
+      APP_PORT: 9117
+
+  server:
+    image: lscr.io/linuxserver/jackett:0.21.372@sha256:2f8cba0900b42edf3e5edf64dd1ef341872337ca274da1b48bd25ab8156c570a
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data:/config
+      - ${APP_DATA_DIR}/blackhole:/downloads
+    stop_grace_period: 1m
+    environment:
+      - PUID=1000
+      - PGID=1000
