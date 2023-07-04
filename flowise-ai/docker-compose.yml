@@ -1,0 +1,17 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: flowise_server_1
+      APP_PORT: 3000
+
+  server:
+    image: impranshu/flowise-ai:v1@sha256:c8bb34965acfaf328825de467028db99ab17eda6160bdde617712ea22f539d2d
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data/config:/config
+    stop_grace_period: 1m
+    environment:
+      - PUID=1000
+      - PGID=1000
