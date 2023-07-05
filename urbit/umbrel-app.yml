@@ -2,7 +2,7 @@ manifestVersion: 1
 id: urbit
 category: networking
 name: Urbit
-version: "v2.10"
+version: "v2.11"
 tagline: Run Urbit on your Umbrel
 description: >-
   Urbit is a personal server for self-sovereign personal & networked
@@ -35,16 +35,13 @@ torOnly: false
 submitter: ~mopfel-winrux
 submission: https://github.com/getumbrel/umbrel/pull/1246
 releaseNotes: >-
-  This release includes runtime fixes mainly aimed at OTA publishers. A
-  publisher running vere-v2.10 and urbit-os-v2.142 (releasing in a few
-  days) will be able to reliably deliver the initial OTA through remote
-  scry instead of falling back to ames.
+  This release fixes a guard page bounds check that would usually present
+  as a ship crashing with loom: bogus ward. This bug (present since
+  vere-v2.7) also has a small chance of corrupting persistent state, so we
+  encourage users to upgrade as soon as possible.
   
-  The release also includes significantly better long-running replay
-  capabilities that were missing since vere-v1.14. The <your-ship>/.run
-  play command now supports the –auto-meld command line flag to
-  automatically meld a long memory-intensive replay. It also supports the
-  –snap-at x command line flag to snapshot every x events.
+  The release also fixes a bug with the meld command that was causing it
+  to run twice for every invocation.
 
 
-  Full release notes here: https://github.com/urbit/vere/releases/tag/vere-v2.10
+  Full release notes here: https://github.com/urbit/vere/releases/tag/vere-v2.11
