@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+
+# This script checks if a pre-host-network version of the app is currently installed and, if it is,
+# deletes the old configuration files to allow Home Assistant to initialize properly.
+
+APP_DIR="$(dirname "${BASH_SOURCE[0]}")/.."
+HOME_ASSISTANT_CONFIG_DIR="${APP_DIR}/data"
+PRE_HOST_NETWORK_CONFIGURATION_YAML="${APP_DIR}/configuration.yaml"
+PRE_HOST_NETWORK_CONFIGURATION_TEMPLATE="${APP_DIR}/configuration.yaml.template"
+CONFIGURATION_YAML="${HOME_ASSISTANT_CONFIG_DIR}/configuration.yaml"
+
+# Check for the existence of pre-host-network configuration files and delete them if they exist
+if [[ -f "${PRE_HOST_NETWORK_CONFIGURATION_YAML}" ]] || [[ -f "${PRE_HOST_NETWORK_CONFIGURATION_TEMPLATE}" ]]; then
+    echo "This is a pre-host-network installation"
+
+    if [[ -f "${PRE_HOST_NETWORK_CONFIGURATION_YAML}" ]]; then
+        echo "Deleting old configuration.yaml"
+        rm "${PRE_HOST_NETWORK_CONFIGURATION_YAML}"
+    fi
+
+    if [[ -f "${PRE_HOST_NETWORK_CONFIGURATION_TEMPLATE}" ]]; then
+        echo "Deleting old configuration.yaml.template"
+        rm "${PRE_HOST_NETWORK_CONFIGURATION_TEMPLATE}"
+    fi
+
+    # Also delete the configuration.yml in the data dir
+    if [[ -f "${CONFIGURATION_YAML}" ]]; then
+        echo "Deleting old configuration.yaml in data dir"
+        rm "${CONFIGURATION_YAML}"
+    fi
+fi

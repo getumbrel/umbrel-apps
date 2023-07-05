@@ -7,7 +7,7 @@ services:
       APP_PORT: $APP_LNMARKETS_PORT
   
   lnmarkets:
-    image: ghcr.io/ln-markets/umbrel:v1.3.0@sha256:2b871515b293580963fac66979352afabaa60da73b04471ce0e225c17906cc34
+    image: ghcr.io/ln-markets/umbrel:v2.0.0@sha256:47b836cd23f7aa9f31aa4ae99ba66f74ffc513388016e31a00f6cb0767144bae
     init: true
     user: 1000:1000
     restart: on-failure
@@ -18,10 +18,7 @@ services:
       LND_IP: $APP_LIGHTNING_NODE_IP
       LND_GRPC_PORT: $APP_LIGHTNING_NODE_GRPC_PORT
       BITCOIN_NETWORK: $APP_BITCOIN_NETWORK
-      APP_HIDDEN_SERVICE: $APP_HIDDEN_SERVICE
-      APP_DOMAIN: $APP_DOMAIN
-      APP_PASSWORD: $APP_PASSWORD
-      API_PORT: $APP_LNMARKETS_PORT
+      APP_LNMARKETS_PORT: $APP_LNMARKETS_PORT
     networks:
       default:
         ipv4_address: $APP_LNMARKETS_IP
