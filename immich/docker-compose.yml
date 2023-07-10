@@ -26,7 +26,7 @@ services:
 
   server:
     image: altran1502/immich-server:v1.66.1@sha256:819360b4bce04cf36f2fe6e861f13c29dcf06ad0b8af7ea96f02cbe18c0d7824
-    entrypoint: ["/bin/sh", "./start-server.sh"]
+    command: [ "start.sh", "immich" ]
     volumes:
       - ${APP_DATA_DIR}/data/upload:/usr/src/app/upload
     environment:
@@ -42,7 +42,7 @@ services:
     # This service cannot run under 1000:1000
     # And because the uploads are shared
     # We'll run immich specific services as root
-    entrypoint: ["/bin/sh", "./start-microservices.sh"]
+    command: [ "start.sh", "microservices" ]
     volumes:
       - ${APP_DATA_DIR}/data/upload:/usr/src/app/upload
     environment:
@@ -56,23 +56,19 @@ services:
   machine-learning:
     image: altran1502/immich-machine-learning:v1.66.1@sha256:6412d3d499bd68012f1dcfbccd38c442d66524c37493b9883ab5e9ec0c06300c
     volumes:
-      - ${APP_DATA_DIR}/data/upload:/usr/src/app/upload
       - ${APP_DATA_DIR}/data/model-cache:/cache
     environment:
       <<: *env
-    depends_on:
-      - postgres
     restart: on-failure
 
   web:
     image: altran1502/immich-web:v1.66.1@sha256:61611ce73dc2c9d47005cb7a033ac5fb0a558991e24ba51dd7630bb51915fba6
-    entrypoint: ["/bin/sh", "./entrypoint.sh"]
     environment:
       <<: *env
     restart: on-failure
 
   typesense:
-    image: typesense/typesense:0.24.0@sha256:3cc1251f09ef6c75a5b1f2751c04e7265c770c0f2b69cba1f9a9f20da57cfa28
+    image: typesense/typesense:0.24.1@sha256:9bcff2b829f12074426ca044b56160ca9d777a0c488303469143dd9f8259d4dd
     environment:
       TYPESENSE_API_KEY: *typesense_api_key
       TYPESENSE_DATA_DIR: "/data"
@@ -87,17 +83,16 @@ services:
       IMMICH_WEB_URL: *immich_web_url
     depends_on:
       - server
+      - web
     restart: on-failure
 
   redis:
-    image: redis:6.2-bullseye@sha256:ffd3d04c8f7832ccdda89616ebaf3cb38414b645ebbf76dbef1fc9c36a72a2d1
+    image: redis:6.2-alpine@sha256:70a7a5b641117670beae0d80658430853896b5ef269ccf00d1827427e3263fa3
     user: "1000:1000"
     restart: on-failure
-    volumes:
-      - ${APP_DATA_DIR}/data/redis:/data
 
   postgres:
-    image: postgres:14-bullseye@sha256:135c62a8134dcef829a1e4f5568bfae44bcfa2c75659ff948f43c71964366aa4
+    image: postgres:14-alpine@sha256:28407a9961e76f2d285dc6991e8e48893503cc3836a4755bbc2d40bcc272a441
     user: "1000:1000"
     environment:
       <<: *env
