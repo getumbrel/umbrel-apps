@@ -1,0 +1,17 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: darktable_server_1
+      APP_PORT: 3000
+
+  server:
+    image: linuxserver/darktable:4.0.1@sha256:0ade9922d44d3cd1485502565c4b1edaea98fe229685a80fa53e44662c3ae91e
+    restart: on-failure
+    environment:
+      - PUID=1000
+      - PGID=1000
+    volumes:
+      - ${APP_DATA_DIR}/data/config:/config
+    shm_size: "1gb"
