@@ -3,11 +3,10 @@ version: "3"
 services:
   app_proxy:
     environment:
-      APP_HOST: wbo
+      APP_HOST: wbo_server_1
       APP_PORT: 80
 
   server:
-    container_name: wbo
     volumes:
       - ${APP_DATA_DIR}/wbo-boards:/opt/app/server-data
     image: lovasoa/wbo:v1.19.1@sha256:fa70c14ba4c27c4413018c1b1537e67953d283a76d896eeae178ddb0e074b0e8
@@ -18,7 +17,7 @@ services:
     stop_grace_period: 1m
 
   volume-permissions-fixer:
-      image: bash:4.4
-      command: chown 1000:1000 -R /opt/app/server-data
-      volumes:
-        - ${APP_DATA_DIR}/wbo-boards:/opt/app/server-data
+    image: bash:4.4@sha256:dbfd09bd48620c7899ae3363241643abba67949ae775f017a3cf94dfcbe80eac
+    command: chown 1000:1000 -R /opt/app/server-data
+    volumes:
+      - ${APP_DATA_DIR}/wbo-boards:/opt/app/server-data
