@@ -1,0 +1,13 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: mario_server_1
+      APP_PORT: 8080
+
+  server:
+    image: impranshu/mario:v1@sha256:b822578012203a14ea3c071b8f14e8ad7c8ac9a007a3c09500bbcacb25c6c0f3
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+    restart: on-failure
