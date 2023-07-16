@@ -35,13 +35,7 @@ services:
   frontend:
     image: vikunja/frontend:0.21@sha256:fdd4582979beee4a6bef2d4d8e3744809b82ab2e198d708a829d7189a0ad9882
     restart: unless-stopped
-  proxy:
-    image: nginx:1.25@sha256:08bc36ad52474e528cc1ea3426b5e3f4bad8a130318e3140d6cfe29c8892c7ef
     ports:
       - 4253:80
-    volumes:
-      - ${APP_DATA_DIR}/nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
-    depends_on:
-      - api
-      - frontend
-    restart: unless-stopped
+    environment:
+      VIKUNJA_API_URL: http://localhost:3456/api/v1
