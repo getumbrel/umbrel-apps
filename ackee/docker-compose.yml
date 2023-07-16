@@ -1,0 +1,24 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: ackee_server_1
+      APP_PORT: 3000
+
+  server:
+    image: electerious/ackee:3.4.2@sha256:55558f35dee1d0a1a0aa83fc8c766cff2c9c28a93f400cdd390cef38f48a6c25
+    restart: on-failure
+    environment:
+      - WAIT_HOSTS=mongo:27017
+      - ACKEE_MONGODB=mongodb://mongo:27017/ackee
+      - ACKEE_USERNAME=umbrel
+      - ACKEE_PASSWORD=pass
+    depends_on:
+      - mongo
+
+  mongo:
+    image: mongo:6@sha256:20f3adcaffe2193e49dd502c8299b770d49a1e0643e0e9db250d5c127b1e9ed8
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data:/data/db
