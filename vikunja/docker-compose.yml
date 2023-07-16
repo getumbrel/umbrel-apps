@@ -3,7 +3,7 @@ version: "3.7"
 services:
   app_proxy:
     environment:
-      APP_HOST: vikunja_server_1
+      APP_HOST: vikunja_frontend_1
       APP_PORT: 80
 
   db:
@@ -26,7 +26,10 @@ services:
       VIKUNJA_DATABASE_USER: vikunja
       VIKUNJA_DATABASE_DATABASE: vikunja
       VIKUNJA_SERVICE_JWTSECRET: <a super secure random secret>
-      VIKUNJA_SERVICE_FRONTENDURL: http://localhost/
+      DEVICE_DOMAIN_NAME: "${DEVICE_DOMAIN_NAME}"
+      VIKUNJA_SERVICE_FRONTENDURL: http://DEVICE_DOMAIN_NAME/
+    ports:
+      - 3456:3456
     volumes:
       - ${APP_DATA_DIR}/files:/app/vikunja/files
     depends_on:
@@ -35,7 +38,6 @@ services:
   frontend:
     image: vikunja/frontend:0.21@sha256:fdd4582979beee4a6bef2d4d8e3744809b82ab2e198d708a829d7189a0ad9882
     restart: unless-stopped
-    ports:
-      - 4253:80
     environment:
-      VIKUNJA_API_URL: http://localhost:3456/api/v1
+      DEVICE_DOMAIN_NAME: "${DEVICE_DOMAIN_NAME}"
+      VIKUNJA_API_URL: http://DEVICE_DOMAIN_NAME:3456/api/v1
