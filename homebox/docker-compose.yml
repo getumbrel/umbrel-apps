@@ -1,0 +1,17 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: homebox_web_1
+      APP_PORT: 7745
+
+  web:
+    image: impranshu/homebox:rootless-v1@sha256:96aba8955de039aa47561bcf0d6065468dbea5af1387ea4e6523ce56e7030f98
+    restart: on-failure
+    environment:
+      - TZ=Europe/Bucharest
+      - PUID=1000
+      - PGID=1000
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
