@@ -462,7 +462,7 @@ Some apps host a user facing at the root of their web application and then an AP
 PROXY_AUTH_WHITELIST: "/api/*"
 ```
 
-Another example could be that the root of the web application (`/`) should be publically accessible but the admin section by protected by Umbrel. This can be achieved by adding these env. vars. to the `app_proxy` Docker Compose service:
+Another example could be that the root of the web application (`/`) should be publically accessible but the admin section be protected by Umbrel. This can be achieved by adding these env. vars. to the `app_proxy` Docker Compose service:
 ```
 PROXY_AUTH_WHITELIST: "*"
 PROXY_AUTH_BLACKLIST: "/admin/*"
