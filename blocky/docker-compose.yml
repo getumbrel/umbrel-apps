@@ -10,3 +10,10 @@ services:
     restart: unless-stopped
     # Optional the instance hostname for logging purpose
     hostname: blocky-hostname
+
+    blocky-frontend:
+    depends_on:
+      - blocky
+    image: ghcr.io/mozart409/blocky-frontend:latest
+    ports:
+      - '8002:8002'
