@@ -4,7 +4,7 @@ services:
   app_proxy:
     environment:
       APP_HOST: readarr_server_1
-      APP_PORT: 7878
+      APP_PORT: 8787
       PROXY_AUTH_WHITELIST: "/api/*"
 
   server:
@@ -25,8 +25,8 @@ services:
       - ${APP_DATA_DIR}/data/config:/config
       - ${UMBREL_ROOT}/data/storage/downloads:/downloads
     environment:
-      DOWNLOAD_CLIENT_API_URL: "http://readarr_server_1:7878/api/v3/downloadclient"
-      ROOT_FOLDER_API_URL: "http://readarr_server_1:7878/api/v3/rootfolder"
+      DOWNLOAD_CLIENT_API_URL: "http://readarr_server_1:8787/api/v3/downloadclient"
+      ROOT_FOLDER_API_URL: "http://readarr_server_1:8787/api/v3/rootfolder"
       TRANSMISSION_HOST: "transmission_server_1"
       TRANSMISSION_PORT: 9091
       ROOT_FOLDER: "/downloads/books"
