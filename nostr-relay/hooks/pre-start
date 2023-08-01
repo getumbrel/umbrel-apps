@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+APP_DATA_DIR="$(readlink -f $(dirname "${BASH_SOURCE[0]}")/..)/data"
+RELAY_PROXY_DATA_DIR="${APP_DATA_DIR}/relay-proxy"
+
+[ ! -d "${RELAY_PROXY_DATA_DIR}" ] && mkdir -p "${RELAY_PROXY_DATA_DIR}" && chown 1000:1000 "${RELAY_PROXY_DATA_DIR}"
