@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+APP_DATA_DIR="$(readlink -f $(dirname "${BASH_SOURCE[0]}")/..)/data"
+
+DESIRED_OWNER="1500:1500"
+
+PUBLIC_DATA_DIR="${APP_DATA_DIR}/public"
+STORAGE_DATA_DIR="${APP_DATA_DIR}/storage"
+
+invoiceninja_correct_permission() {
+	local -r path="${1}"
+
+	if [[ -d "${path}" ]]; then
+		owner=$(stat -c "%u:%g" "${path}")
+
+		if [[ "${owner}" != "${DESIRED_OWNER}" ]]; then
+			chown "${DESIRED_OWNER}" "${path}"
+		fi
+	fi
+}
+
+invoiceninja_correct_permission "${PUBLIC_DATA_DIR}"
+invoiceninja_correct_permission "${STORAGE_DATA_DIR}"

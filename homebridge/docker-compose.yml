@@ -1,0 +1,11 @@
+version: "3.7"
+
+services:
+  server:
+    image: oznu/homebridge:2023-01-08@sha256:f46e9c82e4f3449e18c2b61014ba13474343fed703537983db0f59a2a4b97c31
+    # container runs as root
+    network_mode: host
+    # available at port 8581
+    volumes:
+      - ${APP_DATA_DIR}/data/homebridge:/homebridge
+    restart: on-failure

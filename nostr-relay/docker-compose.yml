@@ -8,12 +8,14 @@ services:
       PROXY_AUTH_ADD: "false"
 
   web:
-    image: getumbrel/umbrel-nostr-relay:v0.1.0@sha256:1c3c2b0563e567258a37e75e5c98028dce02503e522d29914b2a34e6d2eb3421
+    image: getumbrel/umbrel-nostr-relay:v1.1.0@sha256:21b67ab2e9d30b20e785497f19534e8e21b6da1bfe69e3ae5afe91b759f20488
     user: "1000:1000"
     restart: on-failure
     environment:
       RELAY_HOST: "nostr-relay_relay_1"
       RELAY_PORT: "8080"
+      RELAY_PROXY_HOST: "nostr-relay_relay-proxy_1"
+      RELAY_PROXY_PORT: "80"
 
   relay:
     image: getumbrel/nostr-rs-relay:0.8.1@sha256:a6c857aecd4964bf058ec5c3c0fea95e0d87ed0cc789f2140f96de108e5515ec
@@ -22,3 +24,15 @@ services:
     volumes:
       - ${APP_DATA_DIR}/data/relay/config.toml:/app/config.toml
       - ${APP_DATA_DIR}/data/relay/db:/app/db
+
+  relay-proxy:
+    image: getumbrel/umbrel-nostr-relay-proxy:v1.1.0@sha256:c8086f63ac23ade15376fc22aa3cee894a0374c698e7354c2593d395812ff715
+    user: "1000:1000"
+    restart: on-failure
+    environment:
+      RELAY_HOST: "nostr-relay_relay_1"
+      RELAY_PORT: "8080"
+    volumes:
+      - ${APP_DATA_DIR}/data/relay-proxy:/app/data
+    depends_on:
+      - relay

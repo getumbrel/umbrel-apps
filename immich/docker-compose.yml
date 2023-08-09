@@ -1,120 +1,106 @@
 version: "3.7"
 
+x-environment: &env
+  NODE_ENV: "production"
+  DB_HOSTNAME: "immich_postgres_1"
+  DB_USERNAME: &db_username "immich"
+  DB_PASSWORD: &db_password "moneyprintergobrrr"
+  DB_DATABASE_NAME: &db_database_name "immich"
+  REDIS_HOSTNAME: "immich_redis_1"
+  LOG_LEVEL: "simple"
+  JWT_SECRET: ${APP_SEED}
+  DISABLE_REVERSE_GEOCODING: "false"
+  REVERSE_GEOCODING_PRECISION: "3"
+  PUBLIC_LOGIN_PAGE_MESSAGE: ""
+  TYPESENSE_API_KEY: &typesense_api_key "any-text-for-self-hosted-typesense"
+  IMMICH_SERVER_URL: &immich_server_url "http://immich_server_1:3001"
+  IMMICH_WEB_URL: &immich_web_url "http://immich_web_1:3000"
+  IMMICH_MACHINE_LEARNING_URL: "http://immich_machine-learning_1:3003"
+
 services:
   app_proxy:
     environment:
       APP_HOST: immich_proxy_1
       APP_PORT: 8080
-      PROXY_AUTH_WHITELIST: "/api/*"
+      PROXY_AUTH_WHITELIST: "/api/*,/search/*"
 
   server:
-    image: altran1502/immich-server:v1.40.0_63-dev@sha256:c61f6c5373efb4544db8d04e6e090b77561b71b07d4f272821a6349a18531e37
-    entrypoint: ["/bin/sh", "./start-server.sh"]
+    image: altran1502/immich-server:v1.66.1@sha256:819360b4bce04cf36f2fe6e861f13c29dcf06ad0b8af7ea96f02cbe18c0d7824
+    command: [ "start.sh", "immich" ]
     volumes:
       - ${APP_DATA_DIR}/data/upload:/usr/src/app/upload
     environment:
-      NODE_ENV: production
-      DB_HOSTNAME: immich_postgres_1
-      DB_USERNAME: ${APP_IMMICH_DB_USERNAME}
-      DB_PASSWORD: ${APP_IMMICH_DB_PASSWORD}
-      DB_DATABASE_NAME: ${APP_IMMICH_DB_DATABASE_NAME}
-      REDIS_HOSTNAME: immich_redis_1
-      LOG_LEVEL: ${APP_IMMICH_LOG_LEVEL}
-      JWT_SECRET: ${APP_SEED}
-      DISABLE_REVERSE_GEOCODING: ${APP_IMMICH_DISABLE_REVERSE_GEOCODING}
-      REVERSE_GEOCODING_PRECISION: ${APP_IMMICH_REVERSE_GEOCODING_PRECISION}
-      PUBLIC_LOGIN_PAGE_MESSAGE: ${APP_IMMICH_PUBLIC_LOGIN_PAGE_MESSAGE}
+      <<: *env
     depends_on:
       - redis
       - postgres
+      - typesense
     restart: on-failure
 
   microservices:
-    image: altran1502/immich-server:v1.40.0_63-dev@sha256:c61f6c5373efb4544db8d04e6e090b77561b71b07d4f272821a6349a18531e37
+    image: altran1502/immich-server:v1.66.1@sha256:819360b4bce04cf36f2fe6e861f13c29dcf06ad0b8af7ea96f02cbe18c0d7824
     # This service cannot run under 1000:1000
     # And because the uploads are shared
     # We'll run immich specific services as root
-    entrypoint: ["/bin/sh", "./start-microservices.sh"]
+    command: [ "start.sh", "microservices" ]
     volumes:
       - ${APP_DATA_DIR}/data/upload:/usr/src/app/upload
     environment:
-      NODE_ENV: production
-      DB_HOSTNAME: immich_postgres_1
-      DB_USERNAME: ${APP_IMMICH_DB_USERNAME}
-      DB_PASSWORD: ${APP_IMMICH_DB_PASSWORD}
-      DB_DATABASE_NAME: ${APP_IMMICH_DB_DATABASE_NAME}
-      REDIS_HOSTNAME: immich_redis_1
-      LOG_LEVEL: ${APP_IMMICH_LOG_LEVEL}
-      JWT_SECRET: ${APP_SEED}
-      DISABLE_REVERSE_GEOCODING: ${APP_IMMICH_DISABLE_REVERSE_GEOCODING}
-      REVERSE_GEOCODING_PRECISION: ${APP_IMMICH_REVERSE_GEOCODING_PRECISION}
-      PUBLIC_LOGIN_PAGE_MESSAGE: ${APP_IMMICH_PUBLIC_LOGIN_PAGE_MESSAGE}
+      <<: *env
     depends_on:
       - redis
       - postgres
+      - typesense
     restart: on-failure
 
   machine-learning:
-    image: altran1502/immich-machine-learning:v1.40.0_63-dev@sha256:a5e660247a5a3c1d1b4ab9d160629def546d7e86e534a55d5ebc0e0eee5cef1a
-    entrypoint: ["/bin/sh", "./entrypoint.sh"]
+    image: altran1502/immich-machine-learning:v1.66.1@sha256:6412d3d499bd68012f1dcfbccd38c442d66524c37493b9883ab5e9ec0c06300c
     volumes:
-      - ${APP_DATA_DIR}/data/upload:/usr/src/app/upload
+      - ${APP_DATA_DIR}/data/model-cache:/cache
     environment:
-      NODE_ENV: production
-      DB_HOSTNAME: immich_postgres_1
-      DB_USERNAME: ${APP_IMMICH_DB_USERNAME}
-      DB_PASSWORD: ${APP_IMMICH_DB_PASSWORD}
-      DB_DATABASE_NAME: ${APP_IMMICH_DB_DATABASE_NAME}
-      REDIS_HOSTNAME: immich_redis_1
-      LOG_LEVEL: ${APP_IMMICH_LOG_LEVEL}
-      JWT_SECRET: ${APP_SEED}
-      DISABLE_REVERSE_GEOCODING: ${APP_IMMICH_DISABLE_REVERSE_GEOCODING}
-      REVERSE_GEOCODING_PRECISION: ${APP_IMMICH_REVERSE_GEOCODING_PRECISION}
-      PUBLIC_LOGIN_PAGE_MESSAGE: ${APP_IMMICH_PUBLIC_LOGIN_PAGE_MESSAGE}
-    depends_on:
-      - postgres
+      <<: *env
     restart: on-failure
 
   web:
-    image: altran1502/immich-web:v1.40.0_63-dev@sha256:abad6488afaa1d0b4b8ea818221b86e7b45bf72a1ea328d8c0f35ad266b9e544
-    entrypoint: ["/bin/sh", "./entrypoint.sh"]
+    image: altran1502/immich-web:v1.66.1@sha256:61611ce73dc2c9d47005cb7a033ac5fb0a558991e24ba51dd7630bb51915fba6
     environment:
-      DB_HOSTNAME: immich_postgres_1
-      DB_USERNAME: ${APP_IMMICH_DB_USERNAME}
-      DB_PASSWORD: ${APP_IMMICH_DB_PASSWORD}
-      DB_DATABASE_NAME: ${APP_IMMICH_DB_DATABASE_NAME}
-      REDIS_HOSTNAME: immich_redis_1
-      LOG_LEVEL: ${APP_IMMICH_LOG_LEVEL}
-      JWT_SECRET: ${APP_SEED}
-      DISABLE_REVERSE_GEOCODING: ${APP_IMMICH_DISABLE_REVERSE_GEOCODING}
-      REVERSE_GEOCODING_PRECISION: ${APP_IMMICH_REVERSE_GEOCODING_PRECISION}
-      PUBLIC_LOGIN_PAGE_MESSAGE: ${APP_IMMICH_PUBLIC_LOGIN_PAGE_MESSAGE}
-      PUBLIC_IMMICH_SERVER_URL: "http://immich_server_1:3001"
+      <<: *env
+    restart: on-failure
+
+  typesense:
+    image: typesense/typesense:0.24.1@sha256:9bcff2b829f12074426ca044b56160ca9d777a0c488303469143dd9f8259d4dd
+    environment:
+      TYPESENSE_API_KEY: *typesense_api_key
+      TYPESENSE_DATA_DIR: "/data"
+    volumes:
+      - ${APP_DATA_DIR}/data/tsdata:/data
     restart: on-failure
 
   proxy:
-    image: altran1502/immich-proxy:v1.40.0_63-dev@sha256:f779b86497b3d4b8822ec0d7341cfd2d1f1688b8859c70a9b16bd36d01468865
+    image: altran1502/immich-proxy:v1.66.1@sha256:739523b97551477aa3c19114983c41b4a669a4635b4e76b5fc899149d21710b0
     environment:
-      IMMICH_WEB_URL: "http://immich_web_1:3000"
-      IMMICH_SERVER_URL: "http://immich_server_1:3001"
+      IMMICH_SERVER_URL: *immich_server_url
+      IMMICH_WEB_URL: *immich_web_url
     depends_on:
       - server
+      - web
     restart: on-failure
 
   redis:
-    image: redis:6.2-bullseye@sha256:ffd3d04c8f7832ccdda89616ebaf3cb38414b645ebbf76dbef1fc9c36a72a2d1
+    image: redis:6.2-alpine@sha256:70a7a5b641117670beae0d80658430853896b5ef269ccf00d1827427e3263fa3
     user: "1000:1000"
     restart: on-failure
     volumes:
       - ${APP_DATA_DIR}/data/redis:/data
 
   postgres:
-    image: postgres:14-bullseye@sha256:135c62a8134dcef829a1e4f5568bfae44bcfa2c75659ff948f43c71964366aa4
+    image: postgres:14-alpine@sha256:28407a9961e76f2d285dc6991e8e48893503cc3836a4755bbc2d40bcc272a441
     user: "1000:1000"
     environment:
-      POSTGRES_USER: ${APP_IMMICH_DB_USERNAME}
-      POSTGRES_PASSWORD: ${APP_IMMICH_DB_PASSWORD}
-      POSTGRES_DB: ${APP_IMMICH_DB_DATABASE_NAME}
+      <<: *env
+      POSTGRES_PASSWORD: *db_password
+      POSTGRES_USER: *db_username
+      POSTGRES_DB: *db_database_name
       PG_DATA: /var/lib/postgresql/data
     volumes:
       - ${APP_DATA_DIR}/data/postgres:/var/lib/postgresql/data

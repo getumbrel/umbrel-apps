@@ -1,8 +1,8 @@
 manifestVersion: 1
 id: uptime-kuma
-category: Networking
+category: networking
 name: Uptime Kuma
-version: "1.19.6"
+version: "1.21.2"
 tagline: Self-hosted uptime monitoring tool
 description: >
   Uptime Kuma is a self-hosted monitoring tool like Uptime Robot.
@@ -39,27 +39,43 @@ gallery:
 path: ""
 defaultPassword: ""
 releaseNotes: >
-  From 1.18.5 to 1.19.6:
+  Updates Uptime Kuma from version 1.19.6 to 1.21.2.
+  
 
-  - Fix Ping monitor is not working on Windows
+  🆕 New Features:
   
-  - Fix Security patch from upstream dependencies (knex.js)
+  - Now you can schedule maintenance with a cron expression + duration
+   
+   
+  💇‍♀️ Improvements to Maintenance:
 
-  - Add Splunk Notification Provider (Thanks @Joseph-Irving)
+  - The core of maintenance feature is completely rewritten and is changed to cron based, the performance is much better
 
-  - Fix Maintenance count is incorrect
+  - Effective Date Range is no longer required, it is now optional
+
+  - Ability to set a timezone per maintenance
+
+  - Ability to follow the timezone with DST
+
   
-  - Fix Ping monitor issues after 1.9.4
+  🐛 Bug Fixes:
   
-  - Fix Postgres monitor do not handle some error cases correctly
+  - #3003 Maintenance is completely bugged in 1.21.1 and 1.21.0
   
+  - #2988 Fix Ignore TLS/SSL Error is not working when using a proxy (Thanks @chakflying)
   
-  ⚠️ Attention
+ 
+  ⚠️ IMPORTANT - After upgrading, you should review the following maintenance items:
   
-  - Server side timezone is configurable now, you should check whether it is correct in the Settings.
+  - All old maintenance schedules will be set to UTC individually, if you need other timezones, please change it individually.
   
-  - As current DNS cache mechanism is not working properly in some IPv6 networks, DNS cache is now turned off by default. Turn this back on manually in Settings page if you need this.
+  - Since previous versions' maintenance is always respected to UTC, which means the maintenance time could be shifted due to DST in your country. 
   
-  Full changelog can be found here: https://github.com/louislam/uptime-kuma/releases
+  - Breaking change: Due to the limitation of cron, the options Last 2nd day of month, 
+  Last 3rd day of month and Last 4th day of month in the strategy Day of Month is no longer available. 
+  (Last day of month is still available)
+
+  
+  Full changelog for versions 1.19.6 to 1.21.2 can be found here: https://github.com/louislam/uptime-kuma/releases
 submitter: Philipp Haussleiter
 submission: https://github.com/getumbrel/umbrel/pull/1148
