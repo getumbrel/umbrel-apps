@@ -25,7 +25,7 @@ services:
       PROXY_AUTH_WHITELIST: "/api/*,/search/*"
 
   server:
-    image: altran1502/immich-server:v1.66.1@sha256:819360b4bce04cf36f2fe6e861f13c29dcf06ad0b8af7ea96f02cbe18c0d7824
+    image: altran1502/immich-server:v1.72.2@sha256:d306708a090a814d6e3660e7fd372403b92600a1624b398ca2c00e8f3eaeaa1a
     command: [ "start.sh", "immich" ]
     volumes:
       - ${APP_DATA_DIR}/data/upload:/usr/src/app/upload
@@ -38,7 +38,7 @@ services:
     restart: on-failure
 
   microservices:
-    image: altran1502/immich-server:v1.66.1@sha256:819360b4bce04cf36f2fe6e861f13c29dcf06ad0b8af7ea96f02cbe18c0d7824
+    image: altran1502/immich-server:v1.72.2@sha256:d306708a090a814d6e3660e7fd372403b92600a1624b398ca2c00e8f3eaeaa1a
     # This service cannot run under 1000:1000
     # And because the uploads are shared
     # We'll run immich specific services as root
@@ -54,7 +54,7 @@ services:
     restart: on-failure
 
   machine-learning:
-    image: altran1502/immich-machine-learning:v1.66.1@sha256:6412d3d499bd68012f1dcfbccd38c442d66524c37493b9883ab5e9ec0c06300c
+    image: altran1502/immich-machine-learning:v1.72.2@sha256:3884b7424bf19256cf0e2b25f6eab099ec08ccffce6e05a8a250234d08a59aed
     volumes:
       - ${APP_DATA_DIR}/data/model-cache:/cache
     environment:
@@ -62,7 +62,7 @@ services:
     restart: on-failure
 
   web:
-    image: altran1502/immich-web:v1.66.1@sha256:61611ce73dc2c9d47005cb7a033ac5fb0a558991e24ba51dd7630bb51915fba6
+    image: altran1502/immich-web:v1.72.2@sha256:e50572dc3ec86dc0874ba7b06f8ba51bced3ce5de2fd84fc0fbba6999ab9bcef
     environment:
       <<: *env
     restart: on-failure
@@ -77,7 +77,7 @@ services:
     restart: on-failure
 
   proxy:
-    image: altran1502/immich-proxy:v1.66.1@sha256:739523b97551477aa3c19114983c41b4a669a4635b4e76b5fc899149d21710b0
+    image: altran1502/immich-proxy:v1.72.2@sha256:40c2876f1db1ac209f4985c98410f529afc11646391e07cdb80402b31c6ad67d
     environment:
       IMMICH_SERVER_URL: *immich_server_url
       IMMICH_WEB_URL: *immich_web_url
@@ -101,7 +101,6 @@ services:
       POSTGRES_PASSWORD: *db_password
       POSTGRES_USER: *db_username
       POSTGRES_DB: *db_database_name
-      PG_DATA: /var/lib/postgresql/data
     volumes:
       - ${APP_DATA_DIR}/data/postgres:/var/lib/postgresql/data
     restart: on-failure
