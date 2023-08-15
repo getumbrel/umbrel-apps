@@ -1,0 +1,27 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: llama-gpt-ui
+      APP_PORT: 3000
+
+  llama-gpt-api:
+    # TODO: update with versioned image + digest
+    image: 'ghcr.io/getumbrel/llama-gpt-api-llama-2-7b-chat:latest'
+    # user: "1000:1000"
+    restart: on-failure
+    environment:
+      MODEL: '/models/llama-2-7b-chat.bin'
+
+  llama-gpt-ui:
+    # TODO: update with versioned image + digest
+    image: 'ghcr.io/getumbrel/llama-gpt-ui:latest'
+    # user: "1000:1000"
+    restart: on-failure
+    environment:
+      - 'OPENAI_API_KEY=sk-XXXXXXXXXXXXXXXXXXXX'
+      - 'OPENAI_API_HOST=http://llama-gpt-api:8000'
+      - 'DEFAULT_MODEL=/models/llama-2-7b-chat.bin'
+      - 'WAIT_HOSTS=llama-gpt-api:8000'
+      - 'WAIT_TIMEOUT=600'
