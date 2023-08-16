@@ -7,17 +7,13 @@ services:
       APP_PORT: 3000
 
   llama-gpt-api:
-    # TODO: update with versioned image + digest
-    image: 'ghcr.io/getumbrel/llama-gpt-api-llama-2-7b-chat:latest'
-    # user: "1000:1000"
+    image: ghcr.io/getumbrel/llama-gpt-api:1.0.0@sha256:a07e93f73a578822ab7369eb5060e57a4265e289e70db19cfee7822d4ba33a10
     restart: on-failure
     environment:
       MODEL: '/models/llama-2-7b-chat.bin'
 
   llama-gpt-ui:
-    # TODO: update with versioned image + digest
-    image: 'ghcr.io/getumbrel/llama-gpt-ui:latest'
-    # user: "1000:1000"
+    image: ghcr.io/getumbrel/llama-gpt-ui:1.0.0@sha256:e00cbd9e604a108d3ba2b5c6c359262b626fe288cfa9adb00c391e8647f3ef6d
     restart: on-failure
     environment:
       - 'OPENAI_API_KEY=sk-XXXXXXXXXXXXXXXXXXXX'
