@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+AVAILABLE_SPACE_KB=$(df "${UMBREL_ROOT}" | tail -1 | awk '{print $4}')
+REQUIRED_SPACE_KB=$((5 * 1024 * 1024))
+
+# If available space is less than 5GB we do not proceed with the installation
+if (( AVAILABLE_SPACE_KB < REQUIRED_SPACE_KB )); then
+    echo "Not enough available storage space to install LlamaGPT. Exiting."
+    exit 1
+else
+    echo "Sufficient storage space available."
+fi
