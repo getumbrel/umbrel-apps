@@ -6,7 +6,9 @@ REQUIRED_SPACE_GB="10"
 REQUIRED_MEMORY_GB="6"
 
 # We need to kill the parent install process because exiting this script
-# only kills the current hook process not the parent.
+# only kills the current hook process not the parent. The user won't get
+# any visual feedback if we exit but it's better than letting them kill
+# their system.
 kill_app_install() {
   pkill --full "app install llama-gpt"
   exit 1
