@@ -1,0 +1,20 @@
+version: "3.7"
+
+services:
+
+  app_proxy:
+    environment:
+      APP_HOST: homebox_web_1
+      APP_PORT: 7745
+    
+  web:
+    # TODO: update with version-tagged image when available (https://github.com/hay-kot/homebox/pull/372)
+    image: ghcr.io/hay-kot/homebox:nightly-rootless@sha256:1ec765caa21ad37a1fe64eaed2b10b1652169389a275c914eab71e6fd10232b9
+    restart: on-failure
+    user: 1000:1000
+    environment:
+      - HBOX_LOG_LEVEL=info
+      - HBOX_LOG_FORMAT=text
+      - HBOX_WEB_MAX_UPLOAD_SIZE=10
+    volumes:
+      - ${APP_DATA_DIR}/data:/data/
