@@ -9,6 +9,7 @@ services:
   db:
     image: mariadb:10.11@sha256:82e25b84b1d413dc1d57a8cc4511deb4e69b62690080ed11a4f7013815f19bf7
     user: 1000:1000
+    restart: on-failure
     environment:
       - MYSQL_ROOT_PASSWORD=wiufh%woi&rwioj*q
       - MYSQL_LOG_CONSOLE=true
@@ -18,11 +19,13 @@ services:
   memcached:
     image: memcached:1.6@sha256:6490a74d62b91a5090091cec54400b5d7f1d3c606812ac0557b16fbde93ad2d5
     user: 1000:1000
+    restart: on-failure
     entrypoint: memcached -m 256
 
   seafile:
     image: seafileltd/seafile-mc:10.0.1@sha256:70628f29c6634e7d7df64b942e06b2f46990acbd5c6cd84ab907ce06e07ffdc1
     user: 1000:1000
+    restart: on-failure
     ports:
       - "8920:80"
     volumes:
