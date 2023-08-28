@@ -6,8 +6,9 @@ if [[ -f "${HIDDEN_SERVICE_FILE}" ]]; then
 	exit
 fi
 
-"${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" up --detach tdexd
 "${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" up --detach tor
+"${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" up --detach oceand
+"${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" up --detach tdexd
 
 echo "App: ${APP_ID} - Generating Tor Hidden Service..."
 for attempt in $(seq 1 100); do
