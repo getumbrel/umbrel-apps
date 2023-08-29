@@ -1,0 +1,19 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: romm_server_1
+      APP_PORT: 3003
+      PROXY_AUTH_ADD: "true"
+
+  server:
+    image: zurdi15/romm:1.10
+    volumes:
+      - ${APP_DATA_DIR}/data:/romm
+    restart: on-failure
+    ports:
+      - 4000:80
+    environment:
+      - CLIENT_ID="IGBD CLIENT ID"
+      - CLIENT_SECRET="IGBD SECRET"
