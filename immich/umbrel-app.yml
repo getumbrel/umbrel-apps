@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: immich
 category: files
 name: Immich
-version: "v1.74.0"
+version: "v1.75.2"
 tagline: High-performance photo and video backup solution
 description: >-
   An open-source and high-performance self-hosted backup solution for the videos and photos on your mobile device
@@ -45,20 +45,20 @@ description: >-
   
   - User-defined storage structure
 releaseNotes: >
-  ⚠️ The mobile app needs to be on at least version v1.73.0 to be fully compatible with this update.
+  ⚠️ This update includes the following breaking changes for advanced users who have modified their docker-compose.yml file:
+  
+  - To disable machine learning now, use IMMICH_MACHINE_LEARNING_ENABLED=false (previously IMMICH_MACHINE_LEARNING_URL=false)
+  
+  - Sentence-Transformers is no longer used for CLIP models, users who set MACHINE_LEARNING_CLIP_IMAGE_MODEL or MACHINE_LEARNING_CLIP_TEXT_MODEL must migrate to one of the ViT-B models listed here, with the caveat that OpenCLIP models will require running CLIP on all images since the embeddings are incompatible.
   
 
   This update brings the following new features to Immich:
 
-  - Optimized shared link view to use virtual viewports
+  - Add the ability to use a configuration file for bootstrapping an Immich instance instead of using the administration web UI
 
-  - Add the ability to refresh metadata and regenerate thumbnails for individual photo or video
+  - Machine learning sub-jobs can now be configured via the administration web UI
   
-  - Upgrade to Flutter 3.13 and improvement of album UI/UX
-
-  - Albums can now be viewed as a list on the web
-
-  - Add the ability to set the birthday of a person
+  - Slide show mode on the web
   
   - and more!
 
