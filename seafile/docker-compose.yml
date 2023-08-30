@@ -9,6 +9,7 @@ services:
   db:
     image: mariadb:10.9.4@sha256:5e2a3416f8633f8ca25778d13439cfcee4172743e1bd2a45cd1def0dceff6d3b
     container_name: seafile-mysql
+    user: 1000:1000
     environment:
       - MYSQL_ROOT_PASSWORD=wiufh%woi&rwioj*q
       - MYSQL_LOG_CONSOLE=true
@@ -17,11 +18,12 @@ services:
 
   memcached:
     image: memcached:1.5.6@sha256:375aa6d08b4ad5efe55421237ce8598e006505b4bd9ff14806359daff5334f91
+    user: 1000:1000
     container_name: seafile-memcached
     entrypoint: memcached -m 256
 
   web:
-    image: seafileltd/seafile-mc:9.0.9@sha256:7ac833196f60753c5b465e1862894458b0ebd1cd35f5fac923a4be13da0fa330
+    image: seafileltd/seafile-mc:10.0.1@sha256:70628f29c6634e7d7df64b942e06b2f46990acbd5c6cd84ab907ce06e07ffdc1
     container_name: seafile
     user: 1000:1000
     volumes:
