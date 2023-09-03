@@ -5,7 +5,6 @@ services:
     environment:
       APP_HOST: monero_server_1
       APP_PORT: 9976
-      PROXY_AUTH_ADD: "true"
 
   server:
     image: deverickapollo/umbrel-monero:v1.0.0@sha256:a5ca2854b71de83a26a4176bf82f92609b0e67f54be5b7eb9386acffba87b33e
@@ -52,9 +51,6 @@ services:
     ports:
       - "${APP_MONERO_P2P_PORT}:${APP_MONERO_P2P_PORT}"
       - "${APP_MONERO_RPC_PORT}:${APP_MONERO_RPC_PORT}"
-    expose:
-      - "${APP_MONERO_P2P_PORT}"
-      - "${APP_MONERO_RPC_PORT}"
     volumes:
       - "${APP_MONERO_DATA_DIR}:/home/monero/.bitmonero"
     networks:
