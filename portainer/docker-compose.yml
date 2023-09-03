@@ -1,0 +1,32 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: portainer_portainer_1
+      APP_PORT: 9000
+
+  docker:
+    image: docker:24.0.5-dind
+    privileged: true
+    network_mode: host
+    environment:
+      DOCKER_ENSURE_BRIDGE: "dind0:10.32.0.1/16"
+    entrypoint: /entrypoint.sh
+    command: >
+      dockerd
+        --bridge dind0
+        --data-root /data/data
+        --exec-root /data/exec
+        --host unix:///data/docker.sock
+        --pidfile /data/docker.pid
+    volumes:
+      - ./entrypoint.sh:/entrypoint.sh
+      - ./data/docker:/data
+
+  portainer:
+    image: portainer/portainer-ce:2.19.0
+    command: --bind 9000 --host unix:///docker-data/docker.sock
+    volumes:
+      - ./data/portainer:/data
+      - ./data/docker:/docker-data
