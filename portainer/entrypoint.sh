@@ -1,5 +1,12 @@
 #!/bin/sh
 
+# Remove docker pidfile if it exists to ensure Docker can start up after a bad shutdown
+pidfile="/var/run/docker.pid"
+if [[ -f "${pidfile}" ]]
+then
+    rm -f "${pidfile}"
+fi
+
 # Use nftables as the backend for iptables
 for command in iptables iptables-restore iptables-restore-translate iptables-save iptables-translate
 do
