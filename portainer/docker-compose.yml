@@ -26,7 +26,9 @@ services:
 
   portainer:
     image: portainer/portainer-ce:2.19.0
-    command: --bind :9000 --host unix:///docker-data/docker.sock
+    environment:
+      DOCKER_HOST: unix:///docker-data/docker.sock
+    # command: --bind :9000 --host unix:///docker-data/docker.sock
     volumes:
       - ${APP_DATA_DIR}/data/portainer:/data
       - ${APP_DATA_DIR}/data/docker:/docker-data
