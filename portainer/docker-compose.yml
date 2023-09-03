@@ -21,12 +21,12 @@ services:
         --host unix:///data/docker.sock
         --pidfile /data/docker.pid
     volumes:
-      - ./entrypoint.sh:/entrypoint.sh
-      - ./data/docker:/data
+      - ${APP_DATA_DIR}/entrypoint.sh:/entrypoint.sh
+      - ${APP_DATA_DIR}/data/docker:/data
 
   portainer:
     image: portainer/portainer-ce:2.19.0
     command: --bind 9000 --host unix:///docker-data/docker.sock
     volumes:
-      - ./data/portainer:/data
-      - ./data/docker:/docker-data
+      - ${APP_DATA_DIR}/data/portainer:/data
+      - ${APP_DATA_DIR}/data/docker:/docker-data
