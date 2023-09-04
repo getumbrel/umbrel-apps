@@ -1,5 +1,7 @@
 #!/bin/sh
 
+# This hack can be removed if https://github.com/docker-library/docker/pull/444 gets merged.
+
 # Remove docker pidfile if it exists to ensure Docker can start up after a bad shutdown
 pidfile="/var/run/docker.pid"
 if [[ -f "${pidfile}" ]]
