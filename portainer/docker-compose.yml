@@ -28,7 +28,7 @@ services:
 
   portainer:
     image: portainer/portainer-ce:2.19.0
-    command: --admin-password-file=/default-password
+    command: --host unix:///var/run/docker.sock --admin-password-file=/default-password
     restart: on-failure
     volumes:
       - ${APP_DATA_DIR}/default-password:/default-password
