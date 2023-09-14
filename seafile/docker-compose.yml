@@ -17,14 +17,12 @@ services:
 
   memcached:
     image: memcached:1.6.18@sha256:4ab520657d9919221f752771bb013d632c9b39cea9dfae9162244b2e39885bcd
-    user: 1000:1000
     container_name: seafile-memcached
     entrypoint: memcached -m 256
 
   web:
     image: seafileltd/seafile-mc:10.0.1@sha256:70628f29c6634e7d7df64b942e06b2f46990acbd5c6cd84ab907ce06e07ffdc1
     container_name: seafile
-    user: 1000:1000
     volumes:
       - ${APP_DATA_DIR}/seafile-data:/shared
     environment:
