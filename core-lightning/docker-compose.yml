@@ -45,9 +45,10 @@ services:
     environment:
       PORT: "${APP_CORE_LIGHTNING_REST_PORT}"
       PROTOCOL: "http"
+      LN_PATH: "${CORE_LIGHTNING_PATH}"
     volumes:
       - "${APP_CORE_LIGHTNING_REST_CERT_DIR}:/usr/src/app/certs"
-      - "${APP_DATA_DIR}/data/lightningd:/root/.lightning"
+      - "${APP_DATA_DIR}/data/lightningd:${CORE_LIGHTNING_PATH}"
     networks:
       default:
         ipv4_address: ${APP_CORE_LIGHTNING_REST_IP}
