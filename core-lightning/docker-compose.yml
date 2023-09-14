@@ -62,6 +62,7 @@ services:
       - --bitcoin-rpcconnect=${APP_BITCOIN_NODE_IP}
       - --bitcoin-rpcuser=${APP_BITCOIN_RPC_USER}
       - --bitcoin-rpcpassword=${APP_BITCOIN_RPC_PASS}
+      - --lightning-dir=${CORE_LIGHTNING_PATH}
       - --proxy=${TOR_PROXY_IP}:${TOR_PROXY_PORT}
       - --bind-addr=${APP_CORE_LIGHTNING_DAEMON_IP}:9735
       - --addr=statictor:${TOR_PROXY_IP}:29051
@@ -70,9 +71,9 @@ services:
       - --database-upgrade=true
       - --experimental-websocket-port=${APP_CORE_LIGHTNING_WEBSOCKET_PORT}
       - --experimental-offers
-      #- --grpc-port=${APP_CORE_LIGHTNING_DAEMON_GRPC_PORT}
+      - --grpc-port=${APP_CORE_LIGHTNING_DAEMON_GRPC_PORT}
     volumes:
-      - "${APP_DATA_DIR}/data/lightningd:/data/.lightning"
+      - "${APP_DATA_DIR}/data/lightningd:${CORE_LIGHTNING_PATH}"
     networks:
       default:
         ipv4_address: ${APP_CORE_LIGHTNING_DAEMON_IP}
