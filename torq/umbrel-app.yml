@@ -2,7 +2,7 @@ manifestVersion: 1
 id: torq
 category: bitcoin
 name: Torq
-version: "v1.0.11"
+version: "v1.1.1"
 tagline: Scalable Node Management Software
 description: >-
   Operating a Lightning node requires a lot of work. You need to monitor your channels, rebalance them, keep track of your fees and much more.
@@ -14,18 +14,18 @@ description: >-
   Features:
 
   - Advanced decision engine for automation. Create your own logic visually through workflows.
+  
+  - Notifications via Telegram, Discord and Slack (with advanced logic and templating)
 
   - Fast even with more than 1000 channels.
   
   - Advanced charts and visualizations of aggregated forwarding statistics
 
-  - See the channel balance (inbound/outbound capacity) over time
-
   - Manage multiple nodes at once.
 
-  - Stores all events from your node including HTLC events, fee rate changes and channel enable/disable events
-
   - Filter, sort and group data
+
+  - Stores all events from your node including HTLC events, fee rate changes and channel enable/disable events
 
   - Store custom table views configurations for quickly finding the right information
 
@@ -37,8 +37,8 @@ description: >-
 
   
 
-developer: LN Capital
-website: https://ln.capital
+developer: Torq
+website: https://torq.co
 dependencies:
   - lightning
 repo: ""
@@ -52,55 +52,24 @@ gallery:
   - 5.jpg
 releaseNotes: >-
   
-  Torq v1.0.11
+  Torq v1.1.1
   
-    Bug fixes:
-     - Fixes issue where creation of new tags overwrote existing tags.
-  
-  Torq v1.0.10
-
-    New:
-     - Connections status: Provides insight into the internals of Torq. (People often ask if there is a way to see if it's still importing data; well, now you can!)
-     - LND: Select an outbound channel for payment
-     - Keep historic information about tagging/untagging
-     - Manually request a channel from an LSP that is following the LSP channel request specification (i.e. Deezy)
-     - HTLC information in Open Channels
-     - Quick filter with fuzzy search on listing screens
-     - Mempool API integration for fee recommendations
-
-    New HTLC Firewall workflows:
-     - You can create one or more workflows to firewall/drop HTLCs. (i.e. block any HTLC coming from peer1 going to peer2 below a certain amount. Or block any HTLC if the amount of pending HTLC for a peer is above a certain amount)
-     - New HTLC Firewall Related workflow nodes:
-       - HTLC Intercepted (Trigger): Every HTLC will trigger the workflow when HTLC interceptor is enabled in the node's settings
-       - HTLC Event (Data Source): Starting point for the HTLC Firewall workflow
-       - HTLC Filter (Filter): Allows you to filter base on the HTLC's incoming and/or outgoing amount
-       - HTLC Channel Split (Filter): This splits the flow and you can chose to continue with either the incoming channel or outgoing channel from the HTLC
-       - HTLC Channel Join (Filter): After a split you can chose to join the flow back together
-       - HTLC Blocker (Action): This will firewall/drop the HTLC if something passed through it's parent
-
-    New workflow nodes:
-    - Close channel: be very careful with this one so you don't accidentally close a channel because of a logical error in your workflow!
-    - Open channel
-    - Request channel: You can now automatically request a channel from an LSP that is following the LSP channel request specification (i.e. Deezy)
-
-    Workflow update:
-     - Dry-run a workflow
-     - Capture workflow logs
-     - Visualize workflow logs in a flow diagram, including very detailed information for debugging workflows
-     - HTLC filterable data added to Channel Filter (i.e. summary of all pending HTLCs for peer1)
-
-    Updates:
-     - Improved filtering on the peers page
-     - Various optimizations and updates
-
-    Torq pay:
-     - We've never hidden the fact that some day you will have to pay to use Torq.
-     - This release starts a new phase for our startup.
-     - You will need a subscription and we chose to use Stripe for the initial launch.
-     - We ourselves are a startup looking for a good model to be able to provide the power of Torq to as many node operators as possible, so please don't hesitate to reach out to provide feedback! Let's take lightning to the next level, together!
+  Features and bugfixes:
+    - Discord integration
+    - Notifications via workflows (Telegram, Discord and Slack)
+    - Uptime metrics and visualizations
+    - Satcomma formatting on dashboard (and in notifications)
+    - Summary on Payments, On Chain Transactions and Invoices pages (+ small updates)
+    - Peers page paging (+ small updates)
+    - Hitting dry run will always generate logs even when it's disabled for the workflow
+    - Configurable retention period for workflow logs
+    - Cron trigger is now aware of the timezone
+    - Prometheus database metric interval set to 10 minutes
+    - Various CLN fixes (Thanks Boltz team!)
+    - Various performance enhancements
 
 path: ""
 defaultUsername: ""
 deterministicPassword: false
-submitter: LN Capital
+submitter: Torq
 submission: https://github.com/getumbrel/umbrel-apps/pull/549
