@@ -1,5 +1,12 @@
 #!/usr/bin/env bash
 
+set -euo pipefail
+
+APP_DATA_DIR="$(readlink -f $(dirname "${BASH_SOURCE[0]}")/..)"
+OCEAN_DATA_DIR="${APP_DATA_DIR}/ocean-data"
+
+[ ! -d "${OCEAN_DATA_DIR}" ] && mkdir -p "${OCEAN_DATA_DIR}" && chown 1000:1000 "${OCEAN_DATA_DIR}"
+
 # Delay booting TDEX until the Tor Hidden Service is ready
 HIDDEN_SERVICE_FILE="${TOR_DATA_DIR}/app-${APP_ID}-daemon/hostname"
 if [[ -f "${HIDDEN_SERVICE_FILE}" ]]; then
