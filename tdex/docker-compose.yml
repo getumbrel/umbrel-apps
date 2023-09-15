@@ -7,7 +7,7 @@ services:
       APP_PORT: 8080
 
   oceand:
-    image: ghcr.io/vulpemventures/oceand:v0.1.17@sha256:9a7e1b8df4d7907ad66e3475c5a5f357d73c49df96214c00eba121f2aea9a50d
+    image: ghcr.io/vulpemventures/oceand:v0.1.17@sha256:37b813b43b068e32d918b9f42539c33287308cc81d00909c742b7164dfefc0c4
     tty: true
     restart: on-failure
     stop_grace_period: 1m
@@ -21,7 +21,7 @@ services:
       OCEAN_UTXO_EXPIRY_DURATION_IN_SECONDS: 240
 
   tdexd:
-    image: ghcr.io/tdex-network/tdexd:v1.0.0@sha256:6e6733015dceeab41db4780b5e99313d5bbbc5dc490800ee3b5a326a8b65b92d
+    image: ghcr.io/tdex-network/tdexd:v1.0.1@sha256:eef1f31e98208e9a35ddf308317bc1df71065e189fa0915c769c7a01394ef79a
     tty: true
     restart: on-failure
     depends_on:
@@ -44,10 +44,8 @@ services:
       TDEX_CONNECT_PROTO: http
 
   dashboard:
-    image: ghcr.io/tdex-network/dashboard:v1.0.1@sha256:a99b72c76190453b74f16e3f4961f99a3d84ba7ec4315bd913247f7d49bff10f
+    image: ghcr.io/tdex-network/dashboard:v1.0.2@sha256:71d598afb0d5ec9966306f4ef0d5f6839a9d7dc50726a935f3d0bb38f1925d78
     restart: on-failure
-    ports:
-      - 8080:8080
     environment:
       USE_PROXY: "false"
       IS_PACKAGED: "true"
