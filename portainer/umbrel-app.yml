@@ -5,24 +5,39 @@ name: Portainer
 version: "2.19.0"
 tagline: Run custom Docker containers on your Umbrel
 description: >-
-  Portainer Community Edition is a lightweight service delivery platform for containerized applications that can be used to manage Docker, Swarm, Kubernetes and ACI environments.
-  It is designed to be as simple to deploy as it is to use. The application allows you to manage all your orchestrator resources (containers, images, volumes, networks and more)
-  through a ‘smart’ GUI and/or an extensive API.
+  ⚠️ Make sure to only use named Docker volumes for your stacks and containers. Data in bind-mounted volumes
+  will be lost when the Portainer app is restarted or updated.
 
 
-  🛠️ Best Practices for Using Portainer on Umbrel:
+  ⚠️ Watch out for port conflicts between your custom Docker containers and your umbrelOS apps.
 
 
-  PORT MANAGEMENT: Be aware of potential port clashes with umbrelOS containers, apps you have installed from the Umbrel App Store or Community App Stores, and any apps you go to install in the future.
+  Portainer is the ultimate Docker management solution that simplifies running Docker containers and Docker Compose
+  setups on your Umbrel, putting comprehensive control at your fingertips.
 
 
-  DATA PERSISTENCE: To persist data you must use named Docker volumes. Avoid bind mounts as they will result in data loss when the Portainer app is restarted.
+  Portainer provides seamless container management, allowing you to efficiently monitor, start, stop, and
+  modify containers, networks, volumes, and images. You can also deploy multi-container applications using Docker Compose
+  with ease.
 
 
-  CONTAINER RESTART POLICY: Set your containers to "unless-stopped" or "always" restart policies. This will allow your containers to restart automatically when the Portainer app is restarted.
+  🛠️ Portainer on Umbrel is for power users, follow these best practices to avoid issues:
 
 
-  WEB ACCESS TO CONTAINERS: Access your running containers in your browser via umbrel.local:<mapped-port>. For example, for a container with a web UI running on port 4545, navigate to umbrel.local:4545.
+  1. Data persistence: Make sure to only used named Docker volumes for your stacks and containers. Data in bind-mounted
+  volumes will be lost when the Portainer app is restarted or updated.
+
+
+  2. Port management: Watch out for potential port conflicts between your custom containers and umbrelOS' service containers,
+  apps you have installed from the Umbrel App Store or Community App Stores, and any apps you go to install in the future.
+
+
+  3. Container restart policy: Set your containers to "unless-stopped" or "always" restart policies. This will allow your containers
+  to restart automatically when the Portainer app is restarted or updated.
+
+
+  4. Web access to containers: Access your custom containers in your browser at umbrel.local:<mapped-port>. For example, for a container
+  with a web UI running on port 4545, navigate to umbrel.local:4545 to access it.
 website: https://portainer.io
 dependencies: []
 repo: https://github.com/portainer/portainer
