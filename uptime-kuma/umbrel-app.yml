@@ -2,7 +2,7 @@ manifestVersion: 1
 id: uptime-kuma
 category: networking
 name: Uptime Kuma
-version: "1.21.2"
+version: "1.23.0"
 tagline: Self-hosted uptime monitoring tool
 description: >
   Uptime Kuma is a self-hosted monitoring tool like Uptime Robot.
@@ -39,43 +39,55 @@ gallery:
 path: ""
 defaultPassword: ""
 releaseNotes: >
-  Updates Uptime Kuma from version 1.19.6 to 1.21.2.
+  Updates Uptime Kuma from version 1.21.2 to 1.23.0.
+
+  🐻 It should be the last minor version of Uptime Kuma v1. I will focus on the development of v2. Stay tuned!
+
+  Update: The last minor version (1.23.x) means that there won't be any new features introduced in v1. However, bug fixes will still be provided. You can expect to see 1.23.1, 1.23.2 and so on.
   
 
   🆕 New Features:
   
-  - Now you can schedule maintenance with a cron expression + duration
+  - Added an improved comprehensive monitor list filtering
+
+  - Added an ability to bulk select, pause & resume
+
+  - Added an ability to show certificate expiry on status pages
+
+  - Added Tailscale ping monitor
+
+  - Added badges for status page status
    
    
   💇‍♀️ Improvements to Maintenance:
 
-  - The core of maintenance feature is completely rewritten and is changed to cron based, the performance is much better
+  - Dropdown menu is no longer blocked by the save button bar
 
-  - Effective Date Range is no longer required, it is now optional
+  - Added an ability to configure a custom PushDeer server URL
 
-  - Ability to set a timezone per maintenance
+  - Added an ability to set TLS certs (Put ca.pem, key.pen and cert.pem in the data/docker-tls/your_hostname/)
 
-  - Ability to follow the timezone with DST
+  - Strip trailing slashes to avoid 404 from Home Assistant's API endpoint
 
   
   🐛 Bug Fixes:
   
-  - #3003 Maintenance is completely bugged in 1.21.1 and 1.21.0
+  - Fixed Redis authentication reattempt issue
   
-  - #2988 Fix Ignore TLS/SSL Error is not working when using a proxy (Thanks @chakflying)
-  
- 
-  ⚠️ IMPORTANT - After upgrading, you should review the following maintenance items:
-  
-  - All old maintenance schedules will be set to UTC individually, if you need other timezones, please change it individually.
-  
-  - Since previous versions' maintenance is always respected to UTC, which means the maintenance time could be shifted due to DST in your country. 
-  
-  - Breaking change: Due to the limitation of cron, the options Last 2nd day of month, 
-  Last 3rd day of month and Last 4th day of month in the strategy Day of Month is no longer available. 
-  (Last day of month is still available)
+  - Fixed notification toggle missing when import from backup
 
+  - Fixed the issue that IPv6 addresses could not be displayed in the log
+
+  - Avoid new timezones or non-existing timezones crash Uptime Kuma
+
+  - Fixed SMTP notification "Ignore TLS Error" option
+
+
+  ⬆️ Security Fixes
+
+  - Hardening: Avoid exposing the Uptime Kuma version to the public
   
-  Full changelog for versions 1.19.6 to 1.21.2 can be found here: https://github.com/louislam/uptime-kuma/releases
+  
+  Full changelog for versions 1.21.2 to 1.23.0 can be found here: https://github.com/louislam/uptime-kuma/releases
 submitter: Philipp Haussleiter
 submission: https://github.com/getumbrel/umbrel/pull/1148

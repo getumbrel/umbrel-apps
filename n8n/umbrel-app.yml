@@ -2,33 +2,59 @@ manifestVersion: 1
 id: n8n
 category: automation
 name: n8n
-version: "0.212.0"
+version: "1.4.0"
 releaseNotes: >-
-  - New features
-    - Inline expression editor: You can now quickly write expressions inline in a node parameter
-    - Workflow sharing:  With workflow sharing, users can invite other users on the same n8n instance to use and edit their workflows
-    - Log streaming: Log streaming allows you to send events from n8n to your own logging tools
-    - Security audit: You can now run a security audit on your n8n instance, to detect common security issues
-    - Typeahead for expressions: When using expressions, n8n will now offer you suggestions as you type
-    - Editor: Improve UX for brace completion in the inline expressions editor
-    - Editor: pressing = in an empty parameter input switches to expression mode
+  Bug Fixes
 
-  - New nodes
-    - Open AI - This release adds an integration with OpenAI
-    - Google Sheets trigger: You can now start workflows in response to row changes or new rows in a Google Sheet
+  - core: Add recoveryInProgress flag file
 
-  - Node enhancements
-    - Send Email node: add support for a "Reply to" email address
-    - Webhook node: when test the node by selecting Listen For Test Event then dispatching a call to the webhook, n8n now only runs the Webhook node
-    - Compare Datasets node: add an option for fuzzy compare
-    - Google Ads node: update the API version to 11
-    - Google Drive Trigger node: start using the resource locator component
-    - Item Lists node: This acts similarly to generating pivot tables in Excel, allowing you to aggregate and compare data
+  - core: Fix continueOnFail for expression error in Set
 
-  - Bugfixes
+  - core: Fix import:workflow command
 
-  - Performance improvements
+  - core: Replace throw with warning when deactivating a non-active workflow
 
+  - core: Set up OAuth2 cred test
+
+  - editor: Do not flag dynamic load options issue on expression
+
+  - editor: Ensure community node install button tracks user agreement
+
+  - editor: Fix parsing for single quoted resolvables
+
+  - editor: Fix Remove all fields not removing values in resource mapper
+
+  - editor: Prevent Code node linter from erroring on null parse
+  
+  - Google Sheets Node: Fix short sheet name interpreted as range
+
+  - Google Sheets Trigger Node: Support sheet names with non-latin characters
+
+  - GraphQL Node: Improve error handling
+
+  - Mautic Node: Fix issue with owner not being set correctly
+
+  - Salesforce Node: Fix Account update owner operation
+
+  - Shopify Node: Fix pagination when using options
+
+  - Webhook Node: Backward compatible form-data parsing for non-array fields
+  
+
+  Features
+
+  - core: Add a warning to error workflows that cannot be started due to permission or settings (#6961) (67b88f7)
+
+  - core: Add support for ready hooks, and credentials overwrite endpoint in workers (#6954) (8f8a1de)
+
+  - editor: Show banner for non-production licenses (#6943) (413570c)
+
+  - Remove PostHog event calls (#6915) (270946a)
+  
+  - Send Email Node: Add support for sending text and html email simultaneously (#6978) (3860d41)
+
+
+  Full details for changes made since version 1.4.0 can be found at https://github.com/n8n-io/n8n/releases/tag/n8n%401.4.0
 tagline: Build complex workflows, really fast
 description: >-
   n8n is an extendable workflow automation tool. With a fair-code distribution model, n8n will always have visible source code, 

@@ -25,8 +25,8 @@ services:
       PROXY_AUTH_WHITELIST: "/api/*,/search/*"
 
   server:
-    image: altran1502/immich-server:v1.61.0@sha256:c04710ed178b8418bf67ef9e069f5ecc3104955fa54f279fb91941786681a355
-    entrypoint: ["/bin/sh", "./start-server.sh"]
+    image: ghcr.io/immich-app/immich-server:v1.77.0@sha256:c16d7a36feca397b6b762cf553c2d552808ee38d1234e5b54d1be6cffe10e0b4
+    command: [ "start.sh", "immich" ]
     volumes:
       - ${APP_DATA_DIR}/data/upload:/usr/src/app/upload
     environment:
@@ -38,11 +38,11 @@ services:
     restart: on-failure
 
   microservices:
-    image: altran1502/immich-server:v1.61.0@sha256:c04710ed178b8418bf67ef9e069f5ecc3104955fa54f279fb91941786681a355
+    image: ghcr.io/immich-app/immich-server:v1.77.0@sha256:c16d7a36feca397b6b762cf553c2d552808ee38d1234e5b54d1be6cffe10e0b4
     # This service cannot run under 1000:1000
     # And because the uploads are shared
     # We'll run immich specific services as root
-    entrypoint: ["/bin/sh", "./start-microservices.sh"]
+    command: [ "start.sh", "microservices" ]
     volumes:
       - ${APP_DATA_DIR}/data/upload:/usr/src/app/upload
     environment:
@@ -54,25 +54,21 @@ services:
     restart: on-failure
 
   machine-learning:
-    image: altran1502/immich-machine-learning:v1.61.0@sha256:c86e77729444f9da4e97af9e392359afa24e201b0003dafe0f1f769f263095f1
+    image: ghcr.io/immich-app/immich-machine-learning:v1.77.0@sha256:9cceba21035ff1bd82b3a6956eb48f2349e28ffee57bd4f82c5fa99488ae266c
     volumes:
-      - ${APP_DATA_DIR}/data/upload:/usr/src/app/upload
       - ${APP_DATA_DIR}/data/model-cache:/cache
     environment:
       <<: *env
-    depends_on:
-      - postgres
     restart: on-failure
 
   web:
-    image: altran1502/immich-web:v1.61.0@sha256:7d631ccb35ef45a1dd80706ea9f2532fbb865e7dbb8eb3c322bb893a306780c2
-    entrypoint: ["/bin/sh", "./entrypoint.sh"]
+    image: ghcr.io/immich-app/immich-web:v1.77.0@sha256:b5aacf51b8566c239c257d68bc300f4a5572d3e408d58e245d31c578065e90fd
     environment:
       <<: *env
     restart: on-failure
 
   typesense:
-    image: typesense/typesense:0.24.0@sha256:3cc1251f09ef6c75a5b1f2751c04e7265c770c0f2b69cba1f9a9f20da57cfa28
+    image: typesense/typesense:0.24.1@sha256:9bcff2b829f12074426ca044b56160ca9d777a0c488303469143dd9f8259d4dd
     environment:
       TYPESENSE_API_KEY: *typesense_api_key
       TYPESENSE_DATA_DIR: "/data"
@@ -81,30 +77,30 @@ services:
     restart: on-failure
 
   proxy:
-    image: altran1502/immich-proxy:v1.61.0@sha256:3f5802339c86e2aeae463b2d6ef5a2014805b0aba3818b91b05dab59766fef78
+    image: ghcr.io/immich-app/immich-proxy:v1.77.0@sha256:22228613ed93eadb43db4fc4f4f4849c9954683aa399e95bdd4e8d808d288b23
     environment:
       IMMICH_SERVER_URL: *immich_server_url
       IMMICH_WEB_URL: *immich_web_url
     depends_on:
       - server
+      - web
     restart: on-failure
 
   redis:
-    image: redis:6.2-bullseye@sha256:ffd3d04c8f7832ccdda89616ebaf3cb38414b645ebbf76dbef1fc9c36a72a2d1
+    image: redis:6.2-alpine@sha256:70a7a5b641117670beae0d80658430853896b5ef269ccf00d1827427e3263fa3
     user: "1000:1000"
     restart: on-failure
     volumes:
       - ${APP_DATA_DIR}/data/redis:/data
 
   postgres:
-    image: postgres:14-bullseye@sha256:135c62a8134dcef829a1e4f5568bfae44bcfa2c75659ff948f43c71964366aa4
+    image: postgres:14-alpine@sha256:28407a9961e76f2d285dc6991e8e48893503cc3836a4755bbc2d40bcc272a441
     user: "1000:1000"
     environment:
       <<: *env
       POSTGRES_PASSWORD: *db_password
       POSTGRES_USER: *db_username
       POSTGRES_DB: *db_database_name
-      PG_DATA: /var/lib/postgresql/data
     volumes:
       - ${APP_DATA_DIR}/data/postgres:/var/lib/postgresql/data
     restart: on-failure
