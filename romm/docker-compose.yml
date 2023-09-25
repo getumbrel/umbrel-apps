@@ -1,26 +1,19 @@
-manifestVersion: 1
-id: room
-category: media
-name: RomM
-icon: https://raw.githubusercontent.com/zurdi15/romm/a700aa98429b0ec96ec8d9d32ffa01c989d3569f/romm.svg
-version: "1.10"
-tagline: Rom Manager.
-description: >-
-  RomM (Rom Manager) is a web based retro roms manager integrated with IGDB.
-releaseNotes: >-
-  First Version
-developer: zurdi15
-website: https://github.com/zurdi15/romm
-repo: https://github.com/zurdi15/romm
-support: https://github.com/zurdi15/romm/issues
-port: 3003
-submitter: Mateo Silguero
-submission: https://github.com/getumbrel/umbrel-apps/pull/755
-gallery:
-  - 1.jpg
-  - 2.jpg
-  - 3.jpg
-dependencies: []
-path: ""
-defaultUsername: ""
-defaultPassword: ""
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: romm_server_1
+      APP_PORT: 3003
+      PROXY_AUTH_ADD: "true"
+
+  server:
+    image: zurdi15/romm:1.10@sha256:d6c2eb5df269c2d7988f8a58c4df9a81115e8d4e5fd7902c3ce77709c540e3e2
+    volumes:
+      - ${APP_DATA_DIR}/data:/romm
+    restart: on-failure
+    ports:
+      - 4000:80
+    environment:
+      - CLIENT_ID="IGBD CLIENT ID"
+      - CLIENT_SECRET="IGBD SECRET"
