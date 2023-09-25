@@ -1,0 +1,16 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: actual-budget_web_1
+      APP_PORT: 5006
+  
+  web:
+    image: actualbudget/actual-server:latest
+    restart: on-failure
+    stop_grace_period: 1m
+    ports:
+      - 5006:5006
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
