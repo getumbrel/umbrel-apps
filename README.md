@@ -197,6 +197,8 @@ gallery:
 path: ""
 defaultUsername: ""
 defaultPassword: ""
+submitter: Umbrel
+submission: https://github.com/getumbrel/umbrel/pull/334
 ```
 
 The `dependencies` section within the app manifest gives Umbrel a list of app IDs that must be already installed in order for the user to install BTC RPC Explorer and also function.
