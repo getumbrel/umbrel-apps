@@ -29,16 +29,19 @@ jobs:
               ARCHITECTURES=$(docker run --rm mplatform/mquery:v0.5.0@sha256:d0989420b6f0d2b929fd9355f15c767f62d0e9a72cdf999d1eb16e6073782c71 $IMAGE | grep -E 'linux/amd64|linux/arm64')
               if [[ ! $ARCHITECTURES =~ "linux/amd64" ]] || [[ ! $ARCHITECTURES =~ "linux/arm" ]]; then
                 echo "::error::Image $IMAGE does not support both linux/amd64 and linux/arm architectures"
-                echo "imageError=$(echo Image $IMAGE does not support both linux/amd64 and linux/arm architectures)" >> $GITHUB_OUTPUT
+                imageError=$(echo Image $IMAGE does not support both linux/amd64 and linux/arm architectures)
+                echo "IMAGE_ERROR=$imageError" >> $GITHUB_OUTPUT
               fi
             done
             if grep -q ':latest' $changed_file ; then
               echo "::error::Some images use the latest tag"
-              echo "latestTagError=$(echo Some images use the latest tag)" >> $GITHUB_OUTPUT
+              latestTagError=$(echo Some images use the latest tag)
+              echo "LATEST_TAG_ERROR=$latestTagError" >> $GITHUB_OUTPUT
             fi
             if grep -q 'PROXY_AUTH_ADD: "true"' $changed_file ; then
               echo "::error::PROXY_AUTH_ADD is set to true"
-              echo "proxyAuthError=$(echo PROXY_AUTH_ADD is set to true)" >> $GITHUB_OUTPUT
+              proxyAuthError=$(echo PROXY_AUTH_ADD is set to true)
+              echo "PROXY_AUTH_ERROR=$proxyAuthError" >> $GITHUB_OUTPUT
             fi
           fi
         done
@@ -55,16 +58,22 @@ jobs:
             for FIELD in "${REQUIRED_FIELDS[@]}"; do
               if ! grep -q "^$FIELD:" $changed_file ; then
                 echo "::error::Required field $FIELD is missing"
+                requiredFieldError=$(echo Required field $FIELD is missing)
+                echo "REQUIRED_FIELD_ERROR=$requiredFieldError" >> $GITHUB_OUTPUT
               fi
             done
             CATEGORY=$(grep 'category:' $changed_file | cut -d':' -f2 | tr -d '[:space:]')
             if [[ $CATEGORY != $(echo "$CATEGORY" | tr '[:upper:]' '[:lower:]') ]]; then
               echo "::error::Category value is not lowercase"
+              categoryError=$(echo Category value is not lowercase)
+              echo "CATEGORY_ERROR=$categoryError" >> $GITHUB_OUTPUT
             fi
             OPTIONAL_FIELDS=("submission" "submitter" "defaultPassword" "defaultUsername" "repo")
             for FIELD in "${OPTIONAL_FIELDS[@]}"; do
               if ! grep -q "$FIELD:" $changed_file ; then
                 echo "::warning::$FIELD is an optional field and is missing"
+                optionalFieldWarning=$(echo $FIELD is an optional field and is missing)
+                echo "OPTIONAL_FIELD_WARNING=$optionalFieldWarning" >> $GITHUB_OUTPUT
               fi
             done
             echo "$changed_file -> All umbrel app checks passed"
@@ -72,29 +81,36 @@ jobs:
         done
       shell: bash
 
-    - name: Auto comment
-      uses: actions/github-script@v2.1.0
+    - name: Auto Comment
+      uses: wow-actions/auto-comment@v1
       with:
-        script: |
-          const proxyAuthError = steps.docker_compose_checks.outputs.proxyAuthError;
-          const imageError = steps.docker_compose_checks.outputs.imageError;
-          const latestTagError = steps.docker_compose_checks.outputs.latestTagError;
-          let commentBody = '';
-          if (proxyAuthError) {
-            commentBody += `Proxy Auth Error: ${proxyAuthError}\n`;
-          }
-          if (imageError) {
-            commentBody += `Image Error: ${imageError}\n`;
-          }
-          if (latestTagError) {
-            commentBody += `Latest Tag Error: ${latestTagError}\n`;
-          }
-          if (commentBody) {
-            github.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: commentBody
-            });
-          }
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        pullRequestOpened: |
+          👋 @{{ author }}
+          Thank you for raising your pull request.
+          Please make sure you have followed our contributing guidelines. We will review it as soon as possible
+          If there are any errors, they will be listed below:
+          Errors:
+          `docker-compose.yml`
+          ${{ steps.docker_compose_checks.outputs.IMAGE_ERROR }}
+          ${{ steps.docker_compose_checks.outputs.LATEST_TAG_ERROR }}
+          ${{ steps.docker_compose_checks.outputs.PROXY_AUTH_ERROR }}
+          `umbrel-app.yml`
+          ${{ steps.umbrel_app_checks.outputs.REQUIRED_FIELD_ERROR }}
+          ${{ steps.umbrel_app_checks.outputs.OPTIONAL_FIELD_WARNING }}
+          ${{ steps.umbrel_app_checks.outputs.CATEGORY_ERROR }}
+        pullRequestReopened: |
+          👋 @{{ author }}
+          Thank you for raising your pull request.
+          Please make sure you have followed our contributing guidelines. We will review it as soon as possible
+          If there are any errors, they will be listed below:
+          Errors:
+          `docker-compose.yml`
+          ${{ steps.docker_compose_checks.outputs.IMAGE_ERROR }}
+          ${{ steps.docker_compose_checks.outputs.LATEST_TAG_ERROR }}
+          ${{ steps.docker_compose_checks.outputs.PROXY_AUTH_ERROR }}
+          `umbrel-app.yml`
+          ${{ steps.umbrel_app_checks.outputs.REQUIRED_FIELD_ERROR }}
+          ${{ steps.umbrel_app_checks.outputs.OPTIONAL_FIELD_WARNING }}
+          ${{ steps.umbrel_app_checks.outputs.CATEGORY_ERROR }}
 
