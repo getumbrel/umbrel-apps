@@ -63,15 +63,15 @@ jobs:
               fi
             done
             echo $missingFields
-            echo "REQUIRED_FIELD_ERROR=$missingFields" >> $GITHUB_ENV
+            echo "REQUIRED_FIELD_ERROR=$missingFields" >> $GITHUB_OUTPUT
 
             CATEGORY=$(grep 'category:' $changed_file | cut -d':' -f2 | tr -d '[:space:]')
             if [[ $CATEGORY != $(echo "$CATEGORY" | tr '[:upper:]' '[:lower:]') ]]; then
               echo "::error::Category value is not lowercase"
               categoryError=$(echo Category value is not lowercase)
-              echo "CATEGORY_ERROR=$categoryError" >> $GITHUB_ENV
+              echo "CATEGORY_ERROR=$categoryError" >> $GITHUB_OUTPUT
             fi
-            
+
             OPTIONAL_FIELDS=("submission" "submitter" "defaultPassword" "defaultUsername" "repo")
             optionalFieldsMissing=""
             for FIELD in "${OPTIONAL_FIELDS[@]}"; do
@@ -81,7 +81,7 @@ jobs:
               fi
             done
             echo $optionalFieldsMissing
-            echo "OPTIONAL_FIELD_WARNING=$optionalFieldsMissing" >> $GITHUB_ENV
+            echo "OPTIONAL_FIELD_WARNING=$optionalFieldsMissing" >> $GITHUB_OUTPUT
             echo "$changed_file -> All umbrel app checks passed"
           fi
         done
@@ -101,8 +101,8 @@ jobs:
 
           ### `umbrel-app.yml`
           ${{ steps.umbrel_app_checks.outputs.REQUIRED_FIELD_ERROR != '' && '- 🛑 ' || '- ✅ All required fields present' }} ${{ steps.umbrel_app_checks.outputs.REQUIRED_FIELD_ERROR }}
-          ${{ steps.umbrel_app_checks.outputs.CATEGORY_ERROR != '' && '- 🛑 ' || '- ✅ Category value is lowercase' }} ${{ steps.umbrel_app_checks.outputs.CATEGORY_ERROR }}
           ${{ steps.umbrel_app_checks.outputs.OPTIONAL_FIELD_WARNING != '' && '- ⚠️ ' || '- ✅ All optional fields present' }} ${{ steps.umbrel_app_checks.outputs.OPTIONAL_FIELD_WARNING }}
+          ${{ steps.umbrel_app_checks.outputs.CATEGORY_ERROR != '' && '- 🛑 ' || '- ✅ Category value is lowercase' }} ${{ steps.umbrel_app_checks.outputs.CATEGORY_ERROR }}
 
         pullRequestReopened: |
           if there are any errors or warnings they will be listed below:
