@@ -26,8 +26,24 @@ jobs:
         do
           if [[ $file == *docker-compose.yml ]]
           then
-            chmod +x ./docker-compose-checks.sh
-            ./docker-compose-checks.sh "$file"
+            echo "Running docker-compose checks on $file"
+            grep 'image:' $file | while read -r line ; do
+              IMAGE=$(echo $line | cut -d' ' -f2)
+              ARCHITECTURES=$(docker run --rm mplatform/mquery:v0.5.0@sha256:d0989420b6f0d2b929fd9355f15c767f62d0e9a72cdf999d1eb16e6073782c71 $IMAGE | grep -E 'linux/amd64|linux/arm64')
+              if [[ ! $ARCHITECTURES =~ "linux/amd64" ]] || [[ ! $ARCHITECTURES =~ "linux/arm" ]]; then
+                echo "Image $IMAGE does not support both linux/amd64 and linux/arm architectures"
+                exit 1
+              fi
+            done
+            if grep -q ':latest' $file ; then
+              echo "Some images use the latest tag"
+              exit 1
+            fi
+            if grep -q 'PROXY_AUTH_ADD: "true"' $file ; then
+              echo "PROXY_AUTH_ADD is set to true"
+              exit 1
+            fi
+            echo "$file -> All docker-compose checks passed"
           fi
         done
       shell: bash
@@ -39,8 +55,26 @@ jobs:
         do
           if [[ $file == *umbrel-app.yml ]]
           then
-            chmod +x ./umbrel-app-checks.sh
-            ./docker-compose-checks.sh "$file"
+            echo "Running umbrel app checks on $file"
+            REQUIRED_FIELDS=("manifestVersion" "id" "category" "name" "version" "tagline" "description" "developer" "website" "dependencies" "support" "port" "gallery")
+            for FIELD in "${REQUIRED_FIELDS[@]}"; do
+              if ! grep -q "^$FIELD:" $file ; then
+                echo "Required field $FIELD is missing"
+                exit 1
+              fi
+            done
+            CATEGORY=$(grep 'category:' $file | cut -d':' -f2 | tr -d '[:space:]')
+            if [[ $CATEGORY != $(echo "$CATEGORY" | tr '[:upper:]' '[:lower:]') ]]; then
+              echo "Category value is not lowercase"
+              exit 1
+            fi
+            OPTIONAL_FIELDS=("submission" "submitter" "defaultPassword" "defaultUsername" "repo")
+            for FIELD in "${OPTIONAL_FIELDS[@]}"; do
+              if ! grep -q "$FIELD:" $file ; then
+                echo "Warning: Optional field $FIELD is missing"
+              fi
+            done
+            echo "$file -> All umbrel app checks passed"
           fi
         done
       shell: bash
