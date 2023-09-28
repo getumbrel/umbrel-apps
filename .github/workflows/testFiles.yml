@@ -59,12 +59,12 @@ jobs:
             for FIELD in "${REQUIRED_FIELDS[@]}"; do
               if ! grep -q "^$FIELD:" $changed_file ; then
                 echo "::error::Required field $FIELD is missing"
-                missingFields+="`$FIELD`, "
+                missingFields+="\\`$FIELD\\`, "
               fi
             done
             echo $missingFields
             if [[ $missingFields != "" ]]; then
-              echo "REQUIRED_FIELD_ERROR=$missingFields these required fields are missing in umbrel-app.yml" >> $GITHUB_OUTPUT
+              echo "REQUIRED_FIELD_ERROR=$missingFields : required fields missing in umbrel-app.yml" >> $GITHUB_OUTPUT
             fi
 
             CATEGORY=$(grep 'category:' $changed_file | cut -d':' -f2 | tr -d '[:space:]')
@@ -79,12 +79,12 @@ jobs:
             for FIELD in "${OPTIONAL_FIELDS[@]}"; do
               if ! grep -q "$FIELD:" $changed_file ; then
                 echo "::warning::$FIELD is an optional field and is missing"
-                optionalFieldsMissing+="`$FIELD`, "
+                optionalFieldsMissing+="\\`$FIELD\\`, "
               fi
             done
             echo $optionalFieldsMissing
             if [[ $optionalFieldsMissing != "" ]]; then
-              echo "OPTIONAL_FIELD_WARNING=$optionalFieldsMissing these optional fields are missing in umbrel-app.yml" >> $GITHUB_OUTPUT
+              echo "OPTIONAL_FIELD_WARNING=$optionalFieldsMissing : optional fields missing in umbrel-app.yml" >> $GITHUB_OUTPUT
             fi
             echo "$changed_file -> All umbrel app checks passed"
           fi
