@@ -89,25 +89,25 @@ jobs:
           if there are any errors or warnings they will be listed below:
 
           ### `docker-compose.yml`
-          - 🛑 ${{ steps.docker_compose_checks.outputs.IMAGE_ERROR }}
-          - 🛑 ${{ steps.docker_compose_checks.outputs.LATEST_TAG_ERROR }}
-          - 🛑 ${{ steps.docker_compose_checks.outputs.PROXY_AUTH_ERROR }}
+          ${{ steps.docker_compose_checks.outputs.IMAGE_ERROR != '' && '- 🛑 ' + steps.docker_compose_checks.outputs.IMAGE_ERROR || '- ✅ No image errors' }}
+          ${{ steps.docker_compose_checks.outputs.LATEST_TAG_ERROR != '' && '- 🛑 ' + steps.docker_compose_checks.outputs.LATEST_TAG_ERROR || '- ✅ No latest tag errors' }}
+          ${{ steps.docker_compose_checks.outputs.PROXY_AUTH_ERROR != '' && '- 🛑 ' + steps.docker_compose_checks.outputs.PROXY_AUTH_ERROR || '- ✅ No proxy auth errors' }}
 
           ### `umbrel-app.yml`
-          - 🛑 ${{ steps.umbrel_app_checks.outputs.REQUIRED_FIELD_ERROR }}
-          - 🛑 ${{ steps.umbrel_app_checks.outputs.CATEGORY_ERROR }}
-          - ⚠️ ${{ steps.umbrel_app_checks.outputs.OPTIONAL_FIELD_WARNING }}
+          ${{ steps.umbrel_app_checks.outputs.REQUIRED_FIELD_ERROR != '' && '- 🛑 ' + steps.umbrel_app_checks.outputs.REQUIRED_FIELD_ERROR || '- ✅ All required fields present' }}
+          ${{ steps.umbrel_app_checks.outputs.CATEGORY_ERROR != '' && '- 🛑 ' + steps.umbrel_app_checks.outputs.CATEGORY_ERROR || '- ✅ Category value is lowercase' }}
+          ${{ steps.umbrel_app_checks.outputs.OPTIONAL_FIELD_WARNING != '' && '- ⚠️ ' + steps.umbrel_app_checks.outputs.OPTIONAL_FIELD_WARNING || '- ✅ All optional fields present' }}
 
         pullRequestReopened: |
-          if there are any errors or warnings they will be listed below:
+           if there are any errors or warnings they will be listed below:
 
           ### `docker-compose.yml`
-          - 🛑 ${{ steps.docker_compose_checks.outputs.IMAGE_ERROR }}
-          - 🛑 ${{ steps.docker_compose_checks.outputs.LATEST_TAG_ERROR }}
-          - 🛑 ${{ steps.docker_compose_checks.outputs.PROXY_AUTH_ERROR }}
+          ${{ steps.docker_compose_checks.outputs.IMAGE_ERROR != '' && '- 🛑 ' + steps.docker_compose_checks.outputs.IMAGE_ERROR || '- ✅ No image errors' }}
+          ${{ steps.docker_compose_checks.outputs.LATEST_TAG_ERROR != '' && '- 🛑 ' + steps.docker_compose_checks.outputs.LATEST_TAG_ERROR || '- ✅ No latest tag errors' }}
+          ${{ steps.docker_compose_checks.outputs.PROXY_AUTH_ERROR != '' && '- 🛑 ' + steps.docker_compose_checks.outputs.PROXY_AUTH_ERROR || '- ✅ No proxy auth errors' }}
 
           ### `umbrel-app.yml`
-          - 🛑 ${{ steps.umbrel_app_checks.outputs.REQUIRED_FIELD_ERROR }}
-          - 🛑 ${{ steps.umbrel_app_checks.outputs.CATEGORY_ERROR }}
-          - ⚠️ ${{ steps.umbrel_app_checks.outputs.OPTIONAL_FIELD_WARNING }}
+          ${{ steps.umbrel_app_checks.outputs.REQUIRED_FIELD_ERROR != '' && '- 🛑 ' + steps.umbrel_app_checks.outputs.REQUIRED_FIELD_ERROR || '- ✅ All required fields present' }}
+          ${{ steps.umbrel_app_checks.outputs.CATEGORY_ERROR != '' && '- 🛑 ' + steps.umbrel_app_checks.outputs.CATEGORY_ERROR || '- ✅ Category value is lowercase' }}
+          ${{ steps.umbrel_app_checks.outputs.OPTIONAL_FIELD_WARNING != '' && '- ⚠️ ' + steps.umbrel_app_checks.outputs.OPTIONAL_FIELD_WARNING || '- ✅ All optional fields present' }}
 
