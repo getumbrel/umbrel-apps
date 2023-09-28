@@ -59,7 +59,7 @@ jobs:
             for FIELD in "${REQUIRED_FIELDS[@]}"; do
               if ! grep -q "^$FIELD:" $changed_file ; then
                 echo "::error::Required field $FIELD is missing"
-                missingFields+="\\`$FIELD\\`, "
+                missingFields+="`<code>$FIELD</code>, "
               fi
             done
             echo $missingFields
@@ -79,7 +79,7 @@ jobs:
             for FIELD in "${OPTIONAL_FIELDS[@]}"; do
               if ! grep -q "$FIELD:" $changed_file ; then
                 echo "::warning::$FIELD is an optional field and is missing"
-                optionalFieldsMissing+="\\`$FIELD\\`, "
+                optionalFieldsMissing+="<code>$FIELD</code>, "
               fi
             done
             echo $optionalFieldsMissing
