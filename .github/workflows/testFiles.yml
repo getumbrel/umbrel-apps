@@ -18,6 +18,7 @@ jobs:
       uses: Ana06/get-changed-files@v2.2.0
 
     - name: Run docker-compose checks
+      id: docker-compose-checks
       run: |
         for changed_file in ${{ steps.files.outputs.all }}; do
           if [[ $changed_file == *docker-compose.yml ]]
@@ -41,6 +42,7 @@ jobs:
       shell: bash
 
     - name: Run umbrel app checks
+      id: umbrel-app-checks
       run: |
         for changed_file in ${{ steps.files.outputs.all }}; do
           if [[ $changed_file == *umbrel-app.yml ]]
@@ -76,15 +78,31 @@ jobs:
           Thank you for raising your pull request.
           Please make sure you have followed our contributing guidelines. We will review it as soon as possible
           If there are any errors, they will be listed below:
-          ${{ steps.build.outputs.errors }}
-          ${{ steps.build.outputs.warnings }}
+          Errors:
+          `docker-compose.yml`
+          ${{ steps.docker-compose-checks.outputs.errors }}
+          `umbrel-app.yml`
+          ${{ steps.umbrel-app-checks.outputs.errors }}
+          Warnings:
+          `docker-compose.yml`
+          ${{ steps.docker-compose-checks.outputs.warnings }}
+          `umbrel-app.yml`
+          ${{ steps.umbrel-app-checks.outputs.warnings }}
 
         pullRequestReopened: |
           👋 @{{ author }}
           Thank you for raising your pull request.
           Please make sure you have followed our contributing guidelines. We will review it as soon as possible
           If there are any errors, they will be listed below:
-          ${{ steps.build.outputs.errors }}
-          ${{ steps.build.outputs.warnings }}
+          Errors:
+          `docker-compose.yml`
+          ${{ steps.docker-compose-checks.outputs.errors }}
+          `umbrel-app.yml`
+          ${{ steps.umbrel-app-checks.outputs.errors }}
+          Warnings:
+          `docker-compose.yml`
+          ${{ steps.docker-compose-checks.outputs.warnings }}
+          `umbrel-app.yml`
+          ${{ steps.umbrel-app-checks.outputs.warnings }}
 
 
