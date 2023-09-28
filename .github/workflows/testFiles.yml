@@ -18,7 +18,7 @@ jobs:
         # Loop through all docker-compose.yml files in the PR
         for file in $(find . -name 'docker-compose.yml'); do
           # Run the docker-compose checks script on each file
-          bash .github/workflows/docker-compose-checks.sh "$file"
+          bash ${{ github.workspace }}/.github/workflows/docker-compose-checks.sh "$file"
         done
       shell: /usr/bin/bash -e {0}
     - name: Run umbrel app checks
@@ -26,6 +26,6 @@ jobs:
         # Loop through all umbrel-app.yml files in the PR
         for file in $(find . -name 'umbrel-app.yml'); do
           # Run the umbrel app checks script on each file
-          bash .github/workflows/umbrel-app-checks.sh "$file"
+          bash ${{ github.workspace }}/.github/workflows/umbrel-app-checks.sh "$file"
         done
       shell: /usr/bin/bash -e {0}
