@@ -1,0 +1,51 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: mutiny-wallet_nginx_1
+      APP_PORT: 14499
+
+  proxy:
+    image: ghcr.io/mutinywallet/ln-websocket-proxy:v0.3.1@sha256:b5cd29c10acbc4182b2be7644043ad565407d62e4046c19e6e4a6450886d847e
+    restart: on-failure
+    stop_signal: SIGINT
+
+  postgres:
+    image: postgres:15@sha256:546445ad21cb5893c0997080b831ee45945e798c4359270e16413c8bd93575db
+    restart: on-failure
+    stop_signal: SIGINT
+    volumes:
+      - ${APP_DATA_DIR}/data/postgresql:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: docker
+      POSTGRES_DB: vss
+
+  vss:
+    image: ghcr.io/mutinywallet/vss-rs:v0.1.0@sha256:f64b08c3ec38f0091187b49bf509ab75903d76300a95428c5e14f71cbc053761
+    restart: on-failure
+    stop_signal: SIGINT
+    environment:
+      DATABASE_URL: postgres://postgres:docker@postgres/vss
+      SELF_HOST: "true"
+    links:
+      - postgres
+    depends_on:
+      - postgres
+
+  web:
+    image: ghcr.io/mutinywallet/mutiny-web:build-93@sha256:da1d0d75cb7562ea3a2babd392c0f7ca8ac5ad179d0d5e8fdebc0d2fefd13602
+    restart: on-failure
+
+  nginx:
+    image: nginx:1.21-alpine@sha256:686aac2769fd6e7bab67663fd38750c135b72d993d0bb0a942ab02ef647fc9c3
+    init: true
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/config/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ${APP_DATA_DIR}/data/public:/var/www/app/public:ro
+    depends_on:
+      - web
+      - proxy
+      - vss
