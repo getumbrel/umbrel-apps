@@ -73,16 +73,28 @@ jobs:
       shell: bash
 
     - name: Auto comment
-      uses: actions/github-script@v3
+      uses: actions/github-script@v2.1.0
       with:
         script: |
-          github.issues.createComment({
-            issue_number: context.issue.number,
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            body: `Proxy Auth Error: ${steps.docker_compose_checks.outputs.proxyAuthError}\n` +
-                  `Image Error: ${steps.docker_compose_checks.outputs.imageError}\n` +
-                  `Latest Tag Error: ${steps.docker_compose_checks.outputs.latestTagError}\n` +
-          })
-  
+          const proxyAuthError = steps.docker_compose_checks.outputs.proxyAuthError;
+          const imageError = steps.docker_compose_checks.outputs.imageError;
+          const latestTagError = steps.docker_compose_checks.outputs.latestTagError;
+          let commentBody = '';
+          if (proxyAuthError) {
+            commentBody += `Proxy Auth Error: ${proxyAuthError}\n`;
+          }
+          if (imageError) {
+            commentBody += `Image Error: ${imageError}\n`;
+          }
+          if (latestTagError) {
+            commentBody += `Latest Tag Error: ${latestTagError}\n`;
+          }
+          if (commentBody) {
+            github.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: commentBody
+            });
+          }
 
