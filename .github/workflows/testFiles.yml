@@ -86,31 +86,39 @@ jobs:
       with:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         pullRequestOpened: |
-          👋 @{{ author }}
-          Thank you for raising your pull request.
-          Please make sure you have followed our contributing guidelines. We will review it as soon as possible
-          If there are any errors, they will be listed below:
-          Errors:
+          if there are any errors or warnings they will be listed below:
+
+          Errors 🛑:
+
           `docker-compose.yml`
-          ${{ steps.docker_compose_checks.outputs.IMAGE_ERROR }}
-          ${{ steps.docker_compose_checks.outputs.LATEST_TAG_ERROR }}
-          ${{ steps.docker_compose_checks.outputs.PROXY_AUTH_ERROR }}
+          - ${{ steps.docker_compose_checks.outputs.IMAGE_ERROR }}
+          - ${{ steps.docker_compose_checks.outputs.LATEST_TAG_ERROR }}
+          - ${{ steps.docker_compose_checks.outputs.PROXY_AUTH_ERROR }}
+
           `umbrel-app.yml`
-          ${{ steps.umbrel_app_checks.outputs.REQUIRED_FIELD_ERROR }}
-          ${{ steps.umbrel_app_checks.outputs.OPTIONAL_FIELD_WARNING }}
-          ${{ steps.umbrel_app_checks.outputs.CATEGORY_ERROR }}
+          - ${{ steps.umbrel_app_checks.outputs.REQUIRED_FIELD_ERROR }}
+          - ${{ steps.umbrel_app_checks.outputs.CATEGORY_ERROR }}
+
+          Warnings ⚠️:
+          
+          `umbrel-app.yml`
+          - ${{ steps.umbrel_app_checks.outputs.OPTIONAL_FIELD_WARNING }}
         pullRequestReopened: |
-          👋 @{{ author }}
-          Thank you for raising your pull request.
-          Please make sure you have followed our contributing guidelines. We will review it as soon as possible
-          If there are any errors, they will be listed below:
-          Errors:
+          if there are any errors or warnings they will be listed below:
+
+          Errors 🛑:
+
           `docker-compose.yml`
-          ${{ steps.docker_compose_checks.outputs.IMAGE_ERROR }}
-          ${{ steps.docker_compose_checks.outputs.LATEST_TAG_ERROR }}
-          ${{ steps.docker_compose_checks.outputs.PROXY_AUTH_ERROR }}
+          - ${{ steps.docker_compose_checks.outputs.IMAGE_ERROR }}
+          - ${{ steps.docker_compose_checks.outputs.LATEST_TAG_ERROR }}
+          - ${{ steps.docker_compose_checks.outputs.PROXY_AUTH_ERROR }}
+
           `umbrel-app.yml`
-          ${{ steps.umbrel_app_checks.outputs.REQUIRED_FIELD_ERROR }}
-          ${{ steps.umbrel_app_checks.outputs.OPTIONAL_FIELD_WARNING }}
-          ${{ steps.umbrel_app_checks.outputs.CATEGORY_ERROR }}
+          - ${{ steps.umbrel_app_checks.outputs.REQUIRED_FIELD_ERROR }}
+          - ${{ steps.umbrel_app_checks.outputs.CATEGORY_ERROR }}
+
+          Warnings ⚠️:
+          
+          `umbrel-app.yml`
+          - ${{ steps.umbrel_app_checks.outputs.OPTIONAL_FIELD_WARNING }}
 
