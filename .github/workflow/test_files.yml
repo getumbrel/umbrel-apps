@@ -1,0 +1,29 @@
+name: Test Files
+
+on:
+  pull_request:
+    paths:
+      - '**/docker-compose.yml'
+      - '**/umbrel-app.yml'
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Run docker-compose checks
+      run: |
+        # Loop through all docker-compose.yml files in the PR
+        for file in $(find . -name 'docker-compose.yml'); do
+          # Run the docker-compose checks script on each file
+          .github/workflow/docker-compose-checks.sh "$file"
+        done
+    - name: Run umbrel app checks
+      run: |
+        # Loop through all umbrel-app.yml files in the PR
+        for file in $(find . -name 'umbrel-app.yml'); do
+          # Run the umbrel app checks script on each file
+          .github/workflow/umbrel-app-checks.sh "$file"
+        done
