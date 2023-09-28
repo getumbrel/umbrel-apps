@@ -63,7 +63,7 @@ jobs:
               fi
             done
             echo $missingFields
-            echo "REQUIRED_FIELD_ERROR=$missingFields" >> $GITHUB_OUTPUT
+            echo "REQUIRED_FIELD_ERROR=$missingFields these required fields are missing in umbrel-app.yml" >> $GITHUB_OUTPUT
 
             CATEGORY=$(grep 'category:' $changed_file | cut -d':' -f2 | tr -d '[:space:]')
             if [[ $CATEGORY != $(echo "$CATEGORY" | tr '[:upper:]' '[:lower:]') ]]; then
@@ -81,7 +81,7 @@ jobs:
               fi
             done
             echo $optionalFieldsMissing
-            echo "OPTIONAL_FIELD_WARNING=$optionalFieldsMissing" >> $GITHUB_OUTPUT
+            echo "OPTIONAL_FIELD_WARNING=$optionalFieldsMissing these optional fields are missing in umbrel-app.yml" >> $GITHUB_OUTPUT
             echo "$changed_file -> All umbrel app checks passed"
           fi
         done
