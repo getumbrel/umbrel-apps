@@ -27,16 +27,16 @@ jobs:
               IMAGE=$(echo $line | cut -d' ' -f2)
               ARCHITECTURES=$(docker run --rm mplatform/mquery:v0.5.0@sha256:d0989420b6f0d2b929fd9355f15c767f62d0e9a72cdf999d1eb16e6073782c71 $IMAGE | grep -E 'linux/amd64|linux/arm64')
               if [[ ! $ARCHITECTURES =~ "linux/amd64" ]] || [[ ! $ARCHITECTURES =~ "linux/arm" ]]; then
-                echo "::error::Image $IMAGE does not support both linux/amd64 and linux/arm architectures"
+                echo "::error::Image $IMAGE does not support both linux/amd64 and linux/arm architectures" >> $GITHUB_ENV
                 exit 1
               fi
             done
             if grep -q ':latest' $changed_file ; then
-              echo "::error::Some images use the latest tag"
+              echo "::error::Some images use the latest tag" >> $GITHUB_ENV
               exit 1
             fi
             if grep -q 'PROXY_AUTH_ADD: "true"' $changed_file ; then
-              echo "::error::PROXY_AUTH_ADD is set to true"
+              echo "::error::PROXY_AUTH_ADD is set to true" >> $GITHUB_ENV
               exit 1
             fi
             echo "$changed_file -> All docker-compose checks passed"
@@ -53,19 +53,19 @@ jobs:
             REQUIRED_FIELDS=("manifestVersion" "id" "category" "name" "version" "tagline" "description" "developer" "website" "dependencies" "support" "port" "gallery")
             for FIELD in "${REQUIRED_FIELDS[@]}"; do
               if ! grep -q "^$FIELD:" $changed_file ; then
-                echo "::error::Required field $FIELD is missing"
+                echo "::error::Required field $FIELD is missing" >> $GITHUB_ENV
                 exit 1
               fi
             done
             CATEGORY=$(grep 'category:' $changed_file | cut -d':' -f2 | tr -d '[:space:]')
             if [[ $CATEGORY != $(echo "$CATEGORY" | tr '[:upper:]' '[:lower:]') ]]; then
-              echo "::error::Category value is not lowercase"
+              echo "::error::Category value is not lowercase" >> $GITHUB_ENV
               exit 1
             fi
             OPTIONAL_FIELDS=("submission" "submitter" "defaultPassword" "defaultUsername" "repo")
             for FIELD in "${OPTIONAL_FIELDS[@]}"; do
               if ! grep -q "$FIELD:" $changed_file ; then
-                echo "::warning::$FIELD is an optional field and is missing"
+                echo "::warning::$FIELD is an optional field and is missing" >> $GITHUB_ENV
               fi
             done
             echo "$changed_file -> All umbrel app checks passed"
@@ -73,3 +73,17 @@ jobs:
         done
       shell: bash
 
+    - name: Create PR comment
+      uses: actions/github-script@v5
+      with:
+        script: |
+          const fs = require('fs');
+          const errors = fs.readFileSync(process.env.GITHUB_ENV, 'utf8');
+          if (errors) {
+            github.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: errors
+            });
+          }
