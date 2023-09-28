@@ -60,6 +60,7 @@ jobs:
               if ! grep -q "^$FIELD:" $changed_file ; then
                 echo "::error::Required field $FIELD is missing"
                 missingFields+="$FIELD, "
+                echo $missingFields
               fi
             done
             echo "REQUIRED_FIELD_ERROR=$missingFields" >> $GITHUB_ENV
@@ -75,6 +76,7 @@ jobs:
               if ! grep -q "$FIELD:" $changed_file ; then
                 echo "::warning::$FIELD is an optional field and is missing"
                 optionalFieldsMissing+="$FIELD, "
+                echo $optionalFieldsMissing
               fi
             done
             echo "OPTIONAL_FIELD_WARNING=$optionalFieldsMissing" >> $GITHUB_ENV
