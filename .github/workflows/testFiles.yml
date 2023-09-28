@@ -55,27 +55,29 @@ jobs:
           then
             echo "Running umbrel app checks on $changed_file"
             REQUIRED_FIELDS=("manifestVersion" "id" "category" "name" "version" "tagline" "description" "developer" "website" "dependencies" "support" "port" "gallery")
+            missingFields=""
             for FIELD in "${REQUIRED_FIELDS[@]}"; do
               if ! grep -q "^$FIELD:" $changed_file ; then
                 echo "::error::Required field $FIELD is missing"
-                requiredFieldError=$(echo Required field $FIELD is missing)
-                echo "REQUIRED_FIELD_ERROR=$requiredFieldError" >> $GITHUB_OUTPUT
+                missingFields+="$FIELD, "
               fi
             done
+            echo "REQUIRED_FIELD_ERROR=$missingFields" >> $GITHUB_ENV
             CATEGORY=$(grep 'category:' $changed_file | cut -d':' -f2 | tr -d '[:space:]')
             if [[ $CATEGORY != $(echo "$CATEGORY" | tr '[:upper:]' '[:lower:]') ]]; then
               echo "::error::Category value is not lowercase"
               categoryError=$(echo Category value is not lowercase)
-              echo "CATEGORY_ERROR=$categoryError" >> $GITHUB_OUTPUT
+              echo "CATEGORY_ERROR=$categoryError" >> $GITHUB_ENV
             fi
             OPTIONAL_FIELDS=("submission" "submitter" "defaultPassword" "defaultUsername" "repo")
+            optionalFieldsMissing=""
             for FIELD in "${OPTIONAL_FIELDS[@]}"; do
               if ! grep -q "$FIELD:" $changed_file ; then
                 echo "::warning::$FIELD is an optional field and is missing"
-                optionalFieldWarning=$(echo $FIELD is an optional field and is missing)
-                echo "OPTIONAL_FIELD_WARNING=$optionalFieldWarning" >> $GITHUB_OUTPUT
+                optionalFieldsMissing+="$FIELD, "
               fi
             done
+            echo "OPTIONAL_FIELD_WARNING=$optionalFieldsMissing" >> $GITHUB_ENV
             echo "$changed_file -> All umbrel app checks passed"
           fi
         done
