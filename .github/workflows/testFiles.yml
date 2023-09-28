@@ -1,5 +1,38 @@
 name: Test Files
 
+# Define reusable YAML anchors
+
+anchors:
+  docker_compose_checks: &docker_compose_checks |
+    for changed_file in ${{ steps.files.outputs.all }}; do
+      if [[ $changed_file == *docker-compose.yml ]]
+      then
+        echo "Running docker-compose checks on $changed_file"
+        # Rest of your docker-compose checks
+      fi
+    done
+
+  umbrel_app_checks: &umbrel_app_checks |
+    for changed_file in ${{ steps.files.outputs.all }}; do
+      if [[ $changed_file == *umbrel-app.yml ]]
+      then
+        echo "Running umbrel app checks on $changed_file"
+        # Rest of your umbrel app checks
+      fi
+    done
+
+  comment_template: &comment_template |
+    if there are any errors or warnings they will be listed below:
+    ### `docker-compose.yml`
+    ${{ steps.docker_compose_checks.outputs.IMAGE_ERROR != '' && '- 🛑 ' || '- ✅ No image errors' }} ${{ steps.docker_compose_checks.outputs.IMAGE_ERROR }}
+    ${{ steps.docker_compose_checks.outputs.LATEST_TAG_ERROR != '' && '- 🛑 ' || '- ✅ No latest tag errors' }} ${{ steps.docker_compose_checks.outputs.LATEST_TAG_ERROR }}
+    ${{ steps.docker_compose_checks.outputs.PROXY_AUTH_ERROR != '' && '- 🛑 ' || '- ✅ No proxy auth errors' }} ${{ steps.docker_compose_checks.outputs.PROXY_AUTH_ERROR }}
+    
+    ### `umbrel-app.yml`
+    ${{ steps.umbrel_app_checks.outputs.REQUIRED_FIELD_ERROR != '' && '- 🛑 ' || '- ✅ All required fields present' }} ${{ steps.umbrel_app_checks.outputs.REQUIRED_FIELD_ERROR }}
+    ${{ steps.umbrel_app_checks.outputs.CATEGORY_ERROR != '' && '- 🛑 ' || '- ✅ Category value is lowercase' }} ${{ steps.umbrel_app_checks.outputs.CATEGORY_ERROR }}
+    ${{ steps.umbrel_app_checks.outputs.OPTIONAL_FIELD_WARNING != '' && '- ⚠️ ' || '- ✅ All optional fields present' }} ${{ steps.umbrel_app_checks.outputs.OPTIONAL_FIELD_WARNING }}
+
 on:
   pull_request:
     paths:
@@ -34,35 +67,3 @@ jobs:
         pullRequestOpened: *comment_template
         pullRequestReopened: *comment_template
         pullRequestSynchronize: *comment_template
-
-# Define reusable YAML anchors
-anchors:
-  docker_compose_checks: &docker_compose_checks |
-    for changed_file in ${{ steps.files.outputs.all }}; do
-      if [[ $changed_file == *docker-compose.yml ]]
-      then
-        echo "Running docker-compose checks on $changed_file"
-        # Rest of your docker-compose checks
-      fi
-    done
-
-  umbrel_app_checks: &umbrel_app_checks |
-    for changed_file in ${{ steps.files.outputs.all }}; do
-      if [[ $changed_file == *umbrel-app.yml ]]
-      then
-        echo "Running umbrel app checks on $changed_file"
-        # Rest of your umbrel app checks
-      fi
-    done
-
-  comment_template: &comment_template |
-    if there are any errors or warnings they will be listed below:
-    ### `docker-compose.yml`
-    ${{ steps.docker_compose_checks.outputs.IMAGE_ERROR != '' && '- 🛑 ' || '- ✅ No image errors' }} ${{ steps.docker_compose_checks.outputs.IMAGE_ERROR }}
-    ${{ steps.docker_compose_checks.outputs.LATEST_TAG_ERROR != '' && '- 🛑 ' || '- ✅ No latest tag errors' }} ${{ steps.docker_compose_checks.outputs.LATEST_TAG_ERROR }}
-    ${{ steps.docker_compose_checks.outputs.PROXY_AUTH_ERROR != '' && '- 🛑 ' || '- ✅ No proxy auth errors' }} ${{ steps.docker_compose_checks.outputs.PROXY_AUTH_ERROR }}
-    
-    ### `umbrel-app.yml`
-    ${{ steps.umbrel_app_checks.outputs.REQUIRED_FIELD_ERROR != '' && '- 🛑 ' || '- ✅ All required fields present' }} ${{ steps.umbrel_app_checks.outputs.REQUIRED_FIELD_ERROR }}
-    ${{ steps.umbrel_app_checks.outputs.CATEGORY_ERROR != '' && '- 🛑 ' || '- ✅ Category value is lowercase' }} ${{ steps.umbrel_app_checks.outputs.CATEGORY_ERROR }}
-    ${{ steps.umbrel_app_checks.outputs.OPTIONAL_FIELD_WARNING != '' && '- ⚠️ ' || '- ✅ All optional fields present' }} ${{ steps.umbrel_app_checks.outputs.OPTIONAL_FIELD_WARNING }}
