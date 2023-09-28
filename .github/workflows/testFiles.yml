@@ -42,10 +42,6 @@ jobs:
             fi
           fi
         done
-      # outputs:
-      #   imageError: ${{ steps.docker-compose-checks.outputs.imageError }}
-      #   latestTagError: ${{ steps.docker-compose-checks.outputs.latestTagError }}
-      #   proxyAuthError: ${{ steps.docker-compose-checks.outputs.proxyAuthError }}
       shell: bash
 
     - name: Run umbrel app checks
@@ -76,37 +72,17 @@ jobs:
         done
       shell: bash
 
-    - name: Auto Comment
-      uses: wow-actions/auto-comment@v1
+    - name: Auto comment
+      uses: actions/github-script@v3
       with:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        pullRequestOpened: |
-          👋 @{{ author }}
-          Thank you for raising your pull request.
-          Please make sure you have followed our contributing guidelines. We will review it as soon as possible
-          If there are any errors, they will be listed below:
-          Errors:
-          `docker-compose.yml`
-          ${{ steps.docker-compose-checks.outputs.errors }}
-          `umbrel-app.yml`
-          ${{ steps.umbrel-app-checks.outputs.errors }}
-          Warnings:
-          `docker-compose.yml`
-          ${{ steps.docker-compose-checks.outputs.warnings }}
-          `umbrel-app.yml`
-          ${{ steps.umbrel-app-checks.outputs.warnings }}
-
-        pullRequestReopened: |
-          👋 @{{ author }}
-          Thank you for raising your pull request.
-          Please make sure you have followed our contributing guidelines. We will review it as soon as possible
-          If there are any errors, they will be listed below:
-          Errors:
-          `docker-compose.yml`
-          ${{ steps.docker_compose_checks.imageError }}
-          ${{ steps.docker_compose_checks.latestTagError }}
-          ${{ steps.docker_compose_checks.proxyAuthError }}
-          `umbrel-app.yml`
-          ${{ GITHUB_OUTPUT }}
+        script: |
+          github.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: `Proxy Auth Error: ${steps.docker_compose_checks.outputs.proxyAuthError}\n` +
+                  `Image Error: ${steps.docker_compose_checks.outputs.imageError}\n` +
+                  `Latest Tag Error: ${steps.docker_compose_checks.outputs.latestTagError}\n` +
+          })
   
 
