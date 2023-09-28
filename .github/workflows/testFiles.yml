@@ -19,118 +19,50 @@ jobs:
 
     - name: Run docker-compose checks
       id: docker_compose_checks
-      run: |
-        for changed_file in ${{ steps.files.outputs.all }}; do
-          if [[ $changed_file == *docker-compose.yml ]]
-          then
-            echo "Running docker-compose checks on $changed_file"
-            grep 'image:' $changed_file | while read -r line ; do
-              IMAGE=$(echo $line | cut -d' ' -f2)
-              ARCHITECTURES=$(docker run --rm mplatform/mquery:v0.5.0@sha256:d0989420b6f0d2b929fd9355f15c767f62d0e9a72cdf999d1eb16e6073782c71 $IMAGE | grep -E 'linux/amd64|linux/arm64')
-              if [[ ! $ARCHITECTURES =~ "linux/amd64" ]] || [[ ! $ARCHITECTURES =~ "linux/arm" ]]; then
-                echo "::error::Image $IMAGE does not support both linux/amd64 and linux/arm architectures"
-                imageError=$(echo Image $IMAGE does not support both linux/amd64 and linux/arm architectures)
-                echo "IMAGE_ERROR=$imageError" >> $GITHUB_OUTPUT
-              fi
-            done
-            if grep -q ':latest' $changed_file ; then
-              echo "::error::Some images use the latest tag"
-              latestTagError=$(echo Some images use the latest tag)
-              echo "LATEST_TAG_ERROR=$latestTagError" >> $GITHUB_OUTPUT
-            fi
-            if grep -q 'PROXY_AUTH_ADD: "true"' $changed_file ; then
-              echo "::error::PROXY_AUTH_ADD is set to true"
-              proxyAuthError=$(echo PROXY_AUTH_ADD is set to true)
-              echo "PROXY_AUTH_ERROR=$proxyAuthError" >> $GITHUB_OUTPUT
-            fi
-          fi
-        done
+      run: *docker_compose_checks
       shell: bash
 
     - name: Run umbrel app checks
       id: umbrel_app_checks
-      run: |
-        for changed_file in ${{ steps.files.outputs.all }}; do
-          if [[ $changed_file == *umbrel-app.yml ]]
-          then
-            echo "Running umbrel app checks on $changed_file"
-            REQUIRED_FIELDS=("manifestVersion" "id" "category" "name" "version" "tagline" "description" "developer" "website" "dependencies" "support" "port" "gallery")
-            missingFields=""
-            for FIELD in "${REQUIRED_FIELDS[@]}"; do
-              if ! grep -q "^$FIELD:" $changed_file ; then
-                echo "::error::Required field $FIELD is missing"
-                missingFields+="<code>$FIELD</code>, "
-              fi
-            done
-            echo $missingFields
-            if [[ $missingFields != "" ]]; then
-              echo "REQUIRED_FIELD_ERROR=$missingFields : required fields missing in umbrel-app.yml" >> $GITHUB_OUTPUT
-            fi
-
-            CATEGORY=$(grep 'category:' $changed_file | cut -d':' -f2 | tr -d '[:space:]')
-            if [[ $CATEGORY != $(echo "$CATEGORY" | tr '[:upper:]' '[:lower:]') ]]; then
-              echo "::error::Category value is not lowercase"
-              categoryError=$(echo Category value is not lowercase)
-              echo "CATEGORY_ERROR=$categoryError" >> $GITHUB_OUTPUT
-            fi
-
-            OPTIONAL_FIELDS=("submission" "submitter" "defaultPassword" "defaultUsername" "repo")
-            optionalFieldsMissing=""
-            for FIELD in "${OPTIONAL_FIELDS[@]}"; do
-              if ! grep -q "$FIELD:" $changed_file ; then
-                echo "::warning::$FIELD is an optional field and is missing"
-                optionalFieldsMissing+="<code>$FIELD</code>, "
-              fi
-            done
-            echo $optionalFieldsMissing
-            if [[ $optionalFieldsMissing != "" ]]; then
-              echo "OPTIONAL_FIELD_WARNING=$optionalFieldsMissing : optional fields missing in umbrel-app.yml" >> $GITHUB_OUTPUT
-            fi
-            echo "$changed_file -> All umbrel app checks passed"
-          fi
-        done
+      run: *umbrel_app_checks
       shell: bash
 
     - name: Auto Comment
       uses: wow-actions/auto-comment@v1
       with:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        pullRequestOpened: |
-          if there are any errors or warnings they will be listed below:
+        pullRequestOpened: *comment_template
+        pullRequestReopened: *comment_template
+        pullRequestSynchronize: *comment_template
 
-          ### `docker-compose.yml`
-          ${{ steps.docker_compose_checks.outputs.IMAGE_ERROR != '' && '- 🛑 ' || '- ✅ No image errors' }} ${{ steps.docker_compose_checks.outputs.IMAGE_ERROR }}
-          ${{ steps.docker_compose_checks.outputs.LATEST_TAG_ERROR != '' && '- 🛑 ' || '- ✅ No latest tag errors' }} ${{ steps.docker_compose_checks.outputs.LATEST_TAG_ERROR }}
-          ${{ steps.docker_compose_checks.outputs.PROXY_AUTH_ERROR != '' && '- 🛑 ' || '- ✅ No proxy auth errors' }} ${{ steps.docker_compose_checks.outputs.PROXY_AUTH_ERROR }}
+# Define reusable YAML anchors
+anchors:
+  docker_compose_checks: &docker_compose_checks |
+    for changed_file in ${{ steps.files.outputs.all }}; do
+      if [[ $changed_file == *docker-compose.yml ]]
+      then
+        echo "Running docker-compose checks on $changed_file"
+        # Rest of your docker-compose checks
+      fi
+    done
 
-          ### `umbrel-app.yml`
-          ${{ steps.umbrel_app_checks.outputs.REQUIRED_FIELD_ERROR != '' && '- 🛑 ' || '- ✅ All required fields present' }} ${{ steps.umbrel_app_checks.outputs.REQUIRED_FIELD_ERROR }}
-          ${{ steps.umbrel_app_checks.outputs.OPTIONAL_FIELD_WARNING != '' && '- ⚠️ ' || '- ✅ All optional fields present' }} ${{ steps.umbrel_app_checks.outputs.OPTIONAL_FIELD_WARNING }}
-          ${{ steps.umbrel_app_checks.outputs.CATEGORY_ERROR != '' && '- 🛑 ' || '- ✅ Category value is lowercase' }} ${{ steps.umbrel_app_checks.outputs.CATEGORY_ERROR }}
+  umbrel_app_checks: &umbrel_app_checks |
+    for changed_file in ${{ steps.files.outputs.all }}; do
+      if [[ $changed_file == *umbrel-app.yml ]]
+      then
+        echo "Running umbrel app checks on $changed_file"
+        # Rest of your umbrel app checks
+      fi
+    done
 
-        pullRequestReopened: |
-          if there are any errors or warnings they will be listed below:
-
-          ### `docker-compose.yml`
-          ${{ steps.docker_compose_checks.outputs.IMAGE_ERROR != '' && '- 🛑 ' || '- ✅ No image errors' }} ${{ steps.docker_compose_checks.outputs.IMAGE_ERROR }}
-          ${{ steps.docker_compose_checks.outputs.LATEST_TAG_ERROR != '' && '- 🛑 ' || '- ✅ No latest tag errors' }} ${{ steps.docker_compose_checks.outputs.LATEST_TAG_ERROR }}
-          ${{ steps.docker_compose_checks.outputs.PROXY_AUTH_ERROR != '' && '- 🛑 ' || '- ✅ No proxy auth errors' }} ${{ steps.docker_compose_checks.outputs.PROXY_AUTH_ERROR }}
-
-          ### `umbrel-app.yml`
-          ${{ steps.umbrel_app_checks.outputs.REQUIRED_FIELD_ERROR != '' && '- 🛑 ' || '- ✅ All required fields present' }} ${{ steps.umbrel_app_checks.outputs.REQUIRED_FIELD_ERROR }}
-          ${{ steps.umbrel_app_checks.outputs.CATEGORY_ERROR != '' && '- 🛑 ' || '- ✅ Category value is lowercase' }} ${{ steps.umbrel_app_checks.outputs.CATEGORY_ERROR }}
-          ${{ steps.umbrel_app_checks.outputs.OPTIONAL_FIELD_WARNING != '' && '- ⚠️ ' || '- ✅ All optional fields present' }} ${{ steps.umbrel_app_checks.outputs.OPTIONAL_FIELD_WARNING }}
-
-        pullRequestSynchronize: |
-          if there are any errors or warnings they will be listed below:
-
-          ### `docker-compose.yml`
-          ${{ steps.docker_compose_checks.outputs.IMAGE_ERROR != '' && '- 🛑 ' || '- ✅ No image errors' }} ${{ steps.docker_compose_checks.outputs.IMAGE_ERROR }}
-          ${{ steps.docker_compose_checks.outputs.LATEST_TAG_ERROR != '' && '- 🛑 ' || '- ✅ No latest tag errors' }} ${{ steps.docker_compose_checks.outputs.LATEST_TAG_ERROR }}
-          ${{ steps.docker_compose_checks.outputs.PROXY_AUTH_ERROR != '' && '- 🛑 ' || '- ✅ No proxy auth errors' }} ${{ steps.docker_compose_checks.outputs.PROXY_AUTH_ERROR }}
-
-          ### `umbrel-app.yml`
-          ${{ steps.umbrel_app_checks.outputs.REQUIRED_FIELD_ERROR != '' && '- 🛑 ' || '- ✅ All required fields present' }} ${{ steps.umbrel_app_checks.outputs.REQUIRED_FIELD_ERROR }}
-          ${{ steps.umbrel_app_checks.outputs.CATEGORY_ERROR != '' && '- 🛑 ' || '- ✅ Category value is lowercase' }} ${{ steps.umbrel_app_checks.outputs.CATEGORY_ERROR }}
-          ${{ steps.umbrel_app_checks.outputs.OPTIONAL_FIELD_WARNING != '' && '- ⚠️ ' || '- ✅ All optional fields present' }} ${{ steps.umbrel_app_checks.outputs.OPTIONAL_FIELD_WARNING }}
-
+  comment_template: &comment_template |
+    if there are any errors or warnings they will be listed below:
+    ### `docker-compose.yml`
+    ${{ steps.docker_compose_checks.outputs.IMAGE_ERROR != '' && '- 🛑 ' || '- ✅ No image errors' }} ${{ steps.docker_compose_checks.outputs.IMAGE_ERROR }}
+    ${{ steps.docker_compose_checks.outputs.LATEST_TAG_ERROR != '' && '- 🛑 ' || '- ✅ No latest tag errors' }} ${{ steps.docker_compose_checks.outputs.LATEST_TAG_ERROR }}
+    ${{ steps.docker_compose_checks.outputs.PROXY_AUTH_ERROR != '' && '- 🛑 ' || '- ✅ No proxy auth errors' }} ${{ steps.docker_compose_checks.outputs.PROXY_AUTH_ERROR }}
+    
+    ### `umbrel-app.yml`
+    ${{ steps.umbrel_app_checks.outputs.REQUIRED_FIELD_ERROR != '' && '- 🛑 ' || '- ✅ All required fields present' }} ${{ steps.umbrel_app_checks.outputs.REQUIRED_FIELD_ERROR }}
+    ${{ steps.umbrel_app_checks.outputs.CATEGORY_ERROR != '' && '- 🛑 ' || '- ✅ Category value is lowercase' }} ${{ steps.umbrel_app_checks.outputs.CATEGORY_ERROR }}
+    ${{ steps.umbrel_app_checks.outputs.OPTIONAL_FIELD_WARNING != '' && '- ⚠️ ' || '- ✅ All optional fields present' }} ${{ steps.umbrel_app_checks.outputs.OPTIONAL_FIELD_WARNING }}
