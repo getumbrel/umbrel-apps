@@ -8,24 +8,39 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v3
+
+    - name: Get changed files
+      id: getfile
+      run: |
+        echo "::set-output name=files::$(git diff --name-only ${{ github.event.before }} ${{ github.event.after }} | grep -E 'docker-compose.yml|umbrel-app.yml')"
+      shell: bash
+
     - name: Run docker-compose checks
       run: |
-        # Loop through all docker-compose.yml files in the PR
-        for file in $(find . -name 'docker-compose.yml'); do
-          # Run the docker-compose checks script on each file
-          bash ${{ github.workspace }}/.github/workflows/docker-compose-checks.sh "$file"
+        IFS=$'\n' read -d '' -r -a files <<< "${{ steps.getfile.outputs.files }}"
+        for file in "${files[@]}"
+        do
+          if [[ $file == *docker-compose.yml ]]
+          then
+            chmod +x ./docker-compose-checks.sh
+            ./docker-compose-checks.sh "$file"
+          fi
         done
-      shell: /usr/bin/bash -e {0}
+      shell: bash
+
     - name: Run umbrel app checks
       run: |
-        # Loop through all umbrel-app.yml files in the PR
-        for file in $(find . -name 'umbrel-app.yml'); do
-          # Run the umbrel app checks script on each file
-          bash ${{ github.workspace }}/.github/workflows/umbrel-app-checks.sh "$file"
+        IFS=$'\n' read -d '' -r -a files <<< "${{ steps.getfile.outputs.files }}"
+        for file in "${files[@]}"
+        do
+          if [[ $file == *umbrel-app.yml ]]
+          then
+            chmod +x ./umbrel-app-checks.sh
+            ./docker-compose-checks.sh "$file"
+          fi
         done
-      shell: /usr/bin/bash -e {0}
+      shell: bash
