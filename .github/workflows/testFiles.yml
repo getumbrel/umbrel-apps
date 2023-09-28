@@ -18,7 +18,7 @@ jobs:
       uses: Ana06/get-changed-files@v2.2.0
 
     - name: Run docker-compose checks
-      id: docker-compose-checks
+      id: docker_compose_checks
       run: |
         for changed_file in ${{ steps.files.outputs.all }}; do
           if [[ $changed_file == *docker-compose.yml ]]
@@ -42,7 +42,7 @@ jobs:
       shell: bash
 
     - name: Run umbrel app checks
-      id: umbrel-app-checks
+      id: umbrel_app_checks
       run: |
         for changed_file in ${{ steps.files.outputs.all }}; do
           if [[ $changed_file == *umbrel-app.yml ]]
@@ -96,13 +96,12 @@ jobs:
           If there are any errors, they will be listed below:
           Errors:
           `docker-compose.yml`
-          ${{ steps.docker-compose-checks.outputs.errors }}
+          ${{ steps.docker_compose_checks.outputs.errors }}
           `umbrel-app.yml`
-          ${{ steps.umbrel-app-checks.outputs.errors }}
+          ${{ steps.umbrel_app_checks.outputs.errors }}
           Warnings:
           `docker-compose.yml`
-          ${{ steps.docker-compose-checks.outputs.warnings }}
+          ${{ steps.docker_compose_checks.outputs.warnings }}
           `umbrel-app.yml`
-          ${{ steps.umbrel-app-checks.outputs.warnings }}
-
+          ${{ steps.umbrel_app_checks.outputs.warnings }}
 
