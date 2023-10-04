@@ -2,7 +2,7 @@ manifestVersion: 1
 id: lightning-terminal
 category: bitcoin
 name: Lightning Terminal
-version: "0.10.5-alpha"
+version: "0.11.0-alpha"
 tagline: The easiest way to manage channel liquidity
 description: >-
   Lightning Terminal is the easiest way to manage inbound and
@@ -50,16 +50,33 @@ path: ""
 defaultUsername: ""
 deterministicPassword: true
 releaseNotes: >-
-  This release of Lightning Terminal (LiT) includes an update to the integrated 
-  Loop version along with a small UI update use the correct unit for Loop Out 
-  swap deadlines. 
+  This release of Lightning Terminal (LiT) updates the integrated LND daemon
+  version to the latest v0.17.0-beta release, as well as updates the
+  integrated Loop daemon to the latest patch release.
+
+  In this release of LiT, a new Status server was added, which enables users
+  to disable the different integrated sub-servers and the integrated accounts
+  sub-system in LiT through configuration. LiT will now also successfully
+  start even if any of the sub-servers or sub-systems fails to start.
+
+  This release of LiT also enables the ability to link a new Autopilot
+  session with an old session, as well as enabling the ability to specify
+  feature configurations for an Autopilot session.
+
+  One important change to note for users running LiT through docker, is that
+  due to the new status server feature, the startup process of LiT will not
+  error and end if a sub-server or sub-system fails to start. So any
+  platforms that rely on docker to automatically restart the LiT container
+  if the startup process ends due to the sub-servers or sub-system not having
+  started yet, will now not restart the container as the start process won't
+  exit.
   
 
   We'll be continuously working to improve the user experience based on
   feedback from the community. 
   
   
-  This release packages LND v0.16.4-beta, Taproot Assets Daemon v0.2.3-alpha,
-  Loop v0.26.2-beta, Pool v0.6.4-beta and Faraday v0.2.11-alpha.
+  This release packages LND v0.17.0-beta, Taproot Assets Daemon v0.2.3-alpha,
+  Loop v0.26.3-beta, Pool v0.6.4-beta and Faraday v0.2.11-alpha.
 submitter: Umbrel
 submission: https://github.com/getumbrel/umbrel/pull/348
