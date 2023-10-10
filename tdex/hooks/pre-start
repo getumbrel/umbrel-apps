@@ -3,6 +3,12 @@
 set -euo pipefail
 
 APP_DATA_DIR="$(readlink -f $(dirname "${BASH_SOURCE[0]}")/..)"
+
+# Update the Caddyfile with newer tdexd port
+CADDYFILE_PATH="${APP_DATA_DIR}/caddy-data/Caddyfile"
+sed -i 's/tdex_tdexd_1:9090/tdex_tdexd_1:9092/g' "${CADDYFILE_PATH}"
+
+# Ensure the ocean-data directory exists for apps that update from the original TDEX app version
 OCEAN_DATA_DIR="${APP_DATA_DIR}/ocean-data"
 
 [ ! -d "${OCEAN_DATA_DIR}" ] && mkdir -p "${OCEAN_DATA_DIR}" && chown 1000:1000 "${OCEAN_DATA_DIR}"
