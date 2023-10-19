@@ -2,7 +2,7 @@ manifestVersion: 1
 id: lightning-terminal
 category: bitcoin
 name: Lightning Terminal
-version: "0.11.0-alpha"
+version: "0.12.0-alpha"
 tagline: The easiest way to manage channel liquidity
 description: >-
   Lightning Terminal is the easiest way to manage inbound and
@@ -50,36 +50,41 @@ path: ""
 defaultUsername: ""
 deterministicPassword: true
 releaseNotes: >-
-  This release of Lightning Terminal (LiT) updates the integrated LND daemon
-  version to the latest v0.17.0-beta release, as well as updates the
-  integrated Loop daemon to the latest patch release.
+  This release of Lightning Terminal (LiT) updates the integrated Taproot
+  Assets daemon to the latest version (v0.3.0-alpha), which adds support for
+  Taproot Assets on the Bitcoin mainnet! This release also includes an update
+  to the latest patch release of the integrated Loop daemon.
 
 
-  In this release of LiT, a new Status server was added, which enables users
-  to disable the different integrated sub-servers and the integrated accounts
-  sub-system in LiT through configuration. LiT will now also successfully
-  start even if any of the sub-servers or sub-systems fails to start.
+  IMPORTANT NOTE: To avoid loss of funds, it's imperative that you read the
+  Operational Safety Guidelines
+  (https://github.com/lightninglabs/taproot-assets/blob/main/docs/safety.md)
+  before using tapd on mainnet!
 
 
-  This release of LiT also enables the ability to link a new Autopilot
-  session with an old session, as well as enabling the ability to specify
-  feature configurations for an Autopilot session.
+  IMPORTANT NOTE FOR UMBREL/LIGHTNING TERMINAL USERS:
+  DO NOT UNDER ANY CIRCUMSTANCE uninstall (or re-install) the "Lightning
+  Terminal" app without first making a manual backup of all local tapd data,
+  if you are using Taproot Assets as part of the "Lightning Terminal" app with
+  Umbrel. Uninstalling Umbrel apps deletes application data. This Taproot
+  Assets application data encumbers Taproot Assets AND bitcoin funds. Receiving
+  and sending tapd assets updates the daemon's funds-custody material. Merely
+  having the lnd seed phrase is NOT enough to restore assets minted or received.
+  WITHOUT BACKUP BEFORE DELETION, FUNDS ARE DESTROYED.
 
 
-  One important change to note for users running LiT through docker, is that
-  due to the new status server feature, the startup process of LiT will not
-  error and end if a sub-server or sub-system fails to start. So any
-  platforms that rely on docker to automatically restart the LiT container
-  if the startup process ends due to the sub-servers or sub-system not having
-  started yet, will now not restart the container as the start process won't
-  exit.
-  
+  The Taproot Assets daemon is still in alpha state, which means there can
+  still be bugs and not all desired data safety and backup mechanisms have been
+  implemented yet. Releasing on mainnet mainly signals that there will be no
+  breaking changes in the future and that assets minted with v0.3.0 will be
+  compatible with later versions.
+
 
   We'll be continuously working to improve the user experience based on
-  feedback from the community. 
-  
-  
-  This release packages LND v0.17.0-beta, Taproot Assets Daemon v0.2.3-alpha,
-  Loop v0.26.3-beta, Pool v0.6.4-beta and Faraday v0.2.11-alpha.
+  feedback from the community.
+
+
+  This release packages LND v0.17.0-beta, Taproot Assets Daemon v0.3.0-alpha,
+  Loop v0.26.4-beta, Pool v0.6.4-beta and Faraday v0.2.11-alpha.
 submitter: Umbrel
 submission: https://github.com/getumbrel/umbrel/pull/348
