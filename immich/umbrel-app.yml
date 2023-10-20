@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: immich
 category: files
 name: Immich
-version: "v1.81.0"
+version: "v1.82.1"
 tagline: High-performance photo and video backup solution
 description: >-
   An open-source and high-performance self-hosted backup solution for the videos and photos on your mobile device
@@ -45,30 +45,30 @@ description: >-
   
   - User-defined storage structure
 releaseNotes: >-
-  ⚠️ Please update Immich to this version as soon as possible. This release fixes a severe security vulnerability caused by a third-party dependency.
-  Additionally, please note the following actions that may be required after the update:
+  ⚠️ Please update Immich to this version as soon as possible. This release fixes two security flaws noted here: https://github.com/immich-app/immich/releases/tag/v1.82.0
 
-  - The reverse geocoding settings have been moved to the admin settings pages. If you have set the level of accuracy in the ".env" file, you will need to make the corresponding changes in the settings menu on the administration page on the web.
   
-  - Please migrate thumbnails to a new folder structure by running the new migration job in "Admin > Settings > Migration"
-    
+  Additionally, it was discovered that thumbnails (which can be downloaded from right-click -> save images as…) contain the full EXIF (metadata) information.  Users are advised not to use the public-sharing feature until a fix is released if they have concerns about sharing metadata.
 
-  This update includes many bug fixes and performance improvements, including the following highlights:
   
-  - Added mechanism to store generated files for thumbnails and encoded-videos in subfolders
+  This update from v1.81.0 to v1.82.1 includes many bug fixes and performance improvements, as well as the following new features:
 
-  - Added an ability to suggest people’s names during name assignment for faces
-  
-  - Added an option to show the sidebar menu for the people page in the user setting on the web
+  - Trash Feature
 
-  - Added week number as an option for path templating
+  - Web Client WebSocket Feature
 
-  - Fixes issues related to External Libraries, metadata processing, and Live Photos
+  - Library Scanning Performance
+
+  - Time Bucket Grouping Accuracy (to take advantage of this feature, please run the job to “Extract Metadata” for all assets.)
+
+  - Storage Template Improvements
+
+  - Notable fix: no longer read iOS-modified photos as “FullSizeRender” 
 
   - and more!
 
 
-  Full release notes are found at: https://github.com/immich-app/immich/releases
+  Full release notes are found at: https://github.com/immich-app/immich/releases/tag/v1.82.0
 developer: Alex Tran
 website: https://www.immich.app
 dependencies: []
