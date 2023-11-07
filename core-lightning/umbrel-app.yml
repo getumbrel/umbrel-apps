@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: core-lightning
 category: bitcoin
 name: Core Lightning
-version: "22.11.1-ui0.0.3"
+version: "23.08-hotfix-1"
 tagline: Run your personal Core Lightning node
 description: >-
   Get started with the Lightning network today with Core Lightning - a
@@ -32,23 +32,79 @@ defaultPassword: ""
 submitter: Blockstream
 submission: https://github.com/getumbrel/umbrel-apps/pull/475
 releaseNotes: >-
-  This update brings a stunning new look and intuitive UI, maintained officially by Blockstream
-  
-  
-  It includes two bug fixes:
-
-  - Invalid rune error thrown on some slower machines.
-  
-  - Undefined msat fields shown as NaN will be 0.
+  This hotfix update resolves an issue that was preventing the Core Lightning app from operating on test networks such as testnet. No additional changes are included in this release.
 
 
-  This version also includes some enhanced features such as:
-  
-  - Updates for CLN v23.05 msat migration
-  
-  - Add Offers list view
-  
-  - Add Tor option for lnmessage on connect wallet
+  The release notes from 23.08 are included here for completeness.
 
 
-  Full release notes are available at: https://github.com/ElementsProject/lightning/releases/tag/v22.11.1
+  cln-application v0.0.4 (user interface):
+
+  - bug fix by filtering lnmessage's pubkey from peers list
+
+  - added support for more fiat currencies
+
+
+  Full cln-application release notes are available at https://github.com/ElementsProject/cln-application/releases/tag/v0.0.4
+
+
+  c-lightning-REST v0.10.5:
+
+  - plugin.js renamed to clrest.js (required for reckless plugin manager)
+  
+  - allow an option to specify an IP address to bind with the server
+
+  - bug fix for error on generating new certificates
+
+  - bug fix for websocket notifications
+
+  - setchannelfee rpc has been replaced by setchannel (no impact to the developers as REST API signature remains unchanged)
+
+  - fixed the issue of server failing to initialize if IPV6 is disabled
+
+  - pay api updated with the latest params
+
+  - the msat purge
+
+  - new API endpoint for listpeerchannels rpc
+
+  - issue in the remote balance calculation fixed
+
+  - issue in the pending balance calculation fixed
+
+  - version compatibility check to address BTCPayserver forked version
+
+  - all available filtering options (invoice, payment hash & offer) for listInvoices api
+
+  - all CLN filtering options (payment hash & status) for listPays and listPayments apis
+
+
+  Full c-lightning-REST release notes are available at https://github.com/Ride-The-Lightning/c-lightning-REST/releases
+
+
+  lightningd v23.08:
+
+  - NEW experimental feature: peer storage - back up your encrypted emergency channel backup with your peers
+
+  - access a remote node with a cli flag: lightning-cli --commando=peerid:rune
+
+  - migrate all wrapped segwit UTXOs to native segwit with upgradewallet RPC.
+
+  - large nodes are more performant.
+
+  - pay requiring a full description (not just a hash) has been pushed back, since it broke BTCPayServer and lnbits. It's still deprecated, and we will work with them to try to achieve this.
+
+  - documentation now available for Offers invoicerequest, disableinvoicerequest and listinvoicerequest commands.
+
+  - NEW commando-blacklist and commando-listrunes RPCs for blacklisting and listing stored runes.
+
+  - NEW feerates added 2 new options as "minimum" and NN"blocks". Use explicit block counts or slow/normal/urgent/minimum.
+
+  - listclosedchannels RPC to show old, dead channels.
+
+  - reckless added support for node.js plugin installation and for networks beyond bitcoin and regtest.
+
+  - spending unilateral close transactions now use dynamic fees based on deadlines (and RBF), instead of fixed fees.
+
+
+  Full lightningd release notes are available at https://github.com/ElementsProject/lightning/releases

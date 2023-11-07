@@ -7,7 +7,7 @@ services:
       APP_PORT: $APP_CORE_LIGHTNING_PORT
 
   app:
-    image: ghcr.io/elementsproject/cln-application:0.0.3@sha256:05595731a98a17aff6603b9ad35aaa17825bf1e51dd22da409c37f9fce5d2b2e
+    image: ghcr.io/elementsproject/cln-application:0.0.4@sha256:5c4c930c0bd4b71de202b6166affd76c080a66bd7021877ffaa471207470bbfa
     command: npm run start
     restart: on-failure
     volumes:
@@ -15,6 +15,7 @@ services:
       - ${APP_DATA_DIR}/data/lightningd:${APP_CORE_LIGHTNING_DATA_DIR}
       - ${APP_CORE_LIGHTNING_REST_CERT_DIR}:${APP_REST_CERT_VOLUME_DIR}
     environment:
+      SINGLE_SIGN_ON: "true"
       APP_CORE_LIGHTNING_IP: ${APP_CORE_LIGHTNING_IP}
       APP_CORE_LIGHTNING_PORT: ${APP_CORE_LIGHTNING_PORT}
       APP_CORE_LIGHTNING_BITCOIN_NETWORK: ${APP_CORE_LIGHTNING_BITCOIN_NETWORK}
@@ -38,22 +39,23 @@ services:
         ipv4_address: ${APP_CORE_LIGHTNING_IP}
   
   c-lightning-rest:
-    image: saubyk/c-lightning-rest:0.9.0@sha256:00b40443f1f455378587abb37649fdb7c7b1efb43ed64bc9fe78d9bf6ffb4371
+    image: saubyk/c-lightning-rest:0.10.5@sha256:51941e2b5e82fae87a833fbee658961ca223a40d63e3f685f55c3538764652ec
     restart: on-failure
     ports:
       - ${APP_CORE_LIGHTNING_REST_PORT}:${APP_CORE_LIGHTNING_REST_PORT}
     environment:
       PORT: "${APP_CORE_LIGHTNING_REST_PORT}"
       PROTOCOL: "http"
+      LN_PATH: "${CORE_LIGHTNING_PATH}"
     volumes:
       - "${APP_CORE_LIGHTNING_REST_CERT_DIR}:/usr/src/app/certs"
-      - "${APP_DATA_DIR}/data/lightningd:/root/.lightning"
+      - "${APP_DATA_DIR}/data/lightningd:${CORE_LIGHTNING_PATH}"
     networks:
       default:
         ipv4_address: ${APP_CORE_LIGHTNING_REST_IP}
 
   lightningd:
-    image: lncm/clightning:v22.11.1@sha256:e9939341ca6736566e0499db5a339b25140d6e77fb16ab202c217112f0df9b77
+    image: elementsproject/lightningd:v23.08@sha256:b00bbbbff77e1a3c8e1172777e0bc80c3af9f74c79683cf18a45636b04e29c7f
     restart: on-failure
     ports:
       - ${APP_CORE_LIGHTNING_DAEMON_PORT}:9735
@@ -62,6 +64,8 @@ services:
       - --bitcoin-rpcconnect=${APP_BITCOIN_NODE_IP}
       - --bitcoin-rpcuser=${APP_BITCOIN_RPC_USER}
       - --bitcoin-rpcpassword=${APP_BITCOIN_RPC_PASS}
+      - --bitcoin-rpcport=${APP_BITCOIN_RPC_PORT} 
+      - --lightning-dir=${CORE_LIGHTNING_PATH}
       - --proxy=${TOR_PROXY_IP}:${TOR_PROXY_PORT}
       - --bind-addr=${APP_CORE_LIGHTNING_DAEMON_IP}:9735
       - --addr=statictor:${TOR_PROXY_IP}:29051
@@ -70,9 +74,9 @@ services:
       - --database-upgrade=true
       - --experimental-websocket-port=${APP_CORE_LIGHTNING_WEBSOCKET_PORT}
       - --experimental-offers
-      #- --grpc-port=${APP_CORE_LIGHTNING_DAEMON_GRPC_PORT}
+      - --grpc-port=${APP_CORE_LIGHTNING_DAEMON_GRPC_PORT}
     volumes:
-      - "${APP_DATA_DIR}/data/lightningd:/data/.lightning"
+      - "${APP_DATA_DIR}/data/lightningd:${CORE_LIGHTNING_PATH}"
     networks:
       default:
         ipv4_address: ${APP_CORE_LIGHTNING_DAEMON_IP}

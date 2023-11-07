@@ -2,13 +2,16 @@ manifestVersion: 1
 id: plex
 category: media
 name: Plex
-version: "1.32.5.7349"
+version: "1.32.6.7557"
 tagline: Stream Movies & TV Shows
 description: >-
   Stream movies and TV shows, plus 300+ channels of live TV, instantly, without a subscription. Watch live TV and movies anywhere, from any device, with Plex.
   
   
   Plex uses a server to house your media library and player apps to playback the media. Add, access, and share all the entertainment that matters to you, on almost any device.
+
+
+  ⚠️ If you encounter a "not authorized error" when attempting to access your Plex app, please follow the steps in this guide: https://community.umbrel.com/t/fixing-plexs-not-authorized-error/10523
 developer: Plex
 website: https://www.plex.tv/
 dependencies: []
@@ -26,17 +29,34 @@ torOnly: false
 permissions:
   - STORAGE_DOWNLOADS
 releaseNotes: >-
-  This update includes many bug fixes and performance improvements, as well as the following new features:
+  NEW:
+
+  (TerraMaster) Improve multi-volume support when adding folders to libraries.
+
+  (Transcoder) Enable hardware transcoding by default where available (#14282)
   
-  - New “Deep Cuts” music station.
-  
-  - Hardware transcoding is now supported for SDR media on AMD GPUs on Linux
-  
-  - Hardware transcoding is now supported when running Plex Media Server on headless Windows systems
-  
-  - The GPU used for transcoding can now be selected in server preferences
-  
-  
-  See full release notes here: https://www.videohelp.com/software/Plex/version-history
+
+  FIXES:
+
+  (Hubs) User could order a hub before Continue Watching hub (#14236)
+
+  (Library) In some cases, media item presence and accessibility could fail to be reported (#14307)
+
+  (Metadata) Items could lose metadata if a refresh request failed due to a network failure (#14551)
+
+  (Photos) Autotag data was not visible even if photos had pre-existing autotags (#14493)
+
+  (Photos) Places filter was not visible even if photos had pre-existing place data (#14519)
+
+  (Preferences) Adjust library section preference text for intro and credits detection (#14152)
+
+  (Scanner) Episodes with absolute numbering of 264 and 265 could get ignored (#14084)
+
+  (Security) Certain requests could trigger unwanted notifications (#14524)
+
+  (Transcoding) Hardware transcoding failed on linux machines (#14553)
+ 
+
+  See full release notes here: https://www.videohelp.com/software/Plex
 submitter: Umbrel
 submission: https://github.com/getumbrel/umbrel-apps/commit/60878f278d544b204d8e7c96240c797f43a9b319
