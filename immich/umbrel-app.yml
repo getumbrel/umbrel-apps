@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: immich
 category: files
 name: Immich
-version: "v1.82.1"
+version: "v1.85.0"
 tagline: High-performance photo and video backup solution
 description: >-
   An open-source and high-performance self-hosted backup solution for the videos and photos on your mobile device
@@ -45,30 +45,41 @@ description: >-
   
   - User-defined storage structure
 releaseNotes: >-
-  ⚠️ Please update Immich to this version as soon as possible. This release fixes two security flaws noted here: https://github.com/immich-app/immich/releases/tag/v1.82.0
-
+  ⚠️ The server and mobile app must be on the same version for the application to work correctly. After updating, you may need to re-run
+  metadata extraction for videos impacted by a bug that has now been fixed.
   
-  Additionally, it was discovered that thumbnails (which can be downloaded from right-click -> save images as…) contain the full EXIF (metadata) information.  Users are advised not to use the public-sharing feature until a fix is released if they have concerns about sharing metadata.
 
+  Welcome to release v1.85.0 of Immich. This release introduces many bug fixes across the app, server, and web, along with new features.
+  The most notable changes include:
+
+  - Changing the /server-info/stats endpoint to /server-info/statistics.
+
+  - Introducing global activity in a shared album and activity on the mobile app and album’s option.
+
+  - Adding a new option to shuffle slideshow, allowing you to randomize the order.
+
+  - Fixing a notable issue: Bulk data fetching for initial sync on the mobile app was causing the app to crash due to an out-of-memory error when dealing with a very large gallery.
+
+  - Introducing a new mobile app bar and user profile screen.
+
+  - Adding a shared link with password option.
+
+  - Introducing shared album activity on the web.
+
+  - Adding a custom scan interval for the external library.
+
+  - Fixing a notable issue: The app was unable to download machine learning models from the S3 bucket.
+
+  - Introducing asset stacking.
+
+  - Adding shared links on mobile.
+
+  - Introducing new storage template variables.
+
+  - Adding a custom theme.
   
-  This update from v1.81.0 to v1.82.1 includes many bug fixes and performance improvements, as well as the following new features:
 
-  - Trash Feature
-
-  - Web Client WebSocket Feature
-
-  - Library Scanning Performance
-
-  - Time Bucket Grouping Accuracy (to take advantage of this feature, please run the job to “Extract Metadata” for all assets.)
-
-  - Storage Template Improvements
-
-  - Notable fix: no longer read iOS-modified photos as “FullSizeRender” 
-
-  - and more!
-
-
-  Full release notes are found at: https://github.com/immich-app/immich/releases/tag/v1.82.0
+  Full release notes are found at: https://github.com/immich-app/immich/releases
 developer: Alex Tran
 website: https://www.immich.app
 dependencies: []
