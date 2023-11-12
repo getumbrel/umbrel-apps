@@ -2,7 +2,7 @@ manifestVersion: 1
 id: uptime-kuma
 category: networking
 name: Uptime Kuma
-version: "1.23.0"
+version: "1.23.3"
 tagline: Self-hosted uptime monitoring tool
 description: >
   Uptime Kuma is a self-hosted monitoring tool like Uptime Robot.
@@ -39,54 +39,28 @@ gallery:
 path: ""
 defaultPassword: ""
 releaseNotes: >
-  Updates Uptime Kuma from version 1.21.2 to 1.23.0.
-
-  🐻 It should be the last minor version of Uptime Kuma v1. I will focus on the development of v2. Stay tuned!
-
-  Update: The last minor version (1.23.x) means that there won't be any new features introduced in v1. However, bug fixes will still be provided. You can expect to see 1.23.1, 1.23.2 and so on.
-  
-
-  🆕 New Features:
-  
-  - Added an improved comprehensive monitor list filtering
-
-  - Added an ability to bulk select, pause & resume
-
-  - Added an ability to show certificate expiry on status pages
-
-  - Added Tailscale ping monitor
-
-  - Added badges for status page status
+  Updates Uptime Kuma from version 1.23.0 to 1.23.3
    
-   
-  💇‍♀️ Improvements to Maintenance:
-
-  - Dropdown menu is no longer blocked by the save button bar
-
-  - Added an ability to configure a custom PushDeer server URL
-
-  - Added an ability to set TLS certs (Put ca.pem, key.pen and cert.pem in the data/docker-tls/your_hostname/)
-
-  - Strip trailing slashes to avoid 404 from Home Assistant's API endpoint
-
+  Warning: Due to the security fix, all login sessions will be logged out, after updated to this version.
+  
+  Important: If you are using some unofficial/3rd party tools, it could be a breaking change. You may need to re-generate an auth token.
   
   🐛 Bug Fixes:
   
-  - Fixed Redis authentication reattempt issue
+  - Fixed an issue that notification is not working if the config is too long
   
-  - Fixed notification toggle missing when import from backup
+  - Enable status page certificate expiry badge for all HTTP(s) monitors
 
-  - Fixed the issue that IPv6 addresses could not be displayed in the log
+  - Fixed kafka producer bugs
 
-  - Avoid new timezones or non-existing timezones crash Uptime Kuma
+  - Fixed an issue that x-forwarded-host is not being used correctly
 
-  - Fixed SMTP notification "Ignore TLS Error" option
+  - Fixed a race condition issue that some data is not being saved in the status page editor if you clicked it too fast
 
 
   ⬆️ Security Fixes
 
-  - Hardening: Avoid exposing the Uptime Kuma version to the public
-  
+  - Fixed persistent session tokens issue. There was no way to revoke session tokens even if you changed the password. Now you can revoke them by changing your password if you think they may be leaked (Read more: GHSA-g9v2-wqcj-j99g).
   
   Full changelog for versions 1.21.2 to 1.23.0 can be found here: https://github.com/louislam/uptime-kuma/releases
 submitter: Philipp Haussleiter
