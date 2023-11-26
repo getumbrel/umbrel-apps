@@ -13,19 +13,17 @@ x-environment: &env
   REVERSE_GEOCODING_PRECISION: "3"
   PUBLIC_LOGIN_PAGE_MESSAGE: ""
   TYPESENSE_API_KEY: &typesense_api_key "any-text-for-self-hosted-typesense"
-  IMMICH_SERVER_URL: &immich_server_url "http://immich_server_1:3001"
-  IMMICH_WEB_URL: &immich_web_url "http://immich_web_1:3000"
   IMMICH_MACHINE_LEARNING_URL: "http://immich_machine-learning_1:3003"
 
 services:
   app_proxy:
     environment:
-      APP_HOST: immich_proxy_1
-      APP_PORT: 8080
+      APP_HOST: immich_server_1
+      APP_PORT: 3001
       PROXY_AUTH_WHITELIST: "/api/*,/search/*"
 
   server:
-    image: ghcr.io/immich-app/immich-server:v1.85.0@sha256:b4c9bc6778a142d9ee1ef61c30a498dc2e84d3aabb50a7d4516d9af346db2743
+    image: ghcr.io/immich-app/immich-server:v1.88.2@sha256:ac214c6c4e7f6c2133b885d9e6ebc7696cbcf96a148c95746eef15eef0cea71a
     command: [ "start.sh", "immich" ]
     volumes:
       - ${APP_DATA_DIR}/data/upload:/usr/src/app/upload
@@ -38,7 +36,7 @@ services:
     restart: on-failure
 
   microservices:
-    image: ghcr.io/immich-app/immich-server:v1.85.0@sha256:b4c9bc6778a142d9ee1ef61c30a498dc2e84d3aabb50a7d4516d9af346db2743
+    image: ghcr.io/immich-app/immich-server:v1.88.2@sha256:ac214c6c4e7f6c2133b885d9e6ebc7696cbcf96a148c95746eef15eef0cea71a
     # This service cannot run under 1000:1000
     # And because the uploads are shared
     # We'll run immich specific services as root
@@ -54,15 +52,9 @@ services:
     restart: on-failure
 
   machine-learning:
-    image: ghcr.io/immich-app/immich-machine-learning:v1.85.0@sha256:1fc3e645169ada10d73b6a740434b5821f19003d436a8aeb7a5b9482c9b2f704
+    image: ghcr.io/immich-app/immich-machine-learning:v1.88.2@sha256:134b6d16b76acd2b6a6ee43c6866668c1c00c33fb3c989bbae5ad867acc2f71b
     volumes:
       - ${APP_DATA_DIR}/data/model-cache:/cache
-    environment:
-      <<: *env
-    restart: on-failure
-
-  web:
-    image: ghcr.io/immich-app/immich-web:v1.85.0@sha256:10778b177594390e1a9ec0d5e80150fb9c6855ff964a7ceb2eded4728abaa821
     environment:
       <<: *env
     restart: on-failure
@@ -74,16 +66,6 @@ services:
       TYPESENSE_DATA_DIR: "/data"
     volumes:
       - ${APP_DATA_DIR}/data/tsdata:/data
-    restart: on-failure
-
-  proxy:
-    image: ghcr.io/immich-app/immich-proxy:v1.85.0@sha256:80e290eefe53271738cc6558b5b51296ac1cde94f1144eed873c61817a764928
-    environment:
-      IMMICH_SERVER_URL: *immich_server_url
-      IMMICH_WEB_URL: *immich_web_url
-    depends_on:
-      - server
-      - web
     restart: on-failure
 
   redis:
