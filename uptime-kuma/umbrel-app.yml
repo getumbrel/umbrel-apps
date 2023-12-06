@@ -2,7 +2,7 @@ manifestVersion: 1
 id: uptime-kuma
 category: networking
 name: Uptime Kuma
-version: "1.23.3"
+version: "1.23.7"
 tagline: Self-hosted uptime monitoring tool
 description: >
   Uptime Kuma is a self-hosted monitoring tool like Uptime Robot.
@@ -39,29 +39,36 @@ gallery:
 path: ""
 defaultPassword: ""
 releaseNotes: >
-  Updates Uptime Kuma from version 1.23.0 to 1.23.3
-   
-  Warning: Due to the security fix, all login sessions will be logged out, after updated to this version.
+  ⚠️ Due to a security fix in this update, all login sessions will be logged out after updating to this version. 
+  If you are using some unofficial/3rd party tools, you may need to re-generate an auth token.
   
-  Important: If you are using some unofficial/3rd party tools, it could be a breaking change. You may need to re-generate an auth token.
+
+  This release updates Uptime Kuma from version 1.23.3 to 1.23.7.
+
+
+  💇‍♀️ Improvements:
   
+  - Show the original timeout message again and +10 seconds for abort signal
+  
+  - Improved error message on abort signal timeout (Thanks @chakflying)
+
+
   🐛 Bug Fixes:
-  
-  - Fixed an issue that notification is not working if the config is too long
-  
-  - Enable status page certificate expiry badge for all HTTP(s) monitors
 
-  - Fixed kafka producer bugs
+  - Fixed a memory leak issue. Close the client postgresql connection after rejection. (Thanks @mvaled)
 
-  - Fixed an issue that x-forwarded-host is not being used correctly
-
-  - Fixed a race condition issue that some data is not being saved in the status page editor if you clicked it too fast
+  - Reverted "Restart running monitors if no heartbeat", which causes some issues from 1.23.4 to 1.23.6.
 
 
   ⬆️ Security Fixes
 
-  - Fixed persistent session tokens issue. There was no way to revoke session tokens even if you changed the password. Now you can revoke them by changing your password if you think they may be leaked (Read more: GHSA-g9v2-wqcj-j99g).
+  - An XSS issue in the "Google Analytics ID" text field (Reported by @gtg2619) (Read more: GHSA-v4v2-8h88-65qj)
+
+  - Rewrite Tailscale ping using spawnSync (Reported by @vaadata-pascala) (Read more: GHSA-v4v2-8h88-65qj)
+
+  - getGameList, testChrome are no longer accessible without login
   
-  Full changelog for versions 1.21.2 to 1.23.0 can be found here: https://github.com/louislam/uptime-kuma/releases
+
+  Full changelog for versions 1.23.3 to 1.23.7 can be found here: https://github.com/louislam/uptime-kuma/releases
 submitter: Philipp Haussleiter
 submission: https://github.com/getumbrel/umbrel/pull/1148
