@@ -2,7 +2,7 @@ manifestVersion: 1
 id: ghostfolio
 category: finance
 name: Ghostfolio
-version: "2.14.0"
+version: "2.28.0"
 tagline: Manage your wealth like a boss
 description: >-
   Ghostfolio is a privacy-first, open source dashboard for your personal finances.
@@ -31,32 +31,21 @@ path: ""
 deterministicPassword: false
 torOnly: false
 releaseNotes: >
-  This release upgrades Ghostfolio from v1.287.0 to v2.14.0, and includes numerous bug fixes, performance improvements, and exciting new features. Here's what's new in the latest version:
+  This release upgrades Ghostfolio from v2.14.0 to v2.28.0, and includes numerous bug fixes, performance improvements, and exciting new features. Here's what's new in the latest version:
   
 
   Added:
 
-    - Added the OpenFIGI data enhancer for Financial Instrument Global Identifier (FIGI)
-    - Added figi, figiComposite and figiShareClass to the asset profile model
+    - Added a historical cash balances table to the account detail dialog
+    - Introduced a 'HasPermission' annotation for endpoints
 
   Changed:
 
-    - Moved the fees on account level feature from experimental to general availability
-    - Moved the interest on account level feature from experimental to general availability
-    - Moved the search for a holding from experimental to general availability
-    - Improved the error message in the activities import for csv files
-    - Removed the application version from the client
-    - Allowed to edit today’s historical market data in the asset profile details dialog of the admin control panel
-
+    - Relaxed the check for duplicates in the preview step of the activities import (allow same day)
+    - Respected the 'withExcludedAccounts' flag in the account balance time series
+  
   Fixed:
-
-    - Fixed the style of the active page in the header navigation
-    - Trimmed text in i18n service to query messages.*.xlf files on the server
-
-  Special Thanks
-
-    @dl90
-    @dtslvr
+    - Changed the mechanism of the 'INTRADAY' data gathering to operate synchronously avoiding database deadlocks
 
   For full release notes and additional changes from previous versions, please visit: https://github.com/ghostfolio/ghostfolio/releases
 submitter: BeauAgst
