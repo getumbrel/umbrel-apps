@@ -14,8 +14,9 @@ services:
     volumes:
       - ${APP_DATA_DIR}/data/config:/config
       # sabnzdb offers no way to change the default download directory via environment variables
-      # and the sabnzbd.ini is not generated until after going through the setup wizard
-      # so we have instructions in the app description to change the download directory from /config/Downloads to /downloads
+      # and the sabnzbd.ini is not generated until after going through the setup wizard, which automatically sets the download directory to /config/Downloads
+      # users then need to manually change the download directory to /downloads in Settings > Folders
+      # This must be done in order to integrate easily properly with other apps like Sonarr and Radarr
       - ${UMBREL_ROOT}/data/storage/downloads:/downloads
     environment:
       - PUID=1000
