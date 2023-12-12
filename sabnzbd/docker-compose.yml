@@ -13,7 +13,10 @@ services:
     stop_grace_period: 1m
     volumes:
       - ${APP_DATA_DIR}/data/config:/config
-      - ${UMBREL_ROOT}/data/storage/downloads:/config/Downloads
+      # sabnzdb offers no way to change the default download directory via environment variables
+      # and the sabnzbd.ini is not generated until after going through the setup wizard
+      # so we have instructions in the app description to change the download directory from /config/Downloads to /downloads
+      - ${UMBREL_ROOT}/data/storage/downloads:/downloads
     environment:
       - PUID=1000
       - PGID=1000
