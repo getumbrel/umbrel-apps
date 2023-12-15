@@ -16,7 +16,7 @@ services:
       - ${APP_DATA_DIR}/data/public:/var/www/app/public:ro
 
   app:
-    image: invoiceninja/invoiceninja:5.5.93@sha256:59af42c410467154e6c50322f1d2ab048297b2d01e862f41bc9f1db4829c6086
+    image: invoiceninja/invoiceninja:5.7.62@sha256:3cdb189a3d20bcbe871bc55f6ca169fb3bded63dc1b829effb360cfaa0d8e0a7
     # We're forced to run user/group 1500
     # More detail here: https://github.com/invoiceninja/dockerfiles/blob/ad3ffc227d63740330f761dad6e8c87768577847/alpine/5/Dockerfile#L70-L80
     user: "1500:1500"
@@ -26,6 +26,9 @@ services:
       - ${APP_DATA_DIR}/data/storage:/var/www/app/storage:rw,delegated
     environment:
       APP_URL: "http://${APP_DOMAIN}"
+      APP_DEBUG: "true"
+      APP_KEY: base64:lrrBX5qhQxalWMY6SvSD8LJobCQwcPfotj/oyxqqRCY=
+      REQUIRE_HTTPS: "false"
       DB_HOST: invoice-ninja_db_1
       DB_DATABASE: invoiceninja
       DB_USERNAME: invoiceninja
@@ -44,4 +47,3 @@ services:
       MYSQL_USER: invoiceninja
       MYSQL_PASSWORD: moneyprintergobrrr
       MYSQL_DATABASE: invoiceninja
-
