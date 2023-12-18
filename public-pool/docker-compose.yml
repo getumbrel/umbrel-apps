@@ -11,3 +11,27 @@ services:
     restart: unless-stopped
     environment:
       - DOMAIN=$DEVICE_DOMAIN_NAME
+
+  server:
+    image: ghcr.io/sethforprivacy/public-pool:latest
+    restart: unless-stopped
+    stop_grace_period: 30s
+    ports:
+      - "0.0.0.0:3333:3333/tcp"
+    volumes:
+      - "${APP_BITCOIN_DATA_DIR}:/data/public-pool-db:/public-pool/DB"
+      - "${APP_BITCOIN_DATA_DIR}:/data/pool.env:/public-pool/.env:ro"
+    environment:
+      - NODE_ENV=production
+      - BITCOIN_RPC_URL=http://${APP_BITCOIN_NODE_IP}
+      - BITCOIN_RPC_USER=${APP_BITCOIN_RPC_USER}
+      - BITCOIN_RPC_PASSWORD=${APP_BITCOIN_RPC_PASS}
+      - BITCOIN_RPC_PORT=${APP_BITCOIN_RPC_PORT}
+      - BITCOIN_RPC_TIMEOUT=10000
+      - BITCOIN_ZMQ_HOST="tcp://${APP_BITCOIN_NODE_IP}:${APP_BITCOIN_ZMQ_RAWBLOCK_PORT}"
+      - API_PORT=3334
+      - STRATUM_PORT=3333
+      - NETWORK=mainnet
+      - API_SECURE=false
+      - ENABLE_SOLO=true
+      - ENABLE_PROXY=false
