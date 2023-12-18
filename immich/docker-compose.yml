@@ -7,12 +7,11 @@ x-environment: &env
   DB_PASSWORD: &db_password "moneyprintergobrrr"
   DB_DATABASE_NAME: &db_database_name "immich"
   REDIS_HOSTNAME: "immich_redis_1"
-  LOG_LEVEL: "simple"
+  LOG_LEVEL: "log"
   JWT_SECRET: ${APP_SEED}
   DISABLE_REVERSE_GEOCODING: "false"
   REVERSE_GEOCODING_PRECISION: "3"
   PUBLIC_LOGIN_PAGE_MESSAGE: ""
-  TYPESENSE_API_KEY: &typesense_api_key "any-text-for-self-hosted-typesense"
   IMMICH_MACHINE_LEARNING_URL: "http://immich_machine-learning_1:3003"
 
 services:
@@ -23,7 +22,7 @@ services:
       PROXY_AUTH_WHITELIST: "/api/*,/search/*"
 
   server:
-    image: ghcr.io/immich-app/immich-server:v1.88.2@sha256:ac214c6c4e7f6c2133b885d9e6ebc7696cbcf96a148c95746eef15eef0cea71a
+    image: ghcr.io/immich-app/immich-server:v1.91.3@sha256:7831b311f49f5cccc25fb9ed1535f3c8923577619e9635731d24b9ba8344ee69
     command: [ "start.sh", "immich" ]
     volumes:
       - ${APP_DATA_DIR}/data/upload:/usr/src/app/upload
@@ -32,11 +31,10 @@ services:
     depends_on:
       - redis
       - postgres
-      - typesense
     restart: on-failure
 
   microservices:
-    image: ghcr.io/immich-app/immich-server:v1.88.2@sha256:ac214c6c4e7f6c2133b885d9e6ebc7696cbcf96a148c95746eef15eef0cea71a
+    image: ghcr.io/immich-app/immich-server:v1.91.3@sha256:7831b311f49f5cccc25fb9ed1535f3c8923577619e9635731d24b9ba8344ee69
     # This service cannot run under 1000:1000
     # And because the uploads are shared
     # We'll run immich specific services as root
@@ -48,24 +46,14 @@ services:
     depends_on:
       - redis
       - postgres
-      - typesense
     restart: on-failure
 
   machine-learning:
-    image: ghcr.io/immich-app/immich-machine-learning:v1.88.2@sha256:134b6d16b76acd2b6a6ee43c6866668c1c00c33fb3c989bbae5ad867acc2f71b
+    image: ghcr.io/immich-app/immich-machine-learning:v1.91.3@sha256:36274c6ca2b84edc44f7fbb9a29487c585f72eb7bea9aa58a6305d1f02cbac49
     volumes:
       - ${APP_DATA_DIR}/data/model-cache:/cache
     environment:
       <<: *env
-    restart: on-failure
-
-  typesense:
-    image: typesense/typesense:0.24.1@sha256:9bcff2b829f12074426ca044b56160ca9d777a0c488303469143dd9f8259d4dd
-    environment:
-      TYPESENSE_API_KEY: *typesense_api_key
-      TYPESENSE_DATA_DIR: "/data"
-    volumes:
-      - ${APP_DATA_DIR}/data/tsdata:/data
     restart: on-failure
 
   redis:
@@ -76,7 +64,7 @@ services:
       - ${APP_DATA_DIR}/data/redis:/data
 
   postgres:
-    image: postgres:14-alpine@sha256:28407a9961e76f2d285dc6991e8e48893503cc3836a4755bbc2d40bcc272a441
+    image: tensorchord/pgvecto-rs:pg14-v0.1.11
     user: "1000:1000"
     environment:
       <<: *env
