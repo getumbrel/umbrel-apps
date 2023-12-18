@@ -8,13 +8,13 @@ services:
       PROXY_AUTH_WHITELIST: "/api/*"
   
   web:
-    image: ghcr.io/sethforprivacy/public-pool-ui:latest
+    image: sethforprivacy/public-pool-ui:db286e5@sha256:1a411ed59cdf3a3bddbfc2b4b90b413ad7dbbd6787543aff3c4ae4ffb260b80e
     restart: unless-stopped
     environment:
       - DOMAIN=$DEVICE_DOMAIN_NAME
 
   server:
-    image: ghcr.io/sethforprivacy/public-pool:latest
+    image: sethforprivacy/public-pool:4bb00f2@sha256:0fc82e7123be68650c9e31f57a5a206e622acbcaa170e31219a488818ad6da6b
     restart: unless-stopped
     stop_grace_period: 30s
     ports:
