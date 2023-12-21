@@ -14,6 +14,8 @@ services:
     volumes:
       - ${APP_DATA_DIR}/config/nginx.conf:/etc/nginx/conf.d/nginx.conf:ro
       - ${APP_DATA_DIR}/data/public:/var/www/app/public:ro
+    depends_on:
+      - app
 
   app:
     image: invoiceninja/invoiceninja:5.7.62@sha256:3cdb189a3d20bcbe871bc55f6ca169fb3bded63dc1b829effb360cfaa0d8e0a7
@@ -34,6 +36,8 @@ services:
       DB_PASSWORD: moneyprintergobrrr
       IN_USER_EMAIL: "admin@example.com"
       IN_PASSWORD: $APP_PASSWORD
+    depends_on:
+      - db
 
   db:
     image: mariadb:10.5.12@sha256:dfcba5641bdbfd7cbf5b07eeed707e6a3672f46823695a0d3aba2e49bbd9b1dd
