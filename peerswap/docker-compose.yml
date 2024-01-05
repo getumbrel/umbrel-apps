@@ -7,7 +7,7 @@ services:
       APP_PORT: $APP_PEERSWAP_RPC_PORT
 
   web:
-    image: ghcr.io/impa10r/peerswap-joint:v1.0.3@sha256:89077706b90c849ef09f6524d83f94a6b10c874ed02e3c406eea67b11063fe0f
+    image: ghcr.io/impa10r/peerswap-joint:v1.0.3@sha256:1951866cb1982de0fbac283c14fe053f8e6df17a383e64739ea0026cef1231e4
     restart: on-failure
     stop_grace_period: 1m
     environment:
@@ -18,6 +18,10 @@ services:
       - ${APP_DATA_DIR}/data:/root/.peerswap
       - ${APP_LIGHTNING_NODE_DATA_DIR}:/root/.lnd:ro
     command:
+      - /bin/sh
+      - -c
+      - psweb; 
+      - peerswapd
       # Application Options
       - --datadir=/root/.peerswap
       - --loglevel=2                   # loglevel (1=Info, 2=Debug) (default: 2)
