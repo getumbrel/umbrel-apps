@@ -1,2 +1,1 @@
-export APP_PEERSWAP_RPC_PORT="42069"
 export APP_PEERSWAP_CHAIN="testnet"
