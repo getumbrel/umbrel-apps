@@ -33,7 +33,7 @@ services:
       - --elementsd.rpchost=elements_node_1
 
   web:
-    image: ghcr.io/impa10r/peerswap-web:v1.0.3@sha256:b20fe69ca3934f523803920fb9613f8f289780a0880016816dcadf57ec3aaae7
+    image: ghcr.io/impa10r/peerswap-web:v1.0.3@sha256:40081129e8e45788dca86b80b1f09fdbfd953ef3ac5e7fabdc0db76e9281f418
     restart: on-failure
     stop_grace_period: 1m
     init: true
@@ -41,3 +41,7 @@ services:
       - peerswapd
     volumes:
       - ${APP_DATA_DIR}/data:/root/.peerswap
+    environment:
+      RPC_PORT: $APP_PEERSWAP_RPC_PORT
+      RPC_HOST: peerswap_peerswapd_1
+      TESTNET: $APP_PEERSWAP_CHAIN
