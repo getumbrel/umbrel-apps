@@ -14,6 +14,7 @@ services:
       - $APP_PEERSWAP_RPC_PORT:$APP_PEERSWAP_RPC_PORT # RPC
     volumes:
       - ${APP_DATA_DIR}/data:/root/.peerswap
+      - ${APP_LIGHTNING_NODE_DATA_DIR}:/root/.lnd:ro
     command:
       # Application Options
       - --configfile=/root/.peerswap/peerswap.conf 
@@ -23,8 +24,8 @@ services:
       - --bitcoinswaps                 # remove to disable
       # LND
       - --lnd.host=lightning_lnd_1
-      - --lnd.tlscertpath=${APP_LIGHTNING_NODE_DATA_DIR}/tls.cert
-      - --lnd.macaroonpath=${APP_LIGHTNING_NODE_DATA_DIR}/data/chain/bitcoin/${APP_PEERSWAP_CHAIN}/admin.macaroon
+      - --lnd.tlscertpath=/root/.lnd/tls.cert
+      - --lnd.macaroonpath=/root/.lnd/data/chain/bitcoin/${APP_PEERSWAP_CHAIN}/admin.macaroon
       # Elements RPC
       - --elementsd.rpcuser=elements
       - --elementsd.rpcpass=49cf18cd3c32e6d2c600c9ea603e6b4ddfa4eefe52cc00722e5c040e2ac2ed1e ##### $APP_ELEMENTS_RPC_PASS
