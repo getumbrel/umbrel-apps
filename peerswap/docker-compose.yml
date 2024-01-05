@@ -3,7 +3,7 @@ version: "3.7"
 services:
   app_proxy:
     environment:
-      APP_HOST: elements_web_1
+      APP_HOST: peerswap_web_1
       APP_PORT: $APP_PEERSWAP_UI_PORT
 
   peerswapd:
@@ -15,15 +15,22 @@ services:
     volumes:
       - ${APP_DATA_DIR}/data:/root/.peerswap
     command:
+      # Application Options
+      - --configfile=/root/.peerswap/peerswap.conf 
+      - --policyfile=/root/.peerswap/policy.conf
+      - --datadir=/root/.peerswap
+      - --loglevel=2                   # loglevel (1=Info, 2=Debug) (default: 2)
+      - --liquidswaps=true             
+      - --bitcoinswaps=true
       # LND
-      - -lnd.host=lightning_lnd_1
-      - -lnd.tlscertpath=${APP_LIGHTNING_NODE_DATA_DIR}/tls.cert
-      - -lnd.macaroonpath=${APP_LIGHTNING_NODE_DATA_DIR}/data/chain/bitcoin/${APP_PEERSWAP_CHAIN}/admin.macaroon
+      - --lnd.host=lightning_lnd_1
+      - --lnd.tlscertpath=${APP_LIGHTNING_NODE_DATA_DIR}/tls.cert
+      - --lnd.macaroonpath=${APP_LIGHTNING_NODE_DATA_DIR}/data/chain/bitcoin/${APP_PEERSWAP_CHAIN}/admin.macaroon
       # Elements RPC
-      - -elementsd.rpcuser=elements
-      - -elementsd.rpcpass=$APP_ELEMENTS_RPC_PASS
-      - -elementsd.rpcport=$APP_ELEMENTS_NODE_RPC_PORT
-      - -elementsd.rpchost=elements_node_1
+      - --elementsd.rpcuser=elements
+      - --elementsd.rpcpass=$APP_ELEMENTS_RPC_PASS
+      - --elementsd.rpcport=$APP_ELEMENTS_NODE_RPC_PORT
+      - --elementsd.rpchost=elements_node_1
 
   web:
     image: ghcr.io/impa10r/peerswap-web:v1.0.3@sha256:b20fe69ca3934f523803920fb9613f8f289780a0880016816dcadf57ec3aaae7
