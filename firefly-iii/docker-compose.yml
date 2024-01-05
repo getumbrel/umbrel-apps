@@ -36,3 +36,13 @@ services:
       MYSQL_USER: "fireflyiii"
       MYSQL_PASSWORD: "moneyprintergobrrr"
       MYSQL_ROOT_PASSWORD: "moneyprintergobrrr"
+
+  importer:
+    image: fireflyiii/data-importer:version-1.4.0@sha256:05f8e99dbafe57f7f2158298253d20c9fb27733abeec9e9c17ad8e951760464d
+    restart: always
+    ports:
+      - '81:8080'
+    depends_on:
+      - server
+    environment:
+      FIREFLY_III_URL=$DEVICE_DOMAIN_NAME
