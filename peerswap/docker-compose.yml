@@ -4,15 +4,15 @@ services:
   app_proxy:
     environment:
       APP_HOST: peerswap_web_1
-      APP_PORT: 8088
+      APP_PORT: $APP_PEERSWAP_RPC_PORT
 
   web:
     image: ghcr.io/impa10r/peerswap-joint:v1.0.3@sha256:40055ef3b87cd429c7db437680f05053e35ba15fe5de2d8c70b083f5a9bd4a28
     restart: on-failure
     stop_grace_period: 1m
     environment:
-      #RPC_PORT: $APP_PEERSWAP_RPC_PORT
-      #RPC_HOST: peerswap_web_1
+      RPC_PORT: $APP_PEERSWAP_RPC_PORT
+      RPC_HOST: peerswap_web_1
       TESTNET: $APP_PEERSWAP_CHAIN
     #ports:
     #  - $APP_PEERSWAP_RPC_PORT:$APP_PEERSWAP_RPC_PORT # RPC

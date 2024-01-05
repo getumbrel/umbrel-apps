@@ -1,1 +1,2 @@
 export APP_PEERSWAP_CHAIN="testnet"
+export APP_PEERSWAP_RPC_PORT="8088"
