@@ -1,0 +1,35 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_PORT: $APP_PEERSWAP_PORT
+
+peerswapd:
+    image: ghcr.io/impa10r/peerswapd:v1.0.3@sha256:b20fe69ca3934f523803920fb9613f8f289780a0880016816dcadf57ec3aaae7
+    restart: on-failure
+    stop_grace_period: 1m
+    ports:
+      - $APP_PEERSWAP_RPC_PORT:$APP_PEERSWAP_RPC_PORT # RPC
+    volumes:
+      - ${APP_DATA_DIR}/data:/root/.peerswap
+    command:
+      # LND
+      - --lnd.host=lightning_lnd_1
+      - --lnd.tlscertpath=${APP_LIGHTNING_NODE_DATA_DIR}/tls.cert
+      - --lnd.macaroonpath=${APP_LIGHTNING_NODE_DATA_DIR}/data/chain/bitcoin/${APP_PEERSWAP_CHAIN}/admin.macaroon
+      # Elements RPC
+      - --elementsd.rpcuser=elements
+      - --elementsd.rpcpass=$APP_PASSWORD
+      - --elementsd.rpcport=$APP_ELEMENTS_NODE_RPC_PORT
+      - --elementsd.rpchost=elements_node_1
+
+  web:
+    image: ghcr.io/impa10r/peerswapd:latest@sha256:ebeed891e46e0c990f5d0c5c78a4e39c336d9ce7afee90210f5f9956215bf7e3
+    restart: on-failure
+    stop_grace_period: 1m
+    init: true
+    depends_on:
+      - peerswapd
+    volumes:
+      - ${APP_DATA_DIR}/data:/root/.peerswap
