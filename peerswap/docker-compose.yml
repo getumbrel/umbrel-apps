@@ -18,15 +18,3 @@ services:
     volumes:
       - ${APP_DATA_DIR}/data:/root/.peerswap
       - ${APP_LIGHTNING_NODE_DATA_DIR}:/root/.lnd:ro
-    command:
-      # Application Options
-      - --datadir=/root/.peerswap
-      # LND
-      - --lnd.host=${APP_LIGHTNING_NODE_IP}:${APP_LIGHTNING_NODE_GRPC_PORT}
-      - --lnd.macaroonpath=/root/.lnd/data/chain/bitcoin/${APP_BITCOIN_NETWORK}/admin.macaroon
-      # Elements RPC
-      - --elementsd.rpcuser=elements
-      - --elementsd.rpcpass=49cf18cd3c32e6d2c600c9ea603e6b4ddfa4eefe52cc00722e5c040e2ac2ed1e ##### $APP_ELEMENTS_RPC_PASS
-      - --elementsd.rpcport=$APP_ELEMENTS_NODE_RPC_PORT
-      - --elementsd.rpchost=elements_node_1
-      - --elementsd.rpcwallet=peerswap
