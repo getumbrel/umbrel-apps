@@ -7,12 +7,23 @@ services:
       APP_PORT: $APP_PEERSWAP_RPC_PORT
 
   web:
-    image: ghcr.io/impa10r/peerswap-web:v1.0.3@sha256:7183da1962f6c25d9e3b3aea446dba427cafef54b880d0c13ee6d4e3b54cf6fc
+    image: ghcr.io/impa10r/peerswap-web:v1.0.3@sha256:c99081a27f98eccaf68d96bad0b8c964d1f7b39f51388df5757173a1eb36e235
     restart: on-failure
     stop_grace_period: 1m
     environment:
+      # App
       TESTNET: $APP_BITCOIN_NETWORK
       LAUNCH_PEERSWAPD: "true"
+      APP_MEMPOOL_PORT: $APP_MEMPOOL_PORT 
+      APP_MEMPOOL_HIDDEN_SERVICE: $APP_MEMPOOL_HIDDEN_SERVICE
+      # LND
+      LND_HOST: ${APP_LIGHTNING_NODE_IP}:${APP_LIGHTNING_NODE_GRPC_PORT}
+      LND_MACAROONPATH: /root/.lnd/data/chain/bitcoin/${APP_BITCOIN_NETWORK}/admin.macaroon
+      # Elements RPC
+      ELEMENTSD_RPCUSER: elements
+      ELEMENTSD_RPCPORT: $APP_ELEMENTS_NODE_RPC_PORT
+      ELEMENTSD_RPCHOST: elements_node_1
+      ELEMENTSD_RPCWALLET: peerswap
     volumes:
       - ${APP_DATA_DIR}/data:/root/.peerswap
       - ${APP_LIGHTNING_NODE_DATA_DIR}:/root/.lnd:ro
