@@ -7,32 +7,26 @@ services:
       APP_PORT: $APP_PEERSWAP_RPC_PORT
 
   web:
-    image: ghcr.io/impa10r/peerswap-joint:v1.0.3@sha256:1951866cb1982de0fbac283c14fe053f8e6df17a383e64739ea0026cef1231e4
+    image: ghcr.io/impa10r/peerswap-web:v1.0.3@sha256:8704771dccbf9bd81399364d92479d82b5259b733a04ca81d31d4fd307b0b590
     restart: on-failure
     stop_grace_period: 1m
     environment:
       RPC_PORT: $APP_PEERSWAP_RPC_PORT
       RPC_HOST: peerswap_web_1
       TESTNET: $APP_BITCOIN_NETWORK
+      LAUNCH_PEERSWAPD: true
     volumes:
       - ${APP_DATA_DIR}/data:/root/.peerswap
       - ${APP_LIGHTNING_NODE_DATA_DIR}:/root/.lnd:ro
     command:
-      - sh
-      - -c
-      - /root/psweb; 
-      - /root/peerswapd
       # Application Options
       - --datadir=/root/.peerswap
-      - --loglevel=2                   # loglevel (1=Info, 2=Debug) (default: 2)
-      - --bitcoinswaps                 # remove to disable
       # LND
       - --lnd.host=${APP_LIGHTNING_NODE_IP}:${APP_LIGHTNING_NODE_GRPC_PORT}
-      - --lnd.tlscertpath=/root/.lnd/tls.cert
       - --lnd.macaroonpath=/root/.lnd/data/chain/bitcoin/${APP_PEERSWAP_CHAIN}/admin.macaroon
       # Elements RPC
       - --elementsd.rpcuser=elements
       - --elementsd.rpcpass=49cf18cd3c32e6d2c600c9ea603e6b4ddfa4eefe52cc00722e5c040e2ac2ed1e ##### $APP_ELEMENTS_RPC_PASS
       - --elementsd.rpcport=$APP_ELEMENTS_NODE_RPC_PORT
       - --elementsd.rpchost=elements_node_1
-      - --elementsd.rpcwallet= peerswap
+      - --elementsd.rpcwallet=peerswap
