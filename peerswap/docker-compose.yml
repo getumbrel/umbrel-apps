@@ -4,15 +4,15 @@ services:
   app_proxy:
     environment:
       APP_HOST: peerswap_web_1
-      APP_PORT: $APP_PEERSWAP_RPC_PORT
+      APP_PORT: 1984
 
   web:
-    image: ghcr.io/impa10r/peerswap-web:v1.0.3@sha256:c99081a27f98eccaf68d96bad0b8c964d1f7b39f51388df5757173a1eb36e235
+    image: ghcr.io/impa10r/peerswap-web:v1.1.0
     restart: on-failure
     stop_grace_period: 1m
     environment:
       # App
-      TESTNET: $APP_BITCOIN_NETWORK
+      NETWORK: $APP_BITCOIN_NETWORK
       LAUNCH_PEERSWAPD: "true"
       APP_MEMPOOL_PORT: $APP_MEMPOOL_PORT 
       APP_MEMPOOL_HIDDEN_SERVICE: $APP_MEMPOOL_HIDDEN_SERVICE
@@ -22,7 +22,7 @@ services:
       # Elements RPC
       ELEMENTSD_RPCUSER: elements
       ELEMENTSD_RPCPORT: $APP_ELEMENTS_NODE_RPC_PORT
-      ELEMENTSD_RPCHOST: elements_node_1
+      ELEMENTSD_RPCHOST: http://elements_node_1
       ELEMENTSD_RPCWALLET: peerswap
     volumes:
       - ${APP_DATA_DIR}/data:/root/.peerswap
