@@ -13,15 +13,14 @@ services:
     environment:
       # App
       NETWORK: $APP_BITCOIN_NETWORK
-      LAUNCH_PEERSWAPD: "true"
       # LND
       LND_HOST: ${APP_LIGHTNING_NODE_IP}:${APP_LIGHTNING_NODE_GRPC_PORT}
       LND_MACAROONPATH: /root/.lnd/data/chain/bitcoin/${APP_BITCOIN_NETWORK}/admin.macaroon
       # Elements RPC
-      ELEMENTSD_RPCUSER: elements
-      ELEMENTSD_RPCPORT: $APP_ELEMENTS_NODE_RPC_PORT
-      ELEMENTSD_RPCHOST: http://elements_node_1
-      ELEMENTSD_RPCWALLET: peerswap
+      ELEMENTS_USER: elements
+      ELEMENTS_PORT: $APP_ELEMENTS_NODE_RPC_PORT
+      ELEMENTS_HOST: http://elements_node_1
+      ELEMENTS_WALLET: peerswap
     volumes:
       - ${APP_DATA_DIR}/data:/root/.peerswap
       - ${APP_LIGHTNING_NODE_DATA_DIR}:/root/.lnd:ro
