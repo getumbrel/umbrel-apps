@@ -1,0 +1,53 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: back-that-mac-up_server_1
+      APP_PORT: 80
+
+  server:
+    image: getumbrel/umbrel-back-that-mac-up:1.0.0@sha256:f26f349eec8b3e9970a5f012ce30567d577b9459705a86f3592273a15f2ed0af
+    restart: on-failure
+    environment:
+      TIME_MACHINE_DIR: "/timemachine"
+    volumes:
+      # this is the entire back-that-mac-up data dir (could consider only mounting opt-timemachine subdir instead)
+      - ${APP_DATA_DIR}/data:/timemachine
+
+  timemachine:
+    image: mbentley/timemachine:smb-20231122@sha256:861560184a5c9f3b4f2a8bef4549ef4168d80c57a9de81b16bc5e6eead24ff3f
+    hostname: umbrel
+    environment:
+      ADVERTISED_HOSTNAME: "umbrel"
+      CUSTOM_SMB_CONF: "false"
+      CUSTOM_USER: "false"
+      DEBUG_LEVEL: "1"
+      HIDE_SHARES: "no"
+      EXTERNAL_CONF: ""
+      MIMIC_MODEL: "TimeCapsule8,119"
+      TM_USERNAME: "timemachine"
+      TM_GROUPNAME: "timemachine"
+      TM_UID: "1000"
+      TM_GID: "1000"
+      PASSWORD: "timemachine"
+      SET_PERMISSIONS: "false"
+      SHARE_NAME: "Umbrel - Time Machine"
+      SMB_INHERIT_PERMISSIONS: "no"
+      SMB_NFS_ACES: "no"
+      SMB_METADATA: "stream"
+      SMB_PORT: "445"
+      SMB_VFS_OBJECTS: "acl_xattr fruit streams_xattr"
+      VOLUME_SIZE_LIMIT: "0"
+      WORKGROUP: "WORKGROUP"
+    restart: unless-stopped
+    ports:
+      - "137:137/udp"
+      - "138:138/udp"
+      - "139:139"
+      - "445:445"
+    volumes:
+      - ${APP_DATA_DIR}/data/opt-timemachine:/opt/timemachine
+      - ${APP_DATA_DIR}/data/var-lib-samba:/var/lib/samba
+      - ${APP_DATA_DIR}/data/var-cache-samba:/var/cache/samba
+      - ${APP_DATA_DIR}/data/run-samba:/run/samba
