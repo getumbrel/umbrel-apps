@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: bitcoin
 category: bitcoin
 name: Bitcoin Node
-version: "25.1"
+version: "26.0"
 tagline: Run your personal node powered by Bitcoin Core
 description: >-
   Run your Bitcoin node and independently store and validate
@@ -42,25 +42,24 @@ gallery:
 path: ""
 defaultPassword: ""
 releaseNotes: >-
-  This update brings Bitcoin Core 25.1, automatic 'settings.json' corruption detection and repair, along with several new advanced settings such as:
+  This update brings Bitcoin Core 26.0, with changes such as:
 
 
-  - Peer Settings: Customize your node's connections and interactions with network peers. For example, you can now adjust ban durations for misbehaving peers.
+  - Nodes with multiple reachable networks will actively try to have at least one outbound connection to each network. This improves individual resistance to eclipse attacks and network level resistance to partition attacks. Users no longer need to perform active measures to ensure being connected to multiple enabled networks.
 
 
-  - Optimization: Fine-tune your node's performance and resource usage with new settings like maximum mempool size.
+  - Experimental support for the v2 transport protocol defined in BIP324 was added. It is off by default, but when enabled using -v2transport it will be negotiated on a per-connection basis with other peers that support it too. The existing v1 transport protocol remains fully supported.
 
 
-  - RPC and REST: Configure access to your node's RPC and REST APIs.
+  - When using assumeutxo with -prune, the prune budget may be exceeded if it is set lower than 1100MB (i.e. MIN_DISK_SPACE_FOR_BLOCK_FILES * 2). Prune budget is normally split evenly across each chainstate, unless the resulting prune budget per chainstate is beneath MIN_DISK_SPACE_FOR_BLOCK_FILES in which case that value will be used.
+
+
+  - New RPCs: loadtxoutset, getprioritisedtransactions, submitpackage, getaddrmaninfo and importmempool
 
 
   - and more!
 
 
-  ⚠️ 'Peer Bloom Filters' is now disabled by default for all users, to enhance privacy and lower the risk of denial-of-serice (DoS attacks). You can read more at https://github.com/getumbrel/umbrel/issues/1624.
-  If you are connecting older wallet clients that depend on the BIP37 protocol (eg. Bisq), you can enable 'Peer Bloom Filters' in Advanced Settings at the cost of reduced security.
-
-
-  Discover what's new in Bitcoin Core 25.1: https://github.com/bitcoin/bitcoin/blob/master/doc/release-notes/release-notes-25.1.md
+  Discover what's new in Bitcoin Core 26.0: https://github.com/bitcoin/bitcoin/blob/master/doc/release-notes/release-notes-26.0.md
 submitter: Umbrel
 submission: https://github.com/getumbrel/umbrel-apps/commit/576ecd2bef8d625abceed0f67ec9c487da9b2b1b
