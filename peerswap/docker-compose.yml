@@ -7,7 +7,7 @@ services:
       APP_PORT: 1984
 
   web:
-    image: ghcr.io/impa10r/peerswap-web:v1.1.0
+    image: ghcr.io/impa10r/peerswap-web:v1.1.1
     restart: on-failure
     stop_grace_period: 1m
     environment:
@@ -21,6 +21,9 @@ services:
       ELEMENTS_PORT: $APP_ELEMENTS_NODE_RPC_PORT
       ELEMENTS_HOST: http://elements_node_1
       ELEMENTS_WALLET: peerswap
+      ELEMENTS_FOLDER: /home/elements/.elements
+      ELEMENTS_FOLDER_MAPPED: /root/.elements
     volumes:
       - ${APP_DATA_DIR}/data:/root/.peerswap
       - ${APP_LIGHTNING_NODE_DATA_DIR}:/root/.lnd:ro
+      - /home/umbrel/umbrel/app-data/elements/data:/root/.elements:ro
