@@ -22,10 +22,10 @@ services:
     image: sethforprivacy/public-pool-ui:db286e5@sha256:1a411ed59cdf3a3bddbfc2b4b90b413ad7dbbd6787543aff3c4ae4ffb260b80e
     restart: unless-stopped
     environment:
-      - DOMAIN=$DEVICE_HOSTNAME
+      - DOMAIN=$DEVICE_DOMAIN_NAME
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.public-pool-ui.rule=Host(`$DEVICE_HOSTNAME`)"
+      - "traefik.http.routers.public-pool-ui.rule=Host(`$DEVICE_DOMAIN_NAME`)"
       - "traefik.http.routers.public-pool-ui.entrypoints=web"
       - "traefik.http.services.public-pool-ui.loadbalancer.server.port=80"
 
