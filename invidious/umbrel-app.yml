@@ -2,7 +2,7 @@ manifestVersion: 1
 id: invidious
 category: social
 name: Invidious
-version: "2023.8.7-3450896"
+version: "2024.1.10-1c0b420"
 tagline: Browse YouTube without tracking or ads
 description: >-
   An open source alternative front-end to YouTube
@@ -48,6 +48,16 @@ defaultUsername: ""
 defaultPassword: ""
 torOnly: false
 releaseNotes: >-
-  - This version includes a workaround for fetching streaming URLs.
+  - Add option to disable force_resolve in make_client
+
+    Some websites such as archive.org and textcaptcha.com
+    does not support IPv6 and as such requests fail when Invidious requests
+    with IPv6 to those services.
+
+  - Reenable force_resolve on pubsub subscribe request
+
+  - Make force_resolve false by default in make_client
+
+  - Remove missed explicit force_resolve=false
 submitter: Jasper
 submission: https://github.com/getumbrel/umbrel-apps/pull/129
