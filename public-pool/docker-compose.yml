@@ -8,8 +8,9 @@ services:
       PROXY_AUTH_WHITELIST: "/api/*"
 
   web:
-    image: smolgrrr/public-pool-ui:latest
+    image: smolgrrr/public-pool-ui:0.1.0@sha256:e219808b92a9f52fc5938860a731d317cf6db1d059af3b982b02b48cbe06dc3b
     restart: unless-stopped
+    stop_grace_period: 30s
     environment:
       - DOMAIN=$DEVICE_DOMAIN_NAME
 
