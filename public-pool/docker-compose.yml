@@ -1,0 +1,47 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: public-pool_proxy_1
+      APP_PORT: 80
+      PROXY_AUTH_WHITELIST: "/api/*"
+
+  web:
+    image: smolgrrr/public-pool-ui:0.1.0@sha256:e219808b92a9f52fc5938860a731d317cf6db1d059af3b982b02b48cbe06dc3b
+    restart: on-failure
+    stop_grace_period: 30s
+    environment:
+      - DOMAIN=$DEVICE_DOMAIN_NAME
+
+  server:
+    image: sethforprivacy/public-pool:4bb00f2@sha256:0fc82e7123be68650c9e31f57a5a206e622acbcaa170e31219a488818ad6da6b
+    restart: on-failure
+    stop_grace_period: 30s
+    ports:
+      - "2018:2018/tcp"
+    volumes:
+      - "${APP_DATA_DIR}/data/db:/public-pool/DB"
+    environment:
+      - NODE_ENV=production
+      - BITCOIN_RPC_URL=http://${APP_BITCOIN_NODE_IP}
+      - BITCOIN_RPC_USER=${APP_BITCOIN_RPC_USER}
+      - BITCOIN_RPC_PASSWORD=${APP_BITCOIN_RPC_PASS}
+      - BITCOIN_RPC_PORT=${APP_BITCOIN_RPC_PORT}
+      - BITCOIN_RPC_TIMEOUT=10000
+      - BITCOIN_ZMQ_HOST="tcp://${APP_BITCOIN_NODE_IP}:${APP_BITCOIN_ZMQ_RAWBLOCK_PORT}"
+      - API_PORT=2019
+      - STRATUM_PORT=2018
+      - NETWORK=mainnet
+      - API_SECURE=false
+      - ENABLE_SOLO=true
+      - ENABLE_PROXY=false
+
+  proxy:
+    image: nginx:1.25.3@sha256:4c0fdaa8b6341bfdeca5f18f7837462c80cff90527ee35ef185571e1c327beac
+    volumes:
+      - ${APP_DATA_DIR}/data/proxy/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - web
+      - server
+    restart: on-failure
