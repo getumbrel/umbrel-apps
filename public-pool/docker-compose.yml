@@ -8,20 +8,20 @@ services:
       PROXY_AUTH_WHITELIST: "/api/*"
 
   web:
-    image: smolgrrr/public-pool-ui:0.1.0@sha256:e219808b92a9f52fc5938860a731d317cf6db1d059af3b982b02b48cbe06dc3b
+    image: smolgrrr/public-pool-ui:c2c081d@sha256:3623a1a42cfd0d3cab23ade9bc1bc6ccfadce583303d3a61bd0b3cc421246a36
     restart: on-failure
     stop_grace_period: 30s
     environment:
       - DOMAIN=$DEVICE_DOMAIN_NAME
 
   server:
-    image: sethforprivacy/public-pool:4bb00f2@sha256:0fc82e7123be68650c9e31f57a5a206e622acbcaa170e31219a488818ad6da6b
+    image: sethforprivacy/public-pool:dcfc528@sha256:29dd3493bf30006c3a855a5533226d09705714074f822298443a45a4c8d356c3
     restart: on-failure
     stop_grace_period: 30s
     ports:
       - "2018:2018/tcp"
     volumes:
-      - "${APP_DATA_DIR}/data/db:/public-pool/DB"
+      - "${APP_DATA_DIR}/data/database:/public-pool/DB"
     environment:
       - NODE_ENV=production
       - BITCOIN_RPC_URL=http://${APP_BITCOIN_NODE_IP}
