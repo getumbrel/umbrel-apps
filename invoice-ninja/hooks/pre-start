@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# We're forced to run user/group 1500
+# More detail here: https://github.com/invoiceninja/dockerfiles/blob/ad3ffc227d63740330f761dad6e8c87768577847/alpine/5/Dockerfile#L70-L80
+# So we set the owner of the data directories to 1500:1500
 APP_DATA_DIR="$(readlink -f $(dirname "${BASH_SOURCE[0]}")/..)/data"
 
 DESIRED_OWNER="1500:1500"
@@ -22,3 +25,14 @@ invoiceninja_correct_permission() {
 
 invoiceninja_correct_permission "${PUBLIC_DATA_DIR}"
 invoiceninja_correct_permission "${STORAGE_DATA_DIR}"
+
+LARAVEL_APP_KEY_FILE_PATH="${APP_DATA_DIR}/laravel-app-key.txt"
+
+
+# We only generate and save the Laravel APP_KEY if it doesn't exist already
+if [[ ! -f "${LARAVEL_APP_KEY_FILE_PATH}" ]]; then
+	#  generates a laravel APP_KEY using the invoice-ninja container --> php artisan key:generate --show
+	APP_KEY=$("${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" run --rm app php artisan key:generate --show)
+	# we remove the color codes and newlines from the output which cause laravel to fail to parse the APP_KEY
+	echo "${APP_KEY}" | sed 's/\x1b\[[0-9;]*m//g' | tr -d '\r\n' > "${LARAVEL_APP_KEY_FILE_PATH}"
+fi
