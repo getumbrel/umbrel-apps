@@ -1,0 +1,48 @@
+version: "3.7"
+
+services:
+  app_proxy:
+   environment:
+     APP_HOST: pinserver_web_1
+     APP_PORT: $APP_PINSERVER_WEB_PORT
+
+  node:
+    image: tulipan81/blind_pin_server:v0.0.4@sha256:339974d80c2759900e1d7f155e32bf20f71e32fe9d7b9ad06440ba8d0a3b3bf9
+    depends_on:
+      - tor
+      - web
+    restart: on-failure
+    stop_grace_period: 1m
+    ports:
+      - $APP_PINSERVER_PORT:$APP_PINSERVER_PORT
+    volumes:
+      - ${APP_DATA_DIR}/data/server_public_key.pub:/server_public_key.pub
+      - ${APP_DATA_DIR}/data/server_private_key.key:/server_private_key.key
+      - ${APP_DATA_DIR}/data/pins:/pins
+
+  web: 
+    image: tulipan81/pinserver_web:v0.0.34@sha256:b5a8d94e3204dae157c7aa5cfe4f8ef7ef13c6ff953ade1a292042d432bbeb39
+    depends_on: 
+      - tor
+    restart: on-failure
+    ports:
+      - $APP_PINSERVER_WEB_PORT:$APP_PINSERVER_WEB_PORT
+    volumes:
+      - ${APP_DATA_DIR}/data/server_public_key.pub:/app/server_public_key.pub
+      - ${APP_DATA_DIR}/data/server_private_key.key:/app/server_private_key.key
+      - ${APP_DATA_DIR}/data/pins:/app/pins
+    environment:
+      PINSERVER_URL_A: ${APP_PINSERVER_HIDDEN_SERVICE}
+      PINSERVER_PORT_A: ${APP_PINSERVER_PORT}
+      PINSERVER_URL_B: ${APP_TAILSCALE_URL}
+      PINSERVER_PORT_B: ${APP_PINSERVER_PORT}
+  
+  tor:
+    image: getumbrel/tor:0.4.7.8@sha256:2ace83f22501f58857fa9b403009f595137fa2e7986c4fda79d82a8119072b6a
+    user: "1000:1000"
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/torrc:/etc/tor/torrc:ro
+      - ${TOR_DATA_DIR}:/data
+    environment:
+      HOME: "/tmp"
