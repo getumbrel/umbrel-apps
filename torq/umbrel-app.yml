@@ -2,7 +2,7 @@ manifestVersion: 1
 id: torq
 category: bitcoin
 name: Torq
-version: "v1.4.3"
+version: "v1.5.1"
 tagline: Scalable Node Management Software
 description: >-
   Operating a Lightning node requires a lot of work. You need to monitor your channels, rebalance them, keep track of your fees and much more.
@@ -52,21 +52,39 @@ gallery:
   - 5.jpg
 releaseNotes: >-
   
-  Torq v.1.4.3:
-  
-  List of changes:
+  Torq v.1.5.1:
 
-    - Improve CLN's funds performance
+  Release notes:
+
+  - CLN v23.11+ is required (pagination)
+
+  - Integration with Kraken
+
+  - New workflow triggers: Invoice, Forward, Payment, Transaction (on-chain)
+
+  - New workflow filters: Mempool, Exchange (Kraken) balance
+
+  - New workflow action: Payment Attempt (experimental: tries to find a route to pay an exchange invoice)
+
+  - New variables in workflow actions: API client, notification
+
+  - Replace intercom with chatwoot
+
+  - Small changes to rebalancer + new metrics and logs
+
+  - Timelock Delta in seconds on list screens
+
+  - Update of packages
   
-    - Fix CLN payments import
   
-    - Fix DST problem in profit chart
+  Notes:
   
-    - Update of packages i.e. Open-Telemetry, gRPC, cobra, ...
+  - This release contains a large set of database updates. So the migration might take some time depending on the 
+    hardware and stored data. Please create a backup before updating, there is no automatic rollback process other 
+    then a database restore from before the migration.
   
-    - Reduce logging
-  
-    - Fix UUID bug on payment page
+  - This release (re)imports CLN data so it might take some time to get all data fetched from your CLN node. 
+    (No impact to LND nodes)
   
 
 path: ""
