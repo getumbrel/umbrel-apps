@@ -7,7 +7,7 @@ services:
       APP_PORT: 3005
   
   server:
-    image: retropexx/umbrel-bitcoin-knots:v0.5.0@sha256:ed708145a3deb5edd3058d087ab973ac84a280ca0cafcf2c2bfa414e00e20dc7
+    image: retropexx/umbrel-bitcoin-knots:v0.5.0@sha256:b19da8308ec9b6c66511d327f5fd2b64aa430a3da8ed3854e8e170274b11b624
     depends_on: [bitcoind]
     restart: on-failure
     volumes:
@@ -16,8 +16,8 @@ services:
     environment:
       PORT: "3005"
       BITCOIN_HOST: "${APP_BITCOIN_NODE_IP}"
-      RPC_PORT: "${APP_BITCOIN_RPC_PORT}"
-      BITCOIN_RPC_PORT: "${APP_BITCOIN_RPC_PORT}"
+      RPC_PORT: "${APP_BITCOIN_INTERNAL_RPC_PORT}"
+      BITCOIN_RPC_PORT: "${APP_BITCOIN_INTERNAL_RPC_PORT}"
       RPC_USER: "${APP_BITCOIN_RPC_USER}"
       BITCOIN_RPC_USER: "${APP_BITCOIN_RPC_USER}"
       RPC_PASSWORD: "${APP_BITCOIN_RPC_PASS}"
@@ -40,15 +40,15 @@ services:
         ipv4_address: $APP_BITCOIN_IP
 
   bitcoind:
-    image: retropexx/bitcoind:v25.1@sha256:1da8c09858d0c19df5f821de27e42692c7193291fcc68fff004a5fbdd7f7454f
+    image: retropexx/bitcoind:v25.1@sha256:4091eb570744d24f4234a0efc6d8b6aaf7de1c86d1a6e3077525d59bbd98336e
     command: "${APP_BITCOIN_COMMAND}"
     restart: unless-stopped
     stop_grace_period: 15m30s
     volumes:
       - "${APP_BITCOIN_DATA_DIR}:/data/.bitcoin"
     ports:
-      - "${APP_BITCOIN_P2P_PORT}:${APP_BITCOIN_P2P_PORT}"
-      - "${APP_BITCOIN_RPC_PORT}:${APP_BITCOIN_RPC_PORT}"
+      - "${APP_BITCOIN_P2P_PORT}:${APP_BITCOIN_INTERNAL_P2P_PORT}"
+      - "${APP_BITCOIN_RPC_PORT}:${APP_BITCOIN_INTERNAL_RPC_PORT}"
     networks:
       default:
         ipv4_address: $APP_BITCOIN_NODE_IP
