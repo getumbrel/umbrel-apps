@@ -2,7 +2,7 @@ version: "3.7"
 
 services:
   backend:
-    image: patranakamo/saifa-be:v1.0.1
+    image: patranakamo/saifa-be:v1.0.2
     restart: on-failure
     stop_grace_period: 1m
     ports:
@@ -16,7 +16,7 @@ services:
       APP_PASSWORD: $APP_PASSWORD
       BITCOIN_NETWORK: $APP_BITCOIN_NETWORK
       LN_SERVER_URL: "https://$LND_IP:$LND_REST_PORT"
-      MACAROON_PATH: "/lnd/data/chain/bitcoin/$APP_BITCOIN_NETWORK/invoice.macaroon"
+      MACAROON_PATH: "/lnd/data/chain/bitcoin/$APP_BITCOIN_NETWORK"
       REDIS_HOST: redis
 
   frontend:
