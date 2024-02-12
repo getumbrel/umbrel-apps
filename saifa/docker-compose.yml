@@ -1,10 +1,6 @@
 version: "3.7"
 
 services:
-#  app_proxy:
-#    environment:
-#      APP_HOST: saifa_web_1
-#      APP_PORT: 9989
   backend:
     image: patranakamo/saifa-be:v1.0.0
     restart: on-failure
@@ -28,7 +24,7 @@ services:
     ports:
       - "9989:80"
     depends_on:
-      - server
+      - backend
 
   redis:
     image: redis:latest
