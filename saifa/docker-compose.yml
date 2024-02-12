@@ -5,7 +5,7 @@ services:
 #    environment:
 #      APP_HOST: saifa_web_1
 #      APP_PORT: 9989
-  server:
+  backend:
     image: patranakamo/saifa-be:v1.0.0
     restart: on-failure
     stop_grace_period: 1m
@@ -23,7 +23,7 @@ services:
       MACAROON_PATH: "/lnd/data/chain/bitcoin/$APP_BITCOIN_NETWORK/invoice.macaroon"
       REDIS_HOST: redis
 
-  web:
+  frontend:
     image: patranakamo/saifa-fe:v1.0.0
     ports:
       - "9989:80"
