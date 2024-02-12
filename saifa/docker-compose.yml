@@ -1,0 +1,38 @@
+version: "3.7"
+
+services:
+#  app_proxy:
+#    environment:
+#      APP_HOST: saifa_web_1
+#      APP_PORT: 9989
+  server:
+    image: patranakamo/saifa-be:v1.0.0
+    restart: on-failure
+    stop_grace_period: 1m
+    ports:
+      - "9988:80"
+    volumes:
+      - ${APP_DATA_DIR}/data/app:/data
+      - ${APP_LIGHTNING_NODE_DATA_DIR}:/var/www/html/lnd:ro
+    depends_on:
+      - redis
+    environment:
+      APP_PASSWORD: $APP_PASSWORD
+      BITCOIN_NETWORK: $APP_BITCOIN_NETWORK
+      LN_SERVER_URL: "https://$LND_IP:$LND_REST_PORT"
+      MACAROON_PATH: "/lnd/data/chain/bitcoin/$APP_BITCOIN_NETWORK/invoice.macaroon"
+      REDIS_HOST: redis
+
+  web:
+    image: patranakamo/saifa-fe:v1.0.0
+    ports:
+      - "9989:80"
+    depends_on:
+      - server
+
+  redis:
+    image: redis:latest
+#    ports:
+#      - "6381:6379"
+    volumes:
+      - ${APP_DATA_DIR}/redis_data:/data
