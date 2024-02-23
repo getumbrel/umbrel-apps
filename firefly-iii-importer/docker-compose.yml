@@ -1,0 +1,15 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: firefly-iii-importer_importer_1
+      APP_PORT: 8080
+
+  importer:
+    image: fireflyiii/data-importer:version-1.4.0@sha256:05f8e99dbafe57f7f2158298253d20c9fb27733abeec9e9c17ad8e951760464d
+    restart: on-failure
+    environment:
+      # firefly-iii container:
+      - FIREFLY_III_URL=http://firefly-iii_server_1:8080
+      - VANITY_URL=http://${DEVICE_DOMAIN_NAME}:30009
