@@ -4,7 +4,7 @@ services:
     app_proxy:
         environment:
             APP_HOST: minio_web_1
-            APP_PORT: 9001
+            APP_PORT: 9011
             PROXY_AUTH_ADD: "false"
 
     web:
@@ -12,12 +12,11 @@ services:
         restart: on-failure
         stop_grace_period: 1m
         ports:
-            - "9000:9000"
-            - "9001:9001"
+            - "9010:9000"
         command: ["server", "/data"]
         volumes:
             - ${APP_DATA_DIR}/data:/data
         environment:
             MINIO_ROOT_USER: ${APP_MINIO_ROOT_USER}
             MINIO_ROOT_PASSWORD: ${APP_MINIO_ROOT_PASSWORD}
-            MINIO_CONSOLE_ADDRESS: ":9001"
+            MINIO_CONSOLE_ADDRESS: ":9011"
