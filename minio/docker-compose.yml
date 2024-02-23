@@ -1,0 +1,23 @@
+version: "3.7"
+
+services:
+    app_proxy:
+        environment:
+            APP_HOST: minio_web_1
+            APP_PORT: 9001
+            PROXY_AUTH_ADD: "false"
+
+    web:
+        image: "quay.io/minio/minio:RELEASE.2024-02-17T01-15-57Z"
+        restart: on-failure
+        stop_grace_period: 1m
+        ports:
+            - "9000:9000"
+            - "9001:9001"
+        command: ["server", "/data"]
+        volumes:
+            - ${APP_DATA_DIR}/data:/data
+        environment:
+            MINIO_ROOT_USER: ${APP_MINIO_ROOT_USER}
+            MINIO_ROOT_PASSWORD: ${APP_MINIO_ROOT_PASSWORD}
+            MINIO_CONSOLE_ADDRESS: ":9001"
