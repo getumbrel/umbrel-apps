@@ -22,7 +22,7 @@ services:
       PROXY_AUTH_WHITELIST: "/api/*,/search/*"
 
   server:
-    image: ghcr.io/immich-app/immich-server:v1.94.1@sha256:c7b80752d48464dea1c4495ff810365a0809d89c2ac219547d3c1aed81c6411f
+    image: ghcr.io/immich-app/immich-server:v1.97.0@sha256:d6820874de49c972e7a3421fa53776bef18d4a41b78af931fd50827298ee913c
     command: [ "start.sh", "immich" ]
     volumes:
       - ${APP_DATA_DIR}/data/upload:/usr/src/app/upload
@@ -34,7 +34,7 @@ services:
     restart: on-failure
 
   microservices:
-    image: ghcr.io/immich-app/immich-server:v1.94.1@sha256:c7b80752d48464dea1c4495ff810365a0809d89c2ac219547d3c1aed81c6411f
+    image: ghcr.io/immich-app/immich-server:v1.97.0@sha256:d6820874de49c972e7a3421fa53776bef18d4a41b78af931fd50827298ee913c
     # This service cannot run under 1000:1000
     # And because the uploads are shared
     # We'll run immich specific services as root
@@ -49,7 +49,7 @@ services:
     restart: on-failure
 
   machine-learning:
-    image: ghcr.io/immich-app/immich-machine-learning:v1.94.1@sha256:a3c612c548d5f547a31d001d97f661d7acd4a0ae354de76a70e45162d2b81014
+    image: ghcr.io/immich-app/immich-machine-learning:v1.97.0@sha256:5b5c3e6bb7bcba2cb5f1e68bf504dffd9d6d05984de9d7b3f1a4c219f72441a9
     volumes:
       - ${APP_DATA_DIR}/data/model-cache:/cache
     environment:
@@ -64,7 +64,7 @@ services:
       - ${APP_DATA_DIR}/data/redis:/data
 
   postgres:
-    image: tensorchord/pgvecto-rs:pg14-v0.1.11@sha256:0335a1a22f8c5dd1b697f14f079934f5152eaaa216c09b61e293be285491f8ee
+    image: tensorchord/pgvecto-rs:pg14-v0.2.0@sha256:90724186f0a3517cf6914295b5ab410db9ce23190a2d9d0b9dd6463e3fa298f0
     user: "1000:1000"
     environment:
       <<: *env
