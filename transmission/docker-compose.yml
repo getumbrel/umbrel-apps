@@ -18,3 +18,10 @@ services:
       - 51413:51413
       - 51413:51413/udp
     restart: on-failure
+
+  widget-server:
+    image: getumbrel/umbrel-transmission-widget-server:v1.0.0@sha256:ae3f1e2b4b6d1f8384d6c8707ffde3fa81901619675ae4862b5dfc63003902b6
+    environment:
+      - TRANSMISSION_URL=http://server
+      - TRANSMISSION_PORT=9091
+    restart: on-failure

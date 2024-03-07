@@ -41,5 +41,42 @@ releaseNotes: >-
   Full release notes are available at https://github.com/transmission/transmission/releases
 permissions:
   - STORAGE_DOWNLOADS
+widgets:
+  - id: "status"
+    type: "four-up"
+    refresh: "10s"
+    endpoint: "widget-server:80/widgets/status"
+    link: ""
+    example:
+      type: "four-up"
+      link: ""
+      items:
+        - title: "Downloading"
+          value: "3"
+          valueSub: "torrents"
+        - title: "Seeding"
+          value: "1"
+          valueSub: "torrents"
+        - title: "Stopped"
+          value: "0"
+          valueSub: "torrents"
+        - title: "Queued"
+          value: "2"
+          valueSub: "torrents"
+  - id: "torrent-list"
+    type: "list"
+    refresh: "5s"
+    endpoint: "widget-server:80/widgets/torrent-list"
+    link: ""
+    example:
+      type: "list"
+      link: ""
+      items:
+        - text: "33% • Ubuntu 22.04.3 amd64 ISO image"
+          textSub: "↓4.4Mbps ↑1.2Mbps"
+        - text: "100% • Ubuntu 21.1.0 amd64 ISO image"
+          textSub: "↓0Mbps ↑78Kbps"
+        - text: "100% • Debian 11.0 amd64 ISO image"
+          textSub: "↓0Mbps ↑827Kbps"
 submitter: Umbrel
 submission: https://github.com/getumbrel/umbrel-apps/commit/60878f278d544b204d8e7c96240c797f43a9b319
