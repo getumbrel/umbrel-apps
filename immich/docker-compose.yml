@@ -7,25 +7,22 @@ x-environment: &env
   DB_PASSWORD: &db_password "moneyprintergobrrr"
   DB_DATABASE_NAME: &db_database_name "immich"
   REDIS_HOSTNAME: "immich_redis_1"
-  LOG_LEVEL: "simple"
+  LOG_LEVEL: "log"
   JWT_SECRET: ${APP_SEED}
   DISABLE_REVERSE_GEOCODING: "false"
   REVERSE_GEOCODING_PRECISION: "3"
   PUBLIC_LOGIN_PAGE_MESSAGE: ""
-  TYPESENSE_API_KEY: &typesense_api_key "any-text-for-self-hosted-typesense"
-  IMMICH_SERVER_URL: &immich_server_url "http://immich_server_1:3001"
-  IMMICH_WEB_URL: &immich_web_url "http://immich_web_1:3000"
   IMMICH_MACHINE_LEARNING_URL: "http://immich_machine-learning_1:3003"
 
 services:
   app_proxy:
     environment:
-      APP_HOST: immich_proxy_1
-      APP_PORT: 8080
+      APP_HOST: immich_server_1
+      APP_PORT: 3001
       PROXY_AUTH_WHITELIST: "/api/*,/search/*"
 
   server:
-    image: ghcr.io/immich-app/immich-server:v1.77.0@sha256:c16d7a36feca397b6b762cf553c2d552808ee38d1234e5b54d1be6cffe10e0b4
+    image: ghcr.io/immich-app/immich-server:v1.94.1@sha256:c7b80752d48464dea1c4495ff810365a0809d89c2ac219547d3c1aed81c6411f
     command: [ "start.sh", "immich" ]
     volumes:
       - ${APP_DATA_DIR}/data/upload:/usr/src/app/upload
@@ -34,11 +31,10 @@ services:
     depends_on:
       - redis
       - postgres
-      - typesense
     restart: on-failure
 
   microservices:
-    image: ghcr.io/immich-app/immich-server:v1.77.0@sha256:c16d7a36feca397b6b762cf553c2d552808ee38d1234e5b54d1be6cffe10e0b4
+    image: ghcr.io/immich-app/immich-server:v1.94.1@sha256:c7b80752d48464dea1c4495ff810365a0809d89c2ac219547d3c1aed81c6411f
     # This service cannot run under 1000:1000
     # And because the uploads are shared
     # We'll run immich specific services as root
@@ -50,40 +46,14 @@ services:
     depends_on:
       - redis
       - postgres
-      - typesense
     restart: on-failure
 
   machine-learning:
-    image: ghcr.io/immich-app/immich-machine-learning:v1.77.0@sha256:9cceba21035ff1bd82b3a6956eb48f2349e28ffee57bd4f82c5fa99488ae266c
+    image: ghcr.io/immich-app/immich-machine-learning:v1.94.1@sha256:a3c612c548d5f547a31d001d97f661d7acd4a0ae354de76a70e45162d2b81014
     volumes:
       - ${APP_DATA_DIR}/data/model-cache:/cache
     environment:
       <<: *env
-    restart: on-failure
-
-  web:
-    image: ghcr.io/immich-app/immich-web:v1.77.0@sha256:b5aacf51b8566c239c257d68bc300f4a5572d3e408d58e245d31c578065e90fd
-    environment:
-      <<: *env
-    restart: on-failure
-
-  typesense:
-    image: typesense/typesense:0.24.1@sha256:9bcff2b829f12074426ca044b56160ca9d777a0c488303469143dd9f8259d4dd
-    environment:
-      TYPESENSE_API_KEY: *typesense_api_key
-      TYPESENSE_DATA_DIR: "/data"
-    volumes:
-      - ${APP_DATA_DIR}/data/tsdata:/data
-    restart: on-failure
-
-  proxy:
-    image: ghcr.io/immich-app/immich-proxy:v1.77.0@sha256:22228613ed93eadb43db4fc4f4f4849c9954683aa399e95bdd4e8d808d288b23
-    environment:
-      IMMICH_SERVER_URL: *immich_server_url
-      IMMICH_WEB_URL: *immich_web_url
-    depends_on:
-      - server
-      - web
     restart: on-failure
 
   redis:
@@ -94,7 +64,7 @@ services:
       - ${APP_DATA_DIR}/data/redis:/data
 
   postgres:
-    image: postgres:14-alpine@sha256:28407a9961e76f2d285dc6991e8e48893503cc3836a4755bbc2d40bcc272a441
+    image: tensorchord/pgvecto-rs:pg14-v0.1.11@sha256:0335a1a22f8c5dd1b697f14f079934f5152eaaa216c09b61e293be285491f8ee
     user: "1000:1000"
     environment:
       <<: *env

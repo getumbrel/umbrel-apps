@@ -2,13 +2,16 @@ manifestVersion: 1
 id: plex
 category: media
 name: Plex
-version: "1.32.5.7349"
+version: "1.40.0"
 tagline: Stream Movies & TV Shows
 description: >-
   Stream movies and TV shows, plus 300+ channels of live TV, instantly, without a subscription. Watch live TV and movies anywhere, from any device, with Plex.
   
   
   Plex uses a server to house your media library and player apps to playback the media. Add, access, and share all the entertainment that matters to you, on almost any device.
+
+
+  ⚠️ If you encounter a "not authorized error" when attempting to access your Plex app, please follow the steps in this guide: https://community.umbrel.com/t/fixing-plexs-not-authorized-error/10523
 developer: Plex
 website: https://www.plex.tv/
 dependencies: []
@@ -26,17 +29,30 @@ torOnly: false
 permissions:
   - STORAGE_DOWNLOADS
 releaseNotes: >-
-  This update includes many bug fixes and performance improvements, as well as the following new features:
+  NEW:
   
-  - New “Deep Cuts” music station.
-  
-  - Hardware transcoding is now supported for SDR media on AMD GPUs on Linux
-  
-  - Hardware transcoding is now supported when running Plex Media Server on headless Windows systems
-  
-  - The GPU used for transcoding can now be selected in server preferences
-  
-  
-  See full release notes here: https://www.videohelp.com/software/Plex/version-history
+  - Items added to a collection from the item context menu will now lock the collection field on the items
+
+  - Store track genres and add filtering options
+
+  - Support ID3v2.4 null-separated tags for genres and release type
+
+  - No longer create a view history entry for items marked as played
+
+
+  FIXES:
+
+  - Changing a ‘Other Videos’ type library to the modern movie agent would fail
+
+  - It is possible that agents are not initialised during startup on rare occasions
+
+  - Server could become unresponsive when collection membership changes
+
+  - When performing fix match on items from certain music libraries the language would default to Arabic
+
+  - and many more
+ 
+
+  See full release notes here: https://www.videohelp.com/software/Plex
 submitter: Umbrel
 submission: https://github.com/getumbrel/umbrel-apps/commit/60878f278d544b204d8e7c96240c797f43a9b319

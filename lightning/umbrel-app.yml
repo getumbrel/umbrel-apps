@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: lightning
 category: bitcoin
 name: Lightning Node
-version: "v0.16.4-beta"
+version: "v0.17.4-beta"
 tagline: Run your personal Lightning Network node
 description: >-
   Run your personal Lightning Network node, and join the future of Bitcoin today.
@@ -22,10 +22,22 @@ description: >-
 
   An official app from Umbrel.
 releaseNotes: >-
-  This release is a minor release to fix a memory leak inadvertently introduced by optimizations to the mempool scanning logic.
+  This release updates LND from version 0.17.3-beta to 0.17.4-beta. 
+
+
+  This is a hot fix release that fixes multiple bugs: Channel open hanging until restart, a memory leak when using polling mode for bitcoind, sync getting lost for pruned nodes and the REST proxy not working when TLS certificate encryption is turned on.
+
+
+  Full release notes are found at https://github.com/lightningnetwork/lnd/blob/master/docs/release-notes/
+
+
+  🔔 In case you missed it, a previous release of the Lightning Node app (v0.17.0-beta) brought the option to run your node in hybrid mode or Tor-only mode, along with the ability to open private channels, receive keysend payments, bugfixes, and more!
+
+
+  - Hybrid mode allows your node to make connections to peers (other nodes) over both Tor and clearnet, enhancing both latency and connection stability. This is enabled by default for new users, while existing users can activate it in Advanced Settings.
   
-  
-  Read the full release notes for additional information and detailed changes at https://github.com/lightningnetwork/lnd/blob/master/docs/release-notes/release-notes-0.16.4.md
+
+  - You can now now choose to open private channels, which offer increased privacy but limited routing capabilities compared to public channels.
 developer: Umbrel
 website: https://umbrel.com
 dependencies:
@@ -41,5 +53,63 @@ gallery:
   - 5.jpg
 path: ""
 defaultPassword: ""
+widgets:
+  - id: "bitcoin-wallet"
+    type: "stat-with-buttons"
+    refresh: "1m"
+    endpoint: "app:3006/v1/lnd/widgets/bitcoin-wallet"
+    link: ""
+    example:
+      type: "stat-with-buttons"
+      link: ""
+      title: "Bitcoin Wallet"
+      value: "1,845,893"
+      valueSub: "sats"
+      buttons:
+        - text: "Send"
+          icon: "arrow-up-right"
+          link: "?action=send-bitcoin"
+        - text: "Receive"
+          icon: "arrow-down-right"
+          link: "?action=receive-bitcoin"
+  - id: "lightning-wallet"
+    type: "stat-with-buttons"
+    refresh: "1m"
+    endpoint: "app:3006/v1/lnd/widgets/lightning-wallet"
+    link: ""
+    example:
+      type: "stat-with-buttons"
+      link: ""
+      title: "Lightning Wallet"
+      value: "762,248"
+      valueSub: "sats"
+      buttons:
+        - text: "Send"
+          icon: "arrow-up-right"
+          link: "?action=send-lightning"
+        - text: "Receive"
+          icon: "arrow-down-right"
+          link: "?action=receive-lightning"
+  - id: "lightning-stats"
+    type: "four-up"
+    refresh: "1m"
+    endpoint: "app:3006/v1/lnd/widgets/lightning-stats"
+    link: ""
+    example:
+      type: "four-up"
+      link: ""
+      items:
+        - title: "Connections"
+          value: "5"
+          valueSub: "peers"
+        - title: "Active channels"
+          value: "3"
+          valueSub: "channels"
+        - title: "Max send"
+          value: "90K"
+          valueSub: "sats"
+        - title: "Max receive"
+          value: "45K"
+          valueSub: "sats"
 submitter: Umbrel
 submission: https://github.com/getumbrel/umbrel-apps/commit/576ecd2bef8d625abceed0f67ec9c487da9b2b1b

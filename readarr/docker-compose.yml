@@ -1,0 +1,32 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: readarr_server_1
+      APP_PORT: 8787
+      PROXY_AUTH_WHITELIST: "/api/*"
+
+  server:
+    image: linuxserver/readarr:0.3.16-nightly@sha256:e0393656789fd839d05a6719b079984740652c050e2fc19083e5111e7905850c
+    environment:
+      - PUID=1000
+      - PGID=1000
+    volumes:
+      - ${APP_DATA_DIR}/data/config:/config
+      - ${UMBREL_ROOT}/data/storage/downloads:/downloads
+    restart: on-failure
+
+  mac:
+    image: getumbrel/media-app-configurator:v1.2.0@sha256:6aa568b53f6743dc4a7b3212f97b9d4ca78800ede5eadc0e4b80c7f3af50eda3
+    user: "1000:1000"
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data/config:/config
+      - ${UMBREL_ROOT}/data/storage/downloads:/downloads
+    environment:
+      APP_ID: "readarr"
+      APP_URL: "http://readarr_server_1:8787"
+      TRANSMISSION_HOST: "transmission_server_1"
+      TRANSMISSION_PORT: 9091
+      ROOT_FOLDER: "/downloads/books"

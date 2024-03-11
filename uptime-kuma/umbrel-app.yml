@@ -2,7 +2,7 @@ manifestVersion: 1
 id: uptime-kuma
 category: networking
 name: Uptime Kuma
-version: "1.23.0"
+version: "1.23.7"
 tagline: Self-hosted uptime monitoring tool
 description: >
   Uptime Kuma is a self-hosted monitoring tool like Uptime Robot.
@@ -39,55 +39,36 @@ gallery:
 path: ""
 defaultPassword: ""
 releaseNotes: >
-  Updates Uptime Kuma from version 1.21.2 to 1.23.0.
-
-  🐻 It should be the last minor version of Uptime Kuma v1. I will focus on the development of v2. Stay tuned!
-
-  Update: The last minor version (1.23.x) means that there won't be any new features introduced in v1. However, bug fixes will still be provided. You can expect to see 1.23.1, 1.23.2 and so on.
+  ⚠️ Due to a security fix in this update, all login sessions will be logged out after updating to this version. 
+  If you are using some unofficial/3rd party tools, you may need to re-generate an auth token.
   
 
-  🆕 New Features:
+  This release updates Uptime Kuma from version 1.23.3 to 1.23.7.
+
+
+  💇‍♀️ Improvements:
   
-  - Added an improved comprehensive monitor list filtering
-
-  - Added an ability to bulk select, pause & resume
-
-  - Added an ability to show certificate expiry on status pages
-
-  - Added Tailscale ping monitor
-
-  - Added badges for status page status
-   
-   
-  💇‍♀️ Improvements to Maintenance:
-
-  - Dropdown menu is no longer blocked by the save button bar
-
-  - Added an ability to configure a custom PushDeer server URL
-
-  - Added an ability to set TLS certs (Put ca.pem, key.pen and cert.pem in the data/docker-tls/your_hostname/)
-
-  - Strip trailing slashes to avoid 404 from Home Assistant's API endpoint
-
+  - Show the original timeout message again and +10 seconds for abort signal
   
+  - Improved error message on abort signal timeout (Thanks @chakflying)
+
+
   🐛 Bug Fixes:
-  
-  - Fixed Redis authentication reattempt issue
-  
-  - Fixed notification toggle missing when import from backup
 
-  - Fixed the issue that IPv6 addresses could not be displayed in the log
+  - Fixed a memory leak issue. Close the client postgresql connection after rejection. (Thanks @mvaled)
 
-  - Avoid new timezones or non-existing timezones crash Uptime Kuma
-
-  - Fixed SMTP notification "Ignore TLS Error" option
+  - Reverted "Restart running monitors if no heartbeat", which causes some issues from 1.23.4 to 1.23.6.
 
 
   ⬆️ Security Fixes
 
-  - Hardening: Avoid exposing the Uptime Kuma version to the public
+  - An XSS issue in the "Google Analytics ID" text field (Reported by @gtg2619) (Read more: GHSA-v4v2-8h88-65qj)
+
+  - Rewrite Tailscale ping using spawnSync (Reported by @vaadata-pascala) (Read more: GHSA-v4v2-8h88-65qj)
+
+  - getGameList, testChrome are no longer accessible without login
   
-  
-  Full changelog for versions 1.21.2 to 1.23.0 can be found here: https://github.com/louislam/uptime-kuma/releases
+
+  Full changelog for versions 1.23.3 to 1.23.7 can be found here: https://github.com/louislam/uptime-kuma/releases
 submitter: Philipp Haussleiter
 submission: https://github.com/getumbrel/umbrel/pull/1148

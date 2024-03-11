@@ -1,0 +1,20 @@
+version: "3.7"
+
+services:
+  web:
+    image: aceberg/watchyourlan:1.0.6@sha256:c42ce1dcb1af6dac44d3674f24511558cf89b99982cee8843016fd8ad3935871
+    network_mode: "host"        
+    restart: on-failure
+    stop_grace_period: 1m
+    init: true
+    environment:
+      TZ: "UTC"
+      IFACE: "eth0 wlan0 enp1s0"        # required: 1 or more interface
+      DBPATH: "/data/db.sqlite"         # optional, default: /data/db.sqlite
+      GUIIP: "0.0.0.0"                  # optional, default: localhost
+      GUIPORT: "8840"                   # optional, default: 8840
+      TIMEOUT: "120"                    # optional, time in seconds, default: 60
+      THEME: "darkly"                   # optional
+      IGNOREIP: "no"                    # optional
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
