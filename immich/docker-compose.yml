@@ -22,7 +22,7 @@ services:
       PROXY_AUTH_WHITELIST: "/api/*,/search/*"
 
   server:
-    image: ghcr.io/immich-app/immich-server:v1.97.0@sha256:d6820874de49c972e7a3421fa53776bef18d4a41b78af931fd50827298ee913c
+    image: ghcr.io/immich-app/immich-server:v1.98.2@sha256:5d46c02f171b2c85c5c445ed9ae233d68568b241e14e293b0195d539b98de42a
     command: [ "start.sh", "immich" ]
     volumes:
       - ${APP_DATA_DIR}/data/upload:/usr/src/app/upload
@@ -34,7 +34,7 @@ services:
     restart: on-failure
 
   microservices:
-    image: ghcr.io/immich-app/immich-server:v1.97.0@sha256:d6820874de49c972e7a3421fa53776bef18d4a41b78af931fd50827298ee913c
+    image: ghcr.io/immich-app/immich-server:v1.98.2@sha256:5d46c02f171b2c85c5c445ed9ae233d68568b241e14e293b0195d539b98de42a
     # This service cannot run under 1000:1000
     # And because the uploads are shared
     # We'll run immich specific services as root
@@ -49,7 +49,7 @@ services:
     restart: on-failure
 
   machine-learning:
-    image: ghcr.io/immich-app/immich-machine-learning:v1.97.0@sha256:5b5c3e6bb7bcba2cb5f1e68bf504dffd9d6d05984de9d7b3f1a4c219f72441a9
+    image: ghcr.io/immich-app/immich-machine-learning:v1.98.2@sha256:ac21ed6160c106eb26f704626d1fbf693dd74640131afd4d2ccad5db26aa98c5
     volumes:
       - ${APP_DATA_DIR}/data/model-cache:/cache
     environment:
