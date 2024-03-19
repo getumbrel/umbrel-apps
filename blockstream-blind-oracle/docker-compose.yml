@@ -3,14 +3,15 @@ version: "3.7"
 services:
   app_proxy:
    environment:
-     APP_HOST: pinserver_web_1
+     APP_HOST: blockstream-blind-oracle_web_1
      APP_PORT: $APP_PINSERVER_WEB_PORT
+     PROXY_AUTH_ADD: "false"
 
   node:
-    image: tulipan81/blind_pin_server:v0.0.6@sha256:1a88495c6f66adc14727a40619217561cd94a58789ec25af37c3f3e7c4f06c43
+    image: tulipan81/blind_pin_server:v0.0.7@sha256:db8ce3f8de8da6cb083d60051a8ec720d5aa311e06148b259c42c4dfb7263c63
     depends_on:
-      - tor
       - web
+      - tor
     restart: on-failure
     stop_grace_period: 1m
     ports:
@@ -22,7 +23,7 @@ services:
 
   web: 
     image: tulipan81/pinserver_web:v0.0.36@sha256:a5214dbc14538478744a6a0c6bd40f03ab8ac2990abc9038139c18901064205b
-    depends_on: 
+    depends_on:
       - tor
     restart: on-failure
     ports:
@@ -37,7 +38,7 @@ services:
       PINSERVER_URL_B: ${APP_TAILSCALE_URL}
       PINSERVER_PORT_B: ${APP_PINSERVER_PORT}
       PINSERVER_CERT: ""
-  
+
   tor:
     image: getumbrel/tor:0.4.7.8@sha256:2ace83f22501f58857fa9b403009f595137fa2e7986c4fda79d82a8119072b6a
     user: "1000:1000"
