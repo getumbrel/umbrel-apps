@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: bitcoin
 category: bitcoin
 name: Bitcoin Node
-version: "25.1"
+version: "26.0-w"
 tagline: Run your personal node powered by Bitcoin Core
 description: >-
   Run your Bitcoin node and independently store and validate
@@ -42,25 +42,52 @@ gallery:
 path: ""
 defaultPassword: ""
 releaseNotes: >-
-  This update brings Bitcoin Core 25.1, automatic 'settings.json' corruption detection and repair, along with several new advanced settings such as:
+  🎉 Widgets are here for umbrelOS 1.0.
 
 
-  - Peer Settings: Customize your node's connections and interactions with network peers. For example, you can now adjust ban durations for misbehaving peers.
+  This update brings two new widgets for the Bitcoin Node app, allowing you to keep an eye on your node's stats and its sync progress right from your Umbrel's home screen:
 
 
-  - Optimization: Fine-tune your node's performance and resource usage with new settings like maximum mempool size.
+  - Node Stats: A widget that displays the number of peer connections, mempool size, hashrate, and blockchain size of your node.
 
 
-  - RPC and REST: Configure access to your node's RPC and REST APIs.
+  - Sync Progress: A widget that shows your node's synchronization progress.
 
 
-  - and more!
-
-
-  ⚠️ 'Peer Bloom Filters' is now disabled by default for all users, to enhance privacy and lower the risk of denial-of-serice (DoS attacks). You can read more at https://github.com/getumbrel/umbrel/issues/1624.
-  If you are connecting older wallet clients that depend on the BIP37 protocol (eg. Bisq), you can enable 'Peer Bloom Filters' in Advanced Settings at the cost of reduced security.
-
-
-  Discover what's new in Bitcoin Core 25.1: https://github.com/bitcoin/bitcoin/blob/master/doc/release-notes/release-notes-25.1.md
+  After updating to umbrelOS 1.0, you can add widgets by right-clicking on the home screen and selecting "Edit widgets", or by clicking on Widgets in the Dock.
+widgets:
+  - id: "stats"
+    type: "four-stats"
+    refresh: "5s"
+    endpoint: "server:3005/v1/bitcoind/widgets/stats"
+    link: ""
+    example:
+      type: "four-stats"
+      link: ""
+      items:
+        - title: "Connections"
+          text: "11"
+          subtext: "peers"
+        - title: "Mempool"
+          text: "257"
+          subtext: "MB"
+        - title: "Hashrate"
+          text: "590"
+          subtext: "EH/s"
+        - title: "Blockchain size"
+          text: "600"
+          subtext: "GB"
+  - id: "sync"
+    type: "text-with-progress"
+    refresh: "2s"
+    endpoint: "server:3005/v1/bitcoind/widgets/sync"
+    link: ""
+    example:
+      type: "text-with-progress"
+      link: ""
+      title: "Blockchain sync"
+      text: "83%"
+      progressLabel: "In progress"
+      progress: 0.83
 submitter: Umbrel
 submission: https://github.com/getumbrel/umbrel-apps/commit/576ecd2bef8d625abceed0f67ec9c487da9b2b1b

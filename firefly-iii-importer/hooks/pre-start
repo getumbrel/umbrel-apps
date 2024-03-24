@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Delay starting Firefly III Importer until Firefly III main app has started
+
+FIREFLY_CONTAINER_NAME="firefly-iii_server_1"
+
+while true; do
+    if [ "$(docker ps -q -f name=$FIREFLY_CONTAINER_NAME)" ]; then
+        # If firefly-iii server container is running then we break and exit so that the importer can start
+        echo "$FIREFLY_CONTAINER_NAME is running"
+        break
+    else
+        # If the container is not running, wait for 5 seconds and then check again
+        echo "Waiting for $FIREFLY_CONTAINER_NAME to start..."
+        sleep 5
+    fi
+done

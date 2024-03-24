@@ -8,7 +8,7 @@ services:
       PROXY_AUTH_WHITELIST: "/api/*"
 
   server:
-    image: linuxserver/prowlarr:0.4.4-nightly@sha256:053efaf2ede2a8e85a960f6db0d6a54e2ca29b13910dc3575eb5a86c686ed302
+    image: linuxserver/prowlarr:1.12.2@sha256:b22a66d8b99164c0a7b71004e436203f603dff1d2d9482b4f32e6cb18683dc17
     environment:
       - PUID=1000
       - PGID=1000
@@ -18,7 +18,7 @@ services:
     restart: on-failure
 
   mac:
-    image: getumbrel/media-app-configurator:v1.1.0@sha256:987f6a02367adf86ab1cff38e1e2d43d85e17a6fc130aae4af196fb571dff06a
+    image: getumbrel/media-app-configurator:v1.2.0@sha256:6aa568b53f6743dc4a7b3212f97b9d4ca78800ede5eadc0e4b80c7f3af50eda3
     user: "1000:1000"
     restart: on-failure
     volumes:
@@ -34,3 +34,5 @@ services:
       LIDARR_CONFIG_XML: "${APP_PROWLARR_LIDARR_CONFIG_XML}"
       SONARR_URL: "http://sonarr_server_1:8989"
       SONARR_CONFIG_XML: "${APP_PROWLARR_SONARR_CONFIG_XML}"
+      READARR_URL: "http://readarr_server_1:8787"
+      READARR_CONFIG_XML: "${APP_PROWLARR_READARR_CONFIG_XML}"

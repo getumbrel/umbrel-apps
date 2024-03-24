@@ -7,7 +7,7 @@ services:
       APP_PORT: 9091
 
   server:
-    image: linuxserver/transmission:4.0.4@sha256:760b2d364dbfb6d84c9688f624dc48f98665b15e9e41be2170715afcc525e329
+    image: linuxserver/transmission:4.0.5@sha256:412881528fbbffa64da33b20ee0884985a27f601436036c420c934c1d8b4bb9a
     environment:
       - PUID=1000
       - PGID=1000
@@ -17,4 +17,11 @@ services:
     ports:
       - 51413:51413
       - 51413:51413/udp
+    restart: on-failure
+
+  widget-server:
+    image: getumbrel/umbrel-transmission-widget-server:v1.0.0@sha256:0ee30f1eecbf6f4f3f62e3f6d5c1626bd31d15ace7e97cacff5fc091836650cf
+    environment:
+      - TRANSMISSION_URL=http://transmission_server_1
+      - TRANSMISSION_PORT=9091
     restart: on-failure

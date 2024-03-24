@@ -7,12 +7,11 @@ services:
       APP_PORT: 3006
 
   app:
-    image: getumbrel/umbrel-lightning:v1.2.0@sha256:6252a4b7412f157ee61576af8f9e924d4f73e7e9dc2ba171cc9dc2767df7ffed
+    image: getumbrel/umbrel-lightning:v1.2.0@sha256:4effadadce390959a742d806273d42a20da08280e4f409e9a30658fbd8400854
     restart: on-failure
     volumes:
       - "${APP_LIGHTNING_NODE_DATA_DIR}:/data/.lnd"
       - "${APP_DATA_DIR}/data/lightning:/data"
-      - "${UMBREL_ROOT}/statuses:/statuses"
     environment:
       PORT: "3006"
       TOR_PROXY_IP: "${TOR_PROXY_IP}"
@@ -43,7 +42,7 @@ services:
 
   lnd:
     hostname: "${DEVICE_DOMAIN_NAME}" # Needed so LND can generate a valid cert
-    image: lightninglabs/lnd:v0.17.3-beta@sha256:9d3ba61f9736925b4f8a1fc0c221ccc8c7226af73257f251c44c4284ee9f62c3
+    image: lightninglabs/lnd:v0.17.4-beta@sha256:72402c389943e83ccf65f978ed651eb7c655aaa5ff9ecbd7a373a2f2ff34d82e
     command: "${APP_LIGHTNING_COMMAND}"
     user: 1000:1000
     restart: unless-stopped

@@ -8,12 +8,12 @@ services:
       PROXY_AUTH_ADD: "false"
 
   ord:
-    image: nmfretz/ord:v0.5.1@sha256:0bbe9b14a8b05b783f0f2d967845a213e85f89f1b6ae3434bd2a8d60a271fddf
+    image: nmfretz/ord:v0.15.0@sha256:526066ae7e2a69a639142cb07d0f45ceff94dd57b2a9f7fcd2062705e5b62b50
     # This needs to run as root
     # user: "1000:1000"
     restart: on-failure
     # First-inscription-height may not be needed in the future
     command: "--first-inscription-height 767430 --data-dir /var/lib/ord --bitcoin-data-dir /var/lib/bitcoind --rpc-url ${APP_BITCOIN_NODE_IP}:${APP_BITCOIN_RPC_PORT} --chain ${APP_BITCOIN_NETWORK} server --http"
     volumes:
-      - ${APP_DATA_DIR}/data:/var/lib/ord
+      - ${APP_DATA_DIR}/data/ord:/var/lib/ord
       - ${APP_BITCOIN_DATA_DIR}:/var/lib/bitcoind:ro
