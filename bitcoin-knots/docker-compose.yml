@@ -12,7 +12,7 @@ services:
     restart: on-failure
     volumes:
       - ${APP_DATA_DIR}/data/app:/data # volume to persist advanced settings json
-      - ${APP_BITCOIN_DATA_DIR}:/bitcoin/.bitcoin # volume to persist umbrel-bitcoin.conf and bitcoin.conf
+      - ${APP_BITCOIN_KNOTS_DATA_DIR}:/bitcoin/.bitcoin # volume to persist umbrel-bitcoin.conf and bitcoin.conf
     environment:
       PORT: "3005"
       BITCOIN_HOST: "${APP_BITCOIN_KNOTS_NODE_IP}"
@@ -46,7 +46,7 @@ services:
     restart: unless-stopped
     stop_grace_period: 15m30s
     volumes:
-      - "${APP_BITCOIN_DATA_DIR}:/data/.bitcoin"
+      - "${APP_BITCOIN_KNOTS_DATA_DIR}:/data/.bitcoin"
     ports:
       - "${APP_BITCOIN_KNOTS_P2P_PORT}:${APP_BITCOIN_KNOTS_INTERNAL_P2P_PORT}"
       - "${APP_BITCOIN_KNOTS_RPC_PORT}:${APP_BITCOIN_KNOTS_INTERNAL_RPC_PORT}"
