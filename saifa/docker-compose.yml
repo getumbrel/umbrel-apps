@@ -1,0 +1,33 @@
+version: "3.7"
+
+services:
+  backend:
+    image: patranakamo/saifa-be:v1.3.2
+    restart: on-failure
+    stop_grace_period: 1m
+    ports:
+      - "9988:80"
+    volumes:
+      - ${APP_DATA_DIR}/data/app:/data
+      - ${APP_LIGHTNING_NODE_DATA_DIR}:/var/www/html/lnd:ro
+    depends_on:
+      - redis
+    environment:
+      APP_PASSWORD: $APP_PASSWORD
+      BITCOIN_NETWORK: $APP_BITCOIN_NETWORK
+      LN_SERVER_URL: "https://$LND_IP:$LND_REST_PORT"
+      REDIS_HOST: redis
+
+  frontend:
+    image: patranakamo/saifa-fe:v1.3.1
+    ports:
+      - "9989:80"
+    depends_on:
+      - backend
+
+  redis:
+    image: redis:latest
+#    ports:
+#      - "6381:6379"
+    volumes:
+      - ${APP_DATA_DIR}/redis_data:/data
