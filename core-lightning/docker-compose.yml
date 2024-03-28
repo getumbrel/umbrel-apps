@@ -12,7 +12,7 @@ services:
     restart: on-failure
     volumes:
       - ${APP_DATA_DIR}/data/app:${APP_CONFIG_DIR}
-      - ${APP_DATA_DIR}/data/lightningd:${APP_CORE_LIGHTNING_DATA_DIR}
+      - ${APP_CORE_LIGHTNING_DATA_DIR}:${CORE_LIGHTNING_PATH}
       - ${APP_CORE_LIGHTNING_REST_CERT_DIR}:${APP_REST_CERT_VOLUME_DIR}
     environment:
       SINGLE_SIGN_ON: "true"
@@ -29,15 +29,15 @@ services:
       COMMANDO_CONFIG: ${COMMANDO_CONFIG}
       APP_CONFIG_DIR: ${APP_CONFIG_DIR}
       APP_MODE: ${APP_MODE}
-      DEVICE_DOMAIN_NAME: ${DEVICE_DOMAIN_NAME} 
+      DEVICE_DOMAIN_NAME: ${DEVICE_DOMAIN_NAME}
       LOCAL_HOST: http://${DEVICE_DOMAIN_NAME}
-      CA_CERT: ${APP_CORE_LIGHTNING_DATA_DIR}/bitcoin/ca.pem
-      CLIENT_KEY: ${APP_CORE_LIGHTNING_DATA_DIR}/bitcoin/client-key.pem
-      CLIENT_CERT: ${APP_CORE_LIGHTNING_DATA_DIR}/bitcoin/client.pem
+      CA_CERT: ${CORE_LIGHTNING_PATH}/bitcoin/ca.pem
+      CLIENT_KEY: ${CORE_LIGHTNING_PATH}/bitcoin/client-key.pem
+      CLIENT_CERT: ${CORE_LIGHTNING_PATH}/bitcoin/client.pem
     networks:
       default:
         ipv4_address: ${APP_CORE_LIGHTNING_IP}
-  
+
   c-lightning-rest:
     image: saubyk/c-lightning-rest:0.10.5@sha256:51941e2b5e82fae87a833fbee658961ca223a40d63e3f685f55c3538764652ec
     restart: on-failure
@@ -49,7 +49,7 @@ services:
       LN_PATH: "${CORE_LIGHTNING_PATH}"
     volumes:
       - "${APP_CORE_LIGHTNING_REST_CERT_DIR}:/usr/src/app/certs"
-      - "${APP_DATA_DIR}/data/lightningd:${CORE_LIGHTNING_PATH}"
+      - "${APP_CORE_LIGHTNING_DATA_DIR}:${CORE_LIGHTNING_PATH}"
     networks:
       default:
         ipv4_address: ${APP_CORE_LIGHTNING_REST_IP}
@@ -64,7 +64,7 @@ services:
       - --bitcoin-rpcconnect=${APP_BITCOIN_NODE_IP}
       - --bitcoin-rpcuser=${APP_BITCOIN_RPC_USER}
       - --bitcoin-rpcpassword=${APP_BITCOIN_RPC_PASS}
-      - --bitcoin-rpcport=${APP_BITCOIN_RPC_PORT} 
+      - --bitcoin-rpcport=${APP_BITCOIN_RPC_PORT}
       - --lightning-dir=${CORE_LIGHTNING_PATH}
       - --proxy=${TOR_PROXY_IP}:${TOR_PROXY_PORT}
       - --bind-addr=${APP_CORE_LIGHTNING_DAEMON_IP}:9735
@@ -76,7 +76,7 @@ services:
       - --experimental-offers
       - --grpc-port=${APP_CORE_LIGHTNING_DAEMON_GRPC_PORT}
     volumes:
-      - "${APP_DATA_DIR}/data/lightningd:${CORE_LIGHTNING_PATH}"
+      - "${APP_CORE_LIGHTNING_DATA_DIR}:${CORE_LIGHTNING_PATH}"
     networks:
       default:
         ipv4_address: ${APP_CORE_LIGHTNING_DAEMON_IP}
