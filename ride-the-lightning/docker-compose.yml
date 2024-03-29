@@ -35,7 +35,7 @@ services:
         BOLTZ_MACAROON_PATH: "/boltz/.boltz-lnd/macaroons"
 
   boltz:
-    image: boltz/boltz-lnd:1.2.7@sha256:39e875b059a934d4c41e829d53c6e181ed83dc2560aed9e4cc2f94cceaf4ecde
+    image: boltz/boltz-client:2.0.2-compat@sha256:dc7643381306d29a035a5422b5c217eccf0e08678c4b863c0c62e2dcb6bf6ed6
     user: "1000:1000"
     restart: "on-failure"
     stop_grace_period: "1m"
@@ -45,6 +45,7 @@ services:
       - "${APP_DATA_DIR}/boltz:/data"
       - "${APP_LIGHTNING_NODE_DATA_DIR}:/lnd:ro"
     command:
+      - --datadir=/data/.boltz-lnd
       - --lnd.host="$APP_LIGHTNING_NODE_IP"
       - --lnd.macaroon="/lnd/data/chain/bitcoin/$APP_BITCOIN_NETWORK/admin.macaroon"
       - --lnd.certificate="/lnd/tls.cert"
