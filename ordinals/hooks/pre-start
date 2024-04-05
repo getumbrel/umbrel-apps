@@ -24,6 +24,11 @@ if [[ -f "${APP_DATA_DIR}/index.redb" ]]; then
   set_correct_permissions "${APP_DATA_DIR}"
 fi
 
+# re-index the ordinals data for runes
+if [[ ! -f "${APP_DATA_DIR}/INDEXED_0-17-1" ]]; then
+	rm -f "${ORDINALS_DATA_DIR}/index.redb"
+	touch "${APP_DATA_DIR}/INDEXED_0-17-1"
+fi
 
 
 
