@@ -17,6 +17,7 @@ set_correct_permissions() {
 	fi
 }
 
+# handle generating the correct ord data dir for pre-0.15.0 versions
 if [[ -f "${APP_DATA_DIR}/index.redb" ]]; then
   rm -f "${APP_DATA_DIR}/index.redb"
   mkdir -p "${ORDINALS_DATA_DIR}"
@@ -24,6 +25,14 @@ if [[ -f "${APP_DATA_DIR}/index.redb" ]]; then
   set_correct_permissions "${APP_DATA_DIR}"
 fi
 
+# re-index the ordinals data for runes
+# for installs post 0.17.1 this file will be harmlessly created 
+if [[ ! -f "${APP_DATA_DIR}/AT_LEAST_0-17-1" ]]; then
+    if [[ -f "${ORDINALS_DATA_DIR}/index.redb" ]]; then
+        rm -f "${ORDINALS_DATA_DIR}/index.redb"
+    fi
+    touch "${APP_DATA_DIR}/AT_LEAST_0-17-1"
+fi
 
 
 
