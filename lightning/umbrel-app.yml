@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: lightning
 category: bitcoin
 name: Lightning Node
-version: "v0.17.3-beta"
+version: "v0.17.4-beta-w"
 tagline: Run your personal Lightning Network node
 description: >-
   Run your personal Lightning Network node, and join the future of Bitcoin today.
@@ -22,22 +22,22 @@ description: >-
 
   An official app from Umbrel.
 releaseNotes: >-
-  This release updates LND from version 0.17.2-beta to 0.17.3-beta. 
+  🎉 Widgets are here for umbrelOS 1.0.
 
 
-  - LND 0.17.3-beta fixes multiple concurrency and memory related bugs. Memory consumption for lnd nodes running with bitcoind using the rpcpolling has been significantly reduced (previously scaled with total mempool size).
+  This update brings three new widgets for the Lightning Node app, allowing you to keep an eye on your node's stats, Bitcoin balance, and Lightning balance right from your Umbrel's home screen:
 
 
-  - Full release notes are found at https://github.com/lightningnetwork/lnd/blob/master/docs/release-notes/
+  - Node Stats: A widget that displays the number of peer connections, number of active channels, max send, and max receive for your node.
 
 
-  🔔 In case you missed it, a previous release of the Lightning Node app (v0.17.0-beta) brought the option to run your node in hybrid mode or Tor-only mode, along with the ability to open private channels, receive keysend payments, bugfixes, and more!
+  - Bitcoin Wallet: A widget that shows the balance of your Bitcoin wallet and has shortcuts to send and receive Bitcoin in the Lightning Node app.
 
 
-  - Hybrid mode allows your node to make connections to peers (other nodes) over both Tor and clearnet, enhancing both latency and connection stability. This is enabled by default for new users, while existing users can activate it in Advanced Settings.
-  
+  - Lightning Wallet: A widget that shows the balance of your Lightning wallet and has shortcuts to send and receive Lightning payments in the Lightning Node app.
 
-  - You can now now choose to open private channels, which offer increased privacy but limited routing capabilities compared to public channels.
+
+  After updating to umbrelOS 1.0, you can add widgets by right-clicking on the home screen and selecting "Edit widgets", or by clicking on Widgets in the Dock.
 developer: Umbrel
 website: https://umbrel.com
 dependencies:
@@ -53,5 +53,63 @@ gallery:
   - 5.jpg
 path: ""
 defaultPassword: ""
+widgets:
+  - id: "bitcoin-wallet"
+    type: "text-with-buttons"
+    refresh: "5s"
+    endpoint: "app:3006/v1/lnd/widgets/bitcoin-wallet"
+    link: ""
+    example:
+      type: "text-with-buttons"
+      link: ""
+      title: "Bitcoin Wallet"
+      text: "1,845,894"
+      subtext: "sats"
+      buttons:
+        - text: "Withdraw"
+          icon: "arrow-up-right"
+          link: "?action=send-bitcoin"
+        - text: "Deposit"
+          icon: "arrow-down-right"
+          link: "?action=receive-bitcoin"
+  - id: "lightning-wallet"
+    type: "text-with-buttons"
+    refresh: "2s"
+    endpoint: "app:3006/v1/lnd/widgets/lightning-wallet"
+    link: ""
+    example:
+      type: "text-with-buttons"
+      link: ""
+      title: "Lightning Wallet"
+      text: "762,248"
+      subtext: "sats"
+      buttons:
+        - text: "Send"
+          icon: "arrow-up-right"
+          link: "?action=send-lightning"
+        - text: "Receive"
+          icon: "arrow-down-right"
+          link: "?action=receive-lightning"
+  - id: "lightning-stats"
+    type: "four-stats"
+    refresh: "5s"
+    endpoint: "app:3006/v1/lnd/widgets/lightning-stats"
+    link: ""
+    example:
+      type: "four-stats"
+      link: ""
+      items:
+        - title: "Connections"
+          text: "5"
+          subtext: "peers"
+        - title: "Active channels"
+          text: "3"
+          subtext: "channels"
+        - title: "Max send"
+          text: "90K"
+          subtext: "sats"
+        - title: "Max receive"
+          text: "45K"
+          subtext: "sats"
 submitter: Umbrel
 submission: https://github.com/getumbrel/umbrel-apps/commit/576ecd2bef8d625abceed0f67ec9c487da9b2b1b

@@ -2,7 +2,7 @@ manifestVersion: 1
 id: transmission
 category: networking
 name: Transmission
-version: "4.0.4"
+version: "4.0.5"
 tagline: A fast, easy and free BitTorrent client
 description: >-
   Transmission is designed for easy, powerful use. We've set the defaults to just work and it only takes a few clicks to configure advanced features like watch directories, bad peer blocklists, and the web interface. When Ubuntu chose Transmission as its default BitTorrent client, one of the most-cited reasons was its easy learning curve.
@@ -33,13 +33,60 @@ defaultUsername: ""
 defaultPassword: ""
 torOnly: false
 releaseNotes: >-
-  This release updates Transmission from version 4.0.3 to 4.0.4.
+  🎉 Widgets are here for umbrelOS 1.0.
 
-  This is a bugfix-only release.
-  
 
-  Full release notes are available at https://github.com/transmission/transmission/releases
+  This update brings two new widgets for Transmission, allowing you to monitor the status of your torrents right from your Umbrel's home screen:
+
+
+  - Status: A widget that displays the number of downloading, seeding, stopped, and queued torrents.
+
+
+  - Active Torrents Monitor: A widget that shows your active torrents and their download and upload speeds.
+
+
+  After updating to umbrelOS 1.0, you can add widgets by right-clicking on the home screen and selecting "Edit widgets", or by clicking on Widgets in the Dock.
+
+
+  This release also updates Transmission to version 4.0.5. Full release notes are available at https://github.com/transmission/transmission/releases
 permissions:
   - STORAGE_DOWNLOADS
+widgets:
+  - id: "status"
+    type: "four-stats"
+    refresh: "5s"
+    endpoint: "widget-server:80/widgets/status"
+    link: ""
+    example:
+      type: "four-stats"
+      link: ""
+      items:
+        - title: "Downloading"
+          text: "3"
+          subtext: "torrents"
+        - title: "Seeding"
+          text: "1"
+          subtext: "torrents"
+        - title: "Stopped"
+          text: "0"
+          subtext: "torrents"
+        - title: "Queued"
+          text: "2"
+          subtext: "torrents"
+  - id: "torrent-list"
+    type: "list"
+    refresh: "2s"
+    endpoint: "widget-server:80/widgets/torrent-list"
+    link: ""
+    example:
+      type: "list"
+      link: ""
+      items:
+        - text: "33% • Ubuntu 22.04.3 amd64 ISO image"
+          subtext: "↓4.4Mbps ↑1.2Mbps"
+        - text: "100% • Ubuntu 21.1.0 amd64 ISO image"
+          subtext: "↓0Mbps ↑78Kbps"
+        - text: "100% • Debian 11.0 amd64 ISO image"
+          subtext: "↓0Mbps ↑827Kbps"
 submitter: Umbrel
 submission: https://github.com/getumbrel/umbrel-apps/commit/60878f278d544b204d8e7c96240c797f43a9b319

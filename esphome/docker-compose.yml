@@ -1,13 +1,9 @@
 version: "3.7"
 
 services:
-  app_proxy:
-    environment:
-      APP_HOST: esphome_server_1
-      APP_PORT: 6052
-
   server:
-    image: esphome/esphome:2023.11.6@sha256:783e2131fcff2c457846339a80f6ed981e58e5f86de3578f742e3bed87f7d5b2
+    image: esphome/esphome:2024.2.2@sha256:abdd0754b2aeb28aebb2a4fbd12d2fe38ae172f36d1232d6db70bee5eea39182
+    network_mode: host
     volumes:
       - ${APP_DATA_DIR}/data:/config
     restart: on-failure
