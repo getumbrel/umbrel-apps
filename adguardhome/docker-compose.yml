@@ -1,0 +1,12 @@
+version: "3.7"
+
+services:
+  server:
+    image: adguard/adguardhome:v0.107.48@sha256:d0fcf8c8691df20fe1a280d0a4cbc8493b04c7bd8cf8ca56264279510f030e49
+    restart: on-failure
+    network_mode: host
+    volumes:
+      - ${APP_DATA_DIR}/data/adguardhome/data:/opt/adguardhome/work
+      - ${APP_DATA_DIR}/data/adguardhome/config:/opt/adguardhome/conf
+    cap_add:
+      - NET_ADMIN
