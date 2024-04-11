@@ -5,6 +5,9 @@ APP_DATA_DIR="$(readlink -f $(dirname "${BASH_SOURCE[0]}")/../data)"
 ORDINALS_DATA_DIR="${APP_DATA_DIR}/ord"
 DESIRED_OWNER="1000:1000"
 
+# Ensure the data directory exists
+mkdir -p "${ORDINALS_DATA_DIR}"
+
 set_correct_permissions() {
 	local -r path="${1}"
 
