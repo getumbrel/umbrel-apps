@@ -28,9 +28,12 @@ fi
 # re-index the ordinals data for runes
 # for installs post 0.18.1 this file will be harmlessly created 
 if [[ ! -f "${APP_DATA_DIR}/AT_LEAST_0-18-1" ]]; then
-    if [[ -f "${ORDINALS_DATA_DIR}/index.redb" ]]; then
-        rm -f "${ORDINALS_DATA_DIR}/index.redb"
-    fi
+    # delete index db for all bitcoin networks
+    for file in "${ORDINALS_DATA_DIR}/index.redb" "${ORDINALS_DATA_DIR}/testnet3/index.redb" "${ORDINALS_DATA_DIR}/regtest/index.redb" "${ORDINALS_DATA_DIR}/signet/index.redb"; do
+        if [[ -f "${file}" ]]; then
+            rm -f "${file}"
+        fi
+    done
     touch "${APP_DATA_DIR}/AT_LEAST_0-18-1"
 fi
 
