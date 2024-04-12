@@ -1,0 +1,26 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: gladys-assistant_web_1
+      APP_PORT: 80
+      PROXY_AUTH_ADD: "false"
+  
+  web:
+    image: gladysassistant/gladys:v4
+    restart: on-failure
+    stop_grace_period: 1m
+    privileged: true
+    network_mode: host
+    cgroup: host
+    volumes:
+      - ${APP_DATA_DIR}/gladysassistant:/var/lib/gladysassistant
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /dev:/dev
+      - /run/udev:/run/udev:ro
+    environment:
+      NODE_ENV: production
+      SQLITE_FILE_PATH: /var/lib/gladysassistant/gladys-production.db
+      SERVER_PORT: 80
+      TZ: Europe/Paris
