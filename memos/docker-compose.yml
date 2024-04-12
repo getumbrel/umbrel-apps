@@ -1,0 +1,18 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      # <app-id>_<web-container-name>_1
+      # e.g. 'btc-rpc-explorer_web_1'
+      # Note that the '_1' at the end is needed
+      APP_HOST: memos_main_1
+      APP_PORT: 5230
+
+  main:
+    image: neosmemo/memos:0.21@sha256:c828c4a2044c
+    restart: on-failure
+    stop_grace_period: 1m
+    volumes:
+      - ${APP_DATA_DIR}:/var/opt/memos
+
