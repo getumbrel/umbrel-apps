@@ -20,10 +20,14 @@ services:
       APP_HOST: immich_server_1
       APP_PORT: 3001
       PROXY_AUTH_WHITELIST: "/api/*,/search/*"
+    container_name: immich_app_proxy_1
 
   server:
-    image: ghcr.io/immich-app/immich-server:v1.98.2@sha256:5d46c02f171b2c85c5c445ed9ae233d68568b241e14e293b0195d539b98de42a
-    command: [ "start.sh", "immich" ]
+    image: >-
+      ghcr.io/immich-app/immich-server:v1.101.0@sha256:0097562444db38ebd2e5f98e71bd27dc6dd69b7f786207f7d323febbf99b8f93
+    command:
+      - start.sh
+      - immich
     volumes:
       - ${APP_DATA_DIR}/data/upload:/usr/src/app/upload
     environment:
@@ -32,13 +36,14 @@ services:
       - redis
       - postgres
     restart: on-failure
+    container_name: immich_server_1
 
   microservices:
-    image: ghcr.io/immich-app/immich-server:v1.98.2@sha256:5d46c02f171b2c85c5c445ed9ae233d68568b241e14e293b0195d539b98de42a
-    # This service cannot run under 1000:1000
-    # And because the uploads are shared
-    # We'll run immich specific services as root
-    command: [ "start.sh", "microservices" ]
+    image: >-
+      ghcr.io/immich-app/immich-server:v1.101.0@sha256:0097562444db38ebd2e5f98e71bd27dc6dd69b7f786207f7d323febbf99b8f93
+    command:
+      - start.sh
+      - microservices
     volumes:
       - ${APP_DATA_DIR}/data/upload:/usr/src/app/upload
     environment:
@@ -47,24 +52,30 @@ services:
       - redis
       - postgres
     restart: on-failure
+    container_name: immich_microservices_1
 
   machine-learning:
-    image: ghcr.io/immich-app/immich-machine-learning:v1.98.2@sha256:ac21ed6160c106eb26f704626d1fbf693dd74640131afd4d2ccad5db26aa98c5
+    image: >-
+      ghcr.io/immich-app/immich-machine-learning:v1.101.0@sha256:b0a22ca87496019f495ed5ce89df08da237e0987d389376b435b2226a8c29463
     volumes:
       - ${APP_DATA_DIR}/data/model-cache:/cache
     environment:
       <<: *env
     restart: on-failure
+    container_name: immich_machine-learning_1
 
   redis:
-    image: redis:6.2-alpine@sha256:70a7a5b641117670beae0d80658430853896b5ef269ccf00d1827427e3263fa3
+    image: >-
+      redis:6.2-alpine@sha256:70a7a5b641117670beae0d80658430853896b5ef269ccf00d1827427e3263fa3
     user: "1000:1000"
     restart: on-failure
     volumes:
       - ${APP_DATA_DIR}/data/redis:/data
+    container_name: immich_redis_1
 
   postgres:
-    image: tensorchord/pgvecto-rs:pg14-v0.2.0@sha256:90724186f0a3517cf6914295b5ab410db9ce23190a2d9d0b9dd6463e3fa298f0
+    image: >-
+      tensorchord/pgvecto-rs:pg14-v0.2.0@sha256:90724186f0a3517cf6914295b5ab410db9ce23190a2d9d0b9dd6463e3fa298f0
     user: "1000:1000"
     environment:
       <<: *env
@@ -74,3 +85,4 @@ services:
     volumes:
       - ${APP_DATA_DIR}/data/postgres:/var/lib/postgresql/data
     restart: on-failure
+    container_name: immich_postgres_1
