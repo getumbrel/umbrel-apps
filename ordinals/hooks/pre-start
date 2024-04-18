@@ -43,35 +43,42 @@ fi
 # for installs post 0.18.2, the AT_LEAST_0-18-2 file will be harmlessly created
 
 if [[ ! -f "${APP_DATA_DIR}/AT_LEAST_0-18-2" ]]; then
-    declare -a dirs=("" "/testnet3" "/regtest" "/signet")  # Array of bitcoin network subdirectories
+    echo "AT_LEAST_0-18-2 not found, proceeding with wallet database migration if necessary..."
+    # declare bitcoin network directories
+    declare -a dirs=("" "/testnet3" "/regtest" "/signet")
     for dir in "${dirs[@]}"; do
-        if [[ -d "${ORDINALS_DATA_DIR}${dir}" ]]; then
-            has_wallets=false
-            files_to_move=()  # Array to store files that need to be moved
+        dir_path="${ORDINALS_DATA_DIR}${dir}"
+        echo "Checking directory: ${dir_path}"
+        if [[ -d "${dir_path}" ]]; then
+            echo "${dir_path} exists."
+            files_to_move=()  # an array to store wallet database files to migrate
 
-            # We iterate over files to find .redb files that are not index.redb (these are wallet database files)
-            for file in "${ORDINALS_DATA_DIR}${dir}"/*.redb; do
-                if [[ "$(basename "${file}")" != "index.redb" ]]; then
-                    files_to_move+=("${file}")  # Add file to array
-                    has_wallets=true
+            # Iterate over .redb files that are not index.redb
+            for file in "${dir_path}"/*.redb; do
+                if [[ -f "${file}" && "$(basename "${file}")" != "index.redb" ]]; then
+                    files_to_move+=("${file}")
+                    echo "Adding ${file} to move list."
                 fi
             done
 
-            if [[ "${has_wallets}" == true ]]; then
-                # We only create the wallets subdirectory if there are wallets to move so that we mimic the behavior of ord 0.18.2 which only creates the wallets subdirectory once a wallet database is created
-                mkdir -p "${ORDINALS_DATA_DIR}${dir}/wallets"
-                # Move all collected wallet .redb files
+            # We only create the wallets directory if there are files to move. This mimics the behavior of ord 0.18.2, which only creates the wallets directory when a wallet database is created.
+            if [[ ${#files_to_move[@]} -gt 0 ]]; then 
+                mkdir -p "${dir_path}/wallets"
+                echo "Creating wallets directory in ${dir_path}/wallets"
                 for file in "${files_to_move[@]}"; do
-                    mv "${file}" "${ORDINALS_DATA_DIR}${dir}/wallets/"
+                    echo "Moving ${file} to ${dir_path}/wallets/"
+                    mv "${file}" "${dir_path}/wallets/"
                 done
+            else
+                echo "No wallet files to move in ${dir_path}."
             fi
+        else
+            echo "${dir_path} does not exist, skipping."
         fi
     done
-    touch "${APP_DATA_DIR}/AT_LEAST_0-18-2"  # Set the flag that the migration has been done
+    touch "${APP_DATA_DIR}/AT_LEAST_0-18-2"
+    echo "Wallet database migration complete, flag file created."
+else
+    echo "Migration flag file already exists, skipping wallet database migration."
 fi
-
-
-
-
-
 
