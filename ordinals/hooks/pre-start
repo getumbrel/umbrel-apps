@@ -37,6 +37,40 @@ if [[ ! -f "${APP_DATA_DIR}/AT_LEAST_0-18-1" ]]; then
     touch "${APP_DATA_DIR}/AT_LEAST_0-18-1"
 fi
 
+# migrate all wallet database files to ord/wallets, ord/testnet3/wallets, ord/regtest/wallets, and ord/signet/wallets for pre-0.18.2 versions: https://github.com/ordinals/ord/releases/tag/0.18.2
+# the default unnamed wallet from `ord wallet create` is called ord.redb, but users can create named wallets as <anything>.redb
+# we assume that all .redb files except index.redb are wallet database files
+# for installs post 0.18.2, the AT_LEAST_0-18-2 file will be harmlessly created
+
+if [[ ! -f "${APP_DATA_DIR}/AT_LEAST_0-18-2" ]]; then
+    declare -a dirs=("" "/testnet3" "/regtest" "/signet")  # Array of bitcoin network subdirectories
+    for dir in "${dirs[@]}"; do
+        if [[ -d "${ORDINALS_DATA_DIR}${dir}" ]]; then
+            has_wallets=false
+            files_to_move=()  # Array to store files that need to be moved
+
+            # We iterate over files to find .redb files that are not index.redb (these are wallet database files)
+            for file in "${ORDINALS_DATA_DIR}${dir}"/*.redb; do
+                if [[ "$(basename "${file}")" != "index.redb" ]]; then
+                    files_to_move+=("${file}")  # Add file to array
+                    has_wallets=true
+                fi
+            done
+
+            if [[ "${has_wallets}" == true ]]; then
+                # We only create the wallets subdirectory if there are wallets to move so that we mimic the behavior of ord 0.18.2 which only creates the wallets subdirectory once a wallet database is created
+                mkdir -p "${ORDINALS_DATA_DIR}${dir}/wallets"
+                # Move all collected wallet .redb files
+                for file in "${files_to_move[@]}"; do
+                    mv "${file}" "${ORDINALS_DATA_DIR}${dir}/wallets/"
+                done
+            fi
+        fi
+    done
+    touch "${APP_DATA_DIR}/AT_LEAST_0-18-2"  # Set the flag that the migration has been done
+fi
+
+
 
 
 
