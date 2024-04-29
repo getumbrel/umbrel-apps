@@ -24,9 +24,7 @@ services:
   server:
     image: >-
       ghcr.io/immich-app/immich-server:v1.101.0@sha256:0097562444db38ebd2e5f98e71bd27dc6dd69b7f786207f7d323febbf99b8f93
-    command:
-      - start.sh
-      - immich
+    command: [ "start.sh", "immich" ]
     volumes:
       - ${APP_DATA_DIR}/data/upload:/usr/src/app/upload
     environment:
@@ -39,9 +37,7 @@ services:
   microservices:
     image: >-
       ghcr.io/immich-app/immich-server:v1.101.0@sha256:0097562444db38ebd2e5f98e71bd27dc6dd69b7f786207f7d323febbf99b8f93
-    command:
-      - start.sh
-      - microservices
+    command: [ "start.sh", "microservices" ]
     volumes:
       - ${APP_DATA_DIR}/data/upload:/usr/src/app/upload
     environment:
