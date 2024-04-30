@@ -1,0 +1,15 @@
+version: "3.8"
+
+services:
+  yucca:
+    image: yuccastream/yucca:0.10.0
+    restart: on-failure
+    shm_size: "128mb"
+    volumes:
+      - "${APP_DATA_DIR}/data/data:/opt/yucca/data"
+      - "${APP_DATA_DIR}/data/ffmpeg:/opt/yucca/ffmpeg"
+    ports:
+      - 9910:9910 # Web UI
+      - 9912:9912 # Telemetry
+      - 1525:1025 # SMTP server
+    environment: {} # Read more about configuration here https://docs.yucca.app/en/configuration/
