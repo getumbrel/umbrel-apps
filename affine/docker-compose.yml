@@ -29,7 +29,7 @@ services:
         condition: service_healthy
 
   redis:
-    image: redis@sha256:e647cfe134bf5e8e74e620f66346f93418acfc240b71dd85640325cb7cd01402
+    image: redis:7.2.4@sha256:e647cfe134bf5e8e74e620f66346f93418acfc240b71dd85640325cb7cd01402
     restart: on-failure
     volumes:
       - ${APP_DATA_DIR}/data/storage/redis:/data
@@ -40,7 +40,7 @@ services:
       retries: 5
 
   db:
-    image: postgres@sha256:f58300ac8d393b2e3b09d36ea12d7d24ee9440440e421472a300e929ddb63460
+    image: postgres:16.2@sha256:f58300ac8d393b2e3b09d36ea12d7d24ee9440440e421472a300e929ddb63460
     restart: on-failure
     environment:
       POSTGRES_USER: affine
