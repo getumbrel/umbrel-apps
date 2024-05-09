@@ -1,28 +1,18 @@
-# The docker compose file is used to start and stop your app's Docker containers.
 version: "3.7"
 
 services:
-  # The app proxy is always needed and tells Umbrel how to route traffic to your app.
   app_proxy:
     environment:
-      # For apps in the official app store:
-      # <app-id>_<web-container-name>_1
-      # e.g. 'btc-rpc-explorer_web_1'
-      # For apps in the community app store:
-      # <app-store-id>-<app-id>_<web-container-name>_1
-      # e.g. 'sparkles-btc-rpc-explorer_web_1'
-      # Note that the '_1' at the end is needed
-      APP_HOST: <web-container-dns-name>
-      # The port your app's web server is listening on
-      APP_PORT: <web-container-port-number>
+      APP_HOST: umami_app_1
+      APP_PORT: 3000
       # If you want to disable the app proxy, you can set this to 'false'
       # Disabling the app proxy will make your app accessible without the Umbrel authentication
       #PROXY_AUTH_ADD: "true"
       # If you only want to allow public access to some parts of the app, you can use white/blacklists Here
-      #PROXY_AUTH_WHITELIST: "*"
+      #PROXY_AUTH_WHITELIST: "/share/*"
       #PROXY_AUTH_BLACKLIST: "/admin/*"
   
-  web:
+  app:
     # Note: always use the image digest to ensure reproducability across installations
     image: <docker-image>:<tag>@sha256:<digest>
     restart: on-failure
