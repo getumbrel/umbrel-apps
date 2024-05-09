@@ -14,24 +14,7 @@ services:
     environment:
       DATABASE_URL: postgresql://umami:umami@db:5432/umami
       DATABASE_TYPE: postgresql
-      APP_SECRET: replace-me-with-a-random-stringTODO
-      # Pass any environment variables to your app for configuration in the form:
-      # VARIABLE_NAME: value
-      #
-      # Here are all the Umbrel provided variables that you can pass through to
-      # your app
-      # System level environment variables
-      # $DEVICE_HOSTNAME - Umbrel server device hostname (e.g. "umbrel")
-      # $DEVICE_DOMAIN_NAME - A .local domain name for the Umbrel server (e.g. "umbrel.local")
-      #
-      # Tor proxy environment variables
-      # $TOR_PROXY_IP - Local IP of Tor proxy
-      # $TOR_PROXY_PORT - Port of Tor proxy
-      #
-      # App specific environment variables
-      # $APP_HIDDEN_SERVICE - The address of the Tor hidden service your app will be exposed at
-      # $APP_PASSWORD - Unique plain text password that can be used for authentication in your app, shown to the user in the Umbrel UI
-      # $APP_SEED - Unique 256 bit long hex string (128 bits of entropy) deterministically derived from user's Umbrel seed and your app's ID
+      APP_SECRET: ${APP_SEED}
     depends_on:
       - db
 
