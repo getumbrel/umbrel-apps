@@ -5,38 +5,16 @@ services:
     environment:
       APP_HOST: umami_app_1
       APP_PORT: 3000
-      # If you want to disable the app proxy, you can set this to 'false'
-      # Disabling the app proxy will make your app accessible without the Umbrel authentication
-      #PROXY_AUTH_ADD: "true"
-      # If you only want to allow public access to some parts of the app, you can use white/blacklists Here
-      #PROXY_AUTH_WHITELIST: "/share/*"
-      #PROXY_AUTH_BLACKLIST: "/admin/*"
+      PROXY_AUTH_ADD: "false"
   
   app:
-    # Note: always use the image digest to ensure reproducability across installations
-    image: <docker-image>:<tag>@sha256:<digest>
+    image: ghcr.io/umami-software/umami:postgresql-latest@sha256:4fd4bbf741a10c1109eb8387a8aa90f9a40d673972dc268ebd97e41e5b045c0c
     restart: on-failure
     stop_grace_period: 1m
-    # ports:
-      # You do not need to expose the port that your app's web server is listening on if you're using the app_proxy service.
-      # This is handled by the APP_HOST and APP_PORT environment variables in the service above.
-      #
-      # If you need to expose additional ports, you can do so like this, replacing <port> with the port number:
-      #- <port>:<port>
-    # volumes:
-      # Uncomment to mount your data directories inside
-      # the Docker container for storing persistent data
-      # - ${APP_DATA_DIR}/foo:/foo
-      # - ${APP_DATA_DIR}/bar:/bar
-      #
-      # Uncomment to mount LND's data directory as read-only
-      # inside the Docker container at path /lnd
-      # - ${APP_LIGHTNING_NODE_DATA_DIR}:/lnd:ro
-      #
-      # Uncomment to mount Bitcoin Core's data directory as
-      # read-only inside the Docker container at path /bitcoin
-      # - ${APP_BITCOIN_DATA_DIR}:/bitcoin:ro
-    # environment:
+    environment:
+      DATABASE_URL: postgresql://umami:umami@db:5432/umami
+      DATABASE_TYPE: postgresql
+      APP_SECRET: replace-me-with-a-random-stringTODO
       # Pass any environment variables to your app for configuration in the form:
       # VARIABLE_NAME: value
       #
@@ -54,9 +32,16 @@ services:
       # $APP_HIDDEN_SERVICE - The address of the Tor hidden service your app will be exposed at
       # $APP_PASSWORD - Unique plain text password that can be used for authentication in your app, shown to the user in the Umbrel UI
       # $APP_SEED - Unique 256 bit long hex string (128 bits of entropy) deterministically derived from user's Umbrel seed and your app's ID
-      
-  # If your app has more services, like a database container, you can define those
-  # services below:
-  # db:
-  #   image: <docker-image>:<tag>@sha256:<digest>
-  #   ...
+    depends_on:
+      - db
+
+  db:
+    image: postgres:15-alpine@sha256:8a8d55343d6fc456cb183453e3094ff140b984157b36b48f817dd581654f2aec
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      POSTGRES_DB: umami
+      POSTGRES_USER: umami
+      POSTGRES_PASSWORD: umami
+    volumes:
+      - ${APP_DATA_DIR}/db/data:/var/lib/postgresql/data
