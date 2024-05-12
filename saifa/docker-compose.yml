@@ -1,8 +1,12 @@
 version: "3.7"
 
 services:
+  app_proxy:
+    environment:
+      PROXY_AUTH_ADD: "false"
+
   backend:
-    image: patranakamo/saifa-be:v1.3.3
+    image: patranakamo/saifa-be:v1.3.3@sha256:95321f638a5198c66ec45e72adfe41dd7abbdc3ab611a88bdaa12976ed2b0242
     restart: on-failure
     stop_grace_period: 1m
     ports:
@@ -13,21 +17,26 @@ services:
     depends_on:
       - redis
     environment:
+      HOME: /data
       APP_PASSWORD: $APP_PASSWORD
       BITCOIN_NETWORK: $APP_BITCOIN_NETWORK
       LN_SERVER_URL: "https://$LND_IP:$LND_REST_PORT"
       REDIS_HOST: redis
 
   frontend:
-    image: patranakamo/saifa-fe:v1.3.2
+    image: patranakamo/saifa-fe:v1.3.2@sha256:06ab9f0246e77a63a102111d00e2da7dfe1a94ed21032e56dbdc63dded9717bc
+    restart: on-failure
     ports:
       - "9989:80"
     depends_on:
       - backend
 
   redis:
-    image: redis:latest
+    restart: on-failure
+    image: redis:latest@sha256:f44e91787b843612a3878d8d8fae227b9db63f471214314f5b2e73576ca633d0
 #    ports:
 #      - "6381:6379"
     volumes:
-      - ${APP_DATA_DIR}/redis_data:/data
+      - ${APP_DATA_DIR}/redis_data:/data/redis_data
+    environment:
+      HOME: /data/redis_data
