@@ -7,7 +7,7 @@ services:
       APP_PORT: 80
       PROXY_AUTH_ADD: "false"
 
-  server:
+  backend:
     image: patranakamo/saifa-be:v1.3.3@sha256:95321f638a5198c66ec45e72adfe41dd7abbdc3ab611a88bdaa12976ed2b0242
     restart: on-failure
     stop_grace_period: 1m
@@ -29,7 +29,7 @@ services:
     image: patranakamo/saifa-fe:v1.3.2@sha256:06ab9f0246e77a63a102111d00e2da7dfe1a94ed21032e56dbdc63dded9717bc
     restart: on-failure
     depends_on:
-      - server
+      - backend
 
   redis:
     restart: on-failure
