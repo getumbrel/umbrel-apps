@@ -8,13 +8,13 @@ services:
 
   broker:
     image: docker.io/library/redis:7@sha256:d6ecc832969a4827645a083da38345327b3447772fe907e7d4311c79b4e3a06e
-    restart: unless-stopped
+    restart: on-failure
     volumes:
       - ${APP_DATA_DIR}/redisdata:/data
 
   webserver:
     image: ghcr.io/paperless-ngx/paperless-ngx:2.7.2@sha256:703c990a790dfd4d25fb56df3afec27b13cb0926a3818bf265edac9c71311647
-    restart: unless-stopped
+    restart: on-failure
     depends_on:
       - broker
       - gotenberg
@@ -33,7 +33,7 @@ services:
 
   gotenberg:
     image: docker.io/gotenberg/gotenberg:7.10@sha256:d03b8a04c6e6c5e568b38f57352266dee4674849b71818774025f8f48d869a9a
-    restart: unless-stopped
+    restart: on-failure
 
     # The gotenberg chromium route is used to convert .eml files. We do not
     # want to allow external content like tracking pixels or even javascript.
@@ -44,4 +44,4 @@ services:
 
   tika:
     image: ghcr.io/paperless-ngx/tika:2.9.1-minimal@sha256:8124eeb5d1c3aeff0577634ac1be8b7f6121c1f9bdfc0bfec84843f7325929f4
-    restart: unless-stopped
+    restart: on-failure
