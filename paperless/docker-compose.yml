@@ -10,7 +10,7 @@ services:
     image: docker.io/library/redis:7@sha256:d6ecc832969a4827645a083da38345327b3447772fe907e7d4311c79b4e3a06e
     restart: on-failure
     volumes:
-      - ${APP_DATA_DIR}/redisdata:/data
+      - ${APP_DATA_DIR}/data/redisdata:/data
 
   webserver:
     image: ghcr.io/paperless-ngx/paperless-ngx:2.7.2@sha256:703c990a790dfd4d25fb56df3afec27b13cb0926a3818bf265edac9c71311647
@@ -20,8 +20,8 @@ services:
       - gotenberg
       - tika
     volumes:
-      - ${APP_DATA_DIR}/data:/usr/src/paperless/data
-      - ${APP_DATA_DIR}/media:/usr/src/paperless/media
+      - ${APP_DATA_DIR}/data/data:/usr/src/paperless/data
+      - ${APP_DATA_DIR}/data/media:/usr/src/paperless/media
       - ${UMBREL_ROOT}/data/storage/paperless/export:/usr/src/paperless/export
       - ${UMBREL_ROOT}/data/storage/paperless/consume:/usr/src/paperless/consume
     # env_file: docker-compose.env # NOPE, can't load files
