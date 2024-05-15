@@ -26,10 +26,10 @@ services:
       - ${UMBREL_ROOT}/data/storage/paperless/consume:/usr/src/paperless/consume
     # env_file: docker-compose.env # NOPE, can't load files
     environment:
-      PAPERLESS_REDIS: redis://broker:6379
+      PAPERLESS_REDIS: redis://paperless_broker_1:6379
       PAPERLESS_TIKA_ENABLED: 1
-      PAPERLESS_TIKA_GOTENBERG_ENDPOINT: http://gotenberg:3000
-      PAPERLESS_TIKA_ENDPOINT: http://tika:9998
+      PAPERLESS_TIKA_GOTENBERG_ENDPOINT: http://paperless_gotenberg_1:3000
+      PAPERLESS_TIKA_ENDPOINT: http://paperless_tika_1:9998
 
   gotenberg:
     image: docker.io/gotenberg/gotenberg:7.10@sha256:d03b8a04c6e6c5e568b38f57352266dee4674849b71818774025f8f48d869a9a
