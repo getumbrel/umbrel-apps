@@ -24,10 +24,5 @@ services:
       - LT_UPDATE_MODELS=true
     ##  - LT_LOAD_ONLY=en,fr
     volumes:
-      - libretranslate_api_keys:/app/db
-      ## Using $APP_DATA_DIR causes permission errors
-      - libretranslate_models:/home/libretranslate/.local:rw
-
-volumes:
-  libretranslate_models:
-  libretranslate_api_keys:
+      - ${APP_DATA_DIR}/data/api_keys:/app/db
+      - ${APP_DATA_DIR}/data/models:/home/libretranslate/.local:rw
