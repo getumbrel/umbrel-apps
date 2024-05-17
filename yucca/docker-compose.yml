@@ -10,10 +10,12 @@ services:
     image: yuccastream/yucca:0.10.0@sha256:9551f42cf20aa1d11bf0df6ba5996cc10f506c8225a60a448876cebefe539eb2
     restart: on-failure
     shm_size: "128mb"
+    working_dir: /opt/yucca
     volumes:
       - "${APP_DATA_DIR}/data/data:/opt/yucca/data"
       - "${APP_DATA_DIR}/data/ffmpeg:/opt/yucca/ffmpeg"
     ports:
       - 10925:10925 # SMTP server
     environment: # Read more about configuration here https://docs.yucca.app/en/configuration/
+      YUCCA_SERVER_DATA_DIR: "/opt/yucca/data"
       YUCCA_SMTP_SERVER_LISTEN_ADDRESS: ":10925"
