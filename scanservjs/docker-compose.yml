@@ -1,0 +1,15 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: scanservjs_server_1
+      APP_PORT: 8080
+
+  server:
+    image: sbs20/scanservjs:v3.0.3 # target: latest #!
+    restart: on-failure
+    stop_grace_period: 1m
+    volumes:
+      - /var/run/dbus:/var/run/dbus
+    priveleged: true # IDK, their docker guide told me to do that
