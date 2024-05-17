@@ -8,10 +8,11 @@ services:
       PROXY_AUTH_ADD: "false"
 
   ord:
-    image: mayankchhabra/ord:0.18.1@sha256:9cc88552cca2b59ed6417790ec1b43f4dbfaf0c9ea3fdf79bf055dcd6dcb60b8
+    image: nmfretz/ord:0.18.2@sha256:9f9445ae39df02c31ccf5e604f2539f148ccbd38703e717e1208b08583b9d406
     # This needs to run as root
     # user: "1000:1000"
     restart: on-failure
+    stop_grace_period: 15m30s
     command: "ord server --http"
     volumes:
       - ${APP_DATA_DIR}/data/ord:/var/lib/ord
@@ -25,6 +26,6 @@ services:
       ORD_BITCOIN_RPC_URL: "${APP_BITCOIN_NODE_IP}:${APP_BITCOIN_RPC_PORT}"
       ORD_CHAIN: "${APP_BITCOIN_NETWORK}"
       # First-inscription-height may not be needed in the future. It would be nice to remove it so that other chains like testnet are not impacted.
-      ORD_FIRST_INSCRIPTION_HEIGHT: "767430"
+      # ORD_FIRST_INSCRIPTION_HEIGHT: "767430"
       ORD_INDEX_RUNES: "true"
       # TODO: consider index-sats

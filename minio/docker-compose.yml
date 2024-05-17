@@ -1,0 +1,24 @@
+version: "3.7"
+
+services:
+   app_proxy:
+      environment:
+         APP_HOST: minio_web_1
+         APP_PORT: 9011
+         PROXY_AUTH_ADD: "false"
+
+   web:
+      image: "quay.io/minio/minio:RELEASE.2024-04-06T05-26-02Z@sha256:178e05aba3a0dc967df3558aab43097f1427bbcda77264fc24e92f1bf09dfe02"
+      restart: on-failure
+      user: "1000:1000"
+      stop_grace_period: 1m
+      ports:
+         # MinIO Api Server Port
+         - "9010:9000"
+      command: ["server", "/data"]
+      volumes:
+         - ${APP_DATA_DIR}/data/minio:/data
+      environment:
+         MINIO_ROOT_USER: "umbrel"
+         MINIO_ROOT_PASSWORD: "$APP_PASSWORD"
+         MINIO_CONSOLE_ADDRESS: ":9011"
