@@ -22,7 +22,7 @@ services:
       PROXY_AUTH_WHITELIST: "/api/*,/search/*"
 
   server:
-    image: ghcr.io/immich-app/immich-server:v1.103.0@sha256:1ae17f5ce8e948f4268c95781904e6ef4bec99634ed43ebe2b0096c005932b7a
+    image: ghcr.io/immich-app/immich-server:v1.103.0@sha256:1ae17f5ce8e948f4268c95781904e6ef4bec99634ed43ebe2b0096c005932b7a # target: release #!
     command: [ "start.sh", "immich" ]
     volumes:
       - ${APP_DATA_DIR}/data/upload:/usr/src/app/upload
@@ -34,7 +34,7 @@ services:
     restart: on-failure
 
   microservices:
-    image: ghcr.io/immich-app/immich-server:v1.103.0@sha256:1ae17f5ce8e948f4268c95781904e6ef4bec99634ed43ebe2b0096c005932b7a
+    image: ghcr.io/immich-app/immich-server:v1.103.0@sha256:1ae17f5ce8e948f4268c95781904e6ef4bec99634ed43ebe2b0096c005932b7a # target: release
     command: [ "start.sh", "microservices" ]
     volumes:
       - ${APP_DATA_DIR}/data/upload:/usr/src/app/upload
@@ -46,7 +46,7 @@ services:
     restart: on-failure
 
   machine-learning:
-    image: ghcr.io/immich-app/immich-machine-learning:v1.103.0@sha256:2f2817898bfd6ca32372a8e56ee41523ffbb5b9690be67907926530b2d6dbd1e
+    image: ghcr.io/immich-app/immich-machine-learning:v1.103.0@sha256:2f2817898bfd6ca32372a8e56ee41523ffbb5b9690be67907926530b2d6dbd1e # target: release
     volumes:
       - ${APP_DATA_DIR}/data/model-cache:/cache
     environment:
@@ -54,14 +54,15 @@ services:
     restart: on-failure
 
   redis:
-    image: redis:6.2-alpine@sha256:70a7a5b641117670beae0d80658430853896b5ef269ccf00d1827427e3263fa3
+    image: redis:6.2-alpine@sha256:70a7a5b641117670beae0d80658430853896b5ef269ccf00d1827427e3263fa3 # target: alpine
+      # Pinned digest should cover us (it picks alpine3..., which is not a static tag)
     user: "1000:1000"
     restart: on-failure
     volumes:
       - ${APP_DATA_DIR}/data/redis:/data
 
   postgres:
-    image: tensorchord/pgvecto-rs:pg14-v0.2.0@sha256:90724186f0a3517cf6914295b5ab410db9ce23190a2d9d0b9dd6463e3fa298f0
+    image: tensorchord/pgvecto-rs:pg14-v0.2.0@sha256:90724186f0a3517cf6914295b5ab410db9ce23190a2d9d0b9dd6463e3fa298f0 # noupdate: It doesn't have a rolling tag (or I wasn't able to find it)
     user: "1000:1000"
     environment:
       <<: *env
