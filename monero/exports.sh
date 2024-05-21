@@ -79,10 +79,9 @@ fi
 export MONERO_DEFAULT_NETWORK="${MONERO_CHAIN}"
 
 BIN_ARGS=()
-# Commenting out options that are replaced by generated config file. We should migrate all these over in a future update.
-# BIN_ARGS+=( "--rpc-bind-port=${APP_MONERO_RPC_PORT}" )
-# BIN_ARGS+=( "--rpc-bind-ip=0.0.0.0" )
-# BIN_ARGS+=( "--confirm-external-bind" )
+BIN_ARGS+=( "--rpc-bind-port=${APP_MONERO_RPC_PORT}" )
+BIN_ARGS+=( "--rpc-bind-ip=0.0.0.0" )
+BIN_ARGS+=( "--confirm-external-bind" )
 
 BIN_ARGS+=( "--rpc-login=\"${APP_MONERO_RPC_AUTH}\"" )
 
