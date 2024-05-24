@@ -4,35 +4,40 @@ services:
   app_proxy:
     environment:
       APP_HOST: maybe_web_1
-      APP_PORT: 3000
+      APP_PORT: 3063
 
   web:
-    image: ghcr.io/maybe-finance/maybe:latest@sha256:a197c0e0814ddea1d110ac2837617bb3942e6a97cc6a0d6116b0ed01360e510a
+    image: ghcr.io/maybe-finance/maybe@sha256:a197c0e0814ddea1d110ac2837617bb3942e6a97cc6a0d6116b0ed01360e510a
     restart: on-failure
     stop_grace_period: 1m
     volumes:
-      - ${APP_DATA_DIR}/storage:/rails/storage
+      - ${APP_DATA_DIR}/data/rails:/rails/storage
     environment:
       SELF_HOSTING_ENABLED: true
-      DB_HOST: postgres://maybe:maybe@db:5432/maybe
+      PORT: 3063
+      DB_HOST: db
+      DB_PORT: 5432
+      DATABASE_URL: postgres://maybe:maybe@db:5432/maybe
       RAILS_FORCE_SSL: false
       RAILS_ASSUME_SSL: false
+      POSTGRES_DB: maybe
       POSTGRES_USER: maybe
       POSTGRES_PASSWORD: maybe
       GOOD_JOB_EXECUTION_MODE: async
-      SECRET_KEY_BASE: ${$APP_SEED}
+      SECRET_KEY_BASE: $APP_SEED
     depends_on:
       db:
         condition: service_healthy
 
   db:
-    image: postgres:16.2@sha256:f58300ac8d393b2e3b09d36ea12d7d24ee9440440e421472a300e929ddb63460
+    image: postgres:16@sha256:1bf73ccae25238fa555100080042f0b2f9be08eb757e200fe6afc1fc413a1b3c
     restart: on-failure
+    stop_grace_period: 1m
     volumes:
-      - ${APP_DATA_DIR}/data/storage/postgres:/var/lib/postgresql/data
+      - ${APP_DATA_DIR}/data/postgres:/var/lib/postgresql/data
     environment:
-      POSTGRES_USER: maybe
       POSTGRES_DB: maybe
+      POSTGRES_USER: maybe
       POSTGRES_PASSWORD: maybe
       PGDATA: /var/lib/postgresql/data/pgdata
     healthcheck:
