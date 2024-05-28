@@ -1,0 +1,28 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: libretranslate_main_1
+      APP_PORT: 5000
+      PROXY_AUTH_ADD: "false"
+  main:
+    image: libretranslate/libretranslate:v1.5.7@sha256:f2ac0b1944da971b3bf1344ec02842800883f2046cdefa868d7dc46a9dff6ed8
+    restart: on-failure
+
+    ## Log to docker compose logs. This allows you to see the model download progress when first installing.
+    tty: true
+    healthcheck:
+      test: ['CMD-SHELL', './venv/bin/python scripts/healthcheck.py']     
+    ## Uncomment above command and define your args if necessary
+    # command: --ssl --ga-id MY-GA-ID --req-limit 100 --char-limit 500
+    ## Uncomment this section and the libretranslate_api_keys volume if you want to backup your API keys
+    environment:
+      - LT_API_KEYS=true
+      - LT_API_KEYS_DB_PATH=/app/db/api_keys.db # Same result as `db/api_keys.db` or `./db/api_keys.db`
+    ## Uncomment these vars and libretranslate_models volume to optimize loading time.
+      - LT_UPDATE_MODELS=true
+    ##  - LT_LOAD_ONLY=en,fr
+    volumes:
+      - ${APP_DATA_DIR}/data/api_keys:/app/db
+      - ${APP_DATA_DIR}/data/models:/home/libretranslate/.local:rw

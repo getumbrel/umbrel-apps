@@ -1,0 +1,30 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: peerswap_web_1
+      APP_PORT: 1984
+
+  web:
+    image: ghcr.io/impa10r/peerswap-web:v1.4.7@sha256:9bc6aa9ab40e5762a5b6fdac530f5739cb85f637621cfc9a0ed412af8452b9d2
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      # App
+      NETWORK: $APP_BITCOIN_NETWORK
+      # LND
+      LND_HOST: ${APP_LIGHTNING_NODE_IP}:${APP_LIGHTNING_NODE_GRPC_PORT}
+      LND_MACAROONPATH: /home/peerswap/.lnd/data/chain/bitcoin/${APP_BITCOIN_NETWORK}/admin.macaroon
+      # Elements RPC
+      ELEMENTS_USER: elements
+      ELEMENTS_PORT: $APP_ELEMENTS_NODE_RPC_PORT
+      ELEMENTS_HOST: http://elements_node_1
+      ELEMENTS_WALLET: peerswap
+      ELEMENTS_FOLDER: /home/elements/.elements
+      ELEMENTS_FOLDER_MAPPED: /home/peerswap/.elements
+    volumes:
+      - ${APP_DATA_DIR}/data:/home/peerswap/.peerswap
+      - ${APP_LIGHTNING_NODE_DATA_DIR}:/home/peerswap/.lnd:ro
+      - ${ELEMENTS_DATA_DIR}:/home/peerswap/.elements:ro
