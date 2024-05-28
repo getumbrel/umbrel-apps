@@ -10,8 +10,8 @@ services:
     image: libretranslate/libretranslate:v1.5.7@sha256:f2ac0b1944da971b3bf1344ec02842800883f2046cdefa868d7dc46a9dff6ed8
     restart: on-failure
 
-    ## Uncomment this for logging in docker compose logs
-    # tty: true
+    ## Log to docker compose logs. This allows you to see the model download progress when first installing.
+    tty: true
     healthcheck:
       test: ['CMD-SHELL', './venv/bin/python scripts/healthcheck.py']     
     ## Uncomment above command and define your args if necessary
