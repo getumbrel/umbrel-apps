@@ -4,6 +4,18 @@ services:
   dns-server:
     image: technitium/dns-server:12.1@sha256:f5de7eea6dd85f85656a1ea7584c6af0619bb8b1fa83e5c7992fcf38b76c7ccf
     network_mode: host 
+    # ports:
+      # - "5380:5380/tcp" #DNS web console (HTTP)
+      # - "53443:53443/tcp" #DNS web console (HTTPS)
+      # - "53:53/udp" #DNS service
+      # - "53:53/tcp" #DNS service
+      # - "853:853/udp" #DNS-over-QUIC service
+      # - "853:853/tcp" #DNS-over-TLS service
+      # - "443:443/udp" #DNS-over-HTTPS service (HTTP/3)
+      # - "443:443/tcp" #DNS-over-HTTPS service (HTTP/1.1, HTTP/2)
+      # - "80:80/tcp" #DNS-over-HTTP service (use with reverse proxy or certbot certificate renewal)
+      # - "8053:8053/tcp" #DNS-over-HTTP service (use with reverse proxy)
+      # - "67:67/udp" #DHCP service
     environment:
       - DNS_SERVER_DOMAIN=${DEVICE_DOMAIN_NAME} #The primary domain name used by this DNS Server to identify itself.
       - DNS_SERVER_ADMIN_PASSWORD=${APP_PASSWORD} #DNS web console admin user password.
