@@ -7,7 +7,7 @@ services:
       APP_PORT: 8080
   
   ui:
-    image: "joni1802/ts3-manager:v2.2.1@sha256:d69890c323e8715cef0f625036c7c51ec7e7da321438897633fff5df83da1e39"
+    image: joni1802/ts3-manager:v2.2.1@sha256:d69890c323e8715cef0f625036c7c51ec7e7da321438897633fff5df83da1e39
     user: "1000:1000"
     restart: on-failure
     stop_grace_period: 1m
@@ -15,8 +15,9 @@ services:
       JWT_SECRET: $APP_SEED
 
   server:
-    image: docker.io/library/teamspeak:3.13.7@sha256:sha256:b5bdec55bc87b992c5658e739f3ce465644efa6d997633110b12be3dc3a10796
-    user: "1000:1000"
+    image: teamspeak:3.13.7@sha256:b5bdec55bc87b992c5658e739f3ce465644efa6d997633110b12be3dc3a10796
+    # TeamSpeak does not support running with a different user
+    #user: "1000:1000"
     restart: on-failure
     stop_grace_period: 1m
     ports:
