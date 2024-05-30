@@ -12,10 +12,21 @@ services:
     volumes:
       - ${APP_DATA_DIR}/data/redisdata:/data
 
+  db:
+    image: docker.io/library/postgres:16
+    restart: unless-stopped
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: paperless
+      POSTGRES_USER: paperless
+      POSTGRES_PASSWORD: paperless
+
   webserver:
     image: ghcr.io/paperless-ngx/paperless-ngx:2.7.2@sha256:703c990a790dfd4d25fb56df3afec27b13cb0926a3818bf265edac9c71311647
     restart: on-failure
     depends_on:
+      - db
       - broker
       - gotenberg
       - tika
@@ -27,6 +38,7 @@ services:
     # env_file: docker-compose.env # NOPE, can't load files
     environment:
       PAPERLESS_REDIS: redis://paperless_broker_1:6379
+      PAPERLESS_DBHOST: paperless_db_1
       PAPERLESS_TIKA_ENABLED: 1
       PAPERLESS_TIKA_GOTENBERG_ENDPOINT: http://paperless_gotenberg_1:3000
       PAPERLESS_TIKA_ENDPOINT: http://paperless_tika_1:9998
