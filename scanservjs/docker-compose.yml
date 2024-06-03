@@ -11,9 +11,9 @@ services:
     restart: on-failure
     stop_grace_period: 1m
     volumes:
-      - /var/run/dbus:/var/run/dbus
       - ${APP_DATA_DIR}/data/scans:/var/lib/scanservjs/output
-      - ${APP_DATA_DIR}/data/cfg:/etc/scanservjs
+      - ${APP_DATA_DIR}/data/config:/etc/scanservjs
+      - /var/run/dbus:/var/run/dbus
       # map the host's /dev to allow discovery of usb devices without needing to know apriori which devices are connected
       - /dev:/dev 
     privileged: true
