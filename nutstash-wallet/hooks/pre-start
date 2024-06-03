@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# This script sets up the necessary directories and permissions for the data directories that were added after the initial release of the app.
+
+set -euo pipefail
+
+APP_DATA_DIR="$(readlink -f $(dirname "${BASH_SOURCE[0]}")/..)/data"
+
+[ ! -d "${APP_DATA_DIR}" ] && mkdir -p "${APP_DATA_DIR}" && chown 1000:1000 "${APP_DATA_DIR}"
+
+NUTSTASH_BACKUP_DIR="${APP_DATA_DIR}/backup"
+
+[ ! -d "${NUTSTASH_BACKUP_DIR}" ] && mkdir -p "${NUTSTASH_BACKUP_DIR}" && chown 1000:1000 "${NUTSTASH_BACKUP_DIR}"
