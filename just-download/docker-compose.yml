@@ -10,10 +10,9 @@ services:
     image: ghcr.io/highghlow/just-download:v1.0.6@sha256:9f7dadd49339acc09b84b70d67701ea77f6f3f32521ae69cc0f6845da9c9f07a
     restart: on-failure
     stop_grace_period: 1m
-    environment:
-      - LOCK_TRANSMISSION_CONFIG=1
     volumes:
       - ${APP_DATA_DIR}:/config
     environment:
+      LOCK_TRANSMISSION_CONFIG: 1
       CONFIG_LOCATION: /config/config.json
       CONFIG: '{"indexers": [], "transmission": {"host": "transmission_server_1", "port": 9091}}'
