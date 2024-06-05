@@ -9,7 +9,7 @@ services:
       PROXY_AUTH_WHITELIST: "/api/*"
 
   penpot-frontend:
-    image: penpotapp/frontend:1.18.3@sha256:9cea5dfeceed55533a3aacf3acf65a833bc7da3fd30c7c2e9c1acddcc7d4b7a1
+    image: penpotapp/frontend:2.0.1@sha256:d5e154a986527e66a69ae1a0e81399e13198c0a764c8249319a8ecf0357ca34e
     volumes:
       - ${APP_DATA_DIR}/data/assets:/opt/data/assets
     environment:
@@ -20,7 +20,7 @@ services:
     restart: on-failure
 
   penpot-backend:
-    image: penpotapp/backend:1.18.3@sha256:a744cc44f8305fb9be2a878ce2e29c7d370d370f0ec39a3e623c70014b7387c9
+    image: penpotapp/backend:2.0.1@sha256:73e234c2bba2a18c9dcaa6c525b4eb7fe5c3df27d3654e937dd50eaabf23e511
     # user 1000:1000 to avoid permission issues when importing libraries and templates
     user: "1000:1000"
     volumes:
@@ -34,13 +34,15 @@ services:
       - PENPOT_ASSETS_STORAGE_BACKEND=assets-fs
       - PENPOT_STORAGE_ASSETS_FS_DIRECTORY=/opt/data/assets
       - PENPOT_TELEMETRY_ENABLED=false
+      # PENPOT_PUBLIC_URI needs to be set to in order to render thumbnails in the frontend
+      - PENPOT_PUBLIC_URI=http://${DEVICE_DOMAIN_NAME}:${APP_PENPOT_UI_PORT}
     depends_on:
       - penpot-postgres
       - penpot-redis
     restart: on-failure
 
   penpot-exporter:
-    image: penpotapp/exporter:1.18.3@sha256:c5daee8f7b966f91aaee0a286956ea1859b6d3a77a62da9359ed454ed4dc196b
+    image: penpotapp/exporter:2.0.1@sha256:ce67d475c0f178db8a3e6a0d866f270edddc4940797bd735d2b161ef3de46930
     user: "1000:1000"
     environment:
       - PENPOT_PUBLIC_URI=http://penpot-frontend
