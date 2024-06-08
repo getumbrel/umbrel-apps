@@ -1,0 +1,34 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: toshi-moto_web_1
+      APP_PORT: 8080
+      PROXY_AUTH_ADD: "false"
+  api_web:
+    image: toshimoto821/toshi-moto-api:v1.1.108@sha256:79770356b64c224e089ab5fa26fc600aed5a61395103a811a1538e20fa420fb3
+    restart: on-failure
+    stop_grace_period: 1m
+    depends_on:
+      - mongodb
+    environment:
+      PORT: 8121
+      MONGODB_URI: "mongodb://toshi-moto_mongodb_1:27017/toshi-moto"
+  web:
+    image: toshimoto821/toshi-moto:v1.1.108@sha256:d9d3dded48f8e8607aac4d311af726ed2c801cc81a2d609d938e280c3d1b8f75
+    restart: on-failure
+    stop_grace_period: 1m
+    depends_on:
+      - api_web
+    environment:
+      PORT: 8021
+
+  mongodb:
+    # Newer mongo versions don't support Raspberry Pi 4 arm64
+    image: mongo:4.4.6-bionic@sha256:3d0e6df9fd5bc42cbf8ef8bc9e6c4e78f6f26c7157dbd7bdec72d202ab8ebe3a
+    stop_grace_period: 1m
+    volumes:
+      - ${APP_DATA_DIR}/data/db:/data/db
+      - ${APP_DATA_DIR}/data/db/diagnostic.data:/data/db/diagnostic.data
+      - ${APP_DATA_DIR}/data/db/journal:/data/db/journal
