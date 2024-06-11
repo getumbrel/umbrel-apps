@@ -7,7 +7,7 @@ services:
       APP_PORT: $APP_CORE_LIGHTNING_PORT
 
   app:
-    image: ghcr.io/elementsproject/cln-application:0.0.4@sha256:5c4c930c0bd4b71de202b6166affd76c080a66bd7021877ffaa471207470bbfa
+    image: ghcr.io/elementsproject/cln-application:0.0.5@sha256:5125fc784564997d4d047cb99378284f57eb4900ebc39bdd9ab56811a4763312
     command: npm run start
     restart: on-failure
     volumes:
@@ -55,7 +55,7 @@ services:
         ipv4_address: ${APP_CORE_LIGHTNING_REST_IP}
 
   lightningd:
-    image: elementsproject/lightningd:v23.08@sha256:b00bbbbff77e1a3c8e1172777e0bc80c3af9f74c79683cf18a45636b04e29c7f
+    image: elementsproject/lightningd:v24.02.2@sha256:131e2ce65c3b051e240a294dccb61b565d3909efc5c23b15d8240e014a34f866
     restart: on-failure
     ports:
       - ${APP_CORE_LIGHTNING_DAEMON_PORT}:9735
@@ -68,11 +68,11 @@ services:
       - --lightning-dir=${CORE_LIGHTNING_PATH}
       - --proxy=${TOR_PROXY_IP}:${TOR_PROXY_PORT}
       - --bind-addr=${APP_CORE_LIGHTNING_DAEMON_IP}:9735
+      - --bind-addr=ws:${APP_CORE_LIGHTNING_DAEMON_IP}:${APP_CORE_LIGHTNING_WEBSOCKET_PORT}
       - --addr=statictor:${TOR_PROXY_IP}:29051
       - --tor-service-password=${TOR_PASSWORD}
       - --network=${APP_CORE_LIGHTNING_BITCOIN_NETWORK}
       - --database-upgrade=true
-      - --experimental-websocket-port=${APP_CORE_LIGHTNING_WEBSOCKET_PORT}
       - --experimental-offers
       - --grpc-port=${APP_CORE_LIGHTNING_DAEMON_GRPC_PORT}
     volumes:

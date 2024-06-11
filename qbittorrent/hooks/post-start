@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# As of v4.6.1, qBittorrent no longer supports a default password and instead prints a temporary password to the logs, which is not ideal for users.
+# Users are meant to start qBittorrent, copy the temporary password from the container logs, log in with the temporary password, and then set a new password from the UI.
+# This script will set the default password to the legacy 'adminadmin' password if the password is not already set. If a user has already set a password, this script will not overwrite it.
+# The app description in the Umbrel app store encourages users to change the default password.
+
+APP_DATA_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")"
+QBITTORRENT_CONF_FILE="${APP_DATA_DIR}/data/config/config/qBittorrent.conf"
+
+# Wait up to 30 seconds for the qBittorrent.conf file to exist
+echo "Waiting up to 30 seconds for qBittorrent.conf file to exist..."
+for attempt in $(seq 1 300); do
+	if [[ -f "${QBITTORRENT_CONF_FILE}" ]]; then
+		echo "qBittorrent.conf file exists"
+		break
+	fi
+	sleep 0.1
+done
+
+if [[ ! -f "${QBITTORRENT_CONF_FILE}" ]]; then
+  echo "qBittorrent.conf was never created. Something is likely wrong with the qBittorrent app."
+  exit
+fi
+
+# If a line with `WebUI\Password_PBKDF2` does not exist yet in the qBittorrent.conf, then a custom password hasn't been set yet and we write out `adminadmin` as the default password.
+# This line is expected to be under the [Preferences] section.
+if ! grep --quiet '^WebUI\\Password_PBKDF2' "${QBITTORRENT_CONF_FILE}"; then
+  echo "WebUI\\Password_PBKDF2 does not exist in qBittorrent.conf. Adding default password."
+
+  # wait 5 seconds to be extra sure the file is fully written by the qBittorrent service
+  echo "Waiting 5 seconds for qBittorrent.conf file to be fully written..."
+  sleep 5
+
+  # stop the qBittorrent service
+  echo "Stopping qBittorrent..."
+  "${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" stop server
+
+  echo "Writing default password adminadmin to qBittorrent.conf"
+  sed -i '/^\[Preferences\]/a WebUI\\Password_PBKDF2="@ByteArray(gTzqQHUv3A1X43tLaAhaJQ==:ZBCIBA4honNZ7H66xdEoHpqBC/Vvwj17ZCjQKARSK78ScJWDMdWSfxezHG536UekAL/zpRn571MXCfhtdqiArA==)"' "${QBITTORRENT_CONF_FILE}"
+
+  # start the qBittorrent service
+  echo "Starting qBittorrent..."
+  "${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" start server
+
+else
+  echo "'WebUI\\Password_PBKDF2' already exists in qBittorrent.conf. No changes made."
+fi
