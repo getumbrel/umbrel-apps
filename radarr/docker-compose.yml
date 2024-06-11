@@ -8,7 +8,7 @@ services:
       PROXY_AUTH_WHITELIST: "/api/*"
 
   server:
-    image: linuxserver/radarr:version-5.0.3.8127@sha256:7e1afaeaf791f13882a9f1d662096ff5aea2b5584911a788e2273f32b6bbf009
+    image: linuxserver/radarr:5.6.0@sha256:594fab7afdb1de2f61a82835f3f2377a6220d4940d4b49bfa95e82d8a6b13a95
     environment:
       - PUID=1000
       - PGID=1000
@@ -18,15 +18,15 @@ services:
     restart: on-failure
 
   mac:
-    image: getumbrel/media-app-configurator:v1.0.0@sha256:e3d8b18e0186f76dd3f3d4acacc9101b4abbf302d8f2afbb47cdd3879b1a1008
+    image: getumbrel/media-app-configurator:v1.2.0@sha256:6aa568b53f6743dc4a7b3212f97b9d4ca78800ede5eadc0e4b80c7f3af50eda3
     user: "1000:1000"
     restart: on-failure
     volumes:
       - ${APP_DATA_DIR}/data/config:/config
       - ${UMBREL_ROOT}/data/storage/downloads:/downloads
     environment:
-      DOWNLOAD_CLIENT_API_URL: "http://radarr_server_1:7878/api/v3/downloadclient"
-      ROOT_FOLDER_API_URL: "http://radarr_server_1:7878/api/v3/rootfolder"
+      APP_ID: "radarr"
+      APP_URL: "http://radarr_server_1:7878"
       TRANSMISSION_HOST: "transmission_server_1"
       TRANSMISSION_PORT: 9091
       ROOT_FOLDER: "/downloads/movies"
