@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+# Create a config file with minimal values, it will later be merged by the app
+
+CONFIG_FILE="${APP_DATA_DIR}/data/config/sabnzbd.ini"
+DEVICE_DOMAIN_NAME="${DEVICE_DOMAIN_NAME:-"umbrel.local"}"
+APP_HOST="${APP_HOST:-"sabnzbd_web_1"}"
+
+if [[ ! -f "${CONFIG_FILE}" ]]; then
+  echo "App: SABnzbd - Creating config file"
+  echo "App: SABnzbd - APP_HOST: ${APP_HOST}"
+  echo "App: SABnzbd - DEVICE_DOMAIN_NAME: ${DEVICE_DOMAIN_NAME}"
+
+  cat <<EOF >"${CONFIG_FILE}"
+[misc]
+download_dir = /downloads/incomplete
+complete_dir = /downloads/complete
+host_whitelist = ${DEVICE_DOMAIN_NAME}, ${APP_HOST}
+EOF
+fi
