@@ -33,18 +33,6 @@ services:
       - postgres
     restart: on-failure
 
-  microservices:
-    image: ghcr.io/immich-app/immich-server:v1.105.1@sha256:658b40420d7a39d6eb34c797cec8d36ff315f5adb168301aaf27dc4eafc8e228
-    command: [ "start.sh", "microservices" ]
-    volumes:
-      - ${APP_DATA_DIR}/data/upload:/usr/src/app/upload
-    environment:
-      <<: *env
-    depends_on:
-      - redis
-      - postgres
-    restart: on-failure
-
   machine-learning:
     image: ghcr.io/immich-app/immich-machine-learning:v1.105.1@sha256:2e2736ba2f2270485c0b6fa33eee66ea0b2279b70b92ea838a015c4d5289c9f0
     volumes:
