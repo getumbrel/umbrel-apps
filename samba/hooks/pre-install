@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# APP_DATA_DIR="$(readlink -f $(dirname "${BASH_SOURCE[0]}")/..)/"
+APP_DATA_DIR="/home/umbrel/umbrel/app-data/samba"
+
+last_password_file="${APP_DATA_DIR}/last-password"
+new_password=$(openssl rand -base64 24)
+
+# remove file if it exist
+[ -f "$last_password_file" ] && rm $last_password_file
+
+# save new password
+echo $new_password > "${APP_DATA_DIR}/last-password"
+chown umbrel "${APP_DATA_DIR}/last-password"
+
+# update password on container
+sed -i "s/\(PASS:\s*\).*\$/\1$new_password/" "${APP_DATA_DIR}/docker-compose.yml"
+
+# update password for Umbrel home
+sed -i "s/\(defaultPassword:\s*\).*\$/\1$new_password/" "${APP_DATA_DIR}/umbrel-app.yml"
