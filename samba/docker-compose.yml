@@ -5,27 +5,26 @@ services:
     environment:
       APP_HOST: samba_homepage_1
       APP_PORT: 9445
-    container_name: samba_homepage_app_proxy_1
 
-  apache:
-    image: >-
-      httpd:2.4.59@sha256:10182d88d7fbc5161ae0f6f758cba7adc56d4aae2dc950e51d72c0cf68967cea
+  homepage:
+    image: joseluisq/static-web-server:2@sha256:c8345c2c469ba249cbc986b6155dc275ce86bcd30e0b29755fda4deb501bbddd
     container_name: samba_homepage_1
-    restart: on-failure
+    environment:
+      - SERVER_ROOT=/var/public
+      - SERVER_PORT=9445
     volumes:
-      - ${APP_DATA_DIR}/data:/usr/local/apache2/htdocs
-      - ${APP_DATA_DIR}/data/httpd.conf:/usr/local/apache2/conf/httpd.conf
+      - ${APP_DATA_DIR}/data/public:/var/public
+      - ${APP_DATA_DIR}/data/smb.conf:/var/public/smb.conf
 
   server:
     image: >-
       dockurr/samba:4.20.1@sha256:9a57887c0be1242ee2e1381653619a656820e1aee8e271885662d04c2c367be8
     container_name: samba_server_1
-    restart: on-failure
     environment:
       USER: umbrel
-      PASS: changeme
+      PASS: ${APP_PASSWORD}
     ports:
       - '445:445'
     volumes:
-      - ${UMBREL_ROOT}/data/smb.conf:/etc/samba/smb.conf
+      - ${APP_DATA_DIR}/data/smb.conf:/etc/samba/smb.conf
       - ${UMBREL_ROOT}/data/storage:/storage
