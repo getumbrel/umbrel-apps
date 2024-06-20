@@ -7,7 +7,7 @@ services:
       APP_PORT: 3005
   
   server:
-    image: retropexx/umbrel-bitcoin-knots:v0.5.0@sha256:b19da8308ec9b6c66511d327f5fd2b64aa430a3da8ed3854e8e170274b11b624
+    image: retropexx/umbrel-bitcoin-knots:v0.5.3@sha256:c21fc893fb943c92fb078afb7622ab0741eccccf9073629a5bda713ed7a8f537
     depends_on: [bitcoind]
     restart: on-failure
     volumes:
@@ -41,7 +41,7 @@ services:
         ipv4_address: $APP_BITCOIN_KNOTS_IP
 
   bitcoind:
-    image: retropexx/bitcoind:v26.1@sha256:14d3acf5f5d3030631161e37d8f8115f489acf94340cd6bc45328584442603e4
+    image: retropexx/bitcoind:v26.2@sha256:43a9b8b205d7c0c068e9e13ea8da8d439c4807f6d61f2f22e48ad7b7fac71b72
     command: "${APP_BITCOIN_KNOTS_COMMAND}"
     restart: unless-stopped
     stop_grace_period: 15m30s

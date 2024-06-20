@@ -5,28 +5,29 @@ services:
     environment:
       APP_HOST: seafile
       APP_PORT: 80
+      PROXY_AUTH_ADD: "false"
 
   db:
     image: mariadb:10.11.6@sha256:20a8bd91d972c97cffded88f2ba0ab533c8988b2dc08090c57d50caf7114ed20
     container_name: seafile-mysql
     environment:
-      - MYSQL_ROOT_PASSWORD=db_dev 
+      - MYSQL_ROOT_PASSWORD=db_dev
       - MYSQL_LOG_CONSOLE=true
     volumes:
-       - ${APP_DATA_DIR}/data/db:/var/lib/mysql
+      - ${APP_DATA_DIR}/data/db:/var/lib/mysql
 
   memcached:
     image: memcached:1.6.18@sha256:4ab520657d9919221f752771bb013d632c9b39cea9dfae9162244b2e39885bcd
     container_name: seafile-memcached
     entrypoint: memcached -m 256
-          
+
   seafile:
-    image: seafileltd/seafile-mc:11.0.3@sha256:e712a7b15c63855e2977eda07a8fdd0024d0c1b5a413d2497e8c63c7c82c6d87
+    image: seafileltd/seafile-mc:11.0.8@sha256:1be82fe59680b6fae0df4a6fee6735c21d9915955e3e1aa6775a970ece333e52
     container_name: seafile
     volumes:
       - ${APP_DATA_DIR}/data/seafile-data:/shared
     environment:
-      - DB_HOST=db
+      - DB_HOST=seafile-mysql
       - DB_ROOT_PASSWD=db_dev
       - SEAFILE_ADMIN_EMAIL=umbrel
       - SEAFILE_ADMIN_PASSWORD=${APP_PASSWORD}
