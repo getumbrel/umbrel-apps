@@ -2,7 +2,7 @@ manifestVersion: 1
 id: plex
 category: media
 name: Plex
-version: "1.40.2-hotfix1"
+version: "1.40.3"
 tagline: Stream Movies & TV Shows
 description: >-
   Stream movies and TV shows, plus 300+ channels of live TV, instantly, without a subscription. Watch live TV and movies anywhere, from any device, with Plex.
@@ -29,10 +29,26 @@ torOnly: false
 permissions:
   - STORAGE_DOWNLOADS
 releaseNotes: >-
-  This is a hotfix release that resolves an issue where users were unable to install both Plex and Home Assistant on the same device.
+  NEW:
+
+  - Metadata: Added support for additional TVDB episode orderings in TV Show preferences. This requires a metadata refresh.
 
 
-  ⚠️ If you have not yet upgraded to Plex 1.40.2, then please be patient during this update as large libraries may take a while to update.
+  FIXES:
+
+  - Live-TV: Fixed an issue where tuning slots were not properly released if the tune was canceled during startup, such as when rapidly changing channels.
+  
+  - Scanner: Removed deprecated support for modern metadata agent scan/refresh via Scanner CLI.
+  
+  - Scanner: Fixed an issue where the scanner would not ignore #snapshot/s directories.
+  
+  - Scanner: Fixed an issue where the scanner would not ignore @eaDir copy directories.
+  
+  - Serialization: The viewUpdatedAt field is now included when requested.
+  
+  - Transcoder: Corrected the quality parameter for devices without rate control.
+  
+  - Transcoder: Fixed an issue where Windows would fail to hardware transcode after an RDP session is started or ended.
 
 
   Full release notes are available at https://www.videohelp.com/software/Plex
