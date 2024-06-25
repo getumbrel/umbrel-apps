@@ -7,13 +7,14 @@ services:
       APP_PORT: 1984
 
   web:
-    image: ghcr.io/impa10r/peerswap-web:v1.4.7@sha256:9bc6aa9ab40e5762a5b6fdac530f5739cb85f637621cfc9a0ed412af8452b9d2
+    image: ghcr.io/impa10r/peerswap-web:v1.5.7@sha256:5d3f80d205eaabfd9f33c723f7548a14b758deb65f22e1efdee14441efd80f58
     user: "1000:1000"
     restart: on-failure
     stop_grace_period: 1m
     environment:
       # App
       NETWORK: $APP_BITCOIN_NETWORK
+      NO_HTTPS: "true"
       # LND
       LND_HOST: ${APP_LIGHTNING_NODE_IP}:${APP_LIGHTNING_NODE_GRPC_PORT}
       LND_MACAROONPATH: /home/peerswap/.lnd/data/chain/bitcoin/${APP_BITCOIN_NETWORK}/admin.macaroon
