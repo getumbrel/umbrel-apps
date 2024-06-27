@@ -14,7 +14,7 @@ services:
       - SERVER_ROOT=/var/public
     volumes:
       - ${APP_DATA_DIR}/data/public:/var/public
-      - ${APP_DATA_DIR}/data/smb.conf:/var/public/smb.conf
+      - ${APP_DATA_DIR}/data/samba/smb.conf:/var/public/smb.conf
 
   server:
     image: dockurr/samba:4.20.1@sha256:9a57887c0be1242ee2e1381653619a656820e1aee8e271885662d04c2c367be8
@@ -27,5 +27,5 @@ services:
     ports:
       - '445:445'
     volumes:
-      - ${APP_DATA_DIR}/data/smb.conf:/etc/samba/smb.conf
+      - ${APP_DATA_DIR}/data/samba/smb.conf:/etc/samba/smb.conf
       - ${UMBREL_ROOT}/data/storage:/storage
