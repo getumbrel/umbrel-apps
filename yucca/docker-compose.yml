@@ -1,0 +1,23 @@
+version: "3.8"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: yucca_yucca_1
+      APP_PORT: 9910
+      PROXY_AUTH_WHITELIST: "/v1/*"
+
+  yucca:
+    image: yuccastream/yucca:0.10.1@sha256:9e3dc1d52a952527000e274e2e22f09b5b6626a630e213997f78e5343aa2eec5
+    restart: on-failure
+    shm_size: "128mb"
+    working_dir: /opt/yucca
+    volumes:
+      - "${APP_DATA_DIR}/data/data:/opt/yucca/data"
+      - "${APP_DATA_DIR}/data/ffmpeg:/opt/yucca/ffmpeg"
+    ports:
+      - 10925:10925 # SMTP server
+      - 9912:9912 # telemetry (prometheus)
+    environment: # Read more about configuration here https://docs.yucca.app/en/configuration/
+      YUCCA_SERVER_DATA_DIR: "/opt/yucca/data"
+      YUCCA_SMTP_SERVER_LISTEN_ADDRESS: ":10925"
