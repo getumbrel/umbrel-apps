@@ -1,0 +1,27 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: localai_api_1
+      APP_PORT: 8080
+      PROXY_AUTH_WHITELIST: "/v1/*"
+  api:
+    image: localai/localai:v2.14.0-aio-cpu@sha256:b0366517053d5aadd093f1afb3143484bf7e6eaec163de6d71f547dc234fe18d
+    # For a specific version:
+    # image: localai/localai:v2.14.0-aio-cpu
+    # For Nvidia GPUs decomment one of the following (cuda11 or cuda12):
+    # image: localai/localai:v2.14.0-aio-gpu-nvidia-cuda-11
+    # image: localai/localai:v2.14.0-aio-gpu-nvidia-cuda-12
+    # image: localai/localai:latest-aio-gpu-nvidia-cuda-11
+    # image: localai/localai:latest-aio-gpu-nvidia-cuda-12
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/readyz"]
+      interval: 1m
+      timeout: 20m
+      retries: 5
+    environment:
+      - DEBUG=true
+      # ...
+    volumes:
+      - ${APP_DATA_DIR}/data/models:/build/models:cached
