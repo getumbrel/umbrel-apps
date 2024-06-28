@@ -7,7 +7,7 @@ services:
       APP_PORT: 3001
   
   web:
-    image: shahanafarooqui/rtl:0.14.1@sha256:88bbf2dac4a5eedd0b692e97bc6c50a5266f44aff8215770ea2fc4eb7495e41e
+    image: shahanafarooqui/rtl:v0.15.2@sha256:e2c40d04821a1a6e9bcb55b4276c428c6c416ab1c33b4efd256366430234ea6a
     user: "1000:1000"
     restart: on-failure
     stop_grace_period: 1m
@@ -24,6 +24,7 @@ services:
         RTL_CONFIG_PATH: "/data"
         CHANNEL_BACKUP_PATH: "/data/backup"
         LN_IMPLEMENTATION: "LND"
+        BLOCK_EXPLORER_URL: "${APP_RTL_BLOCK_EXPLORER_URL}"
 
         # LND connection details
         LN_SERVER_URL: "https://$APP_LIGHTNING_NODE_IP:$APP_LIGHTNING_NODE_REST_PORT"
