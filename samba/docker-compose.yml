@@ -7,14 +7,11 @@ services:
       APP_PORT: 80
 
   homepage:
-    image: joseluisq/static-web-server:2.32.0@sha256:c8345c2c469ba249cbc986b6155dc275ce86bcd30e0b29755fda4deb501bbddd
+    image: loficafe/static-web-server-samba:1.0.1@sha256:783667f052d9535bb75946ff9bc807989b041e25437ef10c30b291589d041e6e
     restart: on-failure
     user: "1000:1000"
-    environment:
-      - SERVER_ROOT=/var/public
     volumes:
-      - ${APP_DATA_DIR}/data/public:/var/public
-      - ${APP_DATA_DIR}/data/samba/smb.conf:/var/public/smb.conf:ro
+      - ${APP_DATA_DIR}/data/samba/smb.conf:/public/smb.conf:ro
 
   server:
     image: dockurr/samba:4.20.1@sha256:9a57887c0be1242ee2e1381653619a656820e1aee8e271885662d04c2c367be8
