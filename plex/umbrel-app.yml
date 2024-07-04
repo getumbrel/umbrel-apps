@@ -2,13 +2,16 @@ manifestVersion: 1
 id: plex
 category: media
 name: Plex
-version: "1.31.2"
+version: "1.40.3"
 tagline: Stream Movies & TV Shows
 description: >-
   Stream movies and TV shows, plus 300+ channels of live TV, instantly, without a subscription. Watch live TV and movies anywhere, from any device, with Plex.
   
   
   Plex uses a server to house your media library and player apps to playback the media. Add, access, and share all the entertainment that matters to you, on almost any device.
+
+
+  ⚠️ If you encounter a "not authorized error" when attempting to access your Plex app, please follow the steps in this guide: https://community.umbrel.com/t/fixing-plexs-not-authorized-error/10523
 developer: Plex
 website: https://www.plex.tv/
 dependencies: []
@@ -26,6 +29,28 @@ torOnly: false
 permissions:
   - STORAGE_DOWNLOADS
 releaseNotes: >-
-  This update includes new features such as improved series and season-level preferences, increased support for different naming formats, and numerous bug fixes.
+  NEW:
+
+  - Metadata: Added support for additional TVDB episode orderings in TV Show preferences. This requires a metadata refresh.
+
+
+  FIXES:
+
+  - Live-TV: Fixed an issue where tuning slots were not properly released if the tune was canceled during startup, such as when rapidly changing channels.
+  
+  - Scanner: Removed deprecated support for modern metadata agent scan/refresh via Scanner CLI.
+  
+  - Scanner: Fixed an issue where the scanner would not ignore #snapshot/s directories.
+  
+  - Scanner: Fixed an issue where the scanner would not ignore @eaDir copy directories.
+  
+  - Serialization: The viewUpdatedAt field is now included when requested.
+  
+  - Transcoder: Corrected the quality parameter for devices without rate control.
+  
+  - Transcoder: Fixed an issue where Windows would fail to hardware transcode after an RDP session is started or ended.
+
+
+  Full release notes are available at https://www.videohelp.com/software/Plex
 submitter: Umbrel
 submission: https://github.com/getumbrel/umbrel-apps/commit/60878f278d544b204d8e7c96240c797f43a9b319

@@ -1,0 +1,16 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: tautulli_web_1
+      APP_PORT: 8181
+
+  web:
+    image: linuxserver/tautulli:2.13.2@sha256:6195b187030637f5588c33988b3686b96f003c726b22958ee0d589549c6fb50f
+    volumes:
+      - ${APP_DATA_DIR}/data/config:/config
+    restart: on-failure
+    environment:
+      - PUID=1000
+      - PGID=1000

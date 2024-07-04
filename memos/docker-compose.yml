@@ -1,0 +1,17 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: memos_main_1
+      APP_PORT: 5230
+      PROXY_AUTH_WHITELIST: "/api/*"
+
+  main:
+    image: neosmemo/memos:0.22.0@sha256:2d6dc796dcd89e5787fe6c43c4e71c0e577d29f35ef4f5ab67240a3e70adaa58
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 1m
+    volumes:
+      - ${APP_DATA_DIR}/data:/var/opt/memos
+

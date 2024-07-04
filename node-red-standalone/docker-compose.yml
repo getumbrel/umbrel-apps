@@ -1,15 +1,9 @@
 version: "3.7"
 
 services:
-  app_proxy:
-    environment:
-      APP_HOST: node-red-standalone_web_1
-      APP_PORT: 1881
-      # Used to allow (HTTP In) flows to be publicly exposed
-      PROXY_AUTH_WHITELIST: "/public/*"
-  
   web:
-    image: nodered/node-red:3.0.2-14@sha256:5041fe85e55705d91594980330fc447d86d4f138723befe1628c686bace01de8
+    image: nodered/node-red:4.0.0@sha256:aa2d35ab4cbc1c3bf791a22bbf4de251635c5cbc06b3ec9e6b26a31b1296f7e5
+    network_mode: host
     restart: on-failure
     stop_grace_period: 1m
     volumes:

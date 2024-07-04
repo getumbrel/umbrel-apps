@@ -1,0 +1,17 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: freshrss_server_1
+      APP_PORT: 80
+      PROXY_AUTH_WHITELIST: "/api/*"
+
+  server:
+    image: linuxserver/freshrss:1.23.1@sha256:1d5a55e51551e0b5138fbfefb02c7c8e4fba4c3bb6678fd40bfeb7544ae0aab7
+    restart: on-failure
+    environment:
+      - PUID=1000
+      - PGID=1000
+    volumes:
+      - ${APP_DATA_DIR}/data:/config

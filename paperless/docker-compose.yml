@@ -1,0 +1,61 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: paperless_webserver_1
+      APP_PORT: 8000
+
+  broker:
+    image: docker.io/library/redis:7@sha256:d6ecc832969a4827645a083da38345327b3447772fe907e7d4311c79b4e3a06e
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data/redisdata:/data
+
+  db:
+    image: docker.io/library/postgres:16@sha256:46aa2ee5d664b275f05d1a963b30fff60fb422b4b594d509765c42db46d48881
+    restart: unless-stopped
+    volumes:
+      - ${APP_DATA_DIR}/data/pgdata:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: paperless
+      POSTGRES_USER: paperless
+      POSTGRES_PASSWORD: paperless
+
+  webserver:
+    image: ghcr.io/paperless-ngx/paperless-ngx:2.7.2@sha256:703c990a790dfd4d25fb56df3afec27b13cb0926a3818bf265edac9c71311647
+    restart: on-failure
+    depends_on:
+      - db
+      - broker
+      - gotenberg
+      - tika
+    volumes:
+      - ${APP_DATA_DIR}/data/data:/usr/src/paperless/data
+      - ${APP_DATA_DIR}/data/media:/usr/src/paperless/media
+      # TODO: move these inside the paperless app data dir once umbrelOS supports navigating to it via the UI
+      - ${UMBREL_ROOT}/data/storage/paperless/export:/usr/src/paperless/export
+      - ${UMBREL_ROOT}/data/storage/paperless/consume:/usr/src/paperless/consume
+    environment:
+      PAPERLESS_REDIS: redis://paperless_broker_1:6379
+      PAPERLESS_DBHOST: paperless_db_1
+      PAPERLESS_TIKA_ENABLED: 1
+      PAPERLESS_TIKA_GOTENBERG_ENDPOINT: http://paperless_gotenberg_1:3000
+      PAPERLESS_TIKA_ENDPOINT: http://paperless_tika_1:9998
+      PAPERLESS_ADMIN_USER: admin
+      PAPERLESS_ADMIN_PASSWORD: $APP_PASSWORD
+
+  gotenberg:
+    image: docker.io/gotenberg/gotenberg:7.10@sha256:d03b8a04c6e6c5e568b38f57352266dee4674849b71818774025f8f48d869a9a
+    restart: on-failure
+
+    # The gotenberg chromium route is used to convert .eml files. We do not
+    # want to allow external content like tracking pixels or even javascript.
+    command:
+      - "gotenberg"
+      - "--chromium-disable-javascript=true"
+      - "--chromium-allow-list=file:///tmp/.*"
+
+  tika:
+    image: ghcr.io/paperless-ngx/tika:2.9.1-minimal@sha256:20db3df89eaeb1b271dd840888fe909b88b12f4b86ef641ec07a1d45d4c5168f
+    restart: on-failure

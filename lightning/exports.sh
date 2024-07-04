@@ -51,3 +51,38 @@ rest_hidden_service_file="${EXPORTS_TOR_DATA_DIR}/app-${EXPORTS_APP_ID}-rest/hos
 grpc_hidden_service_file="${EXPORTS_TOR_DATA_DIR}/app-${EXPORTS_APP_ID}-grpc/hostname"
 export APP_LIGHTNING_REST_HIDDEN_SERVICE="$(cat "${rest_hidden_service_file}" 2>/dev/null || echo "notyetset.onion")"
 export APP_LIGHTNING_GRPC_HIDDEN_SERVICE="$(cat "${grpc_hidden_service_file}" 2>/dev/null || echo "notyetset.onion")"
+
+{
+	# Migrate hybrid mode settings for app updates differently to fresh installs
+	LIGHTNING_DATA_DIR="${EXPORTS_APP_DIR}/data/lightning"
+	LND_DATA_DIR="${EXPORTS_APP_DIR}/data/lnd"
+
+	IS_POST_HYBRID_MODE_INSTALL_FILE_PATH="${LIGHTNING_DATA_DIR}/IS_POST_HYBRID_MODE_INSTALL"
+
+	# If no lnd/data directory exists, we write out a file to indicate that this is a fresh install.
+	# This gets around the issue of the pre-start hook starting up the lnd container early for Tor HS creation
+	# and creating the lnd/data directory.
+	if [[ ! -d "${LND_DATA_DIR}/data" ]]; then
+		touch "${IS_POST_HYBRID_MODE_INSTALL_FILE_PATH}"
+	fi
+
+	APP_CONFIG_EXISTS="false"
+	APP_HYBRID_MODE_SETTING_EXISTS="false"
+	if [[ -f "${LIGHTNING_DATA_DIR}/settings.json" ]]; then
+		APP_CONFIG_EXISTS="true"
+		if jq -e '.lnd | has("tor.skip-proxy-for-clearnet-targets")' "${LIGHTNING_DATA_DIR}/settings.json" >/dev/null 2>&1; then
+			APP_HYBRID_MODE_SETTING_EXISTS="true"
+		fi
+	fi
+
+	# We only need to preserve tor-only configuration for existing pre-1.2.0 installs
+	if [[ ! -f "${IS_POST_HYBRID_MODE_INSTALL_FILE_PATH}" ]]; then
+		if [[ "${APP_CONFIG_EXISTS}" = "false" ]]; then
+			# If no settings.json exists at all this is an update to a pre-Advanced-Settings version of the app, so we preserve existing tor-only configuration
+			export LND_INITIALIZE_WITH_TOR_ONLY="true"
+		elif [[ "${APP_CONFIG_EXISTS}" = "true" ]] && [[ "${APP_HYBRID_MODE_SETTING_EXISTS}" = "false" ]]; then
+			# If settings.json exists, but there is no hybrid mode setting yet, then this is a pre-1.2.0 version of the app, so we still preserve existing tor-only configuration
+			export LND_INITIALIZE_WITH_TOR_ONLY="true"
+		fi
+	fi
+} || true

@@ -2,7 +2,7 @@ manifestVersion: 1
 id: snowflake
 category: networking
 name: Tor Snowflake Proxy
-version: "2.4.1"
+version: "v2.7.0"
 tagline: Help defeat internet censorship
 description: >-
   Snowflake is a system to defeat internet censorship. People who are
@@ -27,32 +27,42 @@ torOnly: false
 releaseNotes: >-
   Various bugfixes and enhancements:
   
-  - Issue 40224: Bug fix in utls roundtripper
+  - fix(proxy): Correctly close connection pipe when dealing with error 
   
-  - Fix proxy command line help output
+  - Remove proxy churn measurements from broker.
   
-  - Issue 40123: Reduce multicast DNS candidates
+  - fix(proxy): remove _potential_ deadlock
   
-  - Add ICE ephemeral ports range setting
+  - Maintain backward compatability with old clients
   
-  - Reformat using Go 1.19
+  - Randomly select front domain from comma-separated list
   
-  - Update CI tests to include latest and minimum Go versions
+  - Update dependencies
   
-  - Issue 40184: Use fixed unit for bandwidth logging
+  - chore(deps): update module github.com/xtaci/kcp-go/v5 to v5.6.3
   
-  - Update gorilla/websocket to v1.5.0
+  - Remove Golang 1.20 from CI Testing
   
-  - Issue 40175: Server performance improvements
+  - Update CI targets to test android from golang 1.21
   
-  - Issue 40183: Change snowflake proxy log verbosity
+  - Use ShouldBeNil to check for nil values
   
-  - Issue 40117: Display proxy NAT type in logs
+  - chore(deps): update module github.com/smartystreets/goconvey to v1.8.1
+
+  - chore(deps): update module gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/goptlib to v1.5.0
+
+  - chore(deps): update module github.com/pion/webrtc/v3 to v3.2.20
+
+  - Update CI targets to include only Go 1.20 and 1.21
+
+  - chore(deps): update module golang.org/x/net to v0.15.0
+
+  - Update module golang.org/x/sys to v0.12.0
 
   
-  Full changelog: https://gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/snowflake/-/blob/7c154e5fd06693ddc4feb5962cab4a13aeebd405/ChangeLog
-  
-  
-  Compare to v2.1.0: https://gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/snowflake/-/compare/v2.1.0...v2.4.1
+  Release information: https://gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/snowflake/-/releases
+
+
+  Compare to v2.1.0: https://gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/snowflake/-/compare/v2.4.1...v2.7.0
 submitter: Umbrel
 submission: https://github.com/getumbrel/umbrel/pull/1284

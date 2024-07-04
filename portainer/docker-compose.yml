@@ -1,0 +1,36 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: portainer_portainer_1
+      APP_PORT: 9000
+
+  docker:
+    image: docker:24.0.5-dind@sha256:3c6e4dca7a63c9a32a4e00da40461ce067f255987ccc9721cf18ffa087bcd1ef
+    privileged: true
+    network_mode: host
+    stop_grace_period: 1m
+    restart: on-failure
+    environment:
+      DOCKER_ENSURE_BRIDGE: "dind0:10.32.0.1/16"
+    entrypoint: /entrypoint.sh
+    command: >
+      dockerd
+        --bridge dind0
+        --data-root /data/data
+        --exec-root /data/exec
+        --host unix:///data/docker.sock
+        --pidfile /data/docker.pid
+    volumes:
+      - ${APP_DATA_DIR}/entrypoint.sh:/entrypoint.sh
+      - ${APP_DATA_DIR}/data/docker:/data
+
+  portainer:
+    image: portainer/portainer-ce:2.19.1@sha256:f29cbc7b26ebd701b1fe92b4df42edea350e871372a6296a1fa16ba999481fb2
+    command: --host unix:///var/run/docker.sock --admin-password-file=/default-password
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/default-password:/default-password
+      - ${APP_DATA_DIR}/data/portainer:/data
+      - ${APP_DATA_DIR}/data/docker:/var/run

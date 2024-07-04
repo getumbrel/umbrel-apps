@@ -7,7 +7,7 @@ services:
       APP_PORT: 25441
 
   web:
-    image: lncm/specter-desktop:v1.14.2@sha256:47e18789aaf87dbfd1f313346cbde4d8fc982dace28f889f78c96f0d87b3ad9a
+    image: lncm/specter-desktop:v2.0.2@sha256:aeda6dfaa3f82c7bd3e1c6ba61388df02bd0c22a59412d2bbed3c792fb0b3702
     stop_signal: SIGINT
     restart: on-failure
     stop_grace_period: 1m
@@ -18,6 +18,7 @@ services:
       - --specter-data-folder=/data
     environment:
       # TODO: APP_PASSWORD
+      # These env vars no longer work from v2.0.0 onwards (after introduction of public electrum server option). Keeping them here for potential future use if Specter Desktop adds support for them again. 
       BTC_RPC_USER: $APP_BITCOIN_RPC_USER
       BTC_RPC_PASSWORD: $APP_BITCOIN_RPC_PASS
       BTC_RPC_HOST: $APP_BITCOIN_NODE_IP

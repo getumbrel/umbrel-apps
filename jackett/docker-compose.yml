@@ -1,0 +1,19 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: jackett_server_1
+      APP_PORT: 9117
+      PROXY_AUTH_WHITELIST: "/api/* /dl/*"
+
+  server:
+    image: linuxserver/jackett:0.21.2446@sha256:fb4a593a24655004354787d5184a223102e14b75e71e531ee0d3e281266ddfd9
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data:/config
+      - ${UMBREL_ROOT}/data/storage/downloads:/downloads
+    stop_grace_period: 1m
+    environment:
+      - PUID=1000
+      - PGID=1000

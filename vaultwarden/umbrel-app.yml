@@ -2,12 +2,12 @@ manifestVersion: 1
 id: vaultwarden
 category: files
 name: Vaultwarden
-version: "1.25.0"
+version: "1.30.3"
 tagline: Unofficial Bitwarden® compatible server
 description: >-
-  Vaultwarden (formerly known as Bitwarden_RS) is an alternative
-  implementation of the Bitwarden® server API written in Rust, compatible with
-  upstream Bitwarden® clients*. Vaultwarden is perfect for self-hosting all of
+  Vaultwarden is an alternative
+  implementation of the Bitwarden® server API that is compatible with
+  Bitwarden® clients*. Vaultwarden is perfect for self-hosting all of
   your passwords in an encrypted vault on your Umbrel. Vaultwarden is a full
   implementation of Bitwarden® API that includes:
 
@@ -26,7 +26,42 @@ description: >-
 
   - YubiKey and Duo support
 
-   Please note that Vaultwarden is not associated with the Bitwarden® project nor 8bit Solutions LLC. When using this app, please report any bugs or suggestions to us directly, regardless of whatever clients you are using (mobile, desktop, browser, etc), and do not use Bitwarden®'s official support channels.
+  - Emergency Access
+
+
+  🛠️ SET-UP INSTRUCTIONS
+
+  Vaultwarden's web interface is not accessible over http, meaning that to access it for initial set-up you need to use Tor. Here's how to do it:
+
+  - Ensure your Umbrel is accessible over Tor by going to Settings in your dashboard and toggling "Remote Tor access" to enabled. You will need to restart your Umbrel if Remote Tor access was previously disabled.
+  
+  - Access your umbrel through a Tor browser using the .onion address shown in Settings under "Remote Tor access". 
+
+  - In your Tor browser, open the Vaultwaden app and create an account.
+
+  - Once you've created an account, you can connect your Vaultwarden server from any Bitwarden app (mobile, desktop, browser, etc) by adding your server IP details.
+
+  - For the most robust connection from anywhere, install Tailscale on your Umbrel and your devices, and use the Tailscale IP address to connect to your Vaultwarden server.
+
+
+  *Please note that Vaultwarden is not associated with the Bitwarden® project nor 8bit Solutions LLC. When using this app, please report any bugs or suggestions to us directly, regardless of whatever clients you are using (mobile, desktop, browser, etc), and do not use Bitwarden®'s official support channels.
+releaseNotes: |
+  This release updates Vaultwarden from v1.30.0 to v1.30.3. 
+
+  This is a minor release to fix some issues with push notification device registration and docker healthcheck. As well as some issues with the Login with device feature, and restore the alpine docker tag that was missing on the latest release.
+  
+  Changes:
+
+  - Fix push device registration
+  
+  - Decrease JWT Refresh/Auth token
+
+  - Prevent generating an error during ws close 
+  
+  - Fix attachment upload size check
+
+
+  The full release notes are available at https://github.com/dani-garcia/vaultwarden/releases
 developer: Daniel García
 website: https://github.com/dani-garcia
 dependencies: []

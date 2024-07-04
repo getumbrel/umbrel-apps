@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: bitcoin
 category: bitcoin
 name: Bitcoin Node
-version: "25.0"
+version: "27.0"
 tagline: Run your personal node powered by Bitcoin Core
 description: >-
   Run your Bitcoin node and independently store and validate
@@ -14,6 +14,13 @@ description: >-
 
   Plus, transacting with your own node also helps keep the entire
   Bitcoin network decentralized; win-win!
+
+
+  With over 20 advanced settings, you can take control of your node
+  and customize it to your needs. Control how your node connects to
+  other nodes over Tor, clearnet, and I2P, adjust your daily upload
+  limit, set the maximum mempool size, fine-tune its performance,
+  and much more.
 
 
   Don't trust. Verify. On steroids.
@@ -35,24 +42,56 @@ gallery:
 path: ""
 defaultPassword: ""
 releaseNotes: >-
-  What's new in Bitcoin Core version 25.0?
+  This release of the Bitcoin Node app includes the following updates:
 
 
-  - P2P and network changes
+  - Bitcoin Core: Upgrades Bitcoin Core to version 27.0. Full release notes for Bitcoin Core 27.0 can be found at https://github.com/bitcoin/bitcoin/blob/master/doc/release-notes/release-notes-27.0.md.
 
-  - New and updated RPCs as well as low-level changes
 
-  - New and updated settings
+  - New Advanced Settings Options: Adds 3 new options to the Advanced Settings menu:
+    - datacarrier: Choose whether or not to relay transactions with OP_RETURN outputs.
+    - datacarriersize: Set the maximum size of the data in OP_RETURN outputs (in bytes) that your node will relay.
+    - permitbaremultisig: Choose wether or not to relay non-P2SH multisig transactions.
+
+
+  - JoinMarket Compatibility: The deprecated RPC 'deprecatedrpc=create_bdb' is enabled to allow integration with JoinMarket and the Jam app by default.
+  This fixes an issue where Jam app users who upgraded to Bitcoin Core v26.0 would have to manually add 'deprecatedrpc=create_bdb' to their bitcoin.conf file in order for the app to work.
   
-  - Compatibility updates
   
-  - Wallet updates
-
-  - REST changes
-
-  - Reduced peers.dat corruption risks
-
-
-  Read the full release notes for additional information and detailed changes at https://github.com/bitcoin/bitcoin/blob/master/doc/release-notes/release-notes-25.0.md
+  ⚠️ For existing Jam users, if you receive a connection error in Jam after updating to Bitcoin Core v27.0, please restart the Jam app from your homescreen by right-clicking on the app and selecting 'restart'.
+widgets:
+  - id: "stats"
+    type: "four-stats"
+    refresh: "5s"
+    endpoint: "server:3005/v1/bitcoind/widgets/stats"
+    link: ""
+    example:
+      type: "four-stats"
+      link: ""
+      items:
+        - title: "Connections"
+          text: "11"
+          subtext: "peers"
+        - title: "Mempool"
+          text: "257"
+          subtext: "MB"
+        - title: "Hashrate"
+          text: "590"
+          subtext: "EH/s"
+        - title: "Blockchain size"
+          text: "600"
+          subtext: "GB"
+  - id: "sync"
+    type: "text-with-progress"
+    refresh: "2s"
+    endpoint: "server:3005/v1/bitcoind/widgets/sync"
+    link: ""
+    example:
+      type: "text-with-progress"
+      link: ""
+      title: "Blockchain sync"
+      text: "83%"
+      progressLabel: "In progress"
+      progress: 0.83
 submitter: Umbrel
 submission: https://github.com/getumbrel/umbrel-apps/commit/576ecd2bef8d625abceed0f67ec9c487da9b2b1b

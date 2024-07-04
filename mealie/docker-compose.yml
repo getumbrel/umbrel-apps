@@ -3,23 +3,19 @@ version: "3.7"
 services:
   app_proxy:
     environment:
-      APP_HOST: mealie_mealie-frontend_1
-      APP_PORT: 3000
+      APP_HOST: mealie_web_1
+      APP_PORT: 9000
       PROXY_AUTH_WHITELIST: "/api/*"
 
-  mealie-frontend:
-    image: hkotel/mealie:frontend-v1.0.0beta-5@sha256:d8ff0ecd5cfe460fb593a99fa78d9ca17401925d287c723a319abd764f80b9f7
+  web:
+    image: ghcr.io/mealie-recipes/mealie:v1.8.0@sha256:1622cfc765645792a739443369a11b5c0909c8083b6fcfff194dd44e95bdcad4
+    restart: on-failure
     environment:
-      - API_URL=http://mealie-api:9000
+      # Allow additional user sign-up without token
+      ALLOW_SIGNUP: "true"
+      PUID: 1000
+      PGID: 1000
+      MAX_WORKERS: 1
+      WEB_CONCURRENCY: 1
     volumes:
       - ${APP_DATA_DIR}/data:/app/data
-    restart: on-failure
-
-  mealie-api:
-    image: hkotel/mealie:api-v1.0.0beta-5@sha256:5031ad226b8ec4c895afdc54dab654e07980dd33391a3e8106aadb3f09b73104
-    environment:
-      - PUID=1000
-      - PGID=1000
-    volumes:
-      - ${APP_DATA_DIR}/data:/app/data
-    restart: on-failure

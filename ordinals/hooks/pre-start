@@ -1,0 +1,84 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+APP_DATA_DIR="$(readlink -f $(dirname "${BASH_SOURCE[0]}")/../data)"
+ORDINALS_DATA_DIR="${APP_DATA_DIR}/ord"
+DESIRED_OWNER="1000:1000"
+
+set_correct_permissions() {
+	local -r path="${1}"
+
+	if [[ -d "${path}" ]]; then
+		owner=$(stat -c "%u:%g" "${path}")
+
+		if [[ "${owner}" != "${DESIRED_OWNER}" ]]; then
+			chown -R "${DESIRED_OWNER}" "${path}"
+		fi
+	fi
+}
+
+# handle generating the correct ord data dir for pre-0.15.0 versions
+if [[ -f "${APP_DATA_DIR}/index.redb" ]]; then
+  rm -f "${APP_DATA_DIR}/index.redb"
+  mkdir -p "${ORDINALS_DATA_DIR}"
+  # set correct permissions for both data and ord
+  set_correct_permissions "${APP_DATA_DIR}"
+fi
+
+# re-index the ordinals data for runes
+# for installs post 0.18.1 this file will be harmlessly created 
+if [[ ! -f "${APP_DATA_DIR}/AT_LEAST_0-18-1" ]]; then
+    # delete index db for all bitcoin networks
+    for file in "${ORDINALS_DATA_DIR}/index.redb" "${ORDINALS_DATA_DIR}/testnet3/index.redb" "${ORDINALS_DATA_DIR}/regtest/index.redb" "${ORDINALS_DATA_DIR}/signet/index.redb"; do
+        if [[ -f "${file}" ]]; then
+            rm -f "${file}"
+        fi
+    done
+    touch "${APP_DATA_DIR}/AT_LEAST_0-18-1"
+fi
+
+# migrate all wallet database files to ord/wallets, ord/testnet3/wallets, ord/regtest/wallets, and ord/signet/wallets for pre-0.18.2 versions: https://github.com/ordinals/ord/releases/tag/0.18.2
+# the default unnamed wallet from `ord wallet create` is called ord.redb, but users can create named wallets as <anything>.redb
+# we assume that all .redb files except index.redb are wallet database files
+# for installs post 0.18.2, the AT_LEAST_0-18-2 file will be harmlessly created
+
+if [[ ! -f "${APP_DATA_DIR}/AT_LEAST_0-18-2" ]]; then
+    echo "AT_LEAST_0-18-2 not found, proceeding with wallet database migration if necessary..."
+    # declare bitcoin network directories
+    declare -a dirs=("" "/testnet3" "/regtest" "/signet")
+    for dir in "${dirs[@]}"; do
+        dir_path="${ORDINALS_DATA_DIR}${dir}"
+        echo "Checking directory: ${dir_path}"
+        if [[ -d "${dir_path}" ]]; then
+            echo "${dir_path} exists."
+            files_to_move=()  # an array to store wallet database files to migrate
+
+            # Iterate over .redb files that are not index.redb
+            for file in "${dir_path}"/*.redb; do
+                if [[ -f "${file}" && "$(basename "${file}")" != "index.redb" ]]; then
+                    files_to_move+=("${file}")
+                    echo "Adding ${file} to move list."
+                fi
+            done
+
+            # We only create the wallets directory if there are files to move. This mimics the behavior of ord 0.18.2, which only creates the wallets directory when a wallet database is created.
+            if [[ ${#files_to_move[@]} -gt 0 ]]; then 
+                mkdir -p "${dir_path}/wallets"
+                echo "Creating wallets directory in ${dir_path}/wallets"
+                for file in "${files_to_move[@]}"; do
+                    echo "Moving ${file} to ${dir_path}/wallets/"
+                    mv "${file}" "${dir_path}/wallets/"
+                done
+            else
+                echo "No wallet files to move in ${dir_path}."
+            fi
+        else
+            echo "${dir_path} does not exist, skipping."
+        fi
+    done
+    touch "${APP_DATA_DIR}/AT_LEAST_0-18-2"
+    echo "Wallet database migration complete, flag file created."
+else
+    echo "Migration flag file already exists, skipping wallet database migration."
+fi
+
