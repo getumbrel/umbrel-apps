@@ -1,5 +1,4 @@
 services:
-
   app_proxy:
     environment:
       APP_HOST: affine_web_1
@@ -10,7 +9,7 @@ services:
     restart: on-failure
     init: true
     command:
-      ['sh', '-c', 'node ./scripts/self-host-predeploy && node ./dist/index.js']
+      ["sh", "-c", "node ./scripts/self-host-predeploy && node ./dist/index.js"]
     environment:
       - NODE_OPTIONS="--import=./scripts/register.js"
       - AFFINE_CONFIG_PATH=/root/.affine/config
@@ -22,6 +21,8 @@ services:
     volumes:
       - ${APP_DATA_DIR}/data/config:/root/.affine/config
       - ${APP_DATA_DIR}/data/storage/blob:/root/.affine/storage
+    labels:
+      TEST: true
     depends_on:
       redis:
         condition: service_healthy
@@ -34,7 +35,7 @@ services:
     volumes:
       - ${APP_DATA_DIR}/data/storage/redis:/data
     healthcheck:
-      test: ['CMD', 'redis-cli', '--raw', 'incr', 'ping']
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -50,7 +51,7 @@ services:
     volumes:
       - ${APP_DATA_DIR}/data/storage/postgres:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U affine']
+      test: ["CMD-SHELL", "pg_isready -U affine"]
       interval: 10s
       timeout: 5s
       retries: 5
