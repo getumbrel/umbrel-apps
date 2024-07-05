@@ -1,1 +1,0 @@
-export UMBREL_LOCAL_IP=$(hostname -I | awk '{print $1}')

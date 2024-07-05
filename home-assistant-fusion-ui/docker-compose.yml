@@ -4,11 +4,10 @@ services:
   web:
     image: ghcr.io/matt8707/ha-fusion@sha256:bd396be1a077374dccadb47656b95137f93f15b7c76547a5ff29316dda9ea903
     restart: on-failure
-    network_mode: bridge
     user: 1000:1000
     ports:
       - 5023:5050
     volumes:
       - ${APP_DATA_DIR}/data/fusion:/app/data
     environment:
-      HASS_URL: http://${UMBREL_LOCAL_IP}:8123
+      HASS_URL: http://${DEVICE_DOMAIN_NAME}:8123
