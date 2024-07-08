@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+
+# This pre-start script ensures that legacy Core-Lightning-RTL installs receive the default RTL-Config.json file on update.
+
+APP_DATA_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")"
+RTL_CONFIG_FILE="${APP_DATA_DIR}/data/rtl/RTL-Config.json"
+
+# Check if the RTL config file does not exist or if it exists and lnImplementation is set to "LND".
+if [ ! -f "${RTL_CONFIG_FILE}" ] || jq '.nodes[] | select(.lnImplementation == "LND")' "${RTL_CONFIG_FILE}" >/dev/null 2>&1; then
+echo "No RTL configuration found for CLN. Creating a default configuration file."
+  # We overwrite/create the RTL configuration file with settings for CLN Umbrel
+  # RTL-Config.json is owned by root
+  cat >"${RTL_CONFIG_FILE}" <<EOF
+{
+  "multiPass": "${APP_PASSWORD}",
+  "defaultNodeIndex": 1,
+  "SSO": {
+    "rtlSSO": 0,
+    "rtlCookiePath": "",
+    "logoutRedirectLink": ""
+  },
+  "nodes": [
+    {
+      "index": 1,
+      "lnNode": "CLN Umbrel",
+      "authentication": {
+        "configPath": ""
+      },
+      "settings": {
+        "userPersona": "MERCHANT",
+        "themeMode": "NIGHT",
+        "themeColor": "YELLOW",
+        "enableLogging": true,
+        "fiatConversion": true
+      }
+    }
+  ]
+}
+EOF
+fi
+
