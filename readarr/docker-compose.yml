@@ -8,7 +8,7 @@ services:
       PROXY_AUTH_WHITELIST: "/api/*"
 
   server:
-    image: linuxserver/readarr:0.3.16-nightly@sha256:e0393656789fd839d05a6719b079984740652c050e2fc19083e5111e7905850c
+    image: linuxserver/readarr:0.3.30-nightly@sha256:a7aebe9f2a371f9365a7b3706c0da837a4945b479199d37f2408d2b47b857209
     environment:
       - PUID=1000
       - PGID=1000
@@ -18,7 +18,7 @@ services:
     restart: on-failure
 
   mac:
-    image: getumbrel/media-app-configurator:v1.2.0@sha256:6aa568b53f6743dc4a7b3212f97b9d4ca78800ede5eadc0e4b80c7f3af50eda3
+    image: getumbrel/media-app-configurator:v1.3.0@sha256:67e75dd9f5a14402b7816119a8e20189bc2465484cea077909d164687e59742b
     user: "1000:1000"
     restart: on-failure
     volumes:
@@ -30,3 +30,12 @@ services:
       TRANSMISSION_HOST: "transmission_server_1"
       TRANSMISSION_PORT: 9091
       ROOT_FOLDER: "/downloads/books"
+      # optional qBittorrent download client
+      QBITTORRENT_INSTALLED: ${APP_READARR_QBITTORRENT_INSTALLED:-"false"}
+      QBITTORRENT_HOST: "qbittorrent_server_1"
+      QBITTORRENT_PORT: 8080
+      # optional SABnzbd download client
+      SABNZBD_INSTALLED: ${APP_READARR_SABNZBD_INSTALLED:-"false"}
+      SABNZBD_HOST: "sabnzbd_web_1"
+      SABNZBD_PORT: 8080
+      SABNZBD_API_KEY: ${APP_READARR_SABNZBD_API_KEY:-""}
