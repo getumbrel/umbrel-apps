@@ -8,7 +8,7 @@ services:
       PROXY_AUTH_WHITELIST: "/api/*"
 
   server:
-    image: linuxserver/lidarr:2.1.7@sha256:a695aec5a08032c1a15e3d4b2c784952fe1f86071c377abf3ad19413657f4cbe
+    image: linuxserver/lidarr:2.3.3@sha256:32ddd032d57d7e996052b0fe68c651e88f87909eaab26935dc0160ea468a936e
     environment:
       - PUID=1000
       - PGID=1000
@@ -18,15 +18,24 @@ services:
     restart: on-failure
 
   mac:
-    image: getumbrel/media-app-configurator:v1.0.0@sha256:e3d8b18e0186f76dd3f3d4acacc9101b4abbf302d8f2afbb47cdd3879b1a1008
+    image: getumbrel/media-app-configurator:v1.3.0@sha256:67e75dd9f5a14402b7816119a8e20189bc2465484cea077909d164687e59742b
     user: "1000:1000"
     restart: on-failure
     volumes:
       - ${APP_DATA_DIR}/data/config:/config
       - ${UMBREL_ROOT}/data/storage/downloads:/downloads
     environment:
-      DOWNLOAD_CLIENT_API_URL: "http://lidarr_server_1:8686/api/v1/downloadclient"
-      ROOT_FOLDER_API_URL: "http://lidarr_server_1:8686/api/v1/rootfolder"
+      APP_ID: "lidarr"
+      APP_URL: "http://lidarr_server_1:8686"
       TRANSMISSION_HOST: "transmission_server_1"
       TRANSMISSION_PORT: 9091
       ROOT_FOLDER: "/downloads/music"
+      # optional qBittorrent download client
+      QBITTORRENT_INSTALLED: ${APP_LIDARR_QBITTORRENT_INSTALLED:-"false"}
+      QBITTORRENT_HOST: "qbittorrent_server_1"
+      QBITTORRENT_PORT: 8080
+      # optional SABnzbd download client
+      SABNZBD_INSTALLED: ${APP_LIDARR_SABNZBD_INSTALLED:-"false"}
+      SABNZBD_HOST: "sabnzbd_web_1"
+      SABNZBD_PORT: 8080
+      SABNZBD_API_KEY: ${APP_LIDARR_SABNZBD_API_KEY:-""}
