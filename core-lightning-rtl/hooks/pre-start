@@ -5,9 +5,9 @@
 APP_DATA_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")"
 RTL_CONFIG_FILE="${APP_DATA_DIR}/data/rtl/RTL-Config.json"
 
-# Check if the RTL config file does not exist or if it exists and lnImplementation is set to "LND".
-if [ ! -f "${RTL_CONFIG_FILE}" ] || jq '.nodes[] | select(.lnImplementation == "LND")' "${RTL_CONFIG_FILE}" >/dev/null 2>&1; then
-echo "No RTL configuration found for CLN. Creating a default configuration file."
+# We check if the RTL config file does not exist or if it exists and lnImplementation is set to "LND", which tells us that this is a legacy RTL install that needs to be modified.
+if [ ! -f "${RTL_CONFIG_FILE}" ] || jq -e '.nodes[] | select(.lnImplementation == "LND")' "${RTL_CONFIG_FILE}" >/dev/null 2>&1; then
+  echo "Creating a default configuration file for RTL."
   # We overwrite/create the RTL configuration file with settings for CLN Umbrel
   # RTL-Config.json is owned by root
   cat >"${RTL_CONFIG_FILE}" <<EOF
@@ -38,4 +38,3 @@ echo "No RTL configuration found for CLN. Creating a default configuration file.
 }
 EOF
 fi
-
