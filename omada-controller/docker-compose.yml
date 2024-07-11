@@ -1,0 +1,28 @@
+version: "3.7"
+
+services:
+  server:
+    image: mbentley/omada-controller:5.14@sha256:ce429a64b11bcc8f86fdc5aa1990a54a158de8ce83f92c316bb556f29f732afd
+    init: true
+    restart: unless-stopped
+    stop_grace_period: 60s
+    network_mode: host # Controller needs lots of ports for device discovery
+    ulimits:
+      nofile:
+        soft: 4096
+        hard: 8192
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - MANAGE_HTTP_PORT=8088
+      - MANAGE_HTTPS_PORT=8043
+      - PORTAL_HTTP_PORT=8088
+      - PORTAL_HTTPS_PORT=8043
+      - SHOW_SERVER_LOGS=true
+      - SHOW_MONGODB_LOGS=false
+      - SSL_CERT_NAME="tls.crt"
+      - SSL_KEY_NAME="tls.key"
+    volumes:
+      - ${APP_DATA_DIR}/data:/opt/tplink/EAPController/data
+      - ${APP_DATA_DIR}/logs:/opt/tplink/EAPController/logs
+      - ${APP_DATA_DIR}/work:/opt/tplink/EAPController/work
