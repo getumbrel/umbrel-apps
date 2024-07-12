@@ -1,0 +1,18 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: 3x_ui_app_1
+      APP_PORT: 2053
+  
+  app:
+    image: ghcr.io/mhsanaei/3x-ui:v2.3.8@sha256:2f96cf16dd9cb5b2ec51fe3aaa9e5516c8f485309400d7ab94330bdc1f9c9c44
+    restart: on-failure
+    stop_grace_period: 1m
+    volumes:
+      - ${APP_DATA_DIR}/data/3x-ui:/etc/x-ui
+      - ${APP_DATA_DIR}/cert:/root/cert
+    environment:
+      XRAY_VMESS_AEAD_FORCED: "false"
+    tty: true
