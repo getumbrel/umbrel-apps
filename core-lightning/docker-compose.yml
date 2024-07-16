@@ -55,11 +55,12 @@ services:
         ipv4_address: ${APP_CORE_LIGHTNING_REST_IP}
 
   lightningd:
-    image: elementsproject/lightningd:v24.02.2@sha256:131e2ce65c3b051e240a294dccb61b565d3909efc5c23b15d8240e014a34f866
+    image: elementsproject/lightningd:v24.05@sha256:fc02cfbf0921ab731d8b680db9d1f85b7dbb3b57db596c6dd400659678e5770b
     restart: on-failure
     ports:
       - ${APP_CORE_LIGHTNING_DAEMON_PORT}:9735
       - ${APP_CORE_LIGHTNING_WEBSOCKET_PORT}:${APP_CORE_LIGHTNING_WEBSOCKET_PORT}
+      - ${CORE_LIGHTNING_REST_PORT}:${CORE_LIGHTNING_REST_PORT}
     command:
       - --bitcoin-rpcconnect=${APP_BITCOIN_NODE_IP}
       - --bitcoin-rpcuser=${APP_BITCOIN_RPC_USER}
@@ -75,6 +76,8 @@ services:
       - --database-upgrade=true
       - --experimental-offers
       - --grpc-port=${APP_CORE_LIGHTNING_DAEMON_GRPC_PORT}
+      - --clnrest-host=${APP_CORE_LIGHTNING_DAEMON_IP}
+      - --clnrest-port=${CORE_LIGHTNING_REST_PORT}
     volumes:
       - "${APP_CORE_LIGHTNING_DATA_DIR}:${CORE_LIGHTNING_PATH}"
     networks:

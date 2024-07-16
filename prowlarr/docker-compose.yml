@@ -8,7 +8,7 @@ services:
       PROXY_AUTH_WHITELIST: "/api/*"
 
   server:
-    image: linuxserver/prowlarr:1.18.0@sha256:237e9a72c11c5350bf22e355759436ecd4fd660e820d5b556d9a9e436f25f6b9
+    image: linuxserver/prowlarr:1.20.1@sha256:c43dc0311d4381395b60b3a6068e82226eddb213278bfe886bebabe67eb0f762
     environment:
       - PUID=1000
       - PGID=1000
@@ -17,8 +17,12 @@ services:
       - ${UMBREL_ROOT}/data/storage/downloads:/downloads
     restart: on-failure
 
+  indexer_proxy:
+    image: flaresolverr/flaresolverr:v3.3.17@sha256:5f5661db1e69a6f80ac24d47d9fa5580f6f741ee5ec967818396ae0dacecd7ea
+    restart: on-failure
+
   mac:
-    image: getumbrel/media-app-configurator:v1.2.0@sha256:6aa568b53f6743dc4a7b3212f97b9d4ca78800ede5eadc0e4b80c7f3af50eda3
+    image: getumbrel/media-app-configurator:v1.3.0@sha256:67e75dd9f5a14402b7816119a8e20189bc2465484cea077909d164687e59742b
     user: "1000:1000"
     restart: on-failure
     volumes:
@@ -26,6 +30,7 @@ services:
     environment:
       APP_ID: "prowlarr"
       APP_URL: "http://prowlarr_server_1:9696"
+      FLARESOLVERR_URL: "http://prowlarr_indexer_proxy_1:8191"
       TRANSMISSION_HOST: "transmission_server_1"
       TRANSMISSION_PORT: 9091
       RADARR_URL: "http://radarr_server_1:7878"
@@ -36,3 +41,12 @@ services:
       SONARR_CONFIG_XML: "${APP_PROWLARR_SONARR_CONFIG_XML}"
       READARR_URL: "http://readarr_server_1:8787"
       READARR_CONFIG_XML: "${APP_PROWLARR_READARR_CONFIG_XML}"
+      # optional qBittorrent download client
+      QBITTORRENT_INSTALLED: ${APP_PROWLARR_QBITTORRENT_INSTALLED:-"false"}
+      QBITTORRENT_HOST: "qbittorrent_server_1"
+      QBITTORRENT_PORT: 8080
+      # optional SABnzbd download client
+      SABNZBD_INSTALLED: ${APP_PROWLARR_SABNZBD_INSTALLED:-"false"}
+      SABNZBD_HOST: "sabnzbd_web_1"
+      SABNZBD_PORT: 8080
+      SABNZBD_API_KEY: ${APP_PROWLARR_SABNZBD_API_KEY:-""}

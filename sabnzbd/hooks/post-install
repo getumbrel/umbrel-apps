@@ -1,0 +1,131 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# This script does 3 main things:
+# 1. Sets the default download and complete directories to /downloads/incomplete and /downloads/complete respectively.
+# 2. Sets up the ini file so that *arr apps can automatically configure SABnzbd.
+# 3. Restarts any installed *arr apps so that autoconfiguration can take place.
+
+# Before the setup wizard runs we can add the default categories to the SABnzbd app's ini file without needing to worry about preserving user changes.
+
+# 1. Add the SABnzbd container name to host_whitelist in the SABnzbd app's ini file: 
+# host_whitelist = <whatever sab defaults to here>, sabnzbd_web_1
+
+# 2. Add the default categories to the SABnzbd app's ini file for each arr app.
+
+APP_DATA_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")"
+SABNZBD_CONF_FILE="${APP_DATA_DIR}/data/config/sabnzbd.ini"
+
+# Wait up to 30 seconds for the sabnzbd.conf file to exist
+echo "Waiting up to 30 seconds for sabnzbd.ini file to exist..."
+for attempt in $(seq 1 300); do
+	if [[ -f "${SABNZBD_CONF_FILE}" ]]; then
+		echo "sabnzbd.ini file exists"
+		break
+	fi
+	sleep 0.1
+done
+
+if [[ ! -f "${SABNZBD_CONF_FILE}" ]]; then
+  echo "sabnzbd.ini was never created. Something is likely wrong with the SABnzbd app."
+  exit
+fi
+
+# wait 5 seconds to be extra sure the file is fully written by the SABnzbd service
+echo "Waiting 5 seconds for sabnzbd.ini file to be fully written..."
+sleep 5
+
+# stop the SABnzbd service
+echo "Stopping SABnzbd..."
+"${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" stop web
+
+# Overwrite download directories
+echo "Overwriting download_dir and complete_dir in sabnzbd.ini"
+sed -i 's/download_dir = Downloads\/incomplete/download_dir = \/downloads\/incomplete/' "${SABNZBD_CONF_FILE}"
+sed -i 's/complete_dir = Downloads\/complete/complete_dir = \/downloads\/complete/' "${SABNZBD_CONF_FILE}"
+
+# Add the SABnzbd container name to host_whitelist in the SABnzbd app's ini file
+echo "Adding SABnzbd container name to host_whitelist in sabnzbd.ini"
+if grep -q '^host_whitelist =' "${SABNZBD_CONF_FILE}"; then
+  sed -i 's/^host_whitelist = \(.*\)/host_whitelist = \1 sabnzbd_web_1,/' "${SABNZBD_CONF_FILE}"
+else
+  sed -i '/^\[misc\]/a host_whitelist = sabnzbd_web_1,' "${SABNZBD_CONF_FILE}"
+fi
+
+# Add categories to the SABnzbd app's ini file
+# We do this because the *arr apps require exact category names to be present in the SABnzbd app's ini file in order to automatically configure SABnzbd.
+
+categories_content=$(cat << 'EOF'
+[categories]
+[[*]]
+name = *
+order = 0
+pp = 3
+script = None
+dir =
+newzbin =
+priority = 0
+[[movies]]
+name = movies
+order = 0
+pp =
+script = Default
+dir = /downloads/movies
+newzbin = movies
+priority = 0
+[[prowlarr-fallback]]
+name = prowlarr-fallback
+order = 0
+pp =
+script = Default
+dir = /downloads
+newzbin =
+priority = -100
+[[books]]
+name = books
+order = 0
+pp =
+script = Default
+dir = /downloads/books
+newzbin = books
+priority = -100
+[[shows]]
+name = shows
+order = 0
+pp =
+script = Default
+dir = /downloads/shows
+newzbin = shows
+priority = 0
+[[music]]
+name = music
+order = 0
+pp =
+script = Default
+dir = /downloads/music
+newzbin = music
+priority = 0
+EOF
+)
+
+# Append the categories to the ini file
+echo "$categories_content" >> "$SABNZBD_CONF_FILE"
+
+echo "Appended [categories] section with subheaders to $SABNZBD_CONF_FILE"
+
+# Start the SABnzbd service
+echo "Starting SABnzbd..."
+"${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" start web
+
+# Restart *arr apps in order to trigger automatic configuration
+apps=("radarr" "sonarr" "lidarr" "readarr" "prowlarr")
+
+installed_apps=$("${UMBREL_ROOT}/scripts/app" ls-installed)
+
+for app in "${apps[@]}"; do
+  if echo "$installed_apps" | grep --quiet "$app"; then
+    # We don't block the script on restarting apps because we want to restart all apps in parallel
+    # AND we need SABnzbd to be listed as an installed app when the apps restart. 
+    "${UMBREL_ROOT}/scripts/app" restart "$app" &
+  fi
+done
