@@ -1,16 +1,11 @@
 services:
-  app_proxy:
-    environment:
-      APP_HOST: navidrome_1
-      APP_PORT: 4533
-    container_name: navidrome_1
-  web:
+  server:
     image: deluan/navidrome:latest
-    volumes:
-      - ${APP_DATA_DIR}/data:/data
-      - ${UMBREL_ROOT}/data/storage/music:/music
     restart: on-failure
     environment:
       - PUID=1000
       - PGID=1000
-
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+      - ${UMBREL_ROOT}/data/storage/music:/music:rw
+    container_name: navidrome_1
