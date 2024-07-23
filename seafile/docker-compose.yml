@@ -8,7 +8,7 @@ services:
       PROXY_AUTH_ADD: "false"
 
   db:
-    image: mariadb:10.11.8@sha256:75f6e61397758489d1dccf95db33b6b49ebfc7ec1253d40060fdf8ceb7f938a3
+    image: mariadb:10.11.6@sha256:20a8bd91d972c97cffded88f2ba0ab533c8988b2dc08090c57d50caf7114ed20
     container_name: seafile-mysql
     environment:
       - MYSQL_ROOT_PASSWORD=db_dev
@@ -17,7 +17,7 @@ services:
       - ${APP_DATA_DIR}/data/db:/var/lib/mysql
 
   memcached:
-    image: memcached:1.6.29@sha256:1a3bf68d60a62d1f1d0f1308c28d46fe243598b94f73f526e339e3fa16f3c957
+    image: memcached:1.6.18@sha256:4ab520657d9919221f752771bb013d632c9b39cea9dfae9162244b2e39885bcd
     container_name: seafile-memcached
     entrypoint: memcached -m 256
 
