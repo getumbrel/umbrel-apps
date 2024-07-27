@@ -76,3 +76,8 @@ services:
     networks:
        default:
          ipv4_address: $APP_MEMPOOL_DB_IP
+  widget-server:
+    image: getumbrel/umbrel-mempool-widget-server:v1.0.0@sha256:099846e613c7310deba842241477737babcdf78250fba6edf39d456712eeefc3
+    environment:
+      MEMPOOL_API_URL: "http://$APP_MEMPOOL_IP:$APP_MEMPOOL_PORT/api/v1/fees/recommended"
+    restart: on-failure
