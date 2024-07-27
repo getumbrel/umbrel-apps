@@ -1,10 +1,10 @@
 services:
   app_proxy:
     environment:
-      APP_HOST: navidrome_navidrome_1
+      APP_HOST: navidrome_server_1
       APP_PORT: 4533
       PROXY_AUTH_ADD: "false"
-  navidrome:
+  server:
     image: deluan/navidrome:0.52.5@sha256:b154aebe8b33bae82c500ad0a3eb743e31da54c3bfb4e7cc3054b9a919b685c7
     restart: on-failure
     environment:
@@ -13,4 +13,8 @@ services:
     volumes:
       - ${APP_DATA_DIR}/data:/data
       - ${UMBREL_ROOT}/data/storage/music:/music:rw
-    container_name: navidrome_1
+
+# You do not need to expose the port that your app's web server is listening on if you're using the app_proxy service.
+      # This is handled by the APP_HOST and APP_PORT environment variables in the service above.
+      #
+      # If you need to expose additional ports, you can do so like this, replacing <port> with the port number:
