@@ -2,9 +2,14 @@ version: "3.7"
 
 services:
 
+  app_proxy:
+    environment:
+      APP_HOST: gitlab_gitlab_1
+      APP_PORT: 8929
+      PROXY_AUTH_ADD: "false"
+
   gitlab:
     image: zengxs/gitlab:17.2.1-ce.0@sha256:ac08a4dd997b6cd5d00d56c0027629de56ac80d9d30f9c4f75a73da73f5ff1b4
-    container_name: gitlab
     restart: unless-stopped
     hostname: '${DEVICE_DOMAIN_NAME}:8929'
     ulimits:
@@ -21,7 +26,6 @@ services:
         nginx['listen_port'] = 8929
         nginx['listen_https'] = false
     ports:
-      - '8929:8929'
       - '2424:22'
     volumes:
       - ${APP_DATA_DIR}/data/config:/etc/gitlab
