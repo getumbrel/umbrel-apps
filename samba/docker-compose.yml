@@ -1,0 +1,28 @@
+version: '3.7'
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: samba_homepage_1
+      APP_PORT: 80
+
+  homepage:
+    image: loficafe/static-web-server-samba:1.0.1@sha256:783667f052d9535bb75946ff9bc807989b041e25437ef10c30b291589d041e6e
+    restart: on-failure
+    user: "1000:1000"
+    volumes:
+      - ${APP_DATA_DIR}/data/samba/smb.conf:/public/smb.conf:ro
+
+  server:
+    image: dockurr/samba:4.20.1@sha256:9a57887c0be1242ee2e1381653619a656820e1aee8e271885662d04c2c367be8
+    restart: on-failure
+    environment:
+      USER: umbrel
+      PASS: ${APP_PASSWORD}
+      UID: 1000
+      GID: 1000
+    ports:
+      - '446:445'
+    volumes:
+      - ${APP_DATA_DIR}/data/samba/smb.conf:/etc/samba/smb.conf
+      - ${UMBREL_ROOT}/data/storage:/storage
