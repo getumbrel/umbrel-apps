@@ -28,7 +28,7 @@ services:
       - "${APP_DATA_DIR}/data/redis:/data"
 
   web:
-    image: nextcloud:28.0.3-apache@sha256:ed07f89119dcca2a3711897c48a8ac969542d96d69384445d8fcdc7804ca946f
+    image: nextcloud:29.0.4-apache@sha256:12c7bb0da1d41a08583971d5ba9771c4f37592ddd0aae5f5ce6a306961caa674
     # Currently needs to be run as root, if we run as uid 1000 this fails
     # https://github.com/nextcloud/docker/blob/05026b029d37fc5cd488d4a4a2a79480e39841ba/21.0/apache/entrypoint.sh#L53-L77
     # user: "1000:1000"
@@ -44,14 +44,14 @@ services:
       - TRUSTED_PROXIES="${NETWORK_IP}/16"
       - NEXTCLOUD_ADMIN_USER=umbrel
       - NEXTCLOUD_ADMIN_PASSWORD=${APP_PASSWORD}
-      - NEXTCLOUD_TRUSTED_DOMAINS=${APP_DOMAIN}:${APP_NEXTCLOUD_PORT} ${APP_HIDDEN_SERVICE} ${DEVICE_HOSTNAME}:${APP_NEXTCLOUD_PORT} ${APP_NEXTCLOUD_LOCAL_IPS}
+      - NEXTCLOUD_TRUSTED_DOMAINS=${APP_DOMAIN}:${APP_NEXTCLOUD_PORT} ${APP_HIDDEN_SERVICE} ${DEVICE_HOSTNAME}:${APP_NEXTCLOUD_PORT} ${APP_NEXTCLOUD_LOCAL_IPS} nextcloud_web_1
       - PHP_UPLOAD_LIMIT=1024G
     depends_on:
       - db
       - redis
 
   cron:
-    image: nextcloud:28.0.3-apache@sha256:ed07f89119dcca2a3711897c48a8ac969542d96d69384445d8fcdc7804ca946f
+    image: nextcloud:29.0.4-apache@sha256:12c7bb0da1d41a08583971d5ba9771c4f37592ddd0aae5f5ce6a306961caa674
     # Currently needs to be run as root, if we run as uid 1000 this fails
     # https://github.com/nextcloud/docker/blob/05026b029d37fc5cd488d4a4a2a79480e39841ba/21.0/apache/entrypoint.sh#L53-L77
     # user: "1000:1000"
