@@ -3,7 +3,7 @@ id: audiobookshelf
 name: Audiobookshelf
 tagline: Audiobook and podcast server
 category: media
-version: "2.11.0"
+version: "2.12.1"
 port: 13378
 description: >-
   Features:
@@ -61,73 +61,61 @@ path: ""
 defaultUsername: ""
 defaultPassword: ""
 releaseNotes: >-
-  This release brings audiobookshelf from version 2.9.0 to 2.11.0.
+  Added:
 
+    - Player setting to set skip forward/backward time
+    - “End of chapter” option for sleep timer
+    - Progress percentage for M4B merge and metadata embed tools
+    - Random sort for book/podcast library and series
+    - Support for accent-insensitive search
+    - Setting to show subtitles on book cards
 
-  Added
+  Fixed:
 
-  - Create book share links with expiration (admin users only)
+    - Filter data not populating when opening item page directly
+    - Podcast episode match not encoding search query
+    - Series and collection RSS feeds maintaining book order
+    - Server crash on duplicate series in OPF
+    - M4B merge and embed tools checking folder permissions and stripping file permissions
+    - Search query lost when switching libraries on the search page
+    - Backups not restoring properly
+    - Series & collection RSS feeds not setting cover image
+    - Media item shares duration limit increased
+    - Debian/PPA re-downloading ffmpeg/ffprobe on every reinstall
+    - Changelog not shown from settings page
+    - Series bookshelf row padding issue
 
-  - Email settings option to enable/disable rejecting unauthorized certificates
+  Changed:
 
-  - Support for disabling SSRF request filter with env variable
+    - Debian package now downloads dependencies on server start
+    - Removed old ffmpeg/ffprobe location in Debian/PPA
+    - Global library search includes genres
+    - OPML import runs in the background to prevent timeouts
+    - Fetch more home page items on wide screens
+    - Backup settings allow unlimited size with “0”
+    - NFO metadata parser supports language
+    - Improved EPUB scanner for correct cover image and OPF metadata parsing
+    - M4B merge tool retains advanced encoding settings
+    - Logs added when an ebook is downloaded
+    - Replaced default session memorystore with stable memorystore
 
-  - Support for custom backup path on backups config page or with env variable
+  UI/UX Improvements:
 
-  - Epub ereader setting for font boldness
+    - Match tab supports clicking on current value to set it
+    - Simplified ItemSearchCard component logic
+    - Formatted numbers on user stats page based on locale
+    - Library stats page moved to library siderail (also in settings nav)
+    - Updated material icons font to material symbols
 
-  - Finnish translations
+  Translations:
 
-
-  Fixed
-
-  - Casting podcast episodes
-
-  - Match all authors hitting rate limit
-
-  - Scheduled library scans using old copy of library
-
-  - Changing author name in edit author modal not updating metadata JSON files
-
-  - AB merge tool not working in Debian pkg due to ffmpeg v7
-
-  - Download file ssrfFilter URL
-
-  - Overdrive mediamarkers incorrect timestamp parsing
-
-  - Unhandled exception syncing user progress
-
-  - Server crash from library scanner race condition
-
-  - UI/UX: PDF reader flickering
-
-  - UI/UX: Audio player long author name overflowing
-
-  - UI/UX: Audio player long chapter name overflowing
-
-
-  Changed
-
-  - Replace Tone with Ffmpeg for embedding metadata
-
-  - Playback sessions are closed after 36 hours of inactivity
-
-  - User agent string for podcast RSS feed and file download requests
-
-  - Increased time delay between when watcher detects a file and when it scans the folder
-
-  - Prevent editing backup path if it is set using env variable
-
-  - UI/UX: Show publish date in changelog modal
-
-  - UI/UX: Chapters table "End" column changed to a "Duration" column
-
-  - UI/UX: Bookshelf refactor for consistent scaling
-
-  - UI/UX: Cleaner error page for 404s
-
-  - More strings translated
-
+    - Dutch
+    - Finnish
+    - German
+    - Hebrew
+    - Italian
+    - Polish
+    - Ukrainian
 
   Full release notes can be found at https://github.com/advplyr/audiobookshelf/releases
 submitter: Jasper
