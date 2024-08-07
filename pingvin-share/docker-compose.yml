@@ -1,0 +1,27 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: pingvin-share_web_1
+      APP_PORT: 6453
+      PROXY_AUTH_ADD: "false"
+  
+  web:
+    image: stonith404/pingvin-share:v0.27.0@sha256:ebcd050ddcf0fc6e2f14944e66f478825697479cb79feaec7d989fa4a45a0635
+    restart: on-failure
+    environment:
+      - PUID=1000
+      - PGID=1000
+    ports:
+      - 6453:3000
+    volumes:
+      - "${APP_DATA_DIR}/data:/opt/app/backend/data"
+      - "${APP_DATA_DIR}/data/images:/opt/app/frontend/public/img"
+    depends_on:
+      clamav:
+        condition: service_healthy
+
+  clamav:
+    restart: on-failure
+    image: clamav/clamav
