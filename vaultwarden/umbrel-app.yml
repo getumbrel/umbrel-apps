@@ -2,7 +2,7 @@ manifestVersion: 1
 id: vaultwarden
 category: files
 name: Vaultwarden
-version: "1.31.0"
+version: "1.32.0"
 tagline: Unofficial Bitwarden® compatible server
 description: >-
   Vaultwarden is an alternative
@@ -45,111 +45,21 @@ description: >-
 
 
   *Please note that Vaultwarden is not associated with the Bitwarden® project nor 8bit Solutions LLC. When using this app, please report any bugs or suggestions to us directly, regardless of whatever clients you are using (mobile, desktop, browser, etc), and do not use Bitwarden®'s official support channels.
-releaseNotes: |
-  This release updates Vaultwarden from v1.30.3 to v1.31.0.
-
-  Major changes and New Features:
-
-  - Initial support for the beta releases of the new native mobile apps
-
-  - Removed support for WebSocket traffic on port 3012, as it's been integrated on the main HTTP port for a few releases
-
-  - Updated included web vault to 2024.5.1
+releaseNotes: >-
+  🚨 This release includes several security fixes. We recommend updating as soon as possible.
 
 
-  General mention:
-
-  Bitwarden has changed the push API endpoints which affects the EU region endpoint users. If you use the push functionality and use the EU region you need to update `push.bitwarden.eu` to `api.bitwarden.eu`.
-
-
-  Changes:
-
-  - Improve JWT RSA key initialization and avoid saving public key
-
-  - Remove custom WebSocket code
-
-  - Replace panic with a graceful exit
-
-  - Small improvements around email change
-
-  - Change timestamp data type
-
-  - Fix manager permission within groups
-
-  - Automatically use email address as 2fa provider
-
-  - Fix typos
-
-  - Update chrono and sqlite
-
-  - Update Rust and crates
-
-  - Use async verify for Yubikey
-
-  - Update web-vault to v2024.3.1 (new vertical layout)
-
-  - Update Key Rotation web-vault v2024.3.x
-
-  - Implement custom DNS resolver
-
-  - Add extra (unsupported) container build arch's
-
-  - Pass in collection ids to notifier when sharing cipher
-
-  - Improve access to collections via groups
-
-  - Fix emergency access invites
-
-  - Some fixes for the new mobile apps
-
-  - Update Rust, crates and web-vault
-
-  - Improve Commentary Aesthetics
-
-  - Optimize Dockerfiles
-
-  - Also delete organization_api_key when deleting organizations
-
-  - Fix public api for domains with path prefix
-
-  - Update Alpine to version 3.20
-
-  - Differentiate external groups by organization id
-
-  - Remove old knowndevice route
-
-  - Update admin interface dependencies
-
-  - Update rust and remove unused header values
-
-  - Fix some nightly build errors
-
-  - Fix some more nightly errors and remove lint that will become an error by default
-
-  - Change API and structs to camelCase
-
-  - Fix cipher creation on new android app
-
-  - Remove mimalloc workaround
-
-  - Change some missing PascalCase keys
-
-  - Fix collections and native app issue
-
-  - Fix duplicate folder creations during import
-
-  - Remove duplicate registry step
-
-  - Add group support for Cipher::get_collections()
-
-  - Switch registry cache compression algorithm to zstd
-
-  - Update crates and web-vault
-
-  - Some fixes for emergency access
+  Key highlights in this release:
+    - Updated web-vault to v2024.6.2
+    - Fixed issues with password reset enrollment
+    - Improved HTTP client
+    - Added support for MFA with Duo's Universal Prompt
+    - Increased maximum note size to 100,000 characters
+    - Fixed issues with adding ciphers to organizations on native iOS app
+    - Improved secure send file uploads
 
 
-  The full release notes are available at https://github.com/dani-garcia/vaultwarden/releases
+  Full release notes are available at https://github.com/dani-garcia/vaultwarden/releases
 developer: Daniel García
 website: https://github.com/dani-garcia
 dependencies: []
