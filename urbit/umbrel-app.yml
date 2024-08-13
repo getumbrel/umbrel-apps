@@ -2,7 +2,7 @@ manifestVersion: 1
 id: urbit
 category: networking
 name: Urbit
-version: "v3.0"
+version: "v3.1"
 tagline: Run Urbit on your Umbrel
 description: >-
   Urbit is a personal server for self-sovereign personal & networked
@@ -35,50 +35,13 @@ torOnly: false
 submitter: ~mopfel-winrux
 submission: https://github.com/getumbrel/umbrel/pull/1246
 releaseNotes: >-
-  The big ticket items for this vere release include the epoch system,
-  support for persistent nock caching, informal pings and MDNS local
-  routing. The epoch system is functional immediately after upgrading to
-  vere-v3.0, the other features are reliant on the 411k release slated for
-  ~2024.3.18.
+  `vere-v3.1` is a a minor runtime release with the following highlighted features:
+    - Rebinding eyre HTTP cache entires.
+    - The runtime now automatically tries to open the Ames port on a home network using the NAT-PMP protocol. This will improve connectivity on self-hosted setups.
+    - Restore the ctrl+z functionality to instantly force kill the urbit process.
+    - Plug memory leaks related to DNS queries. This has resulted in significant uptime improvements for select Urbit Foundation infrastructure ships.
+    - More reliable lockfile and replay error handling.
+    - Miscellaneous error message improvements.
   
 
-  This release is not backwards compatible with vere-v2.12 and earlier. A
-  ship cannot be downgraded after upgrading to vere-v3.0.
-  
-
-  Epoch System:
-  
-
-  The epoch system cuts the previously uniform event log into “epochs”
-  associated with a specific runtime version. The epochs are represented
-  as directories in the file system. Here is an example of epochs under
-  the Foundation galaxy ~deg that has been running the vere-v3.0
-  pre-release for a while:
-  
-
-  bash ls ./deg/.urb/log/ 0i0 0i95419173 0i98550959 0i99182407 0i99543593
-  data.mdb lock.mdb
-  
-
-  Each epoch folder is identified by an event number and includes a
-  snapshot and a part of the event log. If the snapshot of a ship gets
-  corrupted the ship may have to replay; the epoch system makes this
-  process more pleasant since the ship no longer has to replay the entire
-  event log. A replay can be initiated from the latest valid epoch,
-  significantly speeding up the process.
-  
-
-  The latest snapshot for a ship is situated in the latest epoch,
-  0i99543593 in the above case. All other epochs are safe to relocate
-  elsewhere or even delete.
-  
-
-  The default behavior for the epoch system is to create a new epoch every
-  time the vere runtime version changes. A user may also manually create a
-  new epoch by using the urbit roll command.
-  
-
-  The urbit chop command now deletes all epochs except for the last two.
-
-
-  Full release notes here: https://github.com/urbit/vere/releases/tag/vere-v3.0
+  Full release notes here: https://github.com/urbit/vere/releases/tag/vere-v3.1
