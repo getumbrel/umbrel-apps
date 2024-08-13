@@ -12,6 +12,8 @@ services:
     stop_grace_period: 1m
     volumes:
       - ${APP_DATA_DIR}/data/rails:/rails/storage
+    # Self-hosted Maybe requires a Synth API key (https://synthfinance.com/) for basic multi-currency support.
+    # Ideally Maybe will support API key input via the UI in the future, but for now we create a persistent .env file for Advanced users to input their API key and restart Maybe (see pre-install hook)
     env_file:
       - ${APP_DATA_DIR}/.env
     environment:
