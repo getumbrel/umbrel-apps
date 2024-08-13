@@ -2,27 +2,29 @@ version: "3.7"
 
 services:
   server:
-    image: linuxserver/plex:1.40.0@sha256:3bc1444e7e8a91dfa0735b1878b4f0eb39c680e97ed419149f74ef24cd1c9222
+    image: linuxserver/plex:1.40.4@sha256:e06a8af0b30250f4efd8392b55a3d56578919f94fa2ac9eaee14998f9d22af56
     restart: on-failure
     hostname: "${DEVICE_HOSTNAME}"
+    network_mode: host
     environment:
       - PUID=1000
       - PGID=1000
       - VERSION=docker
-    ports:
-      - 32400:32400
-      # Plex Companion
-      - 3005:3005/tcp
-      # Roku via Plex Companion
-      - 8324:8324/tcp
-      # Plex DLNA Server
-      - 32469:32469/tcp 
-      - 1900:1900/udp
-      # Network discovery
-      - 32410:32410/udp
-      - 32412:32412/udp
-      - 32413:32413/udp
-      - 32414:32414/udp
+    # Currently running in host network mode to allow for UPnP discovery (Plex DLNA server) and so that Docker does not complain about port 1900/udp being in use (can be shared, for example with Home Assistant).
+    # ports:
+    #   - 32400:32400
+    #   # Plex Companion
+    #   - 3005:3005/tcp
+    #   # Roku via Plex Companion
+    #   - 8324:8324/tcp
+    #   # Plex DLNA Server
+    #   - 32469:32469/tcp 
+    #   - 1900:1900/udp
+    #   # Network discovery
+    #   - 32410:32410/udp
+    #   - 32412:32412/udp
+    #   - 32413:32413/udp
+    #   - 32414:32414/udp
     volumes:
       - ${APP_DATA_DIR}/data/config:/config
       - ${APP_DATA_DIR}/data/transcode:/transcode

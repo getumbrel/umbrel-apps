@@ -2,7 +2,7 @@ manifestVersion: 1
 id: plex
 category: media
 name: Plex
-version: "1.40.0"
+version: "1.40.4"
 tagline: Stream Movies & TV Shows
 description: >-
   Stream movies and TV shows, plus 300+ channels of live TV, instantly, without a subscription. Watch live TV and movies anywhere, from any device, with Plex.
@@ -30,29 +30,35 @@ permissions:
   - STORAGE_DOWNLOADS
 releaseNotes: >-
   NEW:
+
+  - Metadata: Added support for additional TVDB episode orderings in TV Show preferences. This requires a metadata refresh.
   
-  - Items added to a collection from the item context menu will now lock the collection field on the items
-
-  - Store track genres and add filtering options
-
-  - Support ID3v2.4 null-separated tags for genres and release type
-
-  - No longer create a view history entry for items marked as played
+  - Web: Updated to 4.132.2
 
 
   FIXES:
 
-  - Changing a ‘Other Videos’ type library to the modern movie agent would fail
+  - Library: Multi-episode files will only retain one of the episodes.
+  
+  - Live-TV: Fixed an issue where tuning slots were not properly released if the tune was canceled during startup, such as when rapidly changing channels.
+  
+  - Scanner: Removed deprecated support for modern metadata agent scan/refresh via Scanner CLI.
+  
+  - Scanner: Fixed an issue where the scanner would not ignore #snapshot/s directories.
+  
+  - Scanner: Fixed an issue where the scanner would not ignore @eaDir copy directories.
+  
+  - Serialization: The viewUpdatedAt field is now included when requested.
+  
+  - Tonemapping: Hardware Tonemapping failed on intel devices when run on Synology.
+  
+  - Transcoder: Corrected the quality parameter for devices without rate control.
+  
+  - Transcoder: Hardware Transcoding failed when using an AMD or Intel device on windows.
+  
+  - Transcoder: Windows would fail to HW transcode after an RDP session is started or ended.
 
-  - It is possible that agents are not initialised during startup on rare occasions
 
-  - Server could become unresponsive when collection membership changes
-
-  - When performing fix match on items from certain music libraries the language would default to Arabic
-
-  - and many more
- 
-
-  See full release notes here: https://www.videohelp.com/software/Plex
+  Full release notes are available at https://www.videohelp.com/software/Plex
 submitter: Umbrel
 submission: https://github.com/getumbrel/umbrel-apps/commit/60878f278d544b204d8e7c96240c797f43a9b319

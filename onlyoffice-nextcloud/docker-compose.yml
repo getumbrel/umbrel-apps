@@ -1,0 +1,33 @@
+version: '3.9'
+services:
+  app_proxy:
+    environment:
+      APP_HOST: onlyoffice-nextcloud_web_1
+      APP_PORT: 3000
+
+  web:
+    image: a4004/onlyoffice-nextcloud-web:1.0.4@sha256:774bd9bda641e6be49286921637840efba050fdfd022934dfd9ee9b6ec8d0a63
+    restart: on-failure
+    environment:
+      - DOCS_ADDRESS=http://$DEVICE_DOMAIN_NAME:$DOCSERVER_PORT
+      - DOCS_INTERNAL_ADDRESS=http://onlyoffice-nextcloud_documentserver_1
+      - NEXTCLOUD_INTERNAL_ADDRESS=http://nextcloud_web_1
+      - NEXTCLOUD_WEB_URL=http://$DEVICE_DOMAIN_NAME:$APP_NEXTCLOUD_PORT
+
+  documentserver:
+    image: onlyoffice/documentserver:8.1@sha256:9b74cb0e05580bced87f9af69de68d5f4c9e5b3340448ddc94333f5f7f4eba85
+    restart: on-failure
+    stop_grace_period: 1m
+    ports:
+      - "${DOCSERVER_PORT}:80"
+    environment:
+      - JWT_ENABLED=false
+      - ONLYOFFICE_HTTPS_HSTS_ENABLED=false
+      - USE_UNAUTHORIZED_STORAGE=true
+      - ALLOW_PRIVATE_IP_ADDRESS=true
+      - ALLOW_META_IP_ADDRESS=true
+    volumes:
+      - ${APP_DATA_DIR}/data/logs:/var/log/onlyoffice
+      - ${APP_DATA_DIR}/data/certs:/var/www/onlyoffice/Data
+      - ${APP_DATA_DIR}/data/cache:/var/lib/onlyoffice
+      - ${APP_DATA_DIR}/data/db:/var/lib/postgresql

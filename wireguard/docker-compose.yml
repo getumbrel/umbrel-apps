@@ -1,0 +1,24 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: wireguard_app_1
+      APP_PORT: 51821
+  
+  app:
+    image: ghcr.io/wg-easy/wg-easy:14@sha256:f6c2587da3fdc9d5927743fb4a92cff42d690b182396ffd0cdad034becb41053
+    restart: on-failure
+    stop_grace_period: 1m
+    ports:
+      - "51820:51820/udp"
+    volumes:
+      - ${APP_DATA_DIR}/data/wireguard:/etc/wireguard
+    environment:
+      WG_HOST: ${DEVICE_DOMAIN_NAME}
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    sysctls:
+      - net.ipv4.ip_forward=1
+      - net.ipv4.conf.all.src_valid_mark=1

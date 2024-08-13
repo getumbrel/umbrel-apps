@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+# Create hidden service for the node container and ensure the web container
+# gets the hidden service environment variable on first install.
+
+HIDDEN_SERVICE_FILE="${TOR_DATA_DIR}/app-${APP_ID}-node/hostname"
+
+if [[ -f "${HIDDEN_SERVICE_FILE}" ]]; then
+	exit
+fi
+
+# Start web container first to update secret
+"${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" up --detach web
+
+# Start node container so that a hidden service can be created
+"${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" up --detach node
+
+echo "App: ${APP_ID} - Generating Tor Hidden Service for node container..."
+"${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" up --detach tor
+
+for attempt in $(seq 1 100); do
+	if [[ -f "${HIDDEN_SERVICE_FILE}" ]]; then
+		echo "App: ${APP_ID} - Hidden service file created successfully!"
+		# restart web container to source the new hidden service env var
+		echo "App: ${APP_ID} - Restarting web container..."
+		"${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" restart web
+		break
+	fi
+	sleep 0.1
+done
+
+if [[ ! -f "${HIDDEN_SERVICE_FILE}" ]]; then
+	echo "App: ${APP_ID} - Hidden service file wasn't created"
+fi

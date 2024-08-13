@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: lightning
 category: bitcoin
 name: Lightning Node
-version: "v0.17.4-beta"
+version: "v0.18.0-beta"
 tagline: Run your personal Lightning Network node
 description: >-
   Run your personal Lightning Network node, and join the future of Bitcoin today.
@@ -22,22 +22,13 @@ description: >-
 
   An official app from Umbrel.
 releaseNotes: >-
-  This release updates LND from version 0.17.3-beta to 0.17.4-beta. 
+  ⚠️ Please allow a few minutes for your Lightning Node to come online after updating to this version. Nodes running with Watchtower Client enabled (wtclient.active=true) will not be able to downgrade to a previous version of lnd after updating to this version.
 
 
-  This is a hot fix release that fixes multiple bugs: Channel open hanging until restart, a memory leak when using polling mode for bitcoind, sync getting lost for pruned nodes and the REST proxy not working when TLS certificate encryption is turned on.
+  This release updates LND to v0.18.0-beta. This is a major release that includes support for blinded paths (forwarding), a new native SQL invoice database, deadline aware HTLC/commitment transaction RBF/CPFP fee bumping, experimental support for inbound channel fees (discount only), first class probing for payment fee estimation, testmempoolaccept awareness for all transaction publishing, and much more!
 
 
-  Full release notes are found at https://github.com/lightningnetwork/lnd/blob/master/docs/release-notes/
-
-
-  🔔 In case you missed it, a previous release of the Lightning Node app (v0.17.0-beta) brought the option to run your node in hybrid mode or Tor-only mode, along with the ability to open private channels, receive keysend payments, bugfixes, and more!
-
-
-  - Hybrid mode allows your node to make connections to peers (other nodes) over both Tor and clearnet, enhancing both latency and connection stability. This is enabled by default for new users, while existing users can activate it in Advanced Settings.
-  
-
-  - You can now now choose to open private channels, which offer increased privacy but limited routing capabilities compared to public channels.
+  Full LND v0.18.0-beta release notes can be found at https://github.com/lightningnetwork/lnd/blob/master/docs/release-notes/release-notes-0.18.0.md
 developer: Umbrel
 website: https://umbrel.com
 dependencies:
@@ -55,34 +46,34 @@ path: ""
 defaultPassword: ""
 widgets:
   - id: "bitcoin-wallet"
-    type: "stat-with-buttons"
-    refresh: "1m"
+    type: "text-with-buttons"
+    refresh: "5s"
     endpoint: "app:3006/v1/lnd/widgets/bitcoin-wallet"
     link: ""
     example:
-      type: "stat-with-buttons"
+      type: "text-with-buttons"
       link: ""
       title: "Bitcoin Wallet"
-      value: "1,845,893"
-      valueSub: "sats"
+      text: "1,845,894"
+      subtext: "sats"
       buttons:
-        - text: "Send"
+        - text: "Withdraw"
           icon: "arrow-up-right"
           link: "?action=send-bitcoin"
-        - text: "Receive"
+        - text: "Deposit"
           icon: "arrow-down-right"
           link: "?action=receive-bitcoin"
   - id: "lightning-wallet"
-    type: "stat-with-buttons"
-    refresh: "1m"
+    type: "text-with-buttons"
+    refresh: "2s"
     endpoint: "app:3006/v1/lnd/widgets/lightning-wallet"
     link: ""
     example:
-      type: "stat-with-buttons"
+      type: "text-with-buttons"
       link: ""
       title: "Lightning Wallet"
-      value: "762,248"
-      valueSub: "sats"
+      text: "762,248"
+      subtext: "sats"
       buttons:
         - text: "Send"
           icon: "arrow-up-right"
@@ -91,25 +82,25 @@ widgets:
           icon: "arrow-down-right"
           link: "?action=receive-lightning"
   - id: "lightning-stats"
-    type: "four-up"
-    refresh: "1m"
+    type: "four-stats"
+    refresh: "5s"
     endpoint: "app:3006/v1/lnd/widgets/lightning-stats"
     link: ""
     example:
-      type: "four-up"
+      type: "four-stats"
       link: ""
       items:
         - title: "Connections"
-          value: "5"
-          valueSub: "peers"
+          text: "5"
+          subtext: "peers"
         - title: "Active channels"
-          value: "3"
-          valueSub: "channels"
+          text: "3"
+          subtext: "channels"
         - title: "Max send"
-          value: "90K"
-          valueSub: "sats"
+          text: "90K"
+          subtext: "sats"
         - title: "Max receive"
-          value: "45K"
-          valueSub: "sats"
+          text: "45K"
+          subtext: "sats"
 submitter: Umbrel
 submission: https://github.com/getumbrel/umbrel-apps/commit/576ecd2bef8d625abceed0f67ec9c487da9b2b1b

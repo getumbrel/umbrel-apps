@@ -2,7 +2,7 @@ manifestVersion: 1
 id: back-that-mac-up
 category: files
 name: Back That Mac Up
-version: "1.0.1"
+version: "1.1.0"
 tagline: Backup your Mac to your Umbrel using Time Machine
 description: >
   Introducing Back That Mac Up — an official app by Umbrel.
@@ -17,7 +17,13 @@ description: >
 
   For seamless backups even when your Mac isn't connected to the same network as your Umbrel, simply install Tailscale on your Umbrel and your Mac, and use smb://umbrel as the server address.
 releaseNotes: >-
-  This is a patch release to clarify the instructions in the app and improve the accuracy of the current usage indicator.
+  🎉 Widgets are here for umbrelOS 1.0.
+
+
+  This update brings a new widget for Back That Mac Up, allowing you to see your Time Machine usage at a glance right from your Umbrel's home screen.
+
+
+  After updating to umbrelOS 1.0, you can add widgets by right-clicking on the home screen and selecting "Edit widgets", or by clicking on Widgets in the Dock.
 developer: Umbrel
 website: https://umbrel.com
 dependencies: []
@@ -33,15 +39,15 @@ deterministicPassword: false
 torOnly: false
 widgets:
   - id: "disk-usage"
-    type: "stat-with-progress"
+    type: "text-with-progress"
     refresh: "1m"
     endpoint: "server:80/api/widgets/disk-usage"
     link: ""
     example:
-      type: "stat-with-progress"
+      type: "text-with-progress"
       link: ""
       title: "Time Machine Usage"
-      value: "420 GB"
+      text: "420 GB"
       progressLabel: "580 GB left"
       progress: 0.42
 submitter: Umbrel

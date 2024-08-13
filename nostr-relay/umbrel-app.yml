@@ -2,7 +2,7 @@ manifestVersion: 1
 id: nostr-relay
 category: social
 name: Nostr Relay
-version: "1.1.0"
+version: "1.2.0"
 tagline: Backup all your Nostr activity with your private relay
 description: >
   Introducing Nostr Relay — an official app by Umbrel.
@@ -22,9 +22,19 @@ description: >
   
   Nostr Relay is powered by the open source nostr-rs-relay project — a Rust implementation of Nostr relay. It currently supports the entire relay protocol, including NIP-01, NIP-02, NIP-03, NIP-05, NIP-09, NIP-11, NIP-12, NIP-15, NIP-16, NIP-20, NIP-22, NIP-26, NIP-28, and NIP-33.
 releaseNotes: >-
-  This update brings a brand new feature that allows you to sync your private relay with your public relays,
-  backing up your past and future Nostr activity, even if the connection between your client and your private
-  relay is lost. Just tap the globe icon, enter your NIP-05 or npub address, and that's it!
+  🎉 Widgets are here for umbrelOS 1.0.
+
+
+  This update brings two new widgets for Nostr Relay, allowing you to see your latest notes and latest event kinds at a glance right from your Umbrel's home screen:
+
+
+  - Latest Notes: A widget that displays the latest notes that are synced to your Nostr Relay.
+
+
+  - Latest Events: A widget that shows the latest event kinds that are synced to your Nostr Relay, including posts, reactions, profile updates, and more.
+
+
+  After updating to umbrelOS 1.0, you can add widgets by right-clicking on the home screen and selecting "Edit widgets", or by clicking on Widgets in the Dock.
 developer: Umbrel
 website: https://umbrel.com
 dependencies: []
@@ -41,7 +51,7 @@ torOnly: false
 widgets:
   - id: "latest-kind1"
     type: "list"
-    refresh: "30s"
+    refresh: "5s"
     endpoint: "relay-proxy:80/relay-proxy/widgets/latest-kind1"
     link: ""
     example:
@@ -49,14 +59,14 @@ widgets:
       link: ""
       items:
         - text: "one-click app restarts, arriving in umbrelOS 1.0"
-          textSub: "01:11 Mar 02, 2024"
+          subtext: "01:11 Mar 02, 2024"
         - text: "woop! glad it arrived before christmas! welcome aboard 🫡"
-          textSub: "03:07 Dec 28, 2023"
+          subtext: "03:07 Dec 28, 2023"
         - text: "Congrats! Can’t wait for you to get your hands on it 🫶"
-          textSub: "11:40 Nov 24, 2023"
+          subtext: "11:40 Nov 24, 2023"
   - id: "latest-events"
     type: "list-emoji"
-    refresh: "30s"
+    refresh: "5s"
     endpoint: "relay-proxy:80/relay-proxy/widgets/latest-events"
     link: ""
     example:

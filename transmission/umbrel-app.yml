@@ -2,7 +2,7 @@ manifestVersion: 1
 id: transmission
 category: networking
 name: Transmission
-version: "4.0.4"
+version: "4.0.6"
 tagline: A fast, easy and free BitTorrent client
 description: >-
   Transmission is designed for easy, powerful use. We've set the defaults to just work and it only takes a few clicks to configure advanced features like watch directories, bad peer blocklists, and the web interface. When Ubuntu chose Transmission as its default BitTorrent client, one of the most-cited reasons was its easy learning curve.
@@ -33,39 +33,34 @@ defaultUsername: ""
 defaultPassword: ""
 torOnly: false
 releaseNotes: >-
-  This release updates Transmission from version 4.0.3 to 4.0.4.
-
-  This is a bugfix-only release.
-  
-
-  Full release notes are available at https://github.com/transmission/transmission/releases
+  This release includes several bug fixes and improvements for better performance and stability. Full release notes are available at https://github.com/transmission/transmission/releases
 permissions:
   - STORAGE_DOWNLOADS
 widgets:
   - id: "status"
-    type: "four-up"
-    refresh: "10s"
+    type: "four-stats"
+    refresh: "5s"
     endpoint: "widget-server:80/widgets/status"
     link: ""
     example:
-      type: "four-up"
+      type: "four-stats"
       link: ""
       items:
         - title: "Downloading"
-          value: "3"
-          valueSub: "torrents"
+          text: "3"
+          subtext: "torrents"
         - title: "Seeding"
-          value: "1"
-          valueSub: "torrents"
+          text: "1"
+          subtext: "torrents"
         - title: "Stopped"
-          value: "0"
-          valueSub: "torrents"
+          text: "0"
+          subtext: "torrents"
         - title: "Queued"
-          value: "2"
-          valueSub: "torrents"
+          text: "2"
+          subtext: "torrents"
   - id: "torrent-list"
     type: "list"
-    refresh: "5s"
+    refresh: "2s"
     endpoint: "widget-server:80/widgets/torrent-list"
     link: ""
     example:
@@ -73,10 +68,10 @@ widgets:
       link: ""
       items:
         - text: "33% • Ubuntu 22.04.3 amd64 ISO image"
-          textSub: "↓4.4Mbps ↑1.2Mbps"
+          subtext: "↓4.4Mbps ↑1.2Mbps"
         - text: "100% • Ubuntu 21.1.0 amd64 ISO image"
-          textSub: "↓0Mbps ↑78Kbps"
+          subtext: "↓0Mbps ↑78Kbps"
         - text: "100% • Debian 11.0 amd64 ISO image"
-          textSub: "↓0Mbps ↑827Kbps"
+          subtext: "↓0Mbps ↑827Kbps"
 submitter: Umbrel
 submission: https://github.com/getumbrel/umbrel-apps/commit/60878f278d544b204d8e7c96240c797f43a9b319

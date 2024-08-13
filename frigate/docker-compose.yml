@@ -10,13 +10,13 @@ services:
   web:
     privileged: true # this may not be necessary for all setups
     restart: unless-stopped
-    image: ghcr.io/blakeblackshear/frigate:0.12.1@sha256:bb7f7e76a13eccef0b12704e5851cc774a12af1f12df387d6a70a796a3e938c3
+    image: ghcr.io/blakeblackshear/frigate:0.13.2@sha256:2906991ccad85035b176941f9dedfd35088ff710c39d45ef1baa9a49f2b16734
     shm_size: "128mb" # update for your cameras based on calculation above
     devices:
      - /dev:/dev
     volumes:
       - /etc/localtime:/etc/localtime:ro
-      - ${APP_DATA_DIR}/data/config.yml:/config/config.yml
+      - ${APP_DATA_DIR}/data/config:/config
       - ${APP_DATA_DIR}/data/storage:/media/frigate
       - type: tmpfs # Optional: 1GB of memory, reduces SSD/SD Card wear
         target: /tmp/cache
