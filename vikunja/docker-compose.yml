@@ -27,13 +27,13 @@ services:
   web:
     image: vikunja/vikunja:0.24.1@sha256:acf323bc5ba298a9a1b3594bbbd07a036fe39f347850e8b8c05d641fb08c7003
     environment:
+      # VIKUNJA_SERVICE_PUBLICURL: http://${DEVICE_DOMAIN_NAME}/
       VIKUNJA_DATABASE_HOST: vikunja_db_1
       VIKUNJA_DATABASE_PASSWORD: secret
       VIKUNJA_DATABASE_TYPE: mysql
       VIKUNJA_DATABASE_USER: vikunja
       VIKUNJA_DATABASE_DATABASE: vikunja
       VIKUNJA_SERVICE_JWTSECRET: ${APP_SEED}
-      VIKUNJA_SERVICE_FRONTENDURL: http://${DEVICE_DOMAIN_NAME}/
     volumes: 
       - ${APP_DATA_DIR}/data/files:/app/vikunja/files
     depends_on:
