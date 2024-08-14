@@ -17,33 +17,33 @@ description: >-
 
   - Your RTSP password (if needed) is the "default app password" that is displayed on Frigate's page in the app store (shown after install).
 releaseNotes: >-
-  This update takes Frigate from 0.13.2 to 0.14.0.
+  ⚠️ There are several breaking changes in this release. Frigate will attempt to update the configuration automatically; however, in some cases manual changes may be required.
+  
+  
+  Please review the full release notes before upgrading: https://github.com/blakeblackshear/frigate/releases/tag/v0.14.0
 
 
   ⚠️ Breaking Changes:
-
-  - Existing events will not be visible in the new UI
-  - Zone/mask coordinates are now stored as relative values
-  - RTMP has been removed
-  - OpenVINO upgrade: Intel Neural Compute sticks no longer supported
-
+    - Existing events will not be visible in the new UI. You may want to export any starred/favorite events before upgrading. Recordings can still be viewed in the new UI using the recordings viewer.
+    - Zone/mask coordinates are now stored in the config as relative values
+    - The UI's live mode is now intelligently selected. The live_mode config option is now deprecated and should be removed.
+    - RTMP was deprecated in 0.13 and has been fully removed in 0.14. You will need to remove any rtmp references in your config file.
+    - OpenVINO upgrade: Intel Neural Compute sticks no longer supported
 
   New Features:
+    - Brand new UI with improved dashboard and review capabilities
+    - Authentication support
+    - Loitering time for zones
+    - Two-way talk for supported cameras
+    - Rockchip boards now support object detection
+    - Automatic hardware acceleration detection
 
-  - Brand new UI with improved dashboard and review capabilities
-  - Authentication support
-  - TLS support
-  - Loitering time for zones
-  - Two-way talk for supported cameras
-  - Rockchip boards now support object detection
-  - Automatic hardware acceleration detection
-
-
-  Improvements:
-
-  - Better ONVIF support
-  - Improved stationary object detection
-  - Additional support for IPV6
+  Other Notable UI Changes
+    - System stats - New charts and graphs with colored segments to track system usage history and more quickly identify problems or issues.
+    - Status bar - A new status bar gives at-a-glance CPU/GPU usage as well as any problems or issues with Frigate.
+    - New log viewer - The log viewer now provides a pane with links to solutions for common issues.
+    - Real-time motion tuning - Tune motion detection settings for your cameras without editing your config file and restarting.
+    - New mask and zone editor - Edit your masks and zones with a much-improved editor.
 
 
   Full release notes are available at https://github.com/blakeblackshear/frigate/releases
