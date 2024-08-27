@@ -2,7 +2,7 @@ manifestVersion: 1
 id: plex
 category: media
 name: Plex
-version: "1.40.4"
+version: "1.40.5.8897"
 tagline: Stream Movies & TV Shows
 description: >-
   Stream movies and TV shows, plus 300+ channels of live TV, instantly, without a subscription. Watch live TV and movies anywhere, from any device, with Plex.
@@ -31,32 +31,22 @@ permissions:
 releaseNotes: >-
   NEW:
 
-  - Metadata: Added support for additional TVDB episode orderings in TV Show preferences. This requires a metadata refresh.
-  
-  - Web: Updated to 4.132.2
+    - Ad detection in libraries without DVR
+    - Improved subtitle burn-in performance with Hardware Transcoding
+    - Added preference to select tone mapping algorithm (available on some platforms/devices)
+    - Added support for HW Tonemapping on Windows for some Intel devices
+    - Web updated to 4.136.1
 
 
   FIXES:
 
-  - Library: Multi-episode files will only retain one of the episodes.
-  
-  - Live-TV: Fixed an issue where tuning slots were not properly released if the tune was canceled during startup, such as when rapidly changing channels.
-  
-  - Scanner: Removed deprecated support for modern metadata agent scan/refresh via Scanner CLI.
-  
-  - Scanner: Fixed an issue where the scanner would not ignore #snapshot/s directories.
-  
-  - Scanner: Fixed an issue where the scanner would not ignore @eaDir copy directories.
-  
-  - Serialization: The viewUpdatedAt field is now included when requested.
-  
-  - Tonemapping: Hardware Tonemapping failed on intel devices when run on Synology.
-  
-  - Transcoder: Corrected the quality parameter for devices without rate control.
-  
-  - Transcoder: Hardware Transcoding failed when using an AMD or Intel device on windows.
-  
-  - Transcoder: Windows would fail to HW transcode after an RDP session is started or ended.
+    - Improved library item sorting
+    - Enhanced performance when scanning new movie items
+    - Fixed filtering of shared media by type
+    - Improved default sorting to use natural sorting
+
+
+  ⚠️ This release removes support for legacy plug-ins on Nvidia Shield devices
 
 
   Full release notes are available at https://www.videohelp.com/software/Plex
