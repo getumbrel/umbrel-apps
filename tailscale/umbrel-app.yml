@@ -2,7 +2,7 @@ manifestVersion: 1
 id: tailscale
 category: networking
 name: Tailscale
-version: "v1.70.0"
+version: "v1.72.1"
 tagline: Zero config VPN to access your Umbrel from anywhere
 description: >-
   Tailscale is zero config VPN that creates a secure network between
@@ -10,10 +10,10 @@ description: >-
   subnets, Tailscale just works.
 
 
-  Tailscale will assign your Umbrel a stable IP and an auto-assigned domain that stays consistent, no matter what network your Umbrel is connected to. It’s like a local network that works everywhere.
+  Tailscale will assign your Umbrel a stable IP and an auto-assigned domain that stays consistent, no matter what network your Umbrel is connected to. It's like a local network that works everywhere.
 
 
-  Tailscale builds on top of WireGuard®’s Noise protocol encryption, a peer-reviewed and trusted standard.
+  Tailscale builds on top of WireGuard®'s Noise protocol encryption, a peer-reviewed and trusted standard.
 developer: Tailscale Inc.
 website: https://tailscale.com
 dependencies: []
@@ -27,13 +27,16 @@ gallery:
 path: ""
 deterministicPassword: false
 torOnly: false
-releaseNotes: |
-  This update includes several bug fixes and improvements:
-    - Improved NAT traversal for some uncommon scenarios.
-    - Optimized sending firewall rules to clients more efficiently.
-    - Fixed DNS leak issue on Windows.
-    - Fixed Taildrive server no longer starts unnecessarily when no drives are configured.
-    - Switching from unstable to stable tracks using the "tailscale update" command now works correctly
+releaseNotes: >-
+  This update includes several improvements and bug fixes:
+
+    - Captive portal detection is now supported.
+    - Added --min-validity flag to the tailscale cert command for automating certificate refreshes.
+    - The tailscale lock command now allows passing keys as files using the file:<path-to-key-file> format.
+    - A health warning is triggered if DNS queries can’t be forwarded to configured resolvers.
+    - Increased send and receive buffer sizes in userspace mode TCP, improving throughput on high latency paths.
+    - Added TCP generic segmentation offload (GSO) support, further improving throughput.
+    - Resolved DNS over TCP failures when querying the Tailscale-internal resolver.
 
   Full release notes and detailed information is available at https://github.com/tailscale/tailscale/releases
 submitter: Umbrel
