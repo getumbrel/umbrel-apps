@@ -30,12 +30,13 @@ torOnly: false
 releaseNotes: >-
   This update includes several improvements and bug fixes:
 
-    - Improved NAT traversal for some uncommon scenarios
-    - Optimized sending firewall rules to clients more efficiently
-    - Fixed DNS leak issue on Windows
-    - Fixed Taildrive server no longer starting unnecessarily when no drives are configured
-    - Switching from unstable to stable tracks using the "tailscale update" command now works correctly
-
+    - Captive portal detection is now supported.
+    - Added --min-validity flag to the tailscale cert command for automating certificate refreshes.
+    - The tailscale lock command now allows passing keys as files using the file:<path-to-key-file> format.
+    - A health warning is triggered if DNS queries can’t be forwarded to configured resolvers.
+    - Increased send and receive buffer sizes in userspace mode TCP, improving throughput on high latency paths.
+    - Added TCP generic segmentation offload (GSO) support, further improving throughput.
+    - Resolved DNS over TCP failures when querying the Tailscale-internal resolver.
 
   Full release notes and detailed information is available at https://github.com/tailscale/tailscale/releases
 submitter: Umbrel
