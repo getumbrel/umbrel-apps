@@ -2,7 +2,7 @@ manifestVersion: 1
 id: ordinals
 category: bitcoin
 name: Ordinals
-version: "0.18.2"
+version: "0.19.1"
 tagline: Run your own index, block explorer, and command-line wallet for Ordinals
 description: >
   Run your own index, block explorer, and command-line wallet for Ordinals. The app automatically connects to your Bitcoin node on umbrelOS for trustless operation. Simply install the app and wait for Ordinals to index inscriptions and runes.
@@ -16,10 +16,39 @@ description: >
 
   Disclaimer: The Ordinals app does not control, filter, or moderate the content hosted on the Bitcoin blockchain. Consequently, you may come across NSFW (Not Safe For Work), objectionable, or unlawful material while using the app.
 releaseNotes: >-
-  🚨 This update will automatically migrate existing wallet databases to the new ord 0.18.2 file structure. Simply update the app, and the rest is taken care of — no manual migration required!
+  🚨 As usual, major version updates require ord to re-index from scratch. This process will happen automatically when you update the app. 
 
 
   ⏳ If ord is currently indexing, it may take a few minutes to safely shut down before updating. Please be patient during this process.
+
+
+  Added
+
+    - Resume Command: A new dry-run flag has been added for testing purposes.
+    - Runes API: Reintroduced the ability to check rune balances.
+    - Premine Information: You can now view the premine percentage.
+    - Proxy and Decompression: Added a default content proxy and decompression to the environment settings.
+    - Inscriptions & Addresses: Inscriptions and rune balances are now visible on the address page, with additional features like charm for burned inscriptions and sat names.
+    - Shutdown Control: Introduced the ability to cancel shutdowns.
+    - Detailed Inscription Info: Added new endpoints for more detailed recursive inscription information.
+    - Progress Indicators: Show progress bars for etching and added a mint progress field in rune details.
+    - Output Enhancements: Added more output details like sat ranges and transaction hex.
+
+  Changed
+
+    - Rune Etching: The resume function now cycles through all pending etchings and allows resuming a specific one.
+    - Configuration Persistence: Configuration files now persist for environment commands.
+    - Runic Outputs: Runic outputs no longer show in cardinals command.
+
+  Fixed
+
+    - Sending Runes: Issues with sending runes have been resolved.
+    - JSON API: Longer request bodies are now supported.
+    - Minting Rules: Allowed minting to start in the next block if required.
+    - Ord Environment: Fixed a panic issue during shutdown.
+    - Index & List Commands: Fixed issues related to listing and indexing commands.
+    - Various Translations: Updates and fixes were made to multiple language translations.
+    - Minor Fixes: Various small fixes, like removing duplicate words, fixing typos, and addressing minor bugs in different parts of the system.
 
 
   Full release notes can be found at: https://github.com/ordinals/ord/releases
