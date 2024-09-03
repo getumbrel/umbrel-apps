@@ -7,7 +7,7 @@ services:
       APP_PORT: 9000
 
   docker:
-    image: docker:24.0.5-dind@sha256:3c6e4dca7a63c9a32a4e00da40461ce067f255987ccc9721cf18ffa087bcd1ef
+    image: docker:27.2.0-dind@sha256:f9f72ad901a78f27be922b2d320bbc263174f12919c1b37e6a01f828fa904565
     privileged: true
     network_mode: host
     stop_grace_period: 1m
@@ -27,7 +27,7 @@ services:
       - ${APP_DATA_DIR}/data/docker:/data
 
   portainer:
-    image: portainer/portainer-ce:2.19.5@sha256:4a1ceadd7f7898d9190ee0a6d22234c4323aefd80e796e84f5e57127f74370f1
+    image: portainer/portainer-ce:2.21.0@sha256:a5e6d58c93bea2988b604f9c9b1afaa30dc213532dfd9beb7774429146276604
     command: --host unix:///var/run/docker.sock --admin-password-file=/default-password
     restart: on-failure
     volumes:
