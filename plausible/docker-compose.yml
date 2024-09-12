@@ -1,14 +1,14 @@
 services:
   app_proxy:
     environment:
-      APP_HOST: plausible_1
-      APP_PORT: 9091
+      APP_HOST: plausible_plausible_1
+      APP_PORT: 8000
 
   plausible_db:
     # Plausible v2.1.1 was tested against PostgreSQL versions 15 and 16
     # https://github.com/plausible/analytics/blob/v2.1.1/.github/workflows/elixir.yml#L21-L32
     image: postgres:16-alpine@sha256:492898505cb45f9835acc327e98711eaa9298ed804e0bb36f29e08394229550d
-    restart: always
+    restart: on-failure
     user: "1000:1000"
     volumes:
       - ${APP_DATA_DIR}/db-data:/var/lib/postgresql/data
@@ -38,7 +38,6 @@ services:
       - plausible_db
       - plausible_events_db
     environment:
-      - BASE_URL=http://umbrel.local:9091
-      - PORT=9091
+      - BASE_URL=http://umbrel.local:9092
       - SECRET_KEY_BASE=${APP_PLAUSIBLE_SECRET_KEY}
       - TOTP_VAULT_KEY=${APP_PLAUSIBLE_VAULT_KEY}
