@@ -2,6 +2,11 @@ version: "3.7"
 
 services:
 
+  app_proxy:
+    environment:
+      APP_HOST: zabbix-frontend
+      APP_PORT: 8080
+
   # https://hub.docker.com/r/zabbix/zabbix-web-nginx-pgsql
   zabbix-frontend:
     # docker run --name some-zabbix-web-apache-mysql
@@ -14,8 +19,6 @@ services:
       POSTGRES_PASSWORD: zabbix
       ZBX_SERVER_HOST: zabbix-server
       PHP_TZ: UTC
-    ports:
-      - "10052:8080"
     depends_on:
       - zabbix-server
       - zabbix-database
