@@ -1,0 +1,13 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: metube_metube_1
+      APP_PORT: 8081
+
+  metube:
+    image: ghcr.io/alexta69/metube:2024-08-22@sha256:cea4b8628563a7497a88c9970418ff335722c6b53820911bccc6105b8a0a5a28
+    restart: on-failure
+    volumes:
+      - ${UMBREL_ROOT}/data/storage/downloads/metube:/downloads

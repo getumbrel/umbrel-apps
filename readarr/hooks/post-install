@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if "${UMBREL_ROOT}/scripts/app" ls-installed | grep --quiet 'prowlarr'
+then
+ CONFIG_FILE="${APP_DATA_DIR}/data/config/config.xml"
+
+ # Wait for the config.xml file to exist
+ # Wait for the API key property (<ApiKey>) to exist in the config file
+ for attempt in $(seq 1 20); do
+   if [[ -f "${CONFIG_FILE}" ]] && cat "${CONFIG_FILE}" | grep --quiet '<ApiKey>'; then
+     echo "config.xml file exists and <ApiKey> xml key exists..."
+
+     # Restart Prowlarr to automatically set this up as an app
+     "${UMBREL_ROOT}/scripts/app" restart prowlarr
+
+     exit
+   fi
+   sleep 1
+ done
+
+ >&2 echo "Error: Failed to locate <ApiKey> inside: ${CONFIG_FILE}"
+ exit 1
+fi

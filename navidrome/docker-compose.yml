@@ -1,0 +1,16 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: navidrome_server_1
+      APP_PORT: 4533
+      PROXY_AUTH_ADD: "false"
+
+  server:
+    image: deluan/navidrome:0.53.1@sha256:40e53100217d57ec04199fbdd4ca3176aa4e556a73e63862dae4d5bc4763ccca
+    restart: on-failure
+    environment:
+      - PUID=1000
+      - PGID=1000
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+      - ${UMBREL_ROOT}/data/storage/downloads/music:/music

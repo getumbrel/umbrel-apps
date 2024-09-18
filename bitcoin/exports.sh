@@ -106,10 +106,12 @@ BIN_ARGS+=( "-zmqpubrawtx=tcp://0.0.0.0:${APP_BITCOIN_ZMQ_RAWTX_PORT}" )
 BIN_ARGS+=( "-zmqpubhashblock=tcp://0.0.0.0:${APP_BITCOIN_ZMQ_HASHBLOCK_PORT}" )
 BIN_ARGS+=( "-zmqpubsequence=tcp://0.0.0.0:${APP_BITCOIN_ZMQ_SEQUENCE_PORT}" )
 # BIN_ARGS+=( "-txindex=1" )
-BIN_ARGS+=( "-blockfilterindex=1" )
-BIN_ARGS+=( "-peerbloomfilters=1" )
-BIN_ARGS+=( "-peerblockfilters=1" )
-BIN_ARGS+=( "-rpcworkqueue=128" )
+# BIN_ARGS+=( "-blockfilterindex=1" )
+# BIN_ARGS+=( "-peerbloomfilters=1" )
+# BIN_ARGS+=( "-peerblockfilters=1" )
+# BIN_ARGS+=( "-rpcworkqueue=128" )
+# We can remove depratedrpc=create_bdb in a future update once Jam (JoinMarket) implements descriptor wallet support
+BIN_ARGS+=( "-deprecatedrpc=create_bdb" )
 
 export APP_BITCOIN_COMMAND=$(IFS=" "; echo "${BIN_ARGS[@]}")
 

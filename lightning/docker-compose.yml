@@ -7,12 +7,11 @@ services:
       APP_PORT: 3006
 
   app:
-    image: getumbrel/umbrel-lightning:v1.1.2@sha256:3ab819f6335abebb160d2c7b4bd979ad706e25208d219beb9f82d4c1dadd3eff
+    image: getumbrel/umbrel-lightning:v1.2.0@sha256:4effadadce390959a742d806273d42a20da08280e4f409e9a30658fbd8400854
     restart: on-failure
     volumes:
       - "${APP_LIGHTNING_NODE_DATA_DIR}:/data/.lnd"
       - "${APP_DATA_DIR}/data/lightning:/data"
-      - "${UMBREL_ROOT}/statuses:/statuses"
     environment:
       PORT: "3006"
       TOR_PROXY_IP: "${TOR_PROXY_IP}"
@@ -33,6 +32,7 @@ services:
       JSON_SETTINGS_FILE: "/data/settings.json"
       UMBREL_LND_CONF_FILEPATH: "/data/.lnd/umbrel-lnd.conf"
       LND_CONF_FILEPATH: "/data/.lnd/lnd.conf"
+      LND_INITIALIZE_WITH_TOR_ONLY: "${LND_INITIALIZE_WITH_TOR_ONLY:-unset}"
       DEVICE_DOMAIN_NAME: "${DEVICE_DOMAIN_NAME}"
       EXPLORER_PORT: "${APP_MEMPOOL_PORT}"
       EXPLORER_HIDDEN_SERVICE: "${APP_MEMPOOL_HIDDEN_SERVICE}"
@@ -42,7 +42,7 @@ services:
 
   lnd:
     hostname: "${DEVICE_DOMAIN_NAME}" # Needed so LND can generate a valid cert
-    image: lightninglabs/lnd:v0.16.4-beta@sha256:a6e99f1a2a790ea6305a93f8075af64f9a2dade5cbf10bad893740264da03d0c
+    image: lightninglabs/lnd:v0.18.0-beta@sha256:dab0f5ae09615066d4c0f29f6f7444ab7e6c8a2548f56ea50288236b542095d4
     command: "${APP_LIGHTNING_COMMAND}"
     user: 1000:1000
     restart: unless-stopped

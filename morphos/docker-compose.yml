@@ -1,0 +1,12 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: morphos_web_1
+      APP_PORT: 8080
+
+  web:
+    image: ghcr.io/danvergara/morphos-server:0.3.0@sha256:b09a886b6ae1c2c3ab3911d0b3513b1a8c9953e80edeb942d33814700ebadfc7
+    restart: on-failure
+    stop_grace_period: 1m

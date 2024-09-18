@@ -1,0 +1,20 @@
+version: '3.7'
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: sabnzbd_web_1
+      APP_PORT: 8080
+      PROXY_AUTH_WHITELIST: "/api*"
+
+  web:
+    image: lscr.io/linuxserver/sabnzbd:4.3.3@sha256:6a8db539588665971f24a42e31ddf2240d7be114c08007dc409aff7638c8edf6
+    restart: unless-stopped
+    stop_grace_period: 1m
+    volumes:
+      - ${APP_DATA_DIR}/data/config:/config
+      - ${UMBREL_ROOT}/data/storage/downloads:/downloads
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC

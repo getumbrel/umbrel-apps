@@ -1,0 +1,18 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: just-download_web_1
+      APP_PORT: 5000
+  
+  web:
+    image: codeberg.org/highghlow/just-download:v1.0.9@sha256:96d8ed20104418ca41ccc8fc7001889f827bc60235b71b8e9aa19d1f5a6e4db7
+    restart: on-failure
+    stop_grace_period: 1m
+    volumes:
+      - ${APP_DATA_DIR}/data/config:/config
+    environment:
+      LOCK_TRANSMISSION_CONFIG: 1
+      CONFIG_LOCATION: /config/config.json
+      CONFIG: '{"indexers": [], "transmission": {"host": "transmission_server_1", "port": 9091}}'

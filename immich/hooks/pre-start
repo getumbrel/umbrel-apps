@@ -1,11 +1,14 @@
 #!/usr/bin/env bash
-# This script sets up the necessary directories and permissions for model-cache and tsdata that were added after the initial release of the app.
+# This script sets up necessary directories/permissions that have changed in the app since the initial release. 
 
 set -euo pipefail
 
 APP_DATA_DIR="$(readlink -f $(dirname "${BASH_SOURCE[0]}")/..)/data"
-MODEL_CACHE_DIR="${APP_DATA_DIR}/model-cache"
-TYPESENSE_DIR="${APP_DATA_DIR}/tsdata"
 
+# Create model-cache directory if it doesn't exist
+MODEL_CACHE_DIR="${APP_DATA_DIR}/model-cache"
 [ ! -d "${MODEL_CACHE_DIR}" ] && mkdir -p "${MODEL_CACHE_DIR}" && chown 1000:1000 "${MODEL_CACHE_DIR}"
-[ ! -d "${TYPESENSE_DIR}" ] && mkdir -p "${TYPESENSE_DIR}" && chown 1000:1000 "${TYPESENSE_DIR}"
+
+# delete tsdata directory if it exists
+TYPESENSE_DIR="${APP_DATA_DIR}/tsdata"
+[ -d "${TYPESENSE_DIR}" ] && rm -rf "${TYPESENSE_DIR}"

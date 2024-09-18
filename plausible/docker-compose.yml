@@ -1,0 +1,43 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: plausible_plausible_1
+      APP_PORT: 8000
+
+  plausible_db:
+    # Plausible v2.1.1 was tested against PostgreSQL versions 15 and 16
+    # https://github.com/plausible/analytics/blob/v2.1.1/.github/workflows/elixir.yml#L21-L32
+    image: postgres:16-alpine@sha256:492898505cb45f9835acc327e98711eaa9298ed804e0bb36f29e08394229550d
+    restart: on-failure
+    user: "1000:1000"
+    volumes:
+      - ${APP_DATA_DIR}/db-data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=postgres
+
+  plausible_events_db:
+    image: clickhouse/clickhouse-server:24.3.3.102-alpine@sha256:f226fe41f0578968b7f68a54b902d203ff4decfddfccb97c89fe5bfc36a51b66
+    restart: on-failure
+    user: "1000:1000"
+    volumes:
+      - ${APP_DATA_DIR}/event-data:/var/lib/clickhouse
+      - ${APP_DATA_DIR}/event-logs:/var/log/clickhouse-server
+      - ${APP_DATA_DIR}/clickhouse/clickhouse-config.xml:/etc/clickhouse-server/config.d/logging.xml:ro
+      - ${APP_DATA_DIR}/clickhouse/clickhouse-user-config.xml:/etc/clickhouse-server/users.d/logging.xml:ro
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+
+  plausible:
+    image: ghcr.io/plausible/community-edition:v2.1.1@sha256:2085e7a4bafd4bb1824e5fa1131ebdbd8ca78da1b2ebdefbc887f971f24f53c9 
+    restart: on-failure
+    user: "1000:1000"
+    command: sh -c "sleep 10 && /entrypoint.sh db createdb && /entrypoint.sh db migrate && /entrypoint.sh run"
+    depends_on:
+      - plausible_db
+      - plausible_events_db
+    environment:
+      - BASE_URL=http://${DEVICE_DOMAIN_NAME}:9092
+      - SECRET_KEY_BASE=${APP_SEED}
+      - TOTP_VAULT_KEY=${APP_PLAUSIBLE_VAULT_KEY}

@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# This script checks the Nextcloud config.php file for the presence of 'nextcloud_web_1' in the trusted_domains array and adds it if it doesn't exist. Pre-29.0.4 installs on umbrelOS will not have the domain added via `NEXTCLOUD_TRUSTED_DOMAIN`.
+# This is handled in a post-update hook to make sure we don't interfere with the Nextcloud startup process and pre-start script where config.php is being written to.
+
+APP_DATA_DIR="$(readlink -f $(dirname "${BASH_SOURCE[0]}")/..)"
+CONFIG_PHP_FILE="${APP_DATA_DIR}/data/nextcloud/config/config.php"
+
+DOMAIN_TO_ADD="nextcloud_web_1"
+
+domain_exists() {
+    grep -q "'$DOMAIN_TO_ADD'" "$CONFIG_PHP_FILE"
+}
+
+get_highest_index() {
+    awk -F "=>" '/trusted_domains/ {
+        max = 0
+        while (getline && !/\),/) {
+            if ($1 ~ /^[[:space:]]*[0-9]+/) {
+                split($1, a, " ")
+                if (a[1] > max) max = a[1]
+            }
+        }
+        print max
+    }' "$CONFIG_PHP_FILE"
+}
+
+if domain_exists; then
+    echo "Domain '$DOMAIN_TO_ADD' already exists in trusted_domains."
+else
+    echo "Domain '$DOMAIN_TO_ADD' not found. Adding it to trusted_domains..."
+    
+    # Get the highest current index in the trusted_domains array
+    highest_index=$(get_highest_index)
+    
+    # Calculate the new index to add
+    new_index=$((highest_index + 1))
+
+    # Add the new domain entry
+    sed -i "/trusted_domains/,/),/ s/),/  $new_index => '$DOMAIN_TO_ADD',\n&/" "$CONFIG_PHP_FILE"
+    
+    echo "Domain '$DOMAIN_TO_ADD' added successfully."
+fi
