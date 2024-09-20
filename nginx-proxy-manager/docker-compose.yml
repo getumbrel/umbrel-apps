@@ -10,10 +10,11 @@ services:
     hostname: nginx-proxy-manager_web_1
     restart: on-failure
     ports:
-      - 443:443
+      - 40080:80
+      - 40443:443
     volumes:
-      - ${APP_DATA_DIR}/data:/data
-      - ${APP_DATA_DIR}/letsencrypt:/etc/letsencrypt
+      - ${APP_DATA_DIR}/data/npm-data:/data
+      - ${APP_DATA_DIR}/data/letsencrypt:/etc/letsencrypt
     environment:
       PUID: 1000
       PGID: 1000
