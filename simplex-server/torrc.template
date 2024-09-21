@@ -1,0 +1,12 @@
+# Enable log (otherwise, tor doesn't seem to deploy onion address)
+Log notice file /tmp/notices.log
+# Enable single hop routing (2 options below are dependencies of the third) - It will reduce the latency at the cost of lower anonimity of the server - as SMP-server onion address is used in the clients together with public address, this is ok. If you deploy SMP-server with onion-only address, you may want to keep standard configuration instead.
+SOCKSPort 0
+HiddenServiceNonAnonymousMode 1
+HiddenServiceSingleHopMode 1
+# smp-server hidden service host directory and port mappings
+HiddenServiceDir /data/app-$APP_ID-smp
+HiddenServicePort $APP_SIMPLEX_SERVER_SMP_PORT simplex-server_smp-server:$APP_SIMPLEX_SERVER_SMP_PORT
+# xftp-server hidden service host directory and port mappings
+HiddenServiceDir /data/app-$APP_ID-xft
+HiddenServicePort $APP_SIMPLEX_SERVER_XFTP_PORT simplex-server_xftp-server:$APP_SIMPLEX_SERVER_XFTP_PORT

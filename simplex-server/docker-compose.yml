@@ -1,0 +1,41 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: simplex-server_smp-server_1
+      APP_PORT: 8000
+      PROXY_AUTH_ADD: "false"
+
+  smp-server:
+    image: simplexchat/smp-server:v6@sha256:8ee921410249683e9d013d1de9706a2b51713916de8dbe104c2c540e62dba24d
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      ADDR: ${APP_SIMPLEX_SERVER_SMP_HIDDEN_SERVICE}
+      PASS: ${APP_PASSWORD}
+    volumes:
+      - ${APP_DATA_DIR}/data/smp/config:/etc/opt/simplex:z
+      - ${APP_DATA_DIR}/data/smp/logs:/var/opt/simplex:z
+      
+  xftp-server:
+    image: simplexchat/xftp-server:v6@sha256:fb813c9071776c6c11836977c556f221eb3c5320a35ba24e93594216916f1d3c
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      ADDR: ${APP_SIMPLEX_SERVER_XFTP_HIDDEN_SERVICE}
+      QUOTA: "2GB"
+    volumes:
+      - ${APP_DATA_DIR}/data/xftp/config:/etc/opt/simplex-xftp:z
+      - ${APP_DATA_DIR}/data/xftp/logs:/var/opt/simplex-xftp:z
+      - ${APP_DATA_DIR}/data/xftp/files:/srv/xftp:z
+
+  tor:
+    image: getumbrel/tor:0.4.7.8@sha256:2ace83f22501f58857fa9b403009f595137fa2e7986c4fda79d82a8119072b6a
+    user: "1000:1000"
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/torrc:/etc/tor/torrc:ro
+      - ${TOR_DATA_DIR}:/data
+    environment:
+      HOME: "/tmp"
