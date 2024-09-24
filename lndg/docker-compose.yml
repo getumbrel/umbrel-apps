@@ -13,11 +13,12 @@ services:
     init: true
     volumes:
       - ${APP_LIGHTNING_NODE_DATA_DIR}:/root/.lnd:ro
-      - ${APP_DATA_DIR}:/lndg/data
+      - ${APP_DATA_DIR}:/app/data
+      - ${APP_DATA_DIR}/lndg-controller.log:/var/log/lndg-controller.log
     command:
       - sh
       - -c
-      - python initialize.py -net '${APP_BITCOIN_NETWORK}' -server '${APP_LIGHTNING_NODE_IP}:${APP_LIGHTNING_NODE_GRPC_PORT}' -pw '${APP_PASSWORD}' -d && supervisord && python manage.py runserver 0.0.0.0:${APP_LNDG_PORT}
+      - python initialize.py -net '${APP_BITCOIN_NETWORK}' -rpc '${APP_LIGHTNING_NODE_IP}:${APP_LIGHTNING_NODE_GRPC_PORT}' -pw '${APP_PASSWORD}' -wn && python controller.py runserver 0.0.0.0:${APP_LNDG_PORT} > /var/log/lndg-controller.log 2>&1
     networks:
       default:
         ipv4_address: ${APP_LNDG_IP}
