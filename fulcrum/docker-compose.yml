@@ -29,7 +29,14 @@ services:
     image: cculianu/fulcrum:v1.11.1@sha256:70f06b93ab5863997992d4b4508312fe81ce576017e16ecc7e69c7d38165bdf2
     restart: on-failure
     user: "1000:1000"
-    command: Fulcrum -t 0.0.0.0:${APP_FULCRUM_NODE_PORT} -b ${APP_BITCOIN_NODE_IP}:${APP_BITCOIN_RPC_PORT} -u ${APP_BITCOIN_RPC_USER} -p ${APP_BITCOIN_RPC_PASS}
+    environment:
+      TCP: 0.0.0.0:${APP_FULCRUM_NODE_PORT}
+      BITCOIND: ${APP_BITCOIN_NODE_IP}:${APP_BITCOIN_RPC_PORT}
+      RPCUSER: ${APP_BITCOIN_RPC_USER}
+      RPCPASSWORD: ${APP_BITCOIN_RPC_PASS}
+      PEERING: false
+      ANNOUNCE: false
+    command: Fulcrum _ENV_
     volumes:
       - "${APP_DATA_DIR}/data/fulcrum:/data"
     ports:
