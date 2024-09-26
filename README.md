@@ -100,8 +100,6 @@ We'll now create a `docker-compose.yml` file in this directory to define our app
 Let's copy-paste the following `docker-compose.yml` template into a text editor and modify it according to our app.
 
 ```yml
-version: "3.7"
-
 services:
   app_proxy:
     environment:
@@ -225,8 +223,6 @@ BTC RPC Explorer is an application with a single Docker container, so we don't n
 Updated `docker-compose.yml` file:
 
 ```yml
-version: "3.7"
-
 services:
   app_proxy:
     environment:
@@ -247,8 +243,6 @@ services:
 So the final version of `docker-compose.yml` would be:
 
 ```yml
-version: "3.7"
-
 services:
   app_proxy:
     environment:
