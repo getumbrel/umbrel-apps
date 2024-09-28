@@ -1,0 +1,1 @@
+export ELEMENTS_DATA_DIR="$(readlink -f $(dirname "${BASH_SOURCE[0]}")/..)/elements/data"

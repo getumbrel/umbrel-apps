@@ -1,0 +1,34 @@
+version: "3.7"
+
+services:
+
+  app_proxy:
+    environment:
+      APP_HOST: gitlab_gitlab_1
+      APP_PORT: 8929
+      PROXY_AUTH_ADD: "false"
+
+  gitlab:
+    image: zengxs/gitlab:17.2.1-ce.0@sha256:ac08a4dd997b6cd5d00d56c0027629de56ac80d9d30f9c4f75a73da73f5ff1b4
+    restart: on-failure
+    hostname: '${DEVICE_DOMAIN_NAME}:8929'
+    ulimits:
+      nofile:
+        soft: 4096
+        hard: 8192
+    environment:
+      PUID: 1000
+      PGID: 1000
+      GITLAB_OMNIBUS_CONFIG: |
+        # Add any other gitlab.rb configuration here, each on its own line
+        gitlab_rails['initial_root_password'] = '${APP_PASSWORD}'
+        gitlab_rails['gitlab_shell_ssh_port'] = 2424
+        nginx['listen_port'] = 8929
+        nginx['listen_https'] = false
+    ports:
+      - '2424:22'
+    volumes:
+      - ${APP_DATA_DIR}/data/config:/etc/gitlab
+      - ${APP_DATA_DIR}/data/logs:/var/log/gitlab
+      - ${APP_DATA_DIR}/data/data:/var/opt/gitlab
+    shm_size: '256m'

@@ -6,7 +6,7 @@ services:
       APP_PORT: 3010
 
   web:
-    image: ghcr.io/toeverything/affine-graphql:stable-06890d6@sha256:e80b83a14f11cdaf5388d156cf4bfb1933c39fa8e3f85d7b2874ac4cec72e625
+    image: ghcr.io/toeverything/affine-graphql:stable-eb0466e@sha256:3dc307907cbaed5d87ad30afb5e7f1ada7cdb6372736a920b0765401d4bce5e7
     restart: on-failure
     init: true
     command:
@@ -17,8 +17,6 @@ services:
       - REDIS_SERVER_HOST=affine_redis_1
       - DATABASE_URL=postgres://affine:affine@db:5432/affine
       - NODE_ENV=production
-      - AFFINE_ADMIN_EMAIL=admin@umbrel.local
-      - AFFINE_ADMIN_PASSWORD=$APP_PASSWORD
     volumes:
       - ${APP_DATA_DIR}/data/config:/root/.affine/config
       - ${APP_DATA_DIR}/data/storage/blob:/root/.affine/storage

@@ -1,0 +1,28 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: ntfy_app_1
+      APP_PORT: 80
+      PROXY_AUTH_ADD: "false"
+
+  app:
+    image: binwiederhier/ntfy:v2.11.0@sha256:4a7d0f0adc6d5d9fc36e64ab55ef676e76e124a2bdd50ce115b6d9c1c7430294
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 1m
+    entrypoint: [ "/bin/sh", "/entrypoint.sh" ]
+    volumes:
+      - ${APP_DATA_DIR}/entrypoint.sh:/entrypoint.sh
+      - ${APP_DATA_DIR}/data/cache:/var/cache/ntfy
+      - ${APP_DATA_DIR}/data/data:/etc/ntfy
+      - ${APP_DATA_DIR}/data/lib:/var/lib/ntfy
+    environment:
+      NTFY_BASE_URL: http://${DEVICE_DOMAIN_NAME}:${APP_PROXY_PORT}
+      NTFY_UPSTREAM_BASE_URL: https://ntfy.sh
+      NTFY_CACHE_FILE: /var/cache/ntfy/cache.db
+      NTFY_ENABLE_LOGIN: "true"
+      NTFY_AUTH_FILE: /var/lib/ntfy/user.db
+      NTFY_AUTH_DEFAULT_ACCESS: deny-all
+      NTFY_PASSWORD: ${APP_PASSWORD}

@@ -22,20 +22,7 @@ services:
       PROXY_AUTH_WHITELIST: "/api/*,/search/*"
 
   server:
-    image: ghcr.io/immich-app/immich-server:v1.103.0@sha256:1ae17f5ce8e948f4268c95781904e6ef4bec99634ed43ebe2b0096c005932b7a
-    command: [ "start.sh", "immich" ]
-    volumes:
-      - ${APP_DATA_DIR}/data/upload:/usr/src/app/upload
-    environment:
-      <<: *env
-    depends_on:
-      - redis
-      - postgres
-    restart: on-failure
-
-  microservices:
-    image: ghcr.io/immich-app/immich-server:v1.103.0@sha256:1ae17f5ce8e948f4268c95781904e6ef4bec99634ed43ebe2b0096c005932b7a
-    command: [ "start.sh", "microservices" ]
+    image: ghcr.io/immich-app/immich-server:v1.116.0@sha256:548ad7547d3c79c35acb933c1b3e42b6d87d190f9c31442c0bfe12585153af33
     volumes:
       - ${APP_DATA_DIR}/data/upload:/usr/src/app/upload
     environment:
@@ -46,7 +33,7 @@ services:
     restart: on-failure
 
   machine-learning:
-    image: ghcr.io/immich-app/immich-machine-learning:v1.103.0@sha256:2f2817898bfd6ca32372a8e56ee41523ffbb5b9690be67907926530b2d6dbd1e
+    image: ghcr.io/immich-app/immich-machine-learning:v1.116.0@sha256:823cce72af5b56d08fe33171087dd8512be3f52107a3f0b307212f32329aef55
     volumes:
       - ${APP_DATA_DIR}/data/model-cache:/cache
     environment:
@@ -63,11 +50,13 @@ services:
   postgres:
     image: tensorchord/pgvecto-rs:pg14-v0.2.0@sha256:90724186f0a3517cf6914295b5ab410db9ce23190a2d9d0b9dd6463e3fa298f0
     user: "1000:1000"
+    command: ["postgres", "-c" ,"shared_preload_libraries=vectors.so", "-c", 'search_path="$$user", public, vectors', "-c", "logging_collector=on", "-c", "max_wal_size=2GB", "-c", "shared_buffers=512MB", "-c", "wal_compression=on"]
     environment:
       <<: *env
       POSTGRES_PASSWORD: *db_password
       POSTGRES_USER: *db_username
       POSTGRES_DB: *db_database_name
+      POSTGRES_INITDB_ARGS: '--data-checksums'
     volumes:
       - ${APP_DATA_DIR}/data/postgres:/var/lib/postgresql/data
     restart: on-failure

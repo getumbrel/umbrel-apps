@@ -368,10 +368,10 @@ ssh umbrel@umbrel.local
 
 (SSH password is the same as your Umbrel's homescreen password)
 
-2\. This next step will become easier in the future, but for now, we need to manually copy the app directory to the app-store directory in the VM in order to test our app:
+2\. This next step will become easier in the future, but for now, we need to manually copy the app directory (with dotfiles excluded) to the app-store directory on your umbrelOS device in order to test our app:
 
 ```sh
-scp -r <path-to-your-forked-repo>/btc-rpc-explorer/ umbrel@umbrel.local:/home/umbrel/umbrel/app-stores/getumbrel-umbrel-apps-github-53f74447/
+rsync -av --exclude=".*" <path-to-your-forked-repo>/btc-rpc-explorer umbrel@umbrel.local:/home/umbrel/umbrel/app-stores/getumbrel-umbrel-apps-github-53f74447/
 ```
 
 3\. We can now install our app through the homescreen or via the terminal with:

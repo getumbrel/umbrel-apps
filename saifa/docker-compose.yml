@@ -1,0 +1,40 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: saifa_frontend_1
+      APP_PORT: 80
+      PROXY_AUTH_ADD: "false"
+
+  backend:
+    image: patranakamo/saifa-be:v1.3.3@sha256:a04bbaba219b35d7bb59426665ae813ad2d219cb1b2e0eceed1c79170ede6228
+    restart: on-failure
+    stop_grace_period: 1m
+    ports:
+      - "9988:80"
+    volumes:
+      - ${APP_DATA_DIR}/data/app:/data
+      - ${APP_LIGHTNING_NODE_DATA_DIR}:/var/www/html/lnd:ro
+    depends_on:
+      - redis
+    environment:
+      HOME: /data
+      APP_PASSWORD: $APP_PASSWORD
+      BITCOIN_NETWORK: $APP_BITCOIN_NETWORK
+      LN_SERVER_URL: "https://$LND_IP:$LND_REST_PORT"
+      REDIS_HOST: saifa_redis_1
+
+  frontend:
+    image: patranakamo/saifa-fe:v1.3.2@sha256:06ab9f0246e77a63a102111d00e2da7dfe1a94ed21032e56dbdc63dded9717bc
+    restart: on-failure
+    depends_on:
+      - backend
+
+  redis:
+    image: redis:7.2.4@sha256:f14f42fc7e824b93c0e2fe3cdf42f68197ee0311c3d2e0235be37480b2e208e6
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/redis_data:/data/redis_data
+    environment:
+      HOME: /data/redis_data

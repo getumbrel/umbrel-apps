@@ -1,13 +1,32 @@
 #!/usr/bin/env bash
 
+set -euo pipefail
+
+APP_DATA_DIR="$(readlink -f $(dirname "${BASH_SOURCE[0]}")/..)"
+
+# Update the Caddyfile with newer tdexd port
+CADDYFILE_PATH="${APP_DATA_DIR}/caddy-data/Caddyfile"
+sed -i 's/tdex_tdexd_1:9090/tdex_tdexd_1:9092/g' "${CADDYFILE_PATH}"
+
+# Ensure the ocean-data directory exists for apps updating from the old version that didn't have it 
+OCEAN_DATA_DIR="${APP_DATA_DIR}/ocean-data"
+
+[ ! -d "${OCEAN_DATA_DIR}" ] && mkdir -p "${OCEAN_DATA_DIR}" && chown 1000:1000 "${OCEAN_DATA_DIR}"
+
+# Ensure the new tdexd directory exists for apps that are updating from the old tdex-data directory structure
+TDEXD_DATA_DIR="${APP_DATA_DIR}/tdexd"
+
+[ ! -d "${TDEXD_DATA_DIR}" ] && mkdir -p "${TDEXD_DATA_DIR}" && chown 1000:1000 "${TDEXD_DATA_DIR}"
+
 # Delay booting TDEX until the Tor Hidden Service is ready
 HIDDEN_SERVICE_FILE="${TOR_DATA_DIR}/app-${APP_ID}-daemon/hostname"
 if [[ -f "${HIDDEN_SERVICE_FILE}" ]]; then
 	exit
 fi
 
-"${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" up --detach tdexd
 "${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" up --detach tor
+"${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" up --detach oceand
+"${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" up --detach tdexd
 
 echo "App: ${APP_ID} - Generating Tor Hidden Service..."
 for attempt in $(seq 1 100); do

@@ -1,0 +1,100 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "inside qbittorrent/hooks/post-start"
+
+# This script does 2 main things:
+# 1. Sets the default password to 'adminadmin' if it hasn't been set yet. This is done so that users can access qBittorrent after installation without needing to access the qBittorrent container logs to retrieve a temporary password which will reset on restart.
+# 2. Enables the AuthSubnetWhitelist option and sets the AuthSubnetWhitelist to the umbrel_main_network Docker network subnet. This is done so that we can autoconfigure other apps like Radarr/Sonarr/etc.
+
+# We use a file called HAS_BEEN_CONFIGURED to indicate that we've already configured qBittorrent. This way users can modify the qBittorrent.conf file without our script overwriting it.
+
+APP_DATA_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")"
+QBITTORRENT_CONF_FILE="${APP_DATA_DIR}/data/config/config/qBittorrent.conf"
+UMBREL_QBITTORRENT_CONFIG_FLAG="${APP_DATA_DIR}/HAS_BEEN_CONFIGURED_BY_UMBREL"
+
+if [[ -f "${UMBREL_QBITTORRENT_CONFIG_FLAG}" ]]; then
+  echo "qBittorrent has already been configured."
+  exit
+fi
+
+# Wait up to 30 seconds for the qBittorrent.conf file to exist
+echo "Waiting up to 30 seconds for qBittorrent.conf file to exist..."
+for attempt in $(seq 1 300); do
+	if [[ -f "${QBITTORRENT_CONF_FILE}" ]]; then
+		echo "qBittorrent.conf file exists"
+		break
+	fi
+	sleep 0.1
+done
+
+if [[ ! -f "${QBITTORRENT_CONF_FILE}" ]]; then
+  echo "qBittorrent.conf was never created. Something is likely wrong with the qBittorrent app."
+  exit
+fi
+
+# wait 5 seconds to be extra sure the file is fully written by the qBittorrent service
+echo "Waiting 5 seconds for qBittorrent.conf file to be fully written..."
+sleep 5
+
+if "${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" stop server; then
+  echo "qBittorrent stopped successfully."
+else
+  echo "Failed to run stop command because we were sent here from the post-start hook. This is expected behavior. Continuing"
+fi
+
+# As of v4.6.1, qBittorrent no longer supports a default password and instead prints a temporary password to the logs, which is not ideal for users.
+# Users are meant to start qBittorrent, copy the temporary password from the container logs, log in with the temporary password, and then set a new password from the UI.
+# This script will set the default password to the legacy 'adminadmin' password if the password is not already set. If a user has already set a password, this script will not overwrite it.
+# The app description in the Umbrel app store encourages users to change the default password.
+
+# If a line with `WebUI\Password_PBKDF2` does not exist yet in the qBittorrent.conf, then a custom password hasn't been set yet and we write out `adminadmin` as the default password.
+# This line is expected to be under the [Preferences] section.
+# We check for this line first because a user may have a legacy install from before qBittorrent removed the default password.
+if ! grep --quiet '^WebUI\\Password_PBKDF2' "${QBITTORRENT_CONF_FILE}"; then
+  echo "WebUI\\Password_PBKDF2 does not exist in qBittorrent.conf. Adding default password."
+
+  echo "Writing default password adminadmin to qBittorrent.conf"
+  sed -i '/^\[Preferences\]/a WebUI\\Password_PBKDF2="@ByteArray(gTzqQHUv3A1X43tLaAhaJQ==:ZBCIBA4honNZ7H66xdEoHpqBC/Vvwj17ZCjQKARSK78ScJWDMdWSfxezHG536UekAL/zpRn571MXCfhtdqiArA==)"' "${QBITTORRENT_CONF_FILE}"
+
+else
+  # This is a legacy install and the user has already set a password. We don't want to overwrite it. 
+  echo "'WebUI\\Password_PBKDF2' already exists in qBittorrent.conf. No changes made."
+fi
+
+# Users can overwrite these settings in the qBittorrent.conf file if they want to change them and this script won't overwrite them.
+
+# Ensure WebUI\AuthSubnetWhitelist is set correctly
+echo "Setting AuthSubnetWhitelist=10.21.0.0/16 in qBittorrent.conf"
+if grep -q '^WebUI\\AuthSubnetWhitelist=' "${QBITTORRENT_CONF_FILE}"; then
+  sed -i 's/^WebUI\\AuthSubnetWhitelist=.*/WebUI\\AuthSubnetWhitelist=10.21.0.0\/16/' "${QBITTORRENT_CONF_FILE}"
+else
+  sed -i '/^\[Preferences\]/a WebUI\\AuthSubnetWhitelist=10.21.0.0/16' "${QBITTORRENT_CONF_FILE}"
+fi
+
+# Ensure WebUI\AuthSubnetWhitelistEnabled is set correctly
+echo "Setting WebUI\AuthSubnetWhitelistEnabled=true in qBittorrent.conf"
+if grep -q '^WebUI\\AuthSubnetWhitelistEnabled=' "${QBITTORRENT_CONF_FILE}"; then
+  sed -i 's/^WebUI\\AuthSubnetWhitelistEnabled=.*/WebUI\\AuthSubnetWhitelistEnabled=true/' "${QBITTORRENT_CONF_FILE}"
+else
+  sed -i '/^\[Preferences\]/a WebUI\\AuthSubnetWhitelistEnabled=true' "${QBITTORRENT_CONF_FILE}"
+fi
+
+# Create the UMBREL_QBITTORRENT_CONFIG_FLAG file to indicate that we've configured qBittorrent
+touch "${UMBREL_QBITTORRENT_CONFIG_FLAG}"
+
+# start the qBittorrent service
+echo "Starting qBittorrent..."
+"${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" start server
+
+# Restart *arr apps in order to trigger automatic configuration
+apps=("radarr" "sonarr" "lidarr" "readarr" "prowlarr")
+installed_apps=$("${UMBREL_ROOT}/scripts/app" ls-installed)
+
+for app in "${apps[@]}"; do
+  if echo "$installed_apps" | grep --quiet "$app"; then
+    # We don't block the script on restarting apps because we want to restart all apps in parallel
+    # AND we need qBittorrent to be listed as an installed app when the apps restart. 
+    "${UMBREL_ROOT}/scripts/app" restart "$app" &
+  fi
+done

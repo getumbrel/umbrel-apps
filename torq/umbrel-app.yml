@@ -2,7 +2,7 @@ manifestVersion: 1
 id: torq
 category: bitcoin
 name: Torq
-version: "v1.5.1"
+version: "v2.0.4"
 tagline: Scalable Node Management Software
 description: >-
   Operating a Lightning node requires a lot of work. You need to monitor your channels, rebalance them, keep track of your fees and much more.
@@ -51,42 +51,28 @@ gallery:
   - 4.jpg
   - 5.jpg
 releaseNotes: >-
+  A lot of improvements have been made in this release. It's hard to cover it all but here are some highlights:
   
-  Torq v.1.5.1:
-
-  Release notes:
-
-  - CLN v23.11+ is required (pagination)
-
-  - Integration with Kraken
-
-  - New workflow triggers: Invoice, Forward, Payment, Transaction (on-chain)
-
-  - New workflow filters: Mempool, Exchange (Kraken) balance
-
-  - New workflow action: Payment Attempt (experimental: tries to find a route to pay an exchange invoice)
-
-  - New variables in workflow actions: API client, notification
-
-  - Replace intercom with chatwoot
-
-  - Small changes to rebalancer + new metrics and logs
-
-  - Timelock Delta in seconds on list screens
-
-  - Update of packages
-  
-  
-  Notes:
-  
-  - This release contains a large set of database updates. So the migration might take some time depending on the 
-    hardware and stored data. Please create a backup before updating, there is no automatic rollback process other 
-    then a database restore from before the migration.
-  
-  - This release (re)imports CLN data so it might take some time to get all data fetched from your CLN node. 
-    (No impact to LND nodes)
-  
-
+    - Add advanced outputs table (UTXO management), with the ability to lock/unlock individual outputs.
+    - LND v0.18 support (+ inbound fees)
+    - CLN v24.05 support
+    - Tighter CLN integration via Torq plugin
+    - Fix opening a channel with CLN (missing close-to address)
+    - Fix CLN+LND on-chain transaction import (this will reimport on-chain transactions)
+    - Torq will import transactions + transaction inputs and outputs
+    - We advise to configure bitcoind connection details for extra annotation
+    - Ability to integrate Electrum (for unconfirmed on-chain notification support)
+    - System/workflow variables/templates in workflows
+    - example 1: proportionate fee template: 2000 - ({{Channels.peerGauge}} * 2000)
+    - example 2: dynamic max HTLC amount: {{Channels.localBalance}} / 2
+    - Channel open interceptor workflow (LND and CLN)
+    - Email is now a notification type in workflows (using SMTP)
+    - Ability to trigger a workflow via gRPC (and specify workflow/system variables)
+    - Manual and automatic emergency recovery file / SCB (for CLN and LND)
+    - Automatic includes: email, Github, dropbox, gdrive
+    - Beta feature: (Unauthenticated) Implementation agnostic Torq gRPC
+    - With methods: GetActiveNodes, GetNodeInformation, ConnectPeer, DisconnectPeer, OpenChannel, CloseChannel, SendPayment, CreateInvoice, CreateAddress, TagPeer, TriggerWorkflow, GetOnChainTransactionsByAddress, GetOnChainFeeEstimates, WaitInvoiceSettledByPaymentHash, SubscribeInvoiceStatuses, WaitOnChainTransactionsByAddress, SubscribeOnChainTransactions
+    - Package upgrades
 path: ""
 defaultUsername: ""
 deterministicPassword: false

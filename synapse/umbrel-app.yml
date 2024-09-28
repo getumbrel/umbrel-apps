@@ -2,28 +2,34 @@ manifestVersion: 1.1
 id: synapse
 category: social
 name: Synapse
-version: "1.42.0"
-tagline: Matrix reference homeserver
+version: "1.55.0"
+tagline: Matrix homeserver
 description: >-
-  Synapse is a reference "homeserver" implementation of Matrix from
-  the core development team at matrix.org, written in Python/Twisted. It is
-  intended to showcase the concept of Matrix and let folks see the spec in the
-  context of a codebase and let you run your own homeserver and generally help
-  bootstrap the ecosystem.
+  Synapse is an open source Matrix homeserver implementation, written and maintained by Element. Matrix is the open standard for secure and interoperable real time communications.
 
 
-  The easiest way to try out your new Synapse installation is by connecting to it from a web client.
+  💡 How It Works
+  
+  
+  To chat using Matrix, you'll need a client. You can find a list of popular clients here: https://matrix.org/ecosystem/clients/
+  
+  
+  In Matrix, each user operates one or more Matrix clients, which connect to a Matrix homeserver. The homeserver stores all personal chat history and user account information, similar to how a mail client connects to an IMAP/SMTP server.
+  Like email, you can either run your own Matrix homeserver to control and own your communications and history, or use a hosted server (e.g., matrix.org). Matrix has no single point of control or mandatory service provider, unlike WhatsApp, Facebook, Hangouts, etc.
 
 
-  An easy way to get started is to install the "Element" app on your Umbrel and change its Homeserver URL from matrix.org server to your Synapse's Homeserver URL of http://umbrel.local:8008 (or http://<synapse-tor-hidden-service-url> if you are accessing remotely).
+  🛠️ Connecting a Client
 
 
-  In Matrix, every user runs one or more Matrix clients, which connect through to a Matrix homeserver. The homeserver stores all their personal chat history and user account information - much as a mail client connects through to an IMAP/SMTP server. Just like email, you can either run your own Matrix homeserver and control and own your own communications and history or use one hosted by someone else (e.g. matrix.org) - there is no single point of control or mandatory service provider in Matrix, unlike WhatsApp, Facebook, Hangouts, etc.
-developer: Matrix
-website: https://matrix.org
+  To get started, install the "Element" app on your Umbrel, or install any other Matrix client on a device of your choice. When you register or login through the client, you will need to change the address of the homeserver you are logging into from the default matrix.org to http://umbrel.local:8008 for local access. 
+
+  
+  For seamless connection even when your client isn't connected to the same network as your Umbrel, simply install the "Tailscale" app on your Umbrel and your client device, and use http://umbrel:8008 as the address of your server.
+developer: Element
+website: https://element-hq.github.io/synapse/latest/
 dependencies: []
-repo: https://github.com/matrix-org/synapse
-support: https://matrix.to/#/#synapse:matrix.org
+repo: https://github.com/element-hq/synapse
+support: https://github.com/element-hq/synapse/issues
 port: 8008
 gallery:
   - 1.jpg
@@ -35,3 +41,5 @@ defaultPassword: ""
 torOnly: false
 submitter: Umbrel
 submission: https://github.com/getumbrel/umbrel/commit/c9f0975e766e79d4bd6adf4255cd081f54d654cb
+releaseNotes: >-
+  This release updates Synapse to version 1.55.0 to ensure compatibility with the latest Element app. An upcoming update for Synapse on umbrelOS will further upgrade Synapse to the latest available version.

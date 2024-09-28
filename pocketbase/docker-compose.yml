@@ -1,0 +1,19 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: pocketbase_app_1
+      APP_PORT: 8090
+      PROXY_AUTH_ADD: "false"
+  
+  app:
+    image: ghcr.io/muchobien/pocketbase:0.22.21@sha256:5916239bf33387cd64d9c194ce68a58f018417a9648727d68d988e4a30789057
+    # pocketbase needs to run as root
+    # user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 1m
+    volumes:
+      - ${APP_DATA_DIR}/data/data:/pb_data
+      - ${APP_DATA_DIR}/data/public:/pb_public
+      - ${APP_DATA_DIR}/data/hooks:/pb_hooks
