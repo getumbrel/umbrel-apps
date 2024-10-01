@@ -82,13 +82,6 @@ check_compose_file () {
 	fi
 }
 
-# If a Nextcloud config file does not yet exist
-# Then it's likely a new install
-# Therefore there is nothing to do
-if [[ ! -f "${CONFIG_PHP_FILE}" ]]; then
-	exit
-fi
-
 get_version() {
 	cat "${CONFIG_PHP_FILE}" | grep "'version'[[:space:]]=>[[:space:]]" | awk -F"'" '{print $4}'
 }
@@ -96,6 +89,13 @@ get_version() {
 get_major_version() {
 	echo "${1%%.*}"
 }
+
+# If a Nextcloud config file does not yet exist
+# Then it's likely a new install
+# Therefore there is nothing to do
+if [[ ! -f "${CONFIG_PHP_FILE}" ]]; then
+	exit
+fi
 
 nextcloud_version=$(get_version)
 nextcloud_major_version=$(get_major_version "$nextcloud_version")
