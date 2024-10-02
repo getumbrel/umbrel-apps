@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# This script checks for existence of data/ data/db and data/logs directories and creates them + sets correct permissions if they don't exist
+# If db.sqlite3 and lndg-controller.log exist in main app dir, then we move them to their respective new locations and do not change permissions (lndg runs as root)
+# This will be the case for installs that are updating from pre 1.9.0
+
+# App directory is one level up from this script
+APP_DIR="$(readlink -f $(dirname "${BASH_SOURCE[0]}")/..)"
+APP_DATA_DIR="${APP_DIR}/data"
+APP_DATA_DB_DIR="${APP_DATA_DIR}/db"
+APP_DATA_LOGS_DIR="${APP_DATA_DIR}/logs"
+DESIRED_OWNER="1000:1000"
+
+set_correct_permissions() {
+    local -r path="${1}"
+
+    if [[ -d "${path}" ]]; then
+        owner=$(stat -c "%u:%g" "${path}")
+
+        if [[ "${owner}" != "${DESIRED_OWNER}" ]]; then
+            chown -R "${DESIRED_OWNER}" "${path}"
+        fi
+    fi
+}
+
+create_directory_if_not_exists() {
+    local -r dir="${1}"
+    if [[ ! -d "${dir}" ]]; then
+        mkdir -p "${dir}"
+        set_correct_permissions "${dir}"
+    fi
+}
+
+move_file_if_exists() {
+    local -r src="${1}"
+    local -r dest="${2}"
+    if [[ -f "${src}" ]]; then
+        mv "${src}" "${dest}"
+    fi
+}
+
+# Create directories if they don't exist
+create_directory_if_not_exists "${APP_DATA_DIR}"
+create_directory_if_not_exists "${APP_DATA_DB_DIR}"
+create_directory_if_not_exists "${APP_DATA_LOGS_DIR}"
+
+# Move files if they exist
+move_file_if_exists "${APP_DIR}/db.sqlite3" "${APP_DATA_DB_DIR}/db.sqlite3"
+move_file_if_exists "${APP_DIR}/lndg-controller.log" "${APP_DATA_LOGS_DIR}/lndg-controller.log"
