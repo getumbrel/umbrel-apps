@@ -1,0 +1,18 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: pingvin-share_web_1
+      APP_PORT: 3000
+      PROXY_AUTH_ADD: "false"
+  
+  web:
+    image: stonith404/pingvin-share:v1.1.3@sha256:0be053abf13084fe3ed36307a3dbabd3cc1f546bb113abc3c3a9c8acab7df08d
+    restart: on-failure
+    environment:
+      - PUID=1000
+      - PGID=1000
+    volumes:
+      - "${APP_DATA_DIR}/data/backend:/opt/app/backend/data"
+      - "${APP_DATA_DIR}/data/images:/opt/app/frontend/public/img"
