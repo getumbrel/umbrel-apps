@@ -7,7 +7,7 @@ services:
       APP_PORT: $APP_MEMPOOL_PORT
       PROXY_AUTH_ADD: "false"
   web:
-    image: mempool/frontend:v3.0.0@sha256:ec84195e6d3050841efef99b9db2ec6f3b8cd64611df0c8dae026a41931ae58c
+    image: mempool/frontend:v3.0.1@sha256:f3a74d2ca47dfa679f8da5a2b22bd714164794dc2fd088ef8779a79b21d4e742
     user: "1000:1000"
     init: true
     restart: on-failure
@@ -23,7 +23,7 @@ services:
       default:
         ipv4_address: $APP_MEMPOOL_IP
   api:
-    image: mempool/backend:v3.0.0@sha256:d48122e60e5f8fdd74874e23578ea606dbd3cd52bd2eeb2b68b56e69e54e3d82
+    image: mempool/backend:v3.0.1@sha256:4daa540727d3a830e71fb9f1ae281d1393be5077177c7d714066d450fb8f5bbf
     user: "1000:1000"
     init: true
     restart: on-failure
@@ -58,6 +58,7 @@ services:
       LND_MACAROON_PATH: "/lnd/data/chain/bitcoin/$APP_BITCOIN_NETWORK/readonly.macaroon"
       LND_REST_API_URL: "https://$APP_LIGHTNING_NODE_IP:$APP_LIGHTNING_NODE_REST_PORT"
       LND_TIMEOUT: 120000
+      NODE_OPTIONS: "--max-old-space-size=2048"
     networks:
        default:
          ipv4_address: $APP_MEMPOOL_API_IP
