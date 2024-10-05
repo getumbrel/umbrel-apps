@@ -1,0 +1,166 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Variables
+APP_DATA_DIR="$(readlink -f $(dirname "${BASH_SOURCE[0]}")/..)"
+UMBREL_ROOT="${APP_DATA_DIR}/../.."
+
+GITLAB_RAILS_VERSION_FILE="${APP_DATA_DIR}/data/data/gitlab-rails/VERSION"
+
+APP_COMPOSE_FILE="${APP_DATA_DIR}/docker-compose.yml"
+APP_COMPOSE_BACKUP_FILE="${APP_DATA_DIR}/docker-compose.yml.bak"
+
+MIGRATION_PATH=()
+IMAGES=()
+
+# Supported list of GitLab major version migrations
+# + details : https://gitlab-com.gitlab.io/support/toolbox/upgrade-path/
+
+MIGRATION_PATH+=("17.2.1")
+MIGRATION_PATH+=("17.2.2")
+MIGRATION_PATH+=("17.3.3")
+MIGRATION_PATH+=("17.4.1")
+
+# List of GitLab major version images to migrate to
+# + details : https://hub.docker.com/r/zengxs/gitlab/tags
+
+IMAGES+=("zengxs/gitlab:17.2.1-ce.0@sha256:ac08a4dd997b6cd5d00d56c0027629de56ac80d9d30f9c4f75a73da73f5ff1b4")
+IMAGES+=("zengxs/gitlab:17.2.2-ce.0@sha256:f01505d9b618814e840c0c4d7f066be7f511308666dd5418014c6cf2fae8a620")
+IMAGES+=("zengxs/gitlab:17.3.3-ce.0@sha256:b4369fc8f2a505fdf30bae7fa2befde2a8d6f75c067e5bcf85aeb1c5f345cda0")
+IMAGES+=("zengxs/gitlab:17.4.1-ce.0@sha256:c848d893bf509ff04a27e7b72be6fc7a8d94eddb0c42a4946f56ea42680af4cb")
+
+get_version() {
+	# Get the current version of GitLab
+	cat "${GITLAB_RAILS_VERSION_FILE}"
+}
+
+check_compose_file() {
+	# Check the docker-compose.yml
+	if [[ ! -f "${APP_COMPOSE_FILE}" ]]; then
+		echo "docker-compose.yml not found"
+		exit
+	fi
+
+	local -r image="${1}"
+
+	gitlab_image=$(cat "${APP_COMPOSE_FILE}" 2>/dev/null | yq '.services.gitlab.image' || true)
+
+	if [[ "${gitlab_image}" != "${image}" ]]; then
+		echo "The docker-compose.yml now looks bad. Restoring..."
+
+		mv "${APP_COMPOSE_BACKUP_FILE}" "${APP_COMPOSE_FILE}"
+
+		exit
+	fi
+}
+
+find_upgrade() {
+	# user needs to make all the updates from the current version to the latest version of the app without skipping any version
+	local -r current_version="${1}"
+	shift
+	local -r array=("$@")
+
+	for i in "${!array[@]}"; do
+		if [[ "${array[$i]}" == "${current_version}" ]]; then
+			echo $((i + 1))
+			exit
+		fi
+	done
+
+	echo -1
+}
+
+wait_for_upgrade() {
+	local -r max_seconds="${1}"
+	local -r version="${2}"
+
+	# Wait for the version file to be updated
+	for i in $(seq 1 "${max_seconds}"); do
+		echo "Attempt: ${i}"
+		if [[ "$(cat "${GITLAB_RAILS_VERSION_FILE}")" == "${version}" ]]; then
+			echo "Version file updated to: ${version}"
+			
+			# Wait for the app to be ready
+			sleep 15
+			return
+		fi
+		sleep 1
+	done
+
+	echo "Failed after ${max_seconds} seconds"
+	exit 1
+}
+
+if [[ ! -f "${GITLAB_RAILS_VERSION_FILE}" ]]; then
+	echo "GitLab version file not found"
+	exit
+fi
+
+current_version=$(get_version)
+upgrade_index=$(find_upgrade "${current_version}" "${MIGRATION_PATH[@]}")
+
+echo "Current GitLab version: ${current_version}"
+echo "Upgrade index: ${upgrade_index}"
+echo "Updates to make: ${IMAGES[@]:$upgrade_index}"
+
+# check if no updates are available
+if [[ "${upgrade_index}" -eq -1 ]]; then
+	echo "No updates available for GitLab"
+	exit
+fi
+
+# check if latest version is already applied
+if [[ "${upgrade_index}" -eq "${#MIGRATION_PATH[@]}" ]]; then
+	echo "Latest GitLab version already applied"
+	exit
+fi
+
+# check if the update is ongoing
+if [[ "${current_version}" == *"-patch"* ]]; then
+	echo "Active GitLab version is undergoing migration. Exiting..."
+	exit
+fi
+
+# Loop through versions, ignoring past versions
+for i in $(seq "${upgrade_index}" $(( ${#MIGRATION_PATH[@]} - 1 ))); do
+	version="${MIGRATION_PATH[$i]}"
+	image="${IMAGES[$i]}"
+
+	echo "Migrating to major version: ${version} (${image})"
+	echo
+
+	cp --archive "${APP_COMPOSE_FILE}" "${APP_COMPOSE_BACKUP_FILE}"
+
+	yq -i ".services.gitlab.image = \"${image}\"" "${APP_COMPOSE_FILE}"
+
+	check_compose_file "${image}"
+
+	# Mark the current version as being in the middle of an update
+	current_version=$(get_version)
+	sed -i "s/${current_version}/${current_version}-patch/" "${GITLAB_RAILS_VERSION_FILE}"
+
+	# Start the app
+	"${UMBREL_ROOT}/scripts/app" start gitlab
+
+	echo "Waiting for update to complete..."
+
+	# Wait for app to change version
+	wait_for_upgrade 900 "${version}"
+
+	# Stop the app
+	"${UMBREL_ROOT}/scripts/app" stop gitlab
+
+	# Delete image of intermediate version
+	# Unless it's the latest image
+	# Otherwise it will have to be re-downloaded
+	if [[ "${version}" != "${MIGRATION_PATH[-1]}" ]]; then
+		echo "Deleting intermediary image: ${image}"
+
+		docker rmi "${image}" || true
+	fi
+done
+
+# Remove the backup file
+rm -rf "${APP_COMPOSE_BACKUP_FILE}"
+
+echo "Migration completed successfully"
