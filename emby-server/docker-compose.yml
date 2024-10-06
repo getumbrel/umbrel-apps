@@ -1,0 +1,16 @@
+version: "2.3"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: emby-server_web_1
+      APP_PORT: 8080
+
+  web:
+    image: emby/embyserver:4.8.10.0@sha256:be113ebc40cc354e4c0e9e551048c291dd2841661961d5fd796044213fd662cd
+    restart: on-failure
+    network_mode: host
+    volumes:
+      - ${APP_DATA_DIR}/programdata:/config
+      - ${APP_DATA_DIR}/tvshows:/mnt/share1
+      - ${APP_DATA_DIR}/movies:/mnt/share2
