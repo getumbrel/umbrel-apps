@@ -1,0 +1,15 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: phantombot-server_1
+      APP_PORT: 25000
+
+  server:
+    image: ghcr.io/phantombot/phantombot
+    restart: unless-stopped
+    volumes:
+      - ${APP_DATA_DIR}/data:/opt/PhantomBot_data
+    environment:
+      PHANTOMBOT_USEHTTPS: true
+      PHANTOMBOT_PANELUSER: umbrel
+      PHANTOMBOT_PANELPASSWORD: $APP_PASSWORD
