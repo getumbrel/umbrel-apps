@@ -1,0 +1,16 @@
+version: "3.7"
+
+services:
+  agent:
+    image: docker.io/phaus/qemu-ga:9.0.2@sha256:1492960bef70c1d7395f7067a0092000dc30cd67bf71072a7ebd234b2dfd1221
+    privileged: true
+    network_mode: "host"
+    volumes:
+      - "/dev:/dev"
+      - "/var/run/dbus/system_bus_socket:/var/run/dbus/system_bus_socket"
+      - "/sys/fs/cgroup:/sys/fs/cgroup"
+      - "/sbin/shutdown:/sbin/shutdown"
+      - "/bin/systemctl:/bin/systemctl"
+    restart: on-failure
+    stop_grace_period: 1m
+    command: ["-m", "virtio-serial", "-p", "/dev/virtio-ports/org.qemu.guest_agent.0"]
