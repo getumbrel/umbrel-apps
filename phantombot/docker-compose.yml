@@ -1,0 +1,14 @@
+services:
+  server:
+    image: ghcr.io/phantombot/phantombot:3.14.1.0@sha256:dbec9818e40f967ac5aee3abcac5a1857481cbbe6b35400f9a2fa8f1dc638df0
+    user: 0:900
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data:/opt/PhantomBot_data
+    ports:
+      - "${APP_PHANTOM_SERVER_PORT}:${APP_PHANTOM_SERVER_PORT}"
+    environment:
+      PHANTOMBOT_USEHTTPS: "true"
+      PHANTOMBOT_PANELUSER: umbrel
+      PHANTOMBOT_PANELPASSWORD: $APP_PASSWORD
+      PHANTOMBOT_BASEPORT: $APP_PHANTOM_SERVER_PORT
