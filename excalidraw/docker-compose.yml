@@ -1,0 +1,17 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: excalidraw_web_1
+      APP_PORT: 5000
+
+  web:
+    image: excalidraw/excalidraw:latest@sha256:fae667864717a415e7474b5f757ffb50e63a81cfc1a2fbcf905ecbd137d0dbba #only amd64 / Umbrel Home + Linux VM
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      - PUID=1000
+      - PGID=1000
+
+#https://github.com/excalidraw/excalidraw.git   
