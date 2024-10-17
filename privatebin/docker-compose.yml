@@ -1,0 +1,19 @@
+version: '3.8'
+services:
+  app_proxy:
+    environment:
+      APP_HOST: privatebin_server_1
+      APP_PORT: 8080
+      PROXY_AUTH_ADD: "false"
+
+  server:
+    image: privatebin/nginx-fpm-alpine:1.7.4@sha256:4cc5f26f5b558b734cb084ada4fdacd75bd9f5e4574f3f3df54165b3623d6b86
+    read_only: false
+    restart: on-failure
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Berlin
+    volumes:
+      - ${APP_DATA_DIR}/privatebin-data:/srv/data:rw
+      - ${APP_DATA_DIR}/conf.php:/srv/cfg/conf.php:rw
