@@ -1,0 +1,15 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: enclosed_web_1
+      APP_PORT: 8787
+  
+  web:
+    image: corentinth/enclosed:1.6.9-rootless@sha256:a07a4e5385afa214eb74f81ef01679df2ec661c39f273a2f3621e020d54fbd04
+    user: 1000:1000
+    restart: on-failure
+    stop_grace_period: 1m
+    volumes:
+      - ${APP_DATA_DIR}/data:/app/.data
