@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+
+# This pre-start script updates the datum_gateway_config.json file with the user's Knots RPC configuration
+
+APP_DATA_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")"
+DATUM_CONFIG_FILE="${APP_DATA_DIR}/data/settings/datum_gateway_config.json"
+
+# contents of datum_gateway_config.json that will exist on install:
+# {
+#   "bitcoind": {
+#     "rpcuser": "enter your bitcoin RPC user",
+#     "rpcpassword": "enter your bitcoin RPC addres",
+#     "rpcurl": "enter your bitcoin RPC URL"
+#   },
+#   "api": {
+#     "listen_port": 21000
+#   },
+#   "mining": {
+#     "pool_address": "enter your bitcoin address",
+#     "coinbase_tag_primary": "enter your block tag",
+#     "coinbase_unique_id": 1
+#   }
+# }
+
+if [ -f "${DATUM_CONFIG_FILE}" ]; then
+  echo "Checking if the DATUM configuration file needs updating."
+  
+  # Check if Knots environment variables are set
+  if [ -z "${APP_BITCOIN_KNOTS_RPC_USER}" ] || [ -z "${APP_BITCOIN_KNOTS_RPC_PASS}" ] || [ -z "${APP_BITCOIN_KNOTS_NODE_IP}" ] || [ -z "${APP_BITCOIN_KNOTS_INTERNAL_RPC_PORT}" ]; then
+    echo "Error: One or more required environment variables from Bitcoin Knots are not set. Exiting."
+    exit 1
+  fi
+
+  # Check if the file contains default placeholder values
+  if grep -q "enter your bitcoin RPC user" "$DATUM_CONFIG_FILE" || 
+     grep -q "enter your bitcoin RPC addres" "$DATUM_CONFIG_FILE" || 
+     grep -q "enter your bitcoin RPC URL" "$DATUM_CONFIG_FILE"; then
+    
+    echo "Initializing the DATUM configuration file with Bitcoin Knots RPC configuration."
+    
+    # We update the rpcuser, rpcpassword, and rpcurl with Knots credentials
+    jq --arg user "$APP_BITCOIN_KNOTS_RPC_USER" \
+       --arg pass "$APP_BITCOIN_KNOTS_RPC_PASS" \
+       --arg url "${APP_BITCOIN_KNOTS_NODE_IP}:${APP_BITCOIN_KNOTS_INTERNAL_RPC_PORT}" \
+       '.bitcoind.rpcuser = $user | .bitcoind.rpcpassword = $pass | .bitcoind.rpcurl = $url' \
+       "$DATUM_CONFIG_FILE" > "${DATUM_CONFIG_FILE}.tmp" && mv "${DATUM_CONFIG_FILE}.tmp" "$DATUM_CONFIG_FILE"
+
+    echo "Configuration file updated successfully."
+  else
+    echo "Configuration file has already been updated. No changes needed."
+  fi
+
+else
+  echo "The DATUM datum_gateway_config.json file does not exist. Something went wrong on installation."
+  exit 1
+fi
