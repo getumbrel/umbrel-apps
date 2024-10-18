@@ -4,8 +4,6 @@ services:
   datum:
     image: ghcr.io/retropex/datum:v1.3
     volumes:
-      - type: bind
-        source: ${APP_DATA_DIR}/settings/datum_gateway_config.json
-        target: /app/datum_gateway_config.json
+      - ${APP_DATA_DIR}/data/settings/datum_gateway_config.json:/app/datum_gateway_config.json
     ports:
       - 21000:21000
