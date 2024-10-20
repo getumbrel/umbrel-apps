@@ -19,7 +19,8 @@ IMAGES=()
 MIGRATION_PATH+=("17.2.1")
 MIGRATION_PATH+=("17.2.2")
 MIGRATION_PATH+=("17.3.3")
-MIGRATION_PATH+=("17.4.1")
+MIGRATION_PATH+=("17.4.2")
+MIGRATION_PATH+=("17.5.0")
 
 # List of GitLab major version images to migrate to
 # + details : https://hub.docker.com/r/zengxs/gitlab/tags
@@ -27,7 +28,8 @@ MIGRATION_PATH+=("17.4.1")
 IMAGES+=("zengxs/gitlab:17.2.1-ce.0@sha256:ac08a4dd997b6cd5d00d56c0027629de56ac80d9d30f9c4f75a73da73f5ff1b4")
 IMAGES+=("zengxs/gitlab:17.2.2-ce.0@sha256:f01505d9b618814e840c0c4d7f066be7f511308666dd5418014c6cf2fae8a620")
 IMAGES+=("zengxs/gitlab:17.3.3-ce.0@sha256:b4369fc8f2a505fdf30bae7fa2befde2a8d6f75c067e5bcf85aeb1c5f345cda0")
-IMAGES+=("zengxs/gitlab:17.4.1-ce.0@sha256:c848d893bf509ff04a27e7b72be6fc7a8d94eddb0c42a4946f56ea42680af4cb")
+IMAGES+=("zengxs/gitlab:17.4.2-ce.0@sha256:82261baee0e63175597560af1fbe230141dce38aedef8c7ead594aeec4b29895")
+IMAGES+=("zengxs/gitlab:17.5.0-ce.0@sha256:273427b087c9a63005597810e70a7df05039a83a51166273bbac00a4df244cc0")
 
 get_version() {
 	# Get the current version of GitLab
@@ -78,13 +80,20 @@ wait_for_upgrade() {
 	for i in $(seq 1 "${max_seconds}"); do
 		echo "Attempt: ${i}"
 		if [[ "$(cat "${GITLAB_RAILS_VERSION_FILE}")" == "${version}" ]]; then
-			echo "Version file updated to: ${version}"
+			echo "Version file updated to: ${version}. Awaiting migration completion..."
 			
-			# Wait for the app to be ready
-			sleep 15
-			return
+			if docker exec gitlab_gitlab_1 bash -c 'gitlab-psql -tAc "SELECT COUNT(*) FROM batched_background_migrations WHERE status NOT IN(3, 6);" | grep -q "^0$"'; then
+				# Wait for the app to be ready
+				echo "Waiting for GitLab to be ready..."
+				sleep 15
+				return
+			else
+				echo "Background migrations are still running. Waiting..."
+				sleep 1
+			fi
+		else
+			sleep 1
 		fi
-		sleep 1
 	done
 
 	echo "Failed after ${max_seconds} seconds"
