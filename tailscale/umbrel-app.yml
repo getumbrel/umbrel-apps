@@ -2,7 +2,7 @@ manifestVersion: 1
 id: tailscale
 category: networking
 name: Tailscale
-version: "v1.74.1"
+version: "v1.76.1"
 tagline: Zero config VPN to access your Umbrel from anywhere
 description: >-
   Tailscale is zero config VPN that creates a secure network between
@@ -28,15 +28,18 @@ path: ""
 deterministicPassword: false
 torOnly: false
 releaseNotes: >-
-  This update includes several improvements and bug fixes:
+  Changes:
+    - Clients lacking UDP connectivity no longer skip performing fallback latency measurements with DERP servers.
+    - Warnings no longer display unnecessarily.
+    - Tailscale connectivity on in-flight internet on airplanes (such as Alaska Airlines) no longer fails.
+    - Service-related processes no longer run unnecessarily when services are disabled on the tailnet.
+    - Error messages include explanations in addition to the HTTP status code.
+    - Tailscale SSH supports sending environment variables to hosts. It's also possible to specify permitted environment variables using the acceptEnv field.
+    - Tailscale SSH no longer breaks some terminal applications by omitting pixel width and height when resizing the application window.
+    - tailscale netcheck CLI command no longer crashes when performing diagnostics on networks lacking UDP connectivity.
+    - Improperly formatted SERVFAIL responses no longer cause DNS timeouts when using an exit node.
+    - dbus login sessions no longer fail on systems where /bin/login is missing.
 
-    - Added support for authenticating devices with Tailscale using MDM solutions.
-    - Introduced the tailscale dns CLI command for managing DNS settings and status.
-    - Automatically truncate long Tailnet Lock signatures to prevent excessive growth.
-    - Fixed the “Log In” option in the client.
-    - Improved network performance with added support for TCP receive and segmentation offload.
-    - Disabled a Linux-only NAT optimization due to a bug, reverting behavior to earlier versions.
-
-  Full release notes and are available at https://github.com/tailscale/tailscale/releases
+  Full release notes are available at https://github.com/tailscale/tailscale/releases
 submitter: Umbrel
 submission: https://github.com/getumbrel/umbrel/pull/1248
