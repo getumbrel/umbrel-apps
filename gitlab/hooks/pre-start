@@ -122,9 +122,7 @@ if [[ "${current_version}" == *"-patch"* ]]; then
 fi
 
 # Check if active version is in migration list
-echo "Debug: About to check if version is in migration list"
 active_version_idx=$(find_index "${current_version}" "${VERSIONS[@]}")
-echo "Debug: Active version index: ${active_version_idx}"
 if [[ "${active_version_idx}" == "-1" ]]; then
 	echo "Active version is not supported in the list of migrations"
 	exit
@@ -139,7 +137,6 @@ fi
 echo "Debug: About to enter migration loop"
 # Loop through versions, ignoring past versions
 for i in "${!VERSIONS[@]}"; do
-	echo "Debug: Checking version ${VERSIONS[$i]}"
 	[[ "${i}" -le "${active_version_idx}" ]] && continue
 
 	version="${VERSIONS[$i]}"
