@@ -60,6 +60,7 @@ wait_for_migrations_complete() {
 		echo "Running gitlab-psql command to check if batched migrations are complete"
 		# https://docs.gitlab.com/ee/update/background_migrations.html#from-the-database
 		command_output=$(docker exec gitlab_gitlab_1 gitlab-psql -tAc "SELECT COUNT(*) FROM batched_background_migrations WHERE status NOT IN(3, 6);" 2>&1)
+		# TODO: change to use ${UMBREL_ROOT}/scripts/app" compose
 		# command_output=$("${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" exec gitlab gitlab-psql -tAc "SELECT COUNT(*) FROM batched_background_migrations WHERE status NOT IN(3, 6);" 2>&1)
 		exit_code=$?
 		# Set -e to restore default behavior
