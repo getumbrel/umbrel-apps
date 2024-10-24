@@ -18,7 +18,12 @@ services:
       HTTP_SERVER_NAME: umbrel.local
       HTTPS_SERVER_NAME:
     volumes:
-      - ${APP_DATA_DIR}/data:/htdocs
+      - linkstack_data:/htdocs
     
 volumes:
   linkstack_data:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: ${APP_DATA_DIR}/data
