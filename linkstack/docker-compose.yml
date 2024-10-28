@@ -9,9 +9,10 @@ services:
       
   linkstack:
     hostname: 'linkstack'
-    image: 'linkstackorg/linkstack:latest@sha256:abd691b4293b020a317de8794737671e0315159efcb868e8a4124d6f0611f7ae' # This image has no version specific tags
+    # This image has no version specific tags
+    image: 'linkstackorg/linkstack:latest@sha256:abd691b4293b020a317de8794737671e0315159efcb868e8a4124d6f0611f7ae'
     restart: on-failure
-    # This image doesn't support a custom user
+    # This image doesn't support a custom user. It must be apache (100:101)
     # user: '1000:1000'
     environment:
       SERVER_ADMIN: 
@@ -19,7 +20,9 @@ services:
       HTTPS_SERVER_NAME:
     volumes:
       - linkstack_data:/htdocs
-    
+
+# https://docs.linkstack.org/docker/setup/#docker-bind-mounts
+# This gets around the requirement to download the latest release of linkstack and place it in the bind mounted directory in order to use a bind mount. 
 volumes:
   linkstack_data:
     driver: local
