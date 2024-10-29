@@ -120,6 +120,8 @@ BIN_ARGS+=( "-zmqpubsequence=tcp://0.0.0.0:${APP_BITCOIN_ZMQ_SEQUENCE_PORT}" )
 # BIN_ARGS+=( "-rpcworkqueue=128" )
 # We can remove depratedrpc=create_bdb in a future update once Jam (JoinMarket) implements descriptor wallet support
 BIN_ARGS+=( "-deprecatedrpc=create_bdb" )
+# Required for LND compatibility. We can remove deprecatedrpc=warnings in a future update once LND releases a version with this fix: https://github.com/btcsuite/btcd/pull/2245
+BIN_ARGS+=( "-deprecatedrpc=warnings" )
 
 export APP_BITCOIN_COMMAND=$(IFS=" "; echo "${BIN_ARGS[@]}")
 
