@@ -24,7 +24,9 @@ BITCOIN_ENV_FILE="${EXPORTS_APP_DIR}/.env"
 			"main")
 				BITCOIN_NETWORK="mainnet";;
 			"test")
-				BITCOIN_NETWORK="testnet";;
+				BITCOIN_NETWORK="testnet3";;
+			"testnet4")
+				BITCOIN_NETWORK="testnet4";;
 			"signet")
 				BITCOIN_NETWORK="signet";;
 			"regtest")
@@ -64,11 +66,16 @@ fi
 
 if [[ "${APP_BITCOIN_NETWORK}" == "mainnet" ]]; then
 	BITCOIN_CHAIN="main"
-elif [[ "${APP_BITCOIN_NETWORK}" == "testnet" ]]; then
+elif [[ "${APP_BITCOIN_NETWORK}" == "testnet3" ]]; then
 	BITCOIN_CHAIN="test"
 	# export APP_BITCOIN_RPC_PORT="18332"
 	# export APP_BITCOIN_P2P_PORT="18333"
 	# export APP_BITCOIN_TOR_PORT="18334"
+elif [[ "${APP_BITCOIN_NETWORK}" == "testnet4" ]]; then
+	BITCOIN_CHAIN="testnet4"
+	# export APP_BITCOIN_RPC_PORT="48332"
+	# export APP_BITCOIN_P2P_PORT="48333"
+	# export APP_BITCOIN_TOR_PORT="48334"
 elif [[ "${APP_BITCOIN_NETWORK}" == "signet" ]]; then
 	BITCOIN_CHAIN="signet"
 	# export APP_BITCOIN_RPC_PORT="38332"
@@ -94,6 +101,7 @@ BIN_ARGS=()
 # BIN_ARGS+=( "-bind=${APP_BITCOIN_NODE_IP}" )
 # BIN_ARGS+=( "-port=${APP_BITCOIN_P2P_PORT}" )
 # BIN_ARGS+=( "-rpcport=${APP_BITCOIN_RPC_PORT}" )
+# We hardcode the ports p2p and rpc ports to always be the same for all networks
 BIN_ARGS+=( "-port=8333" )
 BIN_ARGS+=( "-rpcport=8332" )
 BIN_ARGS+=( "-rpcbind=${APP_BITCOIN_NODE_IP}" )
@@ -112,6 +120,8 @@ BIN_ARGS+=( "-zmqpubsequence=tcp://0.0.0.0:${APP_BITCOIN_ZMQ_SEQUENCE_PORT}" )
 # BIN_ARGS+=( "-rpcworkqueue=128" )
 # We can remove depratedrpc=create_bdb in a future update once Jam (JoinMarket) implements descriptor wallet support
 BIN_ARGS+=( "-deprecatedrpc=create_bdb" )
+# Required for LND compatibility. We can remove deprecatedrpc=warnings in a future update once LND releases a version with this fix: https://github.com/btcsuite/btcd/pull/2245
+BIN_ARGS+=( "-deprecatedrpc=warnings" )
 
 export APP_BITCOIN_COMMAND=$(IFS=" "; echo "${BIN_ARGS[@]}")
 
