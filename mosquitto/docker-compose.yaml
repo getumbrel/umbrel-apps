@@ -1,0 +1,18 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: mosquitto_broker_1
+      APP_PORT: 9001
+    container_name: mosquitto_app_proxy_1
+  broker:
+    image: eclipse-mosquitto
+    restart: on-failure
+    ports:
+      - '1883:1883'
+      - '9001:9001'
+    volumes:
+      - ${APP_DATA_DIR}/config:/mosquitto/config:rw
+      - ${APP_DATA_DIR}/data:/mosquitto/data:rw
+      - ${APP_DATA_DIR}/log:/mosquitto/log:rw
+      - ${APP_DATA_DIR}/www:/mosquitto/www:r
+    container_name: mosquitto_broker_1
