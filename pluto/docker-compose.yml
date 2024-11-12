@@ -1,26 +1,89 @@
 services:
   app_proxy:
     environment:
-      APP_HOST: pluto_frontend_1
-      APP_PORT: 7777
+      APP_HOST: pluto_frontend_1 # Hostname of the pluto application
+      APP_PORT: 7777 # Port number of the pluto application
+    # ports:
+    #   - "7777:7777" # Proxy listens on port 7780 on the host and forwards to APP_HOST:APP_PORT
     depends_on:
       - frontend
     restart: on-failure
 
+  # mock:
+  #   # build:
+  #   #   context: .
+  #   #   dockerfile: mock/Dockerfile
+  #   image: registry.gitlab.com/plutomining/pluto/pluto-mock:0.6.0-beta.38@sha256:a85eb47feadd3bdf8c9ccd3363dc6a16179553ca2ceedb63b75092d90a94a894 # Docker image with specific version
+  #   ports:
+  #     - "7770:7770" # Map port 7770 on the host to port 7770 on the container
+  #     - "7751:7751" # Map port 7751 on the host to port 7751 on the container
+  #     - "7752:7752" # Map port 7752 on the host to port 7752 on the container
+  #     - "7753:7753" # Map port 7753 on the host to port 7753 on the container
+  #     - "7754:7754" # Map port 7754 on the host to port 7754 on the container
+  #     - "7755:7755" # Map port 7755 on the host to port 7755 on the container
+  #     - "7756:7756" # Map port 7756 on the host to port 7756 on the container
+  #     - "7757:7757" # Map port 7757 on the host to port 7757 on the container
+  #     - "7758:7758" # Map port 7758 on the host to port 7758 on the container
+  #     - "7759:7759" # Map port 7779 on the host to port 7779 on the container
+  #     - "7760:7760" # Map port 7760 on the host to port 7760 on the container
+  #   pid: host
+
+  #   # Container restart policy - restart unless manually stopped
+  #   restart: on-failure
+  #   # env_file:
+  #   #   - mock/.env.local
+  #   environment:
+  #     - LISTING_PORT=7770
+  #     - PORTS=7751,7752,7753,7754,7755,7756,7757,7758,7759,7760
+  #     - LOGS_PUB_ENABLED=false
+  #   # volumes:
+  #   #   - ./common/logger:/common/logger:ro # Monta il modulo in read-only
+  #   #   - ./common/interfaces:/common/interfaces:ro # Monta il modulo in read-only
+  #   #   - ./mock:/home/node/app/
+  #   user: "1000:1000"
+
   discovery:
-    image: registry.gitlab.com/plutomining/pluto/pluto-discovery:0.6.0-beta.33@sha256:f8dfd2dc01fea3c2c3d06fd9b014ba3849e2120aafdce0301a4c86b25ec30a2f
+    # build:
+    #   context: .
+    #   dockerfile: discovery/Dockerfile
+    image: registry.gitlab.com/plutomining/pluto/pluto-discovery:0.6.0-beta.38@sha256:74a0e0516d6604cd33bec74cac62dbd96250689c99ea412fd1074f67cbb46f2c # Docker image with specific version
     network_mode: "host"
+    # ports:
+    #   - "7775:7775" # Map port 7775 on the host to port 7775 on the container
     pid: host
+    cap_add:
+      - NET_RAW
+      - NET_ADMIN
+
+    # Container restart policy - restart unless manually stopped
     restart: on-failure
+    # env_file:
+    #   - discovery/.env.local
     environment:
       - PORT=7775
+      # - DETECT_MOCK_DEVICES=true
+      # - MOCK_DISCOVERY_HOST=http://172.17.0.1:7770
     volumes:
-      - ${APP_DATA_DIR}/data/leveldb:/app/data
+      # - ./common/interfaces:/common/interfaces:ro # Monta il modulo in read-only
+      # - ./common/db:/common/db:ro # Monta il modulo in read-only
+      # - ./common/logger:/common/logger:ro # Monta il modulo in read-only
+      # - ./discovery:/home/node/app/
+      - ${APP_DATA_DIR}/data/leveldb:/home/node/app/data
+    user: "1000:1000"
 
   backend:
-    image: registry.gitlab.com/plutomining/pluto/pluto-backend:0.6.0-beta.33@sha256:fc7f787ce2f8cbe1ee75c72eca585f419bb02d04e7ec52552c813b65ac227865
+    # build:
+    #   context: .
+    #   dockerfile: backend/Dockerfile
+    image: registry.gitlab.com/plutomining/pluto/pluto-backend:0.6.0-beta.38@sha256:eab15df7e0e5da978d1d684ff6c00e8f9ab36276d747c5257c132962e69b817d # Docker image with specific version
+    # ports:
+    #   - "7776:7776" # Map port 7776 on the host to port 7776 on the container
     pid: host
+
+    # Container restart policy - restart unless manually stopped
     restart: on-failure
+    # env_file:
+    #   - backend/.env.local
     environment:
       - PORT=7776
       - AUTO_LISTEN=true
@@ -28,35 +91,60 @@ services:
       - GF_HOST=http://pluto_grafana_1:3000
       - DELETE_DATA_ON_DEVICE_REMOVE=true
     volumes:
-      - ${APP_DATA_DIR}/data/leveldb:/app/data
-      - ${APP_DATA_DIR}/data/grafana:/app/grafana
+      # - ./common/utils:/common/utils:ro # Monta il modulo in read-only
+      # - ./common/interfaces:/common/interfaces:ro # Monta il modulo in read-only
+      # - ./common/db:/common/db:ro # Monta il modulo in read-only
+      # - ./common/logger:/common/logger:ro # Monta il modulo in read-only
+      # - ./backend:/home/node/app/
+      # - ./grafana/templates:/home/node/app/grafana_templates/
+      - ${APP_DATA_DIR}/data/leveldb:/home/node/app/data
+      - ${APP_DATA_DIR}/data/grafana:/home/node/app/grafana
     depends_on:
       prometheus:
         condition: service_healthy
       grafana:
         condition: service_healthy
+    user: "1000:1000"
 
   frontend:
-    image: registry.gitlab.com/plutomining/pluto/pluto-frontend:0.6.0-beta.35@sha256:994b0e374a9401ba4df5ee2cdff9c1bf6791b6557df79ad139b443cd3b410239
+    # build:
+    #   context: .
+    #   dockerfile: frontend/Dockerfile
+    image: registry.gitlab.com/plutomining/pluto/pluto-frontend:0.6.0-beta.38@sha256:245746b9380652b8f14b4386d300201e4d6fe0b59a14090223cfb6b2295f6672 # Docker image with specific version
+    # ports:
+    #   - "7777:7777" # Map port 7777 on the host to port 7777 on the container
+    # Use the host's PID namespace to allow container processes to be visible on the host
     pid: host
+
+    # Container restart policy - restart unless manually stopped
     restart: on-failure
     depends_on:
       - backend
+    # env_file:
+    #   - frontend/.env.local
     environment:
       - PORT=7777
       - GF_HOST=http://pluto_grafana_1:3000
       - BACKEND_DESTINATION_HOST=http://pluto_backend_1:7776
     volumes:
       - ${APP_DATA_DIR}/umbrel-app.yml:/tmp/umbrel-app.yml:ro
+    #   - ./common/utils:/common/utils:ro # Monta il modulo in read-only
+    #   - ./common/interfaces:/common/interfaces:ro # Monta il modulo in read-only
+    #   - ${APP_DATA_DIR}/frontend:/home/node/app/
+    user: "1000:1000"
 
   prometheus:
-    image: prom/prometheus:v2.53.1@sha256:f20d3127bf2876f4a1df76246fca576b41ddf1125ed1c546fbd8b16ea55117e6
+    image: prom/prometheus:v2.53.1@sha256:994b0e374a9401ba4df5ee2cdff9c1bf6791b6557df79ad139b443cd3b410239
     volumes:
       - ${APP_DATA_DIR}/data/prometheus:/prometheus
       - ${APP_DATA_DIR}/data/conf/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    # ports:
+    #   - "9090:9090"
     pid: host
     healthcheck:
-      test: ["CMD-SHELL", "wget --spider --quiet http://localhost:9090/-/ready || exit 1"]
+      test:
+        - "CMD-SHELL"
+        - "wget --spider --quiet http://localhost:9090/-/ready || exit 1"
       interval: 10s
       timeout: 5s
       retries: 5
@@ -64,6 +152,8 @@ services:
 
   grafana:
     image: grafana/grafana:11.1.2@sha256:3d605614c7c7ce2e96f71abaccd09eb3cfacef48fea5fda4b02a555c95a73edc
+    # ports:
+    #   - "7778:3000"
     pid: host
     environment:
       - GF_SECURITY_ADMIN_USER=admin
@@ -75,11 +165,13 @@ services:
       - ${APP_DATA_DIR}/data/conf/grafana/dashboard.yaml:/etc/grafana/provisioning/dashboards/main.yaml
       - ${APP_DATA_DIR}/data/conf/grafana/datasource.yaml:/etc/grafana/provisioning/datasources/main.yaml
     healthcheck:
-      test: ["CMD-SHELL", "wget --spider --quiet http://localhost:3000/api/health || exit 1"]
+      test:
+        - "CMD-SHELL"
+        - "wget --spider --quiet http://localhost:3000/api/health || exit 1"
       interval: 10s
       timeout: 5s
       retries: 5
     depends_on:
       prometheus:
-        condition: service_healthy
+        condition: service_healthy # Attende che prometheus sia in stato "healthy"
     user: "472:472"
