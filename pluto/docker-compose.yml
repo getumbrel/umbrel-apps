@@ -1,0 +1,168 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: pluto_frontend_1 # Hostname of the pluto application
+      APP_PORT: 7777 # Port number of the pluto application
+    # ports:
+    #   - "7777:7777" # Proxy listens on port 7780 on the host and forwards to APP_HOST:APP_PORT
+    depends_on:
+      - frontend
+    restart: unless-stopped
+
+  # mock:
+  #   # build:
+  #   #   context: .
+  #   #   dockerfile: mock/Dockerfile
+  #   image: registry.gitlab.com/plutomining/pluto/pluto-mock:0.6.0-beta.33 # Docker image with specific version
+  #   ports:
+  #     - "7770:7770" # Map port 7770 on the host to port 7770 on the container
+  #     - "7751:7751" # Map port 7751 on the host to port 7751 on the container
+  #     - "7752:7752" # Map port 7752 on the host to port 7752 on the container
+  #     - "7753:7753" # Map port 7753 on the host to port 7753 on the container
+  #     - "7754:7754" # Map port 7754 on the host to port 7754 on the container
+  #     - "7755:7755" # Map port 7755 on the host to port 7755 on the container
+  #     - "7756:7756" # Map port 7756 on the host to port 7756 on the container
+  #     - "7757:7757" # Map port 7757 on the host to port 7757 on the container
+  #     - "7758:7758" # Map port 7758 on the host to port 7758 on the container
+  #     - "7759:7759" # Map port 7779 on the host to port 7779 on the container
+  #     - "7760:7760" # Map port 7760 on the host to port 7760 on the container
+  #   pid: host
+
+  #   # Container restart policy - restart unless manually stopped
+  #   restart: unless-stopped
+  #   # env_file:
+  #   #   - mock/.env.local
+  #   environment:
+  #     - LISTING_PORT=7770
+  #     - PORTS=7751,7752,7753,7754,7755,7756,7757,7758,7759,7760
+  #     - LOGS_PUB_ENABLED=false
+  #   # volumes:
+  #   #   - ./common/logger:/common/logger:ro # Monta il modulo in read-only
+  #   #   - ./common/interfaces:/common/interfaces:ro # Monta il modulo in read-only
+  #   #   - ./mock:/app/
+
+  discovery:
+    # build:
+    #   context: .
+    #   dockerfile: discovery/Dockerfile
+    image: registry.gitlab.com/plutomining/pluto/pluto-discovery:0.6.0-beta.33 # Docker image with specific version
+    network_mode: "host"
+    # ports:
+    #   - "7775:7775" # Map port 7775 on the host to port 7775 on the container
+    pid: host
+
+    # Container restart policy - restart unless manually stopped
+    restart: unless-stopped
+    # env_file:
+    #   - discovery/.env.local
+    environment:
+      - PORT=7775
+      # - DETECT_MOCK_DEVICES=true
+      # - MOCK_DISCOVERY_HOST=http://172.17.0.1:7770
+    volumes:
+      # - ./common/interfaces:/common/interfaces:ro # Monta il modulo in read-only
+      # - ./common/db:/common/db:ro # Monta il modulo in read-only
+      # - ./common/logger:/common/logger:ro # Monta il modulo in read-only
+      # - ./discovery:/app/
+      - ${APP_DATA_DIR}/data/leveldb:/app/data
+
+  backend:
+    # build:
+    #   context: .
+    #   dockerfile: backend/Dockerfile
+    image: registry.gitlab.com/plutomining/pluto/pluto-backend:0.6.0-beta.33 # Docker image with specific version
+    # ports:
+    #   - "7776:7776" # Map port 7776 on the host to port 7776 on the container
+    pid: host
+
+    # Container restart policy - restart unless manually stopped
+    restart: unless-stopped
+    # env_file:
+    #   - backend/.env.local
+    environment:
+      - PORT=7776
+      - AUTO_LISTEN=true
+      - DISCOVERY_SERVICE_HOST=http://172.17.0.1:7775
+      - GF_HOST=http://pluto_grafana_1:3000
+      - DELETE_DATA_ON_DEVICE_REMOVE=true
+    volumes:
+      # - ./common/utils:/common/utils:ro # Monta il modulo in read-only
+      # - ./common/interfaces:/common/interfaces:ro # Monta il modulo in read-only
+      # - ./common/db:/common/db:ro # Monta il modulo in read-only
+      # - ./common/logger:/common/logger:ro # Monta il modulo in read-only
+      # - ./backend:/app/
+      # - ./grafana/templates:/app/grafana_templates/
+      - ${APP_DATA_DIR}/data/leveldb:/app/data
+      - ${APP_DATA_DIR}/data/grafana:/app/grafana
+    depends_on:
+      prometheus:
+        condition: service_healthy
+      grafana:
+        condition: service_healthy
+
+  frontend:
+    # build:
+    #   context: .
+    #   dockerfile: frontend/Dockerfile
+    image: registry.gitlab.com/plutomining/pluto/pluto-frontend:0.6.0-beta.35 # Docker image with specific version
+    # ports:
+    #   - "7777:7777" # Map port 7777 on the host to port 7777 on the container
+    # Use the host's PID namespace to allow container processes to be visible on the host
+    pid: host
+
+    # Container restart policy - restart unless manually stopped
+    restart: unless-stopped
+    depends_on:
+      - backend
+    # env_file:
+    #   - frontend/.env.local
+    environment:
+      - PORT=7777
+      - GF_HOST=http://pluto_grafana_1:3000
+      - BACKEND_DESTINATION_HOST=http://pluto_backend_1:7776
+    volumes:
+      - ${APP_DATA_DIR}/umbrel-app.yml:/tmp/umbrel-app.yml:ro
+    #   - ./common/utils:/common/utils:ro # Monta il modulo in read-only
+    #   - ./common/interfaces:/common/interfaces:ro # Monta il modulo in read-only
+    #   - ${APP_DATA_DIR}/frontend:/app/
+
+  prometheus:
+    image: prom/prometheus:v2.53.1
+    volumes:
+      - ${APP_DATA_DIR}/data/prometheus:/prometheus
+      - ${APP_DATA_DIR}/data/conf/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    # ports:
+    #   - "9090:9090"
+    pid: host
+    healthcheck:
+      test:
+        - "CMD-SHELL"
+        - "wget --spider --quiet http://localhost:9090/-/ready || exit 1"
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  grafana:
+    image: grafana/grafana:11.1.2
+    # ports:
+    #   - "7778:3000"
+    pid: host
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=${APP_PASSWORD}
+      - GF_INSTALL_PLUGINS=marcusolsson-treemap-panel
+    volumes:
+      - ${APP_DATA_DIR}/data/grafana:/var/lib/grafana
+      - ${APP_DATA_DIR}/data/conf/grafana/grafana.ini:/etc/grafana/grafana.ini
+      - ${APP_DATA_DIR}/data/conf/grafana/dashboard.yaml:/etc/grafana/provisioning/dashboards/main.yaml
+      - ${APP_DATA_DIR}/data/conf/grafana/datasource.yaml:/etc/grafana/provisioning/datasources/main.yaml
+    healthcheck:
+      test:
+        - "CMD-SHELL"
+        - "wget --spider --quiet http://localhost:3000/api/health || exit 1"
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    depends_on:
+      prometheus:
+        condition: service_healthy # Attende che prometheus sia in stato "healthy"
