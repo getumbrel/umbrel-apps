@@ -59,7 +59,7 @@ services:
     image: prom/prometheus:v2.53.1@sha256:f20d3127bf2876f4a1df76246fca576b41ddf1125ed1c546fbd8b16ea55117e6
     volumes:
       - ${APP_DATA_DIR}/data/prometheus:/prometheus
-      - ${APP_DATA_DIR}/data/conf/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ${APP_DATA_DIR}/conf/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
     pid: host
     healthcheck:
       test:
@@ -79,9 +79,9 @@ services:
       - GF_INSTALL_PLUGINS=marcusolsson-treemap-panel
     volumes:
       - ${APP_DATA_DIR}/data/grafana:/var/lib/grafana
-      - ${APP_DATA_DIR}/data/conf/grafana/grafana.ini:/etc/grafana/grafana.ini
-      - ${APP_DATA_DIR}/data/conf/grafana/dashboard.yaml:/etc/grafana/provisioning/dashboards/main.yaml
-      - ${APP_DATA_DIR}/data/conf/grafana/datasource.yaml:/etc/grafana/provisioning/datasources/main.yaml
+      - ${APP_DATA_DIR}/conf/grafana/grafana.ini:/etc/grafana/grafana.ini
+      - ${APP_DATA_DIR}/conf/grafana/dashboard.yaml:/etc/grafana/provisioning/dashboards/main.yaml
+      - ${APP_DATA_DIR}/conf/grafana/datasource.yaml:/etc/grafana/provisioning/datasources/main.yaml
     healthcheck:
       test:
         - "CMD-SHELL"
