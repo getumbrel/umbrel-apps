@@ -1,0 +1,43 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: mattermost_app_1
+      APP_PORT: 8000
+      PROXY_AUTH_ADD: "false"
+  
+  app:
+    image: alexlack/mattermost-app:v10.1.2@sha256:9f05d63488b580369bd74a166d40e3f1782842de5261642b3938c758043c850f
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      MM_USERNAME: admin
+      MM_PASSWORD: admin
+      MM_DBNAME: mattermost
+    volumes:
+      - ${APP_DATA_DIR}/data/app/mattermost/config:/mattermost/config:rw
+      - ${APP_DATA_DIR}/data/app/mattermost/data:/mattermost/data:rw
+      - ${APP_DATA_DIR}/data/app/mattermost/logs:/mattermost/logs:rw
+      - ${APP_DATA_DIR}/data/app/mattermost/plugins:/mattermost/plugins:rw
+      - ${APP_DATA_DIR}/data/app/mattermost/client-plugins:/mattermost/client/plugins:rw
+      - /etc/localtime:/etc/localtime:ro
+    ports:
+      - "8443:8443/tcp" # WebRTC over tcp
+      - "8443:8443/udp" # WebRTC over udp
+    depends_on:
+      - db
+
+  db:
+    image: alexlack/mattermost-db:v10.1.2@sha256:f75b632696b7d43f85be5c2bd3ac417568c1796819c4444cd3045360ff2bc084
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      MM_USERNAME: admin
+      MM_PASSWORD: admin
+      MM_DBNAME: mattermost
+    volumes:
+      - ${APP_DATA_DIR}/data/db:/var/lib/postgresql/data
+      - /etc/localtime:/etc/localtime:ro
