@@ -1,0 +1,23 @@
+version: '3.7'
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: super-productivity_web_1
+      APP_PORT: 80
+
+  web:
+    image: johannesjo/super-productivity:v10.1.1@sha256:85abc19361a41122865981613d640ebb57ed8692f8e15e43882820f2bd1ec925
+    restart: on-failure
+    environment:
+      - WEBDAV_BACKEND=http://webdav # Optional
+
+  # Optional: WebDAV backend server
+  # (used with the WEBDAV_BACKEND environment variable)
+  webdav:
+    image: hacdias/webdav:v5.4@sha256:afa0a5a0e7dbe3d6040786777e837beb836d1919cdfe0099e640fce86c2fa3df
+    ports:
+      - 8021:80
+    volumes:
+      - ${APP_DATA_DIR}/webdav/webdav.yaml:/config.yml:ro
+      - ${APP_DATA_DIR}/data:/data
