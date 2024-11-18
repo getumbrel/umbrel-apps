@@ -7,20 +7,21 @@ services:
       APP_PORT: 3006
 
   app:
-    image: ghcr.io/sahilph/umbrel-fulcrum:sha-349e246@sha256:5d565f3b15f7bbeab28c027320ffc84d647e7816cd007fd84077c0db05c15393
+    image: nmfretz/umbrel-fulcrum:1.0.0@sha256:fd8a45f757e11ae1526b650ee5179d25f469d9b371163466fead08c70aab9d41
     depends_on:
       - fulcrum
     restart: on-failure
     environment:
       ELECTRUM_HIDDEN_SERVICE: "${APP_FULCRUM_RPC_HIDDEN_SERVICE}"
       ELECTRUM_LOCAL_SERVICE: "${DEVICE_DOMAIN_NAME}"
-      ELECTRUM_PORT: ${APP_FULCRUM_NODE_PORT}
-      FULCRUM_HOST: "${APP_FULCRUM_NODE_IP}"
-      FULCRUM_PORT: "${APP_FULCRUM_NODE_PORT}"
+      ELECTRUM_HOST: "${APP_FULCRUM_NODE_IP}"
+      ELECTRUM_PUBLIC_CONNECTION_PORT: ${APP_FULCRUM_NODE_PORT}
       BITCOIN_HOST: "${APP_BITCOIN_NODE_IP}"
       RPC_USER: "${APP_BITCOIN_RPC_USER}"
       RPC_PASSWORD: "${APP_BITCOIN_RPC_PASS}"
       RPC_PORT: "${APP_BITCOIN_RPC_PORT}"
+    volumes:
+      - "${APP_DATA_DIR}/data/fulcrum-logs:/fulcrum-logs"
     networks:
       default:
         ipv4_address: $APP_FULCRUM_IP
@@ -31,14 +32,16 @@ services:
     user: "1000:1000"
     environment:
       TCP: 0.0.0.0:${APP_FULCRUM_NODE_PORT}
+      ADMIN: 0.0.0.0:${APP_FULCRUM_ADMIN_PORT}
       BITCOIND: ${APP_BITCOIN_NODE_IP}:${APP_BITCOIN_RPC_PORT}
       RPCUSER: ${APP_BITCOIN_RPC_USER}
       RPCPASSWORD: ${APP_BITCOIN_RPC_PASS}
       PEERING: "false"
       ANNOUNCE: "false"
-    command: Fulcrum _ENV_
+    command: sh -c 'Fulcrum -D /data _ENV_ 2>&1 | tee /logs/fulcrum.log'
     volumes:
       - "${APP_DATA_DIR}/data/fulcrum:/data"
+      - "${APP_DATA_DIR}/data/fulcrum-logs:/logs"
     ports:
       - "${APP_FULCRUM_NODE_PORT}:${APP_FULCRUM_NODE_PORT}"
     networks:
