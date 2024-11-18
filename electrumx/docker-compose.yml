@@ -1,0 +1,53 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: $APP_ELECTRUMX_IP
+      APP_PORT: 3007
+
+  app:
+    image: ghcr.io/getumbrel/umbrel-electrumx:1.0.0@sha256:2352ce668f722118e248c7b4458a6ea4509e5312e3cf1ee3963ddea35d395c09
+    depends_on:
+      - electrumx
+    restart: on-failure
+    environment:
+      ELECTRUM_HIDDEN_SERVICE: "${APP_ELECTRUMX_RPC_HIDDEN_SERVICE}"
+      ELECTRUM_LOCAL_SERVICE: "${DEVICE_DOMAIN_NAME}"
+      ELECTRUM_HOST: "${APP_ELECTRUMX_NODE_IP}"
+      ELECTRUM_PUBLIC_CONNECTION_PORT: "${APP_ELECTRUMX_PUBLIC_CONNECTION_PORT}"
+      ELECTRUM_RPC_PORT: "${APP_ELECTRUMX_RPC_PORT}"
+      BITCOIN_HOST: "${APP_BITCOIN_NODE_IP}"
+      RPC_USER: "${APP_BITCOIN_RPC_USER}"
+      RPC_PASSWORD: "${APP_BITCOIN_RPC_PASS}"
+      RPC_PORT: "${APP_BITCOIN_RPC_PORT}"
+    networks:
+      default:
+        ipv4_address: $APP_ELECTRUMX_IP
+
+  electrumx:
+    image: lukechilds/electrumx:v1.16.0@sha256:2949784536f8f85af229004e12e5b5c3a1d7428918a492f77b4e958035c2ae2a
+    restart: always
+    init: true
+    environment:
+      DAEMON_URL: "http://${APP_BITCOIN_RPC_USER}:${APP_BITCOIN_RPC_PASS}@${APP_BITCOIN_NODE_IP}:${APP_BITCOIN_RPC_PORT}"
+      COIN: "BitcoinSegwit"
+      # https://github.com/spesmilo/electrumx/blob/master/electrumx/lib/coins.py
+      NET: $APP_ELECTRUMX_BITCOIN_NETWORK
+    volumes:
+      - "${APP_DATA_DIR}/data/electrumx:/data"
+    ports:
+      - "${APP_ELECTRUMX_PUBLIC_CONNECTION_PORT}:${APP_ELECTRUMX_NODE_PORT}"
+    networks:
+      default:
+        ipv4_address: $APP_ELECTRUMX_NODE_IP
+
+  tor:
+    image: getumbrel/tor:0.4.7.8@sha256:2ace83f22501f58857fa9b403009f595137fa2e7986c4fda79d82a8119072b6a
+    user: "1000:1000"
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/torrc:/etc/tor/torrc:ro
+      - ${TOR_DATA_DIR}:/data
+    environment:
+      HOME: "/tmp"
