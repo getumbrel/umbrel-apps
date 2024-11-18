@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
 
+# If ${APP_DATA_DIR}/data/fulcrum-logs doesn't exist, we create it and set 1000:1000 ownership
+if [[ ! -d "${APP_DATA_DIR}/data/fulcrum-logs" ]]; then
+  mkdir -p "${APP_DATA_DIR}/data/fulcrum-logs"
+  chown 1000:1000 "${APP_DATA_DIR}/data/fulcrum-logs"
+fi
+
 # Delay booting Fulcrum until the RPC Tor Hidden Service is ready
 
 HIDDEN_SERVICE_FILE="${TOR_DATA_DIR}/app-${APP_ID}-rpc/hostname"
