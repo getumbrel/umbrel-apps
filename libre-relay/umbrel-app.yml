@@ -1,0 +1,72 @@
+manifestVersion: 1.1
+id: libre-relay
+implements:
+  - bitcoin
+category: bitcoin
+name: Libre Relay
+version: "28.0"
+tagline: Run your personal node powered by Libre Relay
+description: >-
+  > "[Bitcoin] takes advantage of the nature of information being easy to spread but hard to stifle." - Satoshi Nakamoto
+
+
+  While Bitcoin Core's mempool policies have been loosened over the years, there still remains some paternalism in what kinds of transactions Bitcoin Core allows. For example, Bitcoin Core maintains the pointless OP_Return size limit, even though it's just one of many ways to publish data in Bitcoin transactions; Libre Relay doesn't. Additionally, there's been constant pressure on Core to block more types of transactions for various reasons, such as censoring "spam".
+
+
+  Libre Relay is a fork of Bitcoin Core that does two things:
+    - Removes paternalistic transaction filtering.
+    - Peers with other Libre Relay nodes to ensure transactions that would have been blocked by Core can reach miners such as F2Pool and MARA anyway.
+
+  While this is of course good for people whose transactions are being blocked by Core, it's also good for Core itself: by having an alternative, when people try to pressure Core into blocking more transactions, Core can always point out that censorship doesn't work.
+
+
+  Finally, Libre Relay is also being used to develop Replace-By-Fee-Rate, a transaction pinning solution that mitigates pinning attacks on L2 protocols in a simple and effective way.
+developer: Peter Todd
+website: https://umbrel.com
+dependencies: []
+repo: https://github.com/petertodd/bitcoin
+support: https://github.com/petertodd/bitcoin/issues
+port: 2108
+gallery:
+  - 1.jpg
+  - 2.jpg
+  - 3.jpg
+path: ""
+defaultPassword: ""
+releaseNotes: ""
+widgets:
+  - id: "stats"
+    type: "four-stats"
+    refresh: "5s"
+    endpoint: "server:3005/v1/bitcoind/widgets/stats"
+    link: ""
+    example:
+      type: "four-stats"
+      link: ""
+      items:
+        - title: "Connections"
+          text: "11"
+          subtext: "peers"
+        - title: "Mempool"
+          text: "257"
+          subtext: "MB"
+        - title: "Hashrate"
+          text: "590"
+          subtext: "EH/s"
+        - title: "Blockchain size"
+          text: "600"
+          subtext: "GB"
+  - id: "sync"
+    type: "text-with-progress"
+    refresh: "2s"
+    endpoint: "server:3005/v1/bitcoind/widgets/sync"
+    link: ""
+    example:
+      type: "text-with-progress"
+      link: ""
+      title: "Blockchain sync"
+      text: "83%"
+      progressLabel: "In progress"
+      progress: 0.83
+submitter: Peter Todd
+submission: https://github.com/getumbrel/umbrel-apps/pull/1815
