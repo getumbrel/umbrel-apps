@@ -7,7 +7,7 @@ services:
       APP_PORT: 3005
   
   server:
-    image: ghcr.io/retropex/umbrel-bitcoin-knots:v0.5.6@sha256:ea2dbea78c257b8670035f1fed389ced6071b95491ff22058300016819d9013a
+    image: ghcr.io/retropex/umbrel-bitcoin-knots:v0.5.7@sha256:fc5ef209bd5443087416dae6efaf57e79b6b13af154ab9bd1b5bf6f0922e128b
     depends_on: [bitcoind]
     restart: on-failure
     volumes:
@@ -16,14 +16,17 @@ services:
     environment:
       PORT: "3005"
       BITCOIN_HOST: "${APP_BITCOIN_KNOTS_NODE_IP}"
+      # used to connect to internal bitcoind port
       RPC_PORT: "${APP_BITCOIN_KNOTS_INTERNAL_RPC_PORT}"
-      BITCOIN_RPC_PORT: "${APP_BITCOIN_KNOTS_INTERNAL_RPC_PORT}"
+      # displayed to user in connection details for external connections
+      BITCOIN_RPC_PORT: "${APP_BITCOIN_KNOTS_RPC_PORT}"
       RPC_USER: "${APP_BITCOIN_KNOTS_RPC_USER}"
       BITCOIN_RPC_USER: "${APP_BITCOIN_KNOTS_RPC_USER}"
       RPC_PASSWORD: "${APP_BITCOIN_KNOTS_RPC_PASS}"
       BITCOIN_RPC_PASSWORD: "${APP_BITCOIN_KNOTS_RPC_PASS}"
       BITCOIN_RPC_HIDDEN_SERVICE: "${APP_BITCOIN_KNOTS_RPC_HIDDEN_SERVICE}"
       BITCOIN_P2P_HIDDEN_SERVICE: "${APP_BITCOIN_KNOTS_P2P_HIDDEN_SERVICE}"
+      # displayed to user in connection details for external connections
       BITCOIN_P2P_PORT: "${APP_BITCOIN_KNOTS_P2P_PORT}"
       DEVICE_DOMAIN_NAME: "${DEVICE_DOMAIN_NAME}"
       BITCOIN_DEFAULT_NETWORK: "${BITCOIN_KNOTS_DEFAULT_NETWORK:-mainnet}"
