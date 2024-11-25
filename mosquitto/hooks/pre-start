@@ -11,4 +11,6 @@ if [ -f "${CONFIG_FILE}" ]; then
 else
   echo "configuration file NOT present, defaults will be copied."
   cp "${CONFIG_FILE}.default" "${CONFIG_FILE}"
+  # set correct owner
+  chown umbrel:umbrel "${CONFIG_FILE}"
 fi
