@@ -1,0 +1,131 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# This script updates Stirling PDF by first migrating older versions (< 0.28.0) to 0.28.3 first.
+# https://github.com/Stirling-Tools/Stirling-PDF/releases
+
+APP_DATA_DIR="$(readlink -f $(dirname "${BASH_SOURCE[0]}")/..)"
+
+STIRLING_PDF_SETTINGS_FILE="${APP_DATA_DIR}/data/configs/settings.yml"
+
+APP_COMPOSE_FILE="${APP_DATA_DIR}/docker-compose.yml"
+APP_COMPOSE_BACKUP_FILE="${APP_DATA_DIR}/docker-compose.yml.bak"
+
+# List of versions on migration path
+# stirling pdf on the umbrel app store was initially released with version 0.25.0
+VERSIONS=()
+VERSIONS+=("0.25.0")
+VERSIONS+=("0.26.1")
+VERSIONS+=("0.27.0")
+
+# Image to migrate to from older versions before migrating to the latest version
+IMAGE="frooodle/s-pdf:0.28.3@sha256:3c17244e2910f3ffd014562e20d41943a5d092c7005adad069bbaddcc5c7b27e"
+
+find_index() {
+    local -r value="${1}"
+    shift
+    local -r array=("$@")
+
+    for i in "${!array[@]}"; do
+        if [[ "${array[$i]}" == "${value}" ]]; then
+            echo $i
+            exit
+        fi
+    done
+
+    echo -1
+}
+
+wait_for_startup_complete() {
+    local start_time=$(date +%s)
+    local max_wait_time=$((1 * 60 * 60)) # 1 hour in seconds
+
+    while true; do
+        # We set some max wait time to prevent an infinite loop if something has gone wrong.
+        # We may want to handle this better in the future.
+        local current_time=$(date +%s)
+        local elapsed_time=$((current_time - start_time))
+        if [[ ${elapsed_time} -ge ${max_wait_time} ]]; then
+            echo "Maximum migration wait time of 1 hour exceeded. Exiting as something is likely wrong..."
+            exit 1
+        fi
+
+        http_response=$(curl -sL -w '%{http_code}' -o /dev/null localhost:27829)
+        if [[ ${http_response} -eq 200 ]]; then
+            echo "Stirling PDF is up and running"
+            return
+        fi
+
+        echo "Waiting 30 seconds before checking app status again..."
+        sleep 30
+    done
+}
+
+check_compose_file() {
+    local -r image="${1}"
+
+    stirling_pdf_image=$(cat "${APP_COMPOSE_FILE}" 2>/dev/null | yq '.services.app.image' || true)
+
+    if [[ "${stirling_pdf_image}" != "${image}" ]]; then
+        echo "The docker-compose.yml now looks bad. Restoring..."
+
+        mv "${APP_COMPOSE_BACKUP_FILE}" "${APP_COMPOSE_FILE}"
+
+        exit
+    fi
+}
+
+get_version() {
+    # get the image digest of the latest stirlingtools/stirling-pdf image
+    image_digest=$(docker images -q stirlingtools/stirling-pdf | head -n 1)
+    # get the version from the label of the image
+    docker inspect --format '{{ index .Config.Labels "org.opencontainers.image.version"}}' ${image_digest}
+}
+
+# Main script execution starts here
+# ================================
+
+# If a settings file does not yet exist
+# Then it's likely a new install
+# Therefore there is nothing to do
+if [[ ! -f "${STIRLING_PDF_SETTINGS_FILE}" ]]; then
+    exit
+fi
+
+current_version=$(get_version)
+echo "Current Stirling PDF version: ${current_version}"
+
+# Check if active version is in migration list
+active_version_idx=$(find_index "${current_version}" "${VERSIONS[@]}")
+if [[ "${active_version_idx}" == "-1" ]]; then
+    echo "Active version does not require migration"
+    exit
+fi
+
+echo "Migrating to version: ${version} (${IMAGE})"
+echo
+
+cp --archive "${APP_COMPOSE_FILE}" "${APP_COMPOSE_BACKUP_FILE}"
+
+yq -i ".services.app.image = \"${IMAGE}\"" "${APP_COMPOSE_FILE}"
+
+check_compose_file "${image}"
+
+# Start the app
+# pre-start hook will be executed in subshell, but will exit on active version check to allow migration to complete
+"${UMBREL_ROOT}/scripts/app" start stirling-pdf
+
+# Wait for app to be fully started up (takes a while because stirling pdf downloads libraries)
+wait_for_startup_complete
+
+# Stop the app
+"${UMBREL_ROOT}/scripts/app" stop stirling-pdf
+
+# Delete image of intermediate version
+echo "Deleting intermediary image: ${IMAGE}"
+docker rmi "${IMAGE}" || true
+
+# Remove the backup file
+rm -rf "${APP_COMPOSE_BACKUP_FILE}"
+
+echo "Migration completed successfully"
