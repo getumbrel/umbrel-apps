@@ -1,0 +1,71 @@
+# Required: MQTT settings
+mqtt:
+    # Required: MQTT server URL (use mqtts:// for SSL/TLS connection)
+    # no FDN only IP (no DNS?)
+    server: 'mqtt://192.168.101.22:1883'
+    # Optional: MQTT base topic for Zigbee2MQTT MQTT messages (default: zigbee2mqtt)
+    base_topic: zigbee2mqtt
+    # Optional: absolute path to SSL/TLS certificate of CA used to sign server and client certificates (default: nothing)
+    # ca: '/etc/ssl/mqtt-ca.crt'
+    # Optional: absolute paths to SSL/TLS key and certificate for client-authentication (default: nothing)
+    # key: '/etc/ssl/mqtt-client.key'
+    # cert: '/etc/ssl/mqtt-client.crt'
+    # Optional: MQTT server authentication user (default: nothing)
+    # user: my_user
+    # Optional: MQTT server authentication password (default: nothing)
+    # password: my_password
+    # Optional: MQTT client ID (default: nothing)
+    client_id: 'zigbee2mqtt'
+    # Optional: disable self-signed SSL certificates (default: true)
+    # reject_unauthorized: true
+    # Optional: Include device information to mqtt messages (default: false)
+    include_device_information: true
+    # Optional: MQTT keepalive in seconds (default: 60)
+    # keepalive: 60
+    # Optional: MQTT protocol version (default: 4), set this to 5 if you
+    # use the 'retention' device specific configuration
+    # version: 4
+    # Optional: Disable retain for all send messages. ONLY enable if you MQTT broker doesn't
+    # support retained message (e.g. AWS IoT core, Azure IoT Hub, Google Cloud IoT core, IBM Watson IoT Platform).
+    # Enabling will break the Home Assistant integration. (default: false)
+    # force_disable_retain: false
+
+# configure zigbee-adapter
+serial:
+    port: tcp://192.168.101.26:6638
+    baudrate: 115200
+    adapter: ember
+    disable_led: false
+
+advanced:
+    # transmission-power (20 is maximum)
+    transmit_power: 20
+    # Let Zigbee2MQTT generate a new network key on first start
+    network_key: GENERATE
+
+
+# Enable the Zigbee2MQTT frontend and set port
+frontend:
+    port: 8080
+
+# Optional: Home Assistant integration (MQTT discovery) (default: false)
+homeassistant: true
+
+# homeassistant:
+    # Optional: Home Assistant discovery topic (default: shown below)
+    # Note: should be different from [MQTT base topic](../mqtt.md) to prevent errors in HA software
+    # discovery_topic: 'homeassistant'
+    # Optional: Home Assistant status topic (default: shown below)
+    # Note: in addition to the `status_topic`, 'homeassistant/status' will also be used
+    # status_topic: 'hass/status'
+    # Optional: Home Assistant legacy entity attributes, (default: shown below), when enabled:
+    # Zigbee2MQTT will send additional states as attributes with each entity. For example,
+    # A temperature & humidity sensor will have 2 entities for the temperature and
+    # humidity, with this setting enabled both entities will also have
+    # an temperature and humidity attribute.
+    # Note: Disabling this option, requires a Home Assistant restart
+    # legacy_entity_attributes: true
+    # Optional: Home Assistant legacy triggers (default: shown below), when enabled:
+    # - Zigbee2mqt will send an empty 'action' or 'click' after one has been send
+    # - A 'sensor_action' and 'sensor_click' will be discoverd
+    # legacy_triggers: true
