@@ -7,7 +7,7 @@ services:
       APP_PORT: 3006
 
   app:
-    image: ghcr.io/sahilph/umbrel-fulcrum:sha-2e52b24@sha256:7a7bcc00a3dd41d2c5034b1e8b59bf2c83b0d6f311cdfa405ffbbf2940d7985c
+    image: nmfretz/umbrel-fulcrum:1.0.1@sha256:7ebcb84446e55dbbde7711a4ac2d65ca65c55d0092e6640b41ca2d9c4539a3ff
     depends_on:
       - fulcrum
     restart: on-failure
@@ -28,6 +28,8 @@ services:
   
   fulcrum:
     image: cculianu/fulcrum:v1.11.1@sha256:70f06b93ab5863997992d4b4508312fe81ce576017e16ecc7e69c7d38165bdf2
+    init: true
+    stop_grace_period: 1m
     restart: on-failure
     user: "1000:1000"
     environment:
