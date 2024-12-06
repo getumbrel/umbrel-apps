@@ -1,0 +1,16 @@
+version: '3.7'
+services:
+  chrome:
+    image: lscr.io/linuxserver/chromium:latest
+    container_name: umbrel-chrome
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
+      - CHROME_CLI=--no-sandbox --start-maximized
+      - CUSTOM_PORT=30099
+      - CUSTOM_USER=admin
+      - CUSTOM_PASS=umbrel123
+    ports:
+      - "30099:30099"
+    restart: unless-stopped
