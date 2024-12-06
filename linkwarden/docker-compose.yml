@@ -1,0 +1,35 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: linkwarden_app_1
+      APP_PORT: 3000
+      PROXY_AUTH_ADD: "false"
+  
+  postgres:
+    image: postgres:16-alpine@sha256:0366402213df5db03c47ff80bcc697e92c8be0c213d03c941df1fc42d1ba9560
+    user: "1000:1000"
+    environment:
+      - POSTGRES_PASSWORD=linkwarden
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data/db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  app:
+    image: ghcr.io/linkwarden/linkwarden:v2.8.3@sha256:7f80a03d688c3e5d9ec6b34f5b65cd861ff8c9eb08d12932dc8fc7482991f238
+    user: "1000:1000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:linkwarden@postgres:5432/postgres
+      - NEXTAUTH_URL=http://${DEVICE_DOMAIN_NAME}:8233/api/v1/auth
+      - NEXTAUTH_SECRET=linkwarden
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data/app:/data/data
+    depends_on:
+      postgres:
+        condition: service_healthy
