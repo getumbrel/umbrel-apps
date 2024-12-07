@@ -1,7 +1,7 @@
 version: '3.7'
 services:
   chrome:
-    image: lscr.io/linuxserver/chromium:latest
+    image: lscr.io/linuxserver/chromium:1.32.0@sha256:<digest> # Specify version and digest for the image
     container_name: umbrel-chrome
     environment:
       - PUID=1000
@@ -11,6 +11,5 @@ services:
       - CUSTOM_PORT=30099
       - CUSTOM_USER=admin
       - CUSTOM_PASS=umbrel123
-    ports:
-      - "30099:30099"
-    restart: unless-stopped
+    # Removed unnecessary port mapping, as app_proxy handles web interface access
+    restart: on-failure # Updated restart policy as per linting requirements
