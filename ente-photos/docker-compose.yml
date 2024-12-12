@@ -1,0 +1,153 @@
+version: "3.7"
+
+x-environment: &env
+  # Umbrel's IP or host name
+  APP_HOST: "${APP_HOST}"
+
+  # DB Configs
+  ENTE_DB_HOST: "${DB_HOST}"
+  ENTE_DB_PORT: "${DB_PORT}"
+  ENTE_DB_NAME: "${DB_NAME}"
+  ENTE_DB_USER: "${DB_USER}"
+  ENTE_DB_PASSWORD: "${DB_PASSWORD}"
+  
+  # MinIO Configs
+  MINIO_API_PORT: "${MINIO_API_PORT}"
+  MINIO_CONSOLE_PORT: "${MINIO_CONSOLE_PORT}"
+  MINIO_URL: &minio_url "${APP_HOST}:${MINIO_API_PORT}"
+  MINIO_ROOT_USER: &minio_user "${MINIO_ROOT_USER}"
+  MINIO_ROOT_PASSWORD: &minio_password "${MINIO_ROOT_PASSWORD}"
+  MINIO_REGION: &minio_region "${MINIO_REGION}"
+
+  # SMTP Configs to send OTP emails
+  ENTE_SMTP_HOST: "${SMTP_HOST}"
+  ENTE_SMTP_PORT: "${SMTP_PORT}"
+  ENTE_SMTP_USERNAME: "${SMTP_USERNAME}"
+  ENTE_SMTP_PASSWORD: "${SMTP_PASSWORD}"
+  # The email address from which to send the email. Set this to an email
+  # address whose credentials you're providing.
+  ENTE_SMTP_EMAIL: "${SMTP_EMAIL}"
+
+  # Set these to your email ID or domain so that you don't
+  # need to peek into the server logs for obtaining the OTP when trying to log
+  # into an instance you're developing on.
+  # export INTERNAL_HARDCODED_OTT_EMAILS="example@example.org,123456"
+  ENTE_INTERNAL_HARDCODED-OTT_EMAILS: "${INTERNAL_HARDCODED_OTT_EMAILS}"
+  # When running in a local environment, hardcode the verification code to
+  # 123456 for email addresses ending with @example.org
+  ENTE_INTERNAL_HARDCODED-OTT_LOCAL-DOMAIN-SUFFIX: "${INTERNAL_HARDCODED_OTT_LOCAL_DOMAIN_SUFFIX}"
+  ENTE_INTERNAL_HARDCODED-OTT_LOCAL-DOMAIN-VALUE: "${INTERNAL_HARDCODED_OTT_LOCAL_DOMAIN_VALUE}"
+  
+services:
+  app_proxy:
+    depends_on:
+      - museum
+    environment:
+      APP_HOST: ente-photos_museum_1
+      APP_PORT: 8080
+      PROXY_AUTH_ADD: "false"
+
+  museum:
+    # https://github.com/ente-io/ente/pkgs/container/server
+    image: ghcr.io/ente-io/server:b0674cd5f37cebda0f446db7ce1e87a3e6d8b9fc
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      <<: *env
+      # S3 Configs
+      ENTE_S3_ARE_LOCAL_BUCKETS: "true"
+      ENTE_S3_B2-EU-CEN_KEY: *minio_user
+      ENTE_S3_B2-EU-CEN_SECRET: *minio_password
+      ENTE_S3_B2-EU-CEN_ENDPOINT: *minio_url
+      ENTE_S3_B2-EU-CEN_REGION: *minio_region
+      ENTE_S3_B2-EU-CEN_BUCKET: b2-eu-cen
+      ENTE_S3_WASABI-EU-CENTRAL-2-V3_KEY: *minio_user
+      ENTE_S3_WASABI-EU-CENTRAL-2-V3_SECRET: *minio_password
+      ENTE_S3_WASABI-EU-CENTRAL-2-V3_ENDPOINT: *minio_url
+      ENTE_S3_WASABI-EU-CENTRAL-2-V3_REGION: *minio_region
+      ENTE_S3_WASABI-EU-CENTRAL-2-V3_BUCKET: wasabi-eu-central-2-v3
+      ENTE_S3_WASABI-EU-CENTRAL-2-V3_COMPIANCE: "false"
+      ENTE_S3_SCW-EU-FR-V3_KEY: *minio_user
+      ENTE_S3_SCW-EU-FR-V3_SECRET: *minio_password
+      ENTE_S3_SCW-EU-FR-V3_ENDPOINT: *minio_url
+      ENTE_S3_SCW-EU-FR-V3_REGION: *minio_region
+      ENTE_S3_SCW-EU-FR-V3_BUCKET: scw-eu-fr-v3
+
+      # More Configs can be found below
+      # https://github.com/ente-io/ente/blob/main/server/configurations/local.yaml
+
+    volumes:
+      - ${APP_DATA_DIR}/data/custom-logs:/var/logs
+      - ${APP_DATA_DIR}/museum.yaml:/museum.yaml:ro
+      - ${APP_DATA_DIR}/scripts/compose/credentials.yaml:/credentials.yaml:ro
+      - ${APP_DATA_DIR}/data:/data:ro
+    restart: on-failure
+
+  cli:
+    image: davidfdezalcoba/ente-cli
+    depends_on:
+      - museum
+    environment:
+      <<: *env
+    volumes:
+      - ${APP_DATA_DIR}/data/cli-data:/cli-data
+    command: ["sh", "-c", "echo -e 'endpoint:\\n    api: http://${APP_HOST}:8080' > config.yaml && sleep infinity"]
+    restart: always
+
+  socat:
+    image: alpine/socat
+    network_mode: service:museum  
+    depends_on:
+      - museum
+    command: "TCP-LISTEN:${MINIO_API_PORT},fork,reuseaddr TCP:minio:${MINIO_API_PORT}"
+
+  postgres:
+    image: postgres:15
+    ports:
+      - "${DB_PORT}:${DB_PORT}"
+    environment:
+      <<: *env
+      POSTGRES_USER: "${DB_USER}"
+      POSTGRES_PASSWORD: "${DB_PASSWORD}"
+      POSTGRES_DB: "${DB_NAME}"
+    # Wait for postgres to accept connections before starting museum.
+    healthcheck:
+      test:
+        ["CMD", "pg_isready", "-q", "-d", "${DB_NAME}", "-U", "${DB_USER}"]
+      start_period: 40s
+      start_interval: 1s
+    volumes:
+      - ${APP_DATA_DIR}/data/postgres-data:/var/lib/postgresql/data
+    restart: on-failure
+
+  minio:
+    image: minio/minio
+    # Use different ports than the minio defaults to avoid conflicting
+    # with the ports used by Prometheus.
+    ports:
+      - "${MINIO_API_PORT}:${MINIO_API_PORT}" # API
+      - "${MINIO_CONSOLE_PORT}:${MINIO_CONSOLE_PORT}" # Console
+    environment:
+      <<: *env
+    command: server /data --address ":${MINIO_API_PORT}" --console-address ":${MINIO_CONSOLE_PORT}"
+    volumes:
+      - ${APP_DATA_DIR}/data/minio-data:/data
+    restart: on-failure
+
+  minio-provision:
+    image: minio/mc
+    depends_on:
+      - minio
+    environment:
+      <<: *env
+    volumes:
+      - ${APP_DATA_DIR}/scripts/compose/minio-provision.sh:/provision.sh:ro
+      - ${APP_DATA_DIR}/data/minio-data:/data
+    entrypoint: sh /provision.sh
+
+volumes:
+  cli-data:
+  custom-logs:
+  minio-data:
+  postgres-data:
