@@ -16,12 +16,15 @@ export MINIO_ROOT_PASSWORD="testtest"
 export MINIO_REGION="eu-central-2"
 
 # SMTP Configs to send OTP emails
-export SMTP_HOST="smtp.gmail.com"
-export SMTP_PORT="465"
-export SMTP_USERNAME="example@gmail.com"
-export SMTP_PASSWORD="changeme"
+# Notes:
+# - Make sure they are correct since the program will stuck at signup if there is any issue
+# - Gmail SMTP hast might fail due to timeout errors, check your latency via ping
+# export SMTP_HOST="smtp.gmail.com"
+# export SMTP_PORT="465"
+# export SMTP_USERNAME="example@gmail.com"
+# export SMTP_PASSWORD="changeme"
 # The email address from which to send the email.
-export SMTP_EMAIL="example@gmail.com"
+# export SMTP_EMAIL="example@gmail.com"
 
 # Uncomment and set these to your email ID or domain to avoid checking server logs for OTPs.
 # export INTERNAL_HARDCODED_OTT_EMAILS="example@example.org,123456"

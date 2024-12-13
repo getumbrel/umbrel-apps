@@ -50,7 +50,6 @@ services:
   museum:
     # https://github.com/ente-io/ente/pkgs/container/server
     image: ghcr.io/ente-io/server:b0674cd5f37cebda0f446db7ce1e87a3e6d8b9fc@sha256:d44049492bb62a3c0c64126ade1b2c0294683422e5a1b7d656d128186919b5e9
-    user: "1000:1000"
     depends_on:
       postgres:
         condition: service_healthy
@@ -81,13 +80,11 @@ services:
     volumes:
       - ${APP_DATA_DIR}/data/custom-logs:/var/logs
       - ${APP_DATA_DIR}/museum.yaml:/museum.yaml:ro
-      - ${APP_DATA_DIR}/scripts/compose/credentials.yaml:/credentials.yaml:ro
       - ${APP_DATA_DIR}/data:/data:ro
     restart: on-failure
 
   cli:
-    image: vasuratanpara/ente-cli:latest@sha256:2a140ecae2671cb845e43f20f9c765e0f3ba1c00f54c022a42841f4bba9f51ce
-    user: "1000:1000"
+    image: vasuratanpara/ente-cli:v0.2.2@sha256:027abc99f012a910a28289034266ce4a63aeb1484c65d56b3743056f0795a3af
     depends_on:
       - museum
     environment:
@@ -98,8 +95,7 @@ services:
     restart: on-failure
 
   socat:
-    image: alpine/socat:latest@sha256:d6cc968aacbfab4437bea9fb2df6d3719b6d0edec4cb59f46a6bd33ad7b0f7be
-    user: "1000:1000"
+    image: alpine/socat:1.8.0.0@sha256:a6be4c0262b339c53ddad723cdd178a1a13271e1137c65e27f90a08c16de02b8
     network_mode: service:museum
     depends_on:
       - museum
@@ -107,7 +103,6 @@ services:
 
   postgres:
     image: postgres:15@sha256:6cbdd616ae7ea61fa88873fdab529b3fd141b8a8311bfe4e6e62575f643f88fe
-    user: "1000:1000"
     ports:
       - "${DB_PORT}:${DB_PORT}"
     environment:
@@ -126,8 +121,7 @@ services:
     restart: on-failure
 
   minio:
-    image: minio/minio:latest@sha256:ac591851803a79aee64bc37f66d77c56b0a4b6e12d9e5356380f4105510f2332
-    user: "1000:1000"
+    image: minio/minio:RELEASE.2024-11-07T00-52-20Z@sha256:ac591851803a79aee64bc37f66d77c56b0a4b6e12d9e5356380f4105510f2332
     # Use different ports than the minio defaults to avoid conflicting
     # with the ports used by Prometheus.
     ports:
@@ -141,8 +135,7 @@ services:
     restart: on-failure
 
   minio-provision:
-    image: minio/mc:latest@sha256:8f94d208188dcd04bbaa51b54578bb43ea2a663626ca59889c07d4fb8ae9546d
-    user: "1000:1000"
+    image: minio/mc:RELEASE.2024-11-17T19-35-25Z@sha256:8f94d208188dcd04bbaa51b54578bb43ea2a663626ca59889c07d4fb8ae9546d
     depends_on:
       - minio
     environment:
