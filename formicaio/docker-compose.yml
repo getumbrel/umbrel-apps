@@ -1,0 +1,42 @@
+version: "3.7"
+
+services:
+
+  app_proxy:
+    environment:
+      APP_HOST: formicaio_formicaio_1
+      APP_PORT: 8080
+
+  docker:
+    image: docker:27.4.0-dind@sha256:b0c1179ea32ad77bdb7b852b037e54b11022304c2f2662af1954ef53869314b2
+    privileged: true
+    network_mode: host
+    stop_grace_period: 1m
+    restart: on-failure
+    environment:
+      DOCKER_ENSURE_BRIDGE: "dind0:10.32.0.1/16"
+    entrypoint: /entrypoint.sh
+    command: >
+      dockerd
+        --bridge dind0
+        --data-root /data/data
+        --exec-root /data/exec
+        --host unix:///data/docker.sock
+        --pidfile /data/docker.pid
+    volumes:
+      - ${APP_DATA_DIR}/entrypoint.sh:/entrypoint.sh
+      - ${APP_DATA_DIR}/data/docker:/data
+
+  formicaio:
+    image: bochaco/formicaio:latest@sha256:3c4285dc5bc751b74a8379e3653a86cd66333685198baed744457976a9cbab0d
+    privileged: true
+    restart: on-failure
+    stop_grace_period: 5s
+    environment:
+      DOCKER_SOCKET_PATH: /var/run/docker.sock
+      DB_PATH: /data
+    volumes:
+      - ${APP_DATA_DIR}/data/formicaio:/data
+      - ${APP_DATA_DIR}/data/docker:/var/run
+    devices:
+      - /dev:/dev
