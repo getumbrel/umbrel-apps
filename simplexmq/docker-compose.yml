@@ -8,36 +8,26 @@ services:
       PROXY_AUTH_ADD: "false"
 
   smp-server:
-    image: escaping/smp-server:v6.2.0@sha256:1aa62b5c81fa408c9221036ad3d6a1dbdd79c9e3095344330d476a47bac430f6
+    image: escaping/smp-server:v6.2.0@sha256:9e47e381e75fa84a45aa2a0ccf37ceb00f5dc0d06ff2acb438b4d74fb0a780be
     user: "1000:1000"
     restart: on-failure
     stop_grace_period: 1m
     environment:
-      ADDR: ${APP_SIMPLEX_SERVER_SMP_HIDDEN_SERVICE}
+      ADDR: ${DEVICE_HOSTNAME}
       PASS: ${APP_PASSWORD}
     volumes:
       - ${APP_DATA_DIR}/data/smp/config:/etc/opt/simplex:z
       - ${APP_DATA_DIR}/data/smp/logs:/var/opt/simplex:z
       
   xftp-server:
-    image: escaping/xftp-server:v6.2.0@sha256:27a052216db8beac62b2a649c1f2374c60ea283ac0e36190e574a8c2ab739ae3
+    image: escaping/xftp-server:v6.2.0@sha256:00cfb9b40a85d95754ee097665c8dca57ac90a33a1debcafcc747a913e476092
     user: "1000:1000"
     restart: on-failure
     stop_grace_period: 1m
     environment:
-      ADDR: ${APP_SIMPLEX_SERVER_XFTP_HIDDEN_SERVICE}
+      ADDR: ${DEVICE_HOSTNAME}
       QUOTA: "2GB"
     volumes:
       - ${APP_DATA_DIR}/data/xftp/config:/etc/opt/simplex-xftp:z
       - ${APP_DATA_DIR}/data/xftp/logs:/var/opt/simplex-xftp:z
       - ${APP_DATA_DIR}/data/xftp/files:/srv/xftp:z
-
-  tor:
-    image: getumbrel/tor:0.4.7.8@sha256:2ace83f22501f58857fa9b403009f595137fa2e7986c4fda79d82a8119072b6a
-    user: "1000:1000"
-    restart: on-failure
-    volumes:
-      - ${APP_DATA_DIR}/torrc:/etc/tor/torrc:ro
-      - ${TOR_DATA_DIR}:/data
-    environment:
-      HOME: "/tmp"
