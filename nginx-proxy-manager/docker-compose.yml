@@ -1,0 +1,29 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: nginx-proxy-manager_web_1
+      APP_PORT: 81
+      
+  web:
+    image: jc21/nginx-proxy-manager:2.11.3@sha256:5bd2aae54ac0b6f4ef6777143ab736baf5366807894a4c7fca7bfa2fbaf1489c
+    hostname: nginx-proxy-manager_web_1
+    restart: on-failure
+    ports:
+      - 40080:80
+      - 40443:443
+    volumes:
+      - ${APP_DATA_DIR}/data/npm-data:/data
+      - ${APP_DATA_DIR}/data/letsencrypt:/etc/letsencrypt
+    environment:
+      PUID: 1000
+      PGID: 1000
+  
+  docker-host:
+    image: qoomon/docker-host:3.3.1@sha256:ec9d214d7fa88932e9186ca2f4419d44661376929931248525b08e7fa9e270f7
+    hostname: $DEVICE_DOMAIN_NAME
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    restart: on-failure
