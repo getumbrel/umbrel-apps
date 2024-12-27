@@ -1,13 +1,13 @@
 version: '3.8'
 services:
   chromium:
-    image: lscr.io/linuxserver/chromium:latest
+    image: lscr.io/linuxserver/chromium@sha256:3bb1e2b133224a470567b461fa49b1f47149d506f71987408686c17bc3f64166
     container_name: chromium
     environment:
       - PUID=1000
       - PGID=1000
       - TZ=Etc/UTC
     volumes:
-      - ${APP_DATA_DIR}/data:/config
+      - /chromium-browser/data:/config
     shm_size: "1gb"
     restart: on-failure
