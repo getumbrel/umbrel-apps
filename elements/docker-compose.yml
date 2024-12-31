@@ -7,7 +7,8 @@ services:
       APP_PORT: 8080
 
   node:
-    image: ghcr.io/vulpemventures/elements:23.2.1@sha256:8bd481aaa0f055b59a8c0bb7e56b0f1d1a55143acbb0d07465778538730c41b3
+    image: ghcr.io/vulpemventures/elements:23.2.4@sha256:f4bb9af7f2278e6b6a7a6160f5f17eec28e85a2bf47ebbdc96d0e64caa582d16
+    user: "1000:1000"
     restart: on-failure
     stop_grace_period: 1m
     ports:
@@ -39,9 +40,12 @@ services:
       - -port=$APP_ELEMENTS_NODE_P2P_PORT
       - -blockfilterindex=1
       - -peerblockfilters=1
+      # Enable creating discounted CT on mainnet
+      - -creatediscountct=1
   
   web: 
     image: ghcr.io/tiero/elements-web:v0.0.3@sha256:b80dc0df2a4693668a97b874aad6d0a8d3239d03f4d05b4342600166934d0b87
+    user: "1000:1000"
     depends_on:
       - node
     restart: on-failure
