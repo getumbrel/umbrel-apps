@@ -1,0 +1,14 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: amato_web_1
+      APP_PORT: 3838
+      
+  web:
+    image: berkeleyengineer/amato:v0.0.1.2@sha256:399142b4322573725ec0c6e922e56e66331d1f3e4d769459c1d585d68aca989b
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      PORT: 3838
