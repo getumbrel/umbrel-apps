@@ -1,0 +1,20 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: lnbits-holesail-proxy_web_1
+      APP_PORT: 3000
+  web:
+    image: orenz0/holesail-server-manager:v1.0.5@sha256:b4680da334a22be69138f43b03bc798aad7a62836afc60d7615d7cd6375d9c8e
+    restart: on-failure
+    stop_grace_period: 1m
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+    environment:
+      HSM_DATA_FILE: /data/hsm.json
+      HSM_HOST: 0.0.0.0
+      HSM_PORT: 3000
+      HSM_TITLE: LNbits Holesail Proxy
+      HSM_TARGET_ADDRESS: $APP_LNBITS_IP
+      HSM_TARGET_PORT: $APP_LNBITS_PORT
