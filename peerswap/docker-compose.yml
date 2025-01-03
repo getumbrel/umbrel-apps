@@ -7,7 +7,7 @@ services:
       APP_PORT: 1984
 
   web:
-    image: ghcr.io/impa10r/peerswap-web:v1.6.9@sha256:a925714945527bae8d792c47f83ed13048f192e3613b06e15b9af4bd60cfe504
+    image: ghcr.io/impa10r/peerswap-web:v1.7.5@sha256:9ce9a183c5b7f689ba036b4736a0eb4737978208b1afb4f1e8981860a5036cb4
     user: "1000:1000"
     restart: on-failure
     stop_grace_period: 1m
@@ -25,6 +25,11 @@ services:
       ELEMENTS_WALLET: peerswap
       ELEMENTS_FOLDER: /home/elements/.elements
       ELEMENTS_FOLDER_MAPPED: /home/peerswap/.elements
+      # Bitcoin RPC
+      BITCOIN_HOST: $APP_BITCOIN_NODE_IP
+      BITCOIN_PORT: $APP_BITCOIN_RPC_PORT
+      BITCOIN_USER: $APP_BITCOIN_RPC_USER
+      BITCOIN_PASS: $APP_BITCOIN_RPC_PASS
     volumes:
       - ${APP_DATA_DIR}/data:/home/peerswap/.peerswap
       - ${APP_LIGHTNING_NODE_DATA_DIR}:/home/peerswap/.lnd:ro
