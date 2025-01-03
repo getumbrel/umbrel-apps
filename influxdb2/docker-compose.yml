@@ -1,0 +1,16 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: influxdb2_app_1
+      APP_PORT: 8086
+#      PROXY_AUTH_WHITELIST: "/api/*"
+      
+  app:
+    image: influxdb:2.7.11@sha256:57429ef3f13cf25bbe541a54b2b831c1b339cfcf5bd060934f0a9ee5ed5428ba
+    user: 1000:1000
+    restart: on-failure
+#    ports:
+#      - '8086:8086' # api/webinterface
+    volumes:
+      - ${APP_DATA_DIR}/data/data:/var/lib/influxdb2
+      - ${APP_DATA_DIR}/data/config:/etc/influxdb2
