@@ -2,7 +2,7 @@ version: "3.7"
 
 services:
   web:
-    image: supertypo/rusty-kaspad:0.15.2
+    image: supertypo/rusty-kaspad:v0.15.2
     restart: on-failure
     stop_grace_period: 1m
     ports:
@@ -10,3 +10,6 @@ services:
       - 16111:16111  # RPC port
     volumes:
       - ${APP_DATA_DIR}/data:/data
+    environment:
+      RUST_LOG: info
+      RUST_BACKTRACE: 1
