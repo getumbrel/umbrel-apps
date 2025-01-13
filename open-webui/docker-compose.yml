@@ -1,6 +1,12 @@
 version: '3.6'
 
 services:
+  app_proxy:
+    environment:
+      APP_HOST: open-webui_web_1
+      APP_PORT: 8080
+      PROXY_AUTH_ADD: "false"
+
   ollama:
     image: ollama/ollama:0.5.4@sha256:18bfb1d605604fd53dcad20d0556df4c781e560ebebcd923454d627c994a0e37
     volumes:
@@ -9,14 +15,12 @@ services:
       - 11434:11434
     restart: on-failure
 
-  open-webui:
+  web:
     image: ghcr.io/open-webui/open-webui:v0.4.8@sha256:c1e4f0927fb0acd53bcbd8bbc92ecaf7ca36a23ee4cb8f25ce90c541012a473a
     volumes:
       - ${APP_DATA_DIR}/data/open-webui:/app/backend/data
     depends_on:
       - ollama
-    ports:
-      - 2876:8080
     environment:
       - 'OLLAMA_BASE_URL=http://ollama:11434'
     restart: on-failure
