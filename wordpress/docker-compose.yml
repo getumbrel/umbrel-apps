@@ -1,5 +1,11 @@
 version: "3.7"
-services:      
+services:
+  app_proxy:
+    environment:
+      APP_HOST: wordpress_app_1
+      APP_PORT: 80
+      PROXY_AUTH_ADD: "false"
+
   app:
     image: wordpress:6.7.1@sha256:2f3572d5cd722489fe47d59ed45d947dc9507f5a019eb0567ddf24aedf9257ed
     user: "1000:1000"
@@ -10,8 +16,6 @@ services:
       - WORDPRESS_DB_PASSWORD=umbrelwordpress
     volumes:
       - ${APP_DATA_DIR}/data/wordpress:/var/www/html
-    ports:
-      - "8567:80"
     restart: on-failure
     depends_on:
       - db
