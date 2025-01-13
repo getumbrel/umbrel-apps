@@ -7,21 +7,21 @@ services:
       APP_PORT: 8080
       PROXY_AUTH_ADD: "false"
 
-  ollama:
-    image: ollama/ollama:0.5.4@sha256:18bfb1d605604fd53dcad20d0556df4c781e560ebebcd923454d627c994a0e37
-    volumes:
-      - ${APP_DATA_DIR}/data/ollama:/root/.ollama
-    # We could uncomment this if we want to expose the ollama port to the host for other external apps/programs to use. 
-    # ports:
-    #   - 11434:11434
-    restart: on-failure
+  # ollama:
+  #   image: ollama/ollama:0.5.4@sha256:18bfb1d605604fd53dcad20d0556df4c781e560ebebcd923454d627c994a0e37
+  #   volumes:
+  #     - ${APP_DATA_DIR}/data/ollama:/root/.ollama
+  #   # We could uncomment this if we want to expose the ollama port to the host for other external apps/programs to use. 
+  #   # ports:
+  #   #   - 11434:11434
+  #   restart: on-failure
 
   web:
     image: ghcr.io/open-webui/open-webui:v0.5.4@sha256:42e8fa544facc38d731e3d516fbf478abe435bb4b80798e0934930afea6c5bab
     volumes:
       - ${APP_DATA_DIR}/data/open-webui:/app/backend/data
-    depends_on:
-      - ollama
-    environment:
-      OLLAMA_BASE_URL: "http://open-webui_ollama_1:11434"
+    # depends_on:
+    #   - ollama
+    # environment:
+    #   OLLAMA_BASE_URL: "http://open-webui_ollama_1:11434"
     restart: on-failure
