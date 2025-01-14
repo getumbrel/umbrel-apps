@@ -1,12 +1,27 @@
 version: "3.7"
 
 services:
+  app_proxy:
+    environment:
+      APP_HOST: kas-rusty-kaspad_web_1
+      APP_PORT: 3000
+
   web:
+    image: nginx:alpine
+    restart: on-failure
+    stop_grace_period: 1m
+    volumes:
+      - ${APP_DATA_DIR}/config/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ${APP_DATA_DIR}/data/web:/usr/share/nginx/html:ro
+
+  node:
     image: supertypo/rusty-kaspad:v0.15.2
     restart: on-failure
     stop_grace_period: 1m
-    ports:
-      - 16110:16110  # P2P port
-      - 16111:16111  # RPC port
     volumes:
       - ${APP_DATA_DIR}/data:/data
+    ports:
+      - 16110:16110  # GRPC
+      - 16111:16111  # P2P
+      - 17110:17110  # WRPC (Borsh)
+      - 18110:18110  # WRPC (JSON)
