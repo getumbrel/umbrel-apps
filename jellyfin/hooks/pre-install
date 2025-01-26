@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Path to docker-compose.yml one directory up from the hooks folder
+COMPOSE_FILE="$(cd "$(dirname "$0")" && pwd)/../docker-compose.yml"
+
+# Dynamic device mapping for hardware acceleration
+DEVICE_MAPPINGS=""
+
+# Check for DRI devices
+if [ -e /dev/dri ]; then
+    DEVICE_MAPPINGS+="      - /dev/dri:/dev/dri\n"
+fi
+
+# Check for Raspberry Pi specific devices
+if [ -e /dev/vcsm ]; then
+    DEVICE_MAPPINGS+="      - /dev/vcsm:/dev/vcsm\n"
+fi
+
+if [ -e /dev/vchiq ]; then
+    DEVICE_MAPPINGS+="      - /dev/vchiq:/dev/vchiq\n"
+fi
+
+# Check for video devices
+for i in {10..12}; do
+    if [ -e "/dev/video$i" ]; then
+        DEVICE_MAPPINGS+="      - /dev/video$i:/dev/video$i\n"
+    fi
+done
+
+# Update docker-compose.yml with dynamic device mappings
+if [ -n "$DEVICE_MAPPINGS" ]; then
+    {
+        # Use printf instead of echo to prevent unwanted newlines
+        [ "$(tail -c1 "$COMPOSE_FILE")" != "" ] && printf "\n"
+        printf "    devices:\n"
+        printf "${DEVICE_MAPPINGS%\\n}"  # Remove trailing newline
+    } >> "$COMPOSE_FILE"
+fi
