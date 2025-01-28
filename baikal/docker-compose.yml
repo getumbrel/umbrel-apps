@@ -1,0 +1,15 @@
+version: '3.7'
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: baikal_web_1
+      APP_PORT: 80
+      PROXY_AUTH_ADD: "false"
+  web:
+    image: ckulka/baikal:0.9.5@sha256:6bbb3a55311bf64458badcea45f377450d27e671506962ba541613b9bed6ecd2
+    # This container runs as user 33:33 and cannot be changed in compose (https://github.com/ckulka/baikal-docker/blob/master/examples/docker-compose.localvolumes.yaml)
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data/config:/var/www/baikal/config
+      - ${APP_DATA_DIR}/data/Specific:/var/www/baikal/Specific

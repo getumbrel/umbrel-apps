@@ -1,0 +1,61 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: $APP_FULCRUM_IP
+      APP_PORT: 3006
+
+  app:
+    image: nmfretz/umbrel-fulcrum:1.0.1@sha256:7ebcb84446e55dbbde7711a4ac2d65ca65c55d0092e6640b41ca2d9c4539a3ff
+    depends_on:
+      - fulcrum
+    restart: on-failure
+    environment:
+      ELECTRUM_HIDDEN_SERVICE: "${APP_FULCRUM_RPC_HIDDEN_SERVICE}"
+      ELECTRUM_LOCAL_SERVICE: "${DEVICE_DOMAIN_NAME}"
+      ELECTRUM_HOST: "${APP_FULCRUM_NODE_IP}"
+      ELECTRUM_PUBLIC_CONNECTION_PORT: ${APP_FULCRUM_NODE_PORT}
+      BITCOIN_HOST: "${APP_BITCOIN_NODE_IP}"
+      RPC_USER: "${APP_BITCOIN_RPC_USER}"
+      RPC_PASSWORD: "${APP_BITCOIN_RPC_PASS}"
+      RPC_PORT: "${APP_BITCOIN_RPC_PORT}"
+    volumes:
+      - "${APP_DATA_DIR}/data/fulcrum-logs:/fulcrum-logs"
+    networks:
+      default:
+        ipv4_address: $APP_FULCRUM_IP
+  
+  fulcrum:
+    image: cculianu/fulcrum:v1.11.1@sha256:70f06b93ab5863997992d4b4508312fe81ce576017e16ecc7e69c7d38165bdf2
+    init: true
+    stop_grace_period: 1m
+    restart: on-failure
+    user: "1000:1000"
+    environment:
+      TCP: 0.0.0.0:${APP_FULCRUM_NODE_PORT}
+      ADMIN: 0.0.0.0:${APP_FULCRUM_ADMIN_PORT}
+      BITCOIND: ${APP_BITCOIN_NODE_IP}:${APP_BITCOIN_RPC_PORT}
+      RPCUSER: ${APP_BITCOIN_RPC_USER}
+      RPCPASSWORD: ${APP_BITCOIN_RPC_PASS}
+      PEERING: "false"
+      ANNOUNCE: "false"
+    command: sh -c 'Fulcrum -D /data _ENV_ 2>&1 | tee /logs/fulcrum.log'
+    volumes:
+      - "${APP_DATA_DIR}/data/fulcrum:/data"
+      - "${APP_DATA_DIR}/data/fulcrum-logs:/logs"
+    ports:
+      - "${APP_FULCRUM_NODE_PORT}:${APP_FULCRUM_NODE_PORT}"
+    networks:
+      default:
+        ipv4_address: $APP_FULCRUM_NODE_IP
+
+  tor:
+    image: getumbrel/tor:0.4.7.8@sha256:2ace83f22501f58857fa9b403009f595137fa2e7986c4fda79d82a8119072b6a
+    user: "1000:1000"
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/torrc:/etc/tor/torrc:ro
+      - ${TOR_DATA_DIR}:/data
+    environment:
+      HOME: "/tmp"

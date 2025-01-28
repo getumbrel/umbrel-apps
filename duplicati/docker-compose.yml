@@ -8,11 +8,16 @@ services:
       PROXY_AUTH_ADD: "false"
   
   duplicati:
-    image: duplicati/duplicati:2.0.8.1_beta_2024-05-07@sha256:97b8ef7bcaa095793ef9f39049851f987860a8c832aaf67ef977ff398f9e996e
-    entrypoint: ["/usr/bin/duplicati-server", "--webservice-port=8200", "--webservice-interface=any", "--webservice-password=${APP_PASSWORD}", "--webservice-allowed-hostnames=*"] 
+    image: duplicati/duplicati:2.1.0.2@sha256:5cfae82b909212e29fbcfe6f597d73bd68ea202e54333135e05193b99974f69b
     user: "1000:1000"
     restart: on-failure
     stop_grace_period: 1m
     volumes:
       - ${APP_DATA_DIR}/data:/data
       - ${UMBREL_ROOT}/data/storage:/umbrel
+    environment:
+      DUPLICATI__WEBSERVICE_PORT: "8200"
+      DUPLICATI__WEBSERVICE_INTERFACE: "any"
+      DUPLICATI__WEBSERVICE_PASSWORD: "${APP_PASSWORD}"
+      DUPLICATI__WEBSERVICE_ALLOWED_HOSTNAMES: "*"
+

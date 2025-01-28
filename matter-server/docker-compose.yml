@@ -1,0 +1,16 @@
+version: "3.7"
+
+services:
+  server:
+    image: ghcr.io/home-assistant-libs/python-matter-server:7.0.1@sha256:828c1cd3f957bb0287a099a439505457a25f5d65ed34281acf19cfbf537fe346
+    restart: on-failure
+    # Required for mDNS to work correctly
+    network_mode: host
+    # UI at default port 5580
+    security_opt:
+      # Needed for Bluetooth via dbus
+      - apparmor:unconfined
+    volumes:
+      - ${APP_DATA_DIR}/data:/data/
+      # Required for Bluetooth via D-Bus
+      - /run/dbus:/run/dbus:ro

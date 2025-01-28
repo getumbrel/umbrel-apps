@@ -1,0 +1,17 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: datum_datum_1
+      APP_PORT: 21000
+
+  datum:
+    image: ghcr.io/retropex/datum:1.8@sha256:718411c69d5b3e147857a7af6a99dcf4ff013191aec2a2acbad6ce47ffc0e1ed
+    user: 1000:1000
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data/settings/datum_gateway_config.json:/app/datum_gateway_config.json
+    ports:
+      # datum gateway port
+      - 23334:23334

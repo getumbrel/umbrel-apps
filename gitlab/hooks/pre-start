@@ -1,0 +1,190 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# This script updates Gitlab by following a migration path that Gitlab docs/tools claim is safe
+# https://gitlab-com.gitlab.io/support/toolbox/upgrade-path/
+
+APP_DATA_DIR="$(readlink -f $(dirname "${BASH_SOURCE[0]}")/..)"
+
+GITLAB_RAILS_VERSION_FILE="${APP_DATA_DIR}/data/data/gitlab-rails/VERSION"
+
+APP_COMPOSE_FILE="${APP_DATA_DIR}/docker-compose.yml"
+APP_COMPOSE_BACKUP_FILE="${APP_DATA_DIR}/docker-compose.yml.bak"
+
+# List of versions on migration path
+# gitlab on the umbrel app store was initially released with version 17.2.1
+# migration path tool: https://gitlab-com.gitlab.io/support/toolbox/upgrade-path/
+VERSIONS=()
+VERSIONS+=("17.2.1")
+VERSIONS+=("17.3.3")
+VERSIONS+=("17.5.1")
+# There is no 17.5.3 final patch release for the zengxs/gitlab image to update to before 17.6
+VERSIONS+=("17.6.1")
+VERSIONS+=("17.7.0")
+
+# List of images on migration path
+# Using zengxs/gitlab which may not have all versions listed in upgrade path tool: https://hub.docker.com/r/zengxs/gitlab/tags
+IMAGES=()
+IMAGES+=("zengxs/gitlab:17.2.1-ce.0@sha256:ac08a4dd997b6cd5d00d56c0027629de56ac80d9d30f9c4f75a73da73f5ff1b4")
+IMAGES+=("zengxs/gitlab:17.3.3-ce.0@sha256:b4369fc8f2a505fdf30bae7fa2befde2a8d6f75c067e5bcf85aeb1c5f345cda0")
+IMAGES+=("zengxs/gitlab:17.5.1-ce.0@sha256:61cb4c79fe55de9dc94822d5a64a07ee40ff681d6282ab5733bc8e80479451ff")
+IMAGES+=("zengxs/gitlab:17.6.1-ce.0@sha256:fac3ab00c189e7f7ef2d9170abe1028180663f5bb50dd8b84cb79c4f3053df42")
+IMAGES+=("zengxs/gitlab:17.7.0-ce.0@sha256:a353041094142d3f3192295d0973e660778db5f7637069f8e035afe45c6b88d1")
+
+find_index() {
+	local -r value="${1}"
+	shift
+	local -r array=("$@")
+
+	for i in "${!array[@]}"; do
+		if [[ "${array[$i]}" == "${value}" ]]; then
+			echo $i
+			exit
+		fi
+	done
+
+	echo -1
+}
+
+wait_for_migrations_complete() {
+	local start_time=$(date +%s)
+	local max_wait_time=$((1 * 60 * 60))  # 1 hour in seconds
+
+	while true; do
+		# We set some max wait time to prevent an infinite loop if something has gone wrong.
+		# We may want to handle this better in the future.
+		local current_time=$(date +%s)
+		local elapsed_time=$((current_time - start_time))
+		if [[ ${elapsed_time} -ge ${max_wait_time} ]]; then
+			echo "Maximum migration wait time of 1 hour exceeded. Exiting as something is likely wrong..."
+			exit 1
+		fi
+		
+		# Set +e because this command will fail until gitlab-psql is ready to accept connections and we don't want to exit the script on failure
+		set +e
+		echo "Running gitlab-psql command to check if batched migrations are complete"
+		# https://docs.gitlab.com/ee/update/background_migrations.html#from-the-database
+		command_output=$(docker exec gitlab_gitlab_1 gitlab-psql -tAc "SELECT COUNT(*) FROM batched_background_migrations WHERE status NOT IN(3, 6);" 2>&1)
+		# Passing the psql command to scripts/app compose results in the command args being split such that psql errors.
+		# Using the `docker exec` command above gets around this issue, but we should revisit this in the future to move away from locking this script to docker.
+		# command_output=$("${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" exec gitlab gitlab-psql -tAc "SELECT COUNT(*) FROM batched_background_migrations WHERE status NOT IN(3, 6);" 2>&1)
+		exit_code=$?
+		# Set -e to restore default behavior
+		set -e
+
+		if [[ ${exit_code} -eq 0 ]]; then
+			remaining_migrations=$(echo "${command_output}" | tr -d '[:space:]')
+			echo "Parsed remaining batched migrations: '${remaining_migrations}'"
+
+      # We only want to continue if there are "0" remaining batched migrations
+			if [[ "${remaining_migrations}" == "0" ]]; then
+				echo "GitLab migration completed successfully."
+				return
+			fi
+		else
+			echo "Command failed with exit code ${exit_code}. Error output: ${command_output}"
+		fi
+
+		echo "Waiting 30 seconds before checking migration status again..."
+		sleep 30
+	done
+}
+
+check_compose_file() {
+	local -r image="${1}"
+
+	gitlab_image=$(cat "${APP_COMPOSE_FILE}" 2>/dev/null | yq '.services.gitlab.image' || true)
+
+	if [[ "${gitlab_image}" != "${image}" ]]; then
+		echo "The docker-compose.yml now looks bad. Restoring..."
+
+		mv "${APP_COMPOSE_BACKUP_FILE}" "${APP_COMPOSE_FILE}"
+
+		exit
+	fi
+}
+
+get_version() {
+	cat "${GITLAB_RAILS_VERSION_FILE}"
+}
+
+# Main script execution starts here
+# ================================
+
+# If a gitlab-rails version file does not yet exist
+# Then it's likely a new install
+# Therefore there is nothing to do
+if [[ ! -f "${GITLAB_RAILS_VERSION_FILE}" ]]; then
+	exit
+fi
+
+current_version=$(get_version)
+echo "Current GitLab version: ${current_version}"
+
+# check if current version has "-patch" appended to it and exit if it does so we allow the migration to complete
+# we add "-patch" to the version below during migration
+if [[ "${current_version}" == *"-patch"* ]]; then
+	echo "Active GitLab version is undergoing migration. Exiting..."
+	exit
+fi
+
+# Check if active version is in migration list
+active_version_idx=$(find_index "${current_version}" "${VERSIONS[@]}")
+if [[ "${active_version_idx}" == "-1" ]]; then
+	echo "Active version is not supported in the list of migrations"
+	exit
+fi
+
+# Check if already up to date
+if [[ "${VERSIONS[-1]}" == "${current_version}" ]]; then
+	echo "GitLab is already on the latest major version. No migration needed."
+	exit
+fi
+
+# Loop through versions, ignoring past versions
+for i in "${!VERSIONS[@]}"; do
+	[[ "${i}" -le "${active_version_idx}" ]] && continue
+
+	version="${VERSIONS[$i]}"
+	image="${IMAGES[$i]}"
+
+	echo "Migrating to version: ${version} (${image})"
+	echo
+
+	cp --archive "${APP_COMPOSE_FILE}" "${APP_COMPOSE_BACKUP_FILE}"
+
+	yq -i ".services.gitlab.image = \"${image}\"" "${APP_COMPOSE_FILE}"
+
+	check_compose_file "${image}"
+
+	# Mark the current version as being in the middle of an update
+	current_version=$(get_version)
+	sed -i "s/${current_version}/${current_version}-patch/" "${GITLAB_RAILS_VERSION_FILE}"
+
+	# Start the app
+	# pre-start hook will be executed in subshell, but will exit on -patch check to allow migration to complete
+	"${UMBREL_ROOT}/scripts/app" start gitlab
+
+	echo "Waiting for update to complete..."
+
+	# Wait for app to undergo any migrations
+	# Indicated by gitlab-rails runner output
+	wait_for_migrations_complete
+
+	# Stop the app
+	"${UMBREL_ROOT}/scripts/app" stop gitlab
+
+	# Delete image of intermediate version
+	# Unless it's the latest image
+	# Otherwise it will have to be re-downloaded
+	if [[ "${version}" != "${VERSIONS[-1]}" ]]; then
+		echo "Deleting intermediary image: ${image}"
+
+		docker rmi "${image}" || true
+	fi
+done
+
+# Remove the backup file
+rm -rf "${APP_COMPOSE_BACKUP_FILE}"
+
+echo "Migration completed successfully"

@@ -2,7 +2,7 @@ manifestVersion: 1
 id: octoprint
 category: files
 name: OctoPrint
-version: "1.10.2"
+version: "1.10.3"
 tagline: A snappy web interface for your 3D printer
 description: >-
   OctoPrint provides a snappy web interface for controlling consumer 3D printers.
@@ -17,16 +17,20 @@ support: https://community.octoprint.org/
 port: 5003
 submitter: mateosilguero
 releaseNotes: >-
-  ✋ Heads-up
-
-    As of Octoprint 1.10.0, you are required to re-enter your password on critical operations (e.g. adding/changing/deleting users and groups, installing plugins, revealing the deprecated global API key, etc).
+  ⚠️ Important security update that fixes vulnerabilities related to XSS and API key management
 
 
-  🐛 Bug fixes
+  🔒 Security fixes:
+    - Fixed vulnerabilities in the login dialog and application key confirmation dialog
+    - Fixed vulnerability related to API key management that could allow unauthorized access
+    - Improved security of internal key generation
+    - Removed version number from discovery to prevent information leakage
 
-    - Fixed a translation string in the German translation.
-    - Fixed a third-party dependency change that broke a development command.
-    - Improved the behavior of the "Hide successful prints" filter in the file list.
+
+  🐛 Bug fixes:
+    - Fixed issues with reverse proxy configuration
+    - Fixed file list caching behavior
+    - Fixed plugin installation queuing
 
   Full release notes are found at https://github.com/OctoPrint/OctoPrint/releases
 submission: https://github.com/getumbrel/umbrel-apps/pull/449

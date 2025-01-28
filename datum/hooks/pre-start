@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+
+# This pre-start script updates the datum_gateway_config.json file with the user's Knots RPC configuration
+
+APP_DATA_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")"
+DATUM_CONFIG_FILE="${APP_DATA_DIR}/data/settings/datum_gateway_config.json"
+DESIRED_OWNER="1000:1000"
+
+if [ -f "${DATUM_CONFIG_FILE}" ]; then
+  echo "Checking DATUM configuration file."
+  
+  # Check if Knots environment variables are set
+  if [ -z "${APP_BITCOIN_KNOTS_RPC_USER}" ] || [ -z "${APP_BITCOIN_KNOTS_RPC_PASS}" ] || [ -z "${APP_BITCOIN_KNOTS_NODE_IP}" ] || [ -z "${APP_BITCOIN_KNOTS_INTERNAL_RPC_PORT}" ]; then
+    echo "Missing Bitcoin Knots environment variables. Exiting."
+    exit 1
+  fi
+
+  # Check if the file contains default placeholder values that we need to configure on install
+  # These have values of "auto-configure-on-install"
+  if jq -e '.bitcoind | .rpcuser, .rpcpassword, .rpcurl | select(. == "auto-configure-on-install")' "$DATUM_CONFIG_FILE" > /dev/null; then
+    
+    echo "Initializing DATUM config with Bitcoin Knots RPC settings."
+    
+    # Update the configuration
+    jq --arg user "$APP_BITCOIN_KNOTS_RPC_USER" \
+       --arg pass "$APP_BITCOIN_KNOTS_RPC_PASS" \
+       --arg url "${APP_BITCOIN_KNOTS_NODE_IP}:${APP_BITCOIN_KNOTS_INTERNAL_RPC_PORT}" \
+       '.bitcoind.rpcuser = $user | 
+        .bitcoind.rpcpassword = $pass | 
+        .bitcoind.rpcurl = $url' \
+       "$DATUM_CONFIG_FILE" > "${DATUM_CONFIG_FILE}.tmp" && mv "${DATUM_CONFIG_FILE}.tmp" "$DATUM_CONFIG_FILE"
+
+    # reset permissions
+    chown "${DESIRED_OWNER}" "$DATUM_CONFIG_FILE"
+    
+    echo "DATUM configuration updated successfully."
+  else
+    echo "DATUM configuration is up-to-date."
+  fi
+
+else
+  echo "DATUM configuration file not found. Installation incomplete."
+  exit 1
+fi
