@@ -12,5 +12,7 @@ services:
     volumes:
       - ${APP_DATA_DIR}/data/open-webui:/app/backend/data
     environment:
+      # Exported from ollama app, which is currently a required dependency.
+      # This will need to change once optional dependencies are supported.
       OLLAMA_BASE_URL: $APP_OLLAMA_URL
     restart: on-failure
