@@ -4,7 +4,7 @@ services:
   app_proxy:
     environment:
       APP_HOST: etherpad_app_1
-      APP_PORT: 9001
+      APP_PORT: 9002
       
   app:
     image: etherpad/etherpad:2.2.7@sha256:980f227a17569901aaa8f98d8bb6eff51e15c04ad3e2ea0a1692662adbcc2090
@@ -27,11 +27,11 @@ services:
       DB_USER: admin
       DEFAULT_PAD_TEXT: 
       # The env var DEFAULT_PAD_TEXT cannot be unset or empty
-      DISABLE_IP_LOGGING: false
+      DISABLE_IP_LOGGING: "false"
       LOGLEVEL: DEBUG
       SOFFICE: null
-      ALLOW_UNKNOWN_FILE_ENDS: true
-      TRUST_PROXY: true
+      ALLOW_UNKNOWN_FILE_ENDS: "true"
+      TRUST_PROXY: "true"
       SKIN_NAME: colibris
       # Either no-skin, colibris or an existing directory under src/static/skins
       SKIN_VARIANTS: super-light-toolbar super-light-editor light-background   
@@ -40,8 +40,8 @@ services:
       # For example, using "dark-toolbar" sets the toolbar to dark. 
       # Multiple variants can be applied, and by default, the skin variant is "super-light-toolbar super-light-editor light-background." 
       # You can also make the editor full-width by adding the "full-width-editor" variant.
-      SHOW_SETTINGS_IN_ADMIN_PAGE: true
-      SUPPRESS_ERRORS_IN_PAD_TEXT: false   
+      SHOW_SETTINGS_IN_ADMIN_PAGE: "true"
+      SUPPRESS_ERRORS_IN_PAD_TEXT: "false"   
     restart: on-failure
     user: "1000:1000"
 
