@@ -1,0 +1,28 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: mikrotik_server_1
+      APP_PORT: 80
+  
+  server:
+    image: henriquesebastiao/routeros:7.17.1@sha256:c2d38e858e308c239e4f2d66973e0524dc8b9a7ce15ed27f15c2853b78522bae
+    restart: on-failure
+    stop_grace_period: 1m
+    ports:
+      # - 21:21 # ftp
+      - 8322:22 # ssh
+      # - 23:23 # telnet
+      # - 8380:80 # www
+      - 8343:443 # www-ssl or sstp
+      - 8394:1194 # OVPN
+      - 8350:1450 # L2TP
+      - 8291:8291 # winbox
+      # - 8728:8728 # api
+      # - 8729:8729 # api-ssl
+      - 8331:13231 # WireGuard
+    cap_add: 
+            - NET_ADMIN
+    devices: 
+        - /dev/net/tun
