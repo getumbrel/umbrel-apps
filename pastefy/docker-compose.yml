@@ -8,6 +8,7 @@ services:
 
   db:
     image: mariadb:10.11@sha256:79cf033abf9089f27dd4c3e831cbef83048a52d6f52783930b647c56224d95c3
+    user: "1000:1000"
     environment:
       MYSQL_ROOT_PASSWORD: "tyooe"
       MYSQL_DATABASE: "pastefy"
@@ -21,6 +22,7 @@ services:
 
   app:
     image: interaapps/pastefy:6.7.5@sha256:cfa582e598cf00034de9431ce80cba75595d5a7016973e49f8108a90fe8bee76
+    user: "1000:1000"
     environment:
       HTTP_SERVER_CORS: "*"
       DATABASE_DRIVER: "mysql"
