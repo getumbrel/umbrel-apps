@@ -11,6 +11,7 @@ services:
     init: true
     read_only: true
     restart: on-failure
+    user: "1000:1000"
     ports:
       - 0.0.0.0:9000:9000
     environment:
@@ -18,4 +19,4 @@ services:
       API_AUTH_REQUIRED: 0
       DURATION_LIMIT: 86400
     volumes:
-      - ${APP_DATA_DIR}/data/cookies/cookies.json:/cookies.json
+      - ${APP_DATA_DIR}/data/cookies:/cookies.json
