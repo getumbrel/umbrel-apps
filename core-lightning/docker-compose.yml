@@ -61,6 +61,7 @@ services:
       - ${APP_CORE_LIGHTNING_DAEMON_PORT}:9735
       - ${APP_CORE_LIGHTNING_WEBSOCKET_PORT}:${APP_CORE_LIGHTNING_WEBSOCKET_PORT}
       - ${CORE_LIGHTNING_REST_PORT}:${CORE_LIGHTNING_REST_PORT}
+      - ${APP_CORE_LIGHTNING_DAEMON_GRPC_PORT}:${APP_CORE_LIGHTNING_DAEMON_GRPC_PORT}
     command:
       - --bitcoin-rpcconnect=${APP_BITCOIN_NODE_IP}
       - --bitcoin-rpcuser=${APP_BITCOIN_RPC_USER}
@@ -75,6 +76,7 @@ services:
       - --network=${APP_CORE_LIGHTNING_BITCOIN_NETWORK}
       - --database-upgrade=true
       - --experimental-offers
+      - --grpc-host=${APP_CORE_LIGHTNING_DAEMON_IP}
       - --grpc-port=${APP_CORE_LIGHTNING_DAEMON_GRPC_PORT}
       - --clnrest-host=${APP_CORE_LIGHTNING_DAEMON_IP}
       - --clnrest-port=${CORE_LIGHTNING_REST_PORT}
