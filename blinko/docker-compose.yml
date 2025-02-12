@@ -21,6 +21,7 @@ services:
       timeout: 45s
       interval: 10s
       retries: 10
+    user: "1000:1000"
     volumes:
       - ${APP_DATA_DIR}/data/db:/var/lib/postgresql/data:rw
     environment:
@@ -45,6 +46,7 @@ services:
       NEXT_PUBLIC_BASE_URL: http://umbrel.local:1111
       NEXTAUTH_SECRET: 3VZEVZ8vC8gjvRChDW8QRtQysSErPwqkR7vyMjIt3PiE3Xhf4Z5rTruf9YU6HxAf
       DATABASE_URL: postgresql://blinkouser:blinkopass@blinko-db:5432/blinko
+    user: "1000:1000"  
     volumes:
       - ${APP_DATA_DIR}/data/blinko:/app/.blinko:rw
     logging:
