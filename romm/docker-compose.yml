@@ -1,0 +1,50 @@
+version: '3.7'
+services:
+  app_proxy:
+    environment:
+      APP_HOST: romm_server_1
+      APP_PORT: 8080
+      PROXY_AUTH_ADD: 'true'
+    container_name: romm_app_proxy_1
+  server:
+    image: rommapp/romm:3.7.2@sha256:b3d593308f2d79a47c63219c20fdad1d6f17de2dee97cbad2aa748ef1d279484
+    volumes:
+      - ${APP_DATA_DIR}/data/resources:/romm/resources
+      - ${APP_DATA_DIR}/data/redis:/redis-data
+      - ${APP_DATA_DIR}/data/library:/romm/library
+      - ${APP_DATA_DIR}/data/assets:/romm/assets
+      - ${APP_DATA_DIR}/data/config:/romm/config
+    restart: on-failure
+    depends_on:
+      romm-db:
+        condition: service_healthy
+        restart: true
+    environment:
+      - DB_HOST=romm_romm-db_1
+      - DB_NAME=romm
+      - DB_USER=romm-user
+      - DB_PASSWD=moneyprintergobrr
+      - ROMM_AUTH_SECRET_KEY=ROMM_AUTH_SECRET_KEY
+      - ROMM_AUTH_USERNAME=admin
+      - ROMM_AUTH_PASSWORD=admin
+      - IGDB_CLIENT_ID=IGDB_CLIENT_ID
+      - IGDB_CLIENT_SECRET=IGDB_CLIENT_SECRET
+    container_name: romm_server_1
+  romm-db:
+    image: mariadb:latest
+    restart: unless-stopped
+    environment:
+      - MYSQL_ROOT_PASSWORD=umbrel
+      - MYSQL_DATABASE=romm
+      - MYSQL_USER=romm-user
+      - MYSQL_PASSWORD=moneyprintergobrr
+    volumes:
+      - ${APP_DATA_DIR}/data/mysql:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      start_period: 30s
+      start_interval: 10s
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    container_name: romm_romm-db_1
