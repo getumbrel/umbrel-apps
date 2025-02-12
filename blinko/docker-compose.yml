@@ -1,0 +1,63 @@
+version: '3.7'
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: blinko_app_1
+      APP_PORT: 1111
+      PROXY_AUTH_ADD: "false"
+    networks:
+      - blinko-network
+
+  db:
+    image: postgres:17.2@sha256:3267c505060a0052e5aa6e5175a7b41ab6b04da2f8c4540fc6e98a37210aa2d3
+    hostname: blinko-db
+    mem_limit: 1g
+    cpu_shares: 1024
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "pg_isready", "-q", "-d", "blinko", "-U", "blinkouser"]
+      timeout: 45s
+      interval: 10s
+      retries: 10
+    volumes:
+      - ${APP_DATA_DIR}/data/db:/var/lib/postgresql/data:rw
+    environment:
+      POSTGRES_DB: blinko
+      POSTGRES_USER: blinkouser
+      POSTGRES_PASSWORD: blinkopass
+    restart: on-failure
+    networks:
+      - blinko-network
+
+  app:
+    image: blinkospace/blinko:0.38.5@sha256:6dcd44268d9b158d6e37393b6a9c10266e6fea00d50bdf0899c7480ebb4554b7
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:1111"]
+      interval: 30s 
+      timeout: 10s  
+      retries: 5
+      start_period: 30s
+    environment:
+      NODE_ENV: production
+      NEXTAUTH_URL: http://umbrel.local:1111
+      NEXT_PUBLIC_BASE_URL: http://umbrel.local:1111
+      NEXTAUTH_SECRET: 3VZEVZ8vC8gjvRChDW8QRtQysSErPwqkR7vyMjIt3PiE3Xhf4Z5rTruf9YU6HxAf
+      DATABASE_URL: postgresql://blinkouser:blinkopass@blinko-db:5432/blinko
+    volumes:
+      - ${APP_DATA_DIR}/data/blinko:/app/.blinko:rw
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: on-failure
+    networks:
+      - blinko-network
+
+networks:
+  blinko-network:
+    driver: bridge
