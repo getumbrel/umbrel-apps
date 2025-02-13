@@ -2,7 +2,7 @@ manifestVersion: 1
 id: public-pool
 category: bitcoin
 name: Public Pool
-version: "9c14003"
+version: "9c14003-w"
 tagline: Fully Open Source Solo Bitcoin Mining Pool
 description: >-
   Run your own Bitcoin Solo Mining Pool with no fees.
@@ -25,10 +25,29 @@ gallery:
   - 3.jpg
 path: ""
 releaseNotes: >-
-  This update brings Bitcoin Core v28 compatibility to Public Pool, along with a number of other improvements.
+  This update brings a brand new Public Pool widget, allowing you to see your pool stats at a glance right from your umbrelOS home screen!
 
 
-  If you have already updated your Bitcoin Node app to v28.0 and Public Pool is not working, this update will fix it.
+  To add this widget, right-click on your home screen and select "Edit widgets", or click on Widgets in the Dock.
 defaultPassword: ""
+widgets:
+  - id: "stats"
+    type: "four-stats"
+    refresh: "5s"
+    endpoint: "widget-server:3000/widgets/pool"
+    link: ""
+    example:
+      type: "four-stats"
+      link: ""
+      items:
+        - title: "Hash Rate"
+          text: "968"
+          subtext: "GH/s"
+        - title: "Miners"
+          text: "1"
+        - title: "Blocks Found"
+          text: "1"
+        - title: "Block Height"
+          text: "883453"
 submitter: smolgrrr
 submission: https://github.com/getumbrel/umbrel-apps/pull/915
