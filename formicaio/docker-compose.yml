@@ -1,42 +1,29 @@
-version: "3.7"
-
 services:
-
   app_proxy:
     environment:
-      APP_HOST: formicaio_formicaio_1
-      APP_PORT: 8080
-
-  docker:
-    image: docker:27.4.0-dind@sha256:b0c1179ea32ad77bdb7b852b037e54b11022304c2f2662af1954ef53869314b2
-    privileged: true
-    network_mode: host
-    stop_grace_period: 1m
-    restart: on-failure
+      APP_HOST: formicaio_formicaio_proxy_1
+      APP_PORT: 52100
+    container_name: formicaio-app_proxy_1
+  formicaio_proxy:
+    image: bochaco/formicaio_proxy:0.1.0@sha256:de09a722629d5c3f7139eb7a9035ee29d4c6eb804c6031a7af39fe63a4dd298f
     environment:
-      DOCKER_ENSURE_BRIDGE: "dind0:10.32.0.1/16"
-    entrypoint: /entrypoint.sh
-    command: >
-      dockerd
-        --bridge dind0
-        --data-root /data/data
-        --exec-root /data/exec
-        --host unix:///data/docker.sock
-        --pidfile /data/docker.pid
-    volumes:
-      - ${APP_DATA_DIR}/entrypoint.sh:/entrypoint.sh
-      - ${APP_DATA_DIR}/data/docker:/data
-
+      FORMICAIO_ADDR: host.docker.internal:3000
+      FORMICAIO_PROXY_PORT: 52100
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    container_name: formicaio-formicaio_proxy_1
   formicaio:
-    image: bochaco/formicaio:latest@sha256:3c4285dc5bc751b74a8379e3653a86cd66333685198baed744457976a9cbab0d
+    image: bochaco/formicaio:0.3.0-native@sha256:b1cb3beedd399183b0ccf41622832cce67bc22b95edb3b07e24ae1a718632c36
     privileged: true
     restart: on-failure
+    network_mode: host
     stop_grace_period: 5s
     environment:
-      DOCKER_SOCKET_PATH: /var/run/docker.sock
       DB_PATH: /data
+      NODE_MGR_ROOT_DIR: /data
+      LEPTOS_SITE_ADDR: 0.0.0.0:3000
     volumes:
       - ${APP_DATA_DIR}/data/formicaio:/data
-      - ${APP_DATA_DIR}/data/docker:/var/run
     devices:
       - /dev:/dev
+    container_name: formicaio-formicaio_1
