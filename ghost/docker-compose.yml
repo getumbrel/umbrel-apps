@@ -7,13 +7,11 @@ services:
       APP_PORT: 2368
 
   db:
-    image: mysql:9.2@sha256:d56d039139a7f3b71f6d1c9f07ca4ee9f977b0fca13acdd27a1b13bfd4a4e3be
+    image: mysql:8.4.4@sha256:339598fe066c73daa4120f2d9dfefd3146c3519cd324748e1d3f9d2b6c71d10b
     restart: on-failure
     user: "1000:1000"
     environment:
       MYSQL_ROOT_PASSWORD: umbrel
-    ports:
-      - 3367:3306
     volumes:
       - ${APP_DATA_DIR}/data/db:/var/lib/mysql:rw
 
@@ -25,8 +23,8 @@ services:
       - ${APP_DATA_DIR}/data/content:/var/lib/ghost/content:rw
     environment:
       database__client: mysql
-      database__connection__host: db
+      database__connection__host: ghost_db_1
       database__connection__user: root
       database__connection__password: umbrel
       database__connection__database: ghost
-      url: http://umbrel.local:3368
+      url: ${DEVICE_DOMAIN_NAME}:3368
