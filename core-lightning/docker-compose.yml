@@ -7,7 +7,7 @@ services:
       APP_PORT: $APP_CORE_LIGHTNING_PORT
 
   app:
-    image: ghcr.io/elementsproject/cln-application:0.0.5@sha256:5125fc784564997d4d047cb99378284f57eb4900ebc39bdd9ab56811a4763312
+    image: ghcr.io/elementsproject/cln-application:0.0.6@sha256:d4b82f45e5a87a55043fba94586fcbfbb8c43c556ee4de3e7857944d6171f271
     command: npm run start
     restart: on-failure
     volumes:
@@ -55,7 +55,7 @@ services:
         ipv4_address: ${APP_CORE_LIGHTNING_REST_IP}
 
   lightningd:
-    image: elementsproject/lightningd:v24.05@sha256:fc02cfbf0921ab731d8b680db9d1f85b7dbb3b57db596c6dd400659678e5770b
+    image: elementsproject/lightningd:v24.11.1@sha256:3441315355152e04e45730406d73d4267899cce27bc74977129b419db0be7e11
     restart: on-failure
     ports:
       - ${APP_CORE_LIGHTNING_DAEMON_PORT}:9735
