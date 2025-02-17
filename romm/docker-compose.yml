@@ -4,42 +4,46 @@ services:
     environment:
       APP_HOST: romm_server_1
       APP_PORT: 8080
-      PROXY_AUTH_ADD: 'true'
-    container_name: romm_app_proxy_1
+      PROXY_AUTH_ADD: "false"
+
   server:
-    image: rommapp/romm:3.7.2@sha256:b3d593308f2d79a47c63219c20fdad1d6f17de2dee97cbad2aa748ef1d279484
+    user: "1000:1000"
+    image: rommapp/romm:3.7.3@sha256:45bfde6088e217b0f050064ca2146bbbf052a559112567cf129e17f52fd07f5b
     volumes:
-      - ${APP_DATA_DIR}/data/resources:/romm/resources
-      - ${APP_DATA_DIR}/data/redis:/redis-data
-      - ${APP_DATA_DIR}/data/library:/romm/library
-      - ${APP_DATA_DIR}/data/assets:/romm/assets
-      - ${APP_DATA_DIR}/data/config:/romm/config
+      - ${APP_DATA_DIR}/data/app/resources:/romm/resources
+      - ${APP_DATA_DIR}/data/app/redis:/redis-data
+      - ${APP_DATA_DIR}/data/app/library:/romm/library
+      - ${APP_DATA_DIR}/data/app/assets:/romm/assets
+      - ${APP_DATA_DIR}/data/app/config:/romm/config
     restart: on-failure
     depends_on:
-      romm-db:
+      db:
         condition: service_healthy
         restart: true
     environment:
-      - DB_HOST=romm_romm-db_1
+      - DB_HOST=romm_db_1
       - DB_NAME=romm
       - DB_USER=romm-user
       - DB_PASSWD=moneyprintergobrr
-      - ROMM_AUTH_SECRET_KEY=ROMM_AUTH_SECRET_KEY
+      - ROMM_AUTH_SECRET_KEY=849a354e3f5f73b73d916a4884770e1c6cb76c4579a4b02738788f40e2098e42
       - ROMM_AUTH_USERNAME=admin
       - ROMM_AUTH_PASSWORD=admin
-      - IGDB_CLIENT_ID=IGDB_CLIENT_ID
-      - IGDB_CLIENT_SECRET=IGDB_CLIENT_SECRET
-    container_name: romm_server_1
-  romm-db:
-    image: mariadb:latest
-    restart: unless-stopped
+      #- IGDB_CLIENT_ID= # Generate an ID and SECRET in IGDB
+      #- IGDB_CLIENT_SECRET= # https://api-docs.igdb.com/#account-creation
+      #- MOBYGAMES_API_KEY= # https://www.mobygames.com/info/api/
+      #- STEAMGRIDDB_API_KEY= # https://github.com/rommapp/romm/wiki/Generate-API-Keys#steamgriddb
+
+  db:
+    user: "1000:1000"
+    image: mariadb:11.4.5@sha256:5dfb3093333fa0ea53194ddef0a2bfa21d3b1e1353bd228b22610cd6fc0c04da
+    restart: on-failure
     environment:
       - MYSQL_ROOT_PASSWORD=umbrel
       - MYSQL_DATABASE=romm
       - MYSQL_USER=romm-user
       - MYSQL_PASSWORD=moneyprintergobrr
     volumes:
-      - ${APP_DATA_DIR}/data/mysql:/var/lib/mysql
+      - ${APP_DATA_DIR}/data/db:/var/lib/mysql
     healthcheck:
       test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
       start_period: 30s
@@ -47,4 +51,3 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    container_name: romm_romm-db_1
