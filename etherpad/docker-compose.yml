@@ -1,0 +1,50 @@
+version: '3.7'
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: etherpad_app_1
+      APP_PORT: 9001
+      
+  app:
+    image: etherpad/etherpad:2.2.7@sha256:980f227a17569901aaa8f98d8bb6eff51e15c04ad3e2ea0a1692662adbcc2090
+    volumes:
+      - ${APP_DATA_DIR}/data/plugins:/opt/etherpad-lite/src/plugin_packages
+      - ${APP_DATA_DIR}/data/etherpad-var:/opt/etherpad-lite/var:rw
+    depends_on:
+      - postgres
+    environment:
+      NODE_ENV: production
+      ADMIN_PASSWORD: ${APP_PASSWORD}
+      DB_CHARSET: utf8mb4
+      DB_HOST: etherpad_postgres_1
+      DB_NAME: etherpad
+      DB_PASS: admin
+      DB_PORT: 5432
+      DB_TYPE: "postgres"
+      DB_USER: admin
+      DEFAULT_PAD_TEXT: 
+      DISABLE_IP_LOGGING: "false"
+      LOGLEVEL: DEBUG
+      SOFFICE: null
+      ALLOW_UNKNOWN_FILE_ENDS: "true"
+      TRUST_PROXY: "true"
+      SKIN_NAME: colibris
+      SKIN_VARIANTS: super-light-toolbar super-light-editor light-background   
+      SHOW_SETTINGS_IN_ADMIN_PAGE: "true"
+      SUPPRESS_ERRORS_IN_PAD_TEXT: "false"   
+    restart: on-failure
+    user: "1000:1000"
+
+  postgres:
+    image: postgres:15-alpine@sha256:93a6166360be8f1d116b7ea97ebb8dea9e2c9c746349e952738bbba72a961d7c
+    environment:
+      POSTGRES_DB: etherpad
+      POSTGRES_PASSWORD: admin
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: admin
+      PGDATA: /var/lib/postgresql/data/pgdata
+    restart: on-failure
+    user: "1000:1000"
+    volumes:
+      - ${APP_DATA_DIR}/data/postgres_data:/var/lib/postgresql/data/pgdata
