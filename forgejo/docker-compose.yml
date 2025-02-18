@@ -33,8 +33,9 @@ services:
       - db
 
   db:
-    image: postgres:14
-    restart: always
+    image: postgres:14@sha256:5d8330e221083215ffbb3c5feeb2cfe44aadda827bc3f0dad9bbf3e58ed2e895
+    restart: on-failure
+    user: "1000:1000"
     environment:
       POSTGRES_USER: forgejo
       POSTGRES_PASSWORD: forgejo
