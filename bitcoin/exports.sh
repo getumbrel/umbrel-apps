@@ -102,6 +102,7 @@ BIN_ARGS=()
 # BIN_ARGS+=( "-port=${APP_BITCOIN_P2P_PORT}" )
 # BIN_ARGS+=( "-rpcport=${APP_BITCOIN_RPC_PORT}" )
 # We hardcode the ports p2p and rpc ports to always be the same for all networks
+# As of v28.1, the default onion listening port will now be derived to be -port + 1 instead of being set to a fixed value (8334 on mainnet)
 BIN_ARGS+=( "-port=8333" )
 BIN_ARGS+=( "-rpcport=8332" )
 BIN_ARGS+=( "-rpcbind=${APP_BITCOIN_NODE_IP}" )
