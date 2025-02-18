@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: lightning
 category: bitcoin
 name: Lightning Node
-version: "v0.16.4-beta"
+version: "0.18.3-beta"
 tagline: Run your personal Lightning Network node
 description: >-
   Run your personal Lightning Network node, and join the future of Bitcoin today.
@@ -22,10 +22,10 @@ description: >-
 
   An official app from Umbrel.
 releaseNotes: >-
-  This release is a minor release to fix a memory leak inadvertently introduced by optimizations to the mempool scanning logic.
-  
-  
-  Read the full release notes for additional information and detailed changes at https://github.com/lightningnetwork/lnd/blob/master/docs/release-notes/release-notes-0.16.4.md
+  This release updates the underlying Lightning Network Daemon (LND) to v0.18.3-beta, which includes bug fixes and stability improvements, as well as support for sending and receiving blinded paths using BOLT 11 invoices.
+
+
+  Full release notes can be found at https://github.com/lightningnetwork/lnd/releases
 developer: Umbrel
 website: https://umbrel.com
 dependencies:
@@ -41,5 +41,63 @@ gallery:
   - 5.jpg
 path: ""
 defaultPassword: ""
+widgets:
+  - id: "bitcoin-wallet"
+    type: "text-with-buttons"
+    refresh: "5s"
+    endpoint: "app:3006/v1/lnd/widgets/bitcoin-wallet"
+    link: ""
+    example:
+      type: "text-with-buttons"
+      link: ""
+      title: "Bitcoin Wallet"
+      text: "1,845,894"
+      subtext: "sats"
+      buttons:
+        - text: "Withdraw"
+          icon: "arrow-up-right"
+          link: "?action=send-bitcoin"
+        - text: "Deposit"
+          icon: "arrow-down-right"
+          link: "?action=receive-bitcoin"
+  - id: "lightning-wallet"
+    type: "text-with-buttons"
+    refresh: "2s"
+    endpoint: "app:3006/v1/lnd/widgets/lightning-wallet"
+    link: ""
+    example:
+      type: "text-with-buttons"
+      link: ""
+      title: "Lightning Wallet"
+      text: "762,248"
+      subtext: "sats"
+      buttons:
+        - text: "Send"
+          icon: "arrow-up-right"
+          link: "?action=send-lightning"
+        - text: "Receive"
+          icon: "arrow-down-right"
+          link: "?action=receive-lightning"
+  - id: "lightning-stats"
+    type: "four-stats"
+    refresh: "5s"
+    endpoint: "app:3006/v1/lnd/widgets/lightning-stats"
+    link: ""
+    example:
+      type: "four-stats"
+      link: ""
+      items:
+        - title: "Connections"
+          text: "5"
+          subtext: "peers"
+        - title: "Active channels"
+          text: "3"
+          subtext: "channels"
+        - title: "Max send"
+          text: "90K"
+          subtext: "sats"
+        - title: "Max receive"
+          text: "45K"
+          subtext: "sats"
 submitter: Umbrel
 submission: https://github.com/getumbrel/umbrel-apps/commit/576ecd2bef8d625abceed0f67ec9c487da9b2b1b

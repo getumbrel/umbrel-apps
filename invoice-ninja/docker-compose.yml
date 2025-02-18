@@ -14,9 +14,11 @@ services:
     volumes:
       - ${APP_DATA_DIR}/config/nginx.conf:/etc/nginx/conf.d/nginx.conf:ro
       - ${APP_DATA_DIR}/data/public:/var/www/app/public:ro
+    depends_on:
+      - app
 
   app:
-    image: invoiceninja/invoiceninja:5.5.93@sha256:59af42c410467154e6c50322f1d2ab048297b2d01e862f41bc9f1db4829c6086
+    image: invoiceninja/invoiceninja:5.11.40@sha256:d7c237266f39c7d25abdbf682c7f4f11b32ee695d1dd143b6d9d3da6f6190681
     # We're forced to run user/group 1500
     # More detail here: https://github.com/invoiceninja/dockerfiles/blob/ad3ffc227d63740330f761dad6e8c87768577847/alpine/5/Dockerfile#L70-L80
     user: "1500:1500"
@@ -26,15 +28,19 @@ services:
       - ${APP_DATA_DIR}/data/storage:/var/www/app/storage:rw,delegated
     environment:
       APP_URL: "http://${APP_DOMAIN}"
+      APP_KEY: "${APP_KEY:-unset}"
+      REQUIRE_HTTPS: "false"
       DB_HOST: invoice-ninja_db_1
       DB_DATABASE: invoiceninja
       DB_USERNAME: invoiceninja
       DB_PASSWORD: moneyprintergobrrr
       IN_USER_EMAIL: "admin@example.com"
       IN_PASSWORD: $APP_PASSWORD
+    depends_on:
+      - db
 
   db:
-    image: mariadb:10.5.12@sha256:dfcba5641bdbfd7cbf5b07eeed707e6a3672f46823695a0d3aba2e49bbd9b1dd
+    image: mariadb:11.4.5@sha256:5dfb3093333fa0ea53194ddef0a2bfa21d3b1e1353bd228b22610cd6fc0c04da
     user: "1000:1000"
     restart: on-failure
     volumes:
@@ -44,4 +50,4 @@ services:
       MYSQL_USER: invoiceninja
       MYSQL_PASSWORD: moneyprintergobrrr
       MYSQL_DATABASE: invoiceninja
-
+      MARIADB_AUTO_UPGRADE: "true"

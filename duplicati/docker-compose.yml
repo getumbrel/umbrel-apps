@@ -1,0 +1,23 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: duplicati_duplicati_1
+      APP_PORT: 8200
+      PROXY_AUTH_ADD: "false"
+  
+  duplicati:
+    image: duplicati/duplicati:2.1.0.2@sha256:5cfae82b909212e29fbcfe6f597d73bd68ea202e54333135e05193b99974f69b
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 1m
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+      - ${UMBREL_ROOT}/data/storage:/umbrel
+    environment:
+      DUPLICATI__WEBSERVICE_PORT: "8200"
+      DUPLICATI__WEBSERVICE_INTERFACE: "any"
+      DUPLICATI__WEBSERVICE_PASSWORD: "${APP_PASSWORD}"
+      DUPLICATI__WEBSERVICE_ALLOWED_HOSTNAMES: "*"
+

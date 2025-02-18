@@ -9,20 +9,29 @@ CONFIG_PHP_FILE="${APP_DATA_DIR}/data/nextcloud/config/config.php"
 APP_COMPOSE_FILE="${APP_DATA_DIR}/docker-compose.yml"
 APP_COMPOSE_BACKUP_FILE="${APP_DATA_DIR}/docker-compose.yml.bak"
 
-# Supported list of Nextcloud migrations
+# Supported list of Nextcloud major version migrations
 VERSIONS=()
-VERSIONS+=( "22.1.1.2" )
-VERSIONS+=( "22.2.10.2" )
-VERSIONS+=( "23.0.11.1" )
-VERSIONS+=( "24.0.7.1" )
-VERSIONS+=( "25.0.1.1" )
+VERSIONS+=( "22" )
+VERSIONS+=( "23" )
+VERSIONS+=( "24" )
+VERSIONS+=( "25" )
+VERSIONS+=( "26" )
+VERSIONS+=( "27" )
+VERSIONS+=( "28" )
+VERSIONS+=( "29" )
+VERSIONS+=( "30" )
 
+# List of Nextcloud major version images to migrate to
 IMAGES=()
-IMAGES+=( "nextcloud:22.1.1-apache@sha256:99d94124b2024c9f7f38dc12144a92bc0d68d110bcfd374169ebb7e8df0adf8e" )
 IMAGES+=( "nextcloud:22.2.10-apache@sha256:71c4fb75d7c035ea2c840ebc1adf0da144b0c69e39ce925f4a2ea84b7c06db18" )
 IMAGES+=( "nextcloud:23.0.11-apache@sha256:671ed70c7b204c63cb56d5c0d5dd624abec5eadeacd492191e65e834ddffef26" )
 IMAGES+=( "nextcloud:24.0.7-apache@sha256:f95a21b598b7470b788251db5b0bbe9516992fdb865e7a8978980585e36eb715" )
 IMAGES+=( "nextcloud:25.0.1-apache@sha256:a200319b132c01ec3486e0dcaf052092b560ec30ac9b78115607696dd201f704" )
+IMAGES+=( "nextcloud:26.0.9-apache@sha256:23180fbe8169d428ce0058bfc8d47793628a16e00e40b495d82e4504a124b3fa" )
+IMAGES+=( "nextcloud:27.0.2-apache@sha256:3c8040278bdc991cbc025278eaffc4978a9c2fd4ac34e95b10f646dcadb7c3fb" )
+IMAGES+=( "nextcloud:28.0.3-apache@sha256:ed07f89119dcca2a3711897c48a8ac969542d96d69384445d8fcdc7804ca946f" )
+IMAGES+=( "nextcloud:29.0.7-apache@sha256:3bcd2afa9d02fccc52251712bee1afc4f5891beaf353af47881b7662cd1308f7" )
+IMAGES+=( "nextcloud:30.0.5-apache@sha256:02441f524c6fab3aadbf7157f6e0484927e231d685b248dc0734fa2941b4445e" )
 
 find_index() {
 	local -r value="${1}"
@@ -77,6 +86,10 @@ get_version() {
 	cat "${CONFIG_PHP_FILE}" | grep "'version'[[:space:]]=>[[:space:]]" | awk -F"'" '{print $4}'
 }
 
+get_major_version() {
+	echo "${1%%.*}"
+}
+
 # If a Nextcloud config file does not yet exist
 # Then it's likely a new install
 # Therefore there is nothing to do
@@ -85,19 +98,28 @@ if [[ ! -f "${CONFIG_PHP_FILE}" ]]; then
 fi
 
 nextcloud_version=$(get_version)
+nextcloud_major_version=$(get_major_version "$nextcloud_version")
 
 echo "Active Nextcloud Version: ${nextcloud_version}"
+echo "Active Nextcloud Major Version: ${nextcloud_major_version}"
 
-# Check if active version is in migration list
-active_version_idx=$(find_index "${nextcloud_version}" "${VERSIONS[@]}")
+# check if active version has "-patch" appended to it and exit if it does so we allow the migration to complete
+# we add "-patch" to the version below during migration
+if [[ "${nextcloud_version}" == *"-patch"* ]]; then
+	echo "Active Nextcloud version is undergoing migration. Exiting..."
+	exit
+fi
+
+# Check if active major version is in migration list
+active_version_idx=$(find_index "${nextcloud_major_version}" "${VERSIONS[@]}")
 if [[ "${active_version_idx}" == "-1" ]]; then
-	echo "Active version is not supported in the list of migrations"
+	echo "Active major version is not supported in the list of migrations"
 	exit
 fi
 
 # Check if already up to date
-if [[ "${VERSIONS[-1]}" == "${nextcloud_version}" ]]; then
-	echo "Nextcloud is up-to-date"
+if [[ "${VERSIONS[-1]}" == "${nextcloud_major_version}" ]]; then
+	echo "Nextcloud is already on the latest major version. No migration needed."
 	exit
 fi
 
@@ -108,7 +130,7 @@ for i in "${!VERSIONS[@]}"; do
 	version="${VERSIONS[$i]}"
 	image="${IMAGES[$i]}"
 
-	echo "Migrating to: ${version} (${image})"
+	echo "Migrating to major version: ${version} (${image})"
 	echo
 
 	cp --archive "${APP_COMPOSE_FILE}" "${APP_COMPOSE_BACKUP_FILE}"

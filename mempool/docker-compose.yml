@@ -7,7 +7,7 @@ services:
       APP_PORT: $APP_MEMPOOL_PORT
       PROXY_AUTH_ADD: "false"
   web:
-    image: mempool/frontend:v2.5.0@sha256:559b4542fc414a28db69bbda143e6be1c404e3f1b637c9e6f30526c10f4c75a7
+    image: mempool/frontend:v3.0.1@sha256:f3a74d2ca47dfa679f8da5a2b22bd714164794dc2fd088ef8779a79b21d4e742
     user: "1000:1000"
     init: true
     restart: on-failure
@@ -18,12 +18,12 @@ services:
       BACKEND_MAINNET_HTTP_HOST: $APP_MEMPOOL_API_IP
       NGINX_PORT: $APP_MEMPOOL_PORT
       NGINX_HOSTNAME: $APP_MEMPOOL_API_IP
-      LIGHTNING_DETECTED_PORT: $APP_LIGHTNING_NODE_PORT
+      LIGHTNING_DETECTED_PORT: $APP_MEMPOOL_LIGHTNING_NODE_PORT
     networks:
       default:
         ipv4_address: $APP_MEMPOOL_IP
   api:
-    image: mempool/backend:v2.5.0@sha256:c58996a3bfd382cb782da5d93e4b8f65f9c02c7a6bb10df4dda0bdf52ba8ed88
+    image: mempool/backend:v3.0.1@sha256:4daa540727d3a830e71fb9f1ae281d1393be5077177c7d714066d450fb8f5bbf
     user: "1000:1000"
     init: true
     restart: on-failure
@@ -56,8 +56,9 @@ services:
       LIGHTNING_GRAPH_REFRESH_INTERVAL: 3600
       LND_TLS_CERT_PATH: "/lnd/tls.cert"
       LND_MACAROON_PATH: "/lnd/data/chain/bitcoin/$APP_BITCOIN_NETWORK/readonly.macaroon"
-      LND_REST_API_URL: "https://$APP_LIGHTNING_NODE_IP:$APP_LIGHTNING_NODE_REST_PORT"
+      LND_REST_API_URL: "https://$APP_MEMPOOL_LIGHTNING_NODE_IP:$APP_MEMPOOL_LIGHTNING_NODE_REST_PORT"
       LND_TIMEOUT: 120000
+      NODE_OPTIONS: "--max-old-space-size=2048"
     networks:
        default:
          ipv4_address: $APP_MEMPOOL_API_IP
@@ -76,3 +77,8 @@ services:
     networks:
        default:
          ipv4_address: $APP_MEMPOOL_DB_IP
+  widget-server:
+    image: getumbrel/umbrel-mempool-widget-server:v1.0.0@sha256:099846e613c7310deba842241477737babcdf78250fba6edf39d456712eeefc3
+    environment:
+      MEMPOOL_API_URL: "http://$APP_MEMPOOL_IP:$APP_MEMPOOL_PORT/api/v1/fees/recommended"
+    restart: on-failure

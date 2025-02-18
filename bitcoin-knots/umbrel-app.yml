@@ -1,0 +1,76 @@
+manifestVersion: 1.1
+id: bitcoin-knots
+implements:
+  - bitcoin
+category: bitcoin
+name: Bitcoin Knots
+version: "27.1.2-swappable.4"
+tagline: Run your personal node powered by Bitcoin Knots
+description: >-
+  Take control of your digital sovereignty by running a Bitcoin node that aligns with your needs and preferences. 
+  Independently store and validate every single Bitcoin transaction with Bitcoin Knots.
+
+
+  Powered by Bitcoin Knots: https://bitcoinknots.org/
+developer: Léo Haf
+website: https://bitcoinknots.org
+dependencies: []
+repo: https://github.com/bitcoinknots/bitcoin.git
+support: https://github.com/bitcoinknots/bitcoin/issues
+port: 2105
+gallery:
+  - 1.jpg
+  - 2.jpg
+  - 3.jpg
+path: ""
+defaultPassword: ""
+releaseNotes: >-
+  This release fixes a bug that prevented some apps from connecting to Bitcoin Knots.
+  
+  
+  **🔔 And in case you missed it:**
+
+
+  Bitcoin Knots now integrates seamlessly with other apps, allowing you to connect compatible apps like Electrum servers, block explorers, and Lightning nodes directly to it.
+
+
+  To switch an existing app to use Bitcoin Knots, right-click the app and update the connection in “Settings.”
+  
+
+  ⚠️ Note: This feature requires umbrelOS 1.3 or later.
+widgets:
+  - id: "stats"
+    type: "four-stats"
+    refresh: "5s"
+    endpoint: "server:3005/v1/bitcoind/widgets/stats"
+    link: ""
+    example:
+      type: "four-stats"
+      link: ""
+      items:
+        - title: "Connections"
+          text: "11"
+          subtext: "peers"
+        - title: "Mempool"
+          text: "257"
+          subtext: "MB"
+        - title: "Hashrate"
+          text: "590"
+          subtext: "EH/s"
+        - title: "Blockchain size"
+          text: "600"
+          subtext: "GB"
+  - id: "sync"
+    type: "text-with-progress"
+    refresh: "2s"
+    endpoint: "server:3005/v1/bitcoind/widgets/sync"
+    link: ""
+    example:
+      type: "text-with-progress"
+      link: ""
+      title: "Blockchain sync"
+      text: "83%"
+      progressLabel: "In progress"
+      progress: 0.83
+submitter: Léo Haf
+submission: https://github.com/getumbrel/umbrel-apps/pull/953

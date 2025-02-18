@@ -6,18 +6,37 @@ services:
       APP_HOST: tdex_caddy_1
       APP_PORT: 8080
 
-  tdexd:
-    image: ghcr.io/tdex-network/tdexd:v0.9.1@sha256:5078897b9a505fc3dfac5b3d51537150941c075f5279ae81de1c6b1c21112544
+  oceand:
+    image: ghcr.io/vulpemventures/oceand:v0.1.17@sha256:37b813b43b068e32d918b9f42539c33287308cc81d00909c742b7164dfefc0c4
     tty: true
     restart: on-failure
     stop_grace_period: 1m
     volumes:
-      - ${APP_DATA_DIR}/tdex-data:/home/tdex/.tdex-daemon
+      - ${APP_DATA_DIR}/ocean-data:/home/ocean/.oceand
+    environment:
+      OCEAN_LOG_LEVEL: 5
+      OCEAN_DB_TYPE: "badger"
+      OCEAN_NO_TLS: "true"
+      OCEAN_NO_PROFILER: "true"
+      OCEAN_UTXO_EXPIRY_DURATION_IN_SECONDS: 240
+
+  tdexd:
+    image: ghcr.io/tdex-network/tdexd:v1.0.1@sha256:eef1f31e98208e9a35ddf308317bc1df71065e189fa0915c769c7a01394ef79a
+    tty: true
+    restart: on-failure
+    depends_on:
+      - oceand
+    stop_grace_period: 1m
+    volumes:
+      - ${APP_DATA_DIR}/tdexd:/home/tdex/.tdex-daemon
+    ports:
+     - ${APP_TDEX_PORT}:${APP_TDEX_PORT}
     environment:
       TDEX_LOG_LEVEL: 5
       TDEX_OPERATOR_LISTENING_PORT: "${APP_TDEX_PORT}"
       TDEX_TRADE_LISTENING_PORT: "${APP_TDEX_PORT}"
       TDEX_NO_OPERATOR_TLS: "true"
+      TDEX_WALLET_ADDR: oceand:18000
       # these vars are used to generate the connect URL
       # we assume to always show the external endpoint
       # reachable remotely by other dashboards via Tor
@@ -25,12 +44,12 @@ services:
       TDEX_CONNECT_PROTO: http
 
   dashboard:
-    image: ghcr.io/tdex-network/dashboard:v0.1.55@sha256:dfa7cdb75117c97e671285fc9754a6cabafc7f74760c314e6625c33067509beb
+    image: ghcr.io/tdex-network/dashboard:v1.0.2@sha256:71d598afb0d5ec9966306f4ef0d5f6839a9d7dc50726a935f3d0bb38f1925d78
     restart: on-failure
     environment:
       USE_PROXY: "false"
       IS_PACKAGED: "true"
-      TRADER_HIDDEN_SERVICE:  "${APP_TDEX_DAEMON_HIDDEN_SERVICE}"
+      TRADER_HIDDEN_SERVICE: "${APP_TDEX_DAEMON_HIDDEN_SERVICE}"
 
   caddy:
     image: caddy:2.6.4-alpine@sha256:4dfec6c3b22c36b63ea4a3633c7cdbdaa9926d1324c27db2b0e2b70ef9cd105a

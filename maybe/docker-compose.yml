@@ -1,0 +1,47 @@
+version: '3.7'
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: maybe_web_1
+      APP_PORT: 3063
+
+  web:
+    image: ghcr.io/maybe-finance/maybe:0.3.0@sha256:68e7025602172ddae766375ea9199282ddc8eb441404022ea3e2153d2448a667
+    restart: on-failure
+    stop_grace_period: 1m
+    volumes:
+      - ${APP_DATA_DIR}/data/rails:/rails/storage
+    environment:
+      SELF_HOSTING_ENABLED: "true"
+      PORT: 3063
+      DB_HOST: db
+      DB_PORT: 5432
+      DATABASE_URL: postgres://maybe:maybe@db:5432/maybe
+      RAILS_FORCE_SSL: "false"
+      RAILS_ASSUME_SSL: "false"
+      POSTGRES_DB: maybe
+      POSTGRES_USER: maybe
+      POSTGRES_PASSWORD: maybe
+      GOOD_JOB_EXECUTION_MODE: async
+      SECRET_KEY_BASE: $APP_SEED
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:16@sha256:1bf73ccae25238fa555100080042f0b2f9be08eb757e200fe6afc1fc413a1b3c
+    restart: on-failure
+    stop_grace_period: 1m
+    volumes:
+      - ${APP_DATA_DIR}/data/postgres:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: maybe
+      POSTGRES_USER: maybe
+      POSTGRES_PASSWORD: maybe
+      PGDATA: /var/lib/postgresql/data/pgdata
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U maybe']
+      interval: 10s
+      timeout: 5s
+      retries: 5

@@ -1,0 +1,14 @@
+version: '3.7'
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: jellyseerr_server_1
+      APP_PORT: 5055
+      PROXY_AUTH_WHITELIST: "/api/*"
+
+  server:
+    image: fallenbagel/jellyseerr:2.3.0@sha256:df53a7b06006e9da117a7072a55cf5d8b2071a6272f6bb329d8ca62b6f5c08a6
+    volumes:
+      - ${APP_DATA_DIR}/data/config:/app/config
+    restart: on-failure

@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# We're forced to run as user/group 1032: https://github.com/LibreTranslate/LibreTranslate/blob/f7a35db05b3ac7fcd40489faa7da827b03354faf/docker/Dockerfile#L28-L33
+# So we set the owner of the data directories to 1032:1032
+APP_DATA_DIR="$(readlink -f $(dirname "${BASH_SOURCE[0]}")/..)/data"
+
+DESIRED_OWNER="1032:1032"
+
+API_KEYS_DATA_DIR="${APP_DATA_DIR}/api_keys"
+MODELS_DATA_DIR="${APP_DATA_DIR}/models"
+
+set_permissions() {
+	local -r path="${1}"
+
+	if [[ -d "${path}" ]]; then
+		owner=$(stat -c "%u:%g" "${path}")
+
+		if [[ "${owner}" != "${DESIRED_OWNER}" ]]; then
+			chown "${DESIRED_OWNER}" "${path}"
+		fi
+	fi
+}
+
+set_permissions "${API_KEYS_DATA_DIR}"
+set_permissions "${MODELS_DATA_DIR}"

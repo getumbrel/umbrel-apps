@@ -1,0 +1,41 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: vikunja_web_1
+      APP_PORT: 3456
+      # vikunja has its own auth, so we don't need to use transparent umbrel auth here
+      PROXY_AUTH_ADD: "false"
+
+  db:
+    image: mariadb:10.11.8@sha256:75f6e61397758489d1dccf95db33b6b49ebfc7ec1253d40060fdf8ceb7f938a3
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    environment:
+      MYSQL_ROOT_PASSWORD: supersecret
+      MYSQL_USER: vikunja
+      MYSQL_PASSWORD: secret
+      MYSQL_DATABASE: vikunja
+    volumes:
+      - ${APP_DATA_DIR}/data/db:/var/lib/mysql
+    restart: on-failure
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u $$MYSQL_USER --password=$$MYSQL_PASSWORD"]
+      interval: 2s
+      start_period: 30s
+
+  web:
+    image: vikunja/vikunja:0.24.6@sha256:ed1f3ed467fecec0b57e9de7bc6607f8bbcbb23ffced6a81f5dfefc794cdbe3b
+    environment:
+      # VIKUNJA_SERVICE_PUBLICURL: <http://<the public ip or host where Vikunja is reachable>
+      VIKUNJA_DATABASE_HOST: vikunja_db_1
+      VIKUNJA_DATABASE_PASSWORD: secret
+      VIKUNJA_DATABASE_TYPE: mysql
+      VIKUNJA_DATABASE_USER: vikunja
+      VIKUNJA_DATABASE_DATABASE: vikunja
+      VIKUNJA_SERVICE_JWTSECRET: ${APP_SEED}
+    volumes: 
+      - ${APP_DATA_DIR}/data/files:/app/vikunja/files
+    depends_on:
+      - db
+    restart: on-failure

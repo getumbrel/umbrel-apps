@@ -1,0 +1,53 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: romm_server_1
+      APP_PORT: 8080
+      PROXY_AUTH_ADD: "false"
+
+  server:
+    user: "1000:1000"
+    image: rommapp/romm:3.7.3@sha256:45bfde6088e217b0f050064ca2146bbbf052a559112567cf129e17f52fd07f5b
+    volumes:
+      - ${APP_DATA_DIR}/data/resources:/romm/resources
+      - ${APP_DATA_DIR}/data/redis:/redis-data
+      - ${APP_DATA_DIR}/data/library:/romm/library
+      - ${APP_DATA_DIR}/data/assets:/romm/assets
+      - ${APP_DATA_DIR}/data/config:/romm/config
+    restart: on-failure
+    depends_on:
+      db:
+        condition: service_healthy
+        restart: true
+    environment:
+      - DB_HOST=romm_db_1
+      - DB_NAME=romm
+      - DB_USER=romm-user
+      - DB_PASSWD=moneyprintergobrr
+      - ROMM_AUTH_SECRET_KEY=${APP_SEED}
+      # As of 17 Feb 2025, API keys cannot be added via the web interface and must, instead, be added in the compose file here.
+      #- IGDB_CLIENT_ID= # Generate an ID and SECRET in IGDB
+      #- IGDB_CLIENT_SECRET= # https://api-docs.igdb.com/#account-creation
+      #- MOBYGAMES_API_KEY= # https://www.mobygames.com/info/api/
+      #- STEAMGRIDDB_API_KEY= # https://github.com/rommapp/romm/wiki/Generate-API-Keys#steamgriddb
+
+  db:
+    user: "1000:1000"
+    image: mariadb:11.4.5@sha256:5dfb3093333fa0ea53194ddef0a2bfa21d3b1e1353bd228b22610cd6fc0c04da
+    restart: on-failure
+    environment:
+      - MARIADB_ROOT_PASSWORD=umbrel
+      - MARIADB_DATABASE=romm
+      - MARIADB_USER=romm-user
+      - MARIADB_PASSWORD=moneyprintergobrr
+    volumes:
+      - ${APP_DATA_DIR}/data/db:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      start_period: 30s
+      start_interval: 10s
+      interval: 10s
+      timeout: 5s
+      retries: 5

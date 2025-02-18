@@ -1,0 +1,31 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: umami_app_1
+      APP_PORT: 3000
+      PROXY_AUTH_ADD: "false"
+  
+  app:
+    image: ghcr.io/umami-software/umami:postgresql-v2.15.1@sha256:b96ff776b0e1dfafb3c366a92119b1a72a656c9c20006d47e07df9dbbffe9331
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      DATABASE_URL: postgresql://umami:umami@db:5432/umami
+      DATABASE_TYPE: postgresql
+      APP_SECRET: ${APP_SEED}
+    depends_on:
+      - db
+
+  db:
+    image: postgres:15-alpine@sha256:8a8d55343d6fc456cb183453e3094ff140b984157b36b48f817dd581654f2aec
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      POSTGRES_DB: umami
+      POSTGRES_USER: umami
+      POSTGRES_PASSWORD: umami
+    volumes:
+      - ${APP_DATA_DIR}/data/db:/var/lib/postgresql/data

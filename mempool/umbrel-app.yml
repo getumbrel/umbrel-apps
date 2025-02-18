@@ -2,7 +2,7 @@ manifestVersion: 1
 id: mempool
 category: bitcoin
 name: mempool
-version: "2.5.0"
+version: "3.0.1-hotfix"
 tagline: Explore the full Bitcoin ecosystem
 description: >-
   Be your own explorer.
@@ -13,7 +13,10 @@ description: >-
 
   This product includes GeoLite2 data created by MaxMind, available from https://www.maxmind.com
 releaseNotes: >-
-  This update allows users to use the Lightning explorer if the Lightning Node app is installed.
+  This update fixes an issue where users on umbrelOS 1.3 were unable to use optional LND functionality in the mempool app.
+
+
+  Full release notes for the previous major update to version 3.0.0 are found at https://github.com/mempool/mempool/releases
 developer: Mempool Space K.K.
 website: https://mempool.space/about
 dependencies:
@@ -30,5 +33,27 @@ gallery:
 path: ""
 defaultUsername: ""
 defaultPassword: ""
+widgets:
+  - id: "stats"
+    type: "four-stats"
+    refresh: "5s"
+    endpoint: "widget-server:3000/widgets/fees"
+    link: ""
+    example:
+      type: "four-stats"
+      link: ""
+      items:
+        - title: "No priority"
+          text: "2"
+          subtext: "sat/vB"
+        - title: "Low priority"
+          text: "6"
+          subtext: "sat/vB"
+        - title: "Medium priority"
+          text: "18"
+          subtext: "sat/vB"
+        - title: "High priority"
+          text: "27"
+          subtext: "sat/vB"
 submitter: Mempool Space K.K.
 submission: https://github.com/getumbrel/umbrel/pull/470

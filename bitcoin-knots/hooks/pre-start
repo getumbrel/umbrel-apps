@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+
+# Recursively chown the bitcoind data directory if this is an install impacted by the bitcoind container running as root.
+
+APP_DIR="$(dirname "${BASH_SOURCE[0]}")/.."
+BITCOIND_DATA_DIR="${APP_DIR}/data/bitcoin"
+IS_BITCOIND_PERMISSIONS_SET="${APP_DIR}/data/IS_BITCOIND_PERMISSIONS_SET"
+
+# If no blocks directory exists, we write out the file to indicate that this is a fresh install with correct permissions.
+if [[ ! -d "${BITCOIND_DATA_DIR}/blocks" ]] && [[ ! -d "${BITCOIND_DATA_DIR}/testnet3/blocks" ]] && [[ ! -d "${BITCOIND_DATA_DIR}/signet/blocks" ]] && [[ ! -d "${BITCOIND_DATA_DIR}/regtest/blocks" ]]
+then
+	touch "${IS_BITCOIND_PERMISSIONS_SET}"
+fi
+
+# If the file exists, we know that the permissions have already been set.
+if [[ ! -f "${IS_BITCOIND_PERMISSIONS_SET}" ]]
+then
+	chown -R 1000:1000 "${BITCOIND_DATA_DIR}"
+	touch "${IS_BITCOIND_PERMISSIONS_SET}"
+fi
+
+# Delay booting Bitcoin until the RPC and P2P Tor Hidden Services are ready
+
+HIDDEN_SERVICE_FILE="${TOR_DATA_DIR}/app-${APP_ID}-rpc/hostname"
+
+if [[ -f "${HIDDEN_SERVICE_FILE}" ]]; then
+	exit
+fi
+
+"${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" up --detach bitcoind
+"${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" up --detach tor
+
+echo "App: ${APP_ID} - Generating Tor Hidden Service..."
+
+for attempt in $(seq 1 100); do
+	if [[ -f "${HIDDEN_SERVICE_FILE}" ]]; then
+		echo "App: ${APP_ID} - Hidden service file created successfully!"
+		break
+	fi
+	sleep 0.1
+done
+
+if [[ ! -f "${HIDDEN_SERVICE_FILE}" ]]; then
+	echo "App: ${APP_ID} - Hidden service file wasn't created"
+fi

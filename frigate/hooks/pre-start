@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# If no config directory exists then this is a pre 0.13.2 install that needs to handle a frigate breaking change:
+# https://github.com/blakeblackshear/frigate/releases/tag/v0.13.0
+
+APP_DATA_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")/data"
+CONFIG_DIR="${APP_DATA_DIR}/config"
+OLD_CONFIG_FILE="${APP_DATA_DIR}/config.yml"
+
+# Create the new config directory if it doesn't exist
+if [ ! -d "${CONFIG_DIR}" ]; then
+  mkdir -p "${CONFIG_DIR}" && chown 1000:1000 "${CONFIG_DIR}"
+  
+  # Move the old config.yml file into the config directory if it exists
+  # If it doesn't exist then the user has deleted it
+  if [ -f "${OLD_CONFIG_FILE}" ]; then
+    mv "${OLD_CONFIG_FILE}" "${CONFIG_DIR}/"
+  else
+    echo "The old Frigate config file does not exist."
+  fi
+fi

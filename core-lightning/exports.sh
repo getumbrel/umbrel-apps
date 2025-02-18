@@ -6,6 +6,8 @@ export APP_CORE_LIGHTNING_DAEMON_IP="10.21.21.96"
 export APP_CORE_LIGHTNING_DAEMON_PORT="9736"
 export APP_CORE_LIGHTNING_DAEMON_GRPC_PORT="2105"
 export APP_CORE_LIGHTNING_WEBSOCKET_PORT="2106"
+export APP_CORE_LIGHTNING_DATA_DIR="${EXPORTS_APP_DIR}/data/lightningd"
+export CORE_LIGHTNING_REST_PORT="2107"
 
 export APP_CORE_LIGHTNING_REST_CERT_DIR="${EXPORTS_APP_DIR}/data/c-lightning-rest/certs"
 
@@ -19,7 +21,6 @@ export APP_CORE_LIGHTNING_REST_HIDDEN_SERVICE="$(cat "${rest_hidden_service_file
 
 export APP_CONFIG_DIR="/data/app"
 export APP_MODE="production"
-export APP_CORE_LIGHTNING_DATA_DIR="/root/.lightning"
 export APP_REST_CERT_VOLUME_DIR="/c-lightning-rest/certs"
 export CORE_LIGHTNING_PATH="/root/.lightning"
 export COMMANDO_CONFIG="/root/.lightning/.commando-env"

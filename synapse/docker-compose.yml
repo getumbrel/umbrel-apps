@@ -8,12 +8,11 @@ services:
       PROXY_AUTH_ADD: "false"
 
   server:
-    image: matrixdotorg/synapse:v1.42.0@sha256:10a1dd576504af002a1107d6d1edddc5bb891ccfc404218fbd99a15531cef742
-    user: "1000:1000"
+    image: matrixdotorg/synapse:v1.123.0@sha256:7e8e20f2c0e7b344ce4d31bab943cb1677ee66de4de0f6a24107e8641a4a8122
     restart: on-failure
     stop_grace_period: 1m
     entrypoint: "bash"
-    command: "-c './start.py generate && ./start.py migrate_config && exec ./start.py'"
+    command: "-c './start.py generate && ./start.py migrate_config && echo -e \"\nenable_registration_without_verification: true\" >> /data/homeserver.yaml && exec ./start.py'"
     volumes:
       - ${APP_DATA_DIR}/data/synapse:/data
     environment:
