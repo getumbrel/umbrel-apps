@@ -43,6 +43,9 @@ BIN_ARGS+=( "--tor.socks=${TOR_PROXY_IP}:${TOR_PROXY_PORT}" )
 BIN_ARGS+=( "--tor.targetipaddress=${APP_LIGHTNING_NODE_IP}" )
 BIN_ARGS+=( "--tor.password=${TOR_PASSWORD}" )
 
+# [protocol]
+BIN_ARGS+=( "--protocol.custom-message=37913" )
+
 export APP_LIGHTNING_COMMAND=$(IFS=" "; echo "${BIN_ARGS[@]}")
 
 # echo "${APP_LIGHTNING_COMMAND}"
