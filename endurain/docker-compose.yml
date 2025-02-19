@@ -1,0 +1,49 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: endurain_app_1
+      APP_PORT: 8080
+      PROXY_AUTH_ADD: "false"
+
+  app:
+    image: ghcr.io/joaovitoriasilva/endurain:v0.8.2@sha256:c22754a884109dcd265ad6c697bf1c1f5c94054a29c8175cd6c64b58ac4cab70
+    environment:
+      TZ: Europe/Lisbon
+      DB_TYPE: postgres
+      DB_HOST: endurain_db_1
+      DB_PORT: 5432
+      DB_PASSWORD: ${APP_PASSWORD}
+      SECRET_KEY: ${APP_PASSWORD}
+      # STRAVA_CLIENT_ID: changeme
+      # STRAVA_CLIENT_SECRET: changeme
+      # STRAVA_AUTH_CODE: changeme
+      GEOCODES_MAPS_API: changeme
+      ENDURAIN_HOST: http://${DEVICE_DOMAIN_NAME}:8865
+      BEHIND_PROXY: true
+    volumes:
+      - ${APP_DATA_DIR}/data/app/user_images:/app/backend/user_images
+      - ${APP_DATA_DIR}/data/app/files/bulk_import:/app/backend/files/bulk_import
+      - ${APP_DATA_DIR}/data/app/files/processed:/app/backend/files/processed
+      - ${APP_DATA_DIR}/data/app/logs:/app/backend/logs
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  db:
+    image: postgres:17.3@sha256:0321e2252ebfeecb8bc1a899755084d29bce872953e1a5a3e25ec0860b739098
+    environment:
+      POSTGRES_PASSWORD: ${APP_PASSWORD}
+      POSTGRES_DB: endurain
+      POSTGRES_USER: endurain
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - ${APP_DATA_DIR}/data/db:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U endurain"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
