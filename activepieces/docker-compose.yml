@@ -1,0 +1,63 @@
+version: '3.0'
+services:
+  app_proxy:
+    environment:
+      APP_HOST: activepieces_app_1
+      APP_PORT: 80
+      PROXY_AUTH_ADD: "false"
+
+  app:
+    ## does not work rootless as of yet
+    #user: "1000:1000"
+    image: ghcr.io/activepieces/activepieces:0.44.0@sha256:de8e2ef919f46635a21266821a85ca49179ecb47f85193f4f1a1d195ba540e3d
+    restart: on-failure
+    environment:
+      AP_ENGINE_EXECUTABLE_PATH: dist/packages/engine/main.js
+      AP_API_KEY: ${APP_PASSWORD}
+      AP_ENCRYPTION_KEY: 36b69be8b6ad0ea08b602dfab84ced40
+      AP_JWT_SECRET: ${APP_PASSWORD}
+      AP_ENVIRONMENT: prod
+      AP_FRONTEND_URL: http://${DEVICE_DOMAIN_NAME}:8146
+      AP_WEBHOOK_TIMEOUT_SECONDS: 30
+      AP_TRIGGER_DEFAULT_POLL_INTERVAL: 5
+      AP_POSTGRES_DATABASE: activepieces
+      AP_POSTGRES_HOST: activepieces_db_1
+      AP_POSTGRES_PORT: 5432
+      AP_POSTGRES_USERNAME: activepieces
+      AP_POSTGRES_PASSWORD: ${APP_PASSWORD}
+      AP_EXECUTION_MODE: UNSANDBOXED
+      AP_REDIS_HOST: activepieces_redis_1
+      AP_REDIS_PORT: 6379
+      AP_FLOW_TIMEOUT_SECONDS: 600
+      AP_TELEMETRY_ENABLED: true
+      AP_TEMPLATES_SOURCE_URL: "https://cloud.activepieces.com/api/v1/flow-templates"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    volumes:
+      - ${APP_DATA_DIR}/data/app/cache:/usr/src/app/cache
+
+  db:
+    user: "1000:1000"
+    image: postgres:17.3@sha256:0321e2252ebfeecb8bc1a899755084d29bce872953e1a5a3e25ec0860b739098
+    restart: on-failure
+    environment:
+      POSTGRES_DB: activepieces
+      POSTGRES_PASSWORD: ${APP_PASSWORD}
+      POSTGRES_USER: activepieces
+    volumes:
+      - ${APP_DATA_DIR}/data/db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U activepieces"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    user: "1000:1000"
+    image: redis:7.4.2@sha256:93a8d83b707d0d6a1b9186edecca2e37f83722ae0e398aee4eea0ff17c2fad0e
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data/redis:/data
