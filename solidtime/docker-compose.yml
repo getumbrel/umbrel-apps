@@ -1,0 +1,218 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: solidtime_app_1
+      APP_PORT: 8000
+      PROXY_AUTH_ADD: "false"
+
+  app:
+    image: "solidtime/solidtime:0.6.0@sha256:293eee50cbe1cea52893119485d939e06a715d44b856fc235da935f9ea2e762e"
+    user: "1000:1000"
+    restart: on-failure
+    volumes:
+      - "${APP_DATA_DIR}/data/app:/var/www/html/storage"
+    environment:
+      CONTAINER_MODE: "http"
+      AUTO_DB_MIGRATE: "true"
+      APP_NAME: "solidtime"
+      VITE_APP_NAME: "solidtime"
+      APP_ENV: "production"
+      APP_DEBUG: "false"
+      APP_URL: "http://${DEVICE_DOMAIN_NAME}:8770"
+      APP_FORCE_HTTPS: "false"
+      TRUSTED_PROXIES: "0.0.0.0/0,2000:0:0:0:0:0:0:0/3"
+
+      # Authentication
+      APP_KEY: "base64:X8mlri/uB/qAyBK4QWbvu17+lOf5Xx7fVucaOTLBbxs="
+      PASSPORT_PRIVATE_KEY: "-----BEGIN PRIVATE KEY-----\n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\nkdU8LJLs/hK0NXJ2R8cCAitckSKNMdY=\n-----END PRIVATE KEY-----"
+      PASSPORT_PUBLIC_KEY: "-----BEGIN PUBLIC KEY-----\nMIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAvlt7Aa+CMNJnQcMLU9i3\nV45w3qzyon+aSwK0eW/YvNbnGHYutmJWzUHCKgP1kelsqNyeNsX4NND2/5VTO+5G\nXiRQLjmrDyUxqBi7ydrcQTpBiDdfD4XWKBgcOTgLj8utSASEaDoAfvGK4tExh6a8\ntRKZYAR54E6hsk/bwV+PZuP+M0gQcl1aKwTzlWNVP8+BEAKtslvc2SXlBhbGJbck\ntEgfD/ZQTrpvHuVNN9NZ0lujYXx0IMJqa+C7hPGDqE6Kd8rKGdaB8pis7YngiZWZ\nCiwAs2y6nAGRaikHkqjZs1XrD3swOqDYUODlLuECVBufqKi7Ckdh6Aracu5HKt+0\nbrbeSkYonPw0CygpD0MZiXk9eBuxiiccPhmUA2zEd+m7v8z195cTJay6TINBOg92\nLooynke75Bl+J+b2sgvOQDGKJJzcPqGJYoTS5RhFC/6+9WvuSgDLUZrrdYiwuy/w\nJq8r7SL7lPQmBvdxXFcyHc+VsMho4xsL9fLzKzwM3r6+A71W010qFNbNn8CPORJn\nRnS4lNqblfz1JHWhs643i9hrQB0sBpLBc8OAA9eB9Dk63iRGTFeWCBQ19I+jjVKf\n1tTMH6oPLD2QZENOLZ8oV7bZv69Kwot4T/fFRXn0nUfJQY+zlywy9RjcO/kE9TdA\nFiFNju04rhN/DVWeHNEb3xcCAwEAAQ==\n-----END PUBLIC KEY-----"
+      SUPER_ADMINS: "umbrel@umbrel.local"
+
+      # Logging
+      LOG_CHANNEL: "stderr_daily"
+      LOG_LEVEL: "debug"
+
+      # Database
+      DB_CONNECTION: "pgsql"
+      DB_HOST: "solidtime_db_1"
+      DB_PORT: "5432"
+      DB_SSLMODE: "require"
+      DB_DATABASE: "solidtime"
+      DB_USERNAME: "solidtime"
+      DB_PASSWORD: "solidtime"
+
+      # Mail
+      MAIL_MAILER: "smtp"
+      MAIL_HOST: ""
+      MAIL_PORT: ""
+      MAIL_ENCRYPTION: "tls"
+      MAIL_FROM_ADDRESS: "no-reply@your-domain.com"
+      MAIL_FROM_NAME: "solidtime"
+      MAIL_USERNAME: ""
+      MAIL_PASSWORD: ""
+
+      # Queue
+      QUEUE_CONNECTION: "solidtime_db_1"
+
+      # File storage
+      FILESYSTEM_DISK: "local"
+      PUBLIC_FILESYSTEM_DISK: "public"
+
+      # Services
+      GOTENBERG_URL: "http://solidtime_gotenberg_1:3000"
+    healthcheck:
+      test: [ "CMD-SHELL", "curl --fail http://localhost:8000/health-check/up || exit 1" ]
+    depends_on:
+      db:
+        condition: service_healthy
+
+  scheduler:
+    image: "solidtime/solidtime:0.6.0@sha256:293eee50cbe1cea52893119485d939e06a715d44b856fc235da935f9ea2e762e"
+    user: "1000:1000"
+    restart: on-failure
+    volumes:
+      - "${APP_DATA_DIR}/data/app:/var/www/html/storage"
+    environment:
+      CONTAINER_MODE: scheduler
+      APP_NAME: "solidtime"
+      VITE_APP_NAME: "solidtime"
+      APP_ENV: "production"
+      APP_DEBUG: "false"
+      APP_URL: "http://${DEVICE_DOMAIN_NAME}:8770"
+      APP_FORCE_HTTPS: "false"
+      TRUSTED_PROXIES: "0.0.0.0/0,2000:0:0:0:0:0:0:0/3"
+
+      # Authentication
+      APP_KEY: "base64:X8mlri/uB/qAyBK4QWbvu17+lOf5Xx7fVucaOTLBbxs="
+      PASSPORT_PRIVATE_KEY: "-----BEGIN PRIVATE KEY-----\n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\nkdU8LJLs/hK0NXJ2R8cCAitckSKNMdY=\n-----END PRIVATE KEY-----"
+      PASSPORT_PUBLIC_KEY: "-----BEGIN PUBLIC KEY-----\nMIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAvlt7Aa+CMNJnQcMLU9i3\nV45w3qzyon+aSwK0eW/YvNbnGHYutmJWzUHCKgP1kelsqNyeNsX4NND2/5VTO+5G\nXiRQLjmrDyUxqBi7ydrcQTpBiDdfD4XWKBgcOTgLj8utSASEaDoAfvGK4tExh6a8\ntRKZYAR54E6hsk/bwV+PZuP+M0gQcl1aKwTzlWNVP8+BEAKtslvc2SXlBhbGJbck\ntEgfD/ZQTrpvHuVNN9NZ0lujYXx0IMJqa+C7hPGDqE6Kd8rKGdaB8pis7YngiZWZ\nCiwAs2y6nAGRaikHkqjZs1XrD3swOqDYUODlLuECVBufqKi7Ckdh6Aracu5HKt+0\nbrbeSkYonPw0CygpD0MZiXk9eBuxiiccPhmUA2zEd+m7v8z195cTJay6TINBOg92\nLooynke75Bl+J+b2sgvOQDGKJJzcPqGJYoTS5RhFC/6+9WvuSgDLUZrrdYiwuy/w\nJq8r7SL7lPQmBvdxXFcyHc+VsMho4xsL9fLzKzwM3r6+A71W010qFNbNn8CPORJn\nRnS4lNqblfz1JHWhs643i9hrQB0sBpLBc8OAA9eB9Dk63iRGTFeWCBQ19I+jjVKf\n1tTMH6oPLD2QZENOLZ8oV7bZv69Kwot4T/fFRXn0nUfJQY+zlywy9RjcO/kE9TdA\nFiFNju04rhN/DVWeHNEb3xcCAwEAAQ==\n-----END PUBLIC KEY-----"
+      SUPER_ADMINS: ""
+
+      # Logging
+      LOG_CHANNEL: "stderr_daily"
+      LOG_LEVEL: "debug"
+
+      # Database
+      DB_CONNECTION: "pgsql"
+      DB_HOST: "solidtime_db_1"
+      DB_PORT: "5432"
+      DB_SSLMODE: "require"
+      DB_DATABASE: "solidtime"
+      DB_USERNAME: "solidtime"
+      DB_PASSWORD: "solidtime"
+
+      # Mail
+      MAIL_MAILER: "smtp"
+      MAIL_HOST: ""
+      MAIL_PORT: ""
+      MAIL_ENCRYPTION: "tls"
+      MAIL_FROM_ADDRESS: "no-reply@your-domain.com"
+      MAIL_FROM_NAME: "solidtime"
+      MAIL_USERNAME: ""
+      MAIL_PASSWORD: ""
+
+      # Queue
+      QUEUE_CONNECTION: "solidtime_db_1"
+
+      # File storage
+      FILESYSTEM_DISK: "local"
+      PUBLIC_FILESYSTEM_DISK: "public"
+
+      # Services
+      GOTENBERG_URL: "http://solidtime_gotenberg_1:3000"
+    healthcheck:
+      test: [ "CMD-SHELL", "supervisorctl status scheduler:scheduler_00" ]
+    depends_on:
+      db:
+        condition: service_healthy
+
+  queue:
+    image: "solidtime/solidtime:0.6.0@sha256:293eee50cbe1cea52893119485d939e06a715d44b856fc235da935f9ea2e762e"
+    user: "1000:1000"
+    restart: on-failure
+    volumes:
+      - "${APP_DATA_DIR}/data/app:/var/www/html/storage"
+    environment:
+      CONTAINER_MODE: worker
+      WORKER_COMMAND: "php /var/www/html/artisan queue:work"
+      APP_NAME: "solidtime"
+      VITE_APP_NAME: "solidtime"
+      APP_ENV: "production"
+      APP_DEBUG: "false"
+      APP_URL: "http://${DEVICE_DOMAIN_NAME}:8770"
+      APP_FORCE_HTTPS: "false"
+      TRUSTED_PROXIES: "0.0.0.0/0,2000:0:0:0:0:0:0:0/3"
+
+      # Authentication
+      APP_KEY: "base64:X8mlri/uB/qAyBK4QWbvu17+lOf5Xx7fVucaOTLBbxs="
+      PASSPORT_PRIVATE_KEY: "-----BEGIN PRIVATE KEY-----\n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\nkdU8LJLs/hK0NXJ2R8cCAitckSKNMdY=\n-----END PRIVATE KEY-----"
+      PASSPORT_PUBLIC_KEY: "-----BEGIN PUBLIC KEY-----\nMIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAvlt7Aa+CMNJnQcMLU9i3\nV45w3qzyon+aSwK0eW/YvNbnGHYutmJWzUHCKgP1kelsqNyeNsX4NND2/5VTO+5G\nXiRQLjmrDyUxqBi7ydrcQTpBiDdfD4XWKBgcOTgLj8utSASEaDoAfvGK4tExh6a8\ntRKZYAR54E6hsk/bwV+PZuP+M0gQcl1aKwTzlWNVP8+BEAKtslvc2SXlBhbGJbck\ntEgfD/ZQTrpvHuVNN9NZ0lujYXx0IMJqa+C7hPGDqE6Kd8rKGdaB8pis7YngiZWZ\nCiwAs2y6nAGRaikHkqjZs1XrD3swOqDYUODlLuECVBufqKi7Ckdh6Aracu5HKt+0\nbrbeSkYonPw0CygpD0MZiXk9eBuxiiccPhmUA2zEd+m7v8z195cTJay6TINBOg92\nLooynke75Bl+J+b2sgvOQDGKJJzcPqGJYoTS5RhFC/6+9WvuSgDLUZrrdYiwuy/w\nJq8r7SL7lPQmBvdxXFcyHc+VsMho4xsL9fLzKzwM3r6+A71W010qFNbNn8CPORJn\nRnS4lNqblfz1JHWhs643i9hrQB0sBpLBc8OAA9eB9Dk63iRGTFeWCBQ19I+jjVKf\n1tTMH6oPLD2QZENOLZ8oV7bZv69Kwot4T/fFRXn0nUfJQY+zlywy9RjcO/kE9TdA\nFiFNju04rhN/DVWeHNEb3xcCAwEAAQ==\n-----END PUBLIC KEY-----"
+      SUPER_ADMINS: ""
+
+      # Logging
+      LOG_CHANNEL: "stderr_daily"
+      LOG_LEVEL: "debug"
+
+      # Database
+      DB_CONNECTION: "pgsql"
+      DB_HOST: "solidtime_db_1"
+      DB_PORT: "5432"
+      DB_SSLMODE: "require"
+      DB_DATABASE: "solidtime"
+      DB_USERNAME: "solidtime"
+      DB_PASSWORD: "solidtime"
+
+      # Mail
+      MAIL_MAILER: "smtp"
+      MAIL_HOST: ""
+      MAIL_PORT: ""
+      MAIL_ENCRYPTION: "tls"
+      MAIL_FROM_ADDRESS: "no-reply@your-domain.com"
+      MAIL_FROM_NAME: "solidtime"
+      MAIL_USERNAME: ""
+      MAIL_PASSWORD: ""
+
+      # Queue
+      QUEUE_CONNECTION: "database"
+
+      # File storage
+      FILESYSTEM_DISK: "local"
+      PUBLIC_FILESYSTEM_DISK: "public"
+
+      # Services
+      GOTENBERG_URL: "http://solidtime_gotenberg_1:3000"
+    healthcheck:
+      test: [ "CMD-SHELL", "supervisorctl status worker:worker_00" ]
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: 'postgres:17.3@sha256:0321e2252ebfeecb8bc1a899755084d29bce872953e1a5a3e25ec0860b739098'
+    user: "1000:1000"
+    restart: on-failure
+    environment:
+      PGPASSWORD: 'soldtime'
+      POSTGRES_DB: 'solidtime'
+      POSTGRES_USER: 'solidtime'
+      POSTGRES_PASSWORD: 'solidtime'
+    volumes:
+      - '${APP_DATA_DIR}/data/db:/var/lib/postgresql/data'
+    healthcheck:
+      test:
+        - CMD
+        - pg_isready
+        - '-q'
+        - '-d'
+        - 'solidtime'
+        - '-U'
+        - 'solidtime'
+      retries: 3
+      timeout: 5s
+
+  gotenberg:
+    image: gotenberg/gotenberg:8.17.1@sha256:46e7b68adeadda1794a9ab194f1e2939f5b09ff21aadef6000e84102c9af6dd5
+    user: "1000:1000"
+    restart: on-failure
+    healthcheck:
+      test: [ "CMD", "curl", "--silent", "--fail", "http://localhost:3000/health" ]

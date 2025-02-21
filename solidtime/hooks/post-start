@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# wait for the scheduler container to be ready
+sleep 20
+
+# This script creates the solidtime admin user if it doesn't exist
+docker exec -i solidtime_scheduler_1 bash -c "echo '${APP_PASSWORD}' | php artisan admin:user:create 'Umbrel' 'umbrel@umbrel.local' --ask-for-password --verify-email"
+
+exit 0
