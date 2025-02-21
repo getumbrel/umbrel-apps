@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+APP_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")"
+
+# generate keys required for solidtime
+docker run --rm solidtime/solidtime php artisan self-host:generate-keys | grep -v "Container mode:" >> "$APP_DIR/keys.env"
+
+echo "Keys for solidtime have been created."
+
+# wait for the scheduler container to be ready and create admin user
+MAX_RETRIES=20  # 1 minute total (5 seconds * 12)
+RETRY_COUNT=0
+
+while ! docker exec -i solidtime_scheduler_1 bash -c "echo '${APP_PASSWORD}' | php artisan admin:user:create 'Umbrel' 'umbrel@umbrel.local' --ask-for-password --verify-email"; do
+    RETRY_COUNT=$((RETRY_COUNT + 1))
+    if [ $RETRY_COUNT -ge $MAX_RETRIES ]; then
+        echo "Error: Failed to create admin user after $MAX_RETRIES attempts. Container might be unhealthy."
+        exit 1
+    fi
+    echo "Waiting for scheduler container to be ready... (attempt $RETRY_COUNT/$MAX_RETRIES)"
+    sleep 5
+done
+
+echo "Admin user for solidtime has been created."
+
+# restart app so that new keys are used
+"${UMBREL_ROOT}/scripts/app" restart "${APP_ID}" &
+
+exit 0
