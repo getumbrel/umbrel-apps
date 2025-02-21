@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+APP_DATA_DIR="$(readlink -f $(dirname "${BASH_SOURCE[0]}")/..)/data"
+APP_CONFIG_DIR="$(readlink -f $(dirname "${BASH_SOURCE[0]}")/..)/config"
+APP_REPO_DIR="$(readlink -f $(dirname "${BASH_SOURCE[0]}")/..)/repo"
+
+# Create directories if they do not exist
+[ ! -d "${APP_DATA_DIR}" ] && mkdir -p "${APP_DATA_DIR}"
+[ ! -d "${APP_CONFIG_DIR}" ] && mkdir -p "${APP_CONFIG_DIR}"
+[ ! -d "${APP_REPO_DIR}" ] && mkdir -p "${APP_REPO_DIR}"
+
+# Recursively set ownership of all files and directories under APP_DATA_DIR to 1000:1000
+chown -R 1000:1000 "${APP_DATA_DIR}"
+chown -R 1000:1000 "${APP_CONFIG_DIR}"
+chown -R 1000:1000 "${APP_REPO_DIR}"
