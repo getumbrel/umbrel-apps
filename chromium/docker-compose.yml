@@ -1,0 +1,16 @@
+version: "3.7"
+services:
+  app_proxy:
+    environment:
+      APP_HOST: chromium_chromium_1
+      APP_PORT: 3000
+
+  chromium:
+    image: ghcr.io/linuxserver/chromium:version-c0d313e5@sha256:231b1e75148be3a8bda8143a2cdffb18e0207d3dc3ba8fc4e07fb954830d51db
+    environment:
+      - PUID=1000
+      - PGID=1000
+    volumes:
+      - ${APP_DATA_DIR}/data:/config
+    shm_size: "1gb"
+    restart: on-failure

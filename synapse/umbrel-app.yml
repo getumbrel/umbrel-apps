@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: synapse
 category: social
 name: Synapse
-version: "1.55.0"
+version: "1.124.0"
 tagline: Matrix homeserver
 description: >-
   Synapse is an open source Matrix homeserver implementation, written and maintained by Element. Matrix is the open standard for secure and interoperable real time communications.
@@ -42,4 +42,13 @@ torOnly: false
 submitter: Umbrel
 submission: https://github.com/getumbrel/umbrel/commit/c9f0975e766e79d4bd6adf4255cd081f54d654cb
 releaseNotes: >-
-  This release updates Synapse to version 1.55.0 to ensure compatibility with the latest Element app. An upcoming update for Synapse on umbrelOS will further upgrade Synapse to the latest available version.
+  This release brings several important bug fixes to enhance the reliability of Synapse.
+
+  Some of the key highlights in this release include:
+    - Fixed a regression in performance of sending events due to superfluous reads and locks.
+    - Addressed an issue where persisting events in some rooms could fail after a previous unclean shutdown.
+    - Deactivated users will no longer automatically accept an invite when `auto_accept_invites` is enabled.
+    - Fixed a problem where joining was denied after being invited over federation.
+    - Resolved a rare edge case where state groups could be deleted while persisting new events.
+
+  Full release notes can be found at https://github.com/element-hq/synapse/releases

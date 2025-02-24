@@ -13,7 +13,6 @@ export APP_BITCOIN_KNOTS_ZMQ_HASHBLOCK_PORT="48334"
 export APP_BITCOIN_KNOTS_ZMQ_SEQUENCE_PORT="48335"
 export APP_BITCOIN_KNOTS_INTERNAL_RPC_PORT="8332"
 export APP_BITCOIN_KNOTS_INTERNAL_P2P_PORT="8333"
-export APP_BITCOIN_KNOTS_INTERNAL_tor_PORT="8334"
 
 BITCOIN_CHAIN="main"
 BITCOIN_ENV_FILE="${EXPORTS_APP_DIR}/.env"
@@ -113,6 +112,9 @@ BIN_ARGS+=( "-zmqpubsequence=tcp://0.0.0.0:${APP_BITCOIN_KNOTS_ZMQ_SEQUENCE_PORT
 # BIN_ARGS+=( "-peerbloomfilters=1" )
 # BIN_ARGS+=( "-peerblockfilters=1" )
 # BIN_ARGS+=( "-rpcworkqueue=128" )
+BIN_ARGS+=( "-blocknotify='curl -s -m 5 http://datum_datum_1:21000/NOTIFY'" )
+# We can remove depratedrpc=create_bdb in a future update once Jam (JoinMarket) implements descriptor wallet support
+BIN_ARGS+=( "-deprecatedrpc=create_bdb" )
 
 export APP_BITCOIN_KNOTS_COMMAND=$(IFS=" "; echo "${BIN_ARGS[@]}")
 
@@ -129,30 +131,40 @@ if [[ "${APP_BITCOIN_KNOTS_NETWORK_ELECTRS}" = "mainnet" ]]; then
 	APP_BITCOIN_KNOTS_NETWORK_ELECTRS="bitcoin"
 fi
 
-# We do not need this legacy bitcoin app logic because the Bitcoin Knots app was forked after advanced settings were introduced
+# Add special handling for knots internal/external port mismatch.
+# This must appear above the below loop.
+export APP_BITCOIN_RPC_PORT="${APP_BITCOIN_RPC_PORT:-$APP_BITCOIN_KNOTS_INTERNAL_RPC_PORT}"
+export APP_BITCOIN_P2P_PORT="${APP_BITCOIN_P2P_PORT:-$APP_BITCOIN_KNOTS_INTERNAL_P2P_PORT}"
 
-# {
-# 	# Migrate settings for app updates differently to fresh installs
-# 	BITCOIN_DATA_DIR="${EXPORTS_APP_DIR}/data/bitcoin"
-# 	IS_POST_ADVANCED_SETTINGS_INSTALL_FILE_PATH="${EXPORTS_APP_DIR}/data/app/IS_POST_ADVANCED_SETTINGS_INSTALL"
-
-# 	# If no blocks directory exists, we write out a file to indicate that this is a fresh install.
-# 	# This gets around the issue of the pre-start hook starting up the bitcoind container early for Tor HS creation
-# 	# and creating the blocks directory.
-# 	if [[ ! -d "${BITCOIN_DATA_DIR}/blocks" ]] && [[ ! -d "${BITCOIN_DATA_DIR}/testnet3/blocks" ]] && [[ ! -d "${BITCOIN_DATA_DIR}/regtest/blocks" ]]
-# 	then
-# 		touch "${IS_POST_ADVANCED_SETTINGS_INSTALL_FILE_PATH}"
-# 	fi
-
-# 	APP_CONFIG_EXISTS="false"
-# 	if [[ -f "${EXPORTS_APP_DIR}/data/app/bitcoin-config.json" ]]
-# 	then
-# 		APP_CONFIG_EXISTS="true"
-# 	fi
-
-# 	if [[ ! -f "${IS_POST_ADVANCED_SETTINGS_INSTALL_FILE_PATH}" ]] && [[ "${APP_CONFIG_EXISTS}" = "false" ]]
-# 	then
-# 		# This app is not a fresh install, it's being updated, so preserve existing clearnet over Tor setting
-# 		export BITCOIN_INITIALIZE_WITH_CLEARNET_OVER_TOR="true"
-# 	fi
-# } || true
+for var in \
+    IP \
+    NODE_IP \
+    TOR_PROXY_IP \
+    I2P_DAEMON_IP \
+    DATA_DIR \
+    RPC_PORT \
+    P2P_PORT \
+    TOR_PORT \
+    ZMQ_RAWBLOCK_PORT \
+    ZMQ_RAWTX_PORT \
+    ZMQ_HASHBLOCK_PORT \
+    ZMQ_SEQUENCE_PORT \
+    NETWORK \
+    RPC_USER \
+    RPC_PASS \
+    RPC_AUTH \
+    INTERNAL_RPC_PORT \
+    INTERNAL_P2P_PORT \
+    COMMAND \
+    RPC_HIDDEN_SERVICE \
+    P2P_HIDDEN_SERVICE \
+    NETWORK_ELECTRS
+do
+    bitcoin_var="APP_BITCOIN_${var}"
+    knots_var="APP_BITCOIN_KNOTS_${var}"
+    if [ -n "${!knots_var-}" ]; then
+        export "$bitcoin_var"="${!bitcoin_var:=${!knots_var}}"
+    else
+        echo "Warning: $knots_var is unset or empty"
+    fi
+done

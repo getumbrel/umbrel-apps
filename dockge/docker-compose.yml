@@ -1,0 +1,37 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: dockge_dockge_1
+      APP_PORT: 5001
+
+  docker:
+    image: docker:24.0.5-dind@sha256:3c6e4dca7a63c9a32a4e00da40461ce067f255987ccc9721cf18ffa087bcd1ef
+    privileged: true
+    network_mode: host
+    stop_grace_period: 1m
+    restart: on-failure
+    environment:
+      DOCKER_ENSURE_BRIDGE: "dind0:10.32.0.1/16"
+    entrypoint: /entrypoint.sh
+    command: >
+      dockerd
+        --bridge dind0
+        --data-root /data/data
+        --exec-root /data/exec
+        --host unix:///data/docker.sock
+        --pidfile /data/docker.pid
+    volumes:
+      - ${APP_DATA_DIR}/entrypoint.sh:/entrypoint.sh
+      - ${APP_DATA_DIR}/data/docker:/data
+
+  dockge:
+    image: louislam/dockge:1.4.2@sha256:ec889251baff476366783bc4a092aaa08c601f377537a0f30fb922754edcd9b7
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data/docker:/var/run
+      - ${APP_DATA_DIR}/data/dockge-data:/app/data
+      - ${APP_DATA_DIR}/data/dockge-stacks:/opt/stacks
+    environment:
+      DOCKGE_STACKS_DIR: /opt/stacks

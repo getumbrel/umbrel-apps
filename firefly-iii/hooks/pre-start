@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# We're forced to run user/group 33
+# So we set the owner of the data directories to 33:33
+APP_DATA_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")/data"
+
+DESIRED_OWNER="33:33"
+
+LOGS_DATA_DIR="${APP_DATA_DIR}/logs"
+UPLOAD_DATA_DIR="${APP_DATA_DIR}/upload"
+
+invoiceninja_correct_permission() {
+	local -r path="${1}"
+
+	if [[ -d "${path}" ]]; then
+		owner=$(stat -c "%u:%g" "${path}")
+
+		if [[ "${owner}" != "${DESIRED_OWNER}" ]]; then
+			chown "${DESIRED_OWNER}" "${path}"
+		fi
+	fi
+}
+
+invoiceninja_correct_permission "${LOGS_DATA_DIR}"
+invoiceninja_correct_permission "${UPLOAD_DATA_DIR}"

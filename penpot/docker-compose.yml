@@ -4,12 +4,12 @@ services:
   app_proxy:
     environment:
       APP_HOST: penpot_penpot-frontend_1
-      APP_PORT: 80
+      APP_PORT: 8080
       # Can consider disabling auth all together. Penpot has its own auth system.
       PROXY_AUTH_WHITELIST: "/api/*"
 
   penpot-frontend:
-    image: penpotapp/frontend:2.1.2@sha256:fabd50fb29567fb53ebf2aedd3f717b89f4b44b06a44414f2a29558b3f10ce55
+    image: penpotapp/frontend:2.4.3@sha256:1b7249ed23694f2b82d28b07e71fc788175f3e4e2606f19da07b78a220264fc3
     volumes:
       - ${APP_DATA_DIR}/data/assets:/opt/data/assets
     environment:
@@ -20,7 +20,7 @@ services:
     restart: on-failure
 
   penpot-backend:
-    image: penpotapp/backend:2.1.2@sha256:8c244f241d261620f50c02c0bd61e59b41c0e8dc96d3708c134076d6fb9187af
+    image: penpotapp/backend:2.4.3@sha256:f716f3e66738fb868cc718d0c629a1737bca79792ba37813fed20fd001142210
     # user 1000:1000 to avoid permission issues when importing libraries and templates
     user: "1000:1000"
     volumes:
@@ -42,7 +42,7 @@ services:
     restart: on-failure
 
   penpot-exporter:
-    image: penpotapp/exporter:2.1.2@sha256:e155660771dc2f966962efdb2b3c2aeedb4bfb50e8de18cacc0f4b2d12c6a90e
+    image: penpotapp/exporter:2.4.3@sha256:60adce36eb42c46df7f2f8bb94d68b9c633f09ffcf7242c84da73eb056a959ef
     user: "1000:1000"
     environment:
       - PENPOT_PUBLIC_URI=http://penpot-frontend

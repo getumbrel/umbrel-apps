@@ -1,0 +1,21 @@
+version: '3.7'
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: zoraxy_server_1
+      APP_PORT: 8000
+  server:
+    image: zoraxydocker/zoraxy:v3.1.8@sha256:d3e104cefcc73345d64195017323c8fd328d0a77d271f4bcb9e50202111ae366
+    restart: on-failure
+    ports:
+      - 41080:80
+      - 41443:443
+    volumes:
+      - ${APP_DATA_DIR}/data/config/:/opt/zoraxy/config
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      FASTGEOIP: "false"
+      ZEROTIER: "false"
+      DOCKER: "false"
+      NOAUTH: "true"

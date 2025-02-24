@@ -7,15 +7,11 @@ services:
       APP_PORT: 3063
 
   web:
-    image: ghcr.io/maybe-finance/maybe:0.1.0-alpha.17@sha256:29898491a708310771ac5a3733d4ed54ff54a596059d3d8ed8ebd64ed2ec77ef
+    image: ghcr.io/maybe-finance/maybe:0.3.0@sha256:68e7025602172ddae766375ea9199282ddc8eb441404022ea3e2153d2448a667
     restart: on-failure
     stop_grace_period: 1m
     volumes:
       - ${APP_DATA_DIR}/data/rails:/rails/storage
-    # Self-hosted Maybe requires a Synth API key (https://synthfinance.com/) for basic multi-currency support.
-    # Ideally Maybe will support API key input via the UI in the future, but for now we create a persistent .env file for Advanced users to input their API key and restart Maybe (see pre-install hook)
-    env_file:
-      - ${APP_DATA_DIR}/.env
     environment:
       SELF_HOSTING_ENABLED: "true"
       PORT: 3063
