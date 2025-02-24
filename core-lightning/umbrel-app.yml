@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: core-lightning
 category: bitcoin
 name: Core Lightning
-version: "24.11.1"
+version: "24.11.1-grpc"
 tagline: Run your personal Core Lightning node
 description: >-
   Get started with the Lightning network today with Core Lightning - a
@@ -32,33 +32,8 @@ defaultPassword: ""
 submitter: Blockstream
 submission: https://github.com/getumbrel/umbrel-apps/pull/475
 releaseNotes: >-
-  This updates cln-application to v0.0.6, and lightningd to v24.11.1.
-
-  cln-application v0.0.6:
-
-    - Bug fix: Change uppercase invoices and offers to lowercase.
-
-    - Enhancement: Create and Display Invoice Rune on Connect Wallet.
-
-    - Deprecation: Resolve commando-rune deprecation and use createrune instead.
-
-  lightningd v24.11.1:
-  
-    - `xpay` is a new, experimental plugin for payments. It's rewritten from the ground up, on top of another plugin called askrene, which provides advanced routing advice for payments. The two play together: xpay tells askrene about the results of payment attempts, so it learns over time. The hard work was done by @Lagrang3 who wrote and refined the minimum-cost-flow solver which is the heart of askrene.
-
-    - Paying and receiving offers (bolt12 send and receive) are enabled by default! This reflects it finally being included in the BOLT specs in September, to applause from all the different Lightning implementers.
-
-    - `listpays` now takes start and limit parameters to speed it up if you only want recent payments.
-
-    - CLN is smarter about remembering where the node successfully connected out to a peer, and will always try that again.
-
-    - The autoclean plugin would make nodes freeze for 30 seconds at a time when had a lot of work to do: it is now kinder and gentler.
-
-    - Faster gossip which is helpful for everyone stay up-to-date with what is happening in the network.
-
-    - Connectd will connect faster on startup, maintaining up to 10 outgoing connection attempts in parallel.
-
-    - Some nasty bugs fixed, including one where extended downtime could mean we might never fully resolve unilateral closes (just missing returning the funds to our wallet).
+  This update makes the gRPC interface in Core Lightning accessible for companion apps you install.
 
 
-  Full lightningd release notes are available at https://github.com/ElementsProject/lightning/releases
+  For example, as a result of this change, the newest Ride The Lightning release integrates Boltz as a service, allowing you to seamlessly swap 
+  in and out of the Lightning Network.
