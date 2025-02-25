@@ -16,6 +16,7 @@ services:
       MM_USERNAME: admin
       MM_PASSWORD: admin
       MM_DBNAME: mattermost
+      MM_SQLSETTINGS_DATASOURCE: postgres://admin:admin@mattermost_db_1:5432/mattermost?sslmode=disable&connect_timeout=10
     volumes:
       - ${APP_DATA_DIR}/data/app/mattermost/config:/mattermost/config:rw
       - ${APP_DATA_DIR}/data/app/mattermost/data:/mattermost/data:rw
@@ -27,7 +28,8 @@ services:
       - "8443:8443/tcp" # WebRTC over tcp
       - "8443:8443/udp" # WebRTC over udp
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 
   db:
     image: alexlack/mattermost-db:v10.5.1@sha256:f7a924e73089320702caf666670cf099d3eab7417bccc6875185aa41a06a4a54
@@ -41,3 +43,8 @@ services:
     volumes:
       - ${APP_DATA_DIR}/data/db:/var/lib/postgresql/data
       - /etc/localtime:/etc/localtime:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
