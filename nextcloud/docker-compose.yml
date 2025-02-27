@@ -20,6 +20,12 @@ services:
       - MYSQL_DATABASE=nextcloud
       - MYSQL_USER=nextcloud
       - MARIADB_AUTO_UPGRADE=1
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      start_period: 10s
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
   redis:
     image: redis:6.2.2-buster@sha256:e10f55f92478715698a2cef97c2bbdc48df2a05081edd884938903aa60df6396
@@ -49,7 +55,11 @@ services:
       - PHP_UPLOAD_LIMIT=1024G
     depends_on:
       - db
-      - redis
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
 
   cron:
     image: nextcloud:30.0.6-apache@sha256:6456ee9dab40419b9e3349f1a0c46d5764c47a5565fe2a105cd2b5f6ea77dbe5
@@ -61,5 +71,8 @@ services:
       - ${APP_DATA_DIR}/data/nextcloud:/var/www/html
     entrypoint: /cron.sh
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
       - redis
