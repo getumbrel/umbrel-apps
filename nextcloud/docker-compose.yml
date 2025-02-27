@@ -54,8 +54,6 @@ services:
       - NEXTCLOUD_TRUSTED_DOMAINS=${APP_DOMAIN}:${APP_NEXTCLOUD_PORT} ${APP_HIDDEN_SERVICE} ${DEVICE_HOSTNAME}:${APP_NEXTCLOUD_PORT} ${APP_NEXTCLOUD_LOCAL_IPS} nextcloud_web_1
       - PHP_UPLOAD_LIMIT=1024G
     depends_on:
-      - db
-    depends_on:
       db:
         condition: service_healthy
       redis:
@@ -75,4 +73,4 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
-      - redis
+
