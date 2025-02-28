@@ -9,15 +9,3 @@ services:
   web:
     image: johannesjo/super-productivity:v10.2.3@sha256:d8df5fc62c04de4e17384150439a20be2265b500084e134b420436703894ad64
     restart: on-failure
-    environment:
-      - WEBDAV_BACKEND=http://webdav # Optional
-
-  # Optional: WebDAV backend server
-  # (used with the WEBDAV_BACKEND environment variable)
-  webdav:
-    image: hacdias/webdav:v5.4@sha256:afa0a5a0e7dbe3d6040786777e837beb836d1919cdfe0099e640fce86c2fa3df
-    ports:
-      - 8021:80
-    volumes:
-      - ${APP_DATA_DIR}/webdav/webdav.yaml:/config.yml:ro
-      - ${APP_DATA_DIR}/data:/data
