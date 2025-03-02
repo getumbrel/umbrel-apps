@@ -1,0 +1,31 @@
+version: '3.7'
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: ghost_web_1
+      APP_PORT: 2368
+      PROXY_AUTH_ADD: "false"
+
+  web:
+    image: ghost:5.110.1@sha256:d7bc9c632df6a315b09b01d5c3bd8fec8ac9142353b846608feb47610b71d5c9
+    restart: on-failure
+    user: "1000:1000"
+    volumes:
+      - ${APP_DATA_DIR}/data/content:/var/lib/ghost/content:rw
+    environment:
+      database__client: mysql
+      database__connection__host: ghost_db_1
+      database__connection__user: root
+      database__connection__password: umbrel
+      database__connection__database: ghost
+      url: http://${DEVICE_DOMAIN_NAME}:3368
+
+  db:
+    image: mysql:8.4.4@sha256:339598fe066c73daa4120f2d9dfefd3146c3519cd324748e1d3f9d2b6c71d10b
+    restart: on-failure
+    user: "1000:1000"
+    environment:
+      MYSQL_ROOT_PASSWORD: umbrel
+    volumes:
+      - ${APP_DATA_DIR}/data/db:/var/lib/mysql:rw
