@@ -17,16 +17,11 @@ services:
     environment:
       INFLUXDB_ADMIN_USER: admin
       INFLUXDB_ADMIN_PASSWORD: admin
-    ports:
-      - "8886:8086" # InfluxDB port
-      - "8088:8088" # RPC service for backup and restore
 
   chronograf:
     image: chronograf:1.9.4@sha256:928cd75952b597df3666886197cfdcd24a4017289422c0e12ec937c56f0131f4
     container_name: chronograf
     environment:
       INFLUXDB_URL: "http://influxdb_influxdb_1:8886"  # InfluxDB URL
-    ports:
-      - "8888:8888"  # Chronograf web interface port
     depends_on:
       - influxdb
