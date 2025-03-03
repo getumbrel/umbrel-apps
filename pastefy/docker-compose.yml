@@ -1,0 +1,38 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: pastefy_app_1
+      APP_PORT: 80
+      PROXY_AUTH_ADD: "false"
+
+  db:
+    image: mariadb:11.4.5@sha256:5dfb3093333fa0ea53194ddef0a2bfa21d3b1e1353bd228b22610cd6fc0c04da
+    user: "1000:1000"
+    environment:
+      MYSQL_ROOT_PASSWORD: "tyooe"
+      MYSQL_DATABASE: "pastefy"
+      MYSQL_USER: "pastefy"
+      MYSQL_PASSWORD: "tyooe"
+    volumes:
+      - ${APP_DATA_DIR}/data/db:/var/lib/mysql:rw
+    restart: on-failure
+
+  app:
+    image: interaapps/pastefy:6.7.5@sha256:cfa582e598cf00034de9431ce80cba75595d5a7016973e49f8108a90fe8bee76
+    user: "1000:1000"
+    environment:
+      HTTP_SERVER_CORS: "*"
+      DATABASE_DRIVER: "mysql"
+      DATABASE_NAME: "pastefy"
+      DATABASE_USER: "pastefy"
+      DATABASE_PASSWORD: "tyooe"
+      DATABASE_HOST: "pastefy_db_1"
+      DATABASE_PORT: "3306"
+      SERVER_NAME: "http://${DEVICE_DOMAIN_NAME}:9900"
+      # OAUTH2_PROVIDER_CLIENT_ID: 
+      # OAUTH2_PROVIDER_CLIENT_SECRET: 
+    restart: on-failure
+    depends_on:
+      - db
