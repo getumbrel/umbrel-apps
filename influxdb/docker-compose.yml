@@ -13,7 +13,7 @@ services:
     restart: on-failure
     stop_grace_period: 1m
     volumes:
-      - ${APP_DATA_DIR}/data:/var/lib/influxdb
+      - ${APP_DATA_DIR}/data/influxdb:/var/lib/influxdb
     environment:
       INFLUXDB_ADMIN_USER: admin
       INFLUXDB_ADMIN_PASSWORD: admin
@@ -22,5 +22,7 @@ services:
     image: chronograf:1.9.4@sha256:928cd75952b597df3666886197cfdcd24a4017289422c0e12ec937c56f0131f4
     environment:
       INFLUXDB_URL: "http://influxdb_influxdb_1:8886"  # InfluxDB URL
+    volumes:
+      - ${APP_DATA_DIR}/data/chronograf:/var/lib/chronograf
     depends_on:
       - influxdb
