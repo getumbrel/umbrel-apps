@@ -16,7 +16,7 @@ services:
       - ${APP_DATA_DIR}/data/influxdb:/var/lib/influxdb
     environment:
       INFLUXDB_ADMIN_USER: admin
-      INFLUXDB_ADMIN_PASSWORD: admin
+      INFLUXDB_ADMIN_PASSWORD: $APP_PASSWORD
       INFLUXDB_HTTP_AUTH_ENABLED: true
 
   chronograf:
@@ -24,7 +24,7 @@ services:
     environment:
       INFLUXDB_URL: "http://influxdb_influxdb_1:8086"
       INFLUXDB_USERNAME: admin
-      INFLUXDB_PASSWORD: admin
+      INFLUXDB_PASSWORD: $APP_PASSWORD
     volumes:
       - ${APP_DATA_DIR}/data/chronograf:/var/lib/chronograf
     depends_on:
