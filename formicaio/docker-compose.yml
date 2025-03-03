@@ -1,0 +1,29 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: formicaio_formicaio_proxy_1
+      APP_PORT: 52100
+    container_name: formicaio-app_proxy_1
+  formicaio_proxy:
+    image: bochaco/formicaio_proxy:0.1.0@sha256:de09a722629d5c3f7139eb7a9035ee29d4c6eb804c6031a7af39fe63a4dd298f
+    environment:
+      FORMICAIO_ADDR: host.docker.internal:3000
+      FORMICAIO_PROXY_PORT: 52100
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    container_name: formicaio-formicaio_proxy_1
+  formicaio:
+    image: bochaco/formicaio:0.3.0-native@sha256:b1cb3beedd399183b0ccf41622832cce67bc22b95edb3b07e24ae1a718632c36
+    privileged: true
+    restart: on-failure
+    network_mode: host
+    stop_grace_period: 5s
+    environment:
+      DB_PATH: /data
+      NODE_MGR_ROOT_DIR: /data
+      LEPTOS_SITE_ADDR: 0.0.0.0:3000
+    volumes:
+      - ${APP_DATA_DIR}/data/formicaio:/data
+    devices:
+      - /dev:/dev
+    container_name: formicaio-formicaio_1
