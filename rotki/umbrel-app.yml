@@ -2,7 +2,7 @@ manifestVersion: 1
 id: rotki
 category: finance
 name: rotki
-version: "1.37.1"
+version: "1.38.0"
 tagline: Portfolio tracking, analytics, accounting and tax reporting
 description: >-
   rotki is an open source portfolio tracking, analytics, accounting and tax reporting tool that protects your privacy. 
@@ -27,6 +27,26 @@ port: 8084
 releaseNotes: >-
   ⚠️ As always when upgrading, all your EVM history events will need to be redecoded. This takes time depending on the amount of events but is required to apply all changes. The redecoding triggers the first time you go to the history events page after opening the new version.
 
+  ⚠️ The minimum GLIBC version required is now 2.35. If your OS does not support this version, rotki will no longer run. Please upgrade to a newer OS.
+
+  ⚠️ First time startup will take longer than usual. When you first open the app with the new release the "Connecting to rotki backend" will take longer than usual. Wait it out and do not close the app.
+
+  ⚠️ The `Remove unneeded nft collection assets` step of the current DB upgrade may also take some time.
+
+  rotki v1.38.0 is a major feature-packed release, introducing Binance Smart Chain (BSC) support and historical asset graphs for premium users, along with many other improvements and fixes.
+
+  Release highlights:
+    - For premium users, historical events and prices can now be used as the data source for the asset amount and value graph instead of balance snapshots. This enables the graph to show history before the asset was tracked in rotki.
+    - Uniswap V3 balances will now be properly detected in all supported EVM chains.
+    - Spark transactions will now be properly decoded and balances detected in all supported EVM chains.
+    - Binance Smart Chain is now supported. Balances will be properly queried and all transactions should be pulled and decoded.
+    - A new "Events Analysis" section has been added for premium users to see various analytics and statistics about all of their tracked addresses.
+    - If you own an alchemy API key you can now put it in rotki and it will be used for price queries.
+    - Paraswap V6 swaps will be properly decoded in all supported EVM chains.
+    - Cowswap swaps in the Base EVM chain will now be properly decoded.
+    - Echo.xyz funding and refunding events will now be properly decoded.
+    - Firebird Finance swaps will be properly decoded in all supported EVM chains.
+    - OpenOcean swaps will be properly decoded in all supported EVM chains.
 
   Improvements and bug fixes:
     - Fixed balance detection for OKX, Bitmex and Bybit
@@ -34,7 +54,33 @@ releaseNotes: >-
     - Better support for various protocol balances
     - Enhanced transaction decoding accuracy
     - Various UI and usability improvements
-
+    - The old deprecated DeFi section is now removed.
+    - Fix selected binance trading pairs not being properly loaded when restarting rotki.
+    - rotki will now skip balance queries for exited validators, reducing API rate limits and improving performance.
+    - Aura positions will no longer be double counted.
+    - Unstaked umami balances in arbitrum will no longer be double counted.
+    - Block production events will no longer blindly trust the MEV relay for the MEV reward but instead track exact transactions sent to fee recipient as MEV reward.
+    - A problem with decoding WETH events in transactions from safes or other smart contracts on arbitrum will now be fixed.
+    - The number of notifications shown to the user will now be limited to the 200 most recent ones.
+    - Withdrawals from Aura gauges will now be properly decoded.
+    - Assets with zero price will again show properly when usd value threshold is not set
+    - Bitmex balances will now be queried correctly.
+    - Prices for Aerodrome LP tokens will now be found and the associated balances shown correctly.
+    - A rare error with velodrome events decoding should now be fixed and the relevant events properly decoded.
+    - Some mainnet to optimism bridging transactions that were not seen correctly will now be properly decoded.
+    - Some specific cases of yearn v2 vault deposit/withdrawals that had problems will now be decoded properly.
+    - Deleting an ethereum address will now remove the withdrawals cache for that address so re-adding it will now properly detect ethereum staking withdrawals again.
+    - Fix double count of cowswap fees.
+    - Odos airdrop will appear as claimed or unclaimed instead of as unknown.
+    - rotki will no longer exceed the two years limit when requesting trades from Bybit.
+    - Fix an error when merging two assets if they both appear at the same snapshot.
+    - Allow rotki app to be minimized using the shortcut for each platform.
+    - Deleting Kusama, Polkadot, or Beaconchain RPC URL should now work properly again.
+    - Some curve event edge cases will now be properly decoded and accounted for.
+    - rotki should now warn you again when gnosis pay authentication token expires.
+    - rotki will now properly decode aave v2 to v3 migrations for polygon and mainnet
+    - rotki will now properly decode some aave v3 wrapped eth transactions that were not decoded properly in the past.
+    - rotki will now be able to add SAFE accounts to all the supported EVM chains at once.
 
   Full release notes are found at https://github.com/rotki/rotki/releases
 gallery:
