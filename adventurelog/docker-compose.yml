@@ -16,15 +16,15 @@ services:
     depends_on:
       - server
   db:
-    image: postgis/postgis:15-3.3
-    restart: unless-stopped
+    image: ghcr.io/baosystems/postgis:15-3.5@sha256:ac619116c8ee81a386eb878956950d798b57c502985c12eb6e7be1598aa8d02f
+    restart: on-failure
     environment:
       POSTGRES_DB: database
       POSTGRES_USER: adventure
       POSTGRES_PASSWORD: adventure
     volumes:
-      - ${APP_DATA_DIR}/postgresql/data:/var/lib/postgresql/data/
-    container_name: adventurelog_db_1
+      - ${APP_DATA_DIR}/data/db:/var/lib/postgresql/data/
+
   server:
     image: ghcr.io/seanmorley15/adventurelog-backend:v0.8.0
     container_name: adventurelog_server_1
