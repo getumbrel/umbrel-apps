@@ -38,10 +38,10 @@ services:
       - DJANGO_ADMIN_USERNAME=admin
       - DJANGO_ADMIN_PASSWORD=admin
       - DJANGO_ADMIN_EMAIL=admin@example.com
-      - PUBLIC_URL=http://server:8000
-      - CSRF_TRUSTED_ORIGINS=http://localhost:8000,http://localhost:8015
+      - PUBLIC_URL=http://${DEVICE_DOMAIN_NAME}:8016
+      - CSRF_TRUSTED_ORIGINS=http://${DEVICE_DOMAIN_NAME}:8015 #http://localhost:8016,
       - DEBUG=False
-      - FRONTEND_URL=http://localhost:8015
+      - FRONTEND_URL=http://${DEVICE_DOMAIN_NAME}:8015
     ports:
       - '8000:80'
     depends_on:
