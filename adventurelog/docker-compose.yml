@@ -7,15 +7,12 @@ services:
       PROXY_AUTH_ADD: "false"
 
   web:
-    image: ghcr.io/seanmorley15/adventurelog-frontend:v0.8.0
-    container_name: adventurelog_web_1
-    restart: unless-stopped
+    image: ghcr.io/seanmorley15/adventurelog-frontend:v0.8.0@sha256:e8333f6528594fd447b1ad73220b7709859c08d734f5f6f7072253ce92585ebd
+    restart: on-failure
     environment:
-      - PUBLIC_SERVER_URL=http://server5:8000
-      - ORIGIN=http://server:8015
-      - BODY_SIZE_LIMIT=Infinity
-    ports:
-      - '8015:3000'
+      PUBLIC_SERVER_URL: "http://adventurelogserver1:8000"
+      ORIGIN: "http://${DEVICE_DOMAIN_NAME}:8015"
+      BODY_SIZE_LIMIT: "Infinity"
     depends_on:
       - server
   db:
