@@ -26,9 +26,9 @@ services:
       - ${APP_DATA_DIR}/data/db:/var/lib/postgresql/data/
 
   server:
-    image: ghcr.io/seanmorley15/adventurelog-backend:v0.8.0
-    container_name: adventurelog_server_1
-    restart: unless-stopped
+    image: ghcr.io/seanmorley15/adventurelog-backend:v0.8.0@sha256:66bfd6e072bffe49f92e3b2b468f76d7c8d032287121074e1a63acf186fbf6a5
+    container_name: adventurelogserver1 # needs to be set for the frontend to be able to connect (underline not supported)
+    restart: on-failure
     environment:
       - PGHOST=adventurelog_db_1
       - PGDATABASE=database
