@@ -18,7 +18,7 @@ services:
       - app
 
   app:
-    image: invoiceninja/invoiceninja:5.11.0@sha256:f0cc1e3487e7be3db989892d61f8b8f4ec92856ffd6a071441117ea5cc1f9380
+    image: invoiceninja/invoiceninja:5.11.41@sha256:9e2930897bb81f21d3fdcab9cac44d1c4f20d03ea46241a853bda4e902320e9a
     # We're forced to run user/group 1500
     # More detail here: https://github.com/invoiceninja/dockerfiles/blob/ad3ffc227d63740330f761dad6e8c87768577847/alpine/5/Dockerfile#L70-L80
     user: "1500:1500"
@@ -40,7 +40,7 @@ services:
       - db
 
   db:
-    image: mariadb:10.5.12@sha256:dfcba5641bdbfd7cbf5b07eeed707e6a3672f46823695a0d3aba2e49bbd9b1dd
+    image: mariadb:11.4.5@sha256:5dfb3093333fa0ea53194ddef0a2bfa21d3b1e1353bd228b22610cd6fc0c04da
     user: "1000:1000"
     restart: on-failure
     volumes:
@@ -50,3 +50,4 @@ services:
       MYSQL_USER: invoiceninja
       MYSQL_PASSWORD: moneyprintergobrrr
       MYSQL_DATABASE: invoiceninja
+      MARIADB_AUTO_UPGRADE: "true"

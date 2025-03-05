@@ -2,7 +2,7 @@ version: "3.7"
 
 services:
   server:
-    image: pihole/pihole:2024.07.0@sha256:0def896a596e8d45780b6359dbf82fc8c75ef05b97e095452e67a0a4ccc95377
+    image: pihole/pihole:2025.02.6@sha256:bcf79fe65348067d17b7b14fd7e2cb8177bbb4e972e1880a905169334e69c1a2
     # Pi-hole doesn't currently support running as non-root
     # https://github.com/pi-hole/docker-pi-hole/issues/685
     # user: "1000:1000"
@@ -12,10 +12,9 @@ services:
       - ${APP_DATA_DIR}/data/pihole:/etc/pihole/
       - ${APP_DATA_DIR}/data/dnsmasq:/etc/dnsmasq.d/
     environment:
-      - VIRTUAL_HOST=${APP_DOMAIN}
-      - WEBPASSWORD=${APP_PASSWORD}
-      - WEB_PORT=8082
+      - FTLCONF_webserver_api_password=${APP_PASSWORD}
+      - FTLCONF_webserver_port=8082
       # Listen on all interfaces, permit all origins
-      - DNSMASQ_LISTENING=all
+      - FTLCONF_dns_listeningMode=all
     cap_add:
       - NET_ADMIN
