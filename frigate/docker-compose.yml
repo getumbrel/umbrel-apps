@@ -10,7 +10,7 @@ services:
   web:
     privileged: true # this may not be necessary for all setups
     restart: unless-stopped
-    image: ghcr.io/blakeblackshear/frigate:0.14.1@sha256:22e3d0b486df52c3d669682254c2b1bf4205fa6ad8bd8f8c9f7fe76b1517005d
+    image: ghcr.io/blakeblackshear/frigate:0.15.0@sha256:dc77295ccc5a7258510ab6b1d9d5b7a339027305e2d29224338534febc4d1e89
     shm_size: "128mb" # update for your cameras based on calculation above
     devices:
      - /dev:/dev
@@ -18,10 +18,10 @@ services:
       - /etc/localtime:/etc/localtime:ro
       - ${APP_DATA_DIR}/data/config:/config
       - ${APP_DATA_DIR}/data/storage:/media/frigate
-      - type: tmpfs # Optional: 1GB of memory, reduces SSD/SD Card wear
-        target: /tmp/cache
-        tmpfs:
-          size: 1000000000
+      # - type: tmpfs # Optional: 1GB of memory, reduces SSD/SD Card wear
+      #   target: /tmp/cache
+      #   tmpfs:
+      #     size: 1000000000
     ports:
       - "8554:8554" # RTSP feeds
       - "8555:8555/tcp" # WebRTC over tcp

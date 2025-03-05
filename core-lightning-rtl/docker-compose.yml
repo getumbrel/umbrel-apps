@@ -19,6 +19,27 @@ services:
       RTL_CONFIG_PATH: "/data"
       RTL_COOKIE_PATH: "/data/.cookie"
       BLOCK_EXPLORER_URL: "${APP_CORE_RTL_BLOCK_EXPLORER_URL}"
+      # Boltz
+      BOLTZ_SERVER_URL: "https://core-lightning-rtl_boltz_1:9003"
+      BOLTZ_MACAROON_PATH: "/boltz/.boltz/macaroons"
     volumes:
       - "${APP_DATA_DIR}/data/rtl:/data"
       - "${APP_CORE_LIGHTNING_DATA_DIR}:/root/.lightning:ro"
+      - "${APP_DATA_DIR}/data/boltz:/boltz:ro"
+
+  boltz:
+    image: boltz/boltz-client:2.3.9@sha256:4de5be20d3a60399005a2ac08a058eb008f42dfd7918b50fd0c315dea7799c3e
+    restart: "on-failure"
+    stop_grace_period: "1m"
+    environment:
+      HOME: "/data"
+    volumes:
+      - "${APP_DATA_DIR}/data/boltz:/data"
+      - "${APP_CORE_LIGHTNING_DATA_DIR}:/cln:ro"
+    command:
+      - --network=$APP_BITCOIN_NETWORK
+      - --cln.datadir=/cln
+      - --cln.host=$APP_CORE_LIGHTNING_DAEMON_IP
+      - --cln.port=$APP_CORE_LIGHTNING_DAEMON_GRPC_PORT
+      - --rpc.rest.host="0.0.0.0"
+      - --rpc.rest.port="9003"

@@ -102,6 +102,7 @@ BIN_ARGS=()
 # BIN_ARGS+=( "-port=${APP_BITCOIN_P2P_PORT}" )
 # BIN_ARGS+=( "-rpcport=${APP_BITCOIN_RPC_PORT}" )
 # We hardcode the ports p2p and rpc ports to always be the same for all networks
+# As of v28.1, the default onion listening port will now be derived to be -port + 1 instead of being set to a fixed value (8334 on mainnet)
 BIN_ARGS+=( "-port=8333" )
 BIN_ARGS+=( "-rpcport=8332" )
 BIN_ARGS+=( "-rpcbind=${APP_BITCOIN_NODE_IP}" )
@@ -120,8 +121,10 @@ BIN_ARGS+=( "-zmqpubsequence=tcp://0.0.0.0:${APP_BITCOIN_ZMQ_SEQUENCE_PORT}" )
 # BIN_ARGS+=( "-rpcworkqueue=128" )
 # We can remove depratedrpc=create_bdb in a future update once Jam (JoinMarket) implements descriptor wallet support
 BIN_ARGS+=( "-deprecatedrpc=create_bdb" )
+
 # Required for LND compatibility. We can remove deprecatedrpc=warnings in a future update once LND releases a version with this fix: https://github.com/btcsuite/btcd/pull/2245
-BIN_ARGS+=( "-deprecatedrpc=warnings" )
+# No longer required as of LND v0.18.4
+# BIN_ARGS+=( "-deprecatedrpc=warnings" )
 
 export APP_BITCOIN_COMMAND=$(IFS=" "; echo "${BIN_ARGS[@]}")
 
