@@ -14,8 +14,8 @@ services:
     ports:
       - "${APP_FORGEJO_SSH_PORT}:${APP_FORGEJO_SSH_PORT}"
     volumes:
-      - ${APP_DATA_DIR}/data/forgejo/data:/var/lib/forgejo
-      - ${APP_DATA_DIR}/data/forgejo/config:/etc/forgejo
+      - ${APP_DATA_DIR}/data/forgejo/data:/var/lib/gitea
+      - ${APP_DATA_DIR}/data/forgejo/config:/etc/gitea
     environment:
       FORGEJO__security__INSTALL_LOCK: "true"
       FORGEJO__server__DOMAIN: "${APP_DOMAIN}"
@@ -30,10 +30,11 @@ services:
       FORGEJO__database__USER: "forgejo"
       FORGEJO__database__PASSWD: "forgejo"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 
   db:
-    image: postgres:14@sha256:5d8330e221083215ffbb3c5feeb2cfe44aadda827bc3f0dad9bbf3e58ed2e895
+    image: postgres:17.3@sha256:0321e2252ebfeecb8bc1a899755084d29bce872953e1a5a3e25ec0860b739098
     restart: on-failure
     user: "1000:1000"
     environment:
@@ -42,3 +43,8 @@ services:
       POSTGRES_DB: forgejo
     volumes:
       - ${APP_DATA_DIR}/data/db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U forgejo"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
