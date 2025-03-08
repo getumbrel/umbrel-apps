@@ -1,0 +1,51 @@
+version: '3.7'
+services:
+  app_proxy:
+    environment:
+      APP_HOST: adventurelog_web_1
+      APP_PORT: 3000
+      PROXY_AUTH_ADD: "false"
+
+  web:
+    image: ghcr.io/seanmorley15/adventurelog-frontend:v0.8.0@sha256:e8333f6528594fd447b1ad73220b7709859c08d734f5f6f7072253ce92585ebd
+    restart: on-failure
+    environment:
+      PUBLIC_SERVER_URL: "http://adventurelogserver1:8000"
+      ORIGIN: "http://${DEVICE_DOMAIN_NAME}:8015"
+      BODY_SIZE_LIMIT: "Infinity"
+    depends_on:
+      - server
+  db:
+    image: ghcr.io/baosystems/postgis:15-3.5@sha256:ac619116c8ee81a386eb878956950d798b57c502985c12eb6e7be1598aa8d02f
+    restart: on-failure
+    environment:
+      POSTGRES_DB: database
+      POSTGRES_USER: adventure
+      POSTGRES_PASSWORD: adventure
+    volumes:
+      - ${APP_DATA_DIR}/data/db:/var/lib/postgresql/data/
+
+  server:
+    image: ghcr.io/seanmorley15/adventurelog-backend:v0.8.0@sha256:66bfd6e072bffe49f92e3b2b468f76d7c8d032287121074e1a63acf186fbf6a5
+    container_name: adventurelogserver1 # needs to be set for the frontend to be able to connect (underline not supported)
+    restart: on-failure
+    environment:
+      - PGHOST=adventurelog_db_1
+      - PGDATABASE=database
+      - PGUSER=adventure
+      - PGPASSWORD=adventure
+      - SECRET_KEY=adventure
+      - DJANGO_ADMIN_USERNAME=admin
+      - DJANGO_ADMIN_PASSWORD=admin
+      - DJANGO_ADMIN_EMAIL=admin@example.com
+      - PUBLIC_URL=http://${DEVICE_DOMAIN_NAME}:8016
+      - CSRF_TRUSTED_ORIGINS=http://${DEVICE_DOMAIN_NAME}:8015 #http://localhost:8016,
+      - DEBUG=False
+      - FRONTEND_URL=http://${DEVICE_DOMAIN_NAME}:8015
+    ports:
+      - '8016:80'
+    depends_on:
+      - db
+    volumes:
+      - ${APP_DATA_DIR}/data/app:/code/media/
+      
