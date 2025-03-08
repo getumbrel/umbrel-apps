@@ -1,0 +1,34 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: mikrotik_server_1
+      APP_PORT: 80
+  
+  server:
+    image: henriquesebastiao/routeros:7.18@sha256:dcecd77cbd0539b7f799fccc6d2d27c0a2bdc3082baa92f37c90e56ca0a47d2b
+    restart: on-failure
+    stop_grace_period: 1m
+    privileged: true
+    ports:
+      # - 21:21 # FTP
+      # - 23:23 # Telnet
+      # - 8380:80 # Web
+      # - 8729:8729 # API-SSL
+      - 8322:22 # SSH
+      - 8343:443 # Web with SSL or SSTP
+      - 8728:8728 # API
+      - 8291:8291 # Winbox
+      - 8353:53/udp # DNS
+      - 8353:53/tcp # DNS
+      - 8361:161/udp # SNMP
+      - 500:500/udp # Internet Key Exchange (IKE) protocol (needed for L2TP)
+      - 4500:4500/udp # NAT Traversal mode (needed for L2TP with IPsec)
+      - 8394:1194 # OpenVPN
+      - 1701:1701 # Layer 2 Tunnel Protocol (L2TP)
+      - 8331:13231 # WireGuard
+    cap_add: 
+        - NET_ADMIN
+    devices: 
+        - /dev/net/tun
