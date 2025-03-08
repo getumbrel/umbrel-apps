@@ -1,0 +1,42 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: kimai_app_1
+      APP_PORT: 8001
+      PROXY_AUTH_ADD: "false"
+
+  app:
+    # currently does not work properly rootless
+    #user: "1000:1000"
+    image: kimai/kimai2:apache-2.28.0@sha256:88767f1a07cfda19d029c138393616ad632e1bf5e195c38e447a87a01f655add
+    volumes:
+      - ${APP_DATA_DIR}/data/app:/opt/kimai/var/data
+      - ${APP_DATA_DIR}/data/app/plugins:/opt/kimai/var/plugins
+    environment:
+      ADMINMAIL: umbrel@umbrel.local
+      # cannot use $APP_PASSWORD here, as the maximum allowed length is 60 characters
+      ADMINPASS: changeme
+      DATABASE_URL: "mysql://kimaiuser:${APP_PASSWORD}@kimai_db_1/kimai?charset=utf8mb4&serverVersion=8.3.0"
+    restart: on-failure
+    depends_on:
+      - db
+
+  db:
+    user: "1000:1000"
+    image: mariadb:11.4.5@sha256:5dfb3093333fa0ea53194ddef0a2bfa21d3b1e1353bd228b22610cd6fc0c04da
+    volumes:
+      - ${APP_DATA_DIR}/data/db:/var/lib/mysql
+    environment:
+      MYSQL_DATABASE: kimai
+      MYSQL_USER: kimaiuser
+      MYSQL_PASSWORD: $APP_PASSWORD
+      MYSQL_ROOT_PASSWORD: $APP_PASSWORD
+    restart: on-failure
+    healthcheck:
+      test: mysqladmin -p$$MYSQL_ROOT_PASSWORD ping -h localhost
+      interval: 20s
+      start_period: 10s
+      timeout: 10s
+      retries: 3
