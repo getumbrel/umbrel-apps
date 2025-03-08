@@ -1,0 +1,50 @@
+version: '3.7'
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: blinko_app_1
+      APP_PORT: 1111
+      PROXY_AUTH_ADD: "false"
+
+  db:
+    image: postgres:17.3@sha256:6e3358e46e34dae6c184f48fd06fe1b3dbf958ad5b83480031907e52b9ec2a7d
+    healthcheck:
+      test: ["CMD", "pg_isready", "-q", "-d", "blinko", "-U", "blinkouser"]
+      timeout: 45s
+      interval: 10s
+      retries: 10
+    user: "1000:1000"
+    volumes:
+      - ${APP_DATA_DIR}/data/db:/var/lib/postgresql/data:rw
+    environment:
+      POSTGRES_DB: blinko
+      POSTGRES_USER: blinkouser
+      POSTGRES_PASSWORD: blinkopass
+    restart: on-failure
+
+  app:
+    image: blinkospace/blinko:0.38.6@sha256:e3779d43e987ef65429db43bf06e74da6e0f9896e1d11fb3539d2afb5e85a31b
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:1111"]
+      interval: 30s 
+      timeout: 10s  
+      retries: 5
+      start_period: 30s
+    environment:
+      NODE_ENV: production
+      NEXTAUTH_URL: http://${DEVICE_DOMAIN_NAME}:1111
+      NEXT_PUBLIC_BASE_URL: http://${DEVICE_DOMAIN_NAME}:1111
+      NEXTAUTH_SECRET: ${APP_SEED}
+      DATABASE_URL: postgresql://blinkouser:blinkopass@blinko_db_1:5432/blinko
+    user: "1000:1000"  
+    volumes:
+      - ${APP_DATA_DIR}/data/app:/app/.blinko:rw
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: on-failure
