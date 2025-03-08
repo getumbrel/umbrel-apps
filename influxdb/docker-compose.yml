@@ -1,0 +1,31 @@
+version: "3.7"
+
+services:
+  
+  app_proxy:
+    environment:
+      APP_HOST: influxdb_chronograf_1
+      APP_PORT: 8888
+      
+  influxdb:
+    image: influxdb:1.11.8@sha256:7a7c698866b3c4098f70a6f9b5e55a10ae622e9cb02eaf48cf75c2f034877a8e
+    user: 1000:1000
+    restart: on-failure
+    stop_grace_period: 1m
+    volumes:
+      - ${APP_DATA_DIR}/data/influxdb:/var/lib/influxdb
+    environment:
+      INFLUXDB_ADMIN_USER: admin
+      INFLUXDB_ADMIN_PASSWORD: $APP_PASSWORD
+      INFLUXDB_HTTP_AUTH_ENABLED: "true"
+
+  chronograf:
+    image: chronograf:1.9.4@sha256:928cd75952b597df3666886197cfdcd24a4017289422c0e12ec937c56f0131f4
+    environment:
+      INFLUXDB_URL: "http://influxdb_influxdb_1:8086"
+      INFLUXDB_USERNAME: admin
+      INFLUXDB_PASSWORD: $APP_PASSWORD
+    volumes:
+      - ${APP_DATA_DIR}/data/chronograf:/var/lib/chronograf
+    depends_on:
+      - influxdb
