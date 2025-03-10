@@ -1,0 +1,14 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: downtify_downtify_1
+      APP_PORT: 8000
+
+  downtify:
+    image: henriquesebastiao/downtify:0.2.4@sha256:a7374527a7fcf5e4ca37280567ff5b2e777b6b6e827fa7edc9a1f579a3eb2622
+    restart: on-failure
+    stop_grace_period: 1m
+    volumes:
+      - ${UMBREL_ROOT}/data/storage/downloads/downtify:/downloads
