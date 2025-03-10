@@ -11,4 +11,5 @@ services:
     restart: on-failure
     user: "1000:1000"
     environment:
-      - ALLOWED_HOSTS=*
+      # Allows main .local address, tailscale magicDNS, and IP addresses of the host machine
+      - ALLOWED_HOSTS=${DEVICE_DOMAIN_NAME},${DEVICE_HOSTNAME},${APP_GITINGEST_LOCAL_IPS}
