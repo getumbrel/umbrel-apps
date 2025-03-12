@@ -27,14 +27,14 @@ fi
 
 # re-index ord on major version upgrades (so far in ord's history, this has been required on every major version update)
 # for fresh installs this file will be harmlessly created 
-if [[ ! -f "${APP_DATA_DIR}/AT_LEAST_0-20-0" ]]; then
+if [[ ! -f "${APP_DATA_DIR}/AT_LEAST_0-22-2" ]]; then
     # delete index db for all bitcoin networks
-    for file in "${ORDINALS_DATA_DIR}/index.redb" "${ORDINALS_DATA_DIR}/testnet3/index.redb" "${ORDINALS_DATA_DIR}/regtest/index.redb" "${ORDINALS_DATA_DIR}/signet/index.redb"; do
+    for file in "${ORDINALS_DATA_DIR}/index.redb" "${ORDINALS_DATA_DIR}/testnet3/index.redb" "${ORDINALS_DATA_DIR}/testnet4/index.redb" "${ORDINALS_DATA_DIR}/regtest/index.redb" "${ORDINALS_DATA_DIR}/signet/index.redb"; do
         if [[ -f "${file}" ]]; then
             rm -f "${file}"
         fi
     done
-    touch "${APP_DATA_DIR}/AT_LEAST_0-20-0"
+    touch "${APP_DATA_DIR}/AT_LEAST_0-22-2"
 fi
 
 # migrate all wallet database files to ord/wallets, ord/testnet3/wallets, ord/regtest/wallets, and ord/signet/wallets for pre-0.18.2 versions: https://github.com/ordinals/ord/releases/tag/0.18.2
