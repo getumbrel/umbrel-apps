@@ -1,0 +1,13 @@
+version: '3.7'
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: threema_web_1
+      APP_PORT: 80
+
+  web:
+    image: dennysubke/threema-web:v2.6.1@sha256:d83e5dcc1a2cbc49b5f84c422073d7d57a36fed89d60b47f9f11dad841d68dad
+    # cannot run rootless
+    #user: "1000:1000"
+    restart: on-failure

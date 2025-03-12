@@ -3,7 +3,7 @@ id: ollama
 name: Ollama
 tagline: Self-host open source AI models like DeepSeek-R1, Llama, and more
 category: ai
-version: "0.5.11"
+version: "0.5.12"
 port: 11434
 description: >-
   Ollama allows you to download and run advanced AI models directly on your own hardware. Self-hosting AI models ensures full control over your data and protects your privacy.
@@ -37,12 +37,12 @@ defaultPassword: ""
 dependencies: []
 releaseNotes: >-
   Highlights:
-    - Ollama will now use AVX-512 instructions where available for additional CPU acceleration
-    - Fixed indexing error that would occur when downloading a model with ollama run or ollama pull
-    - Fixes cases where download progress would reverse
-    - DeepScaleR: A fine-tuned version of Deepseek-R1-Distilled-Qwen-1.5B that surpasses the performance of OpenAI's o1-preview with just 1.5B parameters on popular math evaluations.
-    - OpenThinker: A fully open-source family of reasoning models built using a dataset derived by distilling DeepSeek-R1.
-    - Fixed The system cannot find the path specified errors when running models in some cases on Windows
+    - Perplexity R1 1776: A version of the DeepSeek-R1 model that has been post trained to remove its refusal to respond to some sensitive topics.
+    - The OpenAI-compatible API will now return `tool_calls` if the model called a tool
+    - Performance on certain Intel Xeon processors should now be restored
+    - Fixed permission denied issues after installing Ollama on Linux
+    - The progress bar will no longer flicker when running `ollama pull`
+    - Fixed issue where running a model would fail on Linux if Ollama was installed in a path with UTF-8 characters
 
   Full release notes are available at https://github.com/ollama/ollama/releases
 path: ""

@@ -1,0 +1,15 @@
+version: '3.7'
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: gitingest_app_1
+      APP_PORT: 8000
+
+  app:
+    image: elestio/gitingest:v0.1.3@sha256:c1f0d290be9e49141ecc500c0002ee2401fe11b1b391e3f375a66dd99f5e2c08
+    restart: on-failure
+    user: "1000:1000"
+    environment:
+      # Allows main .local address, tailscale magicDNS, and IP addresses of the host machine
+      - ALLOWED_HOSTS=${DEVICE_DOMAIN_NAME},${DEVICE_HOSTNAME},${APP_GITINGEST_LOCAL_IPS}
