@@ -18,7 +18,7 @@ BIN_ARGS+=( "--restlisten=0.0.0.0:${APP_LIGHTNING_NODE_REST_PORT}" )
 BIN_ARGS+=( "--bitcoin.active" )
 if [[ "${APP_BITCOIN_NETWORK}" == "mainnet" ]]; then
 	BIN_ARGS+=( "--bitcoin.mainnet" )
-elif [[ "${APP_BITCOIN_NETWORK}" == "testnet3" ]]; then
+elif [[ "${APP_BITCOIN_NETWORK}" == "testnet" || "${APP_BITCOIN_NETWORK}" == "testnet3" ]]; then
 	BIN_ARGS+=( "--bitcoin.testnet" )
 	export APP_LIGHTNING_NODE_CHAIN_DIR="testnet"
 elif [[ "${APP_BITCOIN_NETWORK}" == "signet" ]]; then
