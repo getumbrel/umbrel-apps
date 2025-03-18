@@ -35,7 +35,7 @@ services:
       - "${APP_DATA_DIR}/data/redis:/data"
 
   web:
-    image: nextcloud:31.0.0-apache@sha256:32c9403b1b770141850ed999a3a0f20c8ff416d487278e531ae5d594e23d55d2
+    image: nextcloud:31.0.1-apache@sha256:0787cc482ba7ac6887d04740151331cffec95a9a9496fd644a05f8080d83ebef
     # Currently needs to be run as root, if we run as uid 1000 this fails
     # https://github.com/nextcloud/docker/blob/05026b029d37fc5cd488d4a4a2a79480e39841ba/21.0/apache/entrypoint.sh#L53-L77
     # user: "1000:1000"
@@ -60,7 +60,7 @@ services:
         condition: service_started
 
   cron:
-    image: nextcloud:31.0.0-apache@sha256:32c9403b1b770141850ed999a3a0f20c8ff416d487278e531ae5d594e23d55d2
+    image: nextcloud:31.0.1-apache@sha256:0787cc482ba7ac6887d04740151331cffec95a9a9496fd644a05f8080d83ebef
     # Currently needs to be run as root, if we run as uid 1000 this fails
     # https://github.com/nextcloud/docker/blob/05026b029d37fc5cd488d4a4a2a79480e39841ba/21.0/apache/entrypoint.sh#L53-L77
     # user: "1000:1000"
@@ -73,4 +73,3 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
-
