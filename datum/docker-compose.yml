@@ -7,11 +7,13 @@ services:
       APP_PORT: 21000
 
   datum:
-    image: ghcr.io/retropex/datum:1.8@sha256:718411c69d5b3e147857a7af6a99dcf4ff013191aec2a2acbad6ce47ffc0e1ed
+    image: ghcr.io/retropex/datum:1.10@sha256:bcd88108b0bdadb2a387810256130b2b37ed8cde40aaaf2d6ceb54a693e1ad15
+    entrypoint: ["/app/datum_gateway"]
+    command: ["--config=/app/conf/datum_gateway_config.json"]
     user: 1000:1000
     restart: on-failure
     volumes:
-      - ${APP_DATA_DIR}/data/settings/datum_gateway_config.json:/app/datum_gateway_config.json
+      - ${APP_DATA_DIR}/data/settings/:/app/conf/
     ports:
       # datum gateway port
       - 23334:23334
