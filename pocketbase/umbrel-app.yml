@@ -3,7 +3,7 @@ id: pocketbase
 name: PocketBase
 tagline: Open Source backend for your next SaaS and Mobile app in 1 file
 category: developer
-version: "0.25.8"
+version: "0.26.1"
 port: 5400
 description: >-
   PocketBase is an open source backend consisting of embedded database (SQLite) with realtime subscriptions, built-in auth management, convenient dashboard UI and simple REST-ish API.
@@ -43,7 +43,15 @@ gallery:
 path: /_/
 dependencies: []
 releaseNotes: >-
-  This release includes a fix for potential login issues with Apple/OIDC.
+  This release includes multiple improvements and bug fixes:
+    - Fixed error handling when reading files (removed wrapping of io.EOF error)
+    - Replaced AWS SDK with custom lighter implementation, reducing binary size by ~10MB
+    - Prioritized user-submitted email for PocketBase user creation during OAuth2 auth
+    - Added context loading during password/OAuth2/OTP authentication for better rules targeting
+    - Added concurrent-safe store value updating with SetFunc
+    - Added OS stat helper for JSVM
+    - Improved async JSVM handler support
+    - Increased default request timeouts to 5 minutes for better handling of large files
 
 
   Full release notes are found at https://github.com/pocketbase/pocketbase/releases
