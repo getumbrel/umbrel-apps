@@ -1,12 +1,13 @@
 version: "3.7"
 services:
   app:
-    image: "ghcr.io/besoeasy/file-drop:${TAG}"  # Pre-built image; TAG set by Umbrel
+    image: "ghcr.io/besoeasy/file-drop:main"
     ports:
-      - "3232:3232"  # Main app port (host:container)
-      - "3233:8080"  # IPFS gateway (host:container, mapping 3233 to 8080)
+      - "3232:3232"  # Main app UI
+      - "3233:8080"  # IPFS gateway (optional, not exposed by Umbrel UI)
     restart: unless-stopped
     volumes:
-      - ${APP_DATA_DIR}/file-drop:/root/.ipfs  # Persist IPFS data
+      - ${APP_DATA_DIR}/file-drop:/root/.ipfs
     environment:
       - NODE_ENV=production
+      - APP_HIDDEN_SERVICE=${APP_HIDDEN_SERVICE}  # Optional: Tor address
