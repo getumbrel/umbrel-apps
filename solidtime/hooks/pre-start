@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+APP_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")"
+KEYS_FILE="$APP_DIR/keys.env"
+POST_INSTALL_SCRIPT="$APP_DIR/hooks/post-install"
+
+# Check if keys.env exists and has content
+if [ ! -s "$KEYS_FILE" ]; then
+    echo "Keys file missing or empty. Running post-install script to generate keys..."
+    
+    # Make sure the post-install script is executable
+    chmod +x "$POST_INSTALL_SCRIPT"
+    
+    # Execute the post-install script
+    "$POST_INSTALL_SCRIPT"
+else
+    echo "Keys file already exists and has content. No action needed."
+fi
+
+exit 0
