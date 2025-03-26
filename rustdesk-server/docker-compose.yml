@@ -21,7 +21,7 @@ services:
 
     depends_on:
       - hbbr
-    restart: unless-stopped
+    restart: on-failure
 
   hbbr:
     container_name: hbbr
@@ -33,7 +33,7 @@ services:
     volumes:
       - ${APP_DATA_DIR}/data/hbbr:/root
     network_mode: "host"
-    restart: unless-stopped
+    restart: on-failure
 
   web:
     image: nginx:1.27@sha256:124b44bfc9ccd1f3cedf4b592d4d1e8bddb78b51ec2ed5056c52d3692baebc19
