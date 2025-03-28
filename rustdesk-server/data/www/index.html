@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <title> RustDesk Server</title>
+    <style>
+        /*! normalize.css v8.0.1 | MIT License | github.com/necolas/normalize.css */
+        html {
+            line-height: 1.15;
+            -webkit-text-size-adjust: 100%
+        }
+
+        body {
+            margin: 0
+        }
+
+        main {
+            display: block
+        }
+
+        h1 {
+            font-size: 2em;
+            margin: .67em 0
+        }
+
+        hr {
+            box-sizing: content-box;
+            height: 0;
+            overflow: visible
+        }
+
+        pre {
+            font-family: monospace, monospace;
+            font-size: 1em
+        }
+
+        a {
+            background-color: transparent
+        }
+
+        abbr[title] {
+            border-bottom: none;
+            text-decoration: underline;
+            text-decoration: underline dotted
+        }
+
+        b,
+        strong {
+            font-weight: bolder
+        }
+
+        code,
+        kbd,
+        samp {
+            font-family: monospace, monospace;
+            font-size: 1em
+        }
+
+        small {
+            font-size: 80%
+        }
+
+        sub,
+        sup {
+            font-size: 75%;
+            line-height: 0;
+            position: relative;
+            vertical-align: baseline
+        }
+
+        sub {
+            bottom: -.25em
+        }
+
+        sup {
+            top: -.5em
+        }
+
+        img {
+            border-style: none
+        }
+
+        button,
+        input,
+        optgroup,
+        select,
+        textarea {
+            font-family: inherit;
+            font-size: 100%;
+            line-height: 1.15;
+            margin: 0
+        }
+
+        button,
+        input {
+            overflow: visible
+        }
+
+        button,
+        select {
+            text-transform: none
+        }
+
+        [type=button],
+        [type=reset],
+        [type=submit],
+        button {
+            -webkit-appearance: button
+        }
+
+        [type=button]::-moz-focus-inner,
+        [type=reset]::-moz-focus-inner,
+        [type=submit]::-moz-focus-inner,
+        button::-moz-focus-inner {
+            border-style: none;
+            padding: 0
+        }
+
+        [type=button]:-moz-focusring,
+        [type=reset]:-moz-focusring,
+        [type=submit]:-moz-focusring,
+        button:-moz-focusring {
+            outline: 1px dotted ButtonText
+        }
+
+        fieldset {
+            padding: .35em .75em .625em
+        }
+
+        legend {
+            box-sizing: border-box;
+            color: inherit;
+            display: table;
+            max-width: 100%;
+            padding: 0;
+            white-space: normal
+        }
+
+        progress {
+            vertical-align: baseline
+        }
+
+        textarea {
+            overflow: auto
+        }
+
+        [type=checkbox],
+        [type=radio] {
+            box-sizing: border-box;
+            padding: 0
+        }
+
+        [type=number]::-webkit-inner-spin-button,
+        [type=number]::-webkit-outer-spin-button {
+            height: auto
+        }
+
+        [type=search] {
+            -webkit-appearance: textfield;
+            outline-offset: -2px
+        }
+
+        [type=search]::-webkit-search-decoration {
+            -webkit-appearance: none
+        }
+
+        ::-webkit-file-upload-button {
+            -webkit-appearance: button;
+            font: inherit
+        }
+
+        details {
+            display: block
+        }
+
+        summary {
+            display: list-item
+        }
+
+        template {
+            display: none
+        }
+
+        [hidden] {
+            display: none
+        }
+    </style>
+    <style>
+        body {
+            background-color: #1D1B1B;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, Roboto, Helvetica Neue, Segoe UI, Arial, Noto Sans, sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol, Noto Color Emoji;
+            color: #fff;
+        }
+
+        *,
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6,
+        p,
+        span {
+            color: #fff;
+            font-size: 20px;
+            font-weight: normal;
+        }
+
+        .success {
+            color: #63FB72;
+        }
+
+        .text-muted {
+            opacity: 0.8;
+        }
+
+        .text-small {
+            font-size: 14px;
+        }
+
+        hr {
+            width: 100%;
+            height: 2px;
+            background: #2F2C2C;
+            border: none;
+            margin: 40px 0;
+        }
+
+        .container {
+            padding: 40px;
+            max-width: 1440px;
+            margin: auto;
+        }
+
+        .app-icon {
+            border-radius: 20px;
+        }
+
+        .app {
+            display: flex;
+            margin: 20px 0 40px 0;
+        }
+
+        .app>.app-icon {
+            flex-shrink: 0;
+            height: 140px;
+            width: 140px;
+            box-shadow: 0 0 40px 0 rgba(0, 0, 0, 0.95);
+            margin-right: 24px;
+        }
+
+        .app>.app-details>.app-status {
+            display: block;
+            font-size: 20px;
+            margin: 10px 0 0 0;
+        }
+
+        .app>.app-details>.app-name {
+            font-size: 52px;
+            line-height: 52px;
+            font-weight: bold;
+            margin: 10px 0 0 0;
+        }
+    </style>
+    <link rel="shortcut icon" type="image/jpg" href="favicon.png">
+</head>
+
+<body>
+    <section class="container app-container">
+        <div class="app">
+            <img class="app-icon" src="logo.png" width="256" height="256">
+            <div class="app-details">
+                <span class="app-status success">&#9679; Running</span>
+                <h1 class="app-name">RustDesk&nbsp;Server</h1>
+            </div>
+            </div>
+            <p class="text-muted">&nbsp;</p>
+            <hr />
+<h2><strong>Quick Guide to Setting Up Connections Between Client and Server &#x1F527;&nbsp;</strong></h2>
+<p>&nbsp;</p>
+<ol data-start="97" data-end="1031">
+<li class="" data-start="148" data-end="246">
+<p class="" data-start="151" data-end="246"><strong data-start="151" data-end="182">Open RustDesk on the Client</strong><br data-start="182" data-end="185" /> Launch RustDesk on the computer or device you want to use.</p>
+</li>
+<li class="" data-start="248" data-end="338">
+<p class="" data-start="251" data-end="338"><strong data-start="251" data-end="268">Open Settings</strong><br data-start="268" data-end="271" /> Click on the three-dot menu next to your ID and select Settings.</p>
+</li>
+<li class="" data-start="340" data-end="527">
+<p class="" data-start="343" data-end="527"><strong data-start="343" data-end="370">Unlock Network Settings</strong><br data-start="370" data-end="373" /> In the settings menu, go to the Network section. Click on Unlock Network Settings. You may need to enter your system password to modify these settings.</p>
+</li>
+<li class="" data-start="529" data-end="640">
+<p class="" data-start="532" data-end="640"><strong data-start="532" data-end="560">Select "ID/Relay Server"</strong><br data-start="560" data-end="563" /> After unlocking the network settings, select the "ID/Relay Server" option.</p>
+</li>
+<li class="" data-start="642" data-end="1101">
+<p class="" data-start="645" data-end="675"><strong data-start="645" data-end="673">Enter Server Information</strong></p>
+<ul style="list-style-type: disc;" data-start="679" data-end="1101">
+<li class="" data-start="679" data-end="783">
+<p class="" data-start="681" data-end="783"><strong data-start="681" data-end="695">ID Server:</strong> Enter <code data-start="702" data-end="722">umbrel.local:21115</code> as the IP address or Domain of your RustDesk Relay server.</p>
+</li>
+<li class="" data-start="787" data-end="995">
+<p class="" data-start="789" data-end="995"><strong data-start="789" data-end="797">Key:</strong> Enter the Public Key you obtained during the server installation. To get the Public Key, right-click on the RustDesk app in Umbrel, select the "Troubleshoot" option, and find the key in the logs.</p>
+</li>
+<li class="" data-start="999" data-end="1048">
+<p class="" data-start="1001" data-end="1048"><strong data-start="1001" data-end="1016">API Server:</strong> This field can be left empty.</p>
+</li>
+<li class="" data-start="1052" data-end="1101">
+<p class="" data-start="1054" data-end="1101"><strong data-start="1054" data-end="1071">Relay Server:</strong> This field can be left empty.</p>
+</li>
+</ul>
+</li>
+<li class="" data-start="1103" data-end="1195">
+<p class="" data-start="1106" data-end="1195"><strong data-start="1106" data-end="1128">Apply the Settings</strong><br data-start="1128" data-end="1131" /> After entering the details, click Apply to save the settings.</p>
+</li>
+<li class="" data-start="1197" data-end="1384">
+<p class="" data-start="1200" data-end="1384"><strong data-start="1200" data-end="1226">Repeat for All Clients</strong><br data-start="1226" data-end="1229" /> Perform the same steps on all devices that should connect to your server. You need to enter the same <code data-start="1333" data-end="1353">umbrel.local:21115</code> and Public Key on all of them.</p>
+</li>
+</ol>
+<hr />
+<p class="" data-start="1033" data-end="1127">&nbsp;</p>
+<p>&#x1F4A1; For more detailed information about RustDesk, including server setup, user guides, and developer documentation, you can visit the <a href="https://rustdesk.com/docs/en/self-host/">RustDesk Documentation</a>.</p>
+</section>
+
+</body>
+</html>
