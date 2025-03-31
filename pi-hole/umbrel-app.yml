@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: pi-hole
 category: networking
 name: Pi-hole
-version: "2024.07.0"
+version: "2025.03.0"
 tagline: Block ads on your entire network
 description: >-
   Instead of browser plugins or other software on each computer,
@@ -32,9 +32,20 @@ defaultUsername: ""
 deterministicPassword: true
 torOnly: false
 releaseNotes: >-
-  🚨 This release fixes a vulnerability that was recently discovered in Pi-hole's gravity script that could allow an authenticated user to read system files through the web interface. Please update immediately. 
+  ⚠️ If you have set up your router to use Pi-hole as its only DNS server, umbrelOS may be unable to resolve domain names during the update, preventing it from downloading the update files.
+  To avoid issues, temporarily set a backup DNS server (e.g., 1.1.1.1) on your router before updating— or configure a permanent fallback DNS to prevent future issues.
 
 
-  More information can be found at https://github.com/pi-hole/pi-hole/security/advisories/GHSA-95g6-7q26-mp9x
+  This release includes several improvements and bug fixes:
+    - Improved DNS port configuration for docker health checks
+    - Added NTP port to docker compose example
+    - Updated embedded CivetWeb
+    - Improved IPv6 client name resolution
+    - Enhanced settings and query log functionality in the web interface
+    - Fixed multiple domain insertion as wildcard
+    - Improved memory unit selection for devices with less than 1 GB of RAM
+
+
+  Full release notes can be found at https://github.com/pi-hole/docker-pi-hole/releases/tag/2025.03.0
 submitter: Umbrel
 submission: https://github.com/getumbrel/umbrel/commit/9ca55a25e043dcd50d5cb92c6ec756d368bb4794

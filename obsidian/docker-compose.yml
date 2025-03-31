@@ -1,0 +1,17 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: obsidian_server_1
+      APP_PORT: 3000
+
+  server:
+    image: linuxserver/obsidian:1.8.9@sha256:1e994c0c8b201c9a28f2faea68fd73fe641474727870d21c8acc71e6f37c3c4b
+    restart: on-failure
+    environment:
+      - PUID=1000
+      - PGID=1000
+    volumes:
+      - ${APP_DATA_DIR}/data/config:/config
+    shm_size: "1gb"

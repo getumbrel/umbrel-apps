@@ -2,16 +2,19 @@ manifestVersion: 1
 id: public-pool
 category: bitcoin
 name: Public Pool
-version: "9c14003"
+version: "9c14003-w"
 tagline: Fully Open Source Solo Bitcoin Mining Pool
 description: >-
-  Run your own Bitcoin Solo Mining Pool with no fees.
-
-  Connected to your Bitcoin node, and only your node. Contribute to furthering bitcoin mining decentralisation.
-
-  Allows you to pool together any and all mining hardware, with mining rewards going directly to your chosen bitcoin address. 
-
-  Track total hashrate and your individual works with ease.
+  Public Pool is an open-source, solo Bitcoin mining application that lets you run your own pool using your own node.
+  Instead of relying on centralized pools, Public Pool enables your mining hardware to submit work to your personal setup, ensuring that you have full control over your mining operation.
+  If you successfully mine a block, you receive the entire block reward. No splitting with other miners. No fees. No middleman.
+  
+  
+  On umbrelOS, Public Pool is automatically configured to work with your Bitcoin node—no extra setup required. Simply install the app, and it's ready to go.
+  
+  
+  To start mining, just point your mining hardware to your Public Pool instance using the stratum details provided in the app.
+  Monitor your total hashrate, track individual miners, and receive rewards directly to your chosen Bitcoin address. Mine independently and help strengthen Bitcoin's decentralization.
 developer: Benjamin Wilson
 website: https://web.public-pool.io/#/
 dependencies:
@@ -25,10 +28,29 @@ gallery:
   - 3.jpg
 path: ""
 releaseNotes: >-
-  This update brings Bitcoin Core v28 compatibility to Public Pool, along with a number of other improvements.
+  This update brings a brand new Public Pool widget, allowing you to see your pool stats at a glance right from your umbrelOS home screen!
 
 
-  If you have already updated your Bitcoin Node app to v28.0 and Public Pool is not working, this update will fix it.
+  To add this widget, right-click on your home screen and select "Edit widgets", or click on Widgets in the Dock.
 defaultPassword: ""
+widgets:
+  - id: "stats"
+    type: "four-stats"
+    refresh: "5s"
+    endpoint: "widget-server:3000/widgets/pool"
+    link: ""
+    example:
+      type: "four-stats"
+      link: ""
+      items:
+        - title: "Hash Rate"
+          text: "968"
+          subtext: "GH/s"
+        - title: "Miners"
+          text: "1"
+        - title: "Blocks Found"
+          text: "1"
+        - title: "Block Height"
+          text: "883453"
 submitter: smolgrrr
 submission: https://github.com/getumbrel/umbrel-apps/pull/915
