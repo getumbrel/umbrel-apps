@@ -1,0 +1,16 @@
+version: '3.7'
+services:
+
+  app_proxy:
+    depends_on:
+      - socat
+    environment:
+      APP_HOST: ente-auth_socat_1
+      APP_PORT: "${ENTE_AUTH_NEW_PORT}" # Ente Auth app will be mapped to 43000
+      PROXY_AUTH_ADD: "false"
+
+  socat:
+    image: alpine/socat:1.8.0.1@sha256:16b584a72429237bad32c4575c388e6861b7852ad8c2b69b54fbc2aefcc88c2d
+    command: "TCP-LISTEN:${ENTE_AUTH_NEW_PORT},fork,reuseaddr TCP:host.docker.internal:${ENTE_AUTH_PORT}"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
