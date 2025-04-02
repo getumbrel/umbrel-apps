@@ -1,0 +1,131 @@
+version: '3.7'
+
+x-environment: &env
+  # Ente Host
+  ENTE_HOST : "${ENTE_HOST}"
+  ENTE_AUTH_PORT : "${ENTE_AUTH_PORT}"
+  ENTE_CAST_PORT : "${ENTE_CAST_PORT}"
+  ENTE_ALBUMS_PORT: "${ENTE_ALBUMS_PORT}"
+  ENTE_ACCOUNTS_PORT: "${ENTE_ACCOUNTS_PORT}"
+  # DB Configs
+  DB_HOST: &db_host "${DB_HOST}"
+  DB_PORT: &db_port "${DB_PORT}"
+  DB_NAME: &db_name "${DB_NAME}"
+  DB_USER: &db_username "${DB_USER}"
+  DB_PASSWORD: &db_password "${DB_PASS}"
+  # MinIO Configs
+  MINIO_API_PORT: "${MINIO_API_PORT}"
+  MINIO_CONSOLE_PORT: "${MINIO_CONSOLE_PORT}"
+  MINIO_URL: &minio_url "${ENTE_HOST}:${MINIO_API_PORT}"  
+  MINIO_ROOT_USER: &minio_user "${MINIO_ROOT_USER}"
+  MINIO_ROOT_PASSWORD: &minio_password "${MINIO_ROOT_PASSWORD}"
+  MINIO_REGION: &minio_region "${MINIO_REGION}"
+
+services:
+  
+  app_proxy:
+    depends_on:
+      - web
+    environment:
+      APP_HOST: ente-photos_web_1
+      APP_PORT: 3000 # Photos web app will be mapped to 33000
+      PROXY_AUTH_ADD: "false"
+  
+  museum:
+    image: ghcr.io/ente-io/server:f4875653987a6c83fb51a4a4ec252c8ff82b6c7d@sha256:aff07d8ec5f66086852a7c506c78281fb6ba26f27ddb720a5e0d066780876faf
+    ports:
+      - ${ENTE_API_PORT}:8080 # APIs will be mapped to 38080
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      <<: *env
+      ENTE_DB_HOST: *db_host
+      ENTE_DB_PORT: *db_port
+      ENTE_DB_NAME: *db_name
+      ENTE_DB_USER: *db_username
+      ENTE_DB_PASSWORD: *db_password
+      # S3 Configs
+      ENTE_S3_ARE_LOCAL_BUCKETS: "true"
+      ENTE_S3_B2-EU-CEN_KEY: *minio_user
+      ENTE_S3_B2-EU-CEN_SECRET: *minio_password
+      ENTE_S3_B2-EU-CEN_ENDPOINT: *minio_url
+      ENTE_S3_B2-EU-CEN_REGION: *minio_region
+      ENTE_S3_B2-EU-CEN_BUCKET: "b2-eu-cen"
+      ENTE_S3_WASABI-EU-CENTRAL-2-V3_KEY: *minio_user
+      ENTE_S3_WASABI-EU-CENTRAL-2-V3_SECRET: *minio_password
+      ENTE_S3_WASABI-EU-CENTRAL-2-V3_ENDPOINT: *minio_url
+      ENTE_S3_WASABI-EU-CENTRAL-2-V3_REGION: *minio_region
+      ENTE_S3_WASABI-EU-CENTRAL-2-V3_BUCKET: "wasabi-eu-central-2-v3"
+      ENTE_S3_WASABI-EU-CENTRAL-2-V3_COMPIANCE: "false"
+      ENTE_S3_SCW-EU-FR-V3_KEY: *minio_user
+      ENTE_S3_SCW-EU-FR-V3_SECRET: *minio_password
+      ENTE_S3_SCW-EU-FR-V3_ENDPOINT: *minio_url
+      ENTE_S3_SCW-EU-FR-V3_REGION: *minio_region
+      ENTE_S3_SCW-EU-FR-V3_BUCKET: "scw-eu-fr-v3"
+    volumes:
+      - ${APP_DATA_DIR}/museum.yaml:/museum.yaml:ro
+      - ${APP_DATA_DIR}/data:/data:ro
+    restart: on-failure
+  
+  socat:
+    image: alpine/socat:1.8.0.1@sha256:16b584a72429237bad32c4575c388e6861b7852ad8c2b69b54fbc2aefcc88c2d
+    network_mode: service:museum
+    depends_on: [museum]
+    environment:
+      <<: *env
+    command: "TCP-LISTEN:3200,fork,reuseaddr TCP:minio:3200"
+  
+  web:
+    image: ghcr.io/ente-io/web:7174cbac3be4e5392315f1696d2f78531db5f59f@sha256:9413b41ee8ed44825714bd5e1277f2b89f25963c4a5c157af243f61b95da01ac
+    ports:
+      # - 33000:3000 # Photos web app will be mapped to 33000
+      - ${ENTE_ACCOUNTS_PORT}:3001 # Accounts will be mapped to 33001
+      - ${ENTE_ALBUMS_PORT}:3002 # Public albums will be mapped to 33002
+      - ${ENTE_AUTH_PORT}:3003 # Ente Auth will be mapped to 33003
+      - ${ENTE_CAST_PORT}:3004 # Cast will be mapped to 33004
+    environment:
+      <<: *env
+      ENTE_API_ORIGIN: http://${ENTE_HOST}:${ENTE_API_PORT}
+      ENTE_ALBUMS_ORIGIN: http://${ENTE_HOST}:${ENTE_ALBUMS_PORT}
+  
+  postgres:
+    image: postgres:15@sha256:6cbdd616ae7ea61fa88873fdab529b3fd141b8a8311bfe4e6e62575f643f88fe
+    environment:
+      <<: *env
+      POSTGRES_USER: *db_username
+      POSTGRES_PASSWORD: *db_password
+      POSTGRES_DB: *db_name
+    healthcheck:
+      test: pg_isready -q -d ${DB_NAME} -U ${DB_USER}
+      start_period: 40s
+      start_interval: 1s
+    volumes:
+      - ${APP_DATA_DIR}/data/postgres-data:/var/lib/postgresql/data
+    restart: on-failure
+  
+  minio:
+    image: minio/minio:RELEASE.2025-03-12T18-04-18Z@sha256:46b3009bf7041eefbd90bd0d2b38c6ddc24d20a35d609551a1802c558c1c958f
+    ports:
+      - "${MINIO_API_PORT}:3200" # MinIO API will be mapped to 33200
+      - "${MINIO_CONSOLE_PORT}:3201" # MinIO Console will be mapped to 33201
+    environment:
+      <<: *env
+    command: server /data --address ":3200" --console-address ":3201"
+    volumes:
+      - ${APP_DATA_DIR}/data/minio-data:/data
+    restart: on-failure
+  
+  minio-provision:
+    image: minio/mc:RELEASE.2025-03-12T17-29-24Z@sha256:470f5546b596e16c7816b9c3fa7a78ce4076bb73c2c73f7faeec0c8043923123
+    depends_on:
+      - minio
+    environment:
+      <<: *env
+    volumes:
+      - ${APP_DATA_DIR}/scripts/compose/minio-provision.sh:/provision.sh:ro
+      - ${APP_DATA_DIR}/data/minio-data:/data
+    entrypoint: sh /provision.sh
+volumes:
+  postgres-data:
+  minio-data:
