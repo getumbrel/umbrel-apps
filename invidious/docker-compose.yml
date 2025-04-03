@@ -24,6 +24,7 @@ services:
         check_tables: true
         external_port: 3420
         captcha_enabled: false
+        signature_server: sig_helper:12999
         admins: ["umbrel"]
         default_user_preferences:
           feed_menu: ["Trending", "Subscriptions", "Playlists"]
@@ -46,3 +47,16 @@ services:
       POSTGRES_DB: invidious
       POSTGRES_USER: umbrel
       POSTGRES_PASSWORD: moneyprintergobrrr
+
+  sig_helper:
+    image: quay.io/invidious/inv-sig-helper:master-1c70bf6@sha256:1cfd80c42482f6524a3f7a11fdc0f623b761f8cd6686a4c027aaff05fb853fe5
+    restart: on-failure
+    init: true
+    command: ["--tcp", "0.0.0.0:12999"]
+    environment:
+      - RUST_LOG=info
+    cap_drop:
+      - ALL
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
