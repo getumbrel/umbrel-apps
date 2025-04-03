@@ -24,11 +24,11 @@ services:
     restart: on-failure
 
   app:
-    image: blinkospace/blinko:0.45.2@sha256:65005e66225b5271cc3b293a6d323af9560dcf2da30cc1f004135ba2efc3ce84
+    image: blinkospace/blinko:0.49.1@sha256:79f07be7f920c2a93c342ced8cfcb42b5f2f07df482532b6b34f786a73d9e63f
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:1111"]
       interval: 30s 
-      timeout: 10s  
+      timeout: 10s
       retries: 5
       start_period: 30s
     environment:
@@ -37,7 +37,7 @@ services:
       NEXT_PUBLIC_BASE_URL: http://${DEVICE_DOMAIN_NAME}:1111
       NEXTAUTH_SECRET: ${APP_SEED}
       DATABASE_URL: postgresql://blinkouser:blinkopass@blinko_db_1:5432/blinko
-    user: "1000:1000"  
+    user: "1000:1000"
     volumes:
       - ${APP_DATA_DIR}/data/app:/app/.blinko:rw
     logging:

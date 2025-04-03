@@ -22,17 +22,36 @@ services:
     entrypoint: memcached -m 256
 
   seafile:
-    image: seafileltd/seafile-mc:11.0.13@sha256:1239b087aa4bdf1b60a3802e80855f230736ac5d5fa3325a40b15d4c598f422c
+    image: seafileltd/seafile-mc:12.0.11@sha256:4ab87f4b7fd9a712f614386c3362049d1701161e07e0f88681fdddcc3e543680
     container_name: seafile
     volumes:
       - ${APP_DATA_DIR}/data/seafile-data:/shared
     environment:
       - DB_HOST=seafile-mysql
       - DB_ROOT_PASSWD=db_dev
-      - SEAFILE_ADMIN_EMAIL=umbrel
-      - SEAFILE_ADMIN_PASSWORD=${APP_PASSWORD}
+      - JWT_PRIVATE_KEY=${APP_SEED}
+      - INIT_SEAFILE_ADMIN_EMAIL=umbrel
+      - INIT_SEAFILE_ADMIN_PASSWORD=${APP_PASSWORD}
       - SEAFILE_SERVER_LETSENCRYPT=false
       - SEAFILE_SERVER_HOSTNAME=${DEVICE_DOMAIN_NAME}:8920
+      - ENABLE_SEADOC=true
+      - SEADOC_SERVER_URL=http://${DEVICE_DOMAIN_NAME}:8921
     depends_on:
       - db
       - memcached
+
+  seadoc:
+    image: seafileltd/sdoc-server:1.0.5@sha256:b5d3aff910be22388d329053c7dc2847a6760a6c7cfd7f0b1ef0e4f445b158b3
+    volumes:
+      - ${APP_DATA_DIR}/data/seadoc-data:/shared
+    ports:
+      - 8921:80
+    environment:
+      - DB_HOST=seafile-mysql
+      - DB_USER=root
+      - DB_PASSWORD=db_dev
+      - DB_NAME=seahub_db
+      - JWT_PRIVATE_KEY=${APP_SEED}
+      - SEAHUB_SERVICE_URL=http://${DEVICE_DOMAIN_NAME}:8920
+    depends_on:
+      - db
