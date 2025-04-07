@@ -1,10 +1,13 @@
 version: "3.7"
 services:
+  app_proxy:
+    environment:
+      APP_HOST: file-drop_app_1
+      APP_PORT: 3232
+
   app:
-    image: "ghcr.io/besoeasy/file-drop:main@sha256:a8aaeb9830b321b1d761f070ae71de643717c4379853c56127c305b13ab2a7c8"
-    ports:
-      - "3232:3232"  # Main app UI
-      - "3233:8080"  # IPFS gateway (optional, not exposed by Umbrel UI)
+    image: ghcr.io/besoeasy/file-drop:1.0.3@sha256:4523d107acc6c93256e26248b1b7e9dfbc1237253837a10e76a11ddbf6053cd7
+    user: "1000:1000"
     restart: on-failure
     stop_grace_period: 5m
     environment:
