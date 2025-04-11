@@ -1,0 +1,12 @@
+version: '3.7'
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: kokoro_web_1
+      APP_PORT: 8880
+
+  web:
+    image: ghcr.io/remsky/kokoro-fastapi-cpu:v0.2.3pre@sha256:3992367435b059cab86f3417b094f32f352e201434af446024282364bdb0eca3
+    user: "1000:1000"
+    restart: on-failure
