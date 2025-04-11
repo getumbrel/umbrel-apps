@@ -40,6 +40,7 @@ services:
 
   monerod:
     user: "1000:1000"
+    # "unless-stopped" ensures monerod restarts via UI-triggered daemon restarts, not just on failure
     restart: unless-stopped
     stop_grace_period: 15m
     command: "${APP_MONERO_COMMAND}"
