@@ -1,17 +1,13 @@
 version: "3.7"
 
 services:
-  app_proxy:
-    environment:
-      APP_HOST: umami_app_1
-      APP_PORT: 3000
-      PROXY_AUTH_ADD: "false"
-  
   app:
     image: ghcr.io/umami-software/umami:postgresql-v2.17.0@sha256:837eb91c54200f6f087e5c21d5f050ceb3b659eed49af91402dac04dd53bbac1
     user: "1000:1000"
     restart: on-failure
     stop_grace_period: 1m
+    ports:
+      - 25727:3000
     environment:
       DATABASE_URL: postgresql://umami:umami@db:5432/umami
       DATABASE_TYPE: postgresql
