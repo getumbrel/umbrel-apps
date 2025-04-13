@@ -1,0 +1,19 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: ungoogled-chromium_web_1
+      APP_PORT: 3000
+
+  web:
+    image: ghcr.io/linuxserver/ungoogled-chromium:135.0.7049@sha256:d5756bfb04f15ab4bc389876c3855d2b9006738fde6d4bf23fb74a5dc21a02f8
+    volumes:
+      - ${APP_DATA_DIR}/data:/config:rw
+    mem_limit: 3g
+    shm_size: 1g
+    cpu_shares: 1024
+    restart: on-failure
+    environment:
+      PUID: 1000
+      PGID: 1000
