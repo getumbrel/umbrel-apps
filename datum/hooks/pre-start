@@ -51,11 +51,7 @@ if [ -f "${DATUM_CONFIG_FILE}" ]; then
     jq -e '.api.modify_conf = true' "$DATUM_CONFIG_FILE" > "$DATUM_CONFIG_FILE".tmp && mv "${DATUM_CONFIG_FILE}.tmp" "$DATUM_CONFIG_FILE"
   fi
 
-  if jq -e '.api.admin_password' "$DATUM_CONFIG_FILE" > /dev/null; then
-    echo "Admin password already set"
-  else
-    jq -e '.api.admin_password = "umbrel"' "$DATUM_CONFIG_FILE" > "$DATUM_CONFIG_FILE".tmp && mv "${DATUM_CONFIG_FILE}.tmp" "$DATUM_CONFIG_FILE"
-  fi
+  jq --arg password "$APP_PASSWORD" -e '.api.admin_password = $password' "$DATUM_CONFIG_FILE" > "$DATUM_CONFIG_FILE".tmp && mv "${DATUM_CONFIG_FILE}.tmp" "$DATUM_CONFIG_FILE"
 
 else
   echo "DATUM configuration file not found. Installation incomplete."
