@@ -14,6 +14,7 @@ services:
     restart: on-failure
     environment:
       DOCKER_ENSURE_BRIDGE: "dind0:10.32.0.1/16"
+    entrypoint: /entrypoint.sh
     command: >
       dockerd
         --bridge dind0
@@ -22,6 +23,7 @@ services:
         --host unix:///data/docker.sock
         --pidfile /data/docker.pid
     volumes:
+      - ${APP_DATA_DIR}/entrypoint.sh:/entrypoint.sh
       - ${APP_DATA_DIR}/data/docker:/data
 
   web:
