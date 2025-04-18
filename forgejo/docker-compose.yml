@@ -1,0 +1,50 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: forgejo_server_1
+      APP_PORT: 8101
+      PROXY_AUTH_ADD: "false"
+
+  server:
+    image: codeberg.org/forgejo/forgejo:11.0.0-rootless@sha256:cb08d7d68b208fd88d6d7cc55f782da98446ee4a302dfaea239f4701a42ba68d
+    user: "1000:1000"
+    restart: on-failure
+    ports:
+      - "${APP_FORGEJO_SSH_PORT}:${APP_FORGEJO_SSH_PORT}"
+    volumes:
+      - ${APP_DATA_DIR}/data/forgejo/data:/var/lib/gitea
+      - ${APP_DATA_DIR}/data/forgejo/config:/etc/gitea
+    environment:
+      FORGEJO__security__INSTALL_LOCK: "true"
+      FORGEJO__server__DOMAIN: "${APP_DOMAIN}"
+      FORGEJO__server__HTTP_PORT: 8101
+      FORGEJO__server__SSH_DOMAIN: "${APP_DOMAIN}"
+      FORGEJO__server__SSH_PORT: "${APP_FORGEJO_SSH_PORT}"
+      FORGEJO__server__SSH_LISTEN_PORT: "${APP_FORGEJO_SSH_PORT}"
+      FORGEJO__server__START_SSH_SERVER: "true"
+      FORGEJO__database__DB_TYPE: "postgres"
+      FORGEJO__database__HOST: "forgejo_db_1:5432"
+      FORGEJO__database__NAME: "forgejo"
+      FORGEJO__database__USER: "forgejo"
+      FORGEJO__database__PASSWD: "forgejo"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:17.3@sha256:0321e2252ebfeecb8bc1a899755084d29bce872953e1a5a3e25ec0860b739098
+    restart: on-failure
+    user: "1000:1000"
+    environment:
+      POSTGRES_USER: forgejo
+      POSTGRES_PASSWORD: forgejo
+      POSTGRES_DB: forgejo
+    volumes:
+      - ${APP_DATA_DIR}/data/db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U forgejo"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
