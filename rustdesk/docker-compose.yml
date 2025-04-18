@@ -1,0 +1,23 @@
+version: '3.7'
+
+services:
+  hbbs:
+    container_name: hbbs
+    image: rustdesk/rustdesk-server@sha256:680f8ba5accafc264d15076f33a6fdb9cb6f4d963a0fc92e01023ca0e919cc83
+    command: hbbs
+    volumes:
+      - ./data:/root
+    network_mode: "host"
+
+    depends_on:
+      - hbbr
+    restart: unless-stopped
+
+  hbbr:
+    container_name: hbbr
+    image: rustdesk/rustdesk-server@sha256:680f8ba5accafc264d15076f33a6fdb9cb6f4d963a0fc92e01023ca0e919cc83
+    command: hbbr
+    volumes:
+      - ./data:/root
+    network_mode: "host"
+    restart: unless-stopped
