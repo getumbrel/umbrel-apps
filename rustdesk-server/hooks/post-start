@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# This script allows the RustDesk public key to be shown on the web interface
+
+APP_DATA_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")"/..)"
+PUBLIC_KEY_FILE="${APP_DATA_DIR}/data/hbbs/id_ed25519.pub"
+DESTINATION_FILE="${APP_DATA_DIR}/data/www/public_key.txt"
+
+echo "Waiting for file (${PUBLIC_KEY_FILE}) to exist..."
+
+# Wait up to 30 seconds...
+for attempt in $(seq 1 300); do
+	if [[ -f "${PUBLIC_KEY_FILE}" ]]; then
+		echo "public key file exists"
+        # Copy the public key to the destination file
+        cp "${PUBLIC_KEY_FILE}" "${DESTINATION_FILE}"
+		break
+	fi
+	sleep 0.1
+done
