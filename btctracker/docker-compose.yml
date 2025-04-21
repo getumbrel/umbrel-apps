@@ -1,0 +1,17 @@
+version: '3.7'
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: btctracker_web_1
+      APP_PORT: 3000
+
+  web:
+    image: dennysubke/btc-tracker:v0.3.0@sha256:810a5fec2ebef370e3f8739f96510a6c66dfa50518cac3c377f6d3c62f086231
+    user: 1000:1000
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data:/app/src/data
