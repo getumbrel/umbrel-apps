@@ -5,7 +5,7 @@ export APP_LIGHTNING_NODE_PORT="9735"
 export APP_LIGHTNING_NODE_GRPC_PORT="10009"
 export APP_LIGHTNING_NODE_REST_PORT="8080"
 export APP_LIGHTNING_NODE_DATA_DIR="${EXPORTS_APP_DIR}/data/lnd"
-export APP_LIGHTNING_NODE_CHAIN_DIR="${APP_BITCOIN_NETWORK}"
+export APP_BITCOIN_NETWORK_LIGHTNING="${APP_BITCOIN_NETWORK}"
 
 BIN_ARGS=()
 BIN_ARGS+=( "--configfile=/data/.lnd/umbrel-lnd.conf" )
@@ -20,7 +20,7 @@ if [[ "${APP_BITCOIN_NETWORK}" == "mainnet" ]]; then
 	BIN_ARGS+=( "--bitcoin.mainnet" )
 elif [[ "${APP_BITCOIN_NETWORK}" == "testnet" || "${APP_BITCOIN_NETWORK}" == "testnet3" ]]; then
 	BIN_ARGS+=( "--bitcoin.testnet" )
-	export APP_LIGHTNING_NODE_CHAIN_DIR="testnet"
+	export APP_BITCOIN_NETWORK_LIGHTNING="testnet"
 elif [[ "${APP_BITCOIN_NETWORK}" == "signet" ]]; then
 	BIN_ARGS+=( "--bitcoin.signet" )
 elif [[ "${APP_BITCOIN_NETWORK}" == "regtest" ]]; then
