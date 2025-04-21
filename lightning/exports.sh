@@ -5,6 +5,9 @@ export APP_LIGHTNING_NODE_PORT="9735"
 export APP_LIGHTNING_NODE_GRPC_PORT="10009"
 export APP_LIGHTNING_NODE_REST_PORT="8080"
 export APP_LIGHTNING_NODE_DATA_DIR="${EXPORTS_APP_DIR}/data/lnd"
+
+# LND (as of 0.18.5-beta) handles the network name differently than bitcoind for the binary arguments and the macaroon directory
+# so we need to set this explicitly
 export APP_BITCOIN_NETWORK_LIGHTNING="${APP_BITCOIN_NETWORK}"
 
 BIN_ARGS=()
@@ -20,6 +23,8 @@ if [[ "${APP_BITCOIN_NETWORK}" == "mainnet" ]]; then
 	BIN_ARGS+=( "--bitcoin.mainnet" )
 elif [[ "${APP_BITCOIN_NETWORK}" == "testnet" || "${APP_BITCOIN_NETWORK}" == "testnet3" ]]; then
 	BIN_ARGS+=( "--bitcoin.testnet" )
+	# LND uses `/data/.lnd/data/chain/bitcoin/testnet/` for testnet 3 even when bitcoind uses `testnet3` for its dir name
+	# When testnet4 compatibility is added to LND (0.19.0-beta), testnet 3 will remain as `testnet` and testnet4 will be `testnet4`
 	export APP_BITCOIN_NETWORK_LIGHTNING="testnet"
 elif [[ "${APP_BITCOIN_NETWORK}" == "signet" ]]; then
 	BIN_ARGS+=( "--bitcoin.signet" )
