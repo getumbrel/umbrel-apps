@@ -9,7 +9,7 @@ services:
   app:
     ## does not work rootless as of yet
     #user: "1000:1000"
-    image: ghcr.io/activepieces/activepieces:0.50.4@sha256:c8e3cd246a7a7facb4044a9798aeac3ca1af2b606e0192e0c606b1a16fc0d7fd
+    image: ghcr.io/activepieces/activepieces:0.50.5@sha256:5226373793a5e54fba40dbbec449a3caf6a7b065cc62bcddf9e4633475ca17a9
     restart: on-failure
     environment:
       AP_ENGINE_EXECUTABLE_PATH: dist/packages/engine/main.js
@@ -24,7 +24,7 @@ services:
       AP_POSTGRES_HOST: activepieces_db_1
       AP_POSTGRES_PORT: 5432
       AP_POSTGRES_USERNAME: activepieces
-      AP_POSTGRES_PASSWORD: ${APP_PASSWORD}
+      AP_POSTGRES_PASSWORD: activepieces
       AP_EXECUTION_MODE: UNSANDBOXED
       AP_REDIS_HOST: activepieces_redis_1
       AP_REDIS_PORT: 6379
@@ -45,7 +45,7 @@ services:
     restart: on-failure
     environment:
       POSTGRES_DB: activepieces
-      POSTGRES_PASSWORD: ${APP_PASSWORD}
+      POSTGRES_PASSWORD: activepieces
       POSTGRES_USER: activepieces
     volumes:
       - ${APP_DATA_DIR}/data/db:/var/lib/postgresql/data
