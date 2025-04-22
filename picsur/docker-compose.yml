@@ -5,9 +5,10 @@ services:
     environment:
       APP_HOST: picsur_web_1
       APP_PORT: 8286
+      PROXY_AUTH_ADD: "false"
 
   db:
-    image: postgres:16@sha256:cef2d22004db69e3d601442ca4cac142adda0987ad7ca4f28c4e998bef690951
+    image: postgres:17.4@sha256:fe3f571d128e8efadcd8b2fde0e2b73ebab6dbec33f6bfe69d98c682c7d8f7bd
     user: "1000:1000"
     mem_limit: 1g
     cpu_shares: 1024
@@ -31,12 +32,12 @@ services:
     user: "1000:1000"
     environment:
       PICSUR_PORT: 8286
-      PICSUR_DB_HOST: picsur-db
+      PICSUR_DB_HOST: picsur-db_1
       PICSUR_DB_PORT: 5432
       PICSUR_DB_USERNAME: picsuruser
       PICSUR_DB_PASSWORD: picsurpass
       PICSUR_DB_DATABASE: picsur
-      PICSUR_ADMIN_PASSWORD: picsur
+      PICSUR_ADMIN_PASSWORD: ${APP_PASSWORD}
       PICSUR_MAX_FILE_SIZE: 128000000000
     depends_on:
       db:
