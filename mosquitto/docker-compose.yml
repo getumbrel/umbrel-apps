@@ -1,0 +1,18 @@
+services:
+
+  app_proxy:
+    environment:
+      APP_HOST: mosquitto_broker_1
+      APP_PORT: 9001
+
+  broker:
+    image: eclipse-mosquitto:2.0.21@sha256:94f5a3d7deafa59fa3440d227ddad558f59d293c612138de841eec61bfa4d353
+    restart: on-failure
+    ports:
+      - '1883:1883'
+    volumes:
+      - ${APP_DATA_DIR}/data/config:/mosquitto/config:rw
+      - ${APP_DATA_DIR}/data/mosquitto:/mosquitto/data:rw
+      - ${APP_DATA_DIR}/data/log:/mosquitto/log:rw
+      - ${APP_DATA_DIR}/data/www:/mosquitto/www:r
+    user: "1000:1000"

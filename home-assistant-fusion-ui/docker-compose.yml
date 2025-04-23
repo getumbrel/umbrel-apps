@@ -1,0 +1,22 @@
+version: "3.7"
+
+services:
+  # Certain api requests from Fusion do not work unless app_proxy is set with PROXY_TRUST_UPSTREAM=true
+  # app_proxy:
+  #   environment:
+  #     APP_HOST: home-assistant-fusion-ui_web_1
+  #     APP_PORT: 5050
+  #     PROXY_TRUST_UPSTREAM: "true"
+
+  web:
+    image: ghcr.io/matt8707/ha-fusion:2024.10.1@sha256:5eea4634ab2b1e7c7523943996d13318d109b293abe8e9e86c38daf5c41830cb
+    restart: on-failure
+    user: 1000:1000
+    ports:
+      - 5023:5050
+    volumes:
+      - ${APP_DATA_DIR}/data/fusion:/app/data
+    environment:
+      HASS_URL: http://${DEVICE_DOMAIN_NAME}:8123
+    extra_hosts:
+      - "${DEVICE_DOMAIN_NAME}:${APP_HAFUSION_MACHINE_IP}"

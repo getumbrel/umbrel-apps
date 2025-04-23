@@ -1,0 +1,16 @@
+version: "3.7"
+
+services:
+  
+  app_proxy:
+    environment:
+      APP_HOST: grafana_web_1
+      APP_PORT: 3000
+      PROXY_AUTH_WHITELIST: "/api/*"
+      
+  web:
+    image: grafana/grafana:11.6.0@sha256:62d2b9d20a19714ebfe48d1bb405086081bc602aa053e28cf6d73c7537640dfb
+    user: 1000:1000
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data:/var/lib/grafana

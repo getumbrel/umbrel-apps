@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+
+# If ${APP_DATA_DIR}/data/fulcrum-logs doesn't exist, we create it and set 1000:1000 ownership
+if [[ ! -d "${APP_DATA_DIR}/data/fulcrum-logs" ]]; then
+  mkdir -p "${APP_DATA_DIR}/data/fulcrum-logs"
+  chown 1000:1000 "${APP_DATA_DIR}/data/fulcrum-logs"
+fi
+
+# Delay booting Fulcrum until the RPC Tor Hidden Service is ready
+
+HIDDEN_SERVICE_FILE="${TOR_DATA_DIR}/app-${APP_ID}-rpc/hostname"
+
+if [[ -f "${HIDDEN_SERVICE_FILE}" ]]; then
+	exit
+fi
+
+"${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" up --detach fulcrum
+"${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" up --detach tor
+
+echo "App: ${APP_ID} - Generating Tor Hidden Service..."
+
+for attempt in $(seq 1 100); do
+	if [[ -f "${HIDDEN_SERVICE_FILE}" ]]; then
+		echo "App: ${APP_ID} - Hidden service file created successfully!"
+		break
+	fi
+	sleep 0.1
+done
+
+if [[ ! -f "${HIDDEN_SERVICE_FILE}" ]]; then
+	echo "App: ${APP_ID} - Hidden service file wasn't created"
+fi

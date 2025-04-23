@@ -1,6 +1,6 @@
 # Umbrel App Framework
 
-🚨 This is the current workflow for developing and testing an app on umbrelOS 1.0.x. The app framework is under active development and this workflow will change in the future. For testing on umbrelOS 0.5.4, please refer to the [previous version of this document](https://github.com/getumbrel/umbrel-apps/blob/9eae789b8512ef2a213805524e17f33d2128e33e/README.md).
+🚨 This is the current workflow for developing and testing an app on umbrelOS 1.x. The app framework is under active development and this workflow will change in the future. For testing on umbrelOS 0.5.4, please refer to the [previous version of this document](https://github.com/getumbrel/umbrel-apps/blob/9eae789b8512ef2a213805524e17f33d2128e33e/README.md).
 
 If you can code in any language, you already know how to develop an app for Umbrel. There is no restriction on the kinds of programming languages, frameworks, or databases that you can use. Apps run inside isolated [Docker](https://docs.docker.com/) containers, and the only requirement (for now) is that they should have a web-based UI.
 
@@ -13,10 +13,10 @@ Let's jump into action by packaging [BTC RPC Explorer](https://github.com/janosi
 There are 4 steps:
 
 1. [🛳 Containerizing the app using Docker](#1-containerizing-the-app-using-docker)
-1. [☂️ Packaging the app for Umbrel](#2-%EF%B8%8Fpackaging-the-app-for-umbrel)
-1. [🛠 Testing the app on Umbrel](#3-testing-the-app-on-umbrel)
-    1. [Test using a Linux VM on your local machine with Multipass](#31-test-using-a-linux-vm-on-your-local-machine-with-multipass)
-    1. [Testing on a Raspberry Pi or Umbrel Home](#32-testing-on-a-raspberry-pi-or-umbrel-home)
+1. [☂️ Packaging the app for umbrelOS](#2-%EF%B8%8Fpackaging-the-app-for-umbrelos)
+1. [🛠 Testing the app on umbrelOS](#3-testing-the-app-on-umbrelos)
+    1. [Test using an umbrelOS development environment on your local machine](#31-test-using-an-umbrelos-development-environment-on-your-local-machine)
+    1. [Test using umbrelOS running on a physical device](#32-test-using-umbrelos-running-on-a-physical-device)
 1. [🚀 Submitting the app](#4-submitting-the-app)
 ___
 
@@ -69,7 +69,7 @@ docker buildx build --platform linux/arm64,linux/amd64 --tag getumbrel/btc-rpc-e
 
 ___
 
-## 2. ☂️&nbsp;&nbsp;Packaging the app for Umbrel
+## 2. ☂️&nbsp;&nbsp;Packaging the app for umbrelOS
 
 1\. Let's fork the [getumbrel/umbrel-apps](https://github.com/getumbrel/umbrel-apps) repo on GitHub, clone our fork locally, create a new branch for our app, and then switch to it:
 
@@ -294,103 +294,113 @@ git push
 
 ___
 
-## 3. 🛠&nbsp;&nbsp;Testing the app on Umbrel
+## 3. 🛠&nbsp;&nbsp;Testing the app on umbrelOS
 
-🚨 This is the current workflow for testing an app on umbrelOS 1.0.x. The app framework is under active development and this workflow will change in the future. For testing on umbrelOS 0.5.4, please refer to the [previous version of this document](https://github.com/getumbrel/umbrel-apps/blob/9eae789b8512ef2a213805524e17f33d2128e33e/README.md).
+🚨 This is the current workflow for testing an app on umbrelOS 1.x. The app framework is under active development and this workflow will change in the future. For testing on umbrelOS 0.5.4, please refer to the [previous version of this document](https://github.com/getumbrel/umbrel-apps/blob/9eae789b8512ef2a213805524e17f33d2128e33e/README.md).
 
-### 3.1 Test using a Linux VM on your local machine with Multipass
+### 3.1 Test using an umbrelOS development environment on your local machine
 
-It is very easy to spin up a Linux VM on your local machine using [Multipass](https://multipass.run/) and the pre-configured scripts for creating a production-like umbrelOS environment.
+The umbrelOS development environment (umbrel-dev) requires a Docker environment that exposes container IPs to the host. This is how Docker natively works on Linux and can be done with OrbStack on macOS and WSL 2 on Windows.
 
-1\. Install [Multipass](https://multipass.run/)
+1\. Install [OrbStack](https://orbstack.dev/) on macOS or [WSL 2](https://learn.microsoft.com/en-us/windows/wsl/install) with Docker Desktop on Windows.
 
 2\. Clone the [getumbrel/umbrel](https://github.com/getumbrel/umbrel) repo.
 
-From the root of the cloned repo, run the following command to provision a VM with the latest umbrelOS:
+From the root of the cloned repo, run the following command to view the available umbrel-dev commands:
 
 ```sh
-npm run vm:provision
+npm run dev help
 ```
 
-Once provisioned, umbrelOS will be accessible at http://umbrel-dev.local. 
-
-The VM environment has a slight difference compared to the production environment. Specifically, the main Umbrel data directory is located at `~/umbrel/packages/umbreld/data` in the VM environment, whereas in the production environment, it's located at `~/umbrel`.
-
-3\. The following commands can be used to interact with the VM:
-
-You can run any command on the VM with `npm run vm:exec -- <command>`. For example:
+To start the development environment, run the following command:
 
 ```sh
-npm run vm:exec -- sudo journalctl -u umbreld
+npm run dev
 ```
 
-You can also run trpc commands on the VM with `npm run vm:trpc <command>`. For example:
+> [!NOTE]
+> If this is your first time running the development environment, it may take a while to build the OS image locally on your machine.
+
+Once initialized, umbrelOS will be accessible at http://umbrel-dev.local. 
+
+3\. Copy the app's directory (with any .gitkeep files excluded) to the app-store directory on umbrel-dev.
+
+To do this, we run the following command on our local machine:
 
 ```sh
-npm run vm:trpc apps.install.mutate -- --appId transmission
+rsync -av --exclude=".gitkeep" <path-to-your-forked-repo-on-local-machine>/btc-rpc-explorer umbrel@umbrel-dev.local:/home/umbrel/umbrel/app-stores/getumbrel-umbrel-apps-github-53f74447/
 ```
 
-Alternatively, you can get a shell on the VM with:
+If you are asked for a password during the transfer, use the password that you set when you created your umbrelOS account.
+
+4\. Install the app.
+
+From the umbrelOS homescreen, go to the App Store and navigate to BTC RPC Explorer. Click on the "Install" button and wait for the app to install.
+
+You can also install the app from the command line. umbrelOS provides a web terminal that can be accessed via Settings > Advanced Settings > Terminal > umbrelOS, or you can use the umbrel-dev scripts to install the app using the umbreld RPC server:
 
 ```sh
-npm run vm:shell
-```
-
-You can completely destroy the VM with `npm run vm:destroy`.
-
-Other useful commands can be found in the `package.json` file in the root of the cloned repo.
-
-4\. This next step will become easier in the future, but for now, we need to manually copy the app directory to the app-store directory in the VM in order to test our app:
-
-```sh
-multipass transfer -r <path-to-your-forked-repo>/btc-rpc-explorer/ umbrel-dev:/home/ubuntu/umbrel/packages/umbreld/data/app-stores/getumbrel-umbrel-apps-github-53f74447/
-```
-
-5\. And finally, it's time to install our app through the homescreen or via the terminal with:
-
-```sh
-npm run vm:trpc apps.install.mutate -- --appId btc-rpc-explorer
+npm run dev client -- apps.install.mutate -- --appId btc-rpc-explorer
 ```
 
 That's it! Our BTC RPC Explorer app should now be accessible at http://umbrel-dev.local:3002
 
-### 3.2 Testing on a Raspberry Pi or Umbrel Home
-
-You can test your app on a real Raspberry Pi (arm64) or Umbrel Home (x86_64) device. Instructions for installing umbrelOS on a Raspberry Pi can be found [here](https://getumbrel.com/#install). For Umbrel Home, simply connect the device to your local network and plug it in.
-
-1\. After plugging in your device, umbrelOS will be accessible from your browser at http://umbrel.local.
-
-You can SSH into the device with:
+To uninstall the app, you can right-click on the app's icon on your homescreen and click on the "Uninstall" button. You can also uninstall the app using the umbrel-dev scripts:
 
 ```sh
-ssh umbrel@umbrel.local
+npm run dev client -- apps.uninstall.mutate -- --appId btc-rpc-explorer
 ```
 
-(SSH password is the same as your Umbrel's homescreen password)
+> [!WARNING]
+> When testing your app, make sure to verify that any application state that needs to be persisted is in-fact being persisted in volumes.
+>
+> A good way to test this is to restart the app (right-click on the app's icon on your homescreen and click on the "Restart" button). If any state is lost, it means that state should be mapped to a persistent volume.
+>
+> When stopping/starting the app, all data in volumes will be persisted and anything else will be discarded. When uninstalling/installing an app, even persistent data will be discarded.
 
-2\. This next step will become easier in the future, but for now, we need to manually copy the app directory (with dotfiles excluded) to the app-store directory on your umbrelOS device in order to test our app:
+### 3.2 Test using umbrelOS running on a physical device
+
+You can get up and running with umbrelOS in a few different ways:
+  
+1. [Install umbrelOS on a Raspberry Pi 5](https://github.com/getumbrel/umbrel/wiki/Install-umbrelOS-on-a-Raspberry-Pi-5)
+2. [Install umbrelOS on any x86 system](https://github.com/getumbrel/umbrel/wiki/Install-umbrelOS-on-x86-Systems)
+3. [Install umbrelOS in a VM](https://github.com/getumbrel/umbrel/wiki/Install-umbrelOS-on-a-Linux-VM)
+4. [Purchase an Umbrel Home device](https://umbrel.com/umbrel-home)
+
+Regardless of the method you choose, once you have umbrelOS up and running and have visited http://umbrel.local and created an account, you can follow the steps below to test your app.
+
+1\. Copy the app's directory (with any .gitkeep files excluded) to the app-store directory on your umbrelOS device.
+
+To do this, we run the following command on our local machine:
 
 ```sh
-rsync -av --exclude=".*" <path-to-your-forked-repo>/btc-rpc-explorer umbrel@umbrel.local:/home/umbrel/umbrel/app-stores/getumbrel-umbrel-apps-github-53f74447/
+rsync -av --exclude=".gitkeep" <path-to-your-forked-repo-on-local-machine>/btc-rpc-explorer umbrel@umbrel.local:/home/umbrel/umbrel/app-stores/getumbrel-umbrel-apps-github-53f74447/
 ```
 
-3\. We can now install our app through the homescreen or via the terminal with:
+If you are asked for a password during the transfer, use the password that you set for your umbrelOS device when you created your account.
+
+2\. Install the app on your umbrelOS device:
+
+From your umbrelOS homescreen, go to the App Store and navigate to BTC RPC Explorer. Click on the "Install" button and wait for the app to install.
+
+You can also install the app from the command line. umbrelOS provides a web terminal that can be accessed via Settings > Advanced Settings > Terminal > umbrelOS, or you can SSH into the device from your local machine via `ssh umbrel@umbrel.local` and use the same password you set for your umbrelOS device when you created your account.
 
 ```sh
 umbreld client apps.install.mutate --appId btc-rpc-explorer
 ```
 
-The app should now be accessible at http://umbrel.local:3002
+That's it! The app should now be accessible at http://umbrel.local:3002
 
-4\. To uninstall:
+To uninstall the app, you can right-click on the app's icon on your homescreen and click on the "Uninstall" button. You can also uninstall the app from the command line with:
 
 ```sh
 umbreld client apps.uninstall.mutate --appId btc-rpc-explorer
 ```
 
+> [!WARNING]
 > When testing your app, make sure to verify that any application state that needs to be persisted is in-fact being persisted in volumes.
 >
-> A good way to test this is to restart the app with `umbreld client apps.restart.mutate --appId <app-id>`. If any state is lost, it means that state should be mapped to a persistent volume.
+> A good way to test this is to restart the app (right-click on the app's icon on your homescreen and click on the "Restart" button). If any state is lost, it means that state should be mapped to a persistent volume.
 >
 > When stopping/starting the app, all data in volumes will be persisted and anything else will be discarded. When uninstalling/installing an app, even persistent data will be discarded.
 

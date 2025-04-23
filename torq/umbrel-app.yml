@@ -2,7 +2,7 @@ manifestVersion: 1
 id: torq
 category: bitcoin
 name: Torq
-version: "v1.5.1"
+version: "v2.1.0"
 tagline: Scalable Node Management Software
 description: >-
   Operating a Lightning node requires a lot of work. You need to monitor your channels, rebalance them, keep track of your fees and much more.
@@ -34,9 +34,6 @@ description: >-
   - Navigate through time (days, weeks, months) to track your progress
 
   - Tag channels and nodes with custom labels (Exchange, Routing node, Sink, Source, or anything else)
-
-  
-
 developer: Torq
 website: https://torq.co
 dependencies:
@@ -51,42 +48,25 @@ gallery:
   - 4.jpg
   - 5.jpg
 releaseNotes: >-
+  Highlights:
+    - bitcoind wallet as a node type (Torq now has on-chain wallet support for CLN, LND and bitcoind)
+    - bitcoind existing on-chain address listing
+    - management of UTXO locking 
+    - improved transaction output visualizations (and backend)
+    - improve transaction output linking to channels (funding/closing transactions)
+    - LND: sweep transaction output linking to channels
+    - Torq gRPC (BETA feature):
+      - New call SubscribeBlockHeight
+      - New call PayOnChain
+      - New call DecodeInvoice
+      - New call GetInvoiceStatus
+      - We have been streamlining our names in the proto file (so breaking changes)
+    - Various small fixes
+
+  Note 1: There are database migrations in this release so if you want to be able to roll back, you need to create a backup before updating.
+
   
-  Torq v.1.5.1:
-
-  Release notes:
-
-  - CLN v23.11+ is required (pagination)
-
-  - Integration with Kraken
-
-  - New workflow triggers: Invoice, Forward, Payment, Transaction (on-chain)
-
-  - New workflow filters: Mempool, Exchange (Kraken) balance
-
-  - New workflow action: Payment Attempt (experimental: tries to find a route to pay an exchange invoice)
-
-  - New variables in workflow actions: API client, notification
-
-  - Replace intercom with chatwoot
-
-  - Small changes to rebalancer + new metrics and logs
-
-  - Timelock Delta in seconds on list screens
-
-  - Update of packages
-  
-  
-  Notes:
-  
-  - This release contains a large set of database updates. So the migration might take some time depending on the 
-    hardware and stored data. Please create a backup before updating, there is no automatic rollback process other 
-    then a database restore from before the migration.
-  
-  - This release (re)imports CLN data so it might take some time to get all data fetched from your CLN node. 
-    (No impact to LND nodes)
-  
-
+  Note 2: You get the best Torq experience if you specify bitcoind connection details in your configuration file (or command line).
 path: ""
 defaultUsername: ""
 deterministicPassword: false

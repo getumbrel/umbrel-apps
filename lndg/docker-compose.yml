@@ -7,17 +7,18 @@ services:
       APP_PORT: $APP_LNDG_PORT
 
   web:
-    image: ghcr.io/cryptosharks131/lndg:v1.8.0@sha256:a3eda3a7592a8332e0bf3533378a5d2eec41fd0956d1ebc8c0b74ff109d7e631
+    image: ghcr.io/cryptosharks131/lndg:v1.9.0@sha256:ef3d458c2d5daa99491390f0a18e5e9fc1114e82f74b0bb432c3b3d907e0dee7
     restart: on-failure
     stop_grace_period: 1m
     init: true
     volumes:
       - ${APP_LIGHTNING_NODE_DATA_DIR}:/root/.lnd:ro
-      - ${APP_DATA_DIR}:/lndg/data
+      - ${APP_DATA_DIR}/data/db:/app/data
+      - ${APP_DATA_DIR}/data/logs/lndg-controller.log:/var/log/lndg-controller.log
     command:
       - sh
       - -c
-      - python initialize.py -net '${APP_BITCOIN_NETWORK}' -server '${APP_LIGHTNING_NODE_IP}:${APP_LIGHTNING_NODE_GRPC_PORT}' -pw '${APP_PASSWORD}' -d && supervisord && python manage.py runserver 0.0.0.0:${APP_LNDG_PORT}
+      - python initialize.py -net '${APP_BITCOIN_NETWORK}' -rpc '${APP_LIGHTNING_NODE_IP}:${APP_LIGHTNING_NODE_GRPC_PORT}' -pw '${APP_PASSWORD}' -wn && python controller.py runserver 0.0.0.0:${APP_LNDG_PORT} > /var/log/lndg-controller.log 2>&1
     networks:
       default:
         ipv4_address: ${APP_LNDG_IP}
