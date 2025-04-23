@@ -1,8 +1,11 @@
+version: 3.7
+
 services:
   app_proxy:
     environment:
       APP_HOST: formicaio_proxy_1
       APP_PORT: 52100
+
   proxy:
     image: bochaco/formicaio_proxy:0.1.0@sha256:de09a722629d5c3f7139eb7a9035ee29d4c6eb804c6031a7af39fe63a4dd298f
     environment:
@@ -10,6 +13,7 @@ services:
       FORMICAIO_PROXY_PORT: 52100
     extra_hosts:
       - host.docker.internal:host-gateway
+
   app:
     image: bochaco/formicaio:0.4.9-native@sha256:2bea87c03cbd545b55627527fbe5ec21f7158f2aaa5ec6f9588b5bff1ec6a3d8
     privileged: true
