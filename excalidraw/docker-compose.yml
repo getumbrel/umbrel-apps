@@ -1,17 +1,19 @@
-version: "3.7"
+version: '3.7'
 
 services:
   app_proxy:
     environment:
-      APP_HOST: excalidraw_web_1
-      APP_PORT: 5000
+      APP_HOST: denny-excalidraw_app_1
+      APP_PORT: 80 # Web client
 
-  web:
-    image: excalidraw/excalidraw:latest@sha256:fae667864717a415e7474b5f757ffb50e63a81cfc1a2fbcf905ecbd137d0dbba #only amd64 / Umbrel Home + Linux VM
+  app:
+    image: ghcr.io/ozencb/excalidraw-persist:1.0.3@sha256:c39c6027a6acea1fb9623eba3328d7ec0d821b957d4ba4d6800b1262e1346c67
+    ports:
+      - 4001:4000 # Server API
     restart: on-failure
-    stop_grace_period: 1m
     environment:
-      - PUID=1000
-      - PGID=1000
-
-#https://github.com/excalidraw/excalidraw.git   
+      - PORT=4000
+      - NODE_ENV=production
+      - DB_PATH=/app/data/database.sqlite
+    volumes:
+      - ${APP_DATA_DIR}/data:/app/data:rw
