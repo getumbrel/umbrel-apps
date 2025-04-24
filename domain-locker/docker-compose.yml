@@ -11,22 +11,22 @@ services:
     user: "1000:1000"
     restart: on-failure
     environment:
-      DL_ENV_TYPE: ${DL_ENV_TYPE:-selfHosted}
-      DL_PG_HOST: ${DL_PG_HOST:-postgres}
-      DL_PG_PORT: ${DL_PG_PORT:-5432}
-      DL_PG_USER: ${DL_PG_USER:-postgres}
-      DL_PG_PASSWORD: ${DL_PG_PASSWORD:-changeme2420}
-      DL_PG_NAME: ${DL_PG_NAME:-domain_locker}
+      DL_ENV_TYPE: selfHosted
+      DL_PG_HOST: postgres
+      DL_PG_PORT: 5432
+      DL_PG_USER: postgres
+      DL_PG_PASSWORD: domain-locker
+      DL_PG_NAME: domain_locker
     depends_on:
       - postgres
 
   postgres:
-    image: postgres:15-alpine@sha256:ef9d1517df69c4d27dbb9ddcec14f431a2442628603f4e9daa429b92ae6c3cd1
+    image: postgres:17.4@sha256:fe3f571d128e8efadcd8b2fde0e2b73ebab6dbec33f6bfe69d98c682c7d8f7bd
     user: "1000:1000"
     restart: on-failure
     environment:
-      POSTGRES_DB: ${DL_PG_NAME:-domain_locker}
-      POSTGRES_USER: ${DL_PG_USER:-postgres}
-      POSTGRES_PASSWORD: ${DL_PG_PASSWORD:-changeme2420}
+      POSTGRES_DB: domain_locker
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: domain-locker
     volumes:
       - ${APP_DATA_DIR}/data/db_data:/var/lib/postgresql/data
