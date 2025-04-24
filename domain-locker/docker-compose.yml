@@ -8,6 +8,7 @@ services:
 
   app:
     image: lissy93/domain-locker:0.0.6@sha256:bd8b494b2a8b02e9fb612859f64c336e6eb1b21745199253b130705bd4ac8853
+    user: "1000:1000"
     restart: on-failure
     environment:
       DL_ENV_TYPE: ${DL_ENV_TYPE:-selfHosted}
@@ -21,6 +22,7 @@ services:
 
   postgres:
     image: postgres:15-alpine@sha256:ef9d1517df69c4d27dbb9ddcec14f431a2442628603f4e9daa429b92ae6c3cd1
+    user: "1000:1000"
     restart: on-failure
     environment:
       POSTGRES_DB: ${DL_PG_NAME:-domain_locker}
