@@ -1,0 +1,40 @@
+version: '3.7'
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: kitchenowl_web_1
+      APP_PORT: 8080
+
+  web:
+    image: tombursch/kitchenowl:v0.6.11@sha256:21b1a9371717c9829d78847cb4bc312d582d3d88d4d77ad1d215b20fe42ea03f
+    user: "1000:1000"
+    restart: on-failure
+    environment:
+      JWT_SECRET_KEY: 3d054e5ca011d3cab6cc5a5e58be577a54d5049bf8ff7786cba37d663369065f
+      DB_DRIVER: postgresql
+      DB_HOST: db
+      DB_NAME: kitchenowl
+      DB_USER: kitchenowl
+      DB_PASSWORD: password
+    volumes:
+      - ${APP_DATA_DIR}/data/kitchenowl_files:/data
+    depends_on:
+      - db
+
+  db:
+    image: postgres:17.4@sha256:fe3f571d128e8efadcd8b2fde0e2b73ebab6dbec33f6bfe69d98c682c7d8f7bd
+    user: "1000:1000"
+    restart: on-failure
+    environment:
+      POSTGRES_DB: kitchenowl
+      POSTGRES_USER: kitchenowl
+      POSTGRES_PASSWORD: password
+    volumes:
+      - ${APP_DATA_DIR}/data/kitchenowl_db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
+      interval: 30s
+      timeout: 60s
+      retries: 5
+      start_period: 80s
