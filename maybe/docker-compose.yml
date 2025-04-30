@@ -15,9 +15,9 @@ services:
     environment:
       SELF_HOSTING_ENABLED: "true"
       PORT: 3063
-      DB_HOST: maybedb
-      DB_PORT: 5432
-      DATABASE_URL: postgres://maybe:maybe@maybedb:5432/maybe
+      # URL encode underscores (%5F) in hostname to satisfy strict URI parsing in Ruby
+      # Original: postgresql://maybe:maybe@maybe_db_1:5432/maybe
+      DATABASE_URL: postgresql://maybe:maybe@maybe%5Fdb%5F1:5432/maybe
       RAILS_FORCE_SSL: "false"
       RAILS_ASSUME_SSL: "false"
       POSTGRES_DB: maybe
@@ -39,9 +39,9 @@ services:
     environment:
       SELF_HOSTING_ENABLED: "true"
       PORT: 3063
-      DB_HOST: maybedb
-      DB_PORT: 5432
-      DATABASE_URL: postgres://maybe:maybe@maybedb:5432/maybe
+      # URL encode underscores (%5F) in hostname to satisfy strict URI parsing in Ruby
+      # Original: postgresql://maybe:maybe@maybe_db_1:5432/maybe
+      DATABASE_URL: postgresql://maybe:maybe@maybe%5Fdb%5F1:5432/maybe
       RAILS_FORCE_SSL: "false"
       RAILS_ASSUME_SSL: "false"
       POSTGRES_DB: maybe
@@ -56,7 +56,6 @@ services:
 
   db:
     image: postgres:16@sha256:1bf73ccae25238fa555100080042f0b2f9be08eb757e200fe6afc1fc413a1b3c
-    container_name: maybedb
     restart: on-failure
     stop_grace_period: 1m
     volumes:
