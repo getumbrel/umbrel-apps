@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Create admin user for solidtime
+
+MAX_RETRIES=20    # 1 minute total (5s × 12)
+RETRY_COUNT=0
+
+ADMIN_NAME="Umbrel"
+ADMIN_EMAIL="umbrel@umbrel.local"
+
+echo "Creating admin user for solidtime..."
+
+while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+  if OUTPUT=$(docker exec -i solidtime_scheduler_1 bash -c \
+       "echo '${APP_PASSWORD}' | php artisan admin:user:create \
+          '${ADMIN_NAME}' '${ADMIN_EMAIL}' \
+          --ask-for-password --verify-email" 2>&1); then
+    echo "Solidtime admin user created successfully."
+    exit 0
+  else
+    if echo "$OUTPUT" | grep -q "User with email \"${ADMIN_EMAIL}\" already exists."; then
+      echo "Solidtime admin user ${ADMIN_EMAIL} already exists"
+      exit 0
+    fi
+
+    RETRY_COUNT=$((RETRY_COUNT + 1))
+    echo "Attempt $RETRY_COUNT/$MAX_RETRIES failed; Solidtime scheduler container may not be ready."
+    echo "  → Output: $OUTPUT"
+    sleep 5
+  fi
+
+done
+
+echo "Failed to create solidtime admin user after $MAX_RETRIES attempts."
+exit 1

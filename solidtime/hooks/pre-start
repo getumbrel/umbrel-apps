@@ -1,21 +1,21 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Create keys for solidtime
+
 APP_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")"
 KEYS_FILE="$APP_DIR/keys.env"
-POST_INSTALL_SCRIPT="$APP_DIR/hooks/post-install"
 
 # Check if keys.env exists and has content
 if [ ! -s "$KEYS_FILE" ]; then
-    echo "Keys file missing or empty. Running post-install script to generate keys..."
+    echo "Solidtime keys file missing or empty. Running command to generate keys..."
+
+    APP_KEY=$("${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" run --rm app php artisan self-host:generate-keys)
+    echo "${APP_KEY}" | grep -v "Container mode:" > "${KEYS_FILE}"
     
-    # Make sure the post-install script is executable
-    chmod +x "$POST_INSTALL_SCRIPT"
-    
-    # Execute the post-install script
-    "$POST_INSTALL_SCRIPT"
+    echo "Solidtime keys file created successfully."
 else
-    echo "Keys file already exists and has content. No action needed."
+    echo "Solidtime keys file already exists and has content. No action needed."
 fi
 
 exit 0
