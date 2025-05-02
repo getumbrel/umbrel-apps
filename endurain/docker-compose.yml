@@ -8,13 +8,12 @@ services:
       PROXY_AUTH_ADD: "false"
 
   app:
-    image: ghcr.io/joaovitoriasilva/endurain:v0.8.2@sha256:c22754a884109dcd265ad6c697bf1c1f5c94054a29c8175cd6c64b58ac4cab70
+    image: ghcr.io/joaovitoriasilva/endurain:v0.10.1@sha256:0557a76f62bd9bd4fc4f473e32f8586e8f50e515340a13e695953847d59bffbc
     environment:
-      TZ: Europe/Lisbon
       DB_TYPE: postgres
       DB_HOST: endurain_db_1
       DB_PORT: 5432
-      DB_PASSWORD: ${APP_PASSWORD}
+      DB_PASSWORD: endurain
       SECRET_KEY: ${APP_PASSWORD}
       # STRAVA_CLIENT_ID: changeme
       # STRAVA_CLIENT_SECRET: changeme
@@ -33,9 +32,9 @@ services:
     restart: unless-stopped
 
   db:
-    image: postgres:17.3@sha256:0321e2252ebfeecb8bc1a899755084d29bce872953e1a5a3e25ec0860b739098
+    image: postgres:17.4@sha256:4aed4b0525233308fc5de1b8d47f92326460d598dc5f004d14b41f183360b4e9
     environment:
-      POSTGRES_PASSWORD: ${APP_PASSWORD}
+      POSTGRES_PASSWORD: endurain
       POSTGRES_DB: endurain
       POSTGRES_USER: endurain
       PGDATA: /var/lib/postgresql/data/pgdata
