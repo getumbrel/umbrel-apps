@@ -1,0 +1,39 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: satwatch_web_1
+      APP_PORT: 8080
+  web:
+    image: ghcr.io/jpcummins/sat.watch:1.1.2@sha256:c7afa6021549cb040ccf1608f1810ee98150c3485f0f03a47b5e4c4089a4496e
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      DATABASE_URL: "postgresql://satwatch:satwatch@db:5432/satwatch?sslmode=disable"
+      ELECTRUM_HOST: $APP_ELECTRS_NODE_IP
+      ELECTRUM_PORT: $APP_ELECTRS_NODE_PORT
+      URL: "http://$DEVICE_DOMAIN_NAME:3883"
+      ZMQ_HOST: $APP_BITCOIN_NODE_IP
+      ZMQ_PORT: $APP_BITCOIN_ZMQ_RAWTX_PORT
+      RPCHOST: "http://$APP_BITCOIN_NODE_IP:$APP_BITCOIN_RPC_PORT"
+      RPCUSER: $APP_BITCOIN_RPC_USER
+      RPCPASSWORD: $APP_BITCOIN_RPC_PASS
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+  db:
+    image: docker.io/library/postgres:17@sha256:fe3f571d128e8efadcd8b2fde0e2b73ebab6dbec33f6bfe69d98c682c7d8f7bd
+    restart: on-failure
+    environment:
+      POSTGRES_USER: satwatch
+      POSTGRES_PASSWORD: satwatch
+      POSTGRES_DB: satwatch
+    volumes:
+      - ${APP_DATA_DIR}/data/pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: pg_isready -U satwatch -h localhost -d satwatch
+      interval: 5s
+      timeout: 5s
+      retries: 10
