@@ -1,0 +1,20 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: localai_api_1
+      APP_PORT: 8080
+      PROXY_AUTH_WHITELIST: "/v1/*"
+  api:
+    image: localai/localai:v2.28.0-aio-cpu@sha256:4931cc2c44743bbd3cb26be43930e8df832c84d41c8ce263d96b437e9f077f09
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/readyz"]
+      interval: 1m
+      timeout: 20m
+      retries: 5
+    environment:
+      - MODELS_PATH=/models
+    volumes:
+      - ${APP_DATA_DIR}/data/models:/models:cached
+      - ${APP_DATA_DIR}/data/images/:/tmp/generated/images/
