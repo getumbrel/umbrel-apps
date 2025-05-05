@@ -13,22 +13,20 @@ services:
     restart: on-failure
     volumes:
       - ${APP_DATA_DIR}/config/nginx.conf:/etc/nginx/conf.d/nginx.conf:ro
-      - ${APP_DATA_DIR}/data/public:/var/www/app/public:ro
+      - ${APP_DATA_DIR}/data/public:/var/www/html/public:ro
     depends_on:
       - app
 
   app:
-    image: invoiceninja/invoiceninja:5.11.73@sha256:5eeaae7d3a4fce42667b59d44660ee19e1c2de4bf85822570548b6431c440b40
-    # We're forced to run user/group 1500
-    # More detail here: https://github.com/invoiceninja/dockerfiles/blob/ad3ffc227d63740330f761dad6e8c87768577847/alpine/5/Dockerfile#L70-L80
-    user: "1500:1500"
+    image: invoiceninja/invoiceninja-debian:5.11.73-d@sha256:8d6df7639e186339bcafa7fcc19c7567f4513d1bf8c8b633b8049ceddb85a790
     restart: on-failure
     volumes:
-      - ${APP_DATA_DIR}/data/public:/var/www/app/public:rw,delegated
-      - ${APP_DATA_DIR}/data/storage:/var/www/app/storage:rw,delegated
+      - ${APP_DATA_DIR}/data/public:/var/www/html/public:rw,delegated
+      - ${APP_DATA_DIR}/data/storage:/var/www/html/storage:rw,delegated,z
     environment:
       APP_URL: "http://${APP_DOMAIN}"
       APP_KEY: "${APP_KEY:-unset}"
+      APP_ENV: "production"
       REQUIRE_HTTPS: "false"
       DB_HOST: invoice-ninja_db_1
       DB_DATABASE: invoiceninja
@@ -36,6 +34,12 @@ services:
       DB_PASSWORD: moneyprintergobrrr
       IN_USER_EMAIL: "admin@example.com"
       IN_PASSWORD: $APP_PASSWORD
+      CACHE_DRIVER: redis
+      QUEUE_CONNECTION: redis
+      SESSION_DRIVER: redis
+      REDIS_HOST: invoice-ninja_redis_1
+      REDIS_PASSWORD: null
+      REDIS_PORT: 6379
     depends_on:
       - db
 
@@ -51,3 +55,14 @@ services:
       MYSQL_PASSWORD: moneyprintergobrrr
       MYSQL_DATABASE: invoiceninja
       MARIADB_AUTO_UPGRADE: "true"
+
+  redis:
+    image: redis:7.4.3@sha256:ee8ec723c831b815c3e2f2c6fbd1c145c68d1c04ba284f044ec1434fbca0fee8
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data/redis:/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
