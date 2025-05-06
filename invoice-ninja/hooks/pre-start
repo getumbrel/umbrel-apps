@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+### Correct permissions for invoice-ninja data directories
+
 APP_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")"
 APP_DATA_DIR="${APP_DIR}/data"
 
@@ -26,16 +28,82 @@ invoiceninja_correct_permission "${PUBLIC_DATA_DIR}"
 invoiceninja_correct_permission "${STORAGE_DATA_DIR}"
 invoiceninja_correct_permission "${REDIS_DATA_DIR}"
 
-# Fix nginx root
-sed -i 's|root /var/www/app/public/;|root /var/www/html/public;|' "${APP_DIR}/config/nginx.conf"
+### Generate APP_KEY for invoice-ninja
+
+MAX_RETRIES=5
+RETRY_COUNT=0
 
 LARAVEL_APP_KEY_FILE_PATH="${APP_DATA_DIR}/laravel-app-key.txt"
 
+echo "Checking for existing invoice-ninja APP_KEY..."
 
 # We only generate and save the Laravel APP_KEY if it doesn't exist already
 if [[ ! -f "${LARAVEL_APP_KEY_FILE_PATH}" ]]; then
-	#  generates a laravel APP_KEY using the invoice-ninja container --> php artisan key:generate --show
-	APP_KEY=$("${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" run --rm app php artisan key:generate --show)
-	# we remove the color codes and newlines from the output which cause laravel to fail to parse the APP_KEY
-	echo "${APP_KEY}" | sed 's/\x1b\[[0-9;]*m//g' | tr -d '\r\n' > "${LARAVEL_APP_KEY_FILE_PATH}"
+  echo "Generating invoice-ninja APP_KEY..."
+  while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+      if APP_KEY=$(docker run --rm invoiceninja/invoiceninja-debian php artisan key:generate --show); then
+          # Add the passport credentials to the keys file
+		  echo "${APP_KEY}" | sed 's/\x1b\[[0-9;]*m//g' | tr -d '\r\n' > "${LARAVEL_APP_KEY_FILE_PATH}"
+		  echo "invoice-ninja APP_KEY generated and saved to ${LARAVEL_APP_KEY_FILE_PATH}"
+		  break
+      else
+          RETRY_COUNT=$((RETRY_COUNT + 1))
+          echo "Attempt $RETRY_COUNT/$MAX_RETRIES failed; invoice-ninja APP_KEY creation command failed."
+          echo "  → Output: $APP_KEY"
+          sleep 5
+      fi
+  done
+
+  if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
+      echo "Failed to create invoice-ninja APP_KEY after $MAX_RETRIES attempts."
+      exit 1
+  fi
+else
+  echo "invoice-ninja APP_KEY already exist in ${LARAVEL_APP_KEY_FILE_PATH}. No action needed."
+fi
+
+### Create default nginx configuration file for invoice-ninja
+
+NGINX_CONFIG_FILE="${APP_DIR}/config/nginx.conf"
+
+# We check if the nginx config file does not exist or if it exists and root is set to /var/www/app/public/, which tells us that this is a legacy invoice-ninja install that needs to be modified.
+if [ ! -f "${NGINX_CONFIG_FILE}" ] || grep -q "root /var/www/app/public/" "${NGINX_CONFIG_FILE}"; then
+  echo "Creating default configuration file for invoice-ninja nginx."
+  # We overwrite/create the nginx configuration file with new settings for invoice-ninja
+  cat >"${NGINX_CONFIG_FILE}" <<EOF
+server {
+    listen 80 default_server;
+    server_name _;
+    root /var/www/html/public;
+
+    add_header X-Frame-Options "SAMEORIGIN";
+    add_header X-Content-Type-Options "nosniff";
+
+    index index.php;
+ 
+    charset utf-8;
+ 
+    location / {
+        try_files \$uri \$uri/ /index.php?\$query_string;
+    }
+ 
+    location = /favicon.ico { access_log off; log_not_found off; }
+    location = /robots.txt  { access_log off; log_not_found off; }
+ 
+    error_page 404 /index.php;
+
+    location ~ \.php$ {
+        fastcgi_pass invoice-ninja_app_1:9000;
+        fastcgi_param SCRIPT_FILENAME \$realpath_root\$fastcgi_script_name;
+        include fastcgi_params;
+    }
+
+    location ~ /\.(?!well-known).* {
+        deny all;
+    }
+}
+EOF
+
+echo "Created default configuration file for invoice-ninja nginx."
+
 fi
