@@ -19,8 +19,7 @@ services:
       RPCHOST: "http://$APP_BITCOIN_NODE_IP:$APP_BITCOIN_RPC_PORT"
       RPCUSER: $APP_BITCOIN_RPC_USER
       RPCPASSWORD: $APP_BITCOIN_RPC_PASS
-    ports:
-      - "8080:8080"
+    user: "1000:1000"
     depends_on:
       - db
   db:
@@ -31,7 +30,7 @@ services:
       POSTGRES_PASSWORD: satwatch
       POSTGRES_DB: satwatch
     volumes:
-      - ${APP_DATA_DIR}/data/pgdata:/var/lib/postgresql/data
+      - ${APP_DATA_DIR}/data/db:/var/lib/postgresql/data
     healthcheck:
       test: pg_isready -U satwatch -h localhost -d satwatch
       interval: 5s
