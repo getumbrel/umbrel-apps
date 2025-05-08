@@ -1,15 +1,16 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# We're forced to run user/group 1500
-# More detail here: https://github.com/invoiceninja/dockerfiles/blob/ad3ffc227d63740330f761dad6e8c87768577847/alpine/5/Dockerfile#L70-L80
-# So we set the owner of the data directories to 1500:1500
-APP_DATA_DIR="$(readlink -f $(dirname "${BASH_SOURCE[0]}")/..)/data"
+### Correct permissions for invoice-ninja data directories
 
-DESIRED_OWNER="1500:1500"
+APP_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")"
+APP_DATA_DIR="${APP_DIR}/data"
+
+DESIRED_OWNER="1000:1000"
 
 PUBLIC_DATA_DIR="${APP_DATA_DIR}/public"
 STORAGE_DATA_DIR="${APP_DATA_DIR}/storage"
+REDIS_DATA_DIR="${APP_DATA_DIR}/redis"
 
 invoiceninja_correct_permission() {
 	local -r path="${1}"
@@ -25,14 +26,91 @@ invoiceninja_correct_permission() {
 
 invoiceninja_correct_permission "${PUBLIC_DATA_DIR}"
 invoiceninja_correct_permission "${STORAGE_DATA_DIR}"
+invoiceninja_correct_permission "${REDIS_DATA_DIR}"
+
+### Generate APP_KEY for invoice-ninja
+
+MAX_RETRIES=5
+RETRY_COUNT=0
 
 LARAVEL_APP_KEY_FILE_PATH="${APP_DATA_DIR}/laravel-app-key.txt"
 
+echo "Checking for existing invoice-ninja APP_KEY..."
 
 # We only generate and save the Laravel APP_KEY if it doesn't exist already
 if [[ ! -f "${LARAVEL_APP_KEY_FILE_PATH}" ]]; then
-	#  generates a laravel APP_KEY using the invoice-ninja container --> php artisan key:generate --show
-	APP_KEY=$("${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" run --rm app php artisan key:generate --show)
-	# we remove the color codes and newlines from the output which cause laravel to fail to parse the APP_KEY
-	echo "${APP_KEY}" | sed 's/\x1b\[[0-9;]*m//g' | tr -d '\r\n' > "${LARAVEL_APP_KEY_FILE_PATH}"
+  echo "Generating Invoice-Ninja APP_KEY…"
+
+  # start the service in the background
+  "${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" up -d app >/dev/null
+
+  # make sure Laravel’s cache paths exist, because Invoice Ninja removed the bootstrap/cache volume.
+  # https://github.com/invoiceninja/dockerfiles/pull/738
+  # https://github.com/invoiceninja/dockerfiles/pull/745
+  "${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" exec -T -w /var/www/html app \
+    bash -c '
+      php artisan optimize || true
+      mkdir -p storage/framework/{cache,data,sessions,testing,views} bootstrap/cache
+      chown -R www-data:www-data storage bootstrap/cache 2>/dev/null || true
+      chmod -R ug+rwx storage bootstrap/cache
+    '
+
+  # generate the key
+  APP_KEY=$(
+    "${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" \
+      run --rm -w /var/www/html app \
+      php artisan key:generate --show --no-ansi
+  )
+
+  # strip colour codes / newlines and save
+  printf '%s' "${APP_KEY//[$'\t\r\n ']}" > "${LARAVEL_APP_KEY_FILE_PATH}"
+  echo "Invoice-Ninja APP_KEY saved → ${LARAVEL_APP_KEY_FILE_PATH}"
+else
+  echo "Invoice-Ninja APP_KEY already exists – nothing to do."
+fi
+
+### Create default nginx configuration file for invoice-ninja
+
+NGINX_CONFIG_FILE="${APP_DIR}/config/nginx.conf"
+
+# We check if the nginx config file does not exist or if it exists and root is set to /var/www/app/public/, which tells us that this is a legacy invoice-ninja install that needs to be modified.
+if [ ! -f "${NGINX_CONFIG_FILE}" ] || grep -q "root /var/www/app/public/" "${NGINX_CONFIG_FILE}"; then
+  echo "Creating default configuration file for invoice-ninja nginx."
+  # We overwrite/create the nginx configuration file with new settings for invoice-ninja
+  cat >"${NGINX_CONFIG_FILE}" <<EOF
+server {
+    listen 80 default_server;
+    server_name _;
+    root /var/www/html/public;
+
+    add_header X-Frame-Options "SAMEORIGIN";
+    add_header X-Content-Type-Options "nosniff";
+
+    index index.php;
+ 
+    charset utf-8;
+ 
+    location / {
+        try_files \$uri \$uri/ /index.php?\$query_string;
+    }
+ 
+    location = /favicon.ico { access_log off; log_not_found off; }
+    location = /robots.txt  { access_log off; log_not_found off; }
+ 
+    error_page 404 /index.php;
+
+    location ~ \.php$ {
+        fastcgi_pass invoice-ninja_app_1:9000;
+        fastcgi_param SCRIPT_FILENAME \$realpath_root\$fastcgi_script_name;
+        include fastcgi_params;
+    }
+
+    location ~ /\.(?!well-known).* {
+        deny all;
+    }
+}
+EOF
+
+echo "Created default configuration file for invoice-ninja nginx."
+
 fi
