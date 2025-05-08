@@ -1,0 +1,215 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: solidtime_app_1
+      APP_PORT: 8000
+      PROXY_AUTH_ADD: "false"
+
+  app:
+    image: solidtime/solidtime:0.7.0@sha256:064c78939b0ff4e1e6b9105f5ff0483370a1a70c11cbeb9341cf80d41fecd0f1
+    user: "1000:1000"
+    restart: on-failure
+    volumes:
+      - "${APP_DATA_DIR}/data/app:/var/www/html/storage"
+    environment:
+      CONTAINER_MODE: "http"
+      AUTO_DB_MIGRATE: "true"
+      APP_NAME: "solidtime"
+      VITE_APP_NAME: "solidtime"
+      APP_ENV: "production"
+      APP_DEBUG: "false"
+      APP_URL: "http://${DEVICE_DOMAIN_NAME}:8770"
+      APP_FORCE_HTTPS: "false"
+      TRUSTED_PROXIES: "0.0.0.0/0,2000:0:0:0:0:0:0:0/3"
+
+      # Authentication
+      SUPER_ADMINS: "umbrel@umbrel.local"
+
+      # Logging
+      LOG_CHANNEL: "stderr_daily"
+      LOG_LEVEL: "debug"
+
+      # Database
+      DB_CONNECTION: "pgsql"
+      DB_HOST: "solidtime_db_1"
+      DB_PORT: "5432"
+      DB_SSLMODE: "require"
+      DB_DATABASE: "solidtime"
+      DB_USERNAME: "solidtime"
+      DB_PASSWORD: "solidtime"
+
+      # Mail
+      MAIL_MAILER: "smtp"
+      MAIL_HOST: ""
+      MAIL_PORT: ""
+      MAIL_ENCRYPTION: "tls"
+      MAIL_FROM_ADDRESS: "no-reply@your-domain.com"
+      MAIL_FROM_NAME: "solidtime"
+      MAIL_USERNAME: ""
+      MAIL_PASSWORD: ""
+
+      # Queue
+      QUEUE_CONNECTION: "database"
+
+      # File storage
+      FILESYSTEM_DISK: "local"
+      PUBLIC_FILESYSTEM_DISK: "public"
+
+      # Services
+      GOTENBERG_URL: "http://solidtime_gotenberg_1:3000"
+    env_file:
+      - ${APP_DATA_DIR}/keys.env
+    healthcheck:
+      test: [ "CMD-SHELL", "curl --fail http://localhost:8000/health-check/up || exit 1" ]
+    depends_on:
+      db:
+        condition: service_healthy
+
+  scheduler:
+    image: solidtime/solidtime:0.7.0@sha256:064c78939b0ff4e1e6b9105f5ff0483370a1a70c11cbeb9341cf80d41fecd0f1
+    user: "1000:1000"
+    restart: on-failure
+    volumes:
+      - "${APP_DATA_DIR}/data/app:/var/www/html/storage"
+    environment:
+      CONTAINER_MODE: scheduler
+      APP_NAME: "solidtime"
+      VITE_APP_NAME: "solidtime"
+      APP_ENV: "production"
+      APP_DEBUG: "false"
+      APP_URL: "http://${DEVICE_DOMAIN_NAME}:8770"
+      APP_FORCE_HTTPS: "false"
+      TRUSTED_PROXIES: "0.0.0.0/0,2000:0:0:0:0:0:0:0/3"
+
+      # Authentication
+      SUPER_ADMINS: "umbrel@umbrel.local"
+
+      # Logging
+      LOG_CHANNEL: "stderr_daily"
+      LOG_LEVEL: "debug"
+
+      # Database
+      DB_CONNECTION: "pgsql"
+      DB_HOST: "solidtime_db_1"
+      DB_PORT: "5432"
+      DB_SSLMODE: "require"
+      DB_DATABASE: "solidtime"
+      DB_USERNAME: "solidtime"
+      DB_PASSWORD: "solidtime"
+
+      # Mail
+      MAIL_MAILER: "smtp"
+      MAIL_HOST: ""
+      MAIL_PORT: ""
+      MAIL_ENCRYPTION: "tls"
+      MAIL_FROM_ADDRESS: "no-reply@your-domain.com"
+      MAIL_FROM_NAME: "solidtime"
+      MAIL_USERNAME: ""
+      MAIL_PASSWORD: ""
+
+      # Queue
+      QUEUE_CONNECTION: "database"
+
+      # File storage
+      FILESYSTEM_DISK: "local"
+      PUBLIC_FILESYSTEM_DISK: "public"
+
+      # Services
+      GOTENBERG_URL: "http://solidtime_gotenberg_1:3000"
+    env_file:
+      - ${APP_DATA_DIR}/keys.env
+    healthcheck:
+      test: [ "CMD-SHELL", "supervisorctl status scheduler:scheduler_00" ]
+    depends_on:
+      db:
+        condition: service_healthy
+
+  queue:
+    image: solidtime/solidtime:0.7.0@sha256:064c78939b0ff4e1e6b9105f5ff0483370a1a70c11cbeb9341cf80d41fecd0f1
+    user: "1000:1000"
+    restart: on-failure
+    volumes:
+      - "${APP_DATA_DIR}/data/app:/var/www/html/storage"
+    environment:
+      CONTAINER_MODE: worker
+      WORKER_COMMAND: "php /var/www/html/artisan queue:work"
+      APP_NAME: "solidtime"
+      VITE_APP_NAME: "solidtime"
+      APP_ENV: "production"
+      APP_DEBUG: "false"
+      APP_URL: "http://${DEVICE_DOMAIN_NAME}:8770"
+      APP_FORCE_HTTPS: "false"
+      TRUSTED_PROXIES: "0.0.0.0/0,2000:0:0:0:0:0:0:0/3"
+
+      # Authentication
+      SUPER_ADMINS: "umbrel@umbrel.local"
+
+      # Logging
+      LOG_CHANNEL: "stderr_daily"
+      LOG_LEVEL: "debug"
+
+      # Database
+      DB_CONNECTION: "pgsql"
+      DB_HOST: "solidtime_db_1"
+      DB_PORT: "5432"
+      DB_SSLMODE: "require"
+      DB_DATABASE: "solidtime"
+      DB_USERNAME: "solidtime"
+      DB_PASSWORD: "solidtime"
+
+      # Mail
+      MAIL_MAILER: "smtp"
+      MAIL_HOST: ""
+      MAIL_PORT: ""
+      MAIL_ENCRYPTION: "tls"
+      MAIL_FROM_ADDRESS: "no-reply@your-domain.com"
+      MAIL_FROM_NAME: "solidtime"
+      MAIL_USERNAME: ""
+      MAIL_PASSWORD: ""
+
+      # Queue
+      QUEUE_CONNECTION: "database"
+
+      # File storage
+      FILESYSTEM_DISK: "local"
+      PUBLIC_FILESYSTEM_DISK: "public"
+
+      # Services
+      GOTENBERG_URL: "http://solidtime_gotenberg_1:3000"
+    env_file:
+      - ${APP_DATA_DIR}/keys.env
+    healthcheck:
+      test: [ "CMD-SHELL", "supervisorctl status worker:worker_00" ]
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: 'postgres:17.3@sha256:0321e2252ebfeecb8bc1a899755084d29bce872953e1a5a3e25ec0860b739098'
+    user: "1000:1000"
+    restart: on-failure
+    environment:
+      PGPASSWORD: 'soldtime'
+      POSTGRES_DB: 'solidtime'
+      POSTGRES_USER: 'solidtime'
+      POSTGRES_PASSWORD: 'solidtime'
+    volumes:
+      - '${APP_DATA_DIR}/data/db:/var/lib/postgresql/data'
+    healthcheck:
+      test:
+        - CMD
+        - pg_isready
+        - '-q'
+        - '-d'
+        - 'solidtime'
+        - '-U'
+        - 'solidtime'
+      retries: 3
+      timeout: 5s
+
+  gotenberg:
+    image: gotenberg/gotenberg:8.17.1@sha256:46e7b68adeadda1794a9ab194f1e2939f5b09ff21aadef6000e84102c9af6dd5
+    user: "1000:1000"
+    restart: on-failure
+    healthcheck:
+      test: [ "CMD", "curl", "--silent", "--fail", "http://localhost:3000/health" ]
