@@ -39,27 +39,34 @@ echo "Checking for existing invoice-ninja APP_KEY..."
 
 # We only generate and save the Laravel APP_KEY if it doesn't exist already
 if [[ ! -f "${LARAVEL_APP_KEY_FILE_PATH}" ]]; then
-  echo "Generating invoice-ninja APP_KEY..."
-  while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-      if APP_KEY=$(docker run --rm invoiceninja/invoiceninja-debian php artisan key:generate --show); then
-          # Add the passport credentials to the keys file
-		  echo "${APP_KEY}" | sed 's/\x1b\[[0-9;]*m//g' | tr -d '\r\n' > "${LARAVEL_APP_KEY_FILE_PATH}"
-		  echo "invoice-ninja APP_KEY generated and saved to ${LARAVEL_APP_KEY_FILE_PATH}"
-		  break
-      else
-          RETRY_COUNT=$((RETRY_COUNT + 1))
-          echo "Attempt $RETRY_COUNT/$MAX_RETRIES failed; invoice-ninja APP_KEY creation command failed."
-          echo "  → Output: $APP_KEY"
-          sleep 5
-      fi
-  done
+  echo "Generating Invoice-Ninja APP_KEY…"
 
-  if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
-      echo "Failed to create invoice-ninja APP_KEY after $MAX_RETRIES attempts."
-      exit 1
-  fi
+  # start the service in the background
+  "${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" up -d app >/dev/null
+
+  # make sure Laravel’s cache paths exist, because Invoice Ninja removed the bootstrap/cache volume.
+  # https://github.com/invoiceninja/dockerfiles/pull/738
+  # https://github.com/invoiceninja/dockerfiles/pull/745
+  "${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" exec -T -w /var/www/html app \
+    bash -c '
+      php artisan optimize || true
+      mkdir -p storage/framework/{cache,data,sessions,testing,views} bootstrap/cache
+      chown -R www-data:www-data storage bootstrap/cache 2>/dev/null || true
+      chmod -R ug+rwx storage bootstrap/cache
+    '
+
+  # generate the key
+  APP_KEY=$(
+    "${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" \
+      run --rm -w /var/www/html app \
+      php artisan key:generate --show --no-ansi
+  )
+
+  # strip colour codes / newlines and save
+  printf '%s' "${APP_KEY//[$'\t\r\n ']}" > "${LARAVEL_APP_KEY_FILE_PATH}"
+  echo "Invoice-Ninja APP_KEY saved → ${LARAVEL_APP_KEY_FILE_PATH}"
 else
-  echo "invoice-ninja APP_KEY already exist in ${LARAVEL_APP_KEY_FILE_PATH}. No action needed."
+  echo "Invoice-Ninja APP_KEY already exists – nothing to do."
 fi
 
 ### Create default nginx configuration file for invoice-ninja
