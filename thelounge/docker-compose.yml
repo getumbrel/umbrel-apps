@@ -14,9 +14,3 @@ services:
     stop_grace_period: 1m
     volumes:
       - ${APP_DATA_DIR}/data:/var/opt/thelounge
-    command: >
-      /bin/sh -c '
-      if [ ! -f /var/opt/thelounge/umbrel-user-added ]; then
-        (sleep 5 && thelounge add umbrel --password "$APP_PASSWORD" >> /var/opt/thelounge/umbrel-user-added 2>&1) &
-      fi &&
-      thelounge start'
