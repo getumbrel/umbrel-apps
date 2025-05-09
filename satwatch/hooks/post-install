@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Create the default username and password.
+for attempt in $(seq 1 3); do
+  if "${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" run --rm web './create-user -admin -username satwatch -password satwatch'; then
+    echo "Successfully created default user"
+    break
+  else
+    # The database takes time to initialize after installation.
+    echo "Failed to create default user. Retrying..."
+    sleep 0.5
+  fi
+done
