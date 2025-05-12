@@ -3,7 +3,7 @@ id: pocketbase
 name: PocketBase
 tagline: Open Source backend for your next SaaS and Mobile app in 1 file
 category: developer
-version: "0.27.2"
+version: "0.28.0"
 port: 5400
 description: >-
   PocketBase is an open source backend consisting of embedded database (SQLite) with realtime subscriptions, built-in auth management, convenient dashboard UI and simple REST-ish API.
@@ -44,9 +44,11 @@ path: /_/
 dependencies: []
 releaseNotes: >-
   This release includes multiple new features, improvements and bug fixes:
-    - Added a workers pool to avoid thread exhaustion during cascade deletions
-    - Fixed excerpt generation to correctly handle multibyte characters
-    - Optimized count queries by using `rowid` instead of `id` for non-view collections
+    - Request hooks now respond after transactions complete to better handle errors
+    - Database writes are auto-routed to the correct pool; manual control still available
+    - New method to clone existing uploaded files easily
+    - Default JSON field size limit set to 1MB (can be changed, but large blobs discouraged)
+    - Old file loading method deprecated in favor of a clearer alternative (GetReader)
 
 
   Full release notes are found at https://github.com/pocketbase/pocketbase/releases

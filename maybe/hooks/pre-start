@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# This script checks for existence of data/ data/redis directories and creates them + sets correct permissions if they don't exist
+
+# App directory is one level up from this script
+APP_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")"
+APP_DATA_DIR="${APP_DIR}/data"
+APP_DATA_REDIS_DIR="${APP_DATA_DIR}/redis"
+DESIRED_OWNER="1000:1000"
+
+set_correct_permissions() {
+    local -r path="${1}"
+
+    if [[ -d "${path}" ]]; then
+        owner=$(stat -c "%u:%g" "${path}")
+
+        if [[ "${owner}" != "${DESIRED_OWNER}" ]]; then
+            chown -R "${DESIRED_OWNER}" "${path}"
+        fi
+    fi
+}
+
+create_directory_if_not_exists() {
+    local -r dir="${1}"
+    if [[ ! -d "${dir}" ]]; then
+        mkdir -p "${dir}"
+        set_correct_permissions "${dir}"
+    fi
+}
+
+move_file_if_exists() {
+    local -r src="${1}"
+    local -r dest="${2}"
+    if [[ -f "${src}" ]]; then
+        mv "${src}" "${dest}"
+    fi
+}
+
+# Create directories if they don't exist
+create_directory_if_not_exists "${APP_DATA_DIR}"
+create_directory_if_not_exists "${APP_DATA_REDIS_DIR}"

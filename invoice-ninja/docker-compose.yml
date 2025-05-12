@@ -13,22 +13,21 @@ services:
     restart: on-failure
     volumes:
       - ${APP_DATA_DIR}/config/nginx.conf:/etc/nginx/conf.d/nginx.conf:ro
-      - ${APP_DATA_DIR}/data/public:/var/www/app/public:ro
+      - ${APP_DATA_DIR}/data/public:/var/www/html/public:ro
     depends_on:
       - app
 
   app:
-    image: invoiceninja/invoiceninja:5.11.72@sha256:e5f3e871045002f59caffb867389630b85f507f02bc98ae7d3abed77477ae369
-    # We're forced to run user/group 1500
-    # More detail here: https://github.com/invoiceninja/dockerfiles/blob/ad3ffc227d63740330f761dad6e8c87768577847/alpine/5/Dockerfile#L70-L80
-    user: "1500:1500"
+    image: invoiceninja/invoiceninja-debian:5.11.74-d@sha256:a85686590b321caae68d91c1f3efe7ccd1bcdd404e8d3511e272c010f4cd7017
     restart: on-failure
     volumes:
-      - ${APP_DATA_DIR}/data/public:/var/www/app/public:rw,delegated
-      - ${APP_DATA_DIR}/data/storage:/var/www/app/storage:rw,delegated
+      - ${APP_DATA_DIR}/data/public:/var/www/html/public
+      - ${APP_DATA_DIR}/data/storage:/var/www/html/storage
     environment:
       APP_URL: "http://${APP_DOMAIN}"
       APP_KEY: "${APP_KEY:-unset}"
+      APP_ENV: "production"
+      APP_DEBUG: "false"
       REQUIRE_HTTPS: "false"
       DB_HOST: invoice-ninja_db_1
       DB_DATABASE: invoiceninja
@@ -36,8 +35,19 @@ services:
       DB_PASSWORD: moneyprintergobrrr
       IN_USER_EMAIL: "admin@example.com"
       IN_PASSWORD: $APP_PASSWORD
+      IS_DOCKER: "true"
+      CACHE_DRIVER: redis
+      QUEUE_CONNECTION: redis
+      SESSION_DRIVER: redis
+      REDIS_HOST: invoice-ninja_redis_1
+      REDIS_PASSWORD: null
+      REDIS_PORT: 6379
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      
 
   db:
     image: mariadb:11.4.5@sha256:5dfb3093333fa0ea53194ddef0a2bfa21d3b1e1353bd228b22610cd6fc0c04da
@@ -51,3 +61,21 @@ services:
       MYSQL_PASSWORD: moneyprintergobrrr
       MYSQL_DATABASE: invoiceninja
       MARIADB_AUTO_UPGRADE: "true"
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 20s
+      start_period: 10s
+      timeout: 10s
+      retries: 5
+
+  redis:
+    image: redis:7.4.3@sha256:ee8ec723c831b815c3e2f2c6fbd1c145c68d1c04ba284f044ec1434fbca0fee8
+    user: "1000:1000"
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data/redis:/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5

@@ -1,0 +1,93 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+APP_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")"
+KEYS_FILE="${APP_DIR}/keys.env"
+
+# sentinel file to check if admin was already initialised
+ADMIN_SENTINEL="${APP_DATA_DIR}/.admin_created"
+
+# admin user name and email
+ADMIN_NAME="Umbrel"
+ADMIN_EMAIL="umbrel@umbrel.local"
+
+# max number of tries and sleep time between them (60 seconds)
+MAX_TRIES=12
+SLEEP_SECS=5
+
+# ──────────────────────────────────────────────────────────────
+# Skip bootstrap entirely if admin already initialised
+# ──────────────────────────────────────────────────────────────
+if [[ -f "$ADMIN_SENTINEL" ]]; then
+  echo "Solidtime: admin already initialised – skipping bootstrap."
+  exit 0
+fi
+
+# ──────────────────────────────────────────────────────────────
+# Ensure keys.env exists
+# ──────────────────────────────────────────────────────────────
+if [[ ! -s "$KEYS_FILE" ]]; then
+  echo "Solidtime: generating keys.env…"
+  "${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" \
+    run --rm app php artisan self-host:generate-keys \
+  | grep -v "Container mode:" > "$KEYS_FILE"
+fi
+
+# ──────────────────────────────────────────────────────────────
+# Bring the full stack up so that migrations run automatically
+# We can probably only bring up necessary services here, but doing this for simplicity
+# --wait is ignored on old Compose versions (umbrelOS < 1.0)
+# ──────────────────────────────────────────────────────────────
+echo "Solidtime: starting full stack to run migrations…"
+"${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" \
+  up -d --wait --wait-timeout 90
+
+# ──────────────────────────────────────────────────────────────
+# Retry until the admin user is created (max 60 s)
+# All containers are running, so this should succeed first try
+# But including a retry loop for robustness
+# ──────────────────────────────────────────────────────────────
+echo "Solidtime: ensuring admin user exists…"
+for ((try=1; try<=MAX_TRIES; try++)); do
+  # Feed the password + confirmation non-interactively (two \n-separated lines),
+  # then run the Laravel helper inside the *scheduler* service.
+  # - `printf … |` supplies stdin so the command never prompts.
+  # - `compose … exec -T` disables the default TTY allocation, making stdin
+  # behave like a plain pipe (required for scripted input).
+  # - The helper exits 0 on success, letting the enclosing loop know we’re done.
+  if printf '%s\n%s\n' "${APP_PASSWORD}" "${APP_PASSWORD}" | \
+     "${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" \
+       exec -T scheduler php artisan admin:user:create \
+         "${ADMIN_NAME}" "${ADMIN_EMAIL}" \
+         --ask-for-password --verify-email ; then
+    touch "$ADMIN_SENTINEL"
+    echo "Solidtime: admin user ready."
+    break
+  fi
+  echo "  Attempt $try/$MAX_TRIES failed – retrying in ${SLEEP_SECS}s…"
+  sleep "$SLEEP_SECS"
+done
+
+if [[ ! -f "$ADMIN_SENTINEL" ]]; then
+  echo "Solidtime ERROR: could not create admin user after $MAX_TRIES attempts."
+  exit 1
+fi
+
+# ──────────────────────────────────────────────────────────────
+# Create Passport personal-access client if missing
+# ──────────────────────────────────────────────────────────────
+if ! grep -q "^PASSPORT_PERSONAL_ACCESS_CLIENT_ID=" "$KEYS_FILE" 2>/dev/null; then
+  echo "Solidtime: creating Passport personal-access client…"
+  "${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" \
+    run --rm app php artisan passport:client --personal --name="API" |
+  awk '/Client ID/      {printf "PASSPORT_PERSONAL_ACCESS_CLIENT_ID=%s\n", $NF}
+       /Client secret/ {printf "PASSPORT_PERSONAL_ACCESS_CLIENT_SECRET=%s\n", $NF}' \
+  >> "$KEYS_FILE"
+  echo "Solidtime: Passport client created."
+fi
+
+# ──────────────────────────────────────────────────────────────
+# Bring down all containers and let umbrelOS start them fresh
+# ──────────────────────────────────────────────────────────────
+echo "Solidtime: bootstrap finished – stopping stack for clean start…"
+"${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" stop

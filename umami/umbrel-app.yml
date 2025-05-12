@@ -3,7 +3,7 @@ id: umami
 name: Umami
 tagline: Simple, fast, privacy-focused alternative to Google Analytics
 category: developer
-version: "2.17.0-1"
+version: "2.18.1"
 port: 25727
 description: >-
   Empowering insights. Preserving privacy.
@@ -48,18 +48,16 @@ defaultUsername: admin
 defaultPassword: umami
 dependencies: []
 releaseNotes: >-
-  This update removes the app proxy to ensure Umami receives accurate visitor data.
+  This update introduces several new features and improvements:
+
+    - New Attribution report to trace user source origin and measure ad campaign effectiveness
+    - Distinct ID property for sessions to help identify users
+    - New data-before-send attribute for the tracker to inspect and modify payload before sending
+    - Events chart filtering by clicking on items in the events table
+    - Option to use alternative hosts for icons with the FAVICON_URL environment variable
 
 
-  Previous release notes below.
-
-
-  This update includes several major improvements:
-    - New batch send feature for importing large amounts of data through the API
-    - Added payload overrides for custom IP, user agent, and timestamp data
-    - Introduced "Do Not Track" option with data-do-not-track=true parameter
-    - Improved paid ad channel detection
-    - Fixed issues with referrer filtering, CORS headers, and journey reports
+  ⚠️ Note: This release includes database migrations for handling UTM parameters. The migrations will apply the new schema automatically, but you may need to run a separate script to migrate old data.
 
 
   Full release notes are found at https://github.com/umami-software/umami/releases
