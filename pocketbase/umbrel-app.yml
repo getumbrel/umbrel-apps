@@ -44,10 +44,11 @@ path: /_/
 dependencies: []
 releaseNotes: >-
   This release includes multiple new features, improvements and bug fixes:
-    - Added a workers pool to avoid thread exhaustion during cascade deletions
-    - Fixed excerpt generation to correctly handle multibyte characters
-    - Optimized count queries by using rowid instead of id for non-view collections
-    - Changed the default json field max size to 1MB
+    - Request hooks now respond after transactions complete to better handle errors
+    - Database writes are auto-routed to the correct pool; manual control still available
+    - New method to clone existing uploaded files easily
+    - Default JSON field size limit set to 1MB (can be changed, but large blobs discouraged)
+    - Old file loading method deprecated in favor of a clearer alternative (GetReader)
 
 
   Full release notes are found at https://github.com/pocketbase/pocketbase/releases
