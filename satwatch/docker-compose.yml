@@ -6,11 +6,11 @@ services:
       APP_HOST: satwatch_web_1
       APP_PORT: 8080
   web:
-    image: ghcr.io/jpcummins/sat.watch:1.1.5@sha256:8fbdd04b01d1ab8fa5626a908622a1dc36fea1c93c24eb24b8213e0bb2a94b5a
+    image: ghcr.io/jpcummins/sat.watch:1.1.7@sha256:43662321c75fb08ff297beefb24f8d4fe0eb63912a64cf5f070b414779924e82
     restart: on-failure
     stop_grace_period: 1m
     environment:
-      DATABASE_URL: "postgresql://satwatch:satwatch@db:5432/satwatch?sslmode=disable"
+      DATABASE_URL: "postgresql://satwatch:satwatch@satwatch_db_1:5432/satwatch?sslmode=disable"
       ELECTRUM_HOST: $APP_ELECTRS_NODE_IP
       ELECTRUM_PORT: $APP_ELECTRS_NODE_PORT
       URL: "http://$DEVICE_DOMAIN_NAME:3883"
@@ -21,7 +21,8 @@ services:
       RPCPASSWORD: $APP_BITCOIN_RPC_PASS
     user: "1000:1000"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
   db:
     image: docker.io/library/postgres:17@sha256:fe3f571d128e8efadcd8b2fde0e2b73ebab6dbec33f6bfe69d98c682c7d8f7bd
     restart: on-failure
