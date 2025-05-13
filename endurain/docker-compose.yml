@@ -9,6 +9,8 @@ services:
 
   app:
     image: ghcr.io/joaovitoriasilva/endurain:v0.10.7@sha256:e7a8e976ae5b3b87bff8f5fa463bda75ae91644976eaf67d26d824da10f5f628
+    # not working rootless right now
+    # user: "1000:1000"
     environment:
       DB_TYPE: postgres
       DB_HOST: endurain_db_1
@@ -16,7 +18,7 @@ services:
       DB_PASSWORD: endurain
       SECRET_KEY: ${APP_PASSWORD}
       ENDURAIN_HOST: http://${DEVICE_DOMAIN_NAME}:8865
-      BEHIND_PROXY: true
+      BEHIND_PROXY: "true"
     volumes:
       - ${APP_DATA_DIR}/data/app/user_images:/app/backend/user_images
       - ${APP_DATA_DIR}/data/app/files/bulk_import:/app/backend/files/bulk_import
@@ -29,6 +31,7 @@ services:
 
   db:
     image: postgres:17.4@sha256:4aed4b0525233308fc5de1b8d47f92326460d598dc5f004d14b41f183360b4e9
+    user: "1000:1000"
     environment:
       POSTGRES_PASSWORD: endurain
       POSTGRES_DB: endurain
