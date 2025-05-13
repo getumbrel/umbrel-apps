@@ -9,6 +9,7 @@ services:
 
   web:
     image: ghcr.io/karakeep-app/karakeep:0.24.1@sha256:e72341d7626b7f92ea9b4d5e1a671ae1b8b2f6d85873a5f482e836978b650f99
+    user: 1000:1000
     restart: on-failure
     environment:
       MEILI_ADDR: http://meilisearch:7700
@@ -24,7 +25,8 @@ services:
       - meilisearch
 
   chrome:
-    image: gcr.io/zenika-hub/alpine-chrome@sha256:e38563d4475a3d791e986500a2e4125c9afd13798067138881cf770b1f6f3980
+    image: zenika/alpine-chrome:124@sha256:5fade3fab8995c1d73e2e69632b277cb7454d8e5c7edbcabe0fd2b4f9b71c32f
+    user: 1000:1000
     restart: on-failure
     command:
       - --no-sandbox
@@ -36,6 +38,7 @@ services:
 
   meilisearch:
     image: getmeili/meilisearch:v1.14.0@sha256:8cd411ba5d9ec2dfce02e241305208eebacce0fd74a72bece21cadd03dc566ce
+    user: 1000:1000
     restart: on-failure
     environment:
       MEILI_NO_ANALYTICS: "true"
