@@ -1,0 +1,44 @@
+version: '3.7'
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: karakeep_web_1
+      APP_PORT: 3000
+      PROXY_AUTH_ADD: "false"
+
+  web:
+    image: ghcr.io/karakeep-app/karakeep:0.24.1@sha256:e72341d7626b7f92ea9b4d5e1a671ae1b8b2f6d85873a5f482e836978b650f99
+    restart: on-failure
+    environment:
+      MEILI_ADDR: http://meilisearch:7700
+      BROWSER_WEB_URL: http://chrome:9222
+      DATA_DIR: /data
+      NEXTAUTH_SECRET: N5l9X2mPu3qY7Rz6A8cD1XwLbV0OjGhTeMiQ4ZsKyBwVfUnCpLgHzBtSmWyRxEd2
+      NEXTAUTH_URL: http://localhost:3000
+      #OPENAI_API_KEY:
+    volumes:
+      - ${APP_DATA_DIR}/data/karakeep_data:/data
+    depends_on:
+      - chrome
+      - meilisearch
+
+  chrome:
+    image: gcr.io/zenika-hub/alpine-chrome@sha256:e38563d4475a3d791e986500a2e4125c9afd13798067138881cf770b1f6f3980
+    restart: on-failure
+    command:
+      - --no-sandbox
+      - --disable-gpu
+      - --disable-dev-shm-usage
+      - --remote-debugging-address=0.0.0.0
+      - --remote-debugging-port=9222
+      - --hide-scrollbars
+
+  meilisearch:
+    image: getmeili/meilisearch:v1.14.0@sha256:8cd411ba5d9ec2dfce02e241305208eebacce0fd74a72bece21cadd03dc566ce
+    restart: on-failure
+    environment:
+      MEILI_NO_ANALYTICS: "true"
+      MEILI_MASTER_KEY: Zx7Nq2BvR5LgFpMiTkUwJyHcXsVdQoPaWeUzYbXnCmDrLfGhAzPvBsYqXtRwEc3T
+    volumes:
+      - ${APP_DATA_DIR}/data/meilisearch_data:/meili_data
