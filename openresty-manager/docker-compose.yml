@@ -1,0 +1,34 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: openresty-manager_web_1
+      APP_PORT: 34567
+      
+  web:
+    image: uusec/openresty-manager:v1.1.1@sha256:7f4a036cc261ff7a3ebd2a2b8bcaf1bb287a627d6f6902e23980a743349bbfa6
+    hostname: openresty-manager_web_1
+    restart: on-failure
+    ports:
+      - 3080:80
+      - 3443:443
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/resolv.conf:/etc/resolv.conf:ro
+      - ${APP_DATA_DIR}/data/acme:/opt/om/acme
+      - ${APP_DATA_DIR}/data/data:/opt/om/data
+      - ${APP_DATA_DIR}/data/nginx/conf/sites:/opt/om/nginx/conf/sites
+      - ${APP_DATA_DIR}/data/nginx/conf/certs:/opt/om/nginx/conf/certs
+      - ${APP_DATA_DIR}/data/nginx/conf/upstreams:/opt/om/nginx/conf/upstreams
+    environment:
+      PUID: 1000
+      PGID: 1000
+  
+  docker-host:
+    image: qoomon/docker-host:3.3.1@sha256:ec9d214d7fa88932e9186ca2f4419d44661376929931248525b08e7fa9e270f7
+    hostname: $DEVICE_DOMAIN_NAME
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    restart: on-failure
