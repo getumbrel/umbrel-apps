@@ -12,10 +12,10 @@ services:
     user: 1000:1000
     restart: on-failure
     environment:
-      MEILI_ADDR: http://meilisearch:7700
-      BROWSER_WEB_URL: http://chrome:9222
+      MEILI_ADDR: http://karakeep_meilisearch_1:7700
+      BROWSER_WEB_URL: http://karakeep_chrome_1:9222
       DATA_DIR: /data
-      NEXTAUTH_SECRET: N5l9X2mPu3qY7Rz6A8cD1XwLbV0OjGhTeMiQ4ZsKyBwVfUnCpLgHzBtSmWyRxEd2
+      NEXTAUTH_SECRET: ${APP_SEED}
       NEXTAUTH_URL: http://localhost:3000
       #OPENAI_API_KEY:
     volumes:
@@ -42,6 +42,6 @@ services:
     restart: on-failure
     environment:
       MEILI_NO_ANALYTICS: "true"
-      MEILI_MASTER_KEY: Zx7Nq2BvR5LgFpMiTkUwJyHcXsVdQoPaWeUzYbXnCmDrLfGhAzPvBsYqXtRwEc3T
+      MEILI_MASTER_KEY: ${APP_SEED}
     volumes:
       - ${APP_DATA_DIR}/data/meilisearch_data:/meili_data
