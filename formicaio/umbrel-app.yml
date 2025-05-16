@@ -3,7 +3,7 @@ id: formicaio
 name: Formicaio
 tagline: Run nodes on the Autonomi peer-to-peer (P2P) network
 category: networking
-version: "0.5.0"
+version: "0.5.1"
 port: 52100
 description: >-
   ## Simplify your decentralized experience with Formicaio
@@ -59,6 +59,28 @@ description: >-
   When setting up nodes, you can define their connection type:
   - Home-Network mode: Ideal for nodes behind a NAT without port forwarding. This mode activates hole-punching to facilitate direct connections from other nodes. If this not enabled and you're behind a NAT, nodes will struggle to connect to other peers.
   - UPnP support: Attempt to use UPnP to open a port on your home router for incoming connections. If your router does not support or is not configured for UPnP, create new nodes with UPnP disabled to ensure connectivity.
+widgets:
+  - id: "formicaio-stats"
+    type: "four-stats"
+    refresh: "5s"
+    endpoint: "formicaio_proxy:52110/api/stats_widget"
+    link: ""
+    example:
+      type: "four-stats"
+      link: ""
+      items:
+        - title: "Total balance"
+          text: "1.7181"
+          subtext: ""
+        - title: "Active nodes"
+          text: "15/15"
+          subtext: ""
+        - title: "Stored records"
+          text: "69"
+          subtext: ""
+        - title: "Network size"
+          text: "3897207"
+          subtext: ""
 developer: bochaco
 website: https://github.com/bochaco/formicaio
 submitter: bochaco

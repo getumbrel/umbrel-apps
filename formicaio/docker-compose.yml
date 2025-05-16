@@ -7,15 +7,16 @@ services:
       APP_PORT: 52100
 
   proxy:
-    image: bochaco/formicaio_proxy:0.1.0@sha256:de09a722629d5c3f7139eb7a9035ee29d4c6eb804c6031a7af39fe63a4dd298f
+    image: bochaco/formicaio_proxy:0.2.0@sha256:149c41e8281876837cf7df90c9253ac1b7460e04a47a91bc09363c470cbac4d0
     environment:
       FORMICAIO_ADDR: host.docker.internal:3000
       FORMICAIO_PROXY_PORT: 52100
+      FORMICAIO_WIDGET_PROXY_PORT: 52110
     extra_hosts:
       - host.docker.internal:host-gateway
 
   app:
-    image: bochaco/formicaio:0.5.0-native@sha256:55651626293158041060293617bdc7d308e4b10246907fcfc149a9821f0e8161
+    image: bochaco/formicaio:0.5.1-native@sha256:1c4c953a9c7208a9742283737a2bde73ae4ca8f46eaa7d0253aa305b1f745806
     privileged: true
     restart: on-failure
     network_mode: host
