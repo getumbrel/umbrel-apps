@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: datum
 category: bitcoin
 name: DATUM
-version: "v0.3.1-beta-rev1"
+version: "v0.3.1-beta-rev2"
 tagline: Self-sovereign Bitcoin mining
 description: >-
   ⚙️ Please read the important setup instructions at the bottom of this page.
@@ -69,9 +69,23 @@ path: ""
 defaultUsername: "admin"
 deterministicPassword: true
 releaseNotes: >-
-  ⚠️ Datum now requires a default Bitcoin address to be added to the "Config" tab in order to complete startup.
+  Datum now support umbrel widgets.
 
-  
-  Your credentials for the DATUM app can be found by right-clicking on the DATUM app icon from your umbrelOS homescreen and selecting "Show default credentials".
+widgets:
+  - id: "stats"
+    type: "three-stats"
+    refresh: "30s"
+    endpoint: "datum:21000/umbrel-api"
+    link: ""
+    example:
+      type: "three-stats"
+      link: ""
+      items:
+        - title: "Connections"
+          text: "12"
+          subtext: "Worker"
+        - title: "Hashrate"
+          text: "21"
+          subtext: "TH/s"
 submitter: Léo Haf
 submission: https://github.com/getumbrel/umbrel-apps/pull/1661
