@@ -2,7 +2,7 @@ manifestVersion: 1
 id: bitwatch
 category: bitcoin
 name: Bitwatch
-version: "1.6.13"
+version: "1.7.0"
 tagline: Monitor Bitcoin addresses in real-time
 description: >-
   Monitor Bitcoin addresses in the mempool and on-chain using the mempool.space API and websocket.
@@ -29,13 +29,17 @@ gallery:
   - 2.jpg
   - 3.jpg
 releaseNotes: >-
-  This release adds support for taproot extended keys and descriptors.
+  This release completely rebuilds the websocket and API request queue logic and includes bug, performance, and UX fixes.
 
-    - Adds support for taproot extended keys (vpub)
-    - Adds support for descriptors (e.g. multiSig: wsh(multi(2,xpub...,...))
-    - Allows saving default monitor settings
-    - Refresh buttons on addresses and descriptor/extended key sets
-    - fix bug in reloading on sub-pages
+    - new method for mempool.space websocket subscription management
+      - now managed per address to prevent hundreds of websocket subscriptions
+      - improved websocket logic for adding/editing/deleting addresses
+      - showing websocket subscription status in address row
+    - clearer UI for zero balances (opacity reduction)
+    - tighter UI (reduced margin/padding)
+    - fix auto-acceptance bug (failing to alert telegram when alert is set in some cases)
+    - descriptor and extended key rows now show balance summary of address lists
+    - more robust e2e tests
 
 website: https://github.com/zapomatic/bitwatch
 repo: https://github.com/zapomatic/bitwatch
