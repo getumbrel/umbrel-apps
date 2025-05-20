@@ -2,7 +2,7 @@ manifestVersion: 1
 id: rotki
 category: finance
 name: rotki
-version: "1.38.3"
+version: "1.38.4"
 tagline: Portfolio tracking, analytics, accounting and tax reporting
 description: >-
   rotki is an open source portfolio tracking, analytics, accounting and tax reporting tool that protects your privacy. 
@@ -28,23 +28,19 @@ releaseNotes: >-
   ⚠️ As always when upgrading, all your EVM history events will need to be redecoded. This takes time depending on the amount of events but is required to apply all changes. The redecoding triggers the first time you go to the history events page after opening the new version.
 
 
-  rotki v1.38.3 is an emergency patch release containing improvements and bugfixes. Key highlights include:
-    - Fixed an issue caused by the DNS hijacking of curve.fi domain
-    - Migrated to the new Curve API with robust fallback handling
-    - Updated integration with Etherscan to use their new v2 API schema
+  rotki v1.38.4 is an emergency patch release containing improvements and bugfixes. Key highlights include:
+    - Fixed an issue caused by an unexpected result in Morpho's reward distributor API response
+    - Added more robust handling for the Morpho API
+    - Improved transaction decoding for Ethereum and Base
 
 
   Improvements:
-    - Prevented fallback behavior that caused performance issues
-    - Enhanced responsiveness when APIs are unavailable
+    - Blockscout will now be prioritized when querying timestamp to block number for some specific cases
 
 
   Bug fixes:
-    - Resolved slow history querying due to curve DNS domain hijacking
-    - Fixed filter functionality after deleting selected filters
-    - Corrected issues with Bitstamp asset movements and fee loading
-    - Addressed problems with Ethereum Staking display on the dashboard
-    - Improved airdrop eligibility checking for non-mainnet EVM networks
+    - Resolved loading loop for asset information on different areas of the application
+    - Fixed Ethereum and Base transaction decoding after Morpho API deserialization problems
 
 
   Full release notes are found at https://github.com/rotki/rotki/releases
