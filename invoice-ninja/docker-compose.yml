@@ -18,7 +18,7 @@ services:
       - app
 
   app:
-    image: invoiceninja/invoiceninja-debian:5.11.77-d@sha256:22f5564bc1545e5812e21697e0745e1b8d943e57ca43888a5ed143ce87038baf
+    image: invoiceninja/invoiceninja-debian:5.11.78-d@sha256:c99ca1fbe607edb2dbd8cf5dc2aa6a3cfebd7a910284306f6d37eb43700faea0
     restart: on-failure
     volumes:
       - ${APP_DATA_DIR}/data/public:/var/www/html/public
@@ -42,6 +42,7 @@ services:
       REDIS_HOST: invoice-ninja_redis_1
       REDIS_PASSWORD: null
       REDIS_PORT: 6379
+      FILESYSTEM_DISK: debian_docker
     depends_on:
       db:
         condition: service_healthy
