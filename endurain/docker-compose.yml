@@ -8,7 +8,7 @@ services:
       PROXY_AUTH_ADD: "false"
 
   app:
-    image: ghcr.io/joaovitoriasilva/endurain:v0.10.7@sha256:e7a8e976ae5b3b87bff8f5fa463bda75ae91644976eaf67d26d824da10f5f628
+    image: ghcr.io/joaovitoriasilva/endurain:v0.11.2@sha256:2bd4c73e564a152ac17e336c7923e36cc6a28a3be6e67664db7ba11659455033
     # not working rootless right now
     # user: "1000:1000"
     environment:
@@ -19,6 +19,8 @@ services:
       SECRET_KEY: ${APP_PASSWORD}
       ENDURAIN_HOST: http://${DEVICE_DOMAIN_NAME}:8865
       BEHIND_PROXY: "true"
+      FERNET_KEY: changeme
+      GEOCODES_MAPS_API: changeme
     volumes:
       - ${APP_DATA_DIR}/data/app/user_images:/app/backend/user_images
       - ${APP_DATA_DIR}/data/app/files/bulk_import:/app/backend/files/bulk_import
