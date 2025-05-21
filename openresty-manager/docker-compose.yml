@@ -7,7 +7,7 @@ services:
       APP_PORT: 34567
       
   web:
-    image: uusec/openresty-manager:1.1.3@sha256:5dfc233feb1f222927303fce93b0f63193cbe470cfec45f1b9c30b25ba9ef493
+    image: uusec/openresty-manager:1.3.0@sha256:5dfc233feb1f222927303fce93b0f63193cbe470cfec45f1b9c30b25ba9ef493
     hostname: openresty-manager_web_1
     restart: on-failure
     ports:
@@ -22,8 +22,7 @@ services:
       - ${APP_DATA_DIR}/data/nginx/conf/certs:/opt/om/nginx/conf/certs
       - ${APP_DATA_DIR}/data/nginx/conf/upstreams:/opt/om/nginx/conf/upstreams
     environment:
-      PUID: 1000
-      PGID: 1000
+      - NGINX_RESOLVER=resolver 127.0.0.11 valid=30s ipv6=off local=on;
   
   docker-host:
     image: qoomon/docker-host:3.3.1@sha256:ec9d214d7fa88932e9186ca2f4419d44661376929931248525b08e7fa9e270f7
