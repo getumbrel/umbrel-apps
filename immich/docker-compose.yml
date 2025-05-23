@@ -22,7 +22,7 @@ services:
       PROXY_AUTH_ADD: "false"
 
   server:
-    image: ghcr.io/immich-app/immich-server:v1.132.3@sha256:6680d88486251b0264a78a1934fe82eef875555aa6d84d703a0980328a5d5c31
+    image: ghcr.io/immich-app/immich-server:v1.133.0@sha256:4d667c5fd6ffac0395c429fc8a335c607272587643f29fb2ddd9bfe16f1f874e
     volumes:
       - ${APP_DATA_DIR}/data/upload:/usr/src/app/upload
     environment:
@@ -33,7 +33,7 @@ services:
     restart: on-failure
 
   machine-learning:
-    image: ghcr.io/immich-app/immich-machine-learning:v1.132.3@sha256:f45063889794008cfc02fcf9d359b55fe37d1f8ebaf89653c89e1dd0e876eb7d
+    image: ghcr.io/immich-app/immich-machine-learning:v1.133.0@sha256:4e2f17bf9a368201e8641af1d73722cddf7a71da9afc3c14e4e9d144e3c57f67
     volumes:
       - ${APP_DATA_DIR}/data/model-cache:/cache
     environment:
@@ -48,9 +48,9 @@ services:
       - ${APP_DATA_DIR}/data/redis:/data
 
   postgres:
-    image: tensorchord/pgvecto-rs:pg14-v0.2.0@sha256:90724186f0a3517cf6914295b5ab410db9ce23190a2d9d0b9dd6463e3fa298f0
-    user: "1000:1000"
-    command: ["postgres", "-c" ,"shared_preload_libraries=vectors.so", "-c", 'search_path="$$user", public, vectors', "-c", "logging_collector=on", "-c", "max_wal_size=2GB", "-c", "shared_buffers=512MB", "-c", "wal_compression=on"]
+    image: ghcr.io/immich-app/postgres:14-vectorchord0.3.0-pgvectors0.2.0@sha256:b5e2fcf89f01effa82f1a8c3415a680d5df3d90318f70d05ea7db7170934a659
+    # new postgres image does not work rootless
+    #user: "1000:1000"
     environment:
       <<: *env
       POSTGRES_PASSWORD: *db_password
