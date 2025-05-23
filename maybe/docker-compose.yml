@@ -7,7 +7,7 @@ services:
       APP_PORT: 3063
 
   web:
-    image: ghcr.io/maybe-finance/maybe:0.4.3@sha256:5be15dc1fa751bf16b86b1df620ac5ecc88d970c617f58d983d38f76eaf956e5
+    image: ghcr.io/maybe-finance/maybe:0.5.0@sha256:c6ab95ca913089b2112a59b78b1936dd41467065982ad7f36d2bd0524e9eccc9
     restart: on-failure
     stop_grace_period: 1m
     volumes:
@@ -15,9 +15,9 @@ services:
     environment:
       SELF_HOSTING_ENABLED: "true"
       PORT: 3063
-      DB_HOST: db
-      DB_PORT: 5432
-      DATABASE_URL: postgres://maybe:maybe@db:5432/maybe
+      # URL encode underscores (%5F) in hostname to satisfy strict URI parsing in Ruby
+      # Original: postgresql://maybe:maybe@maybe_db_1:5432/maybe
+      DATABASE_URL: postgresql://maybe:maybe@maybe%5Fdb%5F1:5432/maybe
       RAILS_FORCE_SSL: "false"
       RAILS_ASSUME_SSL: "false"
       POSTGRES_DB: maybe
@@ -25,8 +25,33 @@ services:
       POSTGRES_PASSWORD: maybe
       GOOD_JOB_EXECUTION_MODE: async
       SECRET_KEY_BASE: $APP_SEED
+      REDIS_URL: redis://maybe_redis_1:6379/1
     depends_on:
       db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  worker:
+    image: ghcr.io/maybe-finance/maybe:0.5.0@sha256:c6ab95ca913089b2112a59b78b1936dd41467065982ad7f36d2bd0524e9eccc9
+    command: bundle exec sidekiq
+    restart: on-failure
+    environment:
+      SELF_HOSTING_ENABLED: "true"
+      PORT: 3063
+      # URL encode underscores (%5F) in hostname to satisfy strict URI parsing in Ruby
+      # Original: postgresql://maybe:maybe@maybe_db_1:5432/maybe
+      DATABASE_URL: postgresql://maybe:maybe@maybe%5Fdb%5F1:5432/maybe
+      RAILS_FORCE_SSL: "false"
+      RAILS_ASSUME_SSL: "false"
+      POSTGRES_DB: maybe
+      POSTGRES_USER: maybe
+      POSTGRES_PASSWORD: maybe
+      GOOD_JOB_EXECUTION_MODE: async
+      SECRET_KEY_BASE: $APP_SEED
+      REDIS_URL: redis://maybe_redis_1:6379/1
+    depends_on:
+      redis:
         condition: service_healthy
 
   db:
@@ -43,5 +68,17 @@ services:
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U maybe']
       interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7.4.2@sha256:fbdbaea47b9ae4ecc2082ecdb4e1cea81e32176ffb1dcf643d422ad07427e5d9
+    user: "1000:1000"
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data/redis:/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
       timeout: 5s
       retries: 5

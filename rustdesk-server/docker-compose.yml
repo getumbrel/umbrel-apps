@@ -1,0 +1,41 @@
+version: '3.7'
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: rustdesk-server_web_1
+      APP_PORT: 80
+
+  hbbs:
+    container_name: hbbs
+    image: rustdesk/rustdesk-server:1.1.14@sha256:680f8ba5accafc264d15076f33a6fdb9cb6f4d963a0fc92e01023ca0e919cc83
+    ports:
+      - 21115:21115
+      - 21116:21116
+      - 21116:21116/udp
+      - 21118:21118
+    command: hbbs
+    volumes:
+      - ${APP_DATA_DIR}/data/hbbs:/root
+    network_mode: "host"
+    depends_on:
+      - hbbr
+    restart: on-failure
+
+  hbbr:
+    container_name: hbbr
+    image: rustdesk/rustdesk-server:1.1.14@sha256:680f8ba5accafc264d15076f33a6fdb9cb6f4d963a0fc92e01023ca0e919cc83
+    ports:
+      - 21117:21117
+      - 21119:21119
+    command: hbbr
+    volumes:
+      - ${APP_DATA_DIR}/data/hbbr:/root
+    network_mode: "host"
+    restart: on-failure
+
+  web:
+    image: nginx:1.27@sha256:124b44bfc9ccd1f3cedf4b592d4d1e8bddb78b51ec2ed5056c52d3692baebc19
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data/www:/usr/share/nginx/html:ro
