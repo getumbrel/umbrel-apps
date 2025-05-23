@@ -114,3 +114,17 @@ EOF
 echo "Created default configuration file for invoice-ninja nginx."
 
 fi
+
+### Fix split data directories for invoice-ninja
+
+FIX_STORAGE_DATA_DIR="${APP_DIR}/home"
+STORAGE_DATA_DIR="${APP_DIR}/data/storage"
+
+# We only copy data from the home directory if it exists
+if [[ -d "${FIX_STORAGE_DATA_DIR}" ]]; then
+  echo "Migrating invoice-ninja data from ${FIX_STORAGE_DATA_DIR} to ${STORAGE_DATA_DIR}..."
+  cp -R "${FIX_STORAGE_DATA_DIR}"/app/public/* "${STORAGE_DATA_DIR}"/app/public/
+  chown -R www-data:www-data "${STORAGE_DATA_DIR}/app/public/"
+  mv "$FIX_STORAGE_DATA_DIR" "${FIX_STORAGE_DATA_DIR}_migrated"
+  echo "Successfully migrated invoice-ninja data from ${FIX_STORAGE_DATA_DIR} to ${STORAGE_DATA_DIR}..."
+fi
