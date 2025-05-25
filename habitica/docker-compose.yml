@@ -1,0 +1,37 @@
+version: '3.7'
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: habitica_server_1
+      APP_PORT: 3000
+
+  server:
+    image: awinterstein/habitica-server:5.36.4@sha256:220cb3acc53633c7fa659d27a72e4b2b881b8f1ceef1c67b16e8333b720e484e
+    restart: on-failure
+    depends_on:
+      - mongo
+    environment:
+      - NODE_DB_URI=mongodb://mongo/habitica
+      - BASE_URL=http://${DEVICE_DOMAIN_NAME}:3944
+      - INVITE_ONLY=false
+      # EMAIL_SERVER_URL=mail.example.com
+      # EMAIL_SERVER_PORT=587
+      # EMAIL_SERVER_AUTH_USER=mail_user
+      # EMAIL_SERVER_AUTH_PASSWORD=mail_password
+      # ADMIN_EMAIL=mail@example.com
+
+  mongo:
+    image: mongo:5@sha256:54bcd8da3ea5eec561b68c605046c55c6b304387dc4c2bf5b3a5f5064fbb7495
+    restart: on-failure
+    command: ["--replSet", "rs", "--bind_ip_all", "--port", "27017"]
+    healthcheck:
+      test: echo "try { rs.status() } catch (err) { rs.initiate() }" | mongosh --port 27017 --quiet
+      interval: 10s
+      timeout: 30s
+      start_period: 0s
+      start_interval: 1s
+      retries: 30
+    volumes:
+      - ${APP_DATA_DIR}/data/db:/data/db:rw
+      - ${APP_DATA_DIR}/data/dbconf:/data/configdb
