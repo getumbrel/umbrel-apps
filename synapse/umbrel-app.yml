@@ -2,18 +2,18 @@ manifestVersion: 1.1
 id: synapse
 category: social
 name: Synapse
-version: "1.128.0"
+version: "1.131.0"
 tagline: Matrix homeserver
 description: >-
   Synapse is an open source Matrix homeserver implementation, written and maintained by Element. Matrix is the open standard for secure and interoperable real time communications.
 
 
   💡 How It Works
-  
-  
+
+
   To chat using Matrix, you'll need a client. You can find a list of popular clients here: https://matrix.org/ecosystem/clients/
-  
-  
+
+
   In Matrix, each user operates one or more Matrix clients, which connect to a Matrix homeserver. The homeserver stores all personal chat history and user account information, similar to how a mail client connects to an IMAP/SMTP server.
   Like email, you can either run your own Matrix homeserver to control and own your communications and history, or use a hosted server (e.g., matrix.org). Matrix has no single point of control or mandatory service provider, unlike WhatsApp, Facebook, Hangouts, etc.
 
@@ -23,7 +23,7 @@ description: >-
 
   To get started, install the "Element" app on your Umbrel, or install any other Matrix client on a device of your choice. When you register or login through the client, you will need to change the address of the homeserver you are logging into from the default matrix.org to http://umbrel.local:8008 for local access. 
 
-  
+
   For seamless connection even when your client isn't connected to the same network as your Umbrel, simply install the "Tailscale" app on your Umbrel and your client device, and use http://umbrel:8008 as the address of your server.
 developer: Element
 website: https://element-hq.github.io/synapse/latest/
@@ -43,13 +43,13 @@ submitter: Umbrel
 submission: https://github.com/getumbrel/umbrel/commit/c9f0975e766e79d4bd6adf4255cd081f54d654cb
 releaseNotes: >-
   Some of the key highlights in this release include:
-    - Added an access token introspection cache for improved efficiency
-    - Added background job to clear unreferenced state groups
-    - Improved media file tracking and quarantine system
-    - Fixed a performance issue related to sliding sync membership snapshot table
-
-
-  ⚠️ Room list publication is now disabled by default
+    - Added config option to limit key queries to users in shared rooms
+    - Allowed registrations starting with an underscore (_)
+    - Room deletion API now includes room ID in its response
+    - Added support for spam detection via Policy Servers
+    - Fixed a race condition during device resync
+    - Fixed a test timeout issue on RISC-V systems
+    - Fixed admin redaction not working on encrypted messages
 
 
   Full release notes are found at https://github.com/element-hq/synapse/releases

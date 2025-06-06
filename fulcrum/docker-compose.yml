@@ -29,7 +29,8 @@ services:
   fulcrum:
     image: cculianu/fulcrum:v1.12.0.1@sha256:ee6a67224a766448507eddc0efba8649b5598f1ea3def39673e2a08210ae4921
     init: true
-    stop_grace_period: 1m
+    stop_signal: SIGINT
+    stop_grace_period: 5m
     restart: on-failure
     user: "1000:1000"
     environment:
@@ -40,7 +41,8 @@ services:
       RPCPASSWORD: ${APP_BITCOIN_RPC_PASS}
       PEERING: "false"
       ANNOUNCE: "false"
-    command: sh -c 'Fulcrum -D /data _ENV_ 2>&1 | tee /logs/fulcrum.log'
+      DATA_DIR: /data
+    command: 'Fulcrum _ENV_ 2>&1 | tee /logs/fulcrum.log'
     volumes:
       - "${APP_DATA_DIR}/data/fulcrum:/data"
       - "${APP_DATA_DIR}/data/fulcrum-logs:/logs"

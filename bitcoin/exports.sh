@@ -24,7 +24,7 @@ BITCOIN_ENV_FILE="${EXPORTS_APP_DIR}/.env"
 			"main")
 				BITCOIN_NETWORK="mainnet";;
 			"test")
-				BITCOIN_NETWORK="testnet3";;
+				BITCOIN_NETWORK="testnet";;
 			"testnet4")
 				BITCOIN_NETWORK="testnet4";;
 			"signet")
@@ -66,7 +66,7 @@ fi
 
 if [[ "${APP_BITCOIN_NETWORK}" == "mainnet" ]]; then
 	BITCOIN_CHAIN="main"
-elif [[ "${APP_BITCOIN_NETWORK}" == "testnet3" ]]; then
+elif [[ "${APP_BITCOIN_NETWORK}" == "testnet" ]]; then
 	BITCOIN_CHAIN="test"
 	# export APP_BITCOIN_RPC_PORT="18332"
 	# export APP_BITCOIN_P2P_PORT="18333"
