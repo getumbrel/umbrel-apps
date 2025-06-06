@@ -6,9 +6,9 @@ services:
       APP_HOST: twenty_server_1
       APP_PORT: 3000
       PROXY_AUTH_ADD: "false"
-  
+
   server:
-    image: twentycrm/twenty:v0.50.0@sha256:39fb13a0b1f1e98ddf9795d9e98641b4e4a0cfc8abe0d30e18b013ec2bfadd9c
+    image: twentycrm/twenty:v0.54.4@sha256:6a6e5a34426867e746f43ef000989cae3afc44f2e1cedf8bcefa447f6988187a
     user: "1000:1000"
     volumes:
       - ${APP_DATA_DIR}/data/server-local-data:/app/packages/twenty-server/.local-storage
@@ -16,9 +16,11 @@ services:
     environment:
       NODE_PORT: 3000
       PG_DATABASE_URL: postgres://postgres:postgres@twenty_db_1:5432/default
-      SERVER_URL: http://${DEVICE_DOMAIN_NAME}:2020
       REDIS_URL: redis://twenty_redis_1:6379
       APP_SECRET: 2Gn5puuVCH0SI386E9RqOqHm0hGIAyrB
+    env_file:
+      - path: ${APP_DATA_DIR}/.env
+        required: false
     depends_on:
       db:
         condition: service_healthy
@@ -30,17 +32,19 @@ services:
     restart: on-failure
 
   worker:
-    image: twentycrm/twenty:v0.50.0@sha256:39fb13a0b1f1e98ddf9795d9e98641b4e4a0cfc8abe0d30e18b013ec2bfadd9c
+    image: twentycrm/twenty:v0.54.4@sha256:6a6e5a34426867e746f43ef000989cae3afc44f2e1cedf8bcefa447f6988187a
     user: "1000:1000"
     volumes:
       - ${APP_DATA_DIR}/data/server-local-data:/app/packages/twenty-server/.local-storage
     command: ["yarn", "worker:prod"]
     environment:
       PG_DATABASE_URL: postgres://postgres:postgres@twenty_db_1:5432/default
-      SERVER_URL: http://${DEVICE_DOMAIN_NAME}:2020
       REDIS_URL: redis://twenty_redis_1:6379
       DISABLE_DB_MIGRATIONS: "true"
       APP_SECRET: 2Gn5puuVCH0SI386E9RqOqHm0hGIAyrB
+    env_file:
+      - path: ${APP_DATA_DIR}/.env
+        required: false
     depends_on:
       db:
         condition: service_healthy
