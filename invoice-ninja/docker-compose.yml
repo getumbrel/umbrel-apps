@@ -14,17 +14,22 @@ services:
     volumes:
       - ${APP_DATA_DIR}/config/nginx.conf:/etc/nginx/conf.d/nginx.conf:ro
       - ${APP_DATA_DIR}/data/public:/var/www/html/public:ro
+      # We have to use "fake" here because otherwise /data/storage would be replaced with /home
+      # See the line here: https://github.com/getumbrel/umbrel/blob/93a4b1801d1141252e73ff759a4ef52d038fff92/packages/umbreld/source/modules/apps/app.ts#L120
+      - ${APP_DATA_DIR}/data/fake/../storage:/var/www/html/storage:ro
     depends_on:
       - app
 
   app:
-    image: invoiceninja/invoiceninja-debian:5.11.78-d@sha256:c99ca1fbe607edb2dbd8cf5dc2aa6a3cfebd7a910284306f6d37eb43700faea0
+    image: invoiceninja/invoiceninja-debian:5.12.0-d@sha256:2d560c0e15f3234a09ced6f66b7c428cfe49918ec9098960efd118e92f803767
     restart: on-failure
     volumes:
       - ${APP_DATA_DIR}/data/public:/var/www/html/public
-      - ${APP_DATA_DIR}/data/storage:/var/www/html/storage
+      # We have to use "fake" here because otherwise /data/storage would be replaced with /home
+      # See the line here: https://github.com/getumbrel/umbrel/blob/93a4b1801d1141252e73ff759a4ef52d038fff92/packages/umbreld/source/modules/apps/app.ts#L120
+      - ${APP_DATA_DIR}/data/fake/../storage:/var/www/html/storage
     environment:
-      APP_URL: "http://${APP_DOMAIN}"
+      APP_URL: "http://${APP_DOMAIN}:8676"
       APP_KEY: "${APP_KEY:-unset}"
       APP_ENV: "production"
       APP_DEBUG: "false"
