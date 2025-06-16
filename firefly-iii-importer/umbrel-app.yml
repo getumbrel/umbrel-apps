@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: firefly-iii-importer
 category: finance
 name: Firefly III Importer
-version: "1.6.2"
+version: "1.6.3"
 tagline: Import your transactions into Firefly III
 description: >-
   Firefly III is a manager for your personal finances. The data importer is built to help you import transactions into Firefly III. It is separated from Firefly III for security and maintenance reasons.
@@ -30,7 +30,16 @@ path: ""
 deterministicPassword: false
 torOnly: false
 releaseNotes: >-
-  This release includes improvements for auto-import functionality and various bug fixes.
+  ⚠️ Some changes in this release may unexpectedly lead to duplicate transactions. This is caused by changes in the data handling routines.
+
+
+  This release includes several improvements and bug fixes:
+    - Added debug logging for better troubleshooting
+    - Enhanced GoCardless imports with support for tags from custom transaction fields
+    - Improved handling of account numbers by removing spaces for easier matching
+    - Fixed issues with reverse proxy support and X-Forwarded-Prefix header
+    - Resolved problems with importing inverted transactions when account information is missing
+    - Better token acquisition methods for authentication
 
 
   Full release notes can be found at https://github.com/firefly-iii/data-importer/releases
