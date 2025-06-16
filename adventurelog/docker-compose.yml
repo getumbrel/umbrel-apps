@@ -7,7 +7,7 @@ services:
       PROXY_AUTH_ADD: "false"
 
   web:
-    image: ghcr.io/seanmorley15/adventurelog-frontend:v0.9.0@sha256:dada2faca11647c70d3d4fb06db6dbc54b069c7312597527625564f3bd6af6df
+    image: ghcr.io/seanmorley15/adventurelog-frontend:v0.10.0@sha256:7c86f835d8dd8adb6c5c9aa3eef3969eaac3003306bee27df946625429694e43
     restart: on-failure
     environment:
       PUBLIC_SERVER_URL: "http://adventurelogserver1:8000"
@@ -26,7 +26,7 @@ services:
       - ${APP_DATA_DIR}/data/db:/var/lib/postgresql/data/
 
   server:
-    image: ghcr.io/seanmorley15/adventurelog-backend:v0.9.0@sha256:4109ee4e35e8be4965ecd4315cd3c1d43757426ba23d03f7fba2b1b25d973202
+    image: ghcr.io/seanmorley15/adventurelog-backend:v0.10.0@sha256:211b05be806df66c33e964aeba698f2553faf125513eed7d9e6472a05fcb5b31
     container_name: adventurelogserver1 # needs to be set for the frontend to be able to connect (underline not supported)
     restart: on-failure
     environment:
@@ -48,4 +48,3 @@ services:
       - db
     volumes:
       - ${APP_DATA_DIR}/data/app:/code/media/
-      
