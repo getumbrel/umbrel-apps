@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# This scripts checks the environment file for placeholder values and replaces them with generated keys or system variables.
+
+APP_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")"
+ENV_FILE="$APP_DIR/settings.env"
+
+# Check if the file exists
+if [ ! -f "$ENV_FILE" ]; then
+    echo "Error: Environment file not found at $ENV_FILE"
+    exit 1
+fi
+
+# Check if the FERNET_KEY value is set to "changeme"
+if grep -Eq '^FERNET_KEY= *changeme$' "$ENV_FILE"; then
+    echo "Placeholder value for FERNET_KEY detected. Generating a new key..."
+
+    # Generate new FERNET key
+    FERNET_KEY=$(python3 -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())")
+
+    # Replace the placeholder with the new key
+    sed -i -E 's|^FERNET_KEY= *changeme$|FERNET_KEY="'"$FERNET_KEY"'"|' "$ENV_FILE"
+
+    echo "Updated FERNET_KEY in $ENV_FILE"
+else
+    echo "FERNET_KEY is already set. No changes made."
+fi
+
+# Check if the ENDURAIN_HOST value is set to "changeme"
+if grep -Eq '^ENDURAIN_HOST= *changeme$' "$ENV_FILE"; then
+    echo "Placeholder value for ENDURAIN_HOST detected. Adding proper hostname..."
+
+    # Replace the placeholder with the hostname
+    sed -i -E 's|^ENDURAIN_HOST= *changeme$|ENDURAIN_HOST="'"http://${DEVICE_DOMAIN_NAME}:8865"'"|' "$ENV_FILE"
+
+    echo "Updated ENDURAIN_HOST in $ENV_FILE"
+else
+    echo "ENDURAIN_HOST is already set. No changes made."
+fi
+
+exit 0
