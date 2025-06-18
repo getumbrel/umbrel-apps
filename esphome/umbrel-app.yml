@@ -2,7 +2,7 @@ manifestVersion: 1
 id: esphome
 category: automation
 name: ESPHome
-version: "2025.5.2"
+version: "2025.6.0"
 tagline: Intelligently manage all your ESP8266/ESP32 devices
 description: >-
   ESPHome is a system to control your ESP8266/ESP32 by simple yet powerful configuration files and control them remotely through Home Automation systems.
@@ -21,14 +21,22 @@ defaultUsername: ""
 defaultPassword: ""
 torOnly: false
 releaseNotes: >-
-  ⚠️ As usual, please check that your configurations are still working correctly after updating.
+  ⚠️ This release includes breaking changes. Please check that your configurations are still working correctly after updating.
 
 
   Key updates in this release include:
-    - Improved mic task handling to avoid core pinning
-    - Enhanced GPIO interrupt handling for RP2040 and ESP8266
-    - Made debug sensors work without requiring verbose logging
-    - Fixed potential logger stack overflow issue
+    - New components: CUBIC CM1106 CO2 sensor, USB Host UART, ES8388 audio DAC, LC709203F battery monitor, ESP32-P4 LDO support, and OpenThread support
+    - Memory optimizations to reduce flash usage and improve performance
+    - Enhanced BLE handling with lock-free queues to prevent drops
+    - Improved API message batching system
+    - Better GPIO interrupt handling for RP2040 and ESP8266
+    - Fixed fan speed initialization and logger stack overflow issues
+
+
+  Breaking changes:
+    - Minimum Python version updated to 3.10
+    - Various memory optimizations that may affect custom components
+    - LWIP optimization options to reduce flash usage
 
 
   Full release notes can be found at https://github.com/esphome/esphome/releases
