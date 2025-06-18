@@ -1,33 +1,35 @@
 version: '3.7'
 
-x-common-env: &cenv
-  MEILI_URL: http://search:7700
-  MEILI_MASTER_KEY: vODkljPcfFANYNepCHyDyGjzAMPcdHnrb6X5KyXQPWo
-
 services:
   app_proxy:
     environment:
       APP_HOST: wanderer_web_1
       APP_PORT: 3000
 
+
+
+
+
   web:
-    image: flomp/wanderer-web:v0.17.0-beta@sha256:41a9ca330bfc6766fafa785566e09a10b884b5be391db855c66ac9dfaa49e1d5
+    image: flomp/wanderer-web:v0.16.5@sha256:cf9758bd760dd5bc8a68481caa6950cfe84b00faefef294b5a5aec2834857d66
+    user: "1000:1000"
     depends_on:
       search:
         condition: service_healthy
       db:
         condition: service_started
     environment:
-      <<: *cenv
       ORIGIN: http://${DEVICE_DOMAIN_NAME}:3111
       BODY_SIZE_LIMIT: Infinity
-      PUBLIC_POCKETBASE_URL: http://db:8090
+      PUBLIC_POCKETBASE_URL: http://wanderer_db_1:8090
       PUBLIC_DISABLE_SIGNUP: "false"
       UPLOAD_FOLDER: /app/uploads
       UPLOAD_USER: admin
-      UPLOAD_PASSWORD: umbrel
+      UPLOAD_PASSWORD: ${APP_PASSWORD}
       PUBLIC_VALHALLA_URL: https://valhalla1.openstreetmap.de
       PUBLIC_NOMINATIM_URL: https://nominatim.openstreetmap.org
+      MEILI_URL: http://wanderer_search_1:7700
+      MEILI_MASTER_KEY: ${APP_SEED}
     volumes:
       - ${APP_DATA_DIR}/data/uploads:/app/uploads
     restart: on-failure
@@ -35,10 +37,9 @@ services:
   search:
     image: getmeili/meilisearch:v1.14.0@sha256:8cd411ba5d9ec2dfce02e241305208eebacce0fd74a72bece21cadd03dc566ce
     environment:
-      <<: *cenv
       MEILI_NO_ANALYTICS: "true"
-    ports:
-      - 7700:7700
+      MEILI_URL: http://wanderer_search_1:7700
+      MEILI_MASTER_KEY: ${APP_SEED}
     volumes:
       - ${APP_DATA_DIR}/data/data.ms:/meili_data/data.ms
     restart: on-failure
@@ -50,15 +51,15 @@ services:
       timeout: 10s
 
   db:
-    image: flomp/wanderer-db:v0.17.0-beta@sha256:ac7ca89696bd8ce17d8b1bbce7b87382ee8d813154b167151fc25e2eb1224628
+    image: flomp/wanderer-db:v0.16.5@sha256:dcfcc4e45467487bf8d5fc1f08d71ff497046e20c4b0c501c0c63d8c3e4f4385
+    user: "1000:1000"
     depends_on:
       search:
         condition: service_healthy
     environment:
-      <<: *cenv
-      POCKETBASE_ENCRYPTION_KEY:
-    ports:
-      - "3112:8090"
+      POCKETBASE_ENCRYPTION_KEY: ${APP_SEED}
+      MEILI_URL: http://wanderer_search_1:7700
+      MEILI_MASTER_KEY: ${APP_SEED}
     restart: on-failure
     volumes:
       - ${APP_DATA_DIR}/data/pb_data:/pb_data
