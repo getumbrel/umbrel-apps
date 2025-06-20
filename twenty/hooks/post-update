@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Clear cache after updating the app
+
+echo "Clearing cache for twenty."
+"${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" run --rm server yarn command:prod cache:flush
+echo "Successfully cleared the twenty cache."
+
+exit 0
