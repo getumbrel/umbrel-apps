@@ -1,0 +1,15 @@
+version: '3.7'
+
+services:
+     server:
+          image: buanet/iobroker:latest
+          network_mode: host
+          # Web UI at default port 8081
+          privileged: true
+          volumes:
+               - ${APP_DATA_DIR}/data:/opt/iobroker
+               - ${UMBREL_ROOT}/data/storage/downloads:/media
+               - /dev:/dev
+               - /run/dbus:/run/dbus:ro
+          environment:
+               - TZ=Europe/Berlin
