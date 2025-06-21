@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: core-lightning
 category: bitcoin
 name: Core Lightning
-version: "24.11.1-grpc"
+version: "25.05"
 tagline: Run your personal Core Lightning node
 description: >-
   Get started with the Lightning network today with Core Lightning - a
@@ -32,8 +32,25 @@ defaultPassword: ""
 submitter: Blockstream
 submission: https://github.com/getumbrel/umbrel-apps/pull/475
 releaseNotes: >-
-  This update makes the gRPC interface in Core Lightning accessible for companion apps you install.
+  This release of Core Lightning includes many improvements, bug fixes, and new features.
 
 
-  For example, as a result of this change, the newest Ride The Lightning release integrates Boltz as a service, allowing you to seamlessly swap 
-  in and out of the Lightning Network.
+  **CLN Application v0.0.7:**
+    - Adding long awaited Bookkeeper graphs for account events, sats flow and volume
+    - New SQL Terminal to run SQL queries directly from the UI
+    - Connect wallet modal shows clnrest and cln-grpc information
+
+  **CLN Rest v0.10.7:**
+    - added support for generating p2tr addresses
+
+  **CLN v25.05:**
+    - Reduced latency of commit and revoke messages.
+    - Reckless can update existing reckless-installed plugins via reckless update.
+    - Fixed routing of AskRene via high capacity channels.
+    - More accurate anchor fees.
+    - Channel backup turns our peers into watchtowers by now allowing your node to generate penalty transactions!
+    - blacklisted runes can now be restored via relist.
+    - xpay has many, many bugfixes, and is now almost seamlessly compatible when xpay-handle-pay is used.
+    - lightning-cli has neater help output, and doesn't crash occasionally on xpay notifications.
+    - setconfig does more safety checks and uses a separate "config.setconfig" file for runtime changes: you can also now set transient=true if you don't want the config files changed.
+    - Fixed a bug where we would fail to collect our own funds if we force closed a channel we had leased with --experimental-dual-fund.
