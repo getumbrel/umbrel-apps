@@ -1,15 +1,18 @@
 version: "3.7"
 
 services:
+  app_proxy:
+    environment:
+      APP_HOST: iobroker_server_1
+      APP_PORT: 8097
+
   server:
     image: buanet/iobroker:v9.1.2@sha256:84f0699976f54fde3a9e321240f94d7d526ba9cc73e3f2f669a8facc6f4da294
-    # container runs as root
-    network_mode: host
-    # web interface available at port 8097
+    restart: on-failure
+    privileged: true
+    network_mode: bridge
     volumes:
       - ${APP_DATA_DIR}/data:/opt/iobroker
       - ${UMBREL_ROOT}/data/storage/downloads:/media
       - /dev:/dev
       - /run/dbus:/run/dbus:ro
-    restart: on-failure
-    privileged: true
