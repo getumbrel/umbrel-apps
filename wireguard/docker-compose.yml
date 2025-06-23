@@ -7,7 +7,7 @@ services:
       APP_PORT: 51821
   
   app:
-    image: ghcr.io/wg-easy/wg-easy:15@sha256:07ed8f95eeeb4082c2e6afe3f5f3991723f496a21dd2dc25860b119a728b9ab0
+    image: ghcr.io/wg-easy/wg-easy:15.0.0@sha256:07ed8f95eeeb4082c2e6afe3f5f3991723f496a21dd2dc25860b119a728b9ab0
     restart: on-failure
     stop_grace_period: 1m
     ports:
@@ -16,10 +16,23 @@ services:
       - ${APP_DATA_DIR}/data/wireguard:/etc/wireguard
       - /lib/modules:/lib/modules
     environment:
-      WG_HOST: ${DEVICE_DOMAIN_NAME}
+      INIT_ENABLED: 'true'
+      INIT_USERNAME: umbrel
+      INIT_PASSWORD: ${APP_PASSWORD}
+      INIT_PORT: 51820
+      INIT_HOST: ${DEVICE_DOMAIN_NAME}
+      INIT_DNS: 1.1.1.1,8.8.8.8
+      INIT_IPV4_CIDR: 10.8.0.0/24
+      INIT_IPV6_CIDR: fd00:8::/64
+      PORT: 51821
+      HOST: 0.0.0.0
+      INSECURE: 'true'
     cap_add:
       - NET_ADMIN
       - SYS_MODULE
     sysctls:
       - net.ipv4.ip_forward=1
       - net.ipv4.conf.all.src_valid_mark=1
+      - net.ipv6.conf.all.disable_ipv6=0
+      - net.ipv6.conf.all.forwarding=1
+      - net.ipv6.conf.default.forwarding=1
