@@ -8,7 +8,7 @@ services:
       APP_PORT: 8080
 
   zabbix-frontend:
-    image: zabbix/zabbix-web-nginx-pgsql:7.2.7-alpine@sha256:782f2997890cda38c971f35f4626f1d6121125b1ae178bd9f797ceb8f3db8675
+    image: zabbix/zabbix-web-nginx-pgsql:7.2.9-alpine@sha256:ed4a00a2be70bdc05b40174a7e98135f690a9c00c2ef0cfd9d7db04c3604974f
     hostname: zabbix-frontend
     restart: on-failure
     environment:
@@ -22,7 +22,7 @@ services:
       - zabbix-database
 
   zabbix-server:
-    image: zabbix/zabbix-server-pgsql:7.2.7-alpine@sha256:6512317f2569b98e9cc51e6306549f6b82cc19d03facf5accb90dec53f92ebf5
+    image: zabbix/zabbix-server-pgsql:7.2.9-alpine@sha256:f1af5a501f112a33eb0634231630e9005bde88b3f62154585aa670823b79011e
     hostname: zabbix-server
     restart: on-failure
     init: true
@@ -36,7 +36,7 @@ services:
       - zabbix-database
 
   zabbix-agent:
-    image: zabbix/zabbix-agent2:7.2.7-alpine@sha256:3046176ae40fd5c8dbb8f6d54fcf6e42f94bd11646bf82a890569b37ae10ff46
+    image: zabbix/zabbix-agent2:7.2.9-alpine@sha256:a26e3099e33cc59288855d64fd905f9a81b15c1ac5661d6d5072bdd96387f987
     hostname: zabbix-agent
     restart: on-failure
     init: true
