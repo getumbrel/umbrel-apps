@@ -7,7 +7,7 @@ services:
       APP_PORT: 3334
 
   server:
-    image: ghostfolio/ghostfolio:2.172.0@sha256:0bdb56bfa9e32570bbb05b28c31bc2cd216676c64e3544d1e69bea00caf8321d
+    image: ghostfolio/ghostfolio:2.174.0@sha256:3cfcf31b01f6a9e29af809b9e94e845050a7757687c2a1ad87fca21bfb02e9c9
     init: true
     restart: on-failure
     environment:
@@ -23,25 +23,25 @@ services:
       REDIS_HOST: ghostfolio_redis_1
       REDIS_PASSWORD: ${APP_GHOSTFOLIO_REDIS_PASSWORD}
       REDIS_PORT: 6379
-  
-  postgres:
-    image: postgres:14-bullseye@sha256:c2a30d08a6f9e6c365595fd086c9e0436064c52425f15f72379ecf0807bac518
-    restart: on-failure
-    stop_grace_period: 1m
-    user: "1000:1000"
-    environment:
-      POSTGRES_USER: ${APP_GHOSTFOLIO_DB_USERNAME}
-      POSTGRES_PASSWORD: ${APP_GHOSTFOLIO_DB_PASSWORD}
-      POSTGRES_DB: ${APP_GHOSTFOLIO_DB_DATABASE_NAME}
-      PGDATA: /var/lib/postgresql/data
-    volumes:
-      - ${APP_DATA_DIR}/data/postgres:/var/lib/postgresql/data
 
-  redis:
-    image: redis:6.2-bullseye@sha256:5cdb2ac6f780e1d250787f4a887c1ed1166e3389757189ea913059409acc6f7c
-    restart: on-failure
-    user: "1000:1000"
-    command: >
-      --requirepass ${APP_GHOSTFOLIO_REDIS_PASSWORD}
-    volumes:
-      - ${APP_DATA_DIR}/data/redis:/data
+postgres:
+  image: postgres:14-bullseye@sha256:c2a30d08a6f9e6c365595fd086c9e0436064c52425f15f72379ecf0807bac518
+  restart: on-failure
+  stop_grace_period: 1m
+  user: "1000:1000"
+  environment:
+    POSTGRES_USER: ${APP_GHOSTFOLIO_DB_USERNAME}
+    POSTGRES_PASSWORD: ${APP_GHOSTFOLIO_DB_PASSWORD}
+    POSTGRES_DB: ${APP_GHOSTFOLIO_DB_DATABASE_NAME}
+    PGDATA: /var/lib/postgresql/data
+  volumes:
+    - ${APP_DATA_DIR}/data/postgres:/var/lib/postgresql/data
+
+redis:
+  image: redis:6.2-bullseye@sha256:5cdb2ac6f780e1d250787f4a887c1ed1166e3389757189ea913059409acc6f7c
+  restart: on-failure
+  user: "1000:1000"
+  command: >
+    --requirepass ${APP_GHOSTFOLIO_REDIS_PASSWORD}
+  volumes:
+    - ${APP_DATA_DIR}/data/redis:/data
