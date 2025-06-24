@@ -46,24 +46,22 @@ export APP_BITCOIN_NETWORK="mainnet"
 	fi
 } > /dev/null || true
 
-# .env file to persist the rpc user, pass, and auth
+# .env file to persist the rpc username and password
 BITCOIN_ENV_FILE="${EXPORTS_APP_DIR}/.env"
 
 # If no .env file exists, create one with generated values
 if [[ ! -f "${BITCOIN_ENV_FILE}" ]]; then
-	if [[ -z ${BITCOIN_RPC_USER+x} ]] || [[ -z ${BITCOIN_RPC_PASS+x} ]] || [[ -z ${BITCOIN_RPC_AUTH+x} ]]; then
+	if [[ -z ${BITCOIN_RPC_USER+x} ]] || [[ -z ${BITCOIN_RPC_PASS+x} ]]; then
 		BITCOIN_RPC_USER="umbrel"
 		BITCOIN_RPC_DETAILS=$("${EXPORTS_APP_DIR}/scripts/rpcauth.py" "${BITCOIN_RPC_USER}")
 		BITCOIN_RPC_PASS=$(echo "$BITCOIN_RPC_DETAILS" | tail -1)
-		BITCOIN_RPC_AUTH=$(echo "$BITCOIN_RPC_DETAILS" | head -2 | tail -1 | sed -e "s/^rpcauth=//")
 	fi
 
 	echo "export APP_BITCOIN_RPC_USER='${BITCOIN_RPC_USER}'"	>> "${BITCOIN_ENV_FILE}"
 	echo "export APP_BITCOIN_RPC_PASS='${BITCOIN_RPC_PASS}'"	>> "${BITCOIN_ENV_FILE}"
-	echo "export APP_BITCOIN_RPC_AUTH='${BITCOIN_RPC_AUTH}'"	>> "${BITCOIN_ENV_FILE}"
 fi
 
-# Source the .env file to export APP_BITCOIN_RPC_USER, APP_BITCOIN_RPC_PASS, and APP_BITCOIN_RPC_AUTH
+# Source the .env file to export APP_BITCOIN_RPC_USER and APP_BITCOIN_RPC_PASS
 . "${BITCOIN_ENV_FILE}"
 
 # HIDDEN SERVICES
