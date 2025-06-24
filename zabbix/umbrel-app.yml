@@ -3,7 +3,7 @@ id: zabbix
 category: networking
 name: Zabbix
 tagline: The all-in-one, open-source solution that lets you monitor anything
-version: "7.2.7"
+version: "7.2.9"
 description: >-
   ⚠️ Zabbix may take a few minutes to initialize after installation. Please be patient.
 
@@ -38,13 +38,19 @@ defaultUsername: "Admin"
 defaultPassword: "zabbix"
 torOnly: false
 releaseNotes: >-
+  ⚠️ This release includes a breaking change that may cause high CPU utilization when multiple values are received for a single item at once during log monitoring with multiple preprocessing workers configured.
+
+
   This release includes several improvements and bug fixes:
-    - Added Azure Backup Jobs and updated PostgreSQL templates
-    - Improved macro security with secret masking
-    - Enhanced VMware and TimescaleDB support
-    - Numerous bug fixes across server, proxy, frontend, and templates
-    - Resolved macro parsing, timeout handling, and UI display issues
-    - Improved dashboard elements and filtering logic
+    - Added top items sorted by received values number and size to diagnostics
+    - Added preprocessor throughput monitoring to server health templates
+    - Added supergroup topics support to Telegram notifications
+    - Fixed memory over-allocation and high CPU utilization issues
+    - Improved SNMP cache cleanup and preprocessing performance
+    - Fixed various frontend validation and display issues
+    - Enhanced agent performance and stability
+    - Resolved crashes and memory leaks in server and proxy components
+    - Updated templates for better compatibility and functionality
 
 
   Full release notes are available at https://www.zabbix.com/release_notes
