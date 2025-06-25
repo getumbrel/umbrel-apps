@@ -20,9 +20,6 @@ set_correct_permissions() {
 }
 
 # We set the correct permissions for any files that may have been created by a previous app running as root:
-
-# The old app's single-source-of-truth config. This gets renamed on first update
-set_correct_permissions "${APP_DATA_DIR}/app/bitcoin-config.json"
 set_correct_permissions "${APP_DATA_DIR}/bitcoin/umbrel-bitcoin.conf"
 set_correct_permissions "${APP_DATA_DIR}/bitcoin/bitcoin.conf"
 set_correct_permissions "${APP_DATA_DIR}/bitcoin/bitcoin.conf.save"
@@ -32,6 +29,11 @@ set_correct_permissions "${APP_DATA_DIR}/bitcoin/regtest/settings.json"
 set_correct_permissions "${APP_DATA_DIR}/bitcoin/signet/settings.json"
 set_correct_permissions "${APP_DATA_DIR}/bitcoin/testnet3/settings.json"
 set_correct_permissions "${APP_DATA_DIR}/bitcoin/testnet4/settings.json"
+
+# Set permissions recursively on the entire /app bind directory
+if [[ -d "${APP_DATA_DIR}/app" ]]; then
+	chown -R "${DESIRED_OWNER}" "${APP_DATA_DIR}/app"
+fi
 
 # Delay booting the full app until the RPC and P2P Tor Hidden Services are ready
 
