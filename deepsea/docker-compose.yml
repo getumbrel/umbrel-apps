@@ -1,0 +1,14 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: deepsea_deepsea_1
+      APP_PORT: 5000
+
+  deepsea:
+    image: ghcr.io/retropex/custom-dashboard-ocean:v1.1.0@sha256:0caebf8849a21076f7be7e9938fa410cbbd976e779524714d12be86d18539477
+    user: 1000:1000
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data:/app/data/
