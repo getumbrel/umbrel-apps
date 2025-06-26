@@ -3,7 +3,7 @@ id: ollama
 name: Ollama
 tagline: Self-host open source AI models like DeepSeek-R1, Llama, and more
 category: ai
-version: "0.6.4"
+version: "0.9.2"
 port: 11434
 description: >-
   Ollama allows you to download and run advanced AI models directly on your own hardware. Self-hosting AI models ensures full control over your data and protects your privacy.
@@ -36,12 +36,21 @@ defaultUsername: ""
 defaultPassword: ""
 dependencies: []
 releaseNotes: >-
-  Highlights:
-    - /api/show now includes model capabilities like vision
-    - Fixed out-of-memory errors with parallel requests on Gemma 3
-    - Improved Gemma 3's handling of multilingual characters
-    - Fixed context shifting issues in DeepSeek models
-    - Resolved Gemma 3 output degradation after 512/1024 tokens in 0.6.3
+  This release includes several bug fixes and improvements to tool calling functionality.
+
+
+  Key improvements in this release:
+    - Fixed issue where tool calls without parameters would not be returned correctly
+    - Fixed errors that previously showed "does not support generate"
+    - Fixed issue where some special tokens would not be tokenized properly for certain model architectures
+
+
+  Tool calling support has been added for new models:
+    - DeepSeek-R1-2508 (671B model)
+    - Magistral
+
+
+  Tool calling reliability has also been improved for existing models including Llama 4 and Mistral.
 
 
   Full release notes are available at https://github.com/ollama/ollama/releases

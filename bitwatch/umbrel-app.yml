@@ -1,0 +1,51 @@
+manifestVersion: 1
+id: bitwatch
+category: bitcoin
+name: Bitwatch
+version: "1.7.0"
+tagline: Monitor Bitcoin addresses in real-time
+description: >-
+  Monitor Bitcoin addresses in the mempool and on-chain using the mempool.space API and websocket.
+
+
+  Track balance changes, get telegram notifications, and manage expectations for multiple addresses.
+
+
+  Features:
+    - Build list of addresses in collections to sum-up balances accross wallets
+    - Subscribes to mempool.space (or locally hosted) websocket for real-time mempool activity
+    - Double checks data against mempool.space (or locally hosted) API on a configured interval
+    - Track both on-chain and mempool activity
+    - Configure auto-acceptance or alert mode of changes (chain_in, chain_out, mempool_in, mempool_out)
+      - by default, incoming transactions are auto-accepted, outgoing transactions are alerted
+      - all activity is alerted to a configured telegram connection once (even when auto-accepted)
+    - Option to use your own local node for privacy
+
+
+  Recommended to have Mempool + Fulcrum to run privately but not required.
+developer: Zap-O-Matic
+gallery:
+  - 1.jpg
+  - 2.jpg
+  - 3.jpg
+releaseNotes: >-
+  This release completely rebuilds the websocket and API request queue logic and includes bug, performance, and UX fixes.
+
+    - new method for mempool.space websocket subscription management
+      - now managed per address to prevent hundreds of websocket subscriptions
+      - improved websocket logic for adding/editing/deleting addresses
+      - showing websocket subscription status in address row
+    - clearer UI for zero balances (opacity reduction)
+    - tighter UI (reduced margin/padding)
+    - fix auto-acceptance bug (failing to alert telegram when alert is set in some cases)
+    - descriptor and extended key rows now show balance summary of address lists
+    - more robust e2e tests
+
+website: https://github.com/zapomatic/bitwatch
+repo: https://github.com/zapomatic/bitwatch
+support: https://github.com/zapomatic/bitwatch/issues
+dependencies: []
+port: 3117
+path: ""
+submitter: Zap-O-Matic
+submission: https://github.com/getumbrel/umbrel-apps/pull/2410

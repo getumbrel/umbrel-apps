@@ -3,28 +3,20 @@ id: zabbix
 category: networking
 name: Zabbix
 tagline: The all-in-one, open-source solution that lets you monitor anything
-version: "7.2.4"
+version: "7.2.9"
 description: >-
   ⚠️ Zabbix may take a few minutes to initialize after installation. Please be patient.
-  
+
 
   An enterprise-class, open-source distributed monitoring solution that's designed to monitor the performance and availability of network devices, servers, services, and other IT resources.
   Zabbix is a flexible solution that can monitor anything from a simple, standalone application to a large-scale environment, with features including:
-
-
-  - Resource discovery: Discover network entities, server resources, and onboard/offboard devices. Use out-of-the-box integrations (templates) to monitor anything form a low-level device to a SAAS service.
-  
-  - Metric acquisition: Use an agent or agent-less approach for metric acquisition from any source – devices, sensors, operating systems, virtualization platforms, container platforms like Docker, Kubernetes, cloud infrastructures, databases, webpages, Java ecosystems, application servers, API endpoints, business applications, and many more.
-  
-  - Root cause analysis and problem detection: Count on high-performance, real-time problem detection that correlates both existing and incoming problems and performs root cause analyses.
-  
-  - Incidents, alerts, and notifications: Receive an alert when an issue is triggered (proactively or post-mortem) in the ecosystem. Use multiple messaging channels (including Slack, JIRA, Microsoft Teams, email or text messages) to get notified about the different types of events occurring in your environment.
-  
-  - "Single pane of glass" overview: Visualize collected data and monitoring events in graphs, lists, geomaps, and network topology maps.
-  
-  - Multitenancy and distributed monitoring: Enjoy the convenience of one monitoring solution for multiple data centers, departments, and organizations, and monitor remote locations behind firewalls with remote command execution capability.
-  
-  - Unparalleled flexibility: Adapt Zabbix to your needs and utilize built-in functionalities, including the ability to stream metrics and events over HTTP, reporting, auditing, security, service SLA calculations, and many more.
+    - Resource discovery: Discover network entities, server resources, and onboard/offboard devices. Use out-of-the-box integrations (templates) to monitor anything form a low-level device to a SAAS service.
+    - Metric acquisition: Use an agent or agent-less approach for metric acquisition from any source - devices, sensors, operating systems, virtualization platforms, container platforms like Docker, Kubernetes, cloud infrastructures, databases, webpages, Java ecosystems, application servers, API endpoints, business applications, and many more.
+    - Root cause analysis and problem detection: Count on high-performance, real-time problem detection that correlates both existing and incoming problems and performs root cause analyses.
+    - Incidents, alerts, and notifications: Receive an alert when an issue is triggered (proactively or post-mortem) in the ecosystem. Use multiple messaging channels (including Slack, JIRA, Microsoft Teams, email or text messages) to get notified about the different types of events occurring in your environment.
+    - "Single pane of glass" overview: Visualize collected data and monitoring events in graphs, lists, geomaps, and network topology maps.
+    - Multitenancy and distributed monitoring: Enjoy the convenience of one monitoring solution for multiple data centers, departments, and organizations, and monitor remote locations behind firewalls with remote command execution capability.
+    - Unparalleled flexibility: Adapt Zabbix to your needs and utilize built-in functionalities, including the ability to stream metrics and events over HTTP, reporting, auditing, security, service SLA calculations, and many more.
 
 
   ⚙️ Configuration:
@@ -46,18 +38,21 @@ defaultUsername: "Admin"
 defaultPassword: "zabbix"
 torOnly: false
 releaseNotes: >-
-  This release includes several improvements and bug fixes:
-    - New Features & Improvements
-      - **New Templates Added:** Support for Palo Alto PA-440, Azure SQL Managed Instance, Dell (HTTP & SNMP), and Systemd service unit discovery.
-      - **Compatibility Updates:** Now supports PHP 8.4 and TimescaleDB up to version 2.18.
-      - **Enhancements in Agent & API:** Added user parameters for Redis in Zabbix Agent 2, improved handling of service type macros, and proofread Nvidia templates.
-    - Bug Fixes
-      - **Data Integrity & Stability:** Prevented accidental deletion of key elements (hosts, triggers, services) if they are in use.
-      - **User Experience Fixes:** Restored alert visibility for users in the same group, improved UI elements (labels, dropdowns, graphs, tooltips).
-      - **Performance Enhancements:** Reduced load on history syncers, fixed excessive cache filling, and optimized maintenance and trigger handling.
-      - **Agent & Proxy Improvements:** Fixed serialization issues, incorrect exit codes, and buffer sizes in Zabbix Agent 2.
-      - **Security & Configuration Updates:** Improved DNS handling, resolved MQTT message blocking, and enhanced Modbus data interpretation.
+  ⚠️ This release includes a breaking change that may cause high CPU utilization when multiple values are received for a single item at once during log monitoring with multiple preprocessing workers configured.
 
-  Full release notes are available at https://www.zabbix.com/release_notes.
+
+  This release includes several improvements and bug fixes:
+    - Added top items sorted by received values number and size to diagnostics
+    - Added preprocessor throughput monitoring to server health templates
+    - Added supergroup topics support to Telegram notifications
+    - Fixed memory over-allocation and high CPU utilization issues
+    - Improved SNMP cache cleanup and preprocessing performance
+    - Fixed various frontend validation and display issues
+    - Enhanced agent performance and stability
+    - Resolved crashes and memory leaks in server and proxy components
+    - Updated templates for better compatibility and functionality
+
+
+  Full release notes are available at https://www.zabbix.com/release_notes
 submitter: DavidGarciaCat
 submission: https://github.com/getumbrel/umbrel-apps/pull/1376

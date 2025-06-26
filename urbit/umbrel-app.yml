@@ -2,7 +2,7 @@ manifestVersion: 1
 id: urbit
 category: networking
 name: Urbit
-version: "v3.1"
+version: "v3.2-1"
 tagline: Run Urbit on your Umbrel
 description: >-
   Urbit is a personal server for self-sovereign personal & networked
@@ -35,13 +35,20 @@ torOnly: false
 submitter: ~mopfel-winrux
 submission: https://github.com/getumbrel/umbrel/pull/1246
 releaseNotes: >-
-  `vere-v3.1` is a a minor runtime release with the following highlighted features:
-    - Rebinding eyre HTTP cache entires.
-    - The runtime now automatically tries to open the Ames port on a home network using the NAT-PMP protocol. This will improve connectivity on self-hosted setups.
-    - Restore the ctrl+z functionality to instantly force kill the urbit process.
-    - Plug memory leaks related to DNS queries. This has resulted in significant uptime improvements for select Urbit Foundation infrastructure ships.
-    - More reliable lockfile and replay error handling.
-    - Miscellaneous error message improvements.
-  
+  This release is a rewrite of the Urbit Umbrel app with a modern frontend and monolithic self-contained backend. 
 
-  Full release notes here: https://github.com/urbit/vere/releases/tag/vere-v3.1
+  
+  `vere-v3.2` brings the following highlighted features:
+    - Compatibility with the upcoming zuse 410 kelvin release.
+    - A directed messaging driver for 1-3 orders of magnitude faster networking performance.
+    - Lagoon jets for native matrix math in Urbit.
+    - Double boot protection to prevent the most common cause of irrecoverable ship failure.
+    - Loom memory usage statistics in Arvo to help hosting providers and provide a foundation for zero click maintenance.
+    - HTTP scry streaming for serving individual chunks of large files over HTTP.
+    - Note that all these features are dependent on the 410k Arvo release.
+
+
+  Moon keyfiles generated with Arvo versions of 411 or above are not compatible with vere-v3.2. To recreate an old moon keyfile, upgrade Arvo to 410 first and then do |moon-cycle-keys <moon-name>. This only applies to the moon keyfiles, previously booted moons can upgrade to vere-v3.2 without issue.
+
+
+  Full release notes here: https://github.com/urbit/vere/releases/tag/vere-v3.2

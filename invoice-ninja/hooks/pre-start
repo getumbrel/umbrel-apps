@@ -1,15 +1,16 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# We're forced to run user/group 1500
-# More detail here: https://github.com/invoiceninja/dockerfiles/blob/ad3ffc227d63740330f761dad6e8c87768577847/alpine/5/Dockerfile#L70-L80
-# So we set the owner of the data directories to 1500:1500
-APP_DATA_DIR="$(readlink -f $(dirname "${BASH_SOURCE[0]}")/..)/data"
+### Correct permissions for invoice-ninja data directories
 
-DESIRED_OWNER="1500:1500"
+APP_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")"
+APP_DATA_DIR="${APP_DIR}/data"
+
+DESIRED_OWNER="1000:1000"
 
 PUBLIC_DATA_DIR="${APP_DATA_DIR}/public"
 STORAGE_DATA_DIR="${APP_DATA_DIR}/storage"
+REDIS_DATA_DIR="${APP_DATA_DIR}/redis"
 
 invoiceninja_correct_permission() {
 	local -r path="${1}"
@@ -25,14 +26,148 @@ invoiceninja_correct_permission() {
 
 invoiceninja_correct_permission "${PUBLIC_DATA_DIR}"
 invoiceninja_correct_permission "${STORAGE_DATA_DIR}"
+invoiceninja_correct_permission "${REDIS_DATA_DIR}"
+
+### Generate APP_KEY for invoice-ninja
+
+MAX_RETRIES=5
+RETRY_COUNT=0
 
 LARAVEL_APP_KEY_FILE_PATH="${APP_DATA_DIR}/laravel-app-key.txt"
 
+echo "Checking for existing invoice-ninja APP_KEY..."
 
 # We only generate and save the Laravel APP_KEY if it doesn't exist already
 if [[ ! -f "${LARAVEL_APP_KEY_FILE_PATH}" ]]; then
-	#  generates a laravel APP_KEY using the invoice-ninja container --> php artisan key:generate --show
-	APP_KEY=$("${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" run --rm app php artisan key:generate --show)
-	# we remove the color codes and newlines from the output which cause laravel to fail to parse the APP_KEY
-	echo "${APP_KEY}" | sed 's/\x1b\[[0-9;]*m//g' | tr -d '\r\n' > "${LARAVEL_APP_KEY_FILE_PATH}"
+  echo "Generating Invoice-Ninja APP_KEY…"
+
+  # start the service in the background
+  "${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" up -d app >/dev/null
+
+  # make sure Laravel’s cache paths exist, because Invoice Ninja removed the bootstrap/cache volume.
+  # https://github.com/invoiceninja/dockerfiles/pull/738
+  # https://github.com/invoiceninja/dockerfiles/pull/745
+  "${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" exec -T -w /var/www/html app \
+    bash -c '
+      php artisan optimize || true
+      mkdir -p storage/framework/{cache,data,sessions,testing,views} bootstrap/cache
+      chown -R www-data:www-data storage bootstrap/cache 2>/dev/null || true
+      chmod -R ug+rwx storage bootstrap/cache
+    '
+
+  # generate the key
+  APP_KEY=$(
+    "${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" \
+      run --rm -w /var/www/html app \
+      php artisan key:generate --show --no-ansi
+  )
+
+  # strip colour codes / newlines and save
+  printf '%s' "${APP_KEY//[$'\t\r\n ']}" > "${LARAVEL_APP_KEY_FILE_PATH}"
+  echo "Invoice-Ninja APP_KEY saved → ${LARAVEL_APP_KEY_FILE_PATH}"
+else
+  echo "Invoice-Ninja APP_KEY already exists – nothing to do."
+fi
+
+### Create default nginx configuration file for invoice-ninja if it is not up-to-date
+
+NGINX_CONFIG_FILE="${APP_DIR}/config/nginx.conf"
+
+# We use a marker at the top of the file to identify the canonical nginx.conf for invoice-ninja
+MARKER_REGEX='^# Umbrel Invoice-Ninja canonical nginx.conf 27-May-2025'
+
+# We check if the nginx config file does not exist or if it exists and the marker is not up-to-date
+if [[ ! -f "${NGINX_CONFIG_FILE}" ]] || ! grep -qx "${MARKER_REGEX}" "${NGINX_CONFIG_FILE}"; then
+  echo "Updating nginx configuration file for invoice-ninja."
+  # Overwrite the nginx configuration file
+  cat >"${NGINX_CONFIG_FILE}" <<'EOF'
+# Umbrel Invoice-Ninja canonical nginx.conf 27-May-2025
+
+# Invoice-Ninja recommended nginx.conf for Laravel
+# https://github.com/invoiceninja/dockerfiles/blob/ed9c23d9c74a2a9f47b9dcb54946726ab816b6bc/debian/nginx/laravel.conf
+
+# https://laravel.com/docs/master/deployment#nginx
+server {
+    listen 80 default_server;
+    server_name _;
+    root /var/www/html/public;
+
+    add_header X-Frame-Options "SAMEORIGIN";
+    add_header X-Content-Type-Options "nosniff";
+
+    index index.php;
+    charset utf-8;
+
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    location = /favicon.ico { access_log off; log_not_found off; }
+    location = /robots.txt  { access_log off; log_not_found off; }
+
+    error_page 404 /index.php;
+
+    location ~ \.php$ {
+        fastcgi_pass invoice-ninja_app_1:9000;
+        fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
+        include fastcgi_params;
+    }
+
+    location ~ /\.(?!well-known).* {
+        deny all;
+    }
+}
+
+# Invoice-Ninja recommended global/server directives
+# https://github.com/invoiceninja/dockerfiles/blob/ed9c23d9c74a2a9f47b9dcb54946726ab816b6bc/debian/nginx/invoiceninja.conf
+
+# https://nginx.org/en/docs/http/ngx_http_core_module.html
+client_max_body_size 10M;
+client_body_buffer_size 10M;
+server_tokens off;
+
+# https://nginx.org/en/docs/http/ngx_http_fastcgi_module.html
+fastcgi_buffers 32 16K;
+
+# https://nginx.org/en/docs/http/ngx_http_gzip_module.html
+gzip on;
+gzip_comp_level 2;
+gzip_min_length 1M;
+gzip_proxied any;
+gzip_types *;
+EOF
+
+echo "Updated nginx configuration file for invoice-ninja."
+
+fi
+
+# Merge data from incorrect /data/storage mount into correct /data/storage mount for invoice-ninja
+# The incorrect storage bind mount occured due to umbrelOS Files logic for data migration:
+# https://github.com/getumbrel/umbrel/blob/93a4b1801d1141252e73ff759a4ef52d038fff92/packages/umbreld/source/modules/apps/app.ts#L113-L120
+
+INCORRECT_STORAGE_DIR="${APP_DIR}/home"
+CORRECT_STORAGE_DIR="${APP_DIR}/data/storage"
+
+# We only copy data from the ${APP_DIR}/home directory if it exists
+if [[ -d "${INCORRECT_STORAGE_DIR}" ]]; then
+  echo "Migrating invoice-ninja data from ${INCORRECT_STORAGE_DIR} to ${CORRECT_STORAGE_DIR}..."
+
+  # Ensure the destination exists (in case a user has deleted the directory)
+  mkdir -p "${CORRECT_STORAGE_DIR}"
+
+  # Copy everything from the incorrect bind mount into the correct one.
+  # -a archive (perms, times, links, dot-files)
+  # -u update-only (overwrite only if source is newer)
+  rsync -au --progress \
+        "${INCORRECT_STORAGE_DIR}/" \
+        "${CORRECT_STORAGE_DIR}/"
+
+  # Ensure the web-server user owns the merged data
+  chown -R www-data:www-data "${CORRECT_STORAGE_DIR}"
+
+  # Archive the old bind-mount so this block never triggers again
+  mv "${INCORRECT_STORAGE_DIR}" \
+     "${INCORRECT_STORAGE_DIR}_migrated_$(date +%Y%m%dT%H%M%S)"
+
+  echo "Successfully migrated invoice-ninja data from ${INCORRECT_STORAGE_DIR} to ${CORRECT_STORAGE_DIR}..."
 fi

@@ -1,0 +1,63 @@
+version: '3.0'
+services:
+  app_proxy:
+    environment:
+      APP_HOST: activepieces_app_1
+      APP_PORT: 80
+      PROXY_AUTH_ADD: "false"
+
+  app:
+    ## does not work rootless as of yet
+    #user: "1000:1000"
+    image: ghcr.io/activepieces/activepieces:0.64.1@sha256:15825710ff0cc2ab180a125c26bf2f9a4fe4d91c4bb45c103a9799bce071bc91
+    restart: on-failure
+    environment:
+      AP_ENGINE_EXECUTABLE_PATH: dist/packages/engine/main.js
+      AP_API_KEY: ${APP_PASSWORD}
+      AP_ENCRYPTION_KEY: ${APP_AP_ENCRYPTION_KEY}
+      AP_JWT_SECRET: ${APP_PASSWORD}
+      AP_ENVIRONMENT: prod
+      AP_FRONTEND_URL: http://${DEVICE_DOMAIN_NAME}:8146
+      AP_WEBHOOK_TIMEOUT_SECONDS: 30
+      AP_TRIGGER_DEFAULT_POLL_INTERVAL: 5
+      AP_POSTGRES_DATABASE: activepieces
+      AP_POSTGRES_HOST: activepieces_db_1
+      AP_POSTGRES_PORT: 5432
+      AP_POSTGRES_USERNAME: activepieces
+      AP_POSTGRES_PASSWORD: activepieces
+      AP_EXECUTION_MODE: UNSANDBOXED
+      AP_REDIS_HOST: activepieces_redis_1
+      AP_REDIS_PORT: 6379
+      AP_FLOW_TIMEOUT_SECONDS: 600
+      AP_TELEMETRY_ENABLED: "true"
+      AP_TEMPLATES_SOURCE_URL: "https://cloud.activepieces.com/api/v1/flow-templates"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    volumes:
+      - ${APP_DATA_DIR}/data/app/cache:/usr/src/app/cache
+
+  db:
+    user: "1000:1000"
+    image: postgres:17.4@sha256:4aed4b0525233308fc5de1b8d47f92326460d598dc5f004d14b41f183360b4e9
+    restart: on-failure
+    environment:
+      POSTGRES_DB: activepieces
+      POSTGRES_PASSWORD: activepieces
+      POSTGRES_USER: activepieces
+    volumes:
+      - ${APP_DATA_DIR}/data/db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U activepieces"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    user: "1000:1000"
+    image: redis:7.4.3@sha256:ee8ec723c831b815c3e2f2c6fbd1c145c68d1c04ba284f044ec1434fbca0fee8
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data/redis:/data

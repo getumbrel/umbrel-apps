@@ -2,18 +2,18 @@ manifestVersion: 1.1
 id: synapse
 category: social
 name: Synapse
-version: "1.127.1"
+version: "1.132.0"
 tagline: Matrix homeserver
 description: >-
   Synapse is an open source Matrix homeserver implementation, written and maintained by Element. Matrix is the open standard for secure and interoperable real time communications.
 
 
   💡 How It Works
-  
-  
+
+
   To chat using Matrix, you'll need a client. You can find a list of popular clients here: https://matrix.org/ecosystem/clients/
-  
-  
+
+
   In Matrix, each user operates one or more Matrix clients, which connect to a Matrix homeserver. The homeserver stores all personal chat history and user account information, similar to how a mail client connects to an IMAP/SMTP server.
   Like email, you can either run your own Matrix homeserver to control and own your communications and history, or use a hosted server (e.g., matrix.org). Matrix has no single point of control or mandatory service provider, unlike WhatsApp, Facebook, Hangouts, etc.
 
@@ -23,7 +23,7 @@ description: >-
 
   To get started, install the "Element" app on your Umbrel, or install any other Matrix client on a device of your choice. When you register or login through the client, you will need to change the address of the homeserver you are logging into from the default matrix.org to http://umbrel.local:8008 for local access. 
 
-  
+
   For seamless connection even when your client isn't connected to the same network as your Umbrel, simply install the "Tailscale" app on your Umbrel and your client device, and use http://umbrel:8008 as the address of your server.
 developer: Element
 website: https://element-hq.github.io/synapse/latest/
@@ -42,17 +42,13 @@ torOnly: false
 submitter: Umbrel
 submission: https://github.com/getumbrel/umbrel/commit/c9f0975e766e79d4bd6adf4255cd081f54d654cb
 releaseNotes: >-
-  🚨 This release includes a high severity security fix for a vulnerability affecting federation. The vulnerability has been exploited in the wild.
-
-
   Some of the key highlights in this release include:
-    - Fixed a high severity security vulnerability (CVE-2025-30355)
-    - Updated implementation of delayed state events
-    - Added caching support to media endpoints
-    - Improved handling of user-sent state events
-
-
-  ⚠️ Room list publication is now disabled by default
+    - Added support for invite filtering to help manage unwanted invitations
+    - Introduced new module API callbacks for enhanced customization
+    - Added experimental support for configurable user types and rate limit overrides
+    - Improved application service transaction delivery with ping endpoint support
+    - Fixed room summary API incorrectly showing private rooms
+    - Prevented users from adding themselves to their own ignore list
 
 
   Full release notes are found at https://github.com/element-hq/synapse/releases

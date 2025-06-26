@@ -1,0 +1,15 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: bitwatch_web_1
+      APP_PORT: 3117
+
+  web:
+    image: ghcr.io/zapomatic/bitwatch:v1.7.0@sha256:80ae2e5f4941bf347274f3bb0bee68cf347e985a14d04d0a6fa8ffc37b0b830b
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 1m
+    volumes:
+      - ${APP_DATA_DIR}/data:/app/server/data
