@@ -65,7 +65,7 @@ export APP_BITCOIN_KNOTS_RPC_HIDDEN_SERVICE="$(cat "${rpc_hidden_service_file}" 
 export APP_BITCOIN_KNOTS_P2P_HIDDEN_SERVICE="$(cat "${p2p_hidden_service_file}" 2>/dev/null || echo "notyetset.onion")"
 
 # electrs compatible network param
-export APP_BITCOIN_KNOTS_NETWORK_ELECTRS=$APP_BITCOIN_KNOTS_NETWORK
+export APP_BITCOIN_KNOTS_NETWORK_ELECTRS=$APP_BITCOIN_NETWORK
 if [[ "${APP_BITCOIN_KNOTS_NETWORK_ELECTRS}" = "mainnet" ]]; then
 	APP_BITCOIN_KNOTS_NETWORK_ELECTRS="bitcoin"
 fi
