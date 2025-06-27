@@ -1,0 +1,28 @@
+version: '3.7'
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: brave_web_1
+      APP_PORT: 3000
+
+  web:
+    image: ghcr.io/linuxserver/brave:1.79.126@sha256:82448700fd7125d71740d08350caaa58275cf8dcc556203c34fb715855b5db22
+    restart: on-failure
+    ports:
+      - 3935:3001
+    healthcheck:
+      test: timeout 10s bash -c ':> /dev/tcp/127.0.0.1/3000' || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 90s
+    security_opt:
+      - no-new-privileges:true
+      - seccomp:unconfined
+    shm_size: "1gb"
+    volumes:
+      - ${APP_DATA_DIR}/data:/config:rw
+    environment:
+     PUID: 1000
+     PGID: 1000
