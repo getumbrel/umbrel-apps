@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: bitcoin
 category: bitcoin
 name: Bitcoin Node
-version: "29.0"
+version: "1.0.2"
 tagline: Run your personal node powered by Bitcoin Core
 description: >-
   Run your Bitcoin node and independently store and validate
@@ -38,17 +38,42 @@ gallery:
   - 2.jpg
   - 3.jpg
   - 4.jpg
-  - 5.jpg
 path: ""
 defaultPassword: ""
 releaseNotes: >-
-  Bitcoin Core has been updated to v29.0, which includes new features, bug fixes, and performance improvements.
-  See the full Bitcoin Core release notes at https://github.com/bitcoin/bitcoin/blob/master/doc/release-notes/release-notes-29.0.md
+  This update fixes an issue where certain manually edited bitcoin.conf files were not parsed correctly, and also fixes a compatibility issue with Tor Browser.
+
+
+  ### In addition, here's what's new in the all-new Bitcoin Node app.
+
+
+  This update introduces a completely redesigned experience, rebuilt from the ground up, both architecturally and visually, to give you a powerful, data-rich view into every aspect of your node's operation.
+  
+  
+  From visualizing the network in real time to fine-tuning your configuration, the tools you need for ultimate sovereignty are now at your fingertips.
+  
+  
+  ### New features:
+  
+  - **Globe**: A stunning, real-time visualization of your node's global connections. See new peers connect and transactions broadcast around the world, as it happens.
+  
+  - **Blocks**: Follow along as each new block arrives, packed with transactions, and is verified by your own node.
+
+  - **Insights**: Key metrics about your node and the network are now presented in a series of clean, elegant charts.
+
+  - **Peers**: A completely new table gives you a detailed, sortable list of every peer your node is connected to.
+
+  - **Settings**: Fine-tune your node with a simplified, searcheable, and more intuitive layout for the settings. 
+
+  - **Configuration Editor**: Power users can now make custom fine-grained adjustments to their `bitcoin.conf` file directly from a new editor in the app's settings.
+
+
+  A new chapter for self-sovereignty begins.
 widgets:
   - id: "stats"
     type: "four-stats"
     refresh: "5s"
-    endpoint: "server:3005/v1/bitcoind/widgets/stats"
+    endpoint: "app:3000/api/widget/stats"
     link: ""
     example:
       type: "four-stats"
@@ -69,7 +94,7 @@ widgets:
   - id: "sync"
     type: "text-with-progress"
     refresh: "2s"
-    endpoint: "server:3005/v1/bitcoind/widgets/sync"
+    endpoint: "app:3000/api/widget/sync"
     link: ""
     example:
       type: "text-with-progress"
