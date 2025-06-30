@@ -2,7 +2,7 @@ manifestVersion: 1
 id: btcpay-server
 category: bitcoin
 name: BTCPay Server
-version: "2.1.1-patch.1"
+version: "2.1.5"
 tagline: Accept Bitcoin payments with 0 fees & no 3rd party
 description: >-
   BTCPay Server is a payment processor that allows you to receive
@@ -34,25 +34,29 @@ path: ""
 defaultUsername: ""
 defaultPassword: ""
 releaseNotes: >-
-  This patch release of BTCPay Server fixes a critical bug that prevented syncing block 896727. You can see the release notes for BTCPay Server 2.1.1 below:
-
-
   This update of BTCPay Server includes new features, improvements and bug fixes.
 
 
-  ⚠️ Note: If you installed the XPub Extractor plugin, you will need to update it.
+  New features:
+    - Enhanced manual coin selection with advanced filters and improved user experience
+    - Added "Clear All" filter to invoices
+    - Point of Sale improvements including tax rates applied to items with breakdown in checkout and receipts
+    - New webhooks for expired partial payments and payments after expiration
+    - Added Coinmate rate provider for CZK currency
+    - Ability to replace-by-fee sweeping transactions
+    - Admin can change default store templates
+    - Store owners can configure fallback rate source
+    - Phoenixd Lightning support
 
 
-  Highlights:
-    - Add support for wallet policy output descriptors (BIP388, BIP389)
-    - Enable Taproot signing for hardware wallets (BIP86)
-    - Link Payment Requests to external invoices via Reference Id
-    - Add webhook triggered on full Payment Request payment
-    - Fix multiple bugs in multisig flow, QR scanning, and payout permissions
-    - Improve hardware wallet import flow and multisig compatibility
-    - Add confirmation prompts and UI improvements for Payment Requests
-    - Enhance mobile UX with numeric keypad on POS
-    
+  Bug fixes:
+    - Fixed connection failure with phoenixd on mainnet
+    - Fixed Point of Sale custom amount and payment issues
+    - Fixed tax application and receipt display in Print View
+    - Fixed keypad crashes and free item handling
+    - Fixed rate lookup failures and RBF transaction labeling
+
+
   Full release notes can be found at https://github.com/btcpayserver/btcpayserver/releases
 submitter: Umbrel
 submission: https://github.com/getumbrel/umbrel/pull/353
