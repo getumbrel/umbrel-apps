@@ -1,0 +1,81 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: librechat_api_1
+      APP_PORT: 3080
+
+  api:
+    image: ghcr.io/danny-avila/librechat:0.7.8@sha256:7fe76551a78eaa93f12f52a8e80d2c977fad08ca34ed2d0a821aaea7f24f3e62
+    restart: on-failure
+    user: "1000:1000"
+    command: npm run backend:dev
+    env_file:
+      - path: ${APP_DATA_DIR}/.env
+    environment:
+      - HOST=0.0.0.0
+      - MONGO_URI=mongodb://librechat_mongodb_1:27017/LibreChat
+      - MEILI_HOST=http://librechat_meilisearch_1:7700
+      - RAG_PORT=8000
+      - RAG_API_URL=http://librechat_rag_api_1:8000
+      - OPENAI_API_KEY=user_provided
+      - GOOGLE_KEY=user_provided
+      - ANTHROPIC_API_KEY=user_provided
+      - ASSISTANTS_API_KEY=user_provided
+      - CREDS_KEY=f34be427ebb29de8d88c107a71546019685ed8b241d8f2ed00c3df97ad2566f0
+      - CREDS_IV=e2341419ec3dd3d19b13a1a87fafcbfb
+      - JWT_SECRET=16f8c0ef4a5d391b26034086c628469d3f9f497f08163ab9b40137092f2909ef
+      - JWT_REFRESH_SECRET=eaa5191f2914e30b9387fd84e254e4ba6fc51b4654968a9b0803b456a54b8418
+    volumes:
+      - ${APP_DATA_DIR}/data/api/librechat.yaml:/app/librechat.yaml
+      - ${APP_DATA_DIR}/data/api/images:/app/client/public/images
+      - ${APP_DATA_DIR}/data/api/uploads:/app/uploads
+      - ${APP_DATA_DIR}/data/api/logs:/app/api/logs
+    depends_on:
+      - mongodb
+      - rag_api
+
+  mongodb:
+    image: mongo:8.0.10@sha256:15fb53a5160ebabff5ecade8f8b5d48721b68ea190957a7f35b5b38e8340e62b
+    restart: on-failure
+    user: "1000:1000"
+    volumes:
+      - ${APP_DATA_DIR}/data/db:/data/db
+    command: mongod --noauth
+
+  meilisearch:
+    image: getmeili/meilisearch:v1.12.3@sha256:4acfcbbb9e089aa1aac838cfda3fba7f07aaaef044c23da8acbe0ab741400dac
+    restart: on-failure
+    user: "1000:1000"
+    environment:
+      - MEILI_HOST=http://librechat_meilisearch_1:7700
+      - MEILI_NO_ANALYTICS=true
+      - MEILI_MASTER_KEY=DrhYf7zENyR6AlUCKmnz0eYASOQdl6zxH7s7MKFSfFCt
+    volumes:
+      - ${APP_DATA_DIR}/data/meilisearch:/meili_data
+
+  vectordb:
+    image: ankane/pgvector:v0.5.1@sha256:d3a9d8ac27bb7e05e333ef25b634d2625adaa85336ab729954b9e94859bf6fa7
+    environment:
+      POSTGRES_DB: mydatabase
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data/vectordb:/var/lib/postgresql/data
+
+  rag_api:
+    image: ghcr.io/danny-avila/librechat-rag-api-dev-lite:v0.5.0@sha256:c734c37ec42426d862a986f8dc6e253bcd848f901d27be62d9dc63dd16847016
+    env_file:
+      - path: ${APP_DATA_DIR}/.env
+    environment:
+      - DB_HOST=librechat_vectordb_1
+      - RAG_PORT=8000
+      - OPENAI_API_KEY=user_provided
+      - GOOGLE_KEY=user_provided
+      - ANTHROPIC_API_KEY=user_provided
+      - ASSISTANTS_API_KEY=user_provided
+    restart: on-failure
+    depends_on:
+      - vectordb
