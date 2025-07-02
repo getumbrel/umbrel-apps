@@ -9,8 +9,8 @@ export APP_BITCOIN_KNOTS_TOR_PORT="8334"
 export APP_BITCOIN_KNOTS_ZMQ_RAWBLOCK_PORT="48332"
 export APP_BITCOIN_KNOTS_ZMQ_RAWTX_PORT="48333"
 export APP_BITCOIN_KNOTS_ZMQ_HASHBLOCK_PORT="48334"
-export APP_BITCOIN_KNOTS_ZMQ_HASHTX_PORT="48336"
 export APP_BITCOIN_KNOTS_ZMQ_SEQUENCE_PORT="48335"
+export APP_BITCOIN_KNOTS_ZMQ_HASHTX_PORT="48336"
 export APP_BITCOIN_KNOTS_INTERNAL_RPC_PORT="8332"
 export APP_BITCOIN_KNOTS_INTERNAL_P2P_PORT="8333"
 
@@ -69,3 +69,37 @@ export APP_BITCOIN_KNOTS_NETWORK_ELECTRS=$APP_BITCOIN_NETWORK
 if [[ "${APP_BITCOIN_KNOTS_NETWORK_ELECTRS}" = "mainnet" ]]; then
 	APP_BITCOIN_KNOTS_NETWORK_ELECTRS="bitcoin"
 fi
+
+# Add special handling for knots internal/external port mismatch.
+# This must appear above the below loop.
+export APP_BITCOIN_RPC_PORT="${APP_BITCOIN_RPC_PORT:-$APP_BITCOIN_KNOTS_INTERNAL_RPC_PORT}"
+export APP_BITCOIN_P2P_PORT="${APP_BITCOIN_P2P_PORT:-$APP_BITCOIN_KNOTS_INTERNAL_P2P_PORT}"
+
+for var in \
+    NODE_IP \
+    TOR_PROXY_IP \
+    I2P_DAEMON_IP \
+    DATA_DIR \
+    RPC_PORT \
+    P2P_PORT \
+    TOR_PORT \
+    ZMQ_RAWBLOCK_PORT \
+    ZMQ_RAWTX_PORT \
+    ZMQ_HASHBLOCK_PORT \
+    ZMQ_SEQUENCE_PORT \
+    ZMQ_HASHTX_PORT \
+    NETWORK \
+    RPC_USER \
+    RPC_PASS \
+    RPC_HIDDEN_SERVICE \
+    P2P_HIDDEN_SERVICE \
+    NETWORK_ELECTRS
+do
+    bitcoin_var="APP_BITCOIN_${var}"
+    knots_var="APP_BITCOIN_KNOTS_${var}"
+    if [ -n "${!knots_var-}" ]; then
+        export "$bitcoin_var"="${!bitcoin_var:=${!knots_var}}"
+    else
+        echo "Warning: $knots_var is unset or empty"
+    fi
+done
