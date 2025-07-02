@@ -14,7 +14,7 @@ export APP_BITCOIN_KNOTS_ZMQ_HASHTX_PORT="48336"
 export APP_BITCOIN_KNOTS_INTERNAL_RPC_PORT="8332"
 export APP_BITCOIN_KNOTS_INTERNAL_P2P_PORT="8333"
 
-export APP_BITCOIN_NETWORK="mainnet" 
+export APP_BITCOIN_KNOTS_NETWORK="mainnet" 
 
 # Check for an existing settings.json file to override APP_BITCOIN_NETWORK with user's choice
 {
@@ -24,15 +24,15 @@ export APP_BITCOIN_NETWORK="mainnet"
 		bitcoin_app_network=$(jq -r '.chain' "${BITCOIN_APP_CONFIG_FILE}")
 		case $bitcoin_app_network in
 			"main")
-				APP_BITCOIN_NETWORK="mainnet";;
+				APP_BITCOIN_KNOTS_NETWORK="mainnet";;
 			"test")
-				APP_BITCOIN_NETWORK="testnet";;
+				APP_BITCOIN_KNOTS_NETWORK="testnet";;
 			"testnet4")
-				APP_BITCOIN_NETWORK="testnet4";;
+				APP_BITCOIN_KNOTS_NETWORK="testnet4";;
 			"signet")
-				APP_BITCOIN_NETWORK="signet";;
+				APP_BITCOIN_KNOTS_NETWORK="signet";;
 			"regtest")
-				APP_BITCOIN_NETWORK="regtest";;
+				APP_BITCOIN_KNOTS_NETWORK="regtest";;
 			*)
 				if [[ -n "$bitcoin_app_network" ]] && [[ "$bitcoin_app_network" != "null" ]]; then
 					echo "Warning (${EXPORTS_APP_ID}): Invalid network '${bitcoin_app_network}' in settings.json. Exporting APP_BITCOIN_NETWORK as default 'mainnet'."
@@ -65,7 +65,7 @@ export APP_BITCOIN_KNOTS_RPC_HIDDEN_SERVICE="$(cat "${rpc_hidden_service_file}" 
 export APP_BITCOIN_KNOTS_P2P_HIDDEN_SERVICE="$(cat "${p2p_hidden_service_file}" 2>/dev/null || echo "notyetset.onion")"
 
 # electrs compatible network param
-export APP_BITCOIN_KNOTS_NETWORK_ELECTRS=$APP_BITCOIN_NETWORK
+export APP_BITCOIN_KNOTS_NETWORK_ELECTRS=$APP_BITCOIN_KNOTS_NETWORK
 if [[ "${APP_BITCOIN_KNOTS_NETWORK_ELECTRS}" = "mainnet" ]]; then
 	APP_BITCOIN_KNOTS_NETWORK_ELECTRS="bitcoin"
 fi
