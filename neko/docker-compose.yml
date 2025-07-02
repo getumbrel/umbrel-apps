@@ -1,0 +1,23 @@
+version: '3.7'
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: neko_web_1
+      APP_PORT: 8080
+      PROXY_AUTH_ADD: "false"
+
+  web:
+    image: ghcr.io/m1k1o/neko/firefox:3.0.4@sha256:c295df7dd047f5470d87ec83f7c2e29da238027d9f980042a48a228018779ba9
+    environment:
+      PUID: 1000
+      PGID: 1000
+      NEKO_DESKTOP_SCREEN: 1920x1080@30
+      NEKO_MEMBER_MULTIUSER_USER_PASSWORD: neko
+      NEKO_MEMBER_MULTIUSER_ADMIN_PASSWORD: $APP_PASSWORD
+      NEKO_WEBRTC_EPR: 52000-52100
+      NEKO_WEBRTC_ICELITE: 0
+    shm_size: "2gb"
+    restart: on-failure
+    ports:
+      - "52000-52100:52000-52100/udp"

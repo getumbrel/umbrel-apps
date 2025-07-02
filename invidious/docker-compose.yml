@@ -7,28 +7,14 @@ services:
       APP_PORT: 3000
 
   web:
-    image: ceramicwhite/invidious:build-9892604@sha256:b5a9f794d745fcbdbd4e83a9022552fc48ad91afac3dfdca5916c3ef21b43dd7
+    image: ceramicwhite/invidious:build-2c857b5@sha256:b3164666c19e884d96d1c4df58603f5b99e3cc7b7c6554956ffd5c3d83834a05
     restart: on-failure
     stop_grace_period: 1m
     user: "1000:1000"
     # Using official images that include tini
     #init: true
-    environment:
-      INVIDIOUS_CONFIG: |
-        db:
-          dbname: invidious
-          user: umbrel
-          password: moneyprintergobrrr
-          host: invidious_postgres_1
-          port: 5432
-        check_tables: true
-        external_port: 3420
-        captcha_enabled: false
-        admins: ["umbrel"]
-        default_user_preferences:
-          feed_menu: ["Trending", "Subscriptions", "Playlists"]
-          default_home: Trending
-        hmac_key: "${APP_SEED}"
+    env_file:
+      - ${APP_DATA_DIR}/inv.env
     healthcheck:
       disable: true
     depends_on:
@@ -46,3 +32,16 @@ services:
       POSTGRES_DB: invidious
       POSTGRES_USER: umbrel
       POSTGRES_PASSWORD: moneyprintergobrrr
+
+  sig_helper:
+    image: quay.io/invidious/inv-sig-helper:master-5d3c7a4@sha256:b5466c9add729e82e4e3ee5515c30b69df02d78ebb2486dbc9c63e456f29083d
+    restart: on-failure
+    init: true
+    command: ["--tcp", "0.0.0.0:12999"]
+    environment:
+      - RUST_LOG=info
+    cap_drop:
+      - ALL
+    read_only: true
+    security_opt:
+      - no-new-privileges:true

@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Block until the service is healthy before creating users
+"${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" up --detach --wait --wait-timeout 60 web
+
+# Create the default username and password.
+for attempt in $(seq 1 3); do
+  if "${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" run --rm web "./create-user -admin -username satwatch -password ${APP_PASSWORD} -idempotent"; then
+    echo "Successfully created default user"
+    break
+  else
+    # The database takes time to initialize after installation.
+    echo "Failed to create default user. Retrying..."
+    sleep 0.5
+  fi
+done

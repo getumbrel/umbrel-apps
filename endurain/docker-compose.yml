@@ -1,0 +1,48 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: endurain_app_1
+      APP_PORT: 8080
+      PROXY_AUTH_ADD: "false"
+
+  app:
+    image: ghcr.io/joaovitoriasilva/endurain:v0.12.7@sha256:713691f805f8d506514deb2fa757581d436b1f006f31b2eb049cd3831429b6ab
+    environment:
+      UID: "1000"
+      GID: "1000"
+      DB_TYPE: postgres
+      DB_HOST: endurain_db_1
+      DB_PORT: 5432
+      DB_PASSWORD: endurain
+      SECRET_KEY: ${APP_PASSWORD}
+      BEHIND_PROXY: "true"
+    env_file:
+      - ${APP_DATA_DIR}/settings.env
+    volumes:
+      - ${APP_DATA_DIR}/data/app/user_images:/app/backend/user_images
+      - ${APP_DATA_DIR}/data/app/files/bulk_import:/app/backend/files/bulk_import
+      - ${APP_DATA_DIR}/data/app/files/processed:/app/backend/files/processed
+      - ${APP_DATA_DIR}/data/app/logs:/app/backend/logs
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: on-failure
+
+  db:
+    image: postgres:17.4@sha256:4aed4b0525233308fc5de1b8d47f92326460d598dc5f004d14b41f183360b4e9
+    user: "1000:1000"
+    environment:
+      POSTGRES_PASSWORD: endurain
+      POSTGRES_DB: endurain
+      POSTGRES_USER: endurain
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - ${APP_DATA_DIR}/data/db:/var/lib/postgresql/data
+    restart: on-failure
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U endurain"]
+      interval: 5s
+      timeout: 5s
+      retries: 5

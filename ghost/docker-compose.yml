@@ -8,7 +8,7 @@ services:
       PROXY_AUTH_ADD: "false"
 
   web:
-    image: ghost:5.113.0@sha256:ef73ad33bb66d84aed60271c851ee1995322c757103c29063903fd9c1c610b87
+    image: ghost:5.128.0@sha256:cb57fc65fb02cc0f55e9925d4a9ddca770be9fdeb82a64e369e968634aba6677
     restart: on-failure
     user: "1000:1000"
     volumes:
@@ -20,6 +20,7 @@ services:
       database__connection__password: umbrel
       database__connection__database: ghost
       url: http://${DEVICE_DOMAIN_NAME}:3368
+      security__staffDeviceVerification: "false"
 
   db:
     image: mysql:8.4.4@sha256:339598fe066c73daa4120f2d9dfefd3146c3519cd324748e1d3f9d2b6c71d10b
