@@ -8,16 +8,19 @@ services:
       PROXY_AUTH_ADD: "false"
 
   web:
-    image: ghcr.io/karakeep-app/karakeep:0.24.1@sha256:e72341d7626b7f92ea9b4d5e1a671ae1b8b2f6d85873a5f482e836978b650f99
+    image: ghcr.io/karakeep-app/karakeep:0.25.0@sha256:572076596ea7fdaa189694d31dc8059743773b1f908d68d7c4af3737948ff3b3
     user: 1000:1000
     restart: on-failure
     environment:
       MEILI_ADDR: http://karakeep_meilisearch_1:7700
+      MEILI_MASTER_KEY: ${APP_SEED}
       BROWSER_WEB_URL: http://karakeep_chrome_1:9222
       DATA_DIR: /data
       NEXTAUTH_SECRET: ${APP_SEED}
-      NEXTAUTH_URL: http://localhost:3000
-      #OPENAI_API_KEY:
+      NEXTAUTH_URL: http://${DEVICE_DOMAIN_NAME}:8620
+      KARAKEEP_VERSION: release
+    env_file:
+      - ${APP_DATA_DIR}/settings.env
     volumes:
       - ${APP_DATA_DIR}/data/karakeep_data:/data
     depends_on:
