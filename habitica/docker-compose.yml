@@ -22,11 +22,11 @@ services:
       # ADMIN_EMAIL=mail@example.com
 
   mongo:
-    image: mongo:5@sha256:54bcd8da3ea5eec561b68c605046c55c6b304387dc4c2bf5b3a5f5064fbb7495
+    image: mongo:8.0.11@sha256:5941949d3887e40be5175787aade07dc052f2cddb8ce21b740c3948eba6a3ed0
     restart: on-failure
-    command: ["--replSet", "rs", "--bind_ip_all", "--port", "27017"]
+    command: ["--bind_ip_all", "--port", "27017"]
     healthcheck:
-      test: echo "try { rs.status() } catch (err) { rs.initiate() }" | mongosh --port 27017 --quiet
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
       interval: 10s
       timeout: 30s
       start_period: 0s
