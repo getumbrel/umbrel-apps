@@ -1,0 +1,42 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: bitaxe-sentry_web_1
+      APP_PORT: 8000
+      
+  sentry:
+    image: zachprice105/bitaxe-sentry:v0.2.1@sha256:e866ae27c354dc86f5e9516fdf982be55fa8aaf050ac51917c9675269de1b590
+    restart: on-failure
+    stop_grace_period: 1m
+    volumes:
+      - ${APP_DATA_DIR}/data:/app/data
+    environment:
+      # Pass all environment variables with defaults
+      BITAXE_ENDPOINTS: "${BITAXE_ENDPOINTS:-}"
+      DISCORD_WEBHOOK: "${DISCORD_WEBHOOK:-}"
+      CHECK_INTERVAL: "${CHECK_INTERVAL:-60}"
+      TEMPERATURE_THRESHOLD: "${TEMPERATURE_THRESHOLD:-85}"
+      HASHRATE_DROP_THRESHOLD: "${HASHRATE_DROP_THRESHOLD:-30}"
+      DB_PATH: "${DB_PATH:-/app/data/sentry.db}"
+    
+  web:
+    image: zachprice105/bitaxe-sentry:v0.2.1@sha256:e866ae27c354dc86f5e9516fdf982be55fa8aaf050ac51917c9675269de1b590
+    restart: on-failure
+    stop_grace_period: 1m
+    ports:
+      - "7070:8000"
+    volumes:
+      - ${APP_DATA_DIR}/data:/app/data
+    command: uvicorn bitaxe_sentry.sentry.webapp:app --host 0.0.0.0 --port 8000
+    environment:
+      # Pass all environment variables with defaults
+      BITAXE_ENDPOINTS: "${BITAXE_ENDPOINTS:-}"
+      DISCORD_WEBHOOK: "${DISCORD_WEBHOOK:-}"
+      CHECK_INTERVAL: "${CHECK_INTERVAL:-60}"
+      TEMPERATURE_THRESHOLD: "${TEMPERATURE_THRESHOLD:-85}"
+      HASHRATE_DROP_THRESHOLD: "${HASHRATE_DROP_THRESHOLD:-30}"
+      DB_PATH: "${DB_PATH:-/app/data/sentry.db}"
+    depends_on:
+      - sentry
