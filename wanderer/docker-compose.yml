@@ -7,7 +7,7 @@ services:
       APP_PORT: 3000
       
   web:
-    image: flomp/wanderer-web:v0.16.5@sha256:cf9758bd760dd5bc8a68481caa6950cfe84b00faefef294b5a5aec2834857d66
+    image: flomp/wanderer-web:v0.17.1@sha256:2d8c0e94725d45f5bf8fda888f862bb9f01300dbd140e5d0e547b8df186507c3
     user: "1000:1000"
     depends_on:
       search:
@@ -47,15 +47,16 @@ services:
       timeout: 10s
 
   db:
-    image: flomp/wanderer-db:v0.16.5@sha256:dcfcc4e45467487bf8d5fc1f08d71ff497046e20c4b0c501c0c63d8c3e4f4385
+    image: flomp/wanderer-db:v0.17.1@sha256:7491478294f18ea9aacea67b60b9c3af227bb62fadc89e4acdbacb43d46b937c
     user: "1000:1000"
     depends_on:
       search:
         condition: service_healthy
     environment:
-      POCKETBASE_ENCRYPTION_KEY: ${APP_SEED}
+      POCKETBASE_ENCRYPTION_KEY: ${APP_WANDERER_ENCRYPTION_KEY}
       MEILI_URL: http://wanderer_search_1:7700
       MEILI_MASTER_KEY: ${APP_SEED}
+      ORIGIN: http://${DEVICE_DOMAIN_NAME}:3111
     restart: on-failure
     volumes:
       - ${APP_DATA_DIR}/data/pb_data:/pb_data
