@@ -17,18 +17,9 @@ services:
       - /etc/localtime:/etc/localtime:ro
       - ${APP_DATA_DIR}/data/acme:/opt/om/acme
       - ${APP_DATA_DIR}/data/data:/opt/om/data
-      - ${APP_DATA_DIR}/data/nginx/conf/sites:/opt/om/nginx/conf/sites
-      - ${APP_DATA_DIR}/data/nginx/conf/certs:/opt/om/nginx/conf/certs
-      - ${APP_DATA_DIR}/data/nginx/conf/upstreams:/opt/om/nginx/conf/upstreams
+      - ${APP_DATA_DIR}/data/conf:/opt/om/nginx/conf
+
     environment:
       - NGINX_RESOLVER=resolver 127.0.0.11 valid=30s ipv6=off local=on;
       - PUID=1000
       - PGID=1000
-  
-  docker-host:
-    image: qoomon/docker-host:3.3.1@sha256:ec9d214d7fa88932e9186ca2f4419d44661376929931248525b08e7fa9e270f7
-    hostname: $DEVICE_DOMAIN_NAME
-    cap_add:
-      - NET_ADMIN
-      - NET_RAW
-    restart: on-failure
