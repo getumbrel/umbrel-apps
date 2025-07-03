@@ -1,42 +1,42 @@
-version: "3.7"
-
 services:
   app_proxy:
     environment:
       APP_HOST: bitaxe-sentry_web_1
-      APP_PORT: 8000
+      APP_PORT: 7070
       
   sentry:
-    image: zachprice105/bitaxe-sentry:v0.2.1@sha256:e866ae27c354dc86f5e9516fdf982be55fa8aaf050ac51917c9675269de1b590
+    image: zachprice105/bitaxe-sentry:v0.3.0@sha256:753e7577c1faad1cc76a902ddf5abc526cd483d7d8af1fa5d3cf27c15f9e2e0b
     restart: on-failure
     stop_grace_period: 1m
     volumes:
       - ${APP_DATA_DIR}/data:/app/data
     environment:
-      # Pass all environment variables with defaults
-      BITAXE_ENDPOINTS: "${BITAXE_ENDPOINTS:-}"
-      DISCORD_WEBHOOK: "${DISCORD_WEBHOOK:-}"
-      CHECK_INTERVAL: "${CHECK_INTERVAL:-60}"
-      TEMPERATURE_THRESHOLD: "${TEMPERATURE_THRESHOLD:-85}"
-      HASHRATE_DROP_THRESHOLD: "${HASHRATE_DROP_THRESHOLD:-30}"
       DB_PATH: "${DB_PATH:-/app/data/sentry.db}"
+      POLL_INTERVAL_MINUTES: "${POLL_INTERVAL_MINUTES:-15}"
+      RETENTION_DAYS: "${RETENTION_DAYS:-30}"
+      TEMP_MIN: "${TEMP_MIN:-20}"
+      TEMP_MAX: "${TEMP_MAX:-70}"
+      VOLT_MIN: "${VOLT_MIN:-5.0}"
+      BITAXE_ENDPOINTS: "${BITAXE_ENDPOINTS:-}"
+      DISCORD_WEBHOOK_URL: "${DISCORD_WEBHOOK_URL:-}"
     
   web:
-    image: zachprice105/bitaxe-sentry:v0.2.1@sha256:e866ae27c354dc86f5e9516fdf982be55fa8aaf050ac51917c9675269de1b590
+    image: zachprice105/bitaxe-sentry:v0.3.0@sha256:753e7577c1faad1cc76a902ddf5abc526cd483d7d8af1fa5d3cf27c15f9e2e0b
     restart: on-failure
     stop_grace_period: 1m
     ports:
-      - "7070:8000"
+      - "7070:7070"
     volumes:
       - ${APP_DATA_DIR}/data:/app/data
-    command: uvicorn bitaxe_sentry.sentry.webapp:app --host 0.0.0.0 --port 8000
+    command: uvicorn bitaxe_sentry.sentry.webapp:app --host 0.0.0.0 --port 7070
     environment:
-      # Pass all environment variables with defaults
-      BITAXE_ENDPOINTS: "${BITAXE_ENDPOINTS:-}"
-      DISCORD_WEBHOOK: "${DISCORD_WEBHOOK:-}"
-      CHECK_INTERVAL: "${CHECK_INTERVAL:-60}"
-      TEMPERATURE_THRESHOLD: "${TEMPERATURE_THRESHOLD:-85}"
-      HASHRATE_DROP_THRESHOLD: "${HASHRATE_DROP_THRESHOLD:-30}"
       DB_PATH: "${DB_PATH:-/app/data/sentry.db}"
+      POLL_INTERVAL_MINUTES: "${POLL_INTERVAL_MINUTES:-15}"
+      RETENTION_DAYS: "${RETENTION_DAYS:-30}"
+      TEMP_MIN: "${TEMP_MIN:-20}"
+      TEMP_MAX: "${TEMP_MAX:-70}"
+      VOLT_MIN: "${VOLT_MIN:-5.0}"
+      BITAXE_ENDPOINTS: "${BITAXE_ENDPOINTS:-}"
+      DISCORD_WEBHOOK_URL: "${DISCORD_WEBHOOK_URL:-}"
     depends_on:
       - sentry
