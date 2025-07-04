@@ -5,7 +5,7 @@ services:
       APP_PORT: 7070
       
   sentry:
-    image: zachprice105/bitaxe-sentry:v0.3.0@sha256:753e7577c1faad1cc76a902ddf5abc526cd483d7d8af1fa5d3cf27c15f9e2e0b
+    image: zachprice105/bitaxe-sentry:v0.3.1@sha256:b2aad33a9e0b8b7d372a678c606a97d7dde9fcbf0b51bdd8f369dc1985be376a
     restart: on-failure
     stop_grace_period: 1m
     volumes:
@@ -21,11 +21,9 @@ services:
       DISCORD_WEBHOOK_URL: "${DISCORD_WEBHOOK_URL:-}"
     
   web:
-    image: zachprice105/bitaxe-sentry:v0.3.0@sha256:753e7577c1faad1cc76a902ddf5abc526cd483d7d8af1fa5d3cf27c15f9e2e0b
+    image: zachprice105/bitaxe-sentry:v0.3.1@sha256:b2aad33a9e0b8b7d372a678c606a97d7dde9fcbf0b51bdd8f369dc1985be376a
     restart: on-failure
     stop_grace_period: 1m
-    ports:
-      - "7070:7070"
     volumes:
       - ${APP_DATA_DIR}/data:/app/data
     command: uvicorn bitaxe_sentry.sentry.webapp:app --host 0.0.0.0 --port 7070
