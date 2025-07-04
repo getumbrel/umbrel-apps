@@ -1,0 +1,32 @@
+version: '3.7'
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: domain-locker_app_1
+      APP_PORT: 3000
+
+  app:
+    image: lissy93/domain-locker:0.0.7@sha256:9965f1d1d6694d39c4e100812f57c068496e08cb667e52b86a052ea9e2c81ab5
+    user: "1000:1000"
+    restart: on-failure
+    environment:
+      DL_ENV_TYPE: selfHosted
+      DL_PG_HOST: domain-locker_postgres_1
+      DL_PG_PORT: 5432
+      DL_PG_USER: postgres
+      DL_PG_PASSWORD: domain-locker
+      DL_PG_NAME: domain_locker
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:17.4@sha256:fe3f571d128e8efadcd8b2fde0e2b73ebab6dbec33f6bfe69d98c682c7d8f7bd
+    user: "1000:1000"
+    restart: on-failure
+    environment:
+      POSTGRES_DB: domain_locker
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: domain-locker
+    volumes:
+      - ${APP_DATA_DIR}/data/db_data:/var/lib/postgresql/data
