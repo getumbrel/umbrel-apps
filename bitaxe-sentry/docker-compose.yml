@@ -3,22 +3,31 @@ services:
     environment:
       APP_HOST: bitaxe-sentry_web_1
       APP_PORT: 7070
-      
+
   sentry:
-    image: zachprice105/bitaxe-sentry:v0.3.1@sha256:5fe18ec95cdbbb4076eca8b28d3ce2b66f7512daa4de78a9e24ea12259b6cd0b
+    image: zachprice105/bitaxe-sentry:v0.3.2@sha256:993b42d418aed7efab950d7447cbc6783f76fe110009383bf5b7a84a64cb589b
+    user: "1000:1000"
     restart: on-failure
     stop_grace_period: 1m
     volumes:
-      - ${APP_DATA_DIR}/data:/app/data
+      - bitaxe_data:/var/lib/bitaxe
     environment:
-      DB_PATH: "/app/data/sentry.db"
-    
+      DB_PATH: "/var/lib/bitaxe/bitaxe_sentry.db"
+      DB_DATA_DIR: "/var/lib/bitaxe"
+
   web:
-    image: zachprice105/bitaxe-sentry:v0.3.1@sha256:5fe18ec95cdbbb4076eca8b28d3ce2b66f7512daa4de78a9e24ea12259b6cd0b
+    image: zachprice105/bitaxe-sentry:v0.3.2@sha256:993b42d418aed7efab950d7447cbc6783f76fe110009383bf5b7a84a64cb589b
+    user: "1000:1000"
     restart: on-failure
     stop_grace_period: 1m
     volumes:
-      - ${APP_DATA_DIR}/data:/app/data
+      - bitaxe_data:/var/lib/bitaxe
+    environment:
+      DB_PATH: "/var/lib/bitaxe/bitaxe_sentry.db"
+      DB_DATA_DIR: "/var/lib/bitaxe"
     command: uvicorn bitaxe_sentry.sentry.webapp:app --host 0.0.0.0 --port 7070
     depends_on:
       - sentry
+
+volumes:
+  bitaxe_data:
