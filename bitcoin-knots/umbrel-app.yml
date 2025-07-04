@@ -4,7 +4,7 @@ implements:
   - bitcoin
 category: bitcoin
 name: Bitcoin Knots
-version: "28.1-3"
+version: "28.1-4"
 tagline: Run your personal node powered by Bitcoin Knots
 description: >-
   Take control of your digital sovereignty by choosing Bitcoin Knots to run your node! By using Knots, you’re supporting a version of Bitcoin that prioritizes efficiency, security, and flexibility. With Bitcoin Knots’ enhanced configuration options, you can fine-tune your node to help keep the network clean and resilient, actively reducing unnecessary load from spam or parasitic transactions.
@@ -36,14 +36,37 @@ gallery:
 path: ""
 defaultPassword: ""
 releaseNotes: >-
-  - New Welcome page at the first start of Knots.
+  🚨 After updating to this new version, please restart any connected apps (e.g., DATUM, Lightning Node, etc) to ensure they re-connect properly.
+  Also, if you have forwarded ports on your router for incoming peer connections, you will need to make sure you are forwarding 9333 on your router to 9333 on your device.
 
-  - Add -softwareexpiry option.
+
+  This update introduces a completely redesigned experience, rebuilt from the ground up, both architecturally and visually, to give you a powerful, data-rich view into every aspect of your node's operation.
+  
+  
+  From visualizing the network in real time to fine-tuning your configuration, the tools you need for ultimate sovereignty are now at your fingertips.
+  
+  
+  ### New features:
+  
+  - **Globe**: A stunning, real-time visualization of your node's global connections. See new peers connect and transactions broadcast around the world, as it happens.
+  
+  - **Blocks**: Follow along as each new block arrives, packed with transactions, and is verified by your own node.
+
+  - **Insights**: Key metrics about your node and the network are now presented in a series of clean, elegant charts.
+
+  - **Peers**: A completely new table gives you a detailed, sortable list of every peer your node is connected to.
+
+  - **Settings**: Fine-tune your node with a simplified, searcheable, and more intuitive layout for the settings. 
+
+  - **Configuration Editor**: Power users can now make custom fine-grained adjustments to their `bitcoin.conf` file directly from a new editor in the app's settings.
+
+
+  A new chapter for self-sovereignty begins.
 widgets:
   - id: "stats"
     type: "four-stats"
     refresh: "5s"
-    endpoint: "server:3005/v1/bitcoind/widgets/stats"
+    endpoint: "app:3000/api/widget/stats"
     link: ""
     example:
       type: "four-stats"
@@ -64,7 +87,7 @@ widgets:
   - id: "sync"
     type: "text-with-progress"
     refresh: "2s"
-    endpoint: "server:3005/v1/bitcoind/widgets/sync"
+    endpoint: "app:3000/api/widget/sync"
     link: ""
     example:
       type: "text-with-progress"
