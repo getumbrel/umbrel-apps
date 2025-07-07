@@ -51,59 +51,19 @@ path: ""
 permissions:
   - STORAGE_DOWNLOADS
 releaseNotes: >-
-  A big thank you to all the contributors who made this release possible!
+  This release includes new features, improvements and bug fixes.
 
-  ## Added
 
-  - **UI Features**:
-    - Added "Artist Radio" and "Shuffle" options to the artist page.
-    - Added a "Play Artist's Top Songs" button.
-    - Added "Love" and "Rating" functionality to songs within a playlist view.
-    - New "Add to Playlist" dialog, with improved UX.
-    - Added a "Now Playing" panel for administrators to monitor active streams, with configurable `EnableNowPlaying` option (default true).
-    - Added a context menu option to "Show in Playlist".
-    - Added RecentlyAddedByModTime support for tracks.
-    - Added a configuration tab in the About dialog.
-  - **Experimental Plugin Support**: Added experimental support for plugins, allowing for greater extensibility and customization.
-  - **Scanner Accuracy**: Implemented folder hashing for smarter and more accurate quick scans, significantly improving detection of library changes.
-  - **MBID Search**: Added functionality to search for albums, artists, and songs by their MusicBrainz ID (MBID).
-  - **Smart Playlists**:
-    - Added support for sorting smart playlists by multiple fields.
-    - Added support for MBIDs in smart playlists.
-  - **Deezer Agent**: Added a new agent to fetch artist images from the Deezer API.
-  - **API Features**:
-    - Added new endpoints to the native API for updating, clearing, and managing the play queue by index.
-    - Added `main credit` stat to reflect only album artist/artist credit.
-  - **Monitoring**: Added new Prometheus metrics to the Subsonic API and Plugins.
+  Highlights include:
+    - Enhanced artist pages with "Radio", "Shuffle", and top songs play options  
+    - Added "Love", "Rating", and "Add to Playlist" features in playlist view  
+    - Introduced a "Now Playing" admin panel and configuration tab  
+    - Implemented plugin support and smarter folder hashing for scans  
+    - Enabled MusicBrainz ID (MBID) search and smart playlist improvements  
+    - Added new API endpoints and Prometheus metrics  
+    - Fixed various UI, scanner, and Subsonic API issues  
 
-  ## Changed
-
-  - **Docker**: Downgraded the Alpine base image in the Dockerfile to oldest supported version 3.19 for smaller images.
-  - **Dependencies**: Updated TagLib to version 2.1.1.
-
-  ## Fixed
-
-  - **UI**:
-    - Fixed an issue where the playlist page was not resetting to page 1 when changing playlists.
-  - **Scanner**:
-    - Ensured that full scans always update the database.
-    - Fixed an issue where artist statistics were not refreshing during quick scans.
-  - **Server**:
-    - Fixed an issue to ensure a single play queue record is used per user.
-    - Enhanced artist folder detection with directory traversal.
-  - **Subsonic API**:
-    - Fixed an issue where clearing a playlist's `comment` and `public` status was not working.
-    - Fixed `JukeboxRole` logic in `getUser` to respect `AdminOnly` setting.
-    - Fixed loading lyrics from external files when the embedded lyrics was empty.
-    - Fixed lyrics detection when the there are multiple instances of the same song.
-  - **Database**:
-    - Fixed an issue where dangling music entries were not being cleared after upgrading to recent versions (0.55+).
-    - Allow for nullable ReplayGain values.
-    - Auto clean-up annotation table when removing user.
-  - **Jukebox**: Fixed issues with `mpv` command and template parsing, and ensured the `MusicFolder` is included.
-
-  Note: For those waiting for the Multi-Library feature, it is still in progress and will be released in the next version.
-
+  
   Full release notes can be found at https://github.com/navidrome/navidrome/releases
 submitter: owmsoton
 submission: https://github.com/getumbrel/umbrel-apps/pull/1232
