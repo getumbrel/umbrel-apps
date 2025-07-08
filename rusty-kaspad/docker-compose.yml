@@ -3,19 +3,31 @@ version: "3.7"
 services:
   app_proxy:
     environment:
-      APP_HOST: rusty-kaspad_web_1
+      APP_HOST: rusty-kaspad_frontend_1
       APP_PORT: 4321
 
-  web:
-    image: nginx:1.27.4-alpine@sha256:4ff102c5d78d254a6f0da062b3cf39eaf07f01eec0927fd21e219d0af8bc0591
+  frontend:
+    image: elldee/kaspa-frontend:v0.2.0@sha256:e0b6f11d450247c2e746d5e69c2a162067b0689550060261b0fa0a32de17f014
     restart: on-failure
     stop_grace_period: 1m
+    depends_on:
+      - kaspa-api
+  
+  kaspa-api:
+    image: elldee/kaspa-api:v0.2.0@sha256:c7766675bc882d07a212e874e355ace33d4a7b2860c78964dd95524d04324460
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      KASPAD_HOST: kaspad
+      KASPAD_RPC_PORT: 18110
+      KASPAD_CONTAINER_NAME: rusty-kaspad_kaspad_1
     volumes:
-      - ${APP_DATA_DIR}/config/nginx.conf:/etc/nginx/conf.d/default.conf
-      - ${APP_DATA_DIR}/data/web:/usr/share/nginx/html:ro
+      - /var/run/docker.sock:/var/run/docker.sock  # For log parsing
+    depends_on:
+      - kaspad
 
-  node:
-    image: kaspanet/rusty-kaspad:v1.0.0@sha256:5ad66808591ea487b9183dc1deeb3352b302c958d53a36c70975f83bc0e77a1e
+  kaspad:
+    image: kaspanet/rusty-kaspad:v1.0.1@sha256:5bc3195c2cd2d171885781ed55ead9485d93c7bd7b784d46e9e393c96757fe22
     restart: on-failure
     stop_grace_period: 1m
     volumes:
@@ -25,3 +37,9 @@ services:
       - 16111:16111  # P2P
       - 17110:17110  # WRPC (Borsh)
       - 18110:18110  # WRPC (JSON)
+    command: >
+      kaspad
+      --rpclisten=0.0.0.0:16110
+      --rpclisten-borsh=0.0.0.0:17110
+      --rpclisten-json=0.0.0.0:18110
+      --loglevel=info
