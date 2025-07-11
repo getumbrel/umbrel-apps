@@ -3,57 +3,56 @@ version: "3.7"
 services:
   app_proxy:
     environment:
-      APP_HOST: $APP_BITCOIN_KNOTS_IP
-      APP_PORT: 3005
+      APP_HOST: $APP_BITCOIN_KNOTS_NODE_IP
+      APP_PORT: 3000
   
-  server:
-    image: ghcr.io/retropex/umbrel-bitcoin-knots:v0.7.1@sha256:bf938e6448f89c9ec03a0fa049442f3a191718f9baa12ecef0fce3dc41ad6698
-    depends_on: [bitcoind]
-    restart: on-failure
-    volumes:
-      - ${APP_DATA_DIR}/data/app:/data # volume to persist advanced settings json
-      - ${APP_BITCOIN_KNOTS_DATA_DIR}:/bitcoin/.bitcoin # volume to persist umbrel-bitcoin.conf and bitcoin.conf
-    environment:
-      PORT: "3005"
-      BITCOIN_HOST: "${APP_BITCOIN_KNOTS_NODE_IP}"
-      # used to connect to internal bitcoind port
-      RPC_PORT: "${APP_BITCOIN_KNOTS_INTERNAL_RPC_PORT}"
-      # displayed to user in connection details for external connections
-      BITCOIN_RPC_PORT: "${APP_BITCOIN_KNOTS_RPC_PORT}"
-      RPC_USER: "${APP_BITCOIN_KNOTS_RPC_USER}"
-      BITCOIN_RPC_USER: "${APP_BITCOIN_KNOTS_RPC_USER}"
-      RPC_PASSWORD: "${APP_BITCOIN_KNOTS_RPC_PASS}"
-      BITCOIN_RPC_PASSWORD: "${APP_BITCOIN_KNOTS_RPC_PASS}"
-      BITCOIN_RPC_HIDDEN_SERVICE: "${APP_BITCOIN_KNOTS_RPC_HIDDEN_SERVICE}"
-      BITCOIN_P2P_HIDDEN_SERVICE: "${APP_BITCOIN_KNOTS_P2P_HIDDEN_SERVICE}"
-      # displayed to user in connection details for external connections
-      BITCOIN_P2P_PORT: "${APP_BITCOIN_KNOTS_P2P_PORT}"
-      DEVICE_DOMAIN_NAME: "${DEVICE_DOMAIN_NAME}"
-      BITCOIN_DEFAULT_NETWORK: "${BITCOIN_KNOTS_DEFAULT_NETWORK:-mainnet}"
-      # not needed
-      BITCOIN_INITIALIZE_WITH_CLEARNET_OVER_TOR: "${BITCOIN_INITIALIZE_WITH_CLEARNET_OVER_TOR:-unset}"
-      BITCOIND_IP: "${APP_BITCOIN_KNOTS_NODE_IP}"
-      TOR_PROXY_IP: "${APP_BITCOIN_KNOTS_TOR_PROXY_IP}"
-      TOR_PROXY_PORT: "9050"
-      TOR_PROXY_CONTROL_PORT: "9051"
-      TOR_PROXY_CONTROL_PASSWORD: "moneyprintergobrrr"
-      I2P_DAEMON_IP: "${APP_BITCOIN_KNOTS_I2P_DAEMON_IP}"
-      I2P_DAEMON_PORT: "7656"
-    networks:
-      default:
-        ipv4_address: $APP_BITCOIN_KNOTS_IP
-
-  bitcoind:
-    image: ghcr.io/retropex/bitcoin:v28.1@sha256:9dab3c9e0e21bf17ae7e624e1a3fabc51dff812ee8382fb10f8ebdf6e0af5801
+  app:
+    image: ghcr.io/retropex/umbrel-bitcoin-knots:v1.0.3-3@sha256:92cb4dbd5c4bbcb9ea2830024940673de0d64ed5a9de9cb605563335545ada86
     user: "1000:1000"
-    command: "${APP_BITCOIN_KNOTS_COMMAND}"
-    restart: unless-stopped
+    restart: on-failure
     stop_grace_period: 15m30s
-    volumes:
-      - "${APP_BITCOIN_KNOTS_DATA_DIR}:/data/.bitcoin"
+    # these ports are exposed for external connections to bitcoind
     ports:
-      - "${APP_BITCOIN_KNOTS_P2P_PORT}:${APP_BITCOIN_KNOTS_INTERNAL_P2P_PORT}"
-      - "${APP_BITCOIN_KNOTS_RPC_PORT}:${APP_BITCOIN_KNOTS_INTERNAL_RPC_PORT}"
+      - "${APP_BITCOIN_KNOTS_P2P_PORT}:${APP_BITCOIN_KNOTS_P2P_PORT}"
+      - "${APP_BITCOIN_KNOTS_RPC_PORT}:${APP_BITCOIN_KNOTS_RPC_PORT}"
+    volumes:
+      - ${APP_DATA_DIR}/data:/data # data/app and data/bitcoin
+    environment:
+      # DATA DIRECTORY SETTINGS
+      # BITCOIN_DIR: bitcoin-dir-override
+      # APP_STATE_DIR: app-state-dir-override
+
+      # BITCOIND BINARY SETTINGS
+      # BITCOIND_BIN: bitcoind-binary-path-override
+      # comma-delimited list of extra startup flags to pass to bitcoind
+      BITCOIND_EXTRA_ARGS: '-deprecatedrpc=create_bdb' # We can remove depratedrpc=create_bdb in a future update once Jam (JoinMarket) implements descriptor wallet support
+
+      # BITCOIND CONF FILE SETTINGS
+      APPS_SUBNET: "${NETWORK_IP}/16" # used to whitelist local apps as both peers (whitelist) and rpc connections (rpcallowip)
+      P2P_PORT: "${APP_BITCOIN_KNOTS_P2P_PORT}" # port, bind (also used for connect details)
+      RPC_PORT: "${APP_BITCOIN_KNOTS_RPC_PORT}" # rpcport (also used for rpc client and connect details)
+      TOR_PORT: "${APP_BITCOIN_KNOTS_TOR_PORT}" # bind=onion
+      ZMQ_RAWBLOCK_PORT: "${APP_BITCOIN_KNOTS_ZMQ_RAWBLOCK_PORT}" # zmqpubrawblock
+      ZMQ_RAWTX_PORT: "${APP_BITCOIN_KNOTS_ZMQ_RAWTX_PORT}" # zmqpubrawtx
+      ZMQ_HASHBLOCK_PORT: "${APP_BITCOIN_KNOTS_ZMQ_HASHBLOCK_PORT}" # zmqpubhashblock
+      ZMQ_SEQUENCE_PORT: "${APP_BITCOIN_KNOTS_ZMQ_SEQUENCE_PORT}" # zmqpubsequence
+      ZMQ_HASHTX_PORT: "${APP_BITCOIN_KNOTS_ZMQ_HASHTX_PORT}" # zmqpubhashtx
+      TOR_HOST: "${APP_BITCOIN_KNOTS_TOR_PROXY_IP}" # proxy, onion, torcontrol
+      TOR_SOCKS_PORT: "9050" # proxy, onion
+      TOR_CONTROL_PORT: "9051" # torcontrol
+      TOR_CONTROL_PASSWORD: "moneyprintergobrrr" # torpassword
+      I2P_HOST: "${APP_BITCOIN_KNOTS_I2P_DAEMON_IP}" # i2psam
+      I2P_SAM_PORT: "7656" # i2psam
+
+      # RPC CLIENT SETTINGS
+      BITCOIND_IP: "${APP_BITCOIN_KNOTS_NODE_IP}" # host for the rpc client. Also used for bitcoind conf file rpcbind & bind.
+      RPC_USER: "${APP_BITCOIN_KNOTS_RPC_USER}" # also shown in the connect modal
+      RPC_PASS: "${APP_BITCOIN_KNOTS_RPC_PASS}" # also shown in the connect modal
+
+      # CONNECTION DETAILS (shown to user in the connect modal)
+      DEVICE_DOMAIN_NAME: "${DEVICE_DOMAIN_NAME}"
+      P2P_HIDDEN_SERVICE: "${APP_BITCOIN_KNOTS_P2P_HIDDEN_SERVICE}"
+      RPC_HIDDEN_SERVICE: "${APP_BITCOIN_KNOTS_RPC_HIDDEN_SERVICE}"
     networks:
       default:
         ipv4_address: $APP_BITCOIN_KNOTS_NODE_IP
