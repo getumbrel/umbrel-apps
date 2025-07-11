@@ -1,0 +1,49 @@
+services:
+  rails-app:
+    image: martinbarilik/public-pool-web:latest
+    ports:
+      - "2020:3000"
+    environment:
+      - RAILS_MASTER_KEY=${APP_PUBLIC_POOL_WEB_MASTER_KEY}
+      - DATABASE_URL=${APP_PUBLIC_POOL_WEB_DATABASE_URL}
+      - REDIS_URL=${APP_PUBLIC_POOL_WEB_REDIS_URL}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis: 
+        condition: service_healthy
+  db:
+    image: postgres:latest
+    environment:
+      - POSTGRES_USER=${APP_PUBLIC_POOL_WEB_POSTGRES_USERNAME}
+      - POSTGRES_PASSWORD=${APP_PUBLIC_POOL_WEB_POSTGRES_PASSWORD}
+      - POSTGRES_DB=${APP_PUBLIC_POOL_WEB_POSTGRES_DBNAME}
+    volumes:
+      - ${APP_DATA_DIR}/data/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${APP_PUBLIC_POOL_WEB_POSTGRES_USERNAME} -d ${APP_PUBLIC_POOL_WEB_POSTGRES_DBNAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:latest
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - ${APP_DATA_DIR}/data/redis:/data
+
+  sidekiq:
+    image: martinbarilik/public-pool-web:latest
+    environment:
+      - RAILS_MASTER_KEY=${APP_PUBLIC_POOL_WEB_MASTER_KEY}
+      - REDIS_URL=${APP_PUBLIC_POOL_WEB_REDIS_URL}
+      - DATABASE_URL=${APP_PUBLIC_POOL_WEB_DATABASE_URL}
+    command: bundle exec sidekiq
+    depends_on:
+      - redis
+      - db
+      - rails-app
