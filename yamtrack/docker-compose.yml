@@ -8,21 +8,16 @@ services:
 
   web:
     image: ghcr.io/fuzzygrim/yamtrack:0.24.6@sha256:7d837396c3dcdb67956aba9cd5fd767a9aa6f0cc97243be1189b8ea2a2ec1d8e
-    user: "1000:1000"
+    # does not work yet rootless
+    # user: "1000:1000"
     restart: on-failure
-    mem_limit: 8g
     security_opt:
       - no-new-privileges:true
     depends_on:
       - redis
     environment:
-        SECRET: dOxZYTTZgXKMHkqLBIQVImayQXAVWdzGBPuFJKggzcgvgPJPXpWzqzKaUOIOGGIr
-        REDIS_URL: redis://redis:6379
-        TMDB_NSFW: "true" #or false
-        MAL_NSFW: "true" #or false
-        TZ: Europe/Berlin
-        #TMDB_API: YOUR_TMDB_API_KEY
-        #MAL_API: YOUR_MAL_API_KEY
+        SECRET: ${APP_SEED}
+        REDIS_URL: redis://yamtrack_redis_1:6379
     volumes:
       - ${APP_DATA_DIR}/data/db:/yamtrack/db:rw
       
