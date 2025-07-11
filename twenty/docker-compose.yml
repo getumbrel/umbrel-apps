@@ -1,0 +1,71 @@
+version: '3.7'
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: twenty_server_1
+      APP_PORT: 3000
+      PROXY_AUTH_ADD: "false"
+  
+  server:
+    image: twentycrm/twenty:v1.0.1@sha256:269868220e8b3c91ece4096561bac0e06bcbc3aba4f9d03c9267cf139e1c2850
+    user: "1000:1000"
+    volumes:
+      - ${APP_DATA_DIR}/data/server-local-data:/app/packages/twenty-server/.local-storage
+      - ${APP_DATA_DIR}/data/docker-data:/app/docker-data
+    environment:
+      NODE_PORT: 3000
+      PG_DATABASE_URL: postgres://postgres:postgres@twenty_db_1:5432/default
+      SERVER_URL: http://${DEVICE_DOMAIN_NAME}:2020
+      REDIS_URL: redis://twenty_redis_1:6379
+      APP_SECRET: 2Gn5puuVCH0SI386E9RqOqHm0hGIAyrB
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: curl --fail http://localhost:3000/healthz
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: on-failure
+
+  worker:
+    image: twentycrm/twenty:v1.0.1@sha256:269868220e8b3c91ece4096561bac0e06bcbc3aba4f9d03c9267cf139e1c2850
+    user: "1000:1000"
+    volumes:
+      - ${APP_DATA_DIR}/data/server-local-data:/app/packages/twenty-server/.local-storage
+    command: ["yarn", "worker:prod"]
+    environment:
+      PG_DATABASE_URL: postgres://postgres:postgres@twenty_db_1:5432/default
+      SERVER_URL: http://${DEVICE_DOMAIN_NAME}:2020
+      REDIS_URL: redis://twenty_redis_1:6379
+      DISABLE_DB_MIGRATIONS: "true"
+      APP_SECRET: 2Gn5puuVCH0SI386E9RqOqHm0hGIAyrB
+    depends_on:
+      db:
+        condition: service_healthy
+      server:
+        condition: service_healthy
+    restart: on-failure
+
+  db:
+    image: postgres:16.8@sha256:74e7a26f7db1d5bbce23b4132fb4855ed0987ec9dc44f6d078ba8800892dc927
+    user: "1000:1000"
+    volumes:
+      - ${APP_DATA_DIR}/data/db-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    healthcheck:
+      test: pg_isready -U postgres -h localhost -d postgres
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: on-failure
+
+  redis:
+    image: redis:7.4.2@sha256:bd41d55aae1ecff61b2fafd0d66761223fe94a60373eb6bb781cfbb570a84079
+    user: "1000:1000"
+    restart: on-failure
+    volumes:
+      - "${APP_DATA_DIR}/data/redis:/data"
