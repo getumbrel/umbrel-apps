@@ -1,6 +1,6 @@
 services:
   rails-app:
-    image: martinbarilik/public-pool-web:latest
+    image: martinbarilik/public-pool-web:0.0.7@sha256:351eb51b65953f60dda44d367fa092b48d387eaccc425d99f8ee8d0d7ea625a4
     ports:
       - "2020:3000"
     environment:
@@ -13,7 +13,7 @@ services:
       redis: 
         condition: service_healthy
   db:
-    image: postgres:latest
+    image: postgres:17.4@sha256:304ab813518754228f9f792f79d6da36359b82d8ecf418096c636725f8c930ad
     environment:
       - POSTGRES_USER=${APP_PUBLIC_POOL_WEB_POSTGRES_USERNAME}
       - POSTGRES_PASSWORD=${APP_PUBLIC_POOL_WEB_POSTGRES_PASSWORD}
@@ -27,7 +27,7 @@ services:
       retries: 5
 
   redis:
-    image: redis:latest
+    image: redis:7.4.2@sha256:fbdbaea47b9ae4ecc2082ecdb4e1cea81e32176ffb1dcf643d422ad07427e5d9
     healthcheck:
       test: ["CMD-SHELL", "redis-cli ping"]
       interval: 10s
@@ -37,7 +37,7 @@ services:
       - ${APP_DATA_DIR}/data/redis:/data
 
   sidekiq:
-    image: martinbarilik/public-pool-web:latest
+    image: martinbarilik/public-pool-web:0.0.7@sha256:351eb51b65953f60dda44d367fa092b48d387eaccc425d99f8ee8d0d7ea625a4
     environment:
       - RAILS_MASTER_KEY=${APP_PUBLIC_POOL_WEB_MASTER_KEY}
       - REDIS_URL=${APP_PUBLIC_POOL_WEB_REDIS_URL}
