@@ -1,0 +1,14 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: wingfit_app_1
+      APP_PORT: 8000
+
+  app:
+    image: ghcr.io/itskovacs/wingfit:5.2.2@sha256:1da4d73940d54bfce162659426c47c1a72b51301c26bcbdb2310d1cfa4af0724
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data:/app/storage #Do not change /app/storage, only the first part (./storage) if needed
+    command: ["fastapi", "run", "/app/wingfit/main.py", "--host", "0.0.0.0"]
