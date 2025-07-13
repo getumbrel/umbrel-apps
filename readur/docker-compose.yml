@@ -8,6 +8,7 @@ services:
 
   app:
     image: ghcr.io/readur/readur:2.3.1@sha256:2273179dc039c7bef2036419d41985afcf2cce078e8598df400e9f66f14b5e09
+    user: "1000:1000"
     restart: on-failure
     environment:
       DATABASE_URL: postgresql://readur:readur_password@postgres:5432/readur
@@ -40,6 +41,7 @@ services:
 
   postgres:
     image: postgres:17.5@sha256:3962158596daaef3682838cc8eb0e719ad1ce520f88e34596ce8d5de1b6330a1
+    user: "1000:1000"
     restart: on-failure
     environment:
       POSTGRES_USER: readur
