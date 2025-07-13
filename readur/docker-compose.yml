@@ -1,0 +1,54 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: readur_app_1
+      APP_PORT: 8000
+
+  app:
+    image: ghcr.io/readur/readur:2.3.1@sha256:2273179dc039c7bef2036419d41985afcf2cce078e8598df400e9f66f14b5e09
+    restart: on-failure
+    environment:
+      DATABASE_URL: postgresql://readur:readur_password@postgres:5432/readur
+      JWT_SECRET: Lk@4zX9#pVt%qH7!Dw^NyBm&Ra8u$Jc3Kd#GfWxZl2e@Tn6MvY$PbQsHtLj*Cr1!
+      SERVER_ADDRESS: 0.0.0.0:8000
+      UPLOAD_PATH: /app/uploads
+      WATCH_FOLDER: /app/watch
+      ALLOWED_FILE_TYPES: pdf,png,jpg,jpeg,tiff,bmp,gif,txt,rtf,doc,docx
+      WATCH_INTERVAL_SECONDS: 30
+      FILE_STABILITY_CHECK_MS: 500
+      MAX_FILE_AGE_HOURS: 168
+      OCR_LANGUAGE: eng
+      CONCURRENT_OCR_JOBS: 4
+      OCR_TIMEOUT_SECONDS: 300
+      MAX_FILE_SIZE_MB: 50
+      MEMORY_LIMIT_MB: 512
+      CPU_PRIORITY: normal
+    volumes:
+      - ${APP_DATA_DIR}/data/uploads:/app/uploads
+      - ${APP_DATA_DIR}/data/watch:/app/watch
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  postgres:
+    image: postgres:17.5@sha256:3962158596daaef3682838cc8eb0e719ad1ce520f88e34596ce8d5de1b6330a1
+    restart: on-failure
+    environment:
+      POSTGRES_USER: readur
+      POSTGRES_PASSWORD: readur_password
+      POSTGRES_DB: readur
+    volumes:
+      - ${APP_DATA_DIR}/data/postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U readur"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
