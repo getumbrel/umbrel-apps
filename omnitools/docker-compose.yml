@@ -1,0 +1,13 @@
+version: '3.7'
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: omnitools_app_1
+      APP_PORT: 80
+
+  app:
+    image: iib0011/omni-tools:0.5.0@sha256:9d494a4d8d64f34a87ebbf5bc5e1a5f02b5b9796f7ddbc9e3aacda5996e76b61
+    security_opt:
+      - no-new-privileges:true
+    restart: on-failure
