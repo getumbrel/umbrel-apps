@@ -19,10 +19,12 @@ services:
       MONGODB_URI: "mongodb://toshi-moto_mongodb_1:27017/toshi-moto"
 
   web:
-    image: toshimoto821/toshi-moto:1.25.3@sha256:71e28d6482a620cfa84f73be189e3a64442509a5d26da724d8e688a1a9d1a8a2
+    image: toshimoto821/toshi-moto:1.26.1@sha256:cb4e1e6f482bde949b240ed6e8aa72692c13a2b2eb20a70a4d10f89935882ae1
     restart: on-failure
     user: 1000:1000
     stop_grace_period: 1m
+    volumes:
+      - ${APP_DATA_DIR}/data/proxy/nginx.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
       - api_web
     environment:
