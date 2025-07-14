@@ -10,6 +10,7 @@ services:
     image: toshimoto821/toshi-moto-api:1.7.0@sha256:9ef3f9546f1565c5a32c7921d5feb76552dc41b5df9aeb234718af40ad764252
     restart: on-failure
     stop_grace_period: 1m
+    user: 1000:1000
     depends_on:
       - mongodb
     environment:
@@ -18,6 +19,7 @@ services:
   web:
     image: toshimoto821/toshi-moto:1.24.8@sha256:5e45d220b2ed49f962b90ce6ab16ffc67cf0e7c75a56930a7dd2e69854b8fd16
     restart: on-failure
+    user: 1000:1000
     stop_grace_period: 1m
     depends_on:
       - api_web
