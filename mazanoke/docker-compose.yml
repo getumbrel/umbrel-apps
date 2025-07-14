@@ -8,7 +8,8 @@ services:
 
   web:
     image: ghcr.io/civilblur/mazanoke:v1.1.5@sha256:e43dc48de575b7a032bbefd96b890d69c1f141417e43d5d096469aa1398711d6
-    user: "1000:1000"
+    # does not work rootless
+    #user: "1000:1000"
     restart: on-failure
     healthcheck:
       test: ["CMD-SHELL", "nc -z 127.0.0.1 80 || exit 1"]
