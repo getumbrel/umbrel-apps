@@ -3,7 +3,7 @@ version: "3.7"
 services:
   app_proxy:
     environment:
-      APP_HOST: toshi-collection-toshi-moto_web_1
+      APP_HOST: toshi-moto_web_1
       APP_PORT: 8080
       PROXY_AUTH_ADD: "false"
   api_web:
@@ -14,7 +14,7 @@ services:
       - mongodb
     environment:
       PORT: 8121
-      MONGODB_URI: "mongodb://toshi-collection-toshi-moto_mongodb_1:27017/toshi-moto"
+      MONGODB_URI: "mongodb://toshi-moto_mongodb_1:27017/toshi-moto"
   web:
     image: toshimoto821/toshi-moto:1.24.8@sha256:5e45d220b2ed49f962b90ce6ab16ffc67cf0e7c75a56930a7dd2e69854b8fd16
     restart: on-failure
@@ -28,9 +28,8 @@ services:
     # Newer mongo versions don't support Raspberry Pi 4 arm64
     image: mongo:4.4.6-bionic@sha256:3d0e6df9fd5bc42cbf8ef8bc9e6c4e78f6f26c7157dbd7bdec72d202ab8ebe3a
     stop_grace_period: 1m
+    user: 1000:1000
     volumes:
       - ${APP_DATA_DIR}/data/db:/data/db
       - ${APP_DATA_DIR}/data/db/diagnostic.data:/data/db/diagnostic.data
       - ${APP_DATA_DIR}/data/db/journal:/data/db/journal
-    ports:
-      - "27017:27017" # Expose port 27017 to host
