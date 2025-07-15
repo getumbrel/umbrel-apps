@@ -1,8 +1,10 @@
 services:
+  app_proxy:
+    environment:
+      APP_HOST: public-pool-web_rails-app_1
+      APP_PORT: 3000
   rails-app:
     image: martinbarilik/public-pool-web:0.0.7@sha256:351eb51b65953f60dda44d367fa092b48d387eaccc425d99f8ee8d0d7ea625a4
-    ports:
-      - "2020:3000"
     environment:
       - RAILS_MASTER_KEY=${APP_PUBLIC_POOL_WEB_MASTER_KEY}
       - DATABASE_URL=${APP_PUBLIC_POOL_WEB_DATABASE_URL}
