@@ -3,6 +3,7 @@ services:
     environment:
       APP_HOST: public-pool-web_rails-app_1
       APP_PORT: 3000
+
   rails-app:
     image: martinbarilik/public-pool-web:0.0.7@sha256:351eb51b65953f60dda44d367fa092b48d387eaccc425d99f8ee8d0d7ea625a4
     environment:
@@ -14,6 +15,7 @@ services:
         condition: service_healthy
       redis: 
         condition: service_healthy
+        
   db:
     image: postgres:17.4@sha256:304ab813518754228f9f792f79d6da36359b82d8ecf418096c636725f8c930ad
     environment:
