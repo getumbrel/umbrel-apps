@@ -19,7 +19,7 @@ services:
       MONGODB_URI: "mongodb://toshi-moto_mongodb_1:27017/toshi-moto"
 
   web:
-    image: toshimoto821/toshi-moto:1.26.1@sha256:cb4e1e6f482bde949b240ed6e8aa72692c13a2b2eb20a70a4d10f89935882ae1
+    image: toshimoto821/toshi-moto:1.26.2@sha256:5f9989996c0fd78e416c7c29df3b8bca763a635d578d2c51024e250aa5ce029c
     restart: on-failure
     user: 1000:1000
     stop_grace_period: 1m
@@ -31,10 +31,10 @@ services:
       PORT: 8021
 
   mongodb:
-    # Newer mongo versions don't support Raspberry Pi 4 arm64
-    image: mongo:4.4.6-bionic@sha256:3d0e6df9fd5bc42cbf8ef8bc9e6c4e78f6f26c7157dbd7bdec72d202ab8ebe3a
+    image: mongo:8.0.10@sha256:15fb53a5160ebabff5ecade8f8b5d48721b68ea190957a7f35b5b38e8340e62b
     stop_grace_period: 1m
     user: 1000:1000
+    command: mongod --noauth
     volumes:
       - ${APP_DATA_DIR}/data/db:/data/db
       - ${APP_DATA_DIR}/data/db/diagnostic.data:/data/db/diagnostic.data
