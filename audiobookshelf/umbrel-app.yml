@@ -3,7 +3,7 @@ id: audiobookshelf
 name: Audiobookshelf
 tagline: Audiobook and podcast server
 category: media
-version: "2.25.1"
+version: "2.26.0"
 port: 13378
 description: >-
   Features:
@@ -61,23 +61,26 @@ path: ""
 defaultUsername: ""
 defaultPassword: ""
 releaseNotes: >-
+  ⚠️ Important: New authentication system
+
+
+  A more secure authentication system has been added. All users are required to re-login to the web client to start using the new authentication system. The old authentication system will continue to function until September 30, 2025.
+
+
   New features and improvements:
-    - Added notifications for podcast episode check failures
-    - Support for custom timeout settings for podcast downloads
-    - Improved podcast episode matching using fuzzy search
+    - JWT authentication with refresh tokens
+    - API Key config page for managing configurable API Keys
+    - Rate limiter for authentication endpoints
+    - Explicit filter for books & podcasts
+    - Improved podcast episode matching using Fuse.js
     - Enhanced M4B encoder with better backup file handling
-    - Better fallback handling for podcast episode downloads
     - Improved book library sorting with secondary sort by title
-    - Updated Audible provider to return ISBN when available
 
 
   Bug fixes:
-    - Fixed M4B encoder ignoring custom values
-    - Fixed potential issues with podcast episode check getting stuck
-    - Fixed rich text editor file attachment removal
-    - Fixed alignment issues in chapters table
-    - Security fix for the pathexist check
-    - Various translation updates for multiple languages
+    - Fixed scanner re-adding single-file audiobooks when deleted through web UI
+    - Fixed continue listening items not updating for mobile local syncs
+    - Fixed server crash when FantLab metadata provider requests time out
 
 
   Full release notes can be found at https://github.com/advplyr/audiobookshelf/releases
