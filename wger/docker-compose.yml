@@ -7,25 +7,22 @@ services:
       APP_PORT: 80
 
   web:
-    image: wger/server:2.4-dev@sha256:8e2fcacc32157468a3502d7516897e1b16dc5c609a3fe7698291c0e20bb378b5
+    image: wger/server:2.3-dev@sha256:c63947d589c115e777b99154422599a5b23e9314268c9603210bbd047598a9f9
     user: "1000:1000"
     depends_on:
       db:
         condition: service_healthy
       cache:
         condition: service_healthy
-    env_file:
-      - ${APP_DATA_DIR}/config/prod.env
     environment:
       SECRET_KEY: ${APP_SEED}
       SIGNING_KEY: ${APP_SEED}
       CSRF_TRUSTED_ORIGINS: http://${DEVICE_DOMAIN_NAME}:8450
       SITE_URL: http://${DEVICE_DOMAIN_NAME}:8450
+    env_file:
     volumes:
       - ${APP_DATA_DIR}/data/static:/home/wger/static
       - ${APP_DATA_DIR}/data/media:/home/wger/media
-    expose:
-      - 8000
     healthcheck:
       test: wget --no-verbose --tries=1 --spider http://localhost:8000
       interval: 10s
@@ -42,8 +39,6 @@ services:
       - ${APP_DATA_DIR}/config/nginx.conf:/etc/nginx/conf.d/default.conf:ro
       - ${APP_DATA_DIR}/data/static:/wger/static:ro
       - ${APP_DATA_DIR}/data/media:/wger/media:ro
-    expose:
-      - 80
     healthcheck:
       test: service nginx status
       interval: 10s
@@ -62,8 +57,6 @@ services:
       TZ: Europe/Berlin
     volumes:
       - ${APP_DATA_DIR}/data/postgres-data:/var/lib/postgresql/data/
-    expose:
-      - 5432
     healthcheck:
       test: pg_isready -U wger
       interval: 10s
@@ -75,8 +68,6 @@ services:
   cache:
     image: redis:8.0.3-alpine@sha256:25c0ae32c6c2301798579f5944af53729766a18eff5660bbef196fc2e6214a9c
     user: "1000:1000"
-    expose:
-      - 6379
     volumes:
       - ${APP_DATA_DIR}/data/redis-data:/data
     healthcheck:
@@ -88,7 +79,7 @@ services:
     restart: on-failure
 
   celery_worker:
-    image: wger/server:2.4-dev@sha256:8e2fcacc32157468a3502d7516897e1b16dc5c609a3fe7698291c0e20bb378b5
+    image: wger/server:2.3-dev@sha256:c63947d589c115e777b99154422599a5b23e9314268c9603210bbd047598a9f9
     user: "1000:1000"
     command: /start-worker
     env_file:
@@ -107,7 +98,7 @@ services:
     restart: on-failure
 
   celery_beat:
-    image: wger/server:2.4-dev@sha256:8e2fcacc32157468a3502d7516897e1b16dc5c609a3fe7698291c0e20bb378b5
+    image: wger/server:2.3-dev@sha256:c63947d589c115e777b99154422599a5b23e9314268c9603210bbd047598a9f9
     user: "1000:1000"
     command: /start-beat
     volumes:
