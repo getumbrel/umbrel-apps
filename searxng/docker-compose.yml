@@ -9,5 +9,8 @@ services:
   web:
     image: ghcr.io/searxng/searxng:2025.7.19-b95a3e9@sha256:8f1196f03960ebae2292ba7b6d3e074c643abded31ad5bb0d0e971e20670156c
     restart: on-failure
+    environment:
+      SEARXNG_SECRET: ${APP_SEED}
     volumes:
-      - ${APP_DATA_DIR}/data:/etc/searxng
+      - ${APP_DATA_DIR}/data/config:/etc/searxng
+      - ${APP_DATA_DIR}/data/cache:/var/cache/searxng
