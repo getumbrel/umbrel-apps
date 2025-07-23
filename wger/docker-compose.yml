@@ -16,6 +16,11 @@ services:
         condition: service_healthy
     env_file:
       - ${APP_DATA_DIR}/config/prod.env
+    environment:
+      SECRET_KEY: ${APP_SEED}
+      SIGNING_KEY: ${APP_SEED}
+      CSRF_TRUSTED_ORIGINS: http://${DEVICE_DOMAIN_NAME}:8450
+      SITE_URL: http://${DEVICE_DOMAIN_NAME}:8450
     volumes:
       - ${APP_DATA_DIR}/data/static:/home/wger/static
       - ${APP_DATA_DIR}/data/media:/home/wger/media
