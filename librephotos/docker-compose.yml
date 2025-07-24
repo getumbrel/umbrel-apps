@@ -1,0 +1,70 @@
+version: '3.7'
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: librephotos_proxy_1
+      APP_PORT: 80
+
+  proxy:
+    image: reallibrephotos/librephotos-proxy:2025w28@sha256:e1fa9b1eb33fbb11b13c7d01940e1ce354958f97580487555fa6c7fc3d91050c
+    restart: on-failure
+    volumes:
+      - ${UMBREL_ROOT}/data/storage/Photos:/data
+      - ${APP_DATA_DIR}/data/protected_media:/protected_media
+    expose:
+      - "80"
+    depends_on:
+      - backend
+      - frontend
+
+  db:
+    image: pgautoupgrade/pgautoupgrade:17-alpine3.22@sha256:2ec008ae5f0a2e5dd8f4d2475df41cf3ccc9562acf49bd668fcc0c061944b9bf
+    restart: on-failure
+    environment:
+      POSTGRES_USER: librephotos
+      POSTGRES_PASSWORD: librephotos
+      POSTGRES_DB: librephotos
+    volumes:
+      - ${APP_DATA_DIR}/data/db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "psql", "-U", "librephotos", "-d", "librephotos", "-c", "SELECT 1;"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  frontend:
+    image: reallibrephotos/librephotos-frontend:2025w28@sha256:52a440d336205a900b7d6ed4ecb9fdab906e42bb1321f43de1a7350ed85e1ed0
+    restart: on-failure
+
+  backend:
+    image: reallibrephotos/librephotos:2025w28@sha256:40fd192cd99a96ee496007e3451c36381a6b376d2dba15e7e81058284d4af96d
+    restart: on-failure
+    volumes:
+      - ${UMBREL_ROOT}/data/storage/Photos:/data
+      - ${APP_DATA_DIR}/data/protected_media:/protected_media
+      - ${APP_DATA_DIR}/data/logs:/logs
+      - ${APP_DATA_DIR}/data/cache:/root/.cache
+    environment:
+      SECRET_KEY: changeme123
+      BACKEND_HOST: backend
+      ADMIN_EMAIL: admin@admin.com
+      ADMIN_USERNAME: admin
+      ADMIN_PASSWORD: umbrel
+      DB_BACKEND: postgresql
+      DB_NAME: librephotos
+      DB_USER: librephotos
+      DB_PASS: librephotos
+      DB_HOST: db
+      DB_PORT: 5432
+      MAPBOX_API_KEY: ""
+      WEB_CONCURRENCY: 2
+      HEAVYWEIGHT_PROCESS: 1
+      FIXPERMISSIONS: "true"
+      SKIP_PATTERNS: ""
+      ALLOW_UPLOAD: "true"
+      CSRF_TRUSTED_ORIGINS: ""
+      DEBUG: "0"
+    depends_on:
+      db:
+        condition: service_healthy
