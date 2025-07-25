@@ -1,0 +1,17 @@
+version: '3.7'
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: denny-mstream_server_1
+      APP_PORT: 3000
+
+  server:
+    image: linuxserver/mstream:5.13.1@sha256:d59ce8100e1d25861dc6a67fe364c06b5f3930568fb0bf86d300255b53f70be6
+    restart: on-failure
+    environment:
+      - PUID=1000
+      - PGID=1000
+    volumes:
+      - ${APP_DATA_DIR}/data:/config
+      - ${UMBREL_ROOT}/data/storage/downloads/music:/music
