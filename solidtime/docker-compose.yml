@@ -6,7 +6,7 @@ services:
       PROXY_AUTH_ADD: "false"
 
   app:
-    image: solidtime/solidtime:0.8.0@sha256:31206e34ccded06c4f8486f24073214bbef29514cfe87e6e42fc1ff06ca22734
+    image: solidtime/solidtime:0.9.0@sha256:5601b81f63ece49cdc4110f90f7624b0cc4ba87448b3e4bddce904457822a4ef
     user: "1000:1000"
     restart: on-failure
     volumes:
@@ -66,7 +66,7 @@ services:
         condition: service_healthy
 
   scheduler:
-    image: solidtime/solidtime:0.8.0@sha256:31206e34ccded06c4f8486f24073214bbef29514cfe87e6e42fc1ff06ca22734
+    image: solidtime/solidtime:0.9.0@sha256:5601b81f63ece49cdc4110f90f7624b0cc4ba87448b3e4bddce904457822a4ef
     user: "1000:1000"
     restart: on-failure
     volumes:
@@ -119,13 +119,13 @@ services:
     env_file:
       - ${APP_DATA_DIR}/keys.env
     healthcheck:
-      test: [ "CMD-SHELL", "supervisorctl status scheduler:scheduler_00" ]
+      test: [ "CMD", "healthcheck" ]
     depends_on:
       db:
         condition: service_healthy
 
   queue:
-    image: solidtime/solidtime:0.8.0@sha256:31206e34ccded06c4f8486f24073214bbef29514cfe87e6e42fc1ff06ca22734
+    image: solidtime/solidtime:0.9.0@sha256:5601b81f63ece49cdc4110f90f7624b0cc4ba87448b3e4bddce904457822a4ef
     user: "1000:1000"
     restart: on-failure
     volumes:
@@ -179,7 +179,7 @@ services:
     env_file:
       - ${APP_DATA_DIR}/keys.env
     healthcheck:
-      test: [ "CMD-SHELL", "supervisorctl status worker:worker_00" ]
+      test: [ "CMD", "healthcheck" ]
     depends_on:
       db:
         condition: service_healthy
