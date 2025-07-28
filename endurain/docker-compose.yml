@@ -8,7 +8,7 @@ services:
       PROXY_AUTH_ADD: "false"
 
   app:
-    image: ghcr.io/joaovitoriasilva/endurain:v0.12.7@sha256:713691f805f8d506514deb2fa757581d436b1f006f31b2eb049cd3831429b6ab
+    image: ghcr.io/joaovitoriasilva/endurain:v0.13.1@sha256:eba7413268b7634338b678902dbd15e808176cb9c2f422c54ab1c6063ba8c150
     environment:
       UID: "1000"
       GID: "1000"
@@ -21,10 +21,8 @@ services:
     env_file:
       - ${APP_DATA_DIR}/settings.env
     volumes:
-      - ${APP_DATA_DIR}/data/app/user_images:/app/backend/user_images
-      - ${APP_DATA_DIR}/data/app/files/bulk_import:/app/backend/files/bulk_import
-      - ${APP_DATA_DIR}/data/app/files/processed:/app/backend/files/processed
-      - ${APP_DATA_DIR}/data/app/logs:/app/backend/logs
+      - ${APP_DATA_DIR}/data/app:/app/backend/data
+      - ${APP_DATA_DIR}/data/logs:/app/backend/logs
     depends_on:
       db:
         condition: service_healthy
