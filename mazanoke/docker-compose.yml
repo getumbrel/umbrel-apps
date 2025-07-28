@@ -1,0 +1,19 @@
+version: '3.7'
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: mazanoke_web_1
+      APP_PORT: 80
+
+  web:
+    image: ghcr.io/civilblur/mazanoke:v1.1.5@sha256:e43dc48de575b7a032bbefd96b890d69c1f141417e43d5d096469aa1398711d6
+    # does not work rootless
+    #user: "1000:1000"
+    restart: on-failure
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z 127.0.0.1 80 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 90s
