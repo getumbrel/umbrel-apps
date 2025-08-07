@@ -1,0 +1,59 @@
+version: '3.7'
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: bassin_www_1
+      APP_PORT: 80
+      PROXY_AUTH_ADD: "false"
+    container_name: bassin_app_proxy_1
+
+  init:
+    image: alpine
+    entrypoint: >-
+      /bin/sh -c '
+        apk add --no-cache envsubst &&
+        envsubst < /config/ckpool.conf.template > /config/ckpool.conf &&
+        chown 1000:1000 /config/ckpool.conf
+      '
+    volumes:
+      - ${APP_DATA_DIR}/data/config:/config
+    environment:
+      - APP_BITCOIN_NODE_IP=${APP_BITCOIN_NODE_IP}
+      - APP_BITCOIN_RPC_PORT=${APP_BITCOIN_RPC_PORT}
+      - APP_BITCOIN_RPC_USER=${APP_BITCOIN_RPC_USER}
+      - APP_BITCOIN_RPC_PASS=${APP_BITCOIN_RPC_PASS}
+      - APP_BITCOIN_ZMQ_RAWBLOCK_PORT=${APP_BITCOIN_ZMQ_RAWBLOCK_PORT}
+
+  ckpool:
+    image: ghcr.io/duckaxe/ckpool-solo:main@sha256:2c8b700e6b3b03537155199bb7de319539a62adbfeb87227eef9c886f06444f7
+    entrypoint: /bin/sh -c '/opt/ckpool/src/ckpool -k -B -c /config/ckpool.conf'
+    user: "1000:1000"
+    depends_on:
+      - init
+    restart: on-failure
+    stop_grace_period: 30s
+    ports:
+      - "3456:3333/tcp"
+    volumes:
+      - ${APP_DATA_DIR}/data/config:/config:ro
+      - ${APP_DATA_DIR}/data/www:/www
+    container_name: bassin_ckpool_1
+
+  www:
+    image: halverneus/static-file-server
+    user: "1000:1000"
+    environment:
+      - FOLDER=/www
+      - PORT=80
+    volumes:
+      - ${APP_DATA_DIR}/data/www:/www:ro
+    restart: on-failure
+    container_name: bassin_www_1
+  
+  widget-server:
+    image: ghcr.io/duckaxe/umbrel-bassin-widget:main@sha256:293d4a17579bbef339c3f4595ed2dc36bef70699d34909bfa3ac20bba8facb7c
+    user: "1000:1000"
+    environment:
+      - BASSIN_API_POOL_URL=http://bassin_www_1/pool/pool.status
+    restart: on-failure
