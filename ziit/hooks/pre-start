@@ -1,45 +1,26 @@
 #!/usr/bin/env bash
+set -e
 
 APP_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")"
-APP_DATA_DIR="$APP_DIR/data"
-DESIRED_OWNER="1000:1000"
 ENV_FILE="$APP_DIR/docker-compose.yml"
 
-# Check if the file exists
 if [ ! -f "$ENV_FILE" ]; then
-    echo "Error: Environment file not found at $ENV_FILE"
+    echo "Error: $ENV_FILE does not exist"
     exit 1
 fi
 
-if grep -Eq '^NUXT_PASETO_KEY= *k4\.local\.OUTPUT_OF_OPENSSL_COMMAND$' "$ENV_FILE" && \
-   grep -Eq '^POSTGRES_PASSWORD= *CHANGEME$' "$ENV_FILE"; then
+CURRENT_PASETO=$(grep -E '^\s*NUXT_PASETO_KEY:' "$ENV_FILE" | sed -E 's/.*"k4\.local\.([^"]+)".*/\1/' | xargs)
 
-    echo "🔄 Updating PASETO Key and POSTGRES_PASSWORD..."
+CURRENT_PASSWORD=$(grep -E '^\s*POSTGRES_PASSWORD:' "$ENV_FILE" | sed -E 's/.*POSTGRES_PASSWORD:\s*([^#\s]+).*/\1/' | xargs)
 
-    # Generate 32-byte base64 PASETO key
+if [[ "$CURRENT_PASETO" == "CHANGEME" ]] || [[ "$CURRENT_PASETO" == "OUTPUT_OF_OPENSSL_COMMAND" ]] || [[ "$CURRENT_PASETO" == *"CHANGEME"* ]] || [[ "$CURRENT_PASETO" == *"OUTPUT_OF_OPENSSL_COMMAND"* ]]; then
     NEW_PASETO_KEY=$(openssl rand -base64 32)
-
-    # Generate 256-bit hexadecimal password
-    NEW_PASSWORD=$(openssl rand -hex 16)
-
-    # Replace the PASETO key
-    sed -i -E 's|^NUXT_PASETO_KEY= *k4\.local\.OUTPUT_OF_OPENSSL_COMMAND$|NUXT_PASETO_KEY="'"$NEW_PASETO_KEY"'"|' "$ENV_FILE"
-
-    # Replace the POSTGRES_PASSWORD
-    sed -i -E 's|^POSTGRES_PASSWORD= *CHANGEME$|POSTGRES_PASSWORD='"$NEW_PASSWORD"'|' "$ENV_FILE"
-
-    echo "✅ PASETO Key and POSTGRES_PASSWORD updated successfully!"
-
+    sed -i '' -E 's|^( *NUXT_PASETO_KEY: *).*$|\1"k4.local.'$NEW_PASETO_KEY'"|' "$ENV_FILE"
 fi
 
-# 2. 🔸 Generate and replace the DATABASE_URL (if present)
-if grep -Eq '^NUXT_DATABASE_URL= *".*CHANGEME.*"$' "$ENV_FILE"; then
-
-    echo "🔄 Updating DATABASE_URL..."
-
-    # Use the same NEW_PASSWORD as generated for POSTGRES_PASSWORD
-    sed -i -E 's|^NUXT_DATABASE_URL= *".*CHANGEME.*"$|NUXT_DATABASE_URL="postgresql://postgres:'"$NEW_PASSWORD"'@postgres:5432/ziit"|' "$ENV_FILE"
-
-    echo "✅ DATABASE_URL updated successfully!"
-
+if [[ "$CURRENT_PASSWORD" == "CHANGEME" ]] || [[ "$CURRENT_PASSWORD" == "OUTPUT_OF_OPENSSL_COMMAND" ]]; then
+    NEW_PASSWORD=$(openssl rand -hex 16)
+    sed -i '' -E 's|^( *POSTGRES_PASSWORD: *).*$|\1'$NEW_PASSWORD'|' "$ENV_FILE"
+    
+    sed -i '' -E "s|^( *NUXT_DATABASE_URL: *).*(#.*)?$|\1\"postgresql://postgres:$NEW_PASSWORD@postgres:5432/ziit\"\2|" "$ENV_FILE"
 fi
