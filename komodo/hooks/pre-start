@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# This scripts checks the environment file for placeholder values and replaces them with generated keys or system variables.
+
+APP_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")"
+ENV_FILE="$APP_DIR/settings.env"
+
+# Check if the file exists
+if [ ! -f "$ENV_FILE" ]; then
+    echo "Error: Environment file not found at $ENV_FILE"
+    exit 1
+fi
+
+# Check if the KOMODO_HOST value is set to "changeme"
+if grep -Eq '^KOMODO_HOST= *changeme$' "$ENV_FILE"; then
+    echo "Placeholder value for KOMODO_HOST detected. Adding proper hostname..."
+
+    # Replace the placeholder with the hostname
+    sed -i -E 's|^KOMODO_HOST= *changeme$|KOMODO_HOST="'"http://${DEVICE_DOMAIN_NAME}:9120"'"|' "$ENV_FILE"
+
+    echo "Updated KOMODO_HOST in $ENV_FILE"
+else
+    echo "KOMODO_HOST is already set. No changes made."
+fi
+
+exit 0

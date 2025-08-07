@@ -64,30 +64,11 @@ services:
       KOMODO_DATABASE_ADDRESS: komodo_ferretdb_1:27017
       KOMODO_DATABASE_USERNAME: admin
       KOMODO_DATABASE_PASSWORD: admin
-      COMPOSE_KOMODO_IMAGE_TAG: latest
       KOMODO_PASSKEY: ${APP_PASSWORD}
-      TZ: Europe/Berlin
-      KOMODO_HOST: https://demo.komo.do
-      KOMODO_TITLE: Komodo
       KOMODO_FIRST_SERVER: https://komodo_periphery_1:8120
-      KOMODO_DISABLE_CONFIRM_DIALOG: "false"
-      KOMODO_MONITORING_INTERVAL: "15-sec"
-      KOMODO_RESOURCE_POLL_INTERVAL: "1-hr"
-      KOMODO_WEBHOOK_SECRET: W3bh00kS3cret!2025
       KOMODO_JWT_SECRET: ${APP_SEED}
-      KOMODO_JWT_TTL: "1-day"
-      KOMODO_LOCAL_AUTH: "true"
-      KOMODO_DISABLE_USER_REGISTRATION: "false"
-      KOMODO_ENABLE_NEW_USERS: "false"
-      KOMODO_DISABLE_NON_ADMIN_CREATE: "false"
-      KOMODO_TRANSPARENT_MODE: "false"
-      KOMODO_LOGGING_PRETTY: "false"
-      KOMODO_PRETTY_STARTUP_CONFIG: "false"
-      KOMODO_OIDC_ENABLED: "false"
-      KOMODO_GITHUB_OAUTH_ENABLED: "false"
-      KOMODO_GOOGLE_OAUTH_ENABLED: "false"
-      #KOMODO_AWS_ACCESS_KEY_ID:
-      #KOMODO_AWS_SECRET_ACCESS_KEY:
+    env_file:
+      - ${APP_DATA_DIR}/settings.env
     volumes:
       - ${APP_DATA_DIR}/data/core:/repo-cache
       
