@@ -1,9 +1,14 @@
 #!/usr/bin/env bash
-# This script sets up necessary directories/permissions that have changed in the app since the initial release. 
+# This script sets up necessary directories/permissions that have changed in the app since the initial release.
+# It also handles version migrations for Immich to ensure safe upgrades through required intermediate versions.
 
 set -euo pipefail
 
-APP_DATA_DIR="$(readlink -f $(dirname "${BASH_SOURCE[0]}")/..)/data"
+APP_DIR="$(readlink -f $(dirname "${BASH_SOURCE[0]}")/..)"
+APP_DATA_DIR="${APP_DIR}/data"
+VERSION_FILE="${APP_DATA_DIR}/immich-version"
+APP_COMPOSE_FILE="${APP_DIR}/docker-compose.yml"
+APP_COMPOSE_BACKUP_FILE="${APP_DIR}/docker-compose.yml.bak"
 
 # Create model-cache directory if it doesn't exist
 MODEL_CACHE_DIR="${APP_DATA_DIR}/model-cache"
@@ -16,4 +21,264 @@ TYPESENSE_DIR="${APP_DATA_DIR}/tsdata"
 # delete old post-update script if it exists
 POST_UPDATE_SCRIPT="$(readlink -f $(dirname "${BASH_SOURCE[0]}"))/post-update"
 [ -f "${POST_UPDATE_SCRIPT}" ] && rm -f "${POST_UPDATE_SCRIPT}"
-  
+
+# Version migration logic
+# Minimum version that requires the v1.132.1 intermediate step
+MIN_VERSION_REQUIRING_132="1.137.0"
+
+# Required intermediate version for safe migration
+INTERMEDIATE_VERSION="1.132.1"
+
+# Docker images for the intermediate migration step
+INTERMEDIATE_SERVER_IMAGE="ghcr.io/immich-app/immich-server:v1.132.1@sha256:71cb6d2a6587f6481ae22b1cd743c74f163acbf26ade4df890e4425bb1f2e891"
+INTERMEDIATE_ML_IMAGE="ghcr.io/immich-app/immich-machine-learning:v1.132.1@sha256:48fc9c8315a00e1856cb9dff1db626ec8c7f1e424d60a6002c7f04ce94fdfa9a"
+
+version_compare() {
+    # Compare two version strings (e.g., "1.137.3" vs "1.137.0")
+    # Returns: 0 if equal, 1 if first > second, 2 if first < second
+    local ver1="${1}"
+    local ver2="${2}"
+    
+    if [[ "${ver1}" == "${ver2}" ]]; then
+        return 0
+    fi
+    
+    # Split versions into arrays and compare
+    IFS='.' read -ra V1 <<< "${ver1}"
+    IFS='.' read -ra V2 <<< "${ver2}"
+    
+    # Compare each component
+    for i in {0..2}; do
+        local v1_part=${V1[i]:-0}
+        local v2_part=${V2[i]:-0}
+        
+        if [[ $v1_part -gt $v2_part ]]; then
+            return 1  # ver1 > ver2
+        elif [[ $v1_part -lt $v2_part ]]; then
+            return 2  # ver1 < ver2
+        fi
+    done
+    
+    return 0  # equal
+}
+
+requires_intermediate_migration() {
+    local target_version="${1}"
+    
+    # Check if target version is >= MIN_VERSION_REQUIRING_132
+    version_compare "${target_version}" "${MIN_VERSION_REQUIRING_132}"
+    local result=$?
+    
+    # Returns true (0) if target_version >= MIN_VERSION_REQUIRING_132
+    [[ $result -eq 0 || $result -eq 1 ]]
+}
+
+get_current_version_from_compose() {
+    # Extract current version from docker-compose.yml using yq to handle multi-line YAML
+    local server_image=$(yq '.services.server.image' "${APP_COMPOSE_FILE}" 2>/dev/null)
+    # Extract version from image (e.g., "ghcr.io/immich-app/immich-server:v1.137.3@sha256..." -> "1.137.3")
+    local version=$(echo "${server_image}" | sed 's/.*:v\([0-9.]*\).*/\1/')
+    echo "${version}"
+}
+
+get_stored_version() {
+    if [[ -f "${VERSION_FILE}" ]]; then
+        cat "${VERSION_FILE}"
+    else
+        echo ""
+    fi
+}
+
+store_version() {
+    local version="${1}"
+    echo "${version}" > "${VERSION_FILE}"
+}
+
+mark_migration_in_progress() {
+    local version="${1}"
+    echo "${version}-patch" > "${VERSION_FILE}"
+}
+
+is_migration_in_progress() {
+    local stored_version=$(get_stored_version)
+    [[ "${stored_version}" == *"-patch"* ]]
+}
+
+is_fresh_install() {
+    # Check if postgres data directory exists and has been initialized
+    [[ ! -f "${APP_DATA_DIR}/postgres/PG_VERSION" ]]
+}
+
+has_v132_migrations() {
+    # Check if database has migrations from v1.132.1+
+    # If migrations table doesn't exist, assume it's a clean/newer installation that's safe to upgrade
+    local query_result=$(docker exec immich_postgres_1 psql -U immich -d immich -tAc "SELECT COUNT(*) FROM migrations WHERE name LIKE '%TableCleanup%';" 2>&1)
+    
+    if echo "${query_result}" | grep -q "relation \"migrations\" does not exist"; then
+        echo "No migrations table found - assuming clean/newer installation, safe to upgrade"
+        return 0  # No migrations table = safe to upgrade
+    elif echo "${query_result}" | grep -q "^1$"; then
+        echo "Database has v${INTERMEDIATE_VERSION}+ migrations"
+        return 0  # Has v1.132.1+ migrations
+    else
+        echo "Database has migrations table but not v${INTERMEDIATE_VERSION}+ migrations - needs migration"
+        return 1  # Has old migrations - needs migration through v1.132.1
+    fi
+}
+
+get_current_images_from_compose() {
+    # Extract current images from docker-compose.yml, handling multi-line YAML
+    local server_image=$(yq '.services.server.image' "${APP_COMPOSE_FILE}" 2>/dev/null || echo "")
+    local ml_image=$(yq '.services."machine-learning".image' "${APP_COMPOSE_FILE}" 2>/dev/null || echo "")
+    echo "${server_image}|${ml_image}"
+}
+
+update_compose_images() {
+    local server_image="${1}"
+    local ml_image="${2}"
+    
+    # Create backup
+    cp "${APP_COMPOSE_FILE}" "${APP_COMPOSE_BACKUP_FILE}"
+    
+    # Update both server and machine-learning images using yq to handle multi-line YAML properly
+    yq -i ".services.server.image = \"${server_image}\"" "${APP_COMPOSE_FILE}"
+    yq -i ".services.\"machine-learning\".image = \"${ml_image}\"" "${APP_COMPOSE_FILE}"
+}
+
+restore_compose_from_backup() {
+    if [[ -f "${APP_COMPOSE_BACKUP_FILE}" ]]; then
+        mv "${APP_COMPOSE_BACKUP_FILE}" "${APP_COMPOSE_FILE}"
+    fi
+}
+
+wait_for_service() {
+    local service_name="${1}"
+    local check_command="${2}"
+    local max_wait="${3:-60}"
+    local sleep_interval="${4:-2}"
+    local count=0
+    
+    echo "Waiting for ${service_name} to be ready..."
+    while [[ $count -lt $max_wait ]]; do
+        if eval "${check_command}" >/dev/null 2>&1; then
+            echo "${service_name} is ready"
+            return 0
+        fi
+        sleep $sleep_interval
+        ((count += sleep_interval))
+        echo "Still waiting for ${service_name}... ($count/${max_wait}s)"
+    done
+    
+    echo "Timeout waiting for ${service_name} to be ready"
+    return 1
+}
+
+wait_for_postgres_ready() {
+    wait_for_service "PostgreSQL" "docker exec immich_postgres_1 pg_isready -U immich -d immich" 60 2
+}
+
+wait_for_immich_ready() {
+    wait_for_service "Immich" "docker exec immich_server_1 curl -f -s http://localhost:2283/api/server/ping" 600 5
+}
+
+# Main migration logic
+current_compose_version=$(get_current_version_from_compose)
+stored_version=$(get_stored_version)
+
+echo "Current compose version: ${current_compose_version}"
+echo "Stored version: ${stored_version}"
+
+# Check if migration is currently in progress
+if is_migration_in_progress; then
+    echo "Immich migration is currently in progress. Exiting to allow migration to complete..."
+    exit 0
+fi
+
+# Check if this is a fresh install
+if is_fresh_install; then
+    echo "Fresh install detected, no migration needed"
+    store_version "${current_compose_version}"
+    exit 0
+fi
+
+# Check if we're upgrading to a version that requires migration through v1.132.1
+if requires_intermediate_migration "${current_compose_version}"; then
+    echo "Checking if database needs migration through v${INTERMEDIATE_VERSION}..."
+    
+    # Store original images for restoration if needed
+    original_images=$(get_current_images_from_compose)
+    original_server_image=$(echo "${original_images}" | cut -d'|' -f1)
+    original_ml_image=$(echo "${original_images}" | cut -d'|' -f2)
+    
+    # Start postgres to check migration state
+    echo "Starting PostgreSQL to check migration state..."
+    # First ensure any existing containers are stopped and removed
+    "${UMBREL_ROOT}/scripts/app" compose immich down --remove-orphans 2>/dev/null || true
+    "${UMBREL_ROOT}/scripts/app" compose immich up -d postgres
+    
+    # Wait for postgres to be ready
+    if ! wait_for_postgres_ready; then
+        echo "PostgreSQL failed to start, cannot check migration state"
+        "${UMBREL_ROOT}/scripts/app" compose immich down --remove-orphans
+        exit 1
+    fi
+    
+    # Check if we have v1.132.1+ migrations
+    if has_v132_migrations; then
+        echo "Database already has v${INTERMEDIATE_VERSION}+ migrations, safe to upgrade to v${current_compose_version}"
+        # Stop postgres and let normal startup continue
+        "${UMBREL_ROOT}/scripts/app" compose immich down --remove-orphans
+        exit 0
+    else
+        echo "Database needs migration through v${INTERMEDIATE_VERSION} first"
+        
+        # Stop current services and remove containers
+        "${UMBREL_ROOT}/scripts/app" compose immich down --remove-orphans
+        
+        # Mark migration as in progress to prevent endless loops
+        mark_migration_in_progress "${current_compose_version}"
+        
+        # Update to intermediate version first
+        echo "Step 1: Migrating to v${INTERMEDIATE_VERSION}"
+        
+        update_compose_images "${INTERMEDIATE_SERVER_IMAGE}" "${INTERMEDIATE_ML_IMAGE}"
+        
+        # Start Immich with intermediate version
+        echo "Starting Immich v${INTERMEDIATE_VERSION} for migration..."
+        "${UMBREL_ROOT}/scripts/app" start immich
+        
+        # Wait for it to be ready and complete migrations
+        if ! wait_for_immich_ready; then
+            echo "Failed to start Immich v${INTERMEDIATE_VERSION}, restoring original configuration"
+            "${UMBREL_ROOT}/scripts/app" stop immich
+            restore_compose_from_backup
+            # Clear migration state on failure
+            store_version "${current_compose_version}"
+            exit 1
+        fi
+        
+        # Give it time to complete any necessary migrations
+        echo "Allowing time for database migrations to complete..."
+        sleep 60
+        
+        # Stop the app
+        "${UMBREL_ROOT}/scripts/app" stop immich
+        
+        # Now update to final target version
+        echo "Step 2: Migrating to v${current_compose_version}"
+        
+        update_compose_images "${original_server_image}" "${original_ml_image}"
+        
+        # Mark migration as complete (remove -patch suffix)
+        store_version "${current_compose_version}"
+        
+        # Clean up backup
+        rm -f "${APP_COMPOSE_BACKUP_FILE}"
+        
+        echo "Migration completed: v${INTERMEDIATE_VERSION} -> v${current_compose_version}"
+    fi
+else
+    echo "Version v${current_compose_version} does not require special migration"
+    # Update stored version for future reference
+    store_version "${current_compose_version}"
+fi
