@@ -1,0 +1,43 @@
+version: '3.7'
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: domain-locker_app_1
+      APP_PORT: 3000
+
+  app:
+    image: lissy93/domain-locker:0.1.0@sha256:dbdfe1500acc2bb5720767a77097d5afb9fad76a0e60e1c3fe1870c71ebaf94d
+    user: "1000:1000"
+    restart: on-failure
+    environment:
+      DL_ENV_TYPE: selfHosted
+      DL_PG_HOST: domain-locker_postgres_1
+      DL_PG_PORT: 5432
+      DL_PG_USER: postgres
+      DL_PG_PASSWORD: domain-locker
+      DL_PG_NAME: domain_locker
+    depends_on:
+      - postgres
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  postgres:
+    image: postgres:17.4@sha256:fe3f571d128e8efadcd8b2fde0e2b73ebab6dbec33f6bfe69d98c682c7d8f7bd
+    user: "1000:1000"
+    restart: on-failure
+    environment:
+      POSTGRES_DB: domain_locker
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: domain-locker
+    volumes:
+      - ${APP_DATA_DIR}/data/db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5

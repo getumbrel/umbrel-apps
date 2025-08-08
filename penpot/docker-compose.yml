@@ -4,12 +4,12 @@ services:
   app_proxy:
     environment:
       APP_HOST: penpot_penpot-frontend_1
-      APP_PORT: 80
+      APP_PORT: 8080
       # Can consider disabling auth all together. Penpot has its own auth system.
       PROXY_AUTH_WHITELIST: "/api/*"
 
   penpot-frontend:
-    image: penpotapp/frontend:2.3.3@sha256:db917a49091539f070f0f8faa11e4fed11ec8c4b7454e4929445a99a2849db0a
+    image: penpotapp/frontend:2.8.1@sha256:0d031d3a0ae53df17dd0acd009faf542f673b74b405cbe64c2d8d88c1f48686b
     volumes:
       - ${APP_DATA_DIR}/data/assets:/opt/data/assets
     environment:
@@ -20,7 +20,7 @@ services:
     restart: on-failure
 
   penpot-backend:
-    image: penpotapp/backend:2.3.3@sha256:2818a2b573d5b0859cbf8572e1cdf54f8935a8afb1200d0226eeb7de350ff105
+    image: penpotapp/backend:2.8.1@sha256:92ba9e26f5957a8b8611b4f2c78370143561b4d223e81ad102cdd8d21977aaf3
     # user 1000:1000 to avoid permission issues when importing libraries and templates
     user: "1000:1000"
     volumes:
@@ -30,7 +30,7 @@ services:
       - PENPOT_DATABASE_URI=postgresql://penpot-postgres/penpot
       - PENPOT_DATABASE_USERNAME=penpot
       - PENPOT_DATABASE_PASSWORD=penpot
-      - PENPOT_REDIS_URI=redis://penpot-redis/0
+      - PENPOT_REDIS_URI=redis://penpot_penpot-valkey_1/0
       - PENPOT_ASSETS_STORAGE_BACKEND=assets-fs
       - PENPOT_STORAGE_ASSETS_FS_DIRECTORY=/opt/data/assets
       - PENPOT_TELEMETRY_ENABLED=false
@@ -38,15 +38,15 @@ services:
       - PENPOT_PUBLIC_URI=http://${DEVICE_DOMAIN_NAME}:${APP_PENPOT_UI_PORT}
     depends_on:
       - penpot-postgres
-      - penpot-redis
+      - penpot-valkey
     restart: on-failure
 
   penpot-exporter:
-    image: penpotapp/exporter:2.3.3@sha256:d4ce89fb54f5843464e72b9b74709a46d810409cca2fa2cb15552b5142082791
+    image: penpotapp/exporter:2.8.1@sha256:b288f496972878b95cf82c5de9b124676fbd69d68123061105a9c4a078d7bb62
     user: "1000:1000"
     environment:
       - PENPOT_PUBLIC_URI=http://penpot-frontend
-      - PENPOT_REDIS_URI=redis://penpot-redis/0
+      - PENPOT_REDIS_URI=redis://penpot_penpot-valkey_1/0
     restart: on-failure
 
   penpot-postgres:
@@ -62,7 +62,13 @@ services:
       - POSTGRES_PASSWORD=penpot
     restart: on-failure
 
-  penpot-redis:
-    image: redis:7@sha256:45bfd95117a171ff9c1b5304bdae80a7a61eb5bbf0793d6a86c9078526ad88fa
+  penpot-valkey:
+    image: valkey/valkey:8.1.3@sha256:facc1d2c3462975c34e10fccb167bfa92b0e0dbd992fc282c29a61c3243afb11
     user: "1000:1000"
     restart: on-failure
+    healthcheck:
+      test: ["CMD-SHELL", "valkey-cli ping | grep PONG"]
+      interval: 1s
+      timeout: 3s
+      retries: 5
+      start_period: 3s

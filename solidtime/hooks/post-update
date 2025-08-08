@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Recalculate computed attributes for solidtime
+
+echo "Recalculating computed attributes for solidtime."
+"${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" run --rm scheduler php artisan computed-attributes:generate
+echo "Successfully recalculated computed attributes for solidtime."
+
+exit 0

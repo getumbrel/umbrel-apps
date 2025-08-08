@@ -1,0 +1,16 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: thelounge_web_1
+      APP_PORT: 9000
+      PROXY_AUTH_ADD: "false"
+
+  web:
+    image: ghcr.io/thelounge/thelounge:v4.4.3@sha256:c0565787e0c44951df4ea77840519a41cfe6a4ec040bf1bda928a91866cc3e5e
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 1m
+    volumes:
+      - ${APP_DATA_DIR}/data:/var/opt/thelounge

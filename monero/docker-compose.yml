@@ -40,10 +40,11 @@ services:
 
   monerod:
     user: "1000:1000"
+    # "unless-stopped" ensures monerod restarts via UI-triggered daemon restarts, not just on failure
     restart: unless-stopped
     stop_grace_period: 15m
     command: "${APP_MONERO_COMMAND}"
-    image: ghcr.io/sethforprivacy/simple-monerod:v0.18.3.4@sha256:26535f28aba4e8404a8a9a362b27beadfa48e25e23b73c20886cdbe342013690 
+    image: ghcr.io/sethforprivacy/simple-monerod:v0.18.4.1@sha256:11810da93d3a92721421e7aa5f6e1763e12752d5398b84659d864cccc3ebe989
     ports:
       - "${APP_MONERO_P2P_PORT}:${APP_MONERO_P2P_PORT}"
       - "${APP_MONERO_RPC_PORT}:${APP_MONERO_RPC_PORT}"

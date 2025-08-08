@@ -8,7 +8,7 @@ services:
       PROXY_AUTH_ADD: "false"
   
   app:
-    image: alexlack/mattermost-app:v10.3.1@sha256:bfc5ffe1362b16f635e4963862b0d9b649f78b7616994c640793cb4d494a99ae
+    image: alexlack/mattermost-app:v10.10.1@sha256:30af57e729de7ce91799d25d929f70b3286bfc6cea02fbe7c5cd2b16f435cef9
     user: "1000:1000"
     restart: on-failure
     stop_grace_period: 1m
@@ -16,6 +16,7 @@ services:
       MM_USERNAME: admin
       MM_PASSWORD: admin
       MM_DBNAME: mattermost
+      MM_SQLSETTINGS_DATASOURCE: postgres://admin:admin@mattermost_db_1:5432/mattermost?sslmode=disable&connect_timeout=10
     volumes:
       - ${APP_DATA_DIR}/data/app/mattermost/config:/mattermost/config:rw
       - ${APP_DATA_DIR}/data/app/mattermost/data:/mattermost/data:rw
@@ -27,10 +28,11 @@ services:
       - "8443:8443/tcp" # WebRTC over tcp
       - "8443:8443/udp" # WebRTC over udp
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 
   db:
-    image: alexlack/mattermost-db:v10.3.1@sha256:73580144209dc1402de7c85695664be020625355d799e7c4c9cbd22c6f54360f
+    image: alexlack/mattermost-db:v10.10.1@sha256:8a24af7eda00c63ea13651fe80494cfaec799e551ec86be576d896c7b6511fb7
     user: "1000:1000"
     restart: on-failure
     stop_grace_period: 1m
@@ -41,3 +43,8 @@ services:
     volumes:
       - ${APP_DATA_DIR}/data/db:/var/lib/postgresql/data
       - /etc/localtime:/etc/localtime:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
