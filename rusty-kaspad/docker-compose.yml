@@ -22,7 +22,7 @@ services:
       KASPAD_RPC_PORT: 18110
       KASPAD_CONTAINER_NAME: rusty-kaspad_kaspad_1
     volumes:
-      - ${APP_DATA_DIR}/logs:/logs:ro  # For log parsing
+      - ${APP_DATA_DIR}/data/logs:/logs:ro  # For log parsing
     depends_on:
       - kaspad
 
@@ -31,9 +31,9 @@ services:
     restart: on-failure
     stop_grace_period: 1m
     volumes:
-      - ${APP_DATA_DIR}/data:/data
-      - ${APP_DATA_DIR}/logs:/logs
-      - ${APP_DATA_DIR}/kaspad-entrypoint.sh:/entrypoint.sh:ro
+      - ${APP_DATA_DIR}/data/app:/data
+      - ${APP_DATA_DIR}/data/logs:/logs
+      - ${APP_DATA_DIR}/entrypoint.sh:/entrypoint.sh:ro
     ports:
       - 16110:16110  # GRPC
       - 16111:16111  # P2P
