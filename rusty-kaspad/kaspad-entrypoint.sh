@@ -9,12 +9,15 @@ BUFFER_SIZE=10000
 # Ensure log directory exists
 mkdir -p "${LOG_DIR}"
 
-# Start kaspad with all arguments and pipe output to rolling buffer
-exec kaspad \
+# Call the original entrypoint with kaspad and our custom arguments
+# The original entrypoint handles user switching and IP detection
+exec /app/entrypoint.sh kaspad \
   --rpclisten=0.0.0.0:16110 \
   --rpclisten-borsh=0.0.0.0:17110 \
   --rpclisten-json=0.0.0.0:18110 \
   --loglevel=info \
+  --yes \
+  --nologfiles \
   "$@" 2>&1 | {
     # Initialize the log file
     > "${LOG_FILE}"
