@@ -7,14 +7,14 @@ services:
       APP_PORT: 4321
 
   frontend:
-    image: elldee/kaspa-frontend:v0.2.1@sha256:a6e7e81274ff1a26c6659aeec9a3362feda5affd157c0cd77d08affe1de1edc8
+    image: elldee/kaspa-frontend:v0.3.0@sha256:129cff71ec174ea69bb38313cfb2a20518fa2c1fd371e2a2aa5fa4d75b74470c
     restart: on-failure
     stop_grace_period: 1m
     depends_on:
       - kaspa-api
   
   kaspa-api:
-    image: elldee/kaspa-api:v0.2.0@sha256:c7766675bc882d07a212e874e355ace33d4a7b2860c78964dd95524d04324460
+    image: elldee/kaspa-api:v0.3.0@sha256:272c62730984d0a89459337370d215ee75a315552e3031b1f4c4f11c673cb266
     restart: on-failure
     stop_grace_period: 1m
     environment:
@@ -22,7 +22,7 @@ services:
       KASPAD_RPC_PORT: 18110
       KASPAD_CONTAINER_NAME: rusty-kaspad_kaspad_1
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock  # For log parsing
+      - ${APP_DATA_DIR}/logs:/logs:ro  # For log parsing
     depends_on:
       - kaspad
 
@@ -32,14 +32,11 @@ services:
     stop_grace_period: 1m
     volumes:
       - ${APP_DATA_DIR}/data:/data
+      - ${APP_DATA_DIR}/logs:/logs
+      - ${APP_DATA_DIR}/kaspad-entrypoint.sh:/entrypoint.sh:ro
     ports:
       - 16110:16110  # GRPC
       - 16111:16111  # P2P
       - 17110:17110  # WRPC (Borsh)
       - 18110:18110  # WRPC (JSON)
-    command: >
-      kaspad
-      --rpclisten=0.0.0.0:16110
-      --rpclisten-borsh=0.0.0.0:17110
-      --rpclisten-json=0.0.0.0:18110
-      --loglevel=info
+    entrypoint: /entrypoint.sh
