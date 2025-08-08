@@ -2,10 +2,9 @@ version: "3.7"
 
 services:
   swingmusic:
-    image: ghcr.io/swing-opensource/swingmusic:latest
+    image: ghcr.io/swingmx/swingmusic@sha256:a71ef5fba8526cb8a748647fea39d224953368af3621be9b7667c9a4c79ff622
     container_name: swingmusic
-    ports:
-      - "8090:80"
     volumes:
       - ${APP_DATA_DIR}/data:/app/data
-    restart: unless-stopped
+    restart: on-failure
+    user: "1000:1000"
