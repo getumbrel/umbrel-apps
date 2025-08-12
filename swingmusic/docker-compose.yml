@@ -3,12 +3,11 @@ version: "3.9"
 services:
   app_proxy:
     environment:
-      APP_HOST: swingmusic_server
+      APP_HOST: swingmusic_app_1
       APP_PORT: 1970
       PROXY_AUTH_ADD: "false"
 
-  swingmusic_server:
-    container_name: swingmusic_server
+  app:
     image: ghcr.io/swingmx/swingmusic:v2.0.8@sha256:a71ef5fba8526cb8a748647fea39d224953368af3621be9b7667c9a4c79ff622
     restart: on-failure
     environment:
@@ -18,4 +17,3 @@ services:
       - ${APP_DATA_DIR}/data/config:/config
       - ${APP_DATA_DIR}/data/music:/music:rw
       - ${UMBREL_ROOT}/data/storage/downloads:/downloads
-
