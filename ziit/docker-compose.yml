@@ -14,7 +14,8 @@ services:
       - ${APP_DATA_DIR}/settings.env
     restart: on-failure
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
 
   postgres:
     image: timescale/timescaledb:latest-pg17@sha256:c9a5107ed594445a5d1ab581711c22de5fd8ca42b1a0d6844e85507b18166bf8
