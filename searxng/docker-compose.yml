@@ -1,0 +1,16 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: searxng_web_1
+      APP_PORT: 8080
+
+  web:
+    image: ghcr.io/searxng/searxng:2025.8.10-6cccb46@sha256:fe702750a9ffbf923533c67c456951a3be77f298915cf632077f3650ed4b5e4b
+    restart: on-failure
+    environment:
+      SEARXNG_SECRET: ${APP_SEED}
+    volumes:
+      - ${APP_DATA_DIR}/data/config:/etc/searxng
+      - ${APP_DATA_DIR}/data/cache:/var/cache/searxng
