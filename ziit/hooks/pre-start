@@ -1,25 +1,25 @@
 #!/usr/bin/env bash
-set -e
+set -euo pipefail
+
+# This scripts checks the environment file for placeholder values and replaces them with generated keys or system variables.
 
 APP_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")"
-ENV_FILE="$APP_DIR/docker-compose.yml"
+ENV_FILE="$APP_DIR/settings.env"
 
+# Check if the file exists
 if [ ! -f "$ENV_FILE" ]; then
-    echo "Error: $ENV_FILE does not exist"
+    echo "Error: Environment file not found at $ENV_FILE"
     exit 1
 fi
 
-CURRENT_PASETO=$(grep -E '^\s*NUXT_PASETO_KEY:' "$ENV_FILE" | sed -E 's/.*"k4\.local\.([^"]+)".*/\1/' | xargs)
-CURRENT_PASSWORD=$(grep -E '^\s*POSTGRES_PASSWORD:' "$ENV_FILE" | sed -E 's/.*POSTGRES_PASSWORD:\s*([^#\s]+).*/\1/' | xargs)
+# Check if the NUXT_HOST value is set to "changeme"
+if grep -Eq '^NUXT_HOST= *changeme' "$ENV_FILE"; then
+    echo "Placeholder value for NUXT_HOST detected. Adding proper hostname..."
 
-if [[ "$CURRENT_PASETO" == "CHANGEME" ]] || [[ "$CURRENT_PASETO" == "OUTPUT_OF_OPENSSL_COMMAND" ]] || [[ "$CURRENT_PASETO" == *"CHANGEME"* ]] || [[ "$CURRENT_PASETO" == *"OUTPUT_OF_OPENSSL_COMMAND"* ]]; then
-    NEW_PASETO_KEY=$(openssl rand -base64 32)
-    sed -i "s|^\( *NUXT_PASETO_KEY: *\).*$|\1\"k4.local.${NEW_PASETO_KEY}\"|" "$ENV_FILE"
-fi
+    # Replace the placeholder with the hostname
+    sed -i -E 's|^NUXT_HOST= *changeme( *#.*)?$|NUXT_HOST="'"http://${DEVICE_DOMAIN_NAME}:8865"'" \1|' "$ENV_FILE"
 
-if [[ "$CURRENT_PASSWORD" == "CHANGEME" ]] || [[ "$CURRENT_PASSWORD" == "OUTPUT_OF_OPENSSL_COMMAND" ]]; then
-    NEW_PASSWORD=$(openssl rand -hex 16)
-    sed -i "s|^\( *POSTGRES_PASSWORD: *\).*$|\1${NEW_PASSWORD}|" "$ENV_FILE"
-    
-    sed -i "s|^\( *NUXT_DATABASE_URL: *\).*\(#.*\)\?$|\1\"postgresql://postgres:${NEW_PASSWORD}@postgres:5432/ziit\"\2|" "$ENV_FILE"
+    echo "Updated NUXT_HOST in $ENV_FILE"
+else
+    echo "NUXT_HOST is already set. No changes made."
 fi
