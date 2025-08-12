@@ -15,8 +15,9 @@ services:
       - PUID=1000
       - PGID=1000
     volumes:
-      - ${APP_DATA_DIR}/config:/config
-      - ${APP_DATA_DIR}/music:/music:rw
+      - ${APP_DATA_DIR}/data/config:/config
+      - ${APP_DATA_DIR}/data/music:/music:rw
+      - ${UMBREL_ROOT}/data/storage/downloads:/downloads
 
   fix_permissions:
     image: ghcr.io/swingmx/swingmusic:v2.0.8@sha256:a71ef5fba8526cb8a748647fea39d224953368af3621be9b7667c9a4c79ff622
