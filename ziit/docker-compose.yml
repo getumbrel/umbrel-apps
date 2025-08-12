@@ -8,13 +8,10 @@ services:
   app:
     image: ghcr.io/0pandadev/ziit:v1.0.2@sha256:ad8d23ea1a5927f85b0ab36f77c0891f1490794e1baf1c719d8cdf18ca8594f5
     environment:
-      NUXT_DATABASE_URL: "postgresql://postgres:CHANGEME@postgres:5432/ziit" # change the password for production use
-      NUXT_PASETO_KEY: "k4.local.OUTPUT_OF_OPENSSL_COMMAND" # -> openssl rand -base64 32
-      NUXT_GITHUB_CLIENT_ID: "" # Github client id
-      NUXT_GITHUB_CLIENT_SECRET: "" # Github client secret
-      NUXT_GITHUB_REDIRECT_URI: "" # Your redirect url for the github auth e.g. https://ziit.example.com/api/auth/github/callback
-      NUXT_HOST: "http://${DEVICE_DOMAIN_NAME}:3009" # The domain where ziit will be hosted e.g. ziit.example.com
-      NUXT_DISABLE_REGISTRATION: "false" # By default users are allowed to register a new account
+      NUXT_DATABASE_URL: "postgresql://postgres:umbrelziit@ziit_postgres_1:5432/ziit" # change the password for production use
+      NUXT_PASETO_KEY: ${APP_ZIIT_PASTEO_KEY}
+    env_file:
+      - ${APP_DATA_DIR}/settings.env
     restart: on-failure
     depends_on:
       - postgres
