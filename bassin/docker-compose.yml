@@ -40,6 +40,14 @@ services:
       - ${APP_DATA_DIR}/data/www:/www
     container_name: bassin_ckpool_1
 
+  ui:
+    image: ghcr.io/duckaxe/bassin-ui:main@sha256:2ffe7f9954b23780eefd4c19e35a9f6cfca3beccaf0525b698e8dfba7088906b
+    entrypoint: /bin/sh -c "cp -r /ui/* /www/"
+    user: "1000:1000"
+    volumes:
+      - ${APP_DATA_DIR}/data/www:/www
+    restart: no
+
   www:
     image: halverneus/static-file-server:v1.8.11@sha256:2e91ce7ffb8519eeb882ba52d75c191ca6c921c16438447362128ef73ee2ea7e
     user: "1000:1000"
@@ -48,6 +56,8 @@ services:
       - PORT=80
     volumes:
       - ${APP_DATA_DIR}/data/www:/www:ro
+    depends_on:
+      - ui
     restart: on-failure
     container_name: bassin_www_1
   
