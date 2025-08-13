@@ -7,7 +7,7 @@ services:
       APP_PORT: 8000
 
   app:
-    image: ghcr.io/readur/readur:2.3.1@sha256:2273179dc039c7bef2036419d41985afcf2cce078e8598df400e9f66f14b5e09
+    image: ghcr.io/readur/readur:2.5.4@sha256:0b4b08f4ed46fc693fd32101c92a8f2d60b1813a07feb121b4cc65212560c65d
     user: "1000:1000"
     restart: on-failure
     environment:
@@ -32,12 +32,6 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
 
   postgres:
     image: postgres:17.5@sha256:3962158596daaef3682838cc8eb0e719ad1ce520f88e34596ce8d5de1b6330a1
