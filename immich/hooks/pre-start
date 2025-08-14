@@ -31,7 +31,12 @@ INTERMEDIATE_VERSION="1.132.1"
 
 # Docker images for the intermediate migration step
 INTERMEDIATE_SERVER_IMAGE="ghcr.io/immich-app/immich-server:v1.132.1@sha256:71cb6d2a6587f6481ae22b1cd743c74f163acbf26ade4df890e4425bb1f2e891"
+#INTERMEDIATE_SERVER_IMAGE="ghcr.io/immich-app/immich-server:v1.136.0@sha256:8c9633b96ca5b748b10875a99c498ee6f1e5d7f7d1df2bf341909cacb88ad672"
 INTERMEDIATE_ML_IMAGE="ghcr.io/immich-app/immich-machine-learning:v1.132.1@sha256:48fc9c8315a00e1856cb9dff1db626ec8c7f1e424d60a6002c7f04ce94fdfa9a"
+#INTERMEDIATE_ML_IMAGE="ghcr.io/immich-app/immich-machine-learning:v1.136.0@sha256:198d52734136fe9840866cc2f48a8141e0d002c2a25be7e35cd28ef7936b6c67"
+
+# Legacy volume path
+LEGACY_VOLUME_PATH="/usr/src/app/upload"
 
 version_compare() {
     # Compare two version strings (e.g., "1.137.3" vs "1.137.0")
@@ -113,6 +118,7 @@ has_v132_migrations() {
     # Check if database has migrations from v1.132.1+
     # If migrations table doesn't exist, assume it's a clean/newer installation that's safe to upgrade
     local query_result=$(docker exec immich_postgres_1 psql -U immich -d immich -tAc "SELECT COUNT(*) FROM migrations WHERE name LIKE '%TableCleanup%';" 2>&1)
+    echo "immich postgres query result: ${query_result}"
     
     if echo "${query_result}" | grep -q "relation \"migrations\" does not exist"; then
         echo "No migrations table found - assuming clean/newer installation, safe to upgrade"
@@ -130,12 +136,15 @@ get_current_images_from_compose() {
     # Extract current images from docker-compose.yml, handling multi-line YAML
     local server_image=$(yq '.services.server.image' "${APP_COMPOSE_FILE}" 2>/dev/null || echo "")
     local ml_image=$(yq '.services."machine-learning".image' "${APP_COMPOSE_FILE}" 2>/dev/null || echo "")
-    echo "${server_image}|${ml_image}"
+    # Extract the container path from the /server volumes list
+    local container_path=$(yq '.services.server.volumes[] | select(. | test(":"))' "${APP_COMPOSE_FILE}" 2>/dev/null | awk -F':' '{print $2}' || echo "")
+    echo "${server_image}|${ml_image}|${container_path}"
 }
 
 update_compose_images() {
     local server_image="${1}"
     local ml_image="${2}"
+    local volume_path="${3}"
     
     # Create backup
     cp "${APP_COMPOSE_FILE}" "${APP_COMPOSE_BACKUP_FILE}"
@@ -143,6 +152,9 @@ update_compose_images() {
     # Update both server and machine-learning images using yq to handle multi-line YAML properly
     yq -i ".services.server.image = \"${server_image}\"" "${APP_COMPOSE_FILE}"
     yq -i ".services.\"machine-learning\".image = \"${ml_image}\"" "${APP_COMPOSE_FILE}"
+
+    # Update volume
+    yq -i ".services.server.volumes[0] = \"${APP_DATA_DIR}/upload:${volume_path}\"" "${APP_COMPOSE_FILE}"
 }
 
 restore_compose_from_backup() {
@@ -178,7 +190,7 @@ wait_for_postgres_ready() {
 }
 
 wait_for_immich_ready() {
-    wait_for_service "Immich" "docker exec immich_server_1 curl -f -s http://localhost:2283/api/server/ping" 600 5
+    wait_for_service "Immich" "docker exec immich_server_1 curl -f -s http://localhost:2283/api/server/ping" 180 5
 }
 
 # Main migration logic
@@ -209,6 +221,7 @@ if requires_intermediate_migration "${current_compose_version}"; then
     original_images=$(get_current_images_from_compose)
     original_server_image=$(echo "${original_images}" | cut -d'|' -f1)
     original_ml_image=$(echo "${original_images}" | cut -d'|' -f2)
+    original_path=$(echo "${original_images}" | cut -d'|' -f3)
     
     # Start postgres to check migration state
     echo "Starting PostgreSQL to check migration state..."
@@ -241,7 +254,7 @@ if requires_intermediate_migration "${current_compose_version}"; then
         # Update to intermediate version first
         echo "Step 1: Migrating to v${INTERMEDIATE_VERSION}"
         
-        update_compose_images "${INTERMEDIATE_SERVER_IMAGE}" "${INTERMEDIATE_ML_IMAGE}"
+        update_compose_images "${INTERMEDIATE_SERVER_IMAGE}" "${INTERMEDIATE_ML_IMAGE}" "${LEGACY_VOLUME_PATH}"
         
         # Start Immich with intermediate version
         echo "Starting Immich v${INTERMEDIATE_VERSION} for migration..."
@@ -267,7 +280,7 @@ if requires_intermediate_migration "${current_compose_version}"; then
         # Now update to final target version
         echo "Step 2: Migrating to v${current_compose_version}"
         
-        update_compose_images "${original_server_image}" "${original_ml_image}"
+        update_compose_images "${original_server_image}" "${original_ml_image}" "${original_path}"
         
         # Mark migration as complete (remove -patch suffix)
         store_version "${current_compose_version}"
