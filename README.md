@@ -417,7 +417,7 @@ We're now ready to open a pull request on the main [getumbrel/umbrel-apps](https
 ...
 
 ### 256x256 SVG icon
-_(Submit an icon with no rounded corners as it will be dynamically rounded with CSS. GitHub doesn't allow uploading SVGs directly, so please upload your icon to an alternate service, like https://svgur.com, and paste the link below.)_
+_(Upload an icon with no rounded corners as it will be dynamically rounded with CSS.)_
 _We will help finalize this icon before the app goes live in the Umbrel App Store._
 
 ...
