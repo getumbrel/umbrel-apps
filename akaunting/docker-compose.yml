@@ -9,6 +9,8 @@ services:
 
   app:
     image: akaunting/akaunting:3.1.19@sha256:2c2d922c5e2bacde8cfbd6261eaa178b65f5ad85b1c9f21907eabc5c8de1c28f
+    # does not work rootless
+    #user: "1000:1000"
     restart: on-failure
     environment:
       AKAUNTING_SETUP: "true"
@@ -28,6 +30,7 @@ services:
 
   db:
     image: mariadb:11.8.2@sha256:2bcbaec92bd9d4f6591bc8103d3a8e6d0512ee2235506e47a2e129d190444405
+    user: "1000:1000"
     restart: on-failure
     environment:
       MYSQL_DATABASE: akaunting
