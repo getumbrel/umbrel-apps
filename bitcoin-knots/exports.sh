@@ -2,19 +2,30 @@ export APP_BITCOIN_KNOTS_NODE_IP="10.21.21.7"
 export APP_BITCOIN_KNOTS_TOR_PROXY_IP="10.21.22.12"
 export APP_BITCOIN_KNOTS_I2P_DAEMON_IP="10.21.22.13"
 
+installed_apps=$(ls /home/umbrel/umbrel/app-data)
+
+if echo "$installed_apps" | grep --quiet -x 'bitcoin'; then
+	export APP_BITCOIN_KNOTS_RPC_PORT="9332"
+	export APP_BITCOIN_KNOTS_P2P_PORT="9333"
+	# These are legacy env vars we need to keep around for DATUM compatibility
+	export APP_BITCOIN_KNOTS_INTERNAL_RPC_PORT="9332"
+	export APP_BITCOIN_KNOTS_INTERNAL_P2P_PORT="9333"
+else
+	export APP_BITCOIN_KNOTS_RPC_PORT="8332"
+	export APP_BITCOIN_KNOTS_P2P_PORT="8333"
+	# These are legacy env vars we need to keep around for DATUM compatibility
+	export APP_BITCOIN_KNOTS_INTERNAL_RPC_PORT="8332"
+	export APP_BITCOIN_KNOTS_INTERNAL_P2P_PORT="8333"
+fi
+	
+
 export APP_BITCOIN_KNOTS_DATA_DIR="${EXPORTS_APP_DIR}/data/bitcoin"
-export APP_BITCOIN_KNOTS_RPC_PORT="9332"
-export APP_BITCOIN_KNOTS_P2P_PORT="9333"
 export APP_BITCOIN_KNOTS_TOR_PORT="8334"
 export APP_BITCOIN_KNOTS_ZMQ_RAWBLOCK_PORT="48332"
 export APP_BITCOIN_KNOTS_ZMQ_RAWTX_PORT="48333"
 export APP_BITCOIN_KNOTS_ZMQ_HASHBLOCK_PORT="48334"
 export APP_BITCOIN_KNOTS_ZMQ_SEQUENCE_PORT="48335"
 export APP_BITCOIN_KNOTS_ZMQ_HASHTX_PORT="48336"
-
-# These are legacy env vars we need to keep around for DATUM compatibility
-export APP_BITCOIN_KNOTS_INTERNAL_RPC_PORT="9332"
-export APP_BITCOIN_KNOTS_INTERNAL_P2P_PORT="9333"
 
 export APP_BITCOIN_KNOTS_NETWORK="mainnet" 
 
