@@ -10,12 +10,13 @@ services:
     user: 1000:1000
     volumes:
       - ${APP_DATA_DIR}/data:/data
-      - ${APP_LIGHTNING_NODE_DATA_DIR}:/lnd:ro
+      # Using UMBREL_ROOT here to ensure exports.sh can read mounted LND certs/macaroons properly
+      - ${UMBREL_ROOT}/app-data/lightning/data/lnd:/lnd:ro
     environment:
-      LN_BACKEND_TYPE: "LND"
-      LND_ADDRESS: $APP_LIGHTNING_NODE_IP:$APP_LIGHTNING_NODE_GRPC_PORT
-      LND_CERT_FILE: "/lnd/tls.cert"
-      LND_MACAROON_FILE: "/lnd/data/chain/bitcoin/$APP_BITCOIN_NETWORK/admin.macaroon"
+      LN_BACKEND_TYPE: ${APP_ALBYHUB_LN_BACKEND:-LDK}
+      LND_ADDRESS: ${APP_ALBYHUB_LND_ADDRESS:-}
+      LND_CERT_FILE: ${APP_ALBYHUB_LND_CERT_FILE:-}
+      LND_MACAROON_FILE: ${APP_ALBYHUB_LND_MACAROON_FILE:-}
       WORK_DIR: "/data/albyhub"
       COOKIE_SECRET: ${APP_SEED}
       LOG_EVENTS: "true"
