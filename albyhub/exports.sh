@@ -1,9 +1,5 @@
 #!/bin/bash
 
-
-export APP_ALBYHUB_LN_BACKEND="LDK"
-export APP_ALBYHUB_LND_ADDRESS=""
-
 # Check if Lightning Node app is installed and export required variables if so
 installed_apps=$("${UMBREL_ROOT}/scripts/app" ls-installed)
 
