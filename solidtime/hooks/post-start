@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# sentinel file to check if client_id was already created
+CLIENT_SENTINEL="${APP_DATA_DIR}/desktop_client_id.txt"
+
+# ──────────────────────────────────────────────────────────────
+# Ensure desktop_client_id.txt exists
+# ──────────────────────────────────────────────────────────────
+if [[ ! -s "$CLIENT_SENTINEL" ]]; then
+  echo "Solidtime: generating desktop client id…"
+  "${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" \
+    run --rm scheduler php artisan passport:client --name=desktop --redirect_uri=solidtime://oauth/callback --public -n \
+  | grep 'Client ID' | awk '{print $NF}' > "$CLIENT_SENTINEL"
+fi

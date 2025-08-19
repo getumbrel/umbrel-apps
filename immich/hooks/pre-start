@@ -12,3 +12,8 @@ MODEL_CACHE_DIR="${APP_DATA_DIR}/model-cache"
 # delete tsdata directory if it exists
 TYPESENSE_DIR="${APP_DATA_DIR}/tsdata"
 [ -d "${TYPESENSE_DIR}" ] && rm -rf "${TYPESENSE_DIR}"
+
+# delete old post-update script if it exists
+POST_UPDATE_SCRIPT="$(readlink -f $(dirname "${BASH_SOURCE[0]}"))/post-update"
+[ -f "${POST_UPDATE_SCRIPT}" ] && rm -f "${POST_UPDATE_SCRIPT}"
+  

@@ -1,0 +1,25 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: stirling-pdf_app_1
+      APP_PORT: 8080
+      PROXY_AUTH_WHITELIST: "/api/*"
+  
+  app:
+    image: stirlingtools/stirling-pdf:1.2.0@sha256:4b549915161efdf8a7c43bf0ad3b5d5d39f0cb0be58b7dcce1d1b62fbe8ed818
+    # Stirling PDF does not work with a custom user
+    #user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 1m
+    volumes:
+      # Required for extra OCR languages
+      - ${APP_DATA_DIR}/data/tessdata:/usr/share/tessdata
+      - ${APP_DATA_DIR}/data/configs:/configs
+      - ${APP_DATA_DIR}/data/logs:/logs
+    environment:
+      # Not needed as Umbrel authenticates the user
+      DOCKER_ENABLE_SECURITY: "false"
+      INSTALL_BOOK_AND_ADVANCED_HTML_OPS: "true"
+      LANGS: ALL

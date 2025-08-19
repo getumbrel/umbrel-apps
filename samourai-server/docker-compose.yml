@@ -24,7 +24,8 @@ services:
         ipv4_address: $APP_SAMOURAI_SERVER_DB_IP
 
   node:
-    image: louneskmt/dojo-nodejs:1.16.1@sha256:49de92774ecfcb88af1dc67f8d498641d750c4ec9acaab3c448d70c4f2d4bfe7
+    # image: louneskmt/dojo-nodejs:1.16.1@sha256:49de92774ecfcb88af1dc67f8d498641d750c4ec9acaab3c448d70c4f2d4bfe7
+    image: nmfretz/dojo-nodejs:1.16.1-rpcfix@sha256:bd047ed34e04b605c662c94ed5819322c0db65b6e3425acd3607486ef28a83ce
     init: true
     restart: on-failure
     command: "/home/node/app/wait-for-it.sh ${APP_SAMOURAI_SERVER_DB_IP}:3306 --timeout=720 --strict -- /home/node/app/restart.sh"

@@ -18,24 +18,11 @@ services:
   app_proxy:
     environment:
       APP_HOST: immich_server_1
-      APP_PORT: 3001
-      PROXY_AUTH_WHITELIST: "/api/*,/search/*"
+      APP_PORT: 2283
+      PROXY_AUTH_ADD: "false"
 
   server:
-    image: ghcr.io/immich-app/immich-server:v1.103.0@sha256:1ae17f5ce8e948f4268c95781904e6ef4bec99634ed43ebe2b0096c005932b7a
-    command: [ "start.sh", "immich" ]
-    volumes:
-      - ${APP_DATA_DIR}/data/upload:/usr/src/app/upload
-    environment:
-      <<: *env
-    depends_on:
-      - redis
-      - postgres
-    restart: on-failure
-
-  microservices:
-    image: ghcr.io/immich-app/immich-server:v1.103.0@sha256:1ae17f5ce8e948f4268c95781904e6ef4bec99634ed43ebe2b0096c005932b7a
-    command: [ "start.sh", "microservices" ]
+    image: ghcr.io/immich-app/immich-server:v1.136.0@sha256:8c9633b96ca5b748b10875a99c498ee6f1e5d7f7d1df2bf341909cacb88ad672
     volumes:
       - ${APP_DATA_DIR}/data/upload:/usr/src/app/upload
     environment:
@@ -46,7 +33,7 @@ services:
     restart: on-failure
 
   machine-learning:
-    image: ghcr.io/immich-app/immich-machine-learning:v1.103.0@sha256:2f2817898bfd6ca32372a8e56ee41523ffbb5b9690be67907926530b2d6dbd1e
+    image: ghcr.io/immich-app/immich-machine-learning:v1.136.0@sha256:198d52734136fe9840866cc2f48a8141e0d002c2a25be7e35cd28ef7936b6c67
     volumes:
       - ${APP_DATA_DIR}/data/model-cache:/cache
     environment:
@@ -61,13 +48,15 @@ services:
       - ${APP_DATA_DIR}/data/redis:/data
 
   postgres:
-    image: tensorchord/pgvecto-rs:pg14-v0.2.0@sha256:90724186f0a3517cf6914295b5ab410db9ce23190a2d9d0b9dd6463e3fa298f0
-    user: "1000:1000"
+    image: ghcr.io/immich-app/postgres:14-vectorchord0.3.0-pgvectors0.2.0@sha256:b5e2fcf89f01effa82f1a8c3415a680d5df3d90318f70d05ea7db7170934a659
+    # new postgres image does not work rootless
+    #user: "1000:1000"
     environment:
       <<: *env
       POSTGRES_PASSWORD: *db_password
       POSTGRES_USER: *db_username
       POSTGRES_DB: *db_database_name
+      POSTGRES_INITDB_ARGS: '--data-checksums'
     volumes:
       - ${APP_DATA_DIR}/data/postgres:/var/lib/postgresql/data
     restart: on-failure

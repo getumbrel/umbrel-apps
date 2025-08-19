@@ -8,11 +8,10 @@ services:
       PROXY_AUTH_ADD: "false"
   
   server:
-    image: linuxserver/wikijs:2.5.300@sha256:60facd7660fdf186fb8df4645e68d19f64696f4cc19ff618fa30fd7e4bbf18e2
+    user: "1000:1000"
+    image: linuxserver/wikijs:2.5.308@sha256:b1b3704db9554bf99f72539c6876bfa88c0aa7cd344d694bf1443019187e54e0
     restart: on-failure
-    environment:
-      - PUID=1000
-      - PGID=1000
     volumes:
       - ${APP_DATA_DIR}/data:/data
+      - ${APP_DATA_DIR}/repo:/app/wiki/data/repo
       - ${APP_DATA_DIR}/config:/config

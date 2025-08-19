@@ -1,0 +1,15 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: shopstr_web_1
+      APP_PORT: 3000
+
+  web:
+    image: calvadev/shopstr:v0.7.5@sha256:b123e9d16f4267ea766813cbc12ac0989afcea03a72b42edfa37b64951ececdb
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      PORT: 3000

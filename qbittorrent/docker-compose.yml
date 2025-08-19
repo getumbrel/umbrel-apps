@@ -8,12 +8,13 @@ services:
       PROXY_AUTH_ADD: "false"
 
   server:
-    image: hotio/qbittorrent:release-4.6.0@sha256:78ac9dfad4e1bbb7233e11e09781c929e692d92d5de8f499c0f4477eee266622
+    image: ghcr.io/hotio/qbittorrent:release-5.1.2@sha256:4c731e88dd419a20f0e158cef9672e902a7e2c71acea48b8989567f00b5fb095
     environment:
       - PUID=1000
       - PGID=1000
       # - UMASK=002
     volumes:
       - ${APP_DATA_DIR}/data/config:/config
-      - ${UMBREL_ROOT}/data/storage/downloads:/downloads
+      # /app/qBittorrent/downloads is the default path set in qBittorrent
+      - ${UMBREL_ROOT}/data/storage/downloads:/app/qBittorrent/downloads
     restart: on-failure

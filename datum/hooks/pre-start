@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+
+# This pre-start script updates the datum_gateway_config.json file with the user's Knots RPC configuration
+
+APP_DATA_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")"
+DATUM_CONFIG_FILE="${APP_DATA_DIR}/data/settings/datum_gateway_config.json"
+DESIRED_OWNER="1000:1000"
+
+if [ -f "${DATUM_CONFIG_FILE}" ]; then
+  echo "Checking DATUM configuration file."
+  
+  # Check if Knots environment variables are set
+  if [ -z "${APP_BITCOIN_KNOTS_RPC_USER}" ] || [ -z "${APP_BITCOIN_KNOTS_RPC_PASS}" ] || [ -z "${APP_BITCOIN_KNOTS_NODE_IP}" ] || [ -z "${APP_BITCOIN_KNOTS_INTERNAL_RPC_PORT}" ]; then
+    echo "Missing Bitcoin Knots environment variables. Exiting."
+    exit 1
+  fi
+  
+  echo "Initializing DATUM config with Bitcoin Knots RPC settings."
+    
+  # Update the configuration
+  jq --arg user "$APP_BITCOIN_KNOTS_RPC_USER" \
+     --arg pass "$APP_BITCOIN_KNOTS_RPC_PASS" \
+     --arg url "${APP_BITCOIN_KNOTS_NODE_IP}:${APP_BITCOIN_KNOTS_INTERNAL_RPC_PORT}" \
+     '.bitcoind.rpcuser = $user | 
+      .bitcoind.rpcpassword = $pass | 
+      .bitcoind.rpcurl = $url' \
+     "$DATUM_CONFIG_FILE" > "${DATUM_CONFIG_FILE}.tmp" && mv "${DATUM_CONFIG_FILE}.tmp" "$DATUM_CONFIG_FILE"
+
+  # reset permissions
+  chown "${DESIRED_OWNER}" "$DATUM_CONFIG_FILE"
+    
+  echo "DATUM configuration updated successfully."
+
+  if jq -e '.mining.pool_address | select(. == "enter your bitcoin address")' "$DATUM_CONFIG_FILE" > /dev/null; then
+
+    echo "Bitcoin address invalid, resetting."
+    jq -e '.mining.pool_address = ""' "$DATUM_CONFIG_FILE" > "$DATUM_CONFIG_FILE".tmp && mv "${DATUM_CONFIG_FILE}.tmp" "$DATUM_CONFIG_FILE"
+
+  fi
+
+  if jq -e '.api.modify_conf' "$DATUM_CONFIG_FILE" > /dev/null; then
+    echo "New API already set"
+  else
+    jq -e '.api.modify_conf = true' "$DATUM_CONFIG_FILE" > "$DATUM_CONFIG_FILE".tmp && mv "${DATUM_CONFIG_FILE}.tmp" "$DATUM_CONFIG_FILE"
+  fi
+
+  if jq -e '.api.admin_password | select(. == "umbrel")' "$DATUM_CONFIG_FILE" > /dev/null; then
+    jq --arg password "$APP_PASSWORD" -e '.api.admin_password = $password' "$DATUM_CONFIG_FILE" > "$DATUM_CONFIG_FILE".tmp && mv "${DATUM_CONFIG_FILE}.tmp" "$DATUM_CONFIG_FILE"
+  elif ! jq -e '.api.admin_password' "$DATUM_CONFIG_FILE" > /dev/null; then
+    jq --arg password "$APP_PASSWORD" -e '.api.admin_password = $password' "$DATUM_CONFIG_FILE" > "$DATUM_CONFIG_FILE".tmp && mv "${DATUM_CONFIG_FILE}.tmp" "$DATUM_CONFIG_FILE"
+  else
+    echo "Admin password already set"
+  fi
+
+else
+  echo "DATUM configuration file not found. Installation incomplete."
+  exit 1
+fi

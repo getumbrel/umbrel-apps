@@ -2,8 +2,8 @@ manifestVersion: 1.1
 id: tdex
 category: bitcoin
 name: TDEX Provider
-version: "0.9.1"
-tagline: Provide liquidity on the TDEX Network, an open protocol to trade Liquid Network assets.
+version: "1.0.1-hotfix"
+tagline: Provide liquidity on the TDEX Network, an open protocol to trade Liquid Network assets
 description: >-
   A liquidity provider holds Liquid reserves of both a BASE_ASSET-QUOTE_ASSET in his non-custodial Liquid hot-wallet,
   running automated market-making strategies, either with or without an oracle. Providers are incentivized to
@@ -16,6 +16,29 @@ description: >-
   by the trader, without the need to connect to an external price feed. The default strategy of the alpha daemond is the
   constant product market-making. In short, this model generates a full order-book based on an initial price for the market.
   Every transaction that occurs on this market will adjust the prices of the market accordingly.
+releaseNotes: >-
+  This is a hotfix release that fixes a bug preventing new installations of the TDEX Provider app from working.
+  
+  
+  Previous 1.0.1 release notes:
+  
+
+  🚨 IMPORTANT: Please ensure you have your 24-word recovery phrase written down BEFORE updating.
+  This update will require you to restore your wallet from the 24-word recovery phrase.
+
+
+  This is a major update of the TDEX daemon that contains several changes, including:
+
+  - Update to TDEXv2: the daemon's Trade interface implements the specs of the new TDEX v2 protocol. With this update the daemon makes
+  use of PSETv2 as a way for describing and build transactions (instead of the old PSETv0), and, also, exposes some new endpoint according
+  to the spec.
+  
+  - Wallet detachment: the daemon now requires a connection to an Ocean wallet that is fully responsible of deriving new key pairs
+  and scan the chain for them. The wallet produces events consumed by the daemon for confirmed/unconfirmed txs and utxos.
+  This drastically improves the overall perfomances of the service.
+  You don't need to manually claim the funds deposited to the dameon anymore.
+
+  - Embedded price feeder: the daemon allows you to set up price feeds for your pluggable-strategy markets to keep their price always up-to-date.
 dependencies: []
 developer: TDEX Network
 website: https://dev.tdex.network

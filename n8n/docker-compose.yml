@@ -10,7 +10,7 @@ services:
       PROXY_AUTH_WHITELIST: "/webhook-test/*,/webhook/*"
 
   server:
-    image: n8nio/n8n:1.18.1@sha256:85320dd3baa2e752084f9a1dd584a249036dd3b20bed59495d9c55ed62950fa5
+    image: n8nio/n8n:1.107.3@sha256:524bd974e19cd5a6972058c601084abb6b1b970d6a39f8bf8bbe05406a2450a1
     restart: on-failure
     volumes:
       - ${APP_DATA_DIR}/data:/home/node/.n8n
@@ -20,3 +20,7 @@ services:
       - PGID=1000
       # Used to set the url for editor, REST API & webhooks
       - N8N_HOST=$DEVICE_DOMAIN_NAME
+      - N8N_SECURE_COOKIE=false
+      - N8N_DIAGNOSTICS_ENABLED=false
+      - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
+      - N8N_RUNNERS_ENABLED=true

@@ -1,0 +1,42 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: rusty-kaspad_frontend_1
+      APP_PORT: 4321
+
+  frontend:
+    image: elldee/kaspa-frontend:v0.3.0@sha256:129cff71ec174ea69bb38313cfb2a20518fa2c1fd371e2a2aa5fa4d75b74470c
+    restart: on-failure
+    stop_grace_period: 1m
+    depends_on:
+      - kaspa-api
+  
+  kaspa-api:
+    image: elldee/kaspa-api:v0.3.0@sha256:272c62730984d0a89459337370d215ee75a315552e3031b1f4c4f11c673cb266
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      KASPAD_HOST: kaspad
+      KASPAD_RPC_PORT: 18110
+      KASPAD_CONTAINER_NAME: rusty-kaspad_kaspad_1
+    volumes:
+      - ${APP_DATA_DIR}/data/logs:/logs:ro  # For log parsing
+    depends_on:
+      - kaspad
+
+  kaspad:
+    image: kaspanet/rusty-kaspad:v1.0.1@sha256:5bc3195c2cd2d171885781ed55ead9485d93c7bd7b784d46e9e393c96757fe22
+    restart: on-failure
+    stop_grace_period: 1m
+    volumes:
+      - ${APP_DATA_DIR}/data/app:/data
+      - ${APP_DATA_DIR}/data/logs:/logs
+      - ${APP_DATA_DIR}/entrypoint.sh:/entrypoint.sh:ro
+    ports:
+      - 16110:16110  # GRPC
+      - 16111:16111  # P2P
+      - 17110:17110  # WRPC (Borsh)
+      - 18110:18110  # WRPC (JSON)
+    entrypoint: /entrypoint.sh

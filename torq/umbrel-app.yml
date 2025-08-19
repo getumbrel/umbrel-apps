@@ -2,7 +2,7 @@ manifestVersion: 1
 id: torq
 category: bitcoin
 name: Torq
-version: "v1.5.1"
+version: "v2.2.2"
 tagline: Scalable Node Management Software
 description: >-
   Operating a Lightning node requires a lot of work. You need to monitor your channels, rebalance them, keep track of your fees and much more.
@@ -34,9 +34,6 @@ description: >-
   - Navigate through time (days, weeks, months) to track your progress
 
   - Tag channels and nodes with custom labels (Exchange, Routing node, Sink, Source, or anything else)
-
-  
-
 developer: Torq
 website: https://torq.co
 dependencies:
@@ -51,41 +48,29 @@ gallery:
   - 4.jpg
   - 5.jpg
 releaseNotes: >-
-  
-  Torq v.1.5.1:
-
-  Release notes:
-
-  - CLN v23.11+ is required (pagination)
-
-  - Integration with Kraken
-
-  - New workflow triggers: Invoice, Forward, Payment, Transaction (on-chain)
-
-  - New workflow filters: Mempool, Exchange (Kraken) balance
-
-  - New workflow action: Payment Attempt (experimental: tries to find a route to pay an exchange invoice)
-
-  - New variables in workflow actions: API client, notification
-
-  - Replace intercom with chatwoot
-
-  - Small changes to rebalancer + new metrics and logs
-
-  - Timelock Delta in seconds on list screens
-
-  - Update of packages
-  
-  
-  Notes:
-  
-  - This release contains a large set of database updates. So the migration might take some time depending on the 
-    hardware and stored data. Please create a backup before updating, there is no automatic rollback process other 
-    then a database restore from before the migration.
-  
-  - This release (re)imports CLN data so it might take some time to get all data fetched from your CLN node. 
-    (No impact to LND nodes)
-  
+  Highlights:
+    - Torq API node handle grouping
+      - A possibility to make hierarchy of nodes that are used in Torq API.
+      - For example: primarly use Node A, but if it is unreachable, use Node B. Or: use Node A 70% of the time and Node B 30% of the time.
+    - Node data import downtime threshold
+      - Configurable threshold for when to run events and imports for node data depending on how long was Torq down for.
+      - For example: there is a workflow that is set to trigger on "Payment". Then a payment happened on the node while Torq was down. If Torq was down less than the threshold that was set, the workflow **is** triggered when Torq starts, and if Torq was down longer than the threshold, the workflow **is not** triggered.
+    - Possibility to add/remove tags via Tags -> Manage -menu
+    - Show tagging history on "Inspect Channel" -page
+    - Bug fixes and minor improvements:
+       - Bitcoind node status now shown in the "status modal"
+       - Fixed "last balance change" filter and make columns sortable by "last balance change"
+       - Fixed bug when updating CLN node connection details
+       - Ordered tags list on "Tags" page alphabetically
+       - Fixed bolt11 invoice not working in signet
+       - More accurate "unconfirmed" balance on bitcoind node
+       - mempool-url conf parameter now allows trailing slash
+       - Fixed an UI bug that created an error in UI when making an on-chain payment
+       - "Contact support" text in footer is now clickable and opens support chat window
+       - In earlier release an internal table of "payment attempt" was added that saves each attempted payment even if the node with which to make the payment is not reachable. This might bloat the database too much if there are a lot of payments. This release adds a new setting to set the amount of days that they are kept before being deleted from database (If zero, deleted after 1h).
+       - Fixed CLN showing doubled balance while on-chain transaction to self is unconfirmed  
+       - Fix a race condition in LND channel balance cache that might cause Torq to crash
+       - Fix bugs that caused channel balance to not be updated in some cases and channel "peer total local balance" not getting updated.
 
 path: ""
 defaultUsername: ""

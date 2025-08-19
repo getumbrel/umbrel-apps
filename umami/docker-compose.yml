@@ -1,0 +1,27 @@
+version: "3.7"
+
+services:
+  app:
+    image: ghcr.io/umami-software/umami:postgresql-v2.19.0@sha256:77264ce6951c6b131a91d99f1cfd720d9efac1eaaa12e104f21cf49408dd77e0
+    user: "1001:1001"
+    restart: on-failure
+    stop_grace_period: 1m
+    ports:
+      - 25727:3000
+    environment:
+      DATABASE_URL: postgresql://umami:umami@db:5432/umami
+      DATABASE_TYPE: postgresql
+      APP_SECRET: ${APP_SEED}
+    depends_on:
+      - db
+
+  db:
+    image: postgres:15-alpine@sha256:8a8d55343d6fc456cb183453e3094ff140b984157b36b48f817dd581654f2aec
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      POSTGRES_DB: umami
+      POSTGRES_USER: umami
+      POSTGRES_PASSWORD: umami
+    volumes:
+      - ${APP_DATA_DIR}/data/db:/var/lib/postgresql/data

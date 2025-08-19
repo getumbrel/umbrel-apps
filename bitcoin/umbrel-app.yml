@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: bitcoin
 category: bitcoin
 name: Bitcoin Node
-version: "27.0"
+version: "1.0.3"
 tagline: Run your personal node powered by Bitcoin Core
 description: >-
   Run your Bitcoin node and independently store and validate
@@ -42,28 +42,39 @@ gallery:
 path: ""
 defaultPassword: ""
 releaseNotes: >-
-  This release of the Bitcoin Node app includes the following updates:
+  This update fixes a bug that could prevent Bitcoin Core from starting after upgrading from the old app if settings had been changed via the command line
 
 
-  - Bitcoin Core: Upgrades Bitcoin Core to version 27.0. Full release notes for Bitcoin Core 27.0 can be found at https://github.com/bitcoin/bitcoin/blob/master/doc/release-notes/release-notes-27.0.md.
+  ### In addition, here's what's new in the all-new Bitcoin Node app.
 
 
-  - New Advanced Settings Options: Adds 3 new options to the Advanced Settings menu:
-    - datacarrier: Choose whether or not to relay transactions with OP_RETURN outputs.
-    - datacarriersize: Set the maximum size of the data in OP_RETURN outputs (in bytes) that your node will relay.
-    - permitbaremultisig: Choose wether or not to relay non-P2SH multisig transactions.
-
-
-  - JoinMarket Compatibility: The deprecated RPC 'deprecatedrpc=create_bdb' is enabled to allow integration with JoinMarket and the Jam app by default.
-  This fixes an issue where Jam app users who upgraded to Bitcoin Core v26.0 would have to manually add 'deprecatedrpc=create_bdb' to their bitcoin.conf file in order for the app to work.
+  This update introduces a completely redesigned experience, rebuilt from the ground up, both architecturally and visually, to give you a powerful, data-rich view into every aspect of your node's operation.
   
   
-  ⚠️ For existing Jam users, if you receive a connection error in Jam after updating to Bitcoin Core v27.0, please restart the Jam app from your homescreen by right-clicking on the app and selecting 'restart'.
+  From visualizing the network in real time to fine-tuning your configuration, the tools you need for ultimate sovereignty are now at your fingertips.
+  
+  
+  ### New features:
+  
+  - **Globe**: A stunning, real-time visualization of your node's global connections. See new peers connect and transactions broadcast around the world, as it happens.
+  
+  - **Blocks**: Follow along as each new block arrives, packed with transactions, and is verified by your own node.
+
+  - **Insights**: Key metrics about your node and the network are now presented in a series of clean, elegant charts.
+
+  - **Peers**: A completely new table gives you a detailed, sortable list of every peer your node is connected to.
+
+  - **Settings**: Fine-tune your node with a simplified, searcheable, and more intuitive layout for the settings. 
+
+  - **Configuration Editor**: Power users can now make custom fine-grained adjustments to their `bitcoin.conf` file directly from a new editor in the app's settings.
+
+
+  A new chapter for self-sovereignty begins.
 widgets:
   - id: "stats"
     type: "four-stats"
     refresh: "5s"
-    endpoint: "server:3005/v1/bitcoind/widgets/stats"
+    endpoint: "app:3000/api/widget/stats"
     link: ""
     example:
       type: "four-stats"
@@ -84,7 +95,7 @@ widgets:
   - id: "sync"
     type: "text-with-progress"
     refresh: "2s"
-    endpoint: "server:3005/v1/bitcoind/widgets/sync"
+    endpoint: "app:3000/api/widget/sync"
     link: ""
     example:
       type: "text-with-progress"

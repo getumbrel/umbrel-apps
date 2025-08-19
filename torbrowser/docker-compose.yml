@@ -1,0 +1,15 @@
+version: '3.7'
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: torbrowser_web_1
+      APP_PORT: 5800
+  web:
+    image: ghcr.io/lkshrk/docker-tor-browser:14.0.3@sha256:9d854697d4afa21a6e6e8fb98d0cf2a82776330c95d9b5bb03f3665096b3f1da
+    restart: on-failure
+    environment:
+      - DARK_MODE=1
+      - WEB_AUDIO=1
+    volumes:
+      - ${APP_DATA_DIR}/config:/config
