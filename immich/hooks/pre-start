@@ -1,9 +1,15 @@
 #!/usr/bin/env bash
-# This script sets up necessary directories/permissions that have changed in the app since the initial release. 
+# This script sets up necessary directories/permissions that have changed in the app since the initial release.
+# It also handles version migrations for Immich to ensure safe upgrades through required intermediate versions.
 
 set -euo pipefail
 
-APP_DATA_DIR="$(readlink -f $(dirname "${BASH_SOURCE[0]}")/..)/data"
+APP_DIR="$(readlink -f $(dirname "${BASH_SOURCE[0]}")/..)"
+APP_DATA_DIR="${APP_DIR}/data"
+APP_COMPOSE_FILE="${APP_DIR}/docker-compose.yml"
+IMMICH_PG_VERSION_FILE="${APP_DATA_DIR}/postgres/PG_VERSION"
+IMMICH_UPDATE_FLAG_FILE="${APP_DATA_DIR}/POST_1_136_0_VERSION"
+MIGRATION_IN_PROGRESS_FILE="${APP_DATA_DIR}/MIGRATION_IN_PROGRESS"
 
 # Create model-cache directory if it doesn't exist
 MODEL_CACHE_DIR="${APP_DATA_DIR}/model-cache"
@@ -16,4 +22,80 @@ TYPESENSE_DIR="${APP_DATA_DIR}/tsdata"
 # delete old post-update script if it exists
 POST_UPDATE_SCRIPT="$(readlink -f $(dirname "${BASH_SOURCE[0]}"))/post-update"
 [ -f "${POST_UPDATE_SCRIPT}" ] && rm -f "${POST_UPDATE_SCRIPT}"
-  
+
+# If postgres files do not yet exist
+# Then it's likely a new install
+# Create a flag file to indicate that it is a 1.136+ version
+if [[ ! -f "${IMMICH_PG_VERSION_FILE}" ]]; then
+    touch "${IMMICH_UPDATE_FLAG_FILE}"
+fi
+
+# Exit if flag file exists
+if [[ -f "${IMMICH_UPDATE_FLAG_FILE}" ]]; then
+    echo "Immich update flag file already exists at ${IMMICH_UPDATE_FLAG_FILE}. Skipping migration steps."
+    exit 0
+fi
+
+# Check if migration is already in progress to prevent infinite loops
+if [[ -f "${MIGRATION_IN_PROGRESS_FILE}" ]]; then
+    echo "Migration already in progress, exiting to prevent loops"
+    exit 0
+fi
+
+# Mark migration as in progress
+touch "${MIGRATION_IN_PROGRESS_FILE}"
+
+# If no flag file exists, update to v1.136.0 first, then continue to latest version
+echo "No POST_1_136_0_VERSION flag found - performing update to v1.136.0 and then to latest version"
+
+# Docker images for v1.136.0 intermediate step
+INTERMEDIATE_SERVER_IMAGE="ghcr.io/immich-app/immich-server:v1.136.0@sha256:8c9633b96ca5b748b10875a99c498ee6f1e5d7f7d1df2bf341909cacb88ad672"
+INTERMEDIATE_ML_IMAGE="ghcr.io/immich-app/immich-machine-learning:v1.136.0@sha256:198d52734136fe9840866cc2f48a8141e0d002c2a25be7e35cd28ef7936b6c67"
+
+# Get current images from docker-compose.yml
+get_current_images_from_compose() {
+    local server_image=$(yq '.services.server.image' "${APP_COMPOSE_FILE}" 2>/dev/null || echo "")
+    local ml_image=$(yq '.services."machine-learning".image' "${APP_COMPOSE_FILE}" 2>/dev/null || echo "")
+    echo "${server_image}|${ml_image}"
+}
+
+# Update compose file with new images
+update_compose_images() {
+    local server_image="${1}"
+    local ml_image="${2}"
+    
+    yq -i ".services.server.image = \"${server_image}\"" "${APP_COMPOSE_FILE}"
+    yq -i ".services.\"machine-learning\".image = \"${ml_image}\"" "${APP_COMPOSE_FILE}"
+}
+
+# Store original images for final step
+original_images=$(get_current_images_from_compose)
+original_server_image=$(echo "${original_images}" | cut -d'|' -f1)
+original_ml_image=$(echo "${original_images}" | cut -d'|' -f2)
+
+echo "Step 1: Updating to v1.136.0 for safe migration"
+update_compose_images "${INTERMEDIATE_SERVER_IMAGE}" "${INTERMEDIATE_ML_IMAGE}"
+
+# Start with v1.136.0
+echo "Starting Immich v1.136.0..."
+"${UMBREL_ROOT}/scripts/app" start immich
+
+# Wait for startup and migrations to complete
+echo "Waiting for v1.136.0 to complete startup and migrations..."
+sleep 90
+
+# Stop the app
+echo "Stopping Immich v1.136.0..."
+"${UMBREL_ROOT}/scripts/app" stop immich
+
+echo "Step 2: Updating to latest version"
+update_compose_images "${original_server_image}" "${original_ml_image}"
+
+# Create the flag file to prevent this migration from running again
+touch "${IMMICH_UPDATE_FLAG_FILE}"
+
+# Remove migration in progress file
+rm -f "${MIGRATION_IN_PROGRESS_FILE}"
+
+echo "Migration completed: v1.136.0 -> latest version"
+echo "Created ${IMMICH_UPDATE_FLAG_FILE} flag file"
