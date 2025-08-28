@@ -7,7 +7,7 @@ services:
       APP_PORT: 8175 # ui
 
   fedimintd:
-    image: fedimint/fedimintd:v0.8.0@sha256:f5b244593aa2caab159a24848dff34b359286c75c02aa1076fdd7ed0cf20cbbe
+    image: fedimint/fedimintd:v0.8.1@sha256:725110e9341c15aae356f54b085ac86f02823bbfeef9323a0e48ddf6b98ae204
     ports:
       - 8173:8173/tcp # p2p tls
       - 8173:8173/udp # p2p iroh
@@ -17,7 +17,7 @@ services:
     environment:
       FM_ENABLE_IROH: "true"
       FM_DATA_DIR: "/data"
-      FM_BITCOIN_NETWORK: bitcoin
+      FM_BITCOIN_NETWORK: ${APP_BITCOIN_NETWORK_ELECTRS}
       FM_BITCOIND_USERNAME: ${APP_BITCOIN_RPC_USER}
       FM_BITCOIND_PASSWORD: ${APP_BITCOIN_RPC_PASS}
       FM_BITCOIND_URL: "http://${APP_BITCOIN_NODE_IP}:${APP_BITCOIN_RPC_PORT}"
