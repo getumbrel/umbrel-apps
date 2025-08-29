@@ -1,0 +1,14 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: zen_app_1
+      APP_PORT: 8080
+
+  app:
+    image: ghcr.io/sheshbabu/zen/zen:latest@sha256:9d8e85f1a026635a4cc1b80b08ebb60632edbffc42c71e962cff3223517b4340
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data/zen_data:/data
+      - ${APP_DATA_DIR}/data/images:/images
