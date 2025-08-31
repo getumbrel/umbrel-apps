@@ -1,0 +1,71 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: docspell_web_1
+      APP_PORT: 7880
+
+  db:
+    image: postgres:17.6@sha256:29e0bb09c8e7e7fc265ea9f4367de9622e55bae6b0b97e7cce740c2d63c2ebc0
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data/db:/var/lib/postgresql/data:rw
+    environment:
+      - POSTGRES_DB=docspell
+      - POSTGRES_USER=docspelluser
+      - POSTGRES_PASSWORD=docspellpass
+
+  solr:
+    image: solr:9.9.0@sha256:6cc61e53edc21b02fc0c86fc835c47061f57892b7ee01f189880000ac5602b16
+    restart: on-failure
+    command:
+      - solr-precreate
+      - docspell
+    volumes:
+      - ${APP_DATA_DIR}/data/solr:/var/solr:rw
+
+  web:
+    image: docspell/restserver:latest
+    restart: on-failure
+    environment:
+      - TZ=Europe/Berlin
+      - DOCSPELL_SERVER_INTERNAL__URL=http://denny-docspell_web_1:7880
+      - DOCSPELL_SERVER_ADMIN__ENDPOINT_SECRET=2nYt6mVrHj3qXfKpQe9zUoAaG5wL1dJcR7sBiT4vM8hN2yPkWzXgCl0rEsFvQOaD
+      - DOCSPELL_SERVER_AUTH_SERVER__SECRET=jX4hT9uF6kL2vG0zQpR3dC8nW1eB5oSaY7gHfM9tKjU6wV2rPxZqN1cDsO8yL4mE
+      - DOCSPELL_SERVER_BACKEND_JDBC_PASSWORD=docspellpass
+      - DOCSPELL_SERVER_BACKEND_JDBC_URL=jdbc:postgresql://db:5432/docspell
+      - DOCSPELL_SERVER_BACKEND_JDBC_USER=docspelluser
+      - DOCSPELL_SERVER_BIND_ADDRESS=0.0.0.0
+      - DOCSPELL_SERVER_FULL__TEXT__SEARCH_ENABLED=true
+      - DOCSPELL_SERVER_FULL__TEXT__SEARCH_SOLR_URL=http://solr:8983/solr/docspell
+      - DOCSPELL_SERVER_INTEGRATION__ENDPOINT_ENABLED=true
+      - DOCSPELL_SERVER_INTEGRATION__ENDPOINT_HTTP__HEADER_ENABLED=true
+      - DOCSPELL_SERVER_INTEGRATION__ENDPOINT_HTTP__HEADER_HEADER__VALUE=superduperpassword123
+      - DOCSPELL_SERVER_BACKEND_SIGNUP_MODE=open
+      - DOCSPELL_SERVER_BACKEND_SIGNUP_NEW__INVITE__PASSWORD=
+      - DOCSPELL_SERVER_BACKEND_ADDONS_ENABLED=false
+    depends_on:
+      - db
+      - solr
+
+  joex:
+    image: docspell/joex:v0.42.0@sha256:b21d2285e49c0869d827dcba631ff10d574c673eb8df2ebf7fc1f326d0afd581
+    restart: on-failure
+    environment:
+      - TZ=Europe/Berlin
+      - DOCSPELL_JOEX_APP__ID=joex1
+      - DOCSPELL_JOEX_PERIODIC__SCHEDULER_NAME=joex1
+      - DOCSPELL_JOEX_SCHEDULER_NAME=joex1
+      - DOCSPELL_JOEX_BASE__URL=http://joex:7878
+      - DOCSPELL_JOEX_BIND_ADDRESS=0.0.0.0
+      - DOCSPELL_JOEX_FULL__TEXT__SEARCH_ENABLED=true
+      - DOCSPELL_JOEX_FULL__TEXT__SEARCH_SOLR_URL=http://solr:8983/solr/docspell
+      - DOCSPELL_JOEX_JDBC_PASSWORD=docspellpass
+      - DOCSPELL_JOEX_JDBC_URL=jdbc:postgresql://db:5432/docspell
+      - DOCSPELL_JOEX_JDBC_USER=docspelluser
+      - DOCSPELL_JOEX_ADDONS_EXECUTOR__CONFIG_RUNNER=docker,trivial
+      - DOCSPELL_JOEX_CONVERT_HTML__CONVERTER=weasyprint
+    depends_on:
+      - db
+      - solr
