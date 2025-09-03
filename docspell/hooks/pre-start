@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# We're forced to use user/group 8983 (www-data)
+# So we set the owner of the data directories to 8983:8983
+APP_DATA_DIR="$(readlink -f $(dirname "${BASH_SOURCE[0]}")/..)/data"
+
+DESIRED_OWNER="8983:8983"
+
+SOLR_DATA_DIR="${APP_DATA_DIR}/solr"
+
+docspell_correct_permission() {
+	local -r path="${1}"
+
+	if [[ -d "${path}" ]]; then
+		owner=$(stat -c "%u:%g" "${path}")
+
+		if [[ "${owner}" != "${DESIRED_OWNER}" ]]; then
+			chown "${DESIRED_OWNER}" "${path}"
+		fi
+	fi
+}
+
+docspell_correct_permission "${SOLR_DATA_DIR}"
