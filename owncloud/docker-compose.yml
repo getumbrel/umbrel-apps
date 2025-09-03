@@ -14,18 +14,18 @@ services:
       - mariadb
       - redis
     environment:
-      - OWNCLOUD_DOMAIN=umbrel.local:8080
-      - OWNCLOUD_TRUSTED_DOMAINS=umbrel.local,umbrel,localhost,umbrel-2.local,umbrel-2
+      - OWNCLOUD_DOMAIN=${DEVICE_DOMAIN_NAME}:8080
+      - OWNCLOUD_TRUSTED_DOMAINS=${DEVICE_DOMAIN_NAME},${DEVICE_HOSTNAME},${APP_OWNCLOUD_LOCAL_IPS}
       - OWNCLOUD_DB_TYPE=mysql
       - OWNCLOUD_DB_NAME=owncloud
       - OWNCLOUD_DB_USERNAME=owncloud
       - OWNCLOUD_DB_PASSWORD=owncloud
-      - OWNCLOUD_DB_HOST=mariadb
+      - OWNCLOUD_DB_HOST=owncloud_mariadb_1
       - OWNCLOUD_ADMIN_USERNAME=admin
-      - OWNCLOUD_ADMIN_PASSWORD=umbrel
+      - OWNCLOUD_ADMIN_PASSWORD=${APP_PASSWORD}
       - OWNCLOUD_MYSQL_UTF8MB4=true
       - OWNCLOUD_REDIS_ENABLED=true
-      - OWNCLOUD_REDIS_HOST=redis
+      - OWNCLOUD_REDIS_HOST=owncloud_redis_1
       - OWNCLOUD_LOG_LEVEL=2
     healthcheck:
       test: ["CMD", "/usr/bin/healthcheck"]
@@ -33,7 +33,7 @@ services:
       timeout: 10s
       retries: 5
     volumes:
-      - ${APP_DATA_DIR}/data/app_data:/mnt/data
+      - ${APP_DATA_DIR}/data/app:/mnt/data
       - ${APP_DATA_DIR}/config:/var/www/html/config
 
   mariadb:
