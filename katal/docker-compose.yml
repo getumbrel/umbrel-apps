@@ -1,0 +1,26 @@
+version: "3.8"
+services:
+  app_proxy:
+    environment:
+      APP_HOST: katal_app
+      APP_PORT: 6798
+
+  katal_app:
+    image: ghcr.io/besoeasy/katal:main@sha256:6726837d61c7d1633d88b217cc87be941f20aa818750f0ce64250bc51029f7b3
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 5m
+    environment:
+      - NODE_ENV=production
+      - WEBPORT=6798
+      - SERVERPORT=6799
+      - SMBPORT=445
+    ports:
+      - "6798:6798"
+      - "6799:6799"
+      - "445:445"
+    volumes:
+      - katal-data:/tmp/katal
+
+volumes:
+  katal-data:
