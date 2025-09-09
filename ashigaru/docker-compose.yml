@@ -1,0 +1,15 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: denny-ashigaru_app_1
+      APP_PORT: 7682
+
+  app:
+    image: ghcr.io/thenymman/ashi-t:1.0.0@sha256:ec0b362dc56c45497921d57609631ea6ed661ddd5155872e623e7f58e4df1856
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data/tor:/home/ashigaru/.ashigaru/tor
+      - ${APP_DATA_DIR}/data/wallets:/home/ashigaru/.ashigaru/wallets
+      - ${APP_DATA_DIR}/data/config:/home/ashigaru/.ashigaru
