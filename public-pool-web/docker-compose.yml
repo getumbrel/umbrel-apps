@@ -5,7 +5,7 @@ services:
       APP_PORT: 3000
 
   rails-app:
-    image: martinbarilik/public-pool-web:0.0.8@sha256:eb7e3f9458b0a830666570d820d3b391756dd89b2b61be419a5a1cd0e7c357e5
+    image: martinbarilik/public-pool-web:0.1.0@sha256:943270bc7e5c01ee713f74fec77c3e159db8f3b599e71f324b08d39e8d88a37c
     user: "1000:1000"
     environment:
       - RAILS_MASTER_KEY=${APP_PUBLIC_POOL_WEB_MASTER_KEY}
@@ -18,7 +18,7 @@ services:
         condition: service_healthy
         
   db:
-    image: postgres:17.4@sha256:304ab813518754228f9f792f79d6da36359b82d8ecf418096c636725f8c930ad
+    image: postgres:17.6@sha256:8a56bef4c60bef3d26193cb9d810fce93def8fd0c459f4a9b14240fbd7559a1d
     user: "1000:1000"
     environment:
       - POSTGRES_USER=${APP_PUBLIC_POOL_WEB_POSTGRES_USERNAME}
@@ -44,7 +44,7 @@ services:
       - ${APP_DATA_DIR}/data/redis:/data
 
   sidekiq:
-    image: martinbarilik/public-pool-web:0.0.8@sha256:eb7e3f9458b0a830666570d820d3b391756dd89b2b61be419a5a1cd0e7c357e5
+    image: martinbarilik/public-pool-web:0.1.0@sha256:943270bc7e5c01ee713f74fec77c3e159db8f3b599e71f324b08d39e8d88a37c
     user: "1000:1000"
     environment:
       - RAILS_MASTER_KEY=${APP_PUBLIC_POOL_WEB_MASTER_KEY}
