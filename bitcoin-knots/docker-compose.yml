@@ -28,8 +28,9 @@ services:
       BITCOIND_EXTRA_ARGS: '-deprecatedrpc=create_bdb' # We can remove depratedrpc=create_bdb in a future update once Jam (JoinMarket) implements descriptor wallet support
 
       # BITCOIND CONF FILE SETTINGS
-      APPS_SUBNET: "${NETWORK_IP}/16" # used to whitelist local apps as both peers (whitelist) and rpc connections (rpcallowip)
+      APPS_SUBNET: "${NETWORK_IP}/16" # used for rpcallowip
       P2P_PORT: "${APP_BITCOIN_KNOTS_P2P_PORT}" # port, bind (also used for connect details)
+      P2P_WHITEBIND_PORT: "${APP_BITCOIN_KNOTS_P2P_WHITEBIND_PORT}" # Additional inbound P2P listener granting whitelisted permissions (whitebind) to this port; for trusted internal apps only; do not publish externally
       RPC_PORT: "${APP_BITCOIN_KNOTS_RPC_PORT}" # rpcport (also used for rpc client and connect details)
       TOR_PORT: "${APP_BITCOIN_KNOTS_TOR_PORT}" # bind=onion
       ZMQ_RAWBLOCK_PORT: "${APP_BITCOIN_KNOTS_ZMQ_RAWBLOCK_PORT}" # zmqpubrawblock
