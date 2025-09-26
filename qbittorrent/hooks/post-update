@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "inside qbittorrent/hooks/post-update"
+
+APP_DATA_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")"
+
+# Legacy -> New layout mapping
+OLD_CONFIG_DIR="${APP_DATA_DIR}/data/config/config"
+NEW_CONFIG_DIR="${APP_DATA_DIR}/data/config/qBittorrent"
+
+OLD_CACHE_DIR="${APP_DATA_DIR}/data/config/cache"
+NEW_CACHE_DIR="${APP_DATA_DIR}/data/config/.cache"
+
+# Idempotency flag (touch once migration completes)
+MIGRATION_FLAG="${APP_DATA_DIR}/MIGRATED_TO_QBITTORRENT_LAYOUT_V2"
+
+# If we already migrated, nothing to do.
+if [[ -f "$MIGRATION_FLAG" ]]; then
+  echo "Migration already completed earlier."
+  exit 0
+fi
+
+# If neither legacy dir exists, still mark as 'migrated' so we don't re-check every update.
+if [[ ! -d "$OLD_CONFIG_DIR" && ! -d "$OLD_CACHE_DIR" ]]; then
+  echo "No legacy directories to migrate."
+  touch "$MIGRATION_FLAG"
+  exit 0
+fi
+
+echo "Starting migration to new directory layout…"
+
+# Ensure targets exist
+mkdir -p "$NEW_CONFIG_DIR" "$NEW_CACHE_DIR"
+
+# Move config files (skip transient runtime artifacts)
+if [[ -d "$OLD_CONFIG_DIR" ]]; then
+  echo "Migrating ${OLD_CONFIG_DIR} -> ${NEW_CONFIG_DIR}"
+  rsync -a --remove-source-files \
+    --exclude 'ipc-socket' \
+    --exclude 'lockfile' \
+    "$OLD_CONFIG_DIR"/ "$NEW_CONFIG_DIR"/ || true
+
+  # Try to remove old dir if empty
+  rmdir "$OLD_CONFIG_DIR" 2>/dev/null || true
+fi
+
+# Move cache directory
+if [[ -d "$OLD_CACHE_DIR" ]]; then
+  echo "Migrating ${OLD_CACHE_DIR} -> ${NEW_CACHE_DIR}"
+  rsync -a --remove-source-files "$OLD_CACHE_DIR"/ "$NEW_CACHE_DIR"/ || true
+  rmdir "$OLD_CACHE_DIR" 2>/dev/null || true
+fi
+
+# Keep expected ownership (adjust if your UID/GID differ)
+chown -R umbrel:umbrel "${APP_DATA_DIR}/data/config"
+
+touch "$MIGRATION_FLAG"
+echo "Migration complete."
