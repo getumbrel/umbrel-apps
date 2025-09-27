@@ -10,33 +10,34 @@ echo "inside qbittorrent/hooks/post-start"
 # We use a file called HAS_BEEN_CONFIGURED to indicate that we've already configured qBittorrent. This way users can modify the qBittorrent.conf file without our script overwriting it.
 
 APP_DATA_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")"
-QBITTORRENT_CONF_FILE="${APP_DATA_DIR}/data/config/config/qBittorrent.conf"
+QBITTORRENT_CONF_FILE="${APP_DATA_DIR}/data/config/qBittorrent/qBittorrent.conf"
 UMBREL_QBITTORRENT_CONFIG_FLAG="${APP_DATA_DIR}/HAS_BEEN_CONFIGURED_BY_UMBREL"
 
 if [[ -f "${UMBREL_QBITTORRENT_CONFIG_FLAG}" ]]; then
   echo "qBittorrent has already been configured."
-  exit
+  exit 0
 fi
 
 # Wait up to 30 seconds for the qBittorrent.conf file to exist
 echo "Waiting up to 30 seconds for qBittorrent.conf file to exist..."
 for attempt in $(seq 1 300); do
-	if [[ -f "${QBITTORRENT_CONF_FILE}" ]]; then
-		echo "qBittorrent.conf file exists"
-		break
-	fi
-	sleep 0.1
+  if [[ -f "${QBITTORRENT_CONF_FILE}" ]]; then
+    echo "qBittorrent.conf file exists at ${QBITTORRENT_CONF_FILE}"
+    break
+  fi
+  sleep 0.1
 done
 
 if [[ ! -f "${QBITTORRENT_CONF_FILE}" ]]; then
   echo "qBittorrent.conf was never created. Something is likely wrong with the qBittorrent app."
-  exit
+  exit 0
 fi
 
 # wait 5 seconds to be extra sure the file is fully written by the qBittorrent service
 echo "Waiting 5 seconds for qBittorrent.conf file to be fully written..."
 sleep 5
 
+# Try stopping service before modifying config
 if "${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" stop server; then
   echo "qBittorrent stopped successfully."
 else
@@ -78,6 +79,14 @@ if grep -q '^WebUI\\AuthSubnetWhitelistEnabled=' "${QBITTORRENT_CONF_FILE}"; the
   sed -i 's/^WebUI\\AuthSubnetWhitelistEnabled=.*/WebUI\\AuthSubnetWhitelistEnabled=true/' "${QBITTORRENT_CONF_FILE}"
 else
   sed -i '/^\[Preferences\]/a WebUI\\AuthSubnetWhitelistEnabled=true' "${QBITTORRENT_CONF_FILE}"
+fi
+
+# Set HostHeaderValidation to false (otherwise errors with 401)
+echo "Setting WebUI\\HostHeaderValidation=false"
+if grep -q '^WebUI\\HostHeaderValidation=' "${QBITTORRENT_CONF_FILE}"; then
+  sed -i 's/^WebUI\\HostHeaderValidation=.*/WebUI\\HostHeaderValidation=false/' "${QBITTORRENT_CONF_FILE}"
+else
+  sed -i '/^\[Preferences\]/a WebUI\\HostHeaderValidation=false' "${QBITTORRENT_CONF_FILE}"
 fi
 
 # Create the UMBREL_QBITTORRENT_CONFIG_FLAG file to indicate that we've configured qBittorrent
