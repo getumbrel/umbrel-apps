@@ -1,69 +1,28 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+### Correct permissions for data directories
+
 APP_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")"
-ENV_FILE="$APP_DIR/inv.env"
+APP_DATA_DIR="${APP_DIR}/data"
 
-# Check if the file exists
-if [ ! -f "$ENV_FILE" ]; then
-    echo "Error: Environment file not found at $ENV_FILE"
-    exit 1
-fi
+DESIRED_OWNER="1000:1000"
 
-# Read the current content of the file
-CURRENT_CONTENT=$(cat "$ENV_FILE")
+COMPANIONCACHE_DATA_DIR="${APP_DATA_DIR}/companioncache"
 
-# Check if we need to update the keys, matching the escaped quotes
-# Note the \\\" pattern: one \ escapes the next \ for the shell,
-# resulting in the pattern matcher seeing \* ... \" ... *\
-if [[ "$CURRENT_CONTENT" == *"visitor_data: \\\"changeme\\\""* ]] || \
-   [[ "$CURRENT_CONTENT" == *"po_token: \\\"changeme\\\""* ]] || \
-   [[ "$CURRENT_CONTENT" == *"hmac_key: \\\"changeme\\\""* ]]; then
+# Ensure the directory exists
+mkdir -p "${COMPANIONCACHE_DATA_DIR}"
 
-    echo "Placeholder values detected. Generating new keys..."
+correct_permission() {
+	local -r path="${1}"
 
-    # Generate HMAC key
-    HMAC_KEY=$(openssl rand -hex 32)
-    echo "Generated HMAC key: $HMAC_KEY"
+	if [[ -d "${path}" ]]; then
+		owner=$(stat -c "%u:%g" "${path}")
 
-    # Run the docker command and capture its output
-    echo "Running docker to generate YouTube trusted session..."
-    # Handle potential errors from docker run
-    if ! KEYS_OUTPUT=$(docker run --rm quay.io/invidious/youtube-trusted-session-generator); then
-        echo "Error running docker command."
-        exit 1
-    fi
+		if [[ "${owner}" != "${DESIRED_OWNER}" ]]; then
+			chown "${DESIRED_OWNER}" "${path}"
+		fi
+	fi
+}
 
-    # Extract the visitor_data and po_token values using grep and cut
-    # Make patterns more robust in case of extra whitespace
-    VISITOR_DATA=$(echo "$KEYS_OUTPUT" | grep "visitor_data:" | cut -d' ' -f2)
-    PO_TOKEN=$(echo "$KEYS_OUTPUT" | grep "po_token:" | cut -d' ' -f2)
-
-    if [ -n "$VISITOR_DATA" ] && [ -n "$PO_TOKEN" ]; then
-        echo "Successfully extracted YouTube keys"
-        echo "VISITOR_DATA: $VISITOR_DATA"
-        echo "PO_TOKEN: $PO_TOKEN"
-
-        # Create a new variable with the updated content
-        # Use the corrected patterns with \\\" for matching
-        # Also ensure the replacement includes the necessary \\\"
-        NEW_CONTENT="${CURRENT_CONTENT}"
-        NEW_CONTENT="${NEW_CONTENT//visitor_data: \\\"changeme\\\"/visitor_data: \\\"$VISITOR_DATA\\\"}"
-        NEW_CONTENT="${NEW_CONTENT//po_token: \\\"changeme\\\"/po_token: \\\"$PO_TOKEN\\\"}"
-        NEW_CONTENT="${NEW_CONTENT//hmac_key: \\\"changeme\\\"/hmac_key: \\\"$HMAC_KEY\\\"}"
-
-        # Write the new content back to the file
-        # Use printf for potentially better handling of special characters than echo
-        printf "%s" "$NEW_CONTENT" > "$ENV_FILE"
-
-        echo "Successfully updated $ENV_FILE with new keys"
-    else
-        echo "Failed to extract keys from docker output:"
-        echo "$KEYS_OUTPUT" # Show the output for debugging
-        exit 1
-    fi
-else
-    echo "Valid keys already seem to exist in $ENV_FILE based on content. No action needed."
-fi
-
-exit 0
+correct_permission "${COMPANIONCACHE_DATA_DIR}"

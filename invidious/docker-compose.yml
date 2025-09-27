@@ -13,8 +13,22 @@ services:
     user: "1000:1000"
     # Using official images that include tini
     #init: true
-    env_file:
-      - ${APP_DATA_DIR}/inv.env
+    environment:
+      INVIDIOUS_CONFIG: |
+        db:
+          dbname: invidious
+          user: umbrel
+          password: moneyprintergobrrr
+          host: invidious_postgres_1
+          port: 5432
+        check_tables: true
+        invidious_companion:
+        - private_url: "http://invidious_companion_1:8282/companion"
+        invidious_companion_key: ${APP_INV_SECRET_KEY}
+        hmac_key: ${APP_SEED}
+        default_user_preferences:
+          feed_menu: ["Trending", "Subscriptions", "Playlists"]
+          default_home: Trending
     healthcheck:
       disable: true
     depends_on:
@@ -33,15 +47,16 @@ services:
       POSTGRES_USER: umbrel
       POSTGRES_PASSWORD: moneyprintergobrrr
 
-  sig_helper:
-    image: quay.io/invidious/inv-sig-helper:master-dcda9f1@sha256:39fee87693ef3d71c212d9511f2adb3230783753342321489deab17caa87c42f
+  companion:
+    image: quay.io/invidious/invidious-companion:master-a866b71@sha256:18610b3a76ab009a271f85be01df5a19a5916409ba0f43998bb731b650f03ac3
     restart: on-failure
-    init: true
-    command: ["--tcp", "0.0.0.0:12999"]
-    environment:
-      - RUST_LOG=info
+    user: "1000:1000"
     cap_drop:
       - ALL
     read_only: true
+    volumes:
+      - ${APP_DATA_DIR}/data/companioncache:/var/tmp/youtubei.js:rw
     security_opt:
       - no-new-privileges:true
+    environment:
+       - SERVER_SECRET_KEY=${APP_INV_SECRET_KEY}
