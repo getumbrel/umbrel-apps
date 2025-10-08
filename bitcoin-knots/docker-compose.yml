@@ -7,7 +7,7 @@ services:
       APP_PORT: 3000
   
   app:
-    image: ghcr.io/retropex/umbrel-bitcoin-knots:v1.0.3-3@sha256:92cb4dbd5c4bbcb9ea2830024940673de0d64ed5a9de9cb605563335545ada86
+    image: ghcr.io/retropex/umbrel-bitcoin-knots:1.0.4-knots.v29.1@sha256:f0905a6e376a50e69d0c7e03a4382d9d0b9515bc55fe81d0327d94591cfbe7b4
     user: "1000:1000"
     restart: on-failure
     stop_grace_period: 15m30s
@@ -28,8 +28,9 @@ services:
       BITCOIND_EXTRA_ARGS: '-deprecatedrpc=create_bdb' # We can remove depratedrpc=create_bdb in a future update once Jam (JoinMarket) implements descriptor wallet support
 
       # BITCOIND CONF FILE SETTINGS
-      APPS_SUBNET: "${NETWORK_IP}/16" # used to whitelist local apps as both peers (whitelist) and rpc connections (rpcallowip)
+      APPS_SUBNET: "${NETWORK_IP}/16" # used for rpcallowip
       P2P_PORT: "${APP_BITCOIN_KNOTS_P2P_PORT}" # port, bind (also used for connect details)
+      P2P_WHITEBIND_PORT: "${APP_BITCOIN_KNOTS_P2P_WHITEBIND_PORT}" # Additional inbound P2P listener granting whitelisted permissions (whitebind) to this port; for trusted internal apps only; do not publish externally
       RPC_PORT: "${APP_BITCOIN_KNOTS_RPC_PORT}" # rpcport (also used for rpc client and connect details)
       TOR_PORT: "${APP_BITCOIN_KNOTS_TOR_PORT}" # bind=onion
       ZMQ_RAWBLOCK_PORT: "${APP_BITCOIN_KNOTS_ZMQ_RAWBLOCK_PORT}" # zmqpubrawblock

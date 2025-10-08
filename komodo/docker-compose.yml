@@ -53,7 +53,7 @@ services:
       FERRETDB_POSTGRESQL_URL: postgres://admin:admin@komodo_postgres_1:5432/postgres
 
   core:
-    image: ghcr.io/moghtech/komodo-core:1.18.4@sha256:b9a0c8757dd9e8f77a5e541c3afd66d37c5dbb1fa4a4687a2c6146741f18850e
+    image: ghcr.io/moghtech/komodo-core:1.19.5@sha256:a1cceb4f971443b1e9f2a767788f663d0afb6244ee2135f7fe3fd1036af37ade
     user: "1000:1000"
     labels:
       komodo.skip:
@@ -70,10 +70,10 @@ services:
     env_file:
       - ${APP_DATA_DIR}/settings.env
     volumes:
-      - ${APP_DATA_DIR}/data/core:/repo-cache
+      - ${APP_DATA_DIR}/data/core:/backups
       
   periphery:
-    image: ghcr.io/moghtech/komodo-periphery:1.18.4@sha256:0a3ccd9294b13d3c5942d1e20392c81e28369ba1aaba6b17bfd5b35907760b98
+    image: ghcr.io/moghtech/komodo-periphery:1.19.5@sha256:bd79cf960ed054fe8e02384322303e462448679b1149dde48bbef151417255b1
     labels:
       komodo.skip:
     restart: on-failure

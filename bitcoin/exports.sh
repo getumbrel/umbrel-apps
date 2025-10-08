@@ -9,6 +9,8 @@ export APP_BITCOIN_DATA_DIR="${EXPORTS_APP_DIR}/data/bitcoin"
 # PORTS
 export APP_BITCOIN_RPC_PORT="8332"
 export APP_BITCOIN_P2P_PORT="8333"
+# Additional inbound P2P listener granting whitelisted permissions (whitebind) to this port; for trusted internal apps only; do not publish externally
+export APP_BITCOIN_P2P_WHITEBIND_PORT="8335"
 # As of v28.1, the default onion listening port will now be derived to be -port + 1 instead of being set to a fixed value (8334 on mainnet)
 # We are fine because we always hardcode port to 8333 regardless of network
 export APP_BITCOIN_TOR_PORT="8334"

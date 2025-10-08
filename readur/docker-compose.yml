@@ -7,7 +7,7 @@ services:
       APP_PORT: 8000
 
   app:
-    image: ghcr.io/readur/readur:2.5.4@sha256:0b4b08f4ed46fc693fd32101c92a8f2d60b1813a07feb121b4cc65212560c65d
+    image: ghcr.io/readur/readur:2.6.2@sha256:b067b845237182c14d3592418d50cb5b9b9e5165ab663ca0c9c9a63c4e16871b
     user: "1000:1000"
     restart: on-failure
     environment:
@@ -29,6 +29,12 @@ services:
     volumes:
       - ${APP_DATA_DIR}/data/uploads:/app/uploads
       - ${APP_DATA_DIR}/data/watch:/app/watch
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     depends_on:
       postgres:
         condition: service_healthy
