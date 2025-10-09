@@ -9,6 +9,8 @@ services:
 
   server:
     image: owncloud/server:10.15.3@sha256:ce545e72b13f0c3c19fd083aed1ec12facd91ee87993397fd883e853830dc7e9
+    # Does not work rootless
+    #user: "1000:1000"
     restart: on-failure
     depends_on:
       - mariadb
@@ -34,10 +36,11 @@ services:
       retries: 5
     volumes:
       - ${APP_DATA_DIR}/data/app:/mnt/data
-      - ${APP_DATA_DIR}/config:/var/www/html/config
+      - ${APP_DATA_DIR}/data/config:/var/www/html/config
 
   mariadb:
     image: mariadb:10.11@sha256:24bb6e3d8e46f4581ddcc2b2c22fd78c99c77ac4e3fb7c9aba3a5c4c4d934ca2
+    user: "1000:1000"
     restart: on-failure
     environment:
       - MYSQL_ROOT_PASSWORD=owncloud
@@ -52,10 +55,11 @@ services:
       timeout: 5s
       retries: 5
     volumes:
-      - ${APP_DATA_DIR}/data/mysql_data:/var/lib/mysql
+      - ${APP_DATA_DIR}/data/db:/var/lib/mysql
 
   redis:
     image: redis:6-alpine@sha256:7fe72c486b910f6b1a9769c937dad5d63648ddee82e056f47417542dd40825bb
+    user: "1000:1000"
     restart: on-failure
     command: ["--databases", "1"]
     healthcheck:
@@ -64,4 +68,4 @@ services:
       timeout: 5s
       retries: 5
     volumes:
-      - ${APP_DATA_DIR}/data/redis_data:/data
+      - ${APP_DATA_DIR}/data/redis:/data
