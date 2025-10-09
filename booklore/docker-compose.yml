@@ -7,7 +7,9 @@ services:
       APP_PORT: 6060
       
   web:
-    image: booklore/booklore:v1.2.1@sha256:f0169c2a65859650860f72f8c3f9211c3260a4fe99f1e9fd2f94555f96a02fa0
+    image: booklore/booklore:v1.5.1@sha256:4b058a71947d64c3a3297793d6a615c7ab536ab07d6a5c5dc684950aa9e15e03
+    # does not work rootless
+    #user: "1000:1000"
     restart: on-failure
     environment:
       DATABASE_URL: jdbc:mariadb://booklore_db_1:3306/booklore
@@ -17,11 +19,12 @@ services:
       db:
         condition: service_started
     volumes:
-      - ${APP_DATA_DIR}/data/app_data:/app/data
+      - ${APP_DATA_DIR}/data/app:/app/data
       - ${APP_DATA_DIR}/data/books:/books
 
   db:
     image: mariadb:12.0.2@sha256:b30cc65b57a11a2e791ad5c06284e599fe9f1bf3fe9081a88d85bcf36389be4a
+    user: "1000:1000"
     restart: on-failure
     environment:
       MARIADB_DATABASE: booklore
