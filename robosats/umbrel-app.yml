@@ -2,7 +2,7 @@ manifestVersion: 1
 id: robosats
 category: bitcoin
 name: RoboSats
-version: "v0.8.1-alpha"
+version: "v0.8.2-alpha"
 tagline: Simple and Private Bitcoin P2P Exchange
 description: >-
   RoboSats is a simple and private app to exchange bitcoin for national currencies. 
@@ -36,27 +36,35 @@ description: >-
 releaseNotes: >-
   Highlights:
 
-    - Nostr notifications following NIP-17. Coordinators now send nostr anonymous encrypted messages to robots. The client fetches federation's relays for this notifications and display them on a new notifications center.
-    - New mobile view. Improving user experience and using nostr for App notifications.
-    - Improved Robot profile window.
-    - Libraries security updates.
-    - We have created a list of payment methods consistently reported by the community as doing reverts to their transactions.
+    - Orders can now include descriptions. Available in "Advanced Options".
+    - Aggregated Order's meta data from Federation's book is now displayed in Order's view (Before it was only displaying data from the host).
+    - New Search dialog to help on-boarding users
+    - Currency is locked to BTC in Swaps form
+    - Revision of the Czech translation
+
 
   Payment methods marked as reversible:
 
-    - PIX
+    - Revolut
 
   New payment methods:
 
-  - USDC
-  - Paysend
+  - Zeam
 
   Bugs:
 
-    - Order matching view now displays relevant order data.
-    - Fixed some visual bugs caused by previous UI update.
-    - F2F orders are again created with coordinates.
-    - Order view showing wrong amount definitively fixed
+    - The Active robot feature is not available in the orders book view when connection is set to Nostr, yet it always displayed red for all robots.
+    - Refreshing the orders book is not necessary when connection is set to Nostr.
+    - Renewing orders with password now requires to re-enter a password.
+    - Sometimes orders were not found when adding a new robot with an active order
+    - Coordinators overview sometimes didn't load
+    - Order summary "Start Again" button wasn't working
+    - Used robots were not able to create new orders
+    - Advanced mode toggle sometimes didn't work
+    - "you receive" sats amount sometimes showed up incorrect values
+    - "Routing budget" amount  showed sats instead of milisats
+    - Map now displays at zoom 1 (entirely) by default
+    - Sometimes the chat logs were not being sent on a dispute even if the user checked the option
 
   Full release notes are available at https://github.com/RoboSats/robosats/releases/tag/v0.8.1-alpha
 developer: RoboSats
