@@ -6,7 +6,6 @@ services:
       APP_HOST: bassin_www_1
       APP_PORT: 80
       PROXY_AUTH_ADD: "false"
-    container_name: bassin_app_proxy_1
 
   init:
     image: alpine:3.22.1@sha256:4bcff63911fcb4448bd4fdacec207030997caf25e9bea4045fa6c8c44de311d1
@@ -30,7 +29,8 @@ services:
     entrypoint: /bin/sh -c '/opt/ckpool/src/ckpool -k -B -c /config/ckpool.conf'
     user: "1000:1000"
     depends_on:
-      - init
+      init:
+        condition: service_completed_successfully
     restart: on-failure
     stop_grace_period: 30s
     ports:
@@ -38,7 +38,6 @@ services:
     volumes:
       - ${APP_DATA_DIR}/data/config:/config:ro
       - ${APP_DATA_DIR}/data/www:/www
-    container_name: bassin_ckpool_1
 
   ui:
     image: ghcr.io/duckaxe/bassin-ui:main@sha256:2ffe7f9954b23780eefd4c19e35a9f6cfca3beccaf0525b698e8dfba7088906b
@@ -60,7 +59,7 @@ services:
       - ui
     restart: on-failure
     container_name: bassin_www_1
-  
+
   widget-server:
     image: ghcr.io/duckaxe/umbrel-bassin-widget:main@sha256:293d4a17579bbef339c3f4595ed2dc36bef70699d34909bfa3ac20bba8facb7c
     user: "1000:1000"
