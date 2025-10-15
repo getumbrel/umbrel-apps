@@ -6,15 +6,16 @@ services:
       APP_PORT: 6798
 
   app:
-    image: ghcr.io/besoeasy/katal:0.0.5@sha256:105efe56c862e155bd6bf9edaabc552b81da4d079399a82dcf77588bbf6d065e
+    image: ghcr.io/besoeasy/katal:0.0.7@sha256:76cb7b4e23f3d862152100c32c76ba023b1df03da5d750249796a1014ffdbe97
     user: "1000:1000"
     restart: on-failure
-    stop_grace_period: 5m
+    stop_grace_period: 15m
     environment:
       - NODE_ENV=production
+      - SMBPORT=4450
     ports:
       - "6799:6799"
-      - "4450:445"
+      - "4450:4450"
       - "59123:59123"
     volumes:
       - ${APP_DATA_DIR}/data/app:/tmp/katal
