@@ -1,0 +1,15 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: dozzle_server_1
+      APP_PORT: 8080
+
+  server:
+    image: amir20/dozzle:v8.14.4@sha256:e944224b30d0ac8771d7e54c5ae0dfb30859d6b7e590b65e90bafe39c15c46ce
+    restart: on-failure
+    stop_grace_period: 1m
+    user: "0:0"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
