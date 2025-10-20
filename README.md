@@ -205,7 +205,7 @@ submission: https://github.com/getumbrel/umbrel/pull/334
 
 When submitting a new app, leave the `gallery` and `releaseNotes` fields empty. Use the following values:
 
-```
+```yml
 gallery: []
 releaseNotes: ""
 ```
