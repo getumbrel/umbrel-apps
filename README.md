@@ -203,6 +203,13 @@ submitter: Umbrel
 submission: https://github.com/getumbrel/umbrel/pull/334
 ```
 
+When submitting a new app, leave the `gallery` and `releaseNotes` fields empty. Use the following values:
+
+```yml
+gallery: []
+releaseNotes: ""
+```
+
 The `dependencies` section within the app manifest gives Umbrel a list of app IDs that must be already installed in order for the user to install BTC RPC Explorer and also function.
 
 The `exports.sh` shell script is a simple script to export environmental variables that your `docker-compose.yml` can read. These environment variables are also accessible when other apps start through their `docker-compose.yml` files. Most applications will not require this feature.
