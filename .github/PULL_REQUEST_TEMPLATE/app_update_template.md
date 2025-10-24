@@ -30,11 +30,6 @@ Please fill out all sections below to help us review and merge your update smoot
 * [ ]  umbrelOS on an Umbrel Home
 * [ ]  umbrelOS on Linux VM
 
-### App architecture support *(required)*
-<!-- Confirm which architectures this update supports -->
-* [ ]  amd64
-* [ ]  arm64
-
 ### Additional notes (optional)
 <!-- Add any other context, dependencies, or important details related to this update -->
 <!-- Example: Requires new environment variable APP_URL -->
