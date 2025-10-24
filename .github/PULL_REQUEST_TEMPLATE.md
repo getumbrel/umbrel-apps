@@ -1,25 +1,4 @@
-<!-- 
-Thank you for submitting your app to the Umbrel App Store! 
-Please fill out all sections below to help us review and publish your app smoothly.
--->
+Please go to the `Preview` tab and select the appropriate sub-template:
 
-# App Submission
-
-### App name *(required)*
-<!-- Please Write the name of the app here -->
-
-### 256x256 SVG icon *(required)*
-<!-- Upload an icon with no rounded corners as it will be dynamically rounded with CSS. -->
-
-<!-- We will help finalize this icon before the app goes live in the Umbrel App Store. -->
-
-### Gallery images *(required)*
-<!-- Upload 3 to 5 high-quality gallery images (1440x900px) of your app in PNG format, or just upload 3 to 5 screenshots of your app and we'll help you design the gallery images. -->
-
-<!-- We will help finalize these images before the app goes live in the Umbrel App Store. -->
-
-### I have tested my app on *(check at least one)*:
-* [ ]  umbrelOS on a Raspberry Pi
-* [ ]  umbrelOS on an Umbrel Home
-* [ ]  umbrelOS on Linux VM
-
+* [App Submission](?expand=1&template=app_submission_template.md)
+* [App Update](?expand=1&template=app_update_template.md)
