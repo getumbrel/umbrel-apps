@@ -2,7 +2,7 @@ manifestVersion: 1
 id: plex
 category: media
 name: Plex
-version: "1.42.1.10054-gpu"
+version: "1.42.2.10156"
 tagline: Stream Movies & TV Shows
 description: >-
   Stream movies and TV shows, plus 300+ channels of live TV, instantly, without a subscription. Watch live TV and movies anywhere, from any device, with Plex.
@@ -30,17 +30,18 @@ permissions:
   - STORAGE_DOWNLOADS
   - GPU
 releaseNotes: >-
-  This update adds support for GPU passthrough in umbrelOS 1.5.
-
-
-  The release notes of the previous version included the following changes:
-    - Added support for Icelandic in Movie and TV show libraries
-    - New preference for downloads temp directory
-    - Added option to set number of simultaneous background transcodes, including downloads
-    - Fixed issue with collection item counts for smart collections
-    - Resolved error when using Browse option for LiveTV EPG
-    - Improved descriptions for episode and album sorting preferences
-    - Enhanced security to address potential vulnerability
+  This update includes several improvements and bug fixes:
+    - Better caching of codec testing to improve start time of playback sessions
+    - Split transcoder slots into CPU and GPU slots for better control
+    - Fixed issues with ad detection logs being placed in the wrong location
+    - Fixed credit detection failures on Windows servers
+    - Fixed permission issues when explicitly setting UID and GID
+    - Fixed issue where existing files in downloads temporary directory would be deleted
+    - Fixed issue where setting maximum simultaneous background video transcode to unlimited would prevent downloads from running
+    - Fixed similar artist tags not being loaded for music
+    - Fixed HEVC optimization resulting in files with no video
+    - Fixed automatic subtitle selection preferring forced subtitles over full subtitles
+    - Fixed software fallback failures when CPU slots were set to unlimited
 
 
   Full release notes are available at https://www.videohelp.com/software/Plex
