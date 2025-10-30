@@ -3,7 +3,7 @@ id: ollama
 name: Ollama
 tagline: Self-host open source AI models like DeepSeek-R1, Llama, and more
 category: ai
-version: "0.12.6"
+version: "0.12.7"
 port: 11434
 description: >-
   Ollama allows you to download and run advanced AI models directly on your own hardware. Self-hosting AI models ensures full control over your data and protects your privacy.
@@ -36,12 +36,19 @@ defaultUsername: ""
 defaultPassword: ""
 dependencies: []
 releaseNotes: >-
+  New models available:
+    - Qwen3-VL: now available in all parameter sizes ranging from 2B to 235B
+    - MiniMax-M2: a 230 Billion parameter model built for coding and agentic workflows
+
+
+  Ollama's new app now includes a way to add one or many files when prompting the model, and thinking levels can now be adjusted for the gpt-oss models.
+
+
   Key highlights in this release:
-    - Flash attention is now enabled by default for Gemma 3, improving performance and memory utilization
-    - Fixed issue where Ollama would hang while generating responses
-    - Fixed issue where qwen3-coder would act in raw mode when using /api/generate or ollama run qwen3-coder <prompt>
-    - Fixed qwen3-embedding providing invalid results
-    - Ollama will now evict models correctly when num_gpu is set
+    - Model load failures now include more information on Windows
+    - Fixed embedding results being incorrect when running embeddinggemma
+    - Fixed truncation error when generating embeddings
+    - Increased speed when scheduling models
 
 
   Full release notes are available at https://github.com/ollama/ollama/releases
