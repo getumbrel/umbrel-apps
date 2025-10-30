@@ -7,7 +7,7 @@ services:
       APP_PORT: 3080
 
   api:
-    image: ghcr.io/danny-avila/librechat:0.7.9@sha256:7d7c54a1daa1feba3185f14a4e16672d3aed11c3b523887c88c10560c0f3a776
+    image: ghcr.io/danny-avila/librechat:v0.8.0@sha256:adcb326f43a971b53df0fbca5f4769c8e56fafbdf834c9dd8c7e4924788f0152
     restart: on-failure
     user: "1000:1000"
     command: npm run backend:dev
@@ -66,7 +66,7 @@ services:
       - ${APP_DATA_DIR}/data/vectordb:/var/lib/postgresql/data
 
   rag_api:
-    image: ghcr.io/danny-avila/librechat-rag-api-dev-lite:v0.5.0@sha256:c734c37ec42426d862a986f8dc6e253bcd848f901d27be62d9dc63dd16847016
+    image: ghcr.io/danny-avila/librechat-rag-api-dev-lite:v0.6.0@sha256:21561e1856e01e4b0de3cc628c7a3de21419398622a0d81cdf0fd262f360ba24
     env_file:
       - path: ${APP_DATA_DIR}/.env
     environment:
