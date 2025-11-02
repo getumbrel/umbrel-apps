@@ -1,0 +1,36 @@
+services:
+
+  # app_proxy:
+  #   environment:
+  #     APP_HOST: invio_backend_1
+  #     APP_PORT: 3000
+
+  backend:
+    image: ghcr.io/kittendevv/invio-backend:latest
+    environment:
+      ADMIN_USER: ${ADMIN_USER:-admin}
+      ADMIN_PASS: ${ADMIN_PASS:-supersecret}
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-prod}
+      SESSION_TTL_SECONDS: ${SESSION_TTL_SECONDS:-43200}
+      COOKIE_SECURE: ${COOKIE_SECURE:-true}
+      SECURE_HEADERS_DISABLED: ${SECURE_HEADERS_DISABLED:-false}
+      ENABLE_HSTS: ${ENABLE_HSTS:-true}
+      DATABASE_PATH: ${DATABASE_PATH:-/app/data/invio.db}
+    volumes:
+      - ${APP_DATA_DIR}/data:/app/data
+    ports:
+      - "${BACKEND_PORT:-3000}:3000"
+    restart: unless-stopped
+
+  frontend:
+    image: ghcr.io/kittendevv/invio-frontend:latest
+    environment:
+      PORT: ${FRONTEND_PORT_INTERNAL:-8000}
+      BACKEND_URL: ${BACKEND_URL:-http://backend:3000}
+      FRONTEND_SECURE_HEADERS_DISABLED: ${FRONTEND_SECURE_HEADERS_DISABLED:-false}
+      ENABLE_HSTS: ${ENABLE_HSTS:-false}
+    depends_on:
+      - backend
+    ports:
+      - "${FRONTEND_PORT:-8000}:${FRONTEND_PORT_INTERNAL:-8000}"
+    restart: unless-stopped
