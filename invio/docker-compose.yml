@@ -8,6 +8,7 @@ services:
 
   backend:
     image: ghcr.io/kittendevv/invio-backend:v1.7.0@sha256:1d7bc45a698e6ee753e34bbb8e7d1d56c8afc338a6cca8f025894667130555ed
+    user: "1000:1000"
     environment:
       ADMIN_USER: "admin"
       ADMIN_PASS: ${APP_PASSWORD}
@@ -22,6 +23,7 @@ services:
 
   frontend:
     image: ghcr.io/kittendevv/invio-frontend:v1.7.0@sha256:e0c63bbeb4c1c7a0ce80c07b185447d58740a8fc882ebc35a74f7426f6317d2d
+    user: "1000:1000"
     environment:
       PORT: 8000
       BACKEND_URL: http://backend:3000
