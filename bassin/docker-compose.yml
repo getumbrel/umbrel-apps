@@ -25,8 +25,8 @@ services:
       - APP_BITCOIN_ZMQ_HASHBLOCK_PORT=${APP_BITCOIN_ZMQ_HASHBLOCK_PORT}
 
   ckpool:
-    image: ghcr.io/duckaxe/ckpool-solo:main@sha256:e9fabb50efd2ec037fa17a0b0973667280b80caa929437ac51a5708f1b58fed9
-    entrypoint: /bin/sh -c '/opt/ckpool/src/ckpool -k -B -c /config/ckpool.conf'
+    image: pinkyswear/ckpool-solo:latest@sha256:71ee905e7badd04ed119f84700fbd0f388fe6307a504b854558e3e6d26cae787
+    entrypoint: /bin/sh -c './bin/ckpool -k -B -c /config/ckpool.conf'
     user: "1000:1000"
     depends_on:
       init:
@@ -40,7 +40,7 @@ services:
       - ${APP_DATA_DIR}/data/www:/www
 
   ui:
-    image: ghcr.io/duckaxe/bassin-ui:main@sha256:622c8e116d3078a3b7c14ad58743c50700068941b714964963f29a2c3aa2780c
+    image: ghcr.io/duckaxe/bassin-ui:main@sha256:840db0581bac0cbe743352a0155564df7e95f65064f30c720c9db78f4fbf4f2a
     entrypoint: /bin/sh -c "cp -r /ui/* /www/"
     user: "1000:1000"
     volumes:
