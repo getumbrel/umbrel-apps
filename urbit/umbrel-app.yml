@@ -2,7 +2,7 @@ manifestVersion: 1
 id: urbit
 category: networking
 name: Urbit
-version: "v3.3-0"
+version: "v3.5"
 tagline: Run Urbit on your Umbrel
 description: >-
   Urbit is a personal server for self-sovereign personal & networked
@@ -35,10 +35,12 @@ torOnly: false
 submitter: ~mopfel-winrux
 submission: https://github.com/getumbrel/umbrel/pull/1246
 releaseNotes: >-
-  This release moves your piers into permanent storage outside of the app data directory, so they will not be deleted if you uninstall the app. The UI will not serve until migration attempt is complete.
+  vere-v3.5 is a minor runtime release with the following highlighted changes:
 
-  `vere-v3.3` is a bugfix release for a regression introduced in vere-v3.2. The new directed messaging driver was assigned an incorrect driver priority which means that ames packets will always be handled before terminal keystrokes or HTTP requests, exactly the opposite of the intended behavior. This would mean that ships getting spammed with ames packets would appear significantly less responsive than before.
-  
-  This bugfix release restores the ames packet priority to be low and fixes a HTTP caching bug found by ~migrev-dolseg.
+    Fixes a false positive from double boot protection when there are multiple messages in flight.
+    Fixes the -X argument that allows you to scry into a pier without starting it.
+    Fixes a possibility for a race condition between vere io drivers and double boot protection.
+    Better error messages when using outdated moon keys, remove dead urbit.org links and print when doing epoch rollover.
 
-  Full release notes here: https://github.com/urbit/vere/releases/tag/vere-v3.3
+
+  Full release notes here: https://github.com/urbit/vere/releases/tag/vere-v3.5
