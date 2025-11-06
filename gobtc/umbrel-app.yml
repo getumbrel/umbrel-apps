@@ -1,0 +1,79 @@
+manifestVersion: 1.1
+id: gobtc
+implements:
+  - bitcoin
+category: bitcoin
+name: Go BTC
+version: "1.0.0"
+tagline: A RAM-friendly Bitcoin node
+description: >-
+  Go B(T)C (**Good old Bitcoin Core**) is a lightweight wrapper for
+  Bitcoin Core v28.1, which is renowned for its low (~ 1GB) RAM usage.
+  The Bitcoin node is optimized to operate efficiently on devices with limited memory, 
+  making it an ideal choice for users with older or less powerful hardware.
+
+
+  This leads to greater decentralization, as a higher number of devices
+  can act as active Bitcoin nodes. Be there!
+
+
+  Don't trust. Verify.
+dependencies: []
+port: 2121
+path: ""
+defaultPassword: ""
+releaseNotes: >-
+widgets:
+  - id: "stats"
+    type: "four-stats"
+    refresh: "5s"
+    endpoint: "server:3005/v1/bitcoind/widgets/stats"
+    link: ""
+    example:
+      type: "four-stats"
+      link: ""
+      items:
+        - title: "Connections"
+          text: "11"
+          subtext: "peers"
+        - title: "Mempool"
+          text: "257"
+          subtext: "MB"
+        - title: "Hashrate"
+          text: "590"
+          subtext: "EH/s"
+        - title: "Blockchain size"
+          text: "600"
+          subtext: "GB"
+  - id: "sync"
+    type: "text-with-progress"
+    refresh: "2s"
+    endpoint: "server:3005/v1/bitcoind/widgets/sync"
+    link: ""
+    example:
+      type: "text-with-progress"
+      link: ""
+      title: "Blockchain sync"
+      text: "83%"
+      progressLabel: "In progress"
+      progress: 0.83
+developer: duckaxe
+submitter: duckaxe
+submission: https://github.com/getumbrel/umbrel-apps/pull/3969
+support: https://community.getumbrel.com/c/bitcoin-and-lightning
+backupIgnore:
+  - data/bitcoin/blocks
+  - data/bitcoin/chainstate
+  - data/bitcoin/indexes
+  - data/bitcoin/testnet3/blocks
+  - data/bitcoin/testnet3/chainstate
+  - data/bitcoin/testnet3/indexes
+  - data/bitcoin/testnet4/blocks
+  - data/bitcoin/testnet4/chainstate
+  - data/bitcoin/testnet4/indexes
+  - data/bitcoin/signet/blocks
+  - data/bitcoin/signet/chainstate
+  - data/bitcoin/signet/indexes
+  - data/bitcoin/regtest/blocks
+  - data/bitcoin/regtest/chainstate
+  - data/bitcoin/regtest/indexes
