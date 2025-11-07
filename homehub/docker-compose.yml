@@ -1,0 +1,20 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: homehub_web_1
+      APP_PORT: 5000
+
+  web:
+    image: ghcr.io/surajverma/homehub:0.2.1.4@sha256:2d5b32cc4e5cc4a208d627c44fece811c544d370c16019eb51a1bcca392cc27a
+    restart: on-failure
+    environment:
+      - FLASK_ENV=production
+      - SECRET_KEY=umbrel
+    volumes:
+      - ${APP_DATA_DIR}/data/uploads:/app/uploads
+      - ${APP_DATA_DIR}/data/media:/app/media
+      - ${APP_DATA_DIR}/data/pdfs:/app/pdfs
+      - ${APP_DATA_DIR}/data/app_data:/app/data
+      - ${APP_DATA_DIR}/data/config/config.yml:/app/config.yml:ro
