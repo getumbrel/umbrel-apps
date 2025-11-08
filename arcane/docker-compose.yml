@@ -1,0 +1,43 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: arcane_arcane_1
+      APP_PORT: 3552
+
+  docker:
+    image: docker:27.2.0-dind@sha256:f9f72ad901a78f27be922b2d320bbc263174f12919c1b37e6a01f828fa904565
+    privileged: true
+    network_mode: host
+    stop_grace_period: 1m
+    restart: on-failure
+    environment:
+      DOCKER_ENSURE_BRIDGE: "dind0:10.32.0.1/16"
+    entrypoint: /entrypoint.sh
+    command: >
+      dockerd
+        --bridge dind0
+        --data-root /data/data
+        --exec-root /data/exec
+        --host unix:///data/docker.sock
+        --pidfile /data/docker.pid
+    volumes:
+      - ${APP_DATA_DIR}/entrypoint.sh:/entrypoint.sh
+      - ${APP_DATA_DIR}/data/docker:/data
+
+  arcane:
+    image: ghcr.io/ofkm/arcane:v1.7.2@sha256:6733c4971a2289441c187f185ccd404139bb2be72e261d85a2884edb00b254d5
+    depends_on:
+      - docker
+    restart: on-failure
+    environment:
+      APP_URL: http://${DEVICE_DOMAIN_NAME}:3552
+      PUID: 1000
+      PGID: 1000
+      ENCRYPTION_KEY: ${APP_PASSWORD} #9c0a7f4e2b8341c3a7d9e1c2f6b58a12
+      JWT_SECRET: ${APP_PASSWORD} #7f1e3bc4d6a8921f5c3a9e7d2b4c1a9f58e3d2c7a1b9f4c6d8e2a3b4c5d6e7f1
+    volumes:
+      - ${APP_DATA_DIR}/data/app_data:/app/data
+      - ${APP_DATA_DIR}/data/projects:/app/data/projects
+      - ${APP_DATA_DIR}/data/docker:/var/run
