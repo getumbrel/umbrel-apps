@@ -1,0 +1,30 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: sovereign-merchant_web_1
+      APP_PORT: 3000
+
+  web:
+    image: satengineer/sovereign-merchant:v0.0.1@sha256:a4f9df4f6e26e87518990a28ec3d15020b9a0f69a2965342575be81a45737ebd
+    restart: on-failure
+    stop_grace_period: 1m
+    volumes:
+      # Mount data directory for SQLite database persistence
+      - ${APP_DATA_DIR}:/data
+    environment:
+      # Server configuration
+      PORT: 3000
+      HOST: 0.0.0.0
+      NODE_ENV: production
+
+      # Database configuration
+      DATABASE_PATH: /data/config.db
+
+      # BTCPayServer integration (will be configured via Umbrel variables)
+      # BTCEXP_BITCOIND_HOST, etc. will be added when BTCPay is integrated
+
+      # App configuration for Umbrel
+      APP_HIDDEN_SERVICE: $APP_HIDDEN_SERVICE
+      APP_PASSWORD: $APP_PASSWORD
