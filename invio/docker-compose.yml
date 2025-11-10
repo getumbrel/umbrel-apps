@@ -16,9 +16,9 @@ services:
       SESSION_TTL_SECONDS: 43200
       SECURE_HEADERS_DISABLED: "false"
       ENABLE_HSTS: "true"
-      DATABASE_PATH: ${APP_DATA_DIR}/data/db:/app/data/invio.db
+      DATABASE_PATH: /app/data/invio.db
     volumes:
-      - ${APP_DATA_DIR}/data/app:/app/data
+      - ${APP_DATA_DIR}/data:/app/data
     restart: on-failure
 
   frontend:
@@ -26,7 +26,7 @@ services:
     user: "1000:1000"
     environment:
       PORT: 8000
-      BACKEND_URL: http://backend:3000
+      BACKEND_URL: http://invio_backend_1:3000
       COOKIE_SECURE: "false"
       FRONTEND_SECURE_HEADERS_DISABLED: "false"
       ENABLE_HSTS: "false"
