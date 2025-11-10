@@ -1,0 +1,35 @@
+name: "selfhosted"
+is_done_tick_dot_com: false
+is_user_creation_disabled: false
+
+database:
+  type: "sqlite"
+  migration: true
+  host: "localhost"
+  port: 5432
+  user: "selfhosted_user"
+  password: "securepassword"
+  name: "selfhosted_db"
+
+jwt:
+  secret: "yYCBVjEKcrpEiTORFJX3K5TJ2dPbQhFJdZT4jyQPgvE="
+  session_time: 168h
+  max_refresh: 168h
+
+server:
+  port: 2021
+  read_timeout: 10s
+  write_timeout: 10s
+  rate_period: 60s
+  rate_limit: 300
+  cors_allow_origins:
+    - "http://umbrel.local:2021"
+    - "http://umbrel-2.local:2021"
+    - "http://umbrel:2021"
+    - "http://umbrel-2:2021"
+  serve_frontend: true
+
+scheduler_jobs:
+  due_job: 30m
+  overdue_job: 3h
+  pre_due_job: 3h

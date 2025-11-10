@@ -1,0 +1,19 @@
+version: '3.7'
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: denny-donetick_web_1
+      APP_PORT: 2021
+
+  web:
+    image: donetick/donetick:v0.1.64@sha256:e2474d903a60df7d15142e89acc04f8ef32347bc13c3c6f47750f7f14c6dae34
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data/app_data:/donetick-data
+      - ${APP_DATA_DIR}/data/config:/config
+    environment:
+      - DT_ENV=selfhosted
+      - DT_SQLITE_PATH=/donetick-data/donetick.db
+
+
