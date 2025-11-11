@@ -5,7 +5,7 @@ services:
       APP_PORT: 8080
       
   app:
-    image: dedicatedcode/reitti:1.4.0@sha256:f12f00476548d2f00b1f8c2a9770dfddad72c4440b47cf43838deccaca9d902c
+    image: dedicatedcode/reitti:2.4.2@sha256:dd0663751444a2bec6d2cac7056e56fa3d2caff492919b857d4aed14d31b74df
     restart: on-failure
     depends_on:
       - rabbitmq
@@ -17,7 +17,7 @@ services:
       - ${APP_DATA_DIR}/data/app_data:/app/data
 
   postgis:
-    image: postgis/postgis:17-3.5-alpine@sha256:819d9730850d2b85dcd0929128671212b5e142938126c78936751a8e63b2c1d4
+    image: imresamu/postgis:17-3.5-alpine@sha256:f5049274448270889bde6b3e18beeb38e88e9ca09e7a34fc1bf71774aa4557e4
     restart: on-failure
     environment:
       POSTGRES_USER: reitti
@@ -42,7 +42,7 @@ services:
       - ${APP_DATA_DIR}/data/redis:/data
 
   photon:
-    image: rtuszik/photon-docker:0.7.2@sha256:e2f60e41f1c769cb1d8a5d64e8e221f2f0c721888b9ed33a7155c5c33165fc74
+    image: rtuszik/photon-docker:1.3.0@sha256:4b7afa61a0c7516bc0efc8a3c50f6ddc2c6df7bca258ce84cfb7942dd28692e8
     restart: on-failure
     environment:
       UPDATE_STRATEGY: PARALLEL
