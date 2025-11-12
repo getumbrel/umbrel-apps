@@ -1,0 +1,20 @@
+version: "3.9"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: swingmusic_app_1
+      APP_PORT: 1970
+      PROXY_AUTH_ADD: "false"
+
+  app:
+    image: ghcr.io/swingmx/swingmusic:v2.0.9@sha256:f8dcd4e074355de8fe5e8ae256c0af0441715a0eaf0bf2eabaebc65447ea716c
+    restart: on-failure
+    environment:
+      - PUID=1000
+      - PGID=1000
+    volumes:
+      - ${APP_DATA_DIR}/data/config:/config
+      - ${APP_DATA_DIR}/data/music:/music:rw
+      - ${UMBREL_ROOT}/data/storage/downloads:/downloads
+

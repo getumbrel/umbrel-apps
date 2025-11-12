@@ -8,7 +8,7 @@ services:
       PROXY_AUTH_ADD: "false"
   
   db:
-    image: mariadb:10.6.21@sha256:ec79aa7a81a7667885cb69b6dc0415e032f22520bd5aca77927faffca4329924
+    image: mariadb:10.6.21@sha256:8a16204dc96c08ed0ee2c52c0f9324aa5d2dd0e43ad23a471d447a39f75765b5
     user: "1000:1000"
     command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
     restart: on-failure
@@ -35,7 +35,7 @@ services:
       - "${APP_DATA_DIR}/data/redis:/data"
 
   web:
-    image: nextcloud:31.0.2-apache@sha256:090040f97aa1cd6dbfe4c2a3483df41ca95e0abd1d63342e29d973c88a833a52
+    image: nextcloud:32.0.1-apache@sha256:1e4eae55eebe094cae6f9e7b6e0b4bccf4a4fe7b7e6f6f8f57010994b3b2ee42
     # Currently needs to be run as root, if we run as uid 1000 this fails
     # https://github.com/nextcloud/docker/blob/05026b029d37fc5cd488d4a4a2a79480e39841ba/21.0/apache/entrypoint.sh#L53-L77
     # user: "1000:1000"
@@ -60,7 +60,7 @@ services:
         condition: service_started
 
   cron:
-    image: nextcloud:31.0.2-apache@sha256:090040f97aa1cd6dbfe4c2a3483df41ca95e0abd1d63342e29d973c88a833a52
+    image: nextcloud:32.0.1-apache@sha256:1e4eae55eebe094cae6f9e7b6e0b4bccf4a4fe7b7e6f6f8f57010994b3b2ee42
     # Currently needs to be run as root, if we run as uid 1000 this fails
     # https://github.com/nextcloud/docker/blob/05026b029d37fc5cd488d4a4a2a79480e39841ba/21.0/apache/entrypoint.sh#L53-L77
     # user: "1000:1000"

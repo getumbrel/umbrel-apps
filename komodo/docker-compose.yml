@@ -1,0 +1,94 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: komodo_core_1
+      APP_PORT: 9120
+
+  docker:
+    image: docker:28.3.0-dind@sha256:d33eb93fe02683e984e6f8a93c0b3d85bb74f56ec83922bc39fb34ba23ab42bc
+    privileged: true
+    network_mode: host
+    stop_grace_period: 1m
+    restart: on-failure
+    environment:
+      DOCKER_ENSURE_BRIDGE: "dind0:10.32.0.1/16"
+    entrypoint: /entrypoint.sh
+    command: >
+      dockerd
+        --bridge dind0
+        --data-root /data/data
+        --exec-root /data/exec
+        --host unix:///data/docker.sock
+        --pidfile /data/docker.pid
+    volumes:
+      - ${APP_DATA_DIR}/entrypoint.sh:/entrypoint.sh
+      - ${APP_DATA_DIR}/data/docker:/data
+
+  postgres:
+    image: ghcr.io/ferretdb/postgres-documentdb:17-0.104.0@sha256:1d709fc03dcb82faa2e3aa02c0f80ea10e483b38aff08a05da36a6faa2098608
+    user: "1000:1000"
+    labels:
+      komodo.skip:
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data/postgres:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: postgres
+
+  ferretdb:
+    image: ghcr.io/ferretdb/ferretdb:2.3.1@sha256:1170bd36c39378614edd3f1d2b92f0c5a9b30e482a79ea0c3fc0fe11baba3afa
+    user: "1000:1000"
+    labels:
+      komodo.skip:
+    restart: on-failure
+    depends_on:
+      - postgres
+    volumes:
+      - ${APP_DATA_DIR}/data/ferretdb:/state
+    environment:
+      FERRETDB_POSTGRESQL_URL: postgres://admin:admin@komodo_postgres_1:5432/postgres
+
+  core:
+    image: ghcr.io/moghtech/komodo-core:1.19.5@sha256:a1cceb4f971443b1e9f2a767788f663d0afb6244ee2135f7fe3fd1036af37ade
+    user: "1000:1000"
+    labels:
+      komodo.skip:
+    restart: on-failure
+    depends_on:
+      - ferretdb
+    environment:
+      KOMODO_DATABASE_ADDRESS: komodo_ferretdb_1:27017
+      KOMODO_DATABASE_USERNAME: admin
+      KOMODO_DATABASE_PASSWORD: admin
+      KOMODO_PASSKEY: ${APP_PASSWORD}
+      KOMODO_FIRST_SERVER: https://komodo_periphery_1:8120
+      KOMODO_JWT_SECRET: ${APP_SEED}
+    env_file:
+      - ${APP_DATA_DIR}/settings.env
+    volumes:
+      - ${APP_DATA_DIR}/data/core:/backups
+      
+  periphery:
+    image: ghcr.io/moghtech/komodo-periphery:1.19.5@sha256:bd79cf960ed054fe8e02384322303e462448679b1149dde48bbef151417255b1
+    labels:
+      komodo.skip:
+    restart: on-failure
+    environment:
+      COMPOSE_KOMODO_IMAGE_TAG: latest
+      KOMODO_PASSKEY: ${APP_PASSWORD}
+      TZ: Europe/Berlin
+      PERIPHERY_ROOT_DIRECTORY: /etc/komodo
+      PERIPHERY_PASSKEYS: ${APP_PASSWORD}
+      PERIPHERY_DISABLE_TERMINALS: "false"
+      PERIPHERY_SSL_ENABLED: "true"
+      PERIPHERY_INCLUDE_DISK_MOUNTS: /etc/hostname
+      PERIPHERY_LOGGING_PRETTY: "false"
+      PERIPHERY_PRETTY_STARTUP_CONFIG: "false"
+    volumes:
+      - ${APP_DATA_DIR}/data/docker:/var/run
+      - /proc:/proc
+      - ${APP_DATA_DIR}/data/periphery:/etc/komodo

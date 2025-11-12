@@ -9,7 +9,7 @@ services:
       PROXY_AUTH_WHITELIST: "/api/*"
 
   penpot-frontend:
-    image: penpotapp/frontend:2.6.1@sha256:5a1afc4972bf81be3473945f47bbce50513dc4cd47b5f2282d52b13132359b73
+    image: penpotapp/frontend:2.10.0@sha256:91b80791f37b44c9aba3490720ae90fc01c691562c0862abeebcb8bc0a7198d2
     volumes:
       - ${APP_DATA_DIR}/data/assets:/opt/data/assets
     environment:
@@ -20,7 +20,7 @@ services:
     restart: on-failure
 
   penpot-backend:
-    image: penpotapp/backend:2.6.1@sha256:a074efc1d0de69ceb1d4533248d78bdb960d1dd96d380e1f259ec2b941bff5dc
+    image: penpotapp/backend:2.10.0@sha256:cfae17cff120a73c80e2237b7f664b44765b859a874896a377f09d8083463514
     # user 1000:1000 to avoid permission issues when importing libraries and templates
     user: "1000:1000"
     volumes:
@@ -30,7 +30,7 @@ services:
       - PENPOT_DATABASE_URI=postgresql://penpot-postgres/penpot
       - PENPOT_DATABASE_USERNAME=penpot
       - PENPOT_DATABASE_PASSWORD=penpot
-      - PENPOT_REDIS_URI=redis://penpot-redis/0
+      - PENPOT_REDIS_URI=redis://penpot_penpot-valkey_1/0
       - PENPOT_ASSETS_STORAGE_BACKEND=assets-fs
       - PENPOT_STORAGE_ASSETS_FS_DIRECTORY=/opt/data/assets
       - PENPOT_TELEMETRY_ENABLED=false
@@ -38,15 +38,15 @@ services:
       - PENPOT_PUBLIC_URI=http://${DEVICE_DOMAIN_NAME}:${APP_PENPOT_UI_PORT}
     depends_on:
       - penpot-postgres
-      - penpot-redis
+      - penpot-valkey
     restart: on-failure
 
   penpot-exporter:
-    image: penpotapp/exporter:2.6.1@sha256:48c473819c2c51b65885e52e1c47fa4d26aeabab6c2919fbcb7a51aeadccac38
+    image: penpotapp/exporter:2.10.0@sha256:79c4988d0ac1986e3e8a7a1e1041d54869bcf1b17779f0cc6553795666f685e4
     user: "1000:1000"
     environment:
       - PENPOT_PUBLIC_URI=http://penpot-frontend
-      - PENPOT_REDIS_URI=redis://penpot-redis/0
+      - PENPOT_REDIS_URI=redis://penpot_penpot-valkey_1/0
     restart: on-failure
 
   penpot-postgres:
@@ -62,7 +62,13 @@ services:
       - POSTGRES_PASSWORD=penpot
     restart: on-failure
 
-  penpot-redis:
-    image: redis:7@sha256:45bfd95117a171ff9c1b5304bdae80a7a61eb5bbf0793d6a86c9078526ad88fa
+  penpot-valkey:
+    image: valkey/valkey:8.1.3@sha256:facc1d2c3462975c34e10fccb167bfa92b0e0dbd992fc282c29a61c3243afb11
     user: "1000:1000"
     restart: on-failure
+    healthcheck:
+      test: ["CMD-SHELL", "valkey-cli ping | grep PONG"]
+      interval: 1s
+      timeout: 3s
+      retries: 5
+      start_period: 3s

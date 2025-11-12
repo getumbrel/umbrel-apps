@@ -7,14 +7,28 @@ services:
       APP_PORT: 3000
 
   web:
-    image: ceramicwhite/invidious:build-23ff613@sha256:cc751a8ba6e7c0fe075548bb790f4490594a49185f5ef929421efce83f215bae
+    image: ceramicwhite/invidious:build-325e013@sha256:a70ba2ead81d41e197693b8002486e93b7af9174916e0661d30b94e3d7f4b7e1
     restart: on-failure
     stop_grace_period: 1m
     user: "1000:1000"
     # Using official images that include tini
     #init: true
-    env_file:
-      - ${APP_DATA_DIR}/inv.env
+    environment:
+      INVIDIOUS_CONFIG: |
+        db:
+          dbname: invidious
+          user: umbrel
+          password: moneyprintergobrrr
+          host: invidious_postgres_1
+          port: 5432
+        check_tables: true
+        invidious_companion:
+        - private_url: "http://invidious_companion_1:8282/companion"
+        invidious_companion_key: ${APP_INV_SECRET_KEY}
+        hmac_key: ${APP_SEED}
+        default_user_preferences:
+          feed_menu: ["Trending", "Subscriptions", "Playlists"]
+          default_home: Trending
     healthcheck:
       disable: true
     depends_on:
@@ -33,15 +47,16 @@ services:
       POSTGRES_USER: umbrel
       POSTGRES_PASSWORD: moneyprintergobrrr
 
-  sig_helper:
-    image: quay.io/invidious/inv-sig-helper:master-1c70bf6@sha256:1cfd80c42482f6524a3f7a11fdc0f623b761f8cd6686a4c027aaff05fb853fe5
+  companion:
+    image: quay.io/invidious/invidious-companion:master-a866b71@sha256:18610b3a76ab009a271f85be01df5a19a5916409ba0f43998bb731b650f03ac3
     restart: on-failure
-    init: true
-    command: ["--tcp", "0.0.0.0:12999"]
-    environment:
-      - RUST_LOG=info
+    user: "1000:1000"
     cap_drop:
       - ALL
     read_only: true
+    volumes:
+      - ${APP_DATA_DIR}/data/companioncache:/var/tmp/youtubei.js:rw
     security_opt:
       - no-new-privileges:true
+    environment:
+       - SERVER_SECRET_KEY=${APP_INV_SECRET_KEY}

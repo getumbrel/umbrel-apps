@@ -3,7 +3,7 @@ id: audiobookshelf
 name: Audiobookshelf
 tagline: Audiobook and podcast server
 category: media
-version: "2.21.0"
+version: "2.30.0"
 port: 13378
 description: >-
   Features:
@@ -26,7 +26,7 @@ description: >-
   - Backup your metadata + automated daily backups
 
   - Progressive Web App (PWA)
-  
+
   - Chromecast support on the web app and android app
 
   - Fetch metadata and cover art from several sources
@@ -43,8 +43,8 @@ description: >-
   Android App (beta)
 
   - Try it out on the Google Play Store
-  
-  
+
+
   iOS App (early beta)
 
   - Available using Test Flight: https://testflight.apple.com/join/wiic7QIW
@@ -62,26 +62,21 @@ defaultUsername: ""
 defaultPassword: ""
 releaseNotes: >-
   New features and improvements:
-    - Added bulk download option for multiple library items
-    - Improved filename sanitization and normalization
-    - Added support for multiple series in series & series-part meta tags
-    - Increased latest episodes page to show 50 latest (was 25)
-    - Added support for .aif audio files
+    - Added "Best" option for book cover search (searches audible, google & fantlab)
+    - Book cover search is now async and streams results using websockets
+    - Decreased timeout to 10s on all metadata providers
 
 
-  Fixed issues:
-    - Resolved incorrect items count on library page for users with item restricting permissions
-    - Fixed book tools page, chapter edit page, and library stats page not setting the current library properly on refresh
-    - Corrected podcast library item size not updating when downloading episodes
-    - Fixed inconsistent order of multiple authors on a book
+  Bug fixes:
+    - Fixed OIDC invalid callback URL issue
+    - Fixed MultiSelect causing web client to become unresponsive
+    - Fixed podcast episodes being downloaded without an audio stream
+    - Fixed chapter editor overflowing on smaller screen sizes
 
 
-  UI/UX enhancements:
-    - Improved error messaging for chapter lookup errors
-    - Added option to toggle episode pub date sort in podcast episode download modal
-    - Enhanced keyboard navigation for checkboxes and button focus
-    - Updated stats page "items finished" icon
-    - Improved cover image handling in item edit modal and player
+  UI/UX improvements:
+    - Chapter editor no longer redirects back after saving changes or deleting all chapters
+    - Various translation updates for multiple languages
 
 
   Full release notes can be found at https://github.com/advplyr/audiobookshelf/releases

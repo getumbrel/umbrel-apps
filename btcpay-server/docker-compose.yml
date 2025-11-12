@@ -8,7 +8,7 @@ services:
       PROXY_AUTH_ADD: "false"
 
   nbxplorer:
-    image: nicolasdorier/nbxplorer:2.5.25@sha256:7f730fac6a968823aa10f039597ae8f729487f225e81bd9b99f65eba12db8c95
+    image: nicolasdorier/nbxplorer:2.5.28@sha256:480dbf66c30ce0ab211b9275696647c9756f2f81750fd02162c0d3768ee73ffb
     user: "1000:1000"
     restart: on-failure
     stop_grace_period: 1m
@@ -22,14 +22,14 @@ services:
       NBXPLORER_CHAINS: "btc"
       NBXPLORER_SIGNALFILEDIR: "/data"
       NBXPLORER_BTCRPCURL: "http://$APP_BITCOIN_NODE_IP:$APP_BITCOIN_RPC_PORT"
-      NBXPLORER_BTCNODEENDPOINT: $APP_BITCOIN_NODE_IP:$APP_BITCOIN_P2P_PORT
+      NBXPLORER_BTCNODEENDPOINT: $APP_BITCOIN_NODE_IP:${APP_BITCOIN_P2P_WHITEBIND_PORT-${APP_BITCOIN_P2P_PORT}}
       NBXPLORER_BTCRPCUSER: $APP_BITCOIN_RPC_USER
       NBXPLORER_BTCRPCPASSWORD: $APP_BITCOIN_RPC_PASS
       NBXPLORER_POSTGRES: User ID=postgres;Host=btcpay-server_postgres_1;Port=5432;Application Name=nbxplorer;MaxPoolSize=20;Database=nbxplorer$APP_BITCOIN_NETWORK
       NBXPLORER_BTCHASTXINDEX: 1
 
   web:
-    image: btcpayserver/btcpayserver:2.1.0@sha256:c58ffe3af49d3b02007d4c83540e8f0ef138c5902d368b3e1ee1253388102ffa
+    image: btcpayserver/btcpayserver:2.2.1@sha256:21543641994293c253526a9947d741434c3fb4f1fcc847f1b253750b6c56ee23
     user: "1000:1000"
     restart: on-failure
     stop_grace_period: 1m

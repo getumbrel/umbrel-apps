@@ -2,25 +2,19 @@ manifestVersion: 1.1
 id: bitcoin
 category: bitcoin
 name: Bitcoin Node
-version: "28.1"
+version: "1.1"
 tagline: Run your personal node powered by Bitcoin Core
 description: >-
-  Run your Bitcoin node and independently store and validate
-  every single Bitcoin transaction with it. Achieve unparalleled
-  privacy by connecting your wallet directly to your node to
-  ensure that your wallet company can’t spy on your transactions,
-  or worse — lie to you.
+  Run your Bitcoin node, powered by Bitcoin Core. Independently store and validate every Bitcoin transaction.
+  Connect your wallet directly to your node for unmatched privacy so your wallet provider can't track your activity - or worse, mislead you.
 
 
-  Plus, transacting with your own node also helps keep the entire
-  Bitcoin network decentralized; win-win!
+  Transacting through your own node also helps keep the Bitcoin network decentralized — win-win.
 
 
-  With over 20 advanced settings, you can take control of your node
-  and customize it to your needs. Control how your node connects to
-  other nodes over Tor, clearnet, and I2P, adjust your daily upload
-  limit, set the maximum mempool size, fine-tune its performance,
-  and much more.
+  With over 20 advanced settings, you're in full control. Choose which version of Bitcoin Core your node runs, 
+  how your node connects to other nodes over Tor, clearnet, and I2P, adjust daily upload limits, set the maximum mempool size, 
+  fine-tune performance, and much more.
 
 
   Don't trust. Verify. On steroids.
@@ -42,15 +36,18 @@ gallery:
 path: ""
 defaultPassword: ""
 releaseNotes: >-
-  ⚠️ If you are running the Lightning Node app (LND) connected to your Bitcoin Node app, please update Lightning Node to the latest version available in the app store to ensure compatibility.
+  This update brings Bitcoin Core v30.0 and gives you simple, powerful control over which Bitcoin Core version you run.
+    - Switch between the latest or a specific version (v30.0 or v29.2) with confidence.
+    - Smart checks and clear guidance help prevent incompatible settings when changing versions.
+    - UI refinements, bug fixes, and reliability improvements.
 
 
-  Bitcoin Core has been updated to v28.1. See the full Bitcoin Core release notes at https://github.com/bitcoin/bitcoin/blob/master/doc/release-notes/release-notes-28.1.md
+  Note: Version selection affects only the Bitcoin Core version. Your Bitcoin Node app will continue to receive regular updates from the Umbrel App Store.
 widgets:
   - id: "stats"
     type: "four-stats"
     refresh: "5s"
-    endpoint: "server:3005/v1/bitcoind/widgets/stats"
+    endpoint: "app:3000/api/widget/stats"
     link: ""
     example:
       type: "four-stats"
@@ -71,7 +68,7 @@ widgets:
   - id: "sync"
     type: "text-with-progress"
     refresh: "2s"
-    endpoint: "server:3005/v1/bitcoind/widgets/sync"
+    endpoint: "app:3000/api/widget/sync"
     link: ""
     example:
       type: "text-with-progress"
@@ -80,5 +77,21 @@ widgets:
       text: "83%"
       progressLabel: "In progress"
       progress: 0.83
+backupIgnore:
+  - data/bitcoin/blocks
+  - data/bitcoin/chainstate
+  - data/bitcoin/indexes
+  - data/bitcoin/testnet3/blocks
+  - data/bitcoin/testnet3/chainstate
+  - data/bitcoin/testnet3/indexes
+  - data/bitcoin/testnet4/blocks
+  - data/bitcoin/testnet4/chainstate
+  - data/bitcoin/testnet4/indexes
+  - data/bitcoin/signet/blocks
+  - data/bitcoin/signet/chainstate
+  - data/bitcoin/signet/indexes
+  - data/bitcoin/regtest/blocks
+  - data/bitcoin/regtest/chainstate
+  - data/bitcoin/regtest/indexes
 submitter: Umbrel
 submission: https://github.com/getumbrel/umbrel-apps/commit/576ecd2bef8d625abceed0f67ec9c487da9b2b1b

@@ -1,6 +1,41 @@
 #!/usr/bin/env bash
 
-# Delay booting Bitcoin until the RPC and P2P Tor Hidden Services are ready
+APP_DATA_DIR="$(readlink -f $(dirname "${BASH_SOURCE[0]}")/../data)"
+DESIRED_OWNER="1000:1000"
+
+set_correct_permissions() {
+	local -r path="${1}"
+
+	# Check if the file exists
+	if [[ -f "${path}" ]]; then
+		owner=$(stat -c "%u:%g" "${path}")
+
+		if [[ "${owner}" != "${DESIRED_OWNER}" ]]; then
+			chown "${DESIRED_OWNER}" "${path}"
+			echo "Changed ownership of ${path} to ${DESIRED_OWNER}"
+		fi
+	else
+		echo "Skipping ${path} - file does not exist"
+	fi
+}
+
+# We set the correct permissions for any files that may have been created by a previous app running as root:
+set_correct_permissions "${APP_DATA_DIR}/bitcoin/umbrel-bitcoin.conf"
+set_correct_permissions "${APP_DATA_DIR}/bitcoin/bitcoin.conf"
+set_correct_permissions "${APP_DATA_DIR}/bitcoin/bitcoin.conf.save"
+# settings.json for any network could have been self-corrected by the old app running under root.
+set_correct_permissions "${APP_DATA_DIR}/bitcoin/settings.json"
+set_correct_permissions "${APP_DATA_DIR}/bitcoin/regtest/settings.json"
+set_correct_permissions "${APP_DATA_DIR}/bitcoin/signet/settings.json"
+set_correct_permissions "${APP_DATA_DIR}/bitcoin/testnet3/settings.json"
+set_correct_permissions "${APP_DATA_DIR}/bitcoin/testnet4/settings.json"
+
+# Set permissions recursively on the entire /app bind directory
+if [[ -d "${APP_DATA_DIR}/app" ]]; then
+	chown -R "${DESIRED_OWNER}" "${APP_DATA_DIR}/app"
+fi
+
+# Delay booting the full app until the RPC and P2P Tor Hidden Services are ready
 
 HIDDEN_SERVICE_FILE="${TOR_DATA_DIR}/app-${APP_ID}-rpc/hostname"
 
@@ -8,7 +43,7 @@ if [[ -f "${HIDDEN_SERVICE_FILE}" ]]; then
 	exit
 fi
 
-"${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" up --detach bitcoind
+"${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" up --detach app
 "${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" up --detach tor
 
 echo "App: ${APP_ID} - Generating Tor Hidden Service..."

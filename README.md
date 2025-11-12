@@ -1,14 +1,12 @@
 # Umbrel App Framework
 
-🚨 This is the current workflow for developing and testing an app on umbrelOS 1.x. The app framework is under active development and this workflow will change in the future. For testing on umbrelOS 0.5.4, please refer to the [previous version of this document](https://github.com/getumbrel/umbrel-apps/blob/9eae789b8512ef2a213805524e17f33d2128e33e/README.md).
-
-If you can code in any language, you already know how to develop an app for Umbrel. There is no restriction on the kinds of programming languages, frameworks, or databases that you can use. Apps run inside isolated [Docker](https://docs.docker.com/) containers, and the only requirement (for now) is that they should have a web-based UI.
+If you can code in any language, you already know how to develop an app for Umbrel. There is no restriction on the kinds of programming languages, frameworks, or databases that you can use. Apps run inside isolated [Docker](https://docs.docker.com/) containers, and the only requirement is that they should serve a web-based UI.
 
 > Some server apps might not have a UI at all. In that case, the app should serve a simple web page listing the connection details, QR codes, setup instructions, and anything else needed for the user to connect. The user is never expected to have CLI access on Umbrel.
 
 To keep this document short and easy, we won't go into the app development itself, and will instead focus on packaging and testing an existing app.
 
-Let's jump into action by packaging [BTC RPC Explorer](https://github.com/janoside/btc-rpc-explorer), a Node.js based blockchain explorer, for Umbrel.
+Let's jump into action by packaging [BTC RPC Explorer](https://github.com/janoside/btc-rpc-explorer), a Node.js based app, for Umbrel.
 
 There are 4 steps:
 
@@ -205,6 +203,13 @@ submitter: Umbrel
 submission: https://github.com/getumbrel/umbrel/pull/334
 ```
 
+When submitting a new app, leave the `gallery` and `releaseNotes` fields empty. Use the following values:
+
+```yml
+gallery: []
+releaseNotes: ""
+```
+
 The `dependencies` section within the app manifest gives Umbrel a list of app IDs that must be already installed in order for the user to install BTC RPC Explorer and also function.
 
 The `exports.sh` shell script is a simple script to export environmental variables that your `docker-compose.yml` can read. These environment variables are also accessible when other apps start through their `docker-compose.yml` files. Most applications will not require this feature.
@@ -365,7 +370,7 @@ You can get up and running with umbrelOS in a few different ways:
 1. [Install umbrelOS on a Raspberry Pi 5](https://github.com/getumbrel/umbrel/wiki/Install-umbrelOS-on-a-Raspberry-Pi-5)
 2. [Install umbrelOS on any x86 system](https://github.com/getumbrel/umbrel/wiki/Install-umbrelOS-on-x86-Systems)
 3. [Install umbrelOS in a VM](https://github.com/getumbrel/umbrel/wiki/Install-umbrelOS-on-a-Linux-VM)
-4. [Purchase an Umbrel Home device](https://umbrel.com/umbrel-home)
+4. [Purchase an Umbrel Home](https://umbrel.com/umbrel-home)
 
 Regardless of the method you choose, once you have umbrelOS up and running and have visited http://umbrel.local and created an account, you can follow the steps below to test your app.
 
@@ -417,7 +422,7 @@ We're now ready to open a pull request on the main [getumbrel/umbrel-apps](https
 ...
 
 ### 256x256 SVG icon
-_(Submit an icon with no rounded corners as it will be dynamically rounded with CSS. GitHub doesn't allow uploading SVGs directly, so please upload your icon to an alternate service, like https://svgur.com, and paste the link below.)_
+_(Upload an icon with no rounded corners as it will be dynamically rounded with CSS.)_
 _We will help finalize this icon before the app goes live in the Umbrel App Store._
 
 ...
@@ -477,4 +482,4 @@ PROXY_AUTH_BLACKLIST: "/admin/*"
 
 1. **I need help with something else**
 
-    You can open an [issue](https://github.com/getumbrel/umbrel-apps/issues) on GitHub or get in touch with [@mayankchhabra](https://t.me/mayankchhabra), [@lukechilds](https://t.me/lukechilds), or [@nmfretz](https://t.me/nmfretz) on Telegram.
+    Feel free to open an [issue](https://github.com/getumbrel/umbrel-apps/issues) on this GitHub repository.
