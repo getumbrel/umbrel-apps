@@ -43,7 +43,7 @@ services:
     image: getumbrel/bitcoind:v28.1@sha256:c565266ea302c9ab2fc490f04ff14e584210cde3d0d991b8309157e5dfae9e8d
     user: "1000:1000"
     command: "${APP_BITCOIN_28_COMMAND}"
-    restart: unless-stopped
+    restart: on-failure
     stop_grace_period: 15m30s
     volumes:
       - "${APP_BITCOIN_28_DATA_DIR}:/data/.bitcoin"
