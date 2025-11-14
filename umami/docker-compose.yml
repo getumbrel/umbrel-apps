@@ -2,14 +2,14 @@ version: "3.7"
 
 services:
   app:
-    image: ghcr.io/umami-software/umami:postgresql-v2.19.0@sha256:77264ce6951c6b131a91d99f1cfd720d9efac1eaaa12e104f21cf49408dd77e0
+    image: ghcr.io/umami-software/umami:3.0.0@sha256:e1d4f4d4d7a92d7aa459ec24b0139ab27b3a0da9d994ce20ab1f541481a33240
     user: "1001:1001"
     restart: on-failure
     stop_grace_period: 1m
     ports:
       - 25727:3000
     environment:
-      DATABASE_URL: postgresql://umami:umami@db:5432/umami
+      DATABASE_URL: postgresql://umami:umami@umami_db_1:5432/umami
       DATABASE_TYPE: postgresql
       APP_SECRET: ${APP_SEED}
     depends_on:
