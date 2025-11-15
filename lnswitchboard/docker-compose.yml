@@ -1,0 +1,17 @@
+version: "3.9"
+
+services:
+  lnswitchboard:
+    image: ghcr.io/ryleastark/lnswitchboard:0.0.95@sha256:2c8fccc6ebe76783d097ebfdda669c0ff4037d82ae71a9a66c922110d6904a51
+    restart: unless-stopped
+    environment:
+      SERVICE_PORT: 22121
+      LND_HOST: "$APP_LIGHTNING_NODE_IP"
+      LND_GRPC_PORT: "$APP_LIGHTNING_NODE_GRPC_PORT"
+      LND_TLS_PATH: "/lnd/tls.cert"
+    volumes:
+      - ${APP_DATA_DIR}/data/secrets:/app/secrets:rw
+      - ${APP_DATA_DIR}/data/logs:/app/logs:rw
+      - ${UMBREL_ROOT}/app-data/lightning/data/lnd:/lnd:ro
+    ports:
+      - "22121:22121"
