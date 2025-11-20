@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: firefly-iii
 category: finance
 name: Firefly III
-version: "6.2.21"
+version: "6.4.8"
 tagline: Your personal finance manager
 description: >-
   Firefly III is a manager for your personal finances. It is self-hosted and open source. This means that it's free, it has no ads and no tracking.
@@ -31,6 +31,8 @@ description: >-
   JSON rest API
 
   For the advanced and mobile users out there, Firefly III features an expansive JSON REST API that allows you to tap into Firefly III's most important features. Create transactions, manage categories and get chart data from any app or system.
+backupIgnore:
+  - data/logs/*
 developer: Firefly III
 website: https://www.firefly-iii.org/
 dependencies: []
@@ -46,10 +48,18 @@ deterministicPassword: false
 torOnly: false
 releaseNotes: >-
   Key improvements in this release:
-    - Added debug information to search engine
-    - Renamed table field for postgres databases
-    - Fixed issue with incorrect dates when editing transactions
-    - Resolved error on 32-bit systems due to strict date validation
+    - Fixed autocomplete failing when requested account type list includes hidden account types
+
+
+  Previous release highlights:
+    - Fixed redacted amounts misbehaving with reports
+    - Fixed optional transaction information field not being saved when updating recurring transactions
+    - Fixed internal server errors when applying rules
+    - Fixed exceptions when editing recurring transactions
+    - Fixed new transaction showing additional option in input
+    - Added support for Saudi Riyal currency
+    - Fixed initial balance being auto-suggested as an account
+    - Fixed start and end balance getting blanked out during reconciliation
 
 
   Full release notes are found at https://github.com/firefly-iii/firefly-iii/releases

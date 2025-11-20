@@ -7,7 +7,7 @@ services:
       APP_PORT: 3000
 
   server:
-    image: awinterstein/habitica-server:5.38.1@sha256:9e4dbba2252443da1425e0fe397af790dc33679f955c23e721d89ce3dbd66815
+    image: awinterstein/habitica-server:5.41.6@sha256:98d806fe51ee409f50c1944e1e1af4aa124ae3cd2d686349df83b3f0dc0c0bc1
     restart: on-failure
     depends_on:
       - mongo
@@ -24,9 +24,11 @@ services:
   mongo:
     image: mongo:8.0.11@sha256:5941949d3887e40be5175787aade07dc052f2cddb8ce21b740c3948eba6a3ed0
     restart: on-failure
-    command: ["--bind_ip_all", "--port", "27017"]
+    command: ["--replSet", "rs", "--bind_ip_all", "--port", "27017"]
     healthcheck:
-      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      test: >
+        echo "try { rs.status() } catch (err) { rs.initiate({ _id: 'rs', members: [{ _id: 0, host: 'habitica_mongo_1:27017' }] }) }"
+        | mongosh --port 27017 --quiet
       interval: 10s
       timeout: 30s
       start_period: 0s

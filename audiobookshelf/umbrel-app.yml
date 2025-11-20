@@ -3,7 +3,7 @@ id: audiobookshelf
 name: Audiobookshelf
 tagline: Audiobook and podcast server
 category: media
-version: "2.27.0"
+version: "2.30.0"
 port: 13378
 description: >-
   Features:
@@ -61,20 +61,22 @@ path: ""
 defaultUsername: ""
 defaultPassword: ""
 releaseNotes: >-
-  ⚠️ Important: New authentication system was added in v2.26.0. All users are required to re-login to the web client to start using the new authentication system. The old authentication system will continue to function until September 30, 2025.
-
-
   New features and improvements:
-    - Added book library sort option for progress last updated
-    - Added sepia theme in epub e-reader
-    - Improved podcast episode matching
-    - Enhanced M4B encoder with better backup file handling
+    - Added "Best" option for book cover search (searches audible, google & fantlab)
+    - Book cover search is now async and streams results using websockets
+    - Decreased timeout to 10s on all metadata providers
 
 
   Bug fixes:
-    - Fixed some podcast episodes always transcoding
-    - Fixed unable to change root user password when not set
-    - Fixed issues with e-reader devices visibility and chapter editing
+    - Fixed OIDC invalid callback URL issue
+    - Fixed MultiSelect causing web client to become unresponsive
+    - Fixed podcast episodes being downloaded without an audio stream
+    - Fixed chapter editor overflowing on smaller screen sizes
+
+
+  UI/UX improvements:
+    - Chapter editor no longer redirects back after saving changes or deleting all chapters
+    - Various translation updates for multiple languages
 
 
   Full release notes can be found at https://github.com/advplyr/audiobookshelf/releases

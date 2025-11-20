@@ -2,7 +2,7 @@ manifestVersion: 1
 id: frigate
 category: automation
 name: Frigate
-version: "0.15.2"
+version: "0.16.2"
 tagline: A complete and local NVR
 description: >-
   A complete and local NVR designed for Home Assistant with AI object detection. 
@@ -20,12 +20,15 @@ releaseNotes: >-
   ⚠️ As usual, Frigate will attempt to update its configuration automatically. It is still recommended to back up your current config and database before upgrading.
 
 
-  This is a maintenance release for Frigate 0.15 that includes fixes for HAOS 16 "too many open files" errors.
+  This release includes a security fix for authenticated users:
+    - Fixed a vulnerability that could allow arbitrary file read via the Export Thumbnail feature
 
 
-  Key changes include:
-    - Set ulimit to address "too many open files" errors
-    - Fix ulimit setting and script
+  Other improvements in this update include:
+    - Fixed issues with the best thumbnail endpoint and model selection
+    - Improved live video loading performance
+    - Enhanced RF-DETR model export functionality
+    - Added a robots.txt file
 
 
   Full release notes are available at https://github.com/blakeblackshear/frigate/releases
@@ -42,5 +45,7 @@ path: ""
 defaultUsername: ""
 deterministicPassword: true
 dependencies: []
+permissions:
+  - GPU
 submitter: ~dibref-labter
 submission: https://github.com/getumbrel/umbrel-apps/pull/843

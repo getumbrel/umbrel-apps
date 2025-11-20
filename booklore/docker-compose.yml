@@ -1,0 +1,35 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: booklore_web_1
+      APP_PORT: 6060
+      
+  web:
+    image: booklore/booklore:v1.10.0@sha256:fcd3241103794e3c7e26d0d85b3de292af95b253aa177025c6eaaaa5a5c5f842
+    # does not work rootless
+    #user: "1000:1000"
+    restart: on-failure
+    environment:
+      DATABASE_URL: jdbc:mariadb://booklore_db_1:3306/booklore
+      DATABASE_USERNAME: bookloreuser
+      DATABASE_PASSWORD: booklorepass
+    depends_on:
+      db:
+        condition: service_started
+    volumes:
+      - ${APP_DATA_DIR}/data/app:/app/data
+      - ${APP_DATA_DIR}/data/books:/books
+
+  db:
+    image: mariadb:12.0.2@sha256:b30cc65b57a11a2e791ad5c06284e599fe9f1bf3fe9081a88d85bcf36389be4a
+    user: "1000:1000"
+    restart: on-failure
+    environment:
+      MARIADB_DATABASE: booklore
+      MARIADB_USER: bookloreuser
+      MARIADB_PASSWORD: booklorepass
+      MARIADB_ROOT_PASSWORD: rootpass
+    volumes:
+      - ${APP_DATA_DIR}/data/db:/var/lib/mysql

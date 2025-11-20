@@ -8,8 +8,11 @@ services:
       PROXY_AUTH_WHITELIST: "/api/*"
 
   main:
-    image: neosmemo/memos:0.25.0@sha256:da55e8198bcc94906b0d078134e55fbab652d2be4f82c188c98c9b5aa449225d
+    image: neosmemo/memos:0.25.2@sha256:f8876c330a1a07ce0303e9ca6ffd3e1da6ed6421c6d24c7944ab76c7445fd66a
     user: "1000:1000"
+    environment:
+      - MEMOS_MODE=prod
+      - MEMOS_PORT=5230
     restart: on-failure
     stop_grace_period: 1m
     volumes:

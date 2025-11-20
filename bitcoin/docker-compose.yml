@@ -7,7 +7,7 @@ services:
       APP_PORT: 3000
 
   app:
-    image: ghcr.io/getumbrel/umbrel-bitcoin:v1.0.3-core.v29.0@sha256:311d14cf3cb0a49fad7779310521f1abd9242dfcc2f08eb8e3cbff97ca67d6ea
+    image: ghcr.io/getumbrel/umbrel-bitcoin:v1.1.0@sha256:be68b700d56e9454a9b92902a3fcd25adebfef93e3cd24179374303fc2e9f14c
     user: "1000:1000"
     restart: on-failure
     stop_grace_period: 15m30s
@@ -24,12 +24,15 @@ services:
 
       # BITCOIND BINARY SETTINGS
       # BITCOIND_BIN: bitcoind-binary-path-override
-      # comma-delimited list of extra startup flags to pass to bitcoind
-      BITCOIND_EXTRA_ARGS: '-deprecatedrpc=create_bdb' # We can remove depratedrpc=create_bdb in a future update once Jam (JoinMarket) implements descriptor wallet support
+      # BITCOIND_EXTRA_ARGS is a comma-delimited list of extra startup flags to pass to bitcoind
+      # We can remove depratedrpc=create_bdb in a future update once Jam (JoinMarket) implements descriptor wallet support
+      # Bitcoin Core v30 no longer supports legacy bdb wallets, so Jam users will need to run v29.2 for compatibility
+      BITCOIND_EXTRA_ARGS: '-deprecatedrpc=create_bdb'
 
       # BITCOIND CONF FILE SETTINGS
-      APPS_SUBNET: "${NETWORK_IP}/16" # used to whitelist local apps as both peers (whitelist) and rpc connections (rpcallowip)
+      APPS_SUBNET: "${NETWORK_IP}/16" # used for rpcallowip
       P2P_PORT: "${APP_BITCOIN_P2P_PORT}" # port, bind (also used for connect details)
+      P2P_WHITEBIND_PORT: "${APP_BITCOIN_P2P_WHITEBIND_PORT}" # Additional inbound P2P listener granting whitelisted permissions (whitebind) to this port; for trusted internal apps only; do not publish externally
       RPC_PORT: "${APP_BITCOIN_RPC_PORT}" # rpcport (also used for rpc client and connect details)
       TOR_PORT: "${APP_BITCOIN_TOR_PORT}" # bind=onion
       ZMQ_RAWBLOCK_PORT: "${APP_BITCOIN_ZMQ_RAWBLOCK_PORT}" # zmqpubrawblock

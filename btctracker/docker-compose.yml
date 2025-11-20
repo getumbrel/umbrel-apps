@@ -7,11 +7,18 @@ services:
       APP_PORT: 3000
 
   web:
-    image: dennysubke/btc-tracker:v0.5.3@sha256:d9964edbf4259129949c73fbb374b8075de19c16f20d162e39a084d141a50614
+    image: thewilqq/btc-tracker:v0.6.2-fix@sha256:af86150076d00f6d12d6dc3adc5a1786c423691ee05659983c1482ed4e1af547
+    restart: on-failure
     user: 1000:1000
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=production
       - PORT=3000
-    restart: on-failure
+      - DATABASE_URL=file:/app/data/bitcoin-tracker.db
+      - NEXTAUTH_SECRET=${APP_SEED}
+      - NEXTAUTH_URL=http://${DEVICE_DOMAIN_NAME}:3947
     volumes:
-      - ${APP_DATA_DIR}/data:/app/src/data
+      - ${APP_DATA_DIR}/data:/app/data
+
+
+
+

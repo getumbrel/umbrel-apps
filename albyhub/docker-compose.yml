@@ -4,18 +4,17 @@ services:
     environment:
       APP_HOST: albyhub_server_1
       APP_PORT: 8080
-      PROXY_AUTH_ADD: "false"
   server:
-    image: ghcr.io/getalby/hub:v1.18.5@sha256:2fdeba8991028939ee3b98dca83b7bfaa1dbb6b27dc9182b5552d65395213f96
+    image: ghcr.io/getalby/hub:v1.20.0@sha256:323383cbc66ccf0527ec84ad67504ac88556e8c4171f6689e7a150d5c4245038
     user: 1000:1000
     volumes:
       - ${APP_DATA_DIR}/data:/data
-      - ${APP_LIGHTNING_NODE_DATA_DIR}:/lnd:ro
+      - ${UMBREL_ROOT}/app-data/lightning/data/lnd:/lnd:ro
     environment:
-      LN_BACKEND_TYPE: "LND"
-      LND_ADDRESS: $APP_LIGHTNING_NODE_IP:$APP_LIGHTNING_NODE_GRPC_PORT
-      LND_CERT_FILE: "/lnd/tls.cert"
-      LND_MACAROON_FILE: "/lnd/data/chain/bitcoin/$APP_BITCOIN_NETWORK/admin.macaroon"
+      LN_BACKEND_TYPE: ${APP_ALBYHUB_LN_BACKEND:-LDK}
+      LND_ADDRESS: ${APP_ALBYHUB_LND_ADDRESS}
+      LND_CERT_FILE: ${APP_ALBYHUB_LND_CERT_FILE}
+      LND_MACAROON_FILE: ${APP_ALBYHUB_LND_MACAROON_FILE}
       WORK_DIR: "/data/albyhub"
       COOKIE_SECRET: ${APP_SEED}
       LOG_EVENTS: "true"

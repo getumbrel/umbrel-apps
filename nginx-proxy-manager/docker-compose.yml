@@ -7,7 +7,7 @@ services:
       APP_PORT: 81
       
   web:
-    image: jc21/nginx-proxy-manager:2.12.6@sha256:6ab097814f54b1362d5fd3c5884a01ddd5878aaae9992ffd218439180f0f92f3
+    image: jc21/nginx-proxy-manager:2.13.5@sha256:cd9eba29ca132cb006729f2cb2660126453f84818c2f7d75963ad7b61ef696bd
     hostname: nginx-proxy-manager_web_1
     restart: on-failure
     ports:
@@ -16,9 +16,6 @@ services:
     volumes:
       - ${APP_DATA_DIR}/data/npm-data:/data
       - ${APP_DATA_DIR}/data/letsencrypt:/etc/letsencrypt
-    environment:
-      PUID: 1000
-      PGID: 1000
   
   docker-host:
     image: qoomon/docker-host:3.3.1@sha256:ec9d214d7fa88932e9186ca2f4419d44661376929931248525b08e7fa9e270f7

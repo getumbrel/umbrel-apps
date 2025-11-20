@@ -8,13 +8,15 @@ services:
       PROXY_AUTH_WHITELIST: "/api*"
 
   web:
-    image: linuxserver/sabnzbd:4.5.2@sha256:88d9dcb1eb1615b3980d37824b5e40a7df60af49a268d97aeccbe5f7107edf92
+    image: linuxserver/sabnzbd:4.5.5@sha256:37fc318dc632106eac00f096661f43ca513793bf51913bcbd989ba921b3409c8
     restart: on-failure
     stop_grace_period: 1m
     volumes:
       - ${APP_DATA_DIR}/data/config:/config
       - ${UMBREL_ROOT}/data/storage/downloads:/downloads
     environment:
+      - DOCKER_MODS=linuxserver/mods:universal-package-install
+      - INSTALL_PACKAGES=ffmpeg
       - PUID=1000
       - PGID=1000
       - TZ=Etc/UTC

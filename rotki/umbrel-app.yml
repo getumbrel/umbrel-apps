@@ -2,7 +2,7 @@ manifestVersion: 1
 id: rotki
 category: finance
 name: rotki
-version: "1.39.1"
+version: "1.41.1"
 tagline: Portfolio tracking, analytics, accounting and tax reporting
 description: >-
   rotki is an open source portfolio tracking, analytics, accounting and tax reporting tool that protects your privacy. 
@@ -18,6 +18,8 @@ description: >-
   
   
   ⚠️ IMPORTANT ⚠️ Rotki is meant to be accessed locally. Hosting it on a publicly accessible machine should be avoided at all cost, unless you know what you're doing!
+backupIgnore:
+  - data/logs/*
 developer: Rotki
 website: https://rotki.com
 dependencies: []
@@ -25,17 +27,19 @@ repo: https://github.com/rotki/rotki
 support: https://github.com/rotki/rotki/issues
 port: 8084
 releaseNotes: >-
-  This release includes a lot of improvements and bug fixes to enhance your rotki experience.
+  This is a patch release fixing issues reported over the past two weeks.
 
 
-  Key highlights include:
-    - Onchain transactions
-    - Pectra staking
-    - Pendle support
-    - Swap events compact view
-    - Hyperliquid is now supported
-    - Pectra EIP 7702 delegations
-    - Dark mode
+  Key improvements include:
+    - Restored Polkadot and Kusama balance queries after their migration to asset hub
+    - ERC20 transfers will no longer be missed when transaction querying fails due to network problems
+    - Proper decoding of Monerium bridge transactions involving Arbitrum or Scroll
+    - Compound V3 native token deposits/withdrawals will be properly decoded
+    - 1inch limit order swaps will now be decoded correctly
+    - Uniswap V4 swaps with ETH fees paid through internal transactions will now be properly decoded
+
+
+  ⚠️ As always when upgrading, all your EVM history events will need to be redecoded. This takes time depending on the amount of events but is required to apply all changes.
 
 
   Full release notes are found at https://github.com/rotki/rotki/releases
