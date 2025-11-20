@@ -1,7 +1,13 @@
 version: "3.9"
 
 services:
-  lnswitchboard:
+  app_proxy:
+    environment:
+      APP_HOST: lnswitchboard_app_1
+      APP_PORT: 22121
+      PROXY_AUTH_WHITELIST: "/.well-known/*"
+      PROXY_AUTH_ADD: "true"
+  app:
     image: ghcr.io/ryleastark/lnswitchboard:0.0.96@sha256:6e378fd4e2ca0fa59cb15997151d02fe8274316f6140f05b507d184a46f5655b
     restart: on-failure
     environment:
@@ -13,5 +19,3 @@ services:
       - ${APP_DATA_DIR}/data/secrets:/app/secrets:rw
       - ${APP_DATA_DIR}/data/logs:/app/logs:rw
       - ${UMBREL_ROOT}/app-data/lightning/data/lnd:/lnd:ro
-    ports:
-      - "22121:22121"
