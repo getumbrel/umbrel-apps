@@ -1,0 +1,51 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: reitti_app_1
+      APP_PORT: 8080
+      
+  app:
+    image: dedicatedcode/reitti:2.4.2@sha256:dd0663751444a2bec6d2cac7056e56fa3d2caff492919b857d4aed14d31b74df
+    restart: on-failure
+    depends_on:
+      - rabbitmq
+      - postgis
+      - redis
+    environment:
+      PHOTON_BASE_URL: http://photon:2322
+    volumes:
+      - ${APP_DATA_DIR}/data/app_data:/app/data
+
+  postgis:
+    image: imresamu/postgis:17-3.5-alpine@sha256:f5049274448270889bde6b3e18beeb38e88e9ca09e7a34fc1bf71774aa4557e4
+    restart: on-failure
+    environment:
+      POSTGRES_USER: reitti
+      POSTGRES_PASSWORD: reitti
+      POSTGRES_DB: reittidb
+    volumes:
+      - ${APP_DATA_DIR}/data/postgis:/var/lib/postgresql/data
+
+  rabbitmq:
+    image: rabbitmq:4.1.3-management-alpine@sha256:7be3e8a1cf96af968cda654d7a80fd6e9faf036da6acb3927b784944c6502f58
+    restart: on-failure
+    environment:
+      RABBITMQ_DEFAULT_USER: reitti
+      RABBITMQ_DEFAULT_PASS: reitti
+    volumes:
+      - ${APP_DATA_DIR}/data/rabbitmq:/var/lib/rabbitmq
+
+  redis:
+    image: redis:8.2.1-alpine@sha256:987c376c727652f99625c7d205a1cba3cb2c53b92b0b62aade2bd48ee1593232
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data/redis:/data
+
+  photon:
+    image: rtuszik/photon-docker:1.3.0@sha256:4b7afa61a0c7516bc0efc8a3c50f6ddc2c6df7bca258ce84cfb7942dd28692e8
+    restart: on-failure
+    environment:
+      UPDATE_STRATEGY: PARALLEL
+      COUNTRY_CODE: de
+    volumes:
+      - ${APP_DATA_DIR}/data/photon:/photon/photon_data
