@@ -2,7 +2,7 @@ manifestVersion: 1
 id: file-browser
 category: files
 name: File Browser
-version: "2.45.1"
+version: "2.48.2"
 tagline: Browse and manage the files you download on your Umbrel
 description: >-
   File Browser lets you upload, delete, preview, rename and edit your folders and files.
@@ -10,8 +10,13 @@ description: >-
 
   Easily manage files in the Umbrel's storage folder where your downloads from apps like Transmission, Sonarr, Radarr, and Lidarr are currently held.
 releaseNotes: >-
-  This release includes a bug fix:
-    - Fixed share page preview items to properly include the base URL
+  This release includes important improvements to flags and environment variables:
+    - All flags are now correctly available as environmental variables
+    - Flag names are now consistently in lowerCamelCase format (old formats still work for backwards compatibility)
+    - All configuration options available as flags now properly update when using config commands
+
+
+  ⚠️ A bug has been fixed where flag values were always being used at runtime for enabling and disabling certain features. This meant that enabling and disabling these settings via config commands had no effect. As a consequence, some users may notice that some features they previously had enabled are now disabled, and vice-versa. This bug affected thumbnails, resize of image previews, type detection by header sniffing, and command execution.
 
 
   Full release notes are available at https://github.com/filebrowser/filebrowser/releases

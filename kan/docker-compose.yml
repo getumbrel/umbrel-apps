@@ -1,0 +1,28 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: kan_server_1
+      APP_PORT: 3000
+      PROXY_AUTH_ADD: "false"
+
+  server:
+    image: ghcr.io/kanbn/kan:0.5.0@sha256:d691bcc8e517ec9bc131b1e7e589bd296d902a044e21c8251e3f5622dacf2239
+    environment:
+      NEXT_PUBLIC_BASE_URL: http://${DEVICE_DOMAIN_NAME}:8373
+      BETTER_AUTH_SECRET: ${APP_SEED}
+      POSTGRES_URL: 'postgresql://kanuser:kanpassword@kan_db_1:5432/kan?sslmode=disable'
+      NEXT_PUBLIC_ALLOW_CREDENTIALS: "true"
+    depends_on:
+      - db
+    restart: on-failure
+
+  db:
+    image: postgres:17.3@sha256:0321e2252ebfeecb8bc1a899755084d29bce872953e1a5a3e25ec0860b739098
+    user: "1000:1000"
+    environment:
+      POSTGRES_DB: kan
+      POSTGRES_USER: kanuser
+      POSTGRES_PASSWORD: kanpassword
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data/db:/var/lib/postgresql/data
