@@ -57,7 +57,7 @@ update_secret() {
     fi
     
     # Replace the secret value
-    sed -i.bak "/^\[authentication\.fallback-admin\]/,/^\[/s/^secret = .*/secret = \"$NEW_SECRET\"/" "$CONFIG_FILE"
+    sed -i.bak "/^\[authentication\.fallback-admin\]/,/^\[/s|^secret = .*|secret = \"$NEW_SECRET\"|" "$CONFIG_FILE"
     
     # Remove backup file
     rm -f "$CONFIG_FILE.bak"

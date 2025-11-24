@@ -3,19 +3,19 @@ version: "3.9"
 services:
   app_proxy:
     environment:
-      APP_HOST: stalwart_mail-server_1
+      APP_HOST: stalwart_server_1
       APP_PORT: 8080
       PROXY_AUTH_ADD: "false"
 
-  mail-server:
-    image: stalwartlabs/stalwart:v0.13.2@sha256:e682677f83ebb44632e41684db293fd46db8ff94487cef3b894b5c668b448716
+  server:
+    image: stalwartlabs/stalwart:v0.14.1@sha256:54e381c1f6a637fd7b00a8b5778103bcc9763c7073fa72e45795fce275bff610
     ports:
-      - 25:25
-      - 143:143
-      - 465:465
-      - 587:587
-      - 993:993
-      - 4190:4190
+      - 10025:25
+      - 10143:143
+      - 10465:465
+      - 10587:587
+      - 10993:993
+      - 14190:4190
     volumes:
       - ${APP_DATA_DIR}/data:/opt/stalwart
     restart: on-failure
