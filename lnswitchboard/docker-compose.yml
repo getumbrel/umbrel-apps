@@ -6,9 +6,10 @@ services:
       APP_HOST: lnswitchboard_app_1
       APP_PORT: 22121
       PROXY_AUTH_WHITELIST: "/.well-known/*"
-      PROXY_AUTH_ADD: "true"
+
   app:
     image: ghcr.io/ryleastark/lnswitchboard:0.1.0@sha256:672f4ae5e348f963848b5e2cde7518a10e16ff0d43c7bf94f0ba58a068475377
+    user: "1000:1000"
     restart: on-failure
     environment:
       SERVICE_PORT: 22121
