@@ -104,21 +104,33 @@
         
         <h2 style="font-weight: 650;">⚙️ Get your Umbrel connected with NetBird</h2>
         <p>To set up NetBird, a setup key is required, as it registers new devices within the network and links them to the appropriate account during the initial activation.</p>
-<p>Your container logs already show the login link, for example:</p>
-        <p><code class="block">https://login.netbird.io/activate?user_code=[YOUR-CODE]</code></p>
 
-        <h3>Step by step</h3>
-        <ol>
-            <li>Right click on the app and select <strong>Troubleshoot</strong> to open the console where the login information is displayed.</li>
-            <li>In the console, you will find the full activation address together with your login code.</li>
-            <li>Open this address in your browser, either on your PC or on your phone.</li>
-            <li>Sign in using the same NetBird account that you use for the dashboard.</li>
-            <li>Approve the device when prompted and your Umbrel client will be registered automatically.</li>
-            <li>After this initial sign in, the container will stay connected across restarts.</li>
-        </ol>
+        <div id="status-container">
+            <p>Loading status...</p>
+        </div>
 
-        <div class="note">
-            <p><span class="kbd">💡 Tip:</span> You can always generate a fresh code in the logs, for example <code>[YOUR-CODE]</code>, by restarting the container.</p>
+        <div id="setup-instructions" style="display: none;">
+            <h3>Step by step</h3>
+            <ol>
+                <li>Click on the activation link above or copy it to your browser.</li>
+                <li>Sign in using your NetBird account.</li>
+                <li>Approve the device when prompted and your Umbrel client will be registered automatically.</li>
+                <li>After this initial sign in, the container will stay connected across restarts.</li>
+            </ol>
+
+            <div class="note">
+                <p><span class="kbd">💡 Tip:</span> You can always generate a fresh code by restarting the container.</p>
+            </div>
+        </div>
+
+        <div id="connected-message" style="display: none;">
+            <p class="success" style="font-size: 24px;">✓ Your Umbrel is already connected to NetBird!</p>
+            <p>The device is registered and ready to use. No further action needed.</p>
+        </div>
+
+        <div id="waiting-message" style="display: none;">
+            <p>Waiting for NetBird to initialize...</p>
+            <p class="text-small">If the activation link doesn't appear, right-click on the app and select <strong>Troubleshoot</strong> to view the logs.</p>
         </div>
 
         <hr />
@@ -128,5 +140,41 @@
         </p>
 
     </section>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            fetch('status.json')
+                .then(response => response.json())
+                .then(data => {
+                    const statusContainer = document.getElementById('status-container');
+                    const setupInstructions = document.getElementById('setup-instructions');
+                    const connectedMessage = document.getElementById('connected-message');
+                    const waitingMessage = document.getElementById('waiting-message');
+
+                    if (data.status === 'connected') {
+                        // Show connected message
+                        statusContainer.style.display = 'none';
+                        connectedMessage.style.display = 'block';
+                    } else if (data.status === 'pending' && data.activationUrl) {
+                        // Show activation URL and instructions
+                        statusContainer.innerHTML = '<p>Your NetBird activation link:</p>' +
+                            '<p><a href="' + data.activationUrl + '" target="_blank" style="color: #f68330; font-weight: bold; font-size: 22px;">' + 
+                            data.activationUrl + '</a></p>' +
+                            '<p class="text-small text-muted">User Code: <strong style="color: #fff;">' + data.userCode + '</strong></p>';
+                        setupInstructions.style.display = 'block';
+                    } else {
+                        // Show waiting message
+                        statusContainer.style.display = 'none';
+                        waitingMessage.style.display = 'block';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading status:', error);
+                    document.getElementById('status-container').innerHTML = 
+                        '<p class="text-muted">Unable to load status. Please check the app logs for the activation URL.</p>';
+                });
+        });
+    </script>
+
 </body>
 </html>
