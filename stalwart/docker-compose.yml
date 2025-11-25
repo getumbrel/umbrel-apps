@@ -11,12 +11,15 @@ services:
     image: stalwartlabs/stalwart:v0.14.1@sha256:54e381c1f6a637fd7b00a8b5778103bcc9763c7073fa72e45795fce275bff610
     user: "1000:1000"
     ports:
-      - 10025:25
-      - 10143:143
-      - 10465:465
-      - 10587:587
-      - 10993:993
-      - 14190:4190
+      - 10443:443  # HTTPS
+      - 10025:25   # SMTP
+      - 10465:465  # SMTPS
+      - 10587:587  # SMTP Submission
+      - 10143:143  # IMAP
+      - 10993:993  # IMAPS
+      - 14190:4190 # Sieve
+      - 10110:110  # POP3
+      - 10995:995  # POP3S
     volumes:
       - ${APP_DATA_DIR}/data:/opt/stalwart
     restart: on-failure
