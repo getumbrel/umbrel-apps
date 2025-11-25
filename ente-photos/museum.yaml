@@ -1,0 +1,49 @@
+# Configuring museum
+# See All Configs here: https://github.com/ente-io/ente/blob/main/server/configurations/local.yaml
+
+# Key used for encrypting customer emails before storing them in DB
+key:
+    encryption: 873rJBK7oBtVBG3Ec7A+l0UXVmfz8sWO13cw5Upm8rs=
+    hash: MBUSdSYVG6WWliBQy+pbiVQSxnuCRazQVE86mB/V66vf4VMr5+2eCjhquiBd634aFMLLxjRM+hQxP/EpIk/8aQ==
+# JWT secrets
+jwt:
+    secret: 4v6Sp4i23HQwmwmw18_sPfW9lskVw3IhE96eOJTeTyM=
+
+# SMTP configuration (optional)
+# Configure credentials for sending emails from museum (e.g., OTP emails).
+# Notes:
+# - Ensure the settings below are correct; otherwise, the sign-up process may get stuck.
+# - Gmail SMTP host might encounter timeout errors; check your network latency with ping.
+# smtp:
+#     host: smtp.gmail.com
+#     port: 465
+#     username: example@gmail.com     # TODO: Change me
+#     password: changeme              # TODO: Change me
+#     email: example@gmail.com        # TODO: Change me
+#     sender-name: Ente               # TODO: Change me
+
+
+# Various low-level configuration options
+internal:
+    # Hardcoded verification codes.
+    # Uncomment this and set these to your email ID or domain so that you don't need to peek into the server logs for obtaining the OTP when trying to log into an instance you're developing on.
+    hardcoded-ott:
+        emails:
+            - "example@example.org,123456"
+        # When running in a local environment, hardcode the verification code to
+        # 123456 for email addresses ending with @example.org
+        local-domain-suffix: "@example.org"
+        local-domain-value: 123456
+    
+    # List of user IDs that can use the admin API endpoints.
+    # If this is not set, as a fallback, the first user is considered an admin.
+    # admins: []
+    # In case there is a single admin, it can be alternatively specified by as
+    # the "admin" instead of "admins". This can be useful e.g. when wishing to
+    # pass the admin as an environment variable.
+    # admin:
+    # If set to true, users will not be able to register a new account.
+    #
+    # During sign up, the client will get an unauthorized error and
+    # thus cannot create new accounts.
+    disable-registration: false
