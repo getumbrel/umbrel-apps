@@ -4,11 +4,12 @@ services:
   app_proxy:
     environment:
       APP_HOST: canary_web_1
-      APP_PORT: 3000
+      APP_PORT: 3005
       PROXY_AUTH_WHITELIST: "/api/*"
 
   backend:
     image: schjonhaug/canary-backend:v1.0.0@sha256:69be76f68aa542aabb1473a1400f6037ca4888e44cf055b89ae748047fa6fb95
+    user: "1000:1000"
     restart: on-failure
     stop_grace_period: 1m
     environment:
@@ -25,6 +26,7 @@ services:
 
   web:
     image: schjonhaug/canary-frontend:v1.0.0@sha256:bc6b915f823e98669ad622d340c0371f0b01aded864a921555e42ec3dd0b289c
+    user: "1000:1000"
     restart: on-failure
     stop_grace_period: 1m
     environment:
