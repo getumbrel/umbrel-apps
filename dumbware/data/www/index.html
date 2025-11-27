@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>DumbWare Suite</title>
+
+    <style>
+        html {
+            line-height: 1.15;
+            -webkit-text-size-adjust: 100%
+        }
+
+        body {
+            margin: 0
+        }
+
+        main {
+            display: block
+        }
+
+        h1 {
+            font-size: 2em;
+            margin: .67em 0
+        }
+
+        hr {
+            box-sizing: content-box;
+            height: 0;
+            overflow: visible
+        }
+
+        pre {
+            font-family: monospace, monospace;
+            font-size: 1em
+        }
+
+        a {
+            background-color: transparent
+        }
+
+        b,
+        strong {
+            font-weight: bolder
+        }
+
+        code,
+        kbd,
+        samp {
+            font-family: monospace, monospace;
+            font-size: 1em
+        }
+
+        small {
+            font-size: 80%
+        }
+
+        sub,
+        sup {
+            font-size: 75%;
+            line-height: 0;
+            position: relative;
+            vertical-align: baseline
+        }
+
+        sub {
+            bottom: -.25em
+        }
+
+        sup {
+            top: -.5em
+        }
+
+        img {
+            border-style: none
+        }
+
+        button,
+        input,
+        optgroup,
+        select,
+        textarea {
+            font-family: inherit;
+            font-size: 100%;
+            line-height: 1.15;
+            margin: 0
+        }
+
+        button,
+        input {
+            overflow: visible
+        }
+
+        button,
+        select {
+            text-transform: none
+        }
+
+        [type=button],
+        [type=reset],
+        [type=submit],
+        button {
+            -webkit-appearance: button
+        }
+
+        [type=button]::-moz-focus-inner,
+        [type=reset]::-moz-focus-inner,
+        [type=submit]::-moz-focus-inner,
+        button::-moz-focus-inner {
+            border-style: none;
+            padding: 0
+        }
+
+        [type=button]:-moz-focusring,
+        [type=reset]:-moz-focusring,
+        [type=submit]:-moz-focusring,
+        button:-moz-focusring {
+            outline: 1px dotted ButtonText
+        }
+
+        fieldset {
+            padding: .35em .75em .625em
+        }
+
+        legend {
+            box-sizing: border-box;
+            color: inherit;
+            display: table;
+            max-width: 100%;
+            padding: 0;
+            white-space: normal
+        }
+
+        progress {
+            vertical-align: baseline
+        }
+
+        textarea {
+            overflow: auto
+        }
+
+        [type=checkbox],
+        [type=radio] {
+            box-sizing: border-box;
+            padding: 0
+        }
+
+        [type=number]::-webkit-inner-spin-button,
+        [type=number]::-webkit-outer-spin-button {
+            height: auto
+        }
+
+        [type=search] {
+            -webkit-appearance: textfield;
+            outline-offset: -2px
+        }
+
+        [type=search]::-webkit-search-decoration {
+            -webkit-appearance: none
+        }
+
+        ::-webkit-file-upload-button {
+            -webkit-appearance: button;
+            font: inherit
+        }
+
+        details {
+            display: block
+        }
+
+        summary {
+            display: list-item
+        }
+
+        template {
+            display: none
+        }
+
+        [hidden] {
+            display: none
+        }
+    </style>
+
+    <style>
+        body {
+            background-color: #191d20;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, Roboto, Helvetica Neue, Segoe UI, Arial, Noto Sans, sans-serif;
+            color: #fff;
+        }
+
+        *,
+        h1,
+        h2,
+        h3,
+        p,
+        span {
+            color: #fff;
+            font-size: 20px;
+            font-weight: normal;
+        }
+
+        .text-muted {
+            opacity: 0.8;
+        }
+
+        .text-small {
+            font-size: 14px;
+        }
+
+        hr {
+            width: 100%;
+            height: 2px;
+            background: #191d20;
+            border: none;
+            margin: 40px 0;
+        }
+
+        .container {
+            padding: 40px;
+            max-width: 1440px;
+            margin: auto;
+        }
+
+        .app-icon {
+            border-radius: 20px;
+        }
+
+        .app {
+            display: flex;
+            margin: 20px 0 40px 0;
+        }
+
+        .app > .app-icon {
+            flex-shrink: 0;
+            height: 140px;
+            width: 140px;
+            margin-right: 24px;
+        }
+
+        .app > .app-details > .app-name {
+            font-size: 52px;
+            line-height: 52px;
+            font-weight: bold;
+            margin: 10px 0 0 0;
+        }
+
+        .apps-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 28px;
+            margin-top: 24px;
+        }
+
+        .app-card {
+            background: #191d20;
+            border-radius: 20px;
+            padding: 22px;
+            display: flex;
+            gap: 18px;
+            flex-direction: column;
+            cursor: pointer;
+            transition: all 0.15s ease-in-out;
+            border: 1px solid rgba(255,255,255,0.07);
+        }
+
+        .app-card:hover {
+            background: #22272b;
+            transform: translateY(-3px);
+            box-shadow: 0 14px 30px rgba(0,0,0,0.55);
+        }
+
+        .app-card-header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .app-card-logo {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            object-fit: cover;
+            background: #191d20;
+        }
+
+        .app-card-title {
+            font-size: 22px;
+            font-weight: 600;
+        }
+
+        .app-card-desc {
+            font-size: 16px;
+            opacity: 0.9;
+            margin-top: 4px;
+        }
+
+        @media (max-width: 900px) {
+            .apps-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 500px) {
+            .apps-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+
+    <link rel="shortcut icon" type="image/png" href="favicon.png">
+</head>
+
+<body>
+    <section class="container app-container">
+        <div class="app">
+            <img class="app-icon" src="logo.png" width="256" height="256" alt="Dumbware Logo">
+            <div class="app-details">
+                <h1 class="app-name">DumbWare Suite</h1>
+                <p class="text-muted">
+                    DumbWare is a collection of lightweight self hosted tools for everyday life and organization:
+                    simple budgeting, task tracking, file drops, notes, kanban boards, domain lookups and a browser based terminal,
+                    all running on Umbrel.
+                </p>
+            </div>
+        </div>
+
+        <hr />
+
+        <div class="apps-grid">
+            <div class="app-card" onclick="openApp(13331);">
+                <div class="app-card-header">
+                    <img src="dumbbudget.png" class="app-card-logo">
+                    <div>
+                        <div class="app-card-title">DumbBudget</div>
+                        <div class="app-card-desc">Simple budgeting and expense tracking.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="app-card" onclick="openApp(13332);">
+                <div class="app-card-header">
+                    <img src="dumbdo.png" class="app-card-logo">
+                    <div>
+                        <div class="app-card-title">DumbDo</div>
+                        <div class="app-card-desc">Minimalistic todo lists for everyday tasks.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="app-card" onclick="openApp(13333);">
+                <div class="app-card-header">
+                    <img src="dumbdrop.png" class="app-card-logo">
+                    <div>
+                        <div class="app-card-title">DumbDrop</div>
+                        <div class="app-card-desc">Fast file drop inside your network.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="app-card" onclick="openApp(13334);">
+                <div class="app-card-header">
+                    <img src="dumbpad.png" class="app-card-logo">
+                    <div>
+                        <div class="app-card-title">DumbPad</div>
+                        <div class="app-card-desc">Browser based notepad for quick notes.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="app-card" onclick="openApp(13335);">
+                <div class="app-card-header">
+                    <img src="dumbkan.png" class="app-card-logo">
+                    <div>
+                        <div class="app-card-title">DumbKan</div>
+                        <div class="app-card-desc">Simple kanban boards for projects.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="app-card" onclick="openApp(13336);">
+                <div class="app-card-header">
+                    <img src="dumbwhois.png" class="app-card-logo">
+                    <div>
+                        <div class="app-card-title">DumbWhois</div>
+                        <div class="app-card-desc">Quick WHOIS lookups.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="app-card" onclick="openApp(13337);">
+                <div class="app-card-header">
+                    <img src="dumbterm.png" class="app-card-logo">
+                    <div>
+                        <div class="app-card-title">DumbTerm</div>
+                        <div class="app-card-desc">Terminal in your browser.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="app-card" onclick="openApp(13338);">
+                <div class="app-card-header">
+                    <img src="dumbassets.png" class="app-card-logo">
+                    <div>
+                        <div class="app-card-title">DumbAssets</div>
+                        <div class="app-card-desc">Manage images and files locally.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </section>
+
+    <script>
+        function openApp(port) {
+            const host = window.location.hostname;
+            const url = "http://" + host + ":" + port;
+            window.open(url, "_blank");
+        }
+    </script>
+</body>
+</html>
