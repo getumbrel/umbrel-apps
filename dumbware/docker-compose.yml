@@ -1,0 +1,130 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: dumbware_nginx_1
+      APP_PORT: 80
+
+  nginx:
+    image: nginx:alpine@sha256:b3c656d55d7ad751196f21b7fd2e8d4da9cb430e32f646adcf92441b72f82b14
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data/www:/usr/share/nginx/html:ro
+
+  dumbbudget:
+    image: dumbwareio/dumbbudget:latest@sha256:e845d989765caceb07b48986764e6b06871d6788a749e7857bfbbea0ae4db5fc
+    restart: on-failure
+    ports:
+      - 13331:3000
+    volumes:
+      - ${APP_DATA_DIR}/data/dumbsuite/dumbbudget:/app/data
+    environment:
+      DUMBBUDGET_PIN: ""
+      BASE_URL: "http://${DEVICE_DOMAIN_NAME}:13331"
+      CURRENCY: "USD"
+      SITE_TITLE: "DumbBudget"
+      INSTANCE_NAME: ""
+
+  dumbdo:
+    image: dumbwareio/dumbdo:latest@sha256:4a00e5632e77e90c7493fdcd3aed50f3347d666721e516627b7fd4d54ceb4aa4
+    restart: on-failure
+    ports:
+      - 13332:3000
+    volumes:
+      - ${APP_DATA_DIR}/data/dumbsuite/dumbdo:/app/data
+    environment:
+      DUMBDO_PIN: ""
+      DUMBDO_SITE_TITLE: "DumbDo"
+      ALLOWED_ORIGINS: "*"
+      BASE_URL: "http://${DEVICE_DOMAIN_NAME}:13332"
+
+  dumbdrop:
+    image: dumbwareio/dumbdrop:latest@sha256:8a377413d4e041410ec734deb1ad085caa3adfeebeab0f6f342272d234b86e52
+    restart: on-failure
+    ports:
+      - 13333:3000
+    volumes:
+      - ${APP_DATA_DIR}/data/dumbsuite/dumbdrop:/app/uploads
+    environment:
+      DUMBDROP_PIN: ""
+      DUMBDROP_TITLE: "DumbDrop"
+      MAX_FILE_SIZE: "1024"
+      BASE_URL: "http://${DEVICE_DOMAIN_NAME}:13333"
+      AUTO_UPLOAD: "false"
+      LOCAL_UPLOAD_DIR: "/app/uploads"
+
+  dumbpad:
+    image: dumbwareio/dumbpad:latest@sha256:0f752f3a8ef1c184fe3ae3d1b3c1964d354637b35ac04cbe3954686dbd87c5e7
+    user: "0:0"
+    restart: on-failure
+    ports:
+      - 13334:3000
+    volumes:
+      - ${APP_DATA_DIR}/data/dumbsuite/dumbpad:/app/data
+    environment:
+      SITE_TITLE: "DumbPad"
+      DUMBPAD_PIN: ""
+      BASE_URL: "http://${DEVICE_DOMAIN_NAME}:13334"
+      ALLOWED_ORIGINS: "*"
+      LOCKOUT_TIME: "15"
+      MAX_ATTEMPTS: "5"
+      COOKIE_MAX_AGE: "24"
+      PAGE_HISTORY_COOKIE_AGE: "365"
+
+  dumbkan:
+    image: dumbwareio/dumbkan:latest@sha256:431e0d744afcc1f4353c3000f2092ed15a3fde80f583372571ed4dce56b77f6b
+    restart: on-failure
+    ports:
+      - 13335:3000
+    volumes:
+      - ${APP_DATA_DIR}/data/dumbsuite/dumbkan:/app/data
+    environment:
+      SITE_TITLE: "DumbKan"
+      DUMBKAN_PIN: ""
+      BASE_URL: "http://${DEVICE_DOMAIN_NAME}:13335"
+
+  dumbwhois:
+    image: dumbwareio/dumbwhois:latest@sha256:608d475911dc7fb4bda90d033b1448b7c6c58fc07ba207188959abfecc49d6dc
+    restart: on-failure
+    ports:
+      - 13336:3000
+    environment:
+      SITE_TITLE: "DumbWhois"
+      ALLOWED_ORIGINS: "*"
+      BASE_URL: "http://${DEVICE_DOMAIN_NAME}:13336"
+
+  dumbterm:
+    image: dumbwareio/dumbterm:latest@sha256:5c501c5425756d21338b30744918fbeb6b7e6299341d717fb76edecc136f4e16
+    restart: on-failure
+    ports:
+      - 13337:3000
+    volumes:
+      - ${APP_DATA_DIR}/data/dumbsuite/dumbterm/config:/root/.config
+      - ${APP_DATA_DIR}/data/dumbsuite/dumbterm/data:/root/data
+    environment:
+      TZ: "America/Los_Angeles"
+      SITE_TITLE: "DumbTerm"
+      DUMBTERM_PIN: ""
+      BASE_URL: "http://${DEVICE_DOMAIN_NAME}:13337"
+      ENABLE_STARSHIP: "true"
+      LOCKOUT_TIME: "15"
+      MAX_SESSION_AGE: "24"
+      ALLOWED_ORIGINS: "*"
+
+  dumbassets:
+    image: dumbwareio/dumbassets:latest@sha256:1bbe3a1c4aa404f3cbd9641cbf7ef24dfd3f4f09a92570eecc88d48de31517ab
+    restart: on-failure
+    ports:
+      - 13338:3000
+    volumes:
+      - ${APP_DATA_DIR}/data/dumbsuite/dumbassets:/app/data
+    environment:
+      PORT: "3000"
+      NODE_ENV: "production"
+      DEBUG: "true"
+      SITE_TITLE: "DumbAssets"
+      BASE_URL: "http://${DEVICE_DOMAIN_NAME}:13338"
+      DUMBASSETS_PIN: ""
+      ALLOWED_ORIGINS: "*"
+      APPRISE_URL: ""
