@@ -1,0 +1,15 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: papra_server_1
+      APP_PORT: 1221
+
+  server:
+    image: ghcr.io/papra-hq/papra:25.10.2-rootless@sha256:18c184620767ba1c240a5c1f3ef106430024dc6306607a6d2ac60b6ded3502e5
+    user: 1000:1000
+    restart: on-failure
+    environment:
+      - AUTH_SECRET=${APP_SEED}
+      - APP_BASE_URL=http://${DEVICE_DOMAIN_NAME}:8112
+    volumes:
+      - ${APP_DATA_DIR}/data:/app/app-data
