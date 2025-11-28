@@ -6,6 +6,7 @@ services:
 
   dcrd:
     image: ghcr.io/karamble/dcrpulse-dcrd:2.1.0@sha256:63dde66bb5c06107192e12bc7431ef7f8f25be49c8be29b070aba92e691d4e24
+    user: "1000:1000"
     restart: on-failure
     stop_grace_period: 5m
     dns:
@@ -37,6 +38,7 @@ services:
 
   dcrwallet:
     image: ghcr.io/karamble/dcrpulse-dcrwallet:2.1.0@sha256:32a2336a07f72627e1ba82177f72cca20671c808606c08325b0cdda5c585a386
+    user: "1000:1000"
     restart: on-failure
     stop_grace_period: 1m
     volumes:
@@ -67,6 +69,7 @@ services:
 
   dashboard:
     image: ghcr.io/karamble/dcrpulse-dashboard:1.0.0@sha256:c7b0bd714e2dac2a3a5ae73cd6c27b2f8c595370e3377672cb6ee802a8fc5981
+    user: "1000:1000"
     restart: on-failure
     volumes:
       - ${APP_DATA_DIR}/data:/app-data:ro
