@@ -4,11 +4,12 @@ services:
     environment:
       APP_HOST: thinkdashboard_server_1
       APP_PORT: "8080"
+
   server:
-    image: ghcr.io/matiasdesuu/thinkdashboard:v0.6.9@sha256:b805dfbce836933a6e5c49b1033ccc6963ffdde430819dbbdd605a0825115f87
+    image: ghcr.io/matiasdesuu/thinkdashboard:v0.7.6@sha256:3bd3ac29fcd0329673a1b4946e4e63ecc55239e6221a00bd4b407a5343c55079
+    user: "1000:1000"
     restart: on-failure
     volumes:
       - ${APP_DATA_DIR}/data:/app/data
     environment:
       - PORT=8080
-
