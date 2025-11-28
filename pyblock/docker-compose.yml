@@ -1,0 +1,23 @@
+version: "4.0"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: pyblock_pyblock_1
+      APP_PORT: 6969
+
+  chantools:
+    image: []
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 1s
+    volumes:
+      - ${APP_DATA_DIR}/data:/pyblock
+    command:
+      - "ttyd"
+      - "-W"
+      - "-p"
+      - "6969"
+      - "bash"
+      - "-c"
+      - "python3 PyBlock.py"
