@@ -1,0 +1,97 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: dashboard
+      APP_PORT: 8080
+
+  dcrd:
+    image: ghcr.io/karamble/dcrpulse-dcrd@sha256:63dde66bb5c06107192e12bc7431ef7f8f25be49c8be29b070aba92e691d4e24
+    restart: on-failure
+    stop_grace_period: 5m
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
+    volumes:
+      - ${APP_DATA_DIR}:/app-data
+    environment:
+      DCRD_RPC_USER: ${APP_SEED}
+      DCRD_RPC_PASS: ${APP_SEED}
+      DCRD_EXTRA_ARGS: --txindex
+      TOR_PROXY_IP: ${TOR_PROXY_IP}
+      TOR_PROXY_PORT: ${TOR_PROXY_PORT}
+    command: >
+      --rpcuser=${APP_SEED}
+      --rpcpass=${APP_SEED}
+      --rpclisten=0.0.0.0:9109
+      --rpccert=/app-data/dcrd/rpc.cert
+      --rpckey=/app-data/dcrd/rpc.key
+    networks:
+      - default
+      - dcrpulse_internal
+    healthcheck:
+      test: ["CMD", "sh", "-c", "curl -k -u ${APP_SEED}:${APP_SEED} -H 'Content-Type: application/json' -d '{\"jsonrpc\":\"1.0\",\"method\":\"getinfo\",\"params\":[],\"id\":1}' https://127.0.0.1:9109 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+
+  dcrwallet:
+    image: ghcr.io/karamble/dcrpulse-dcrwallet@sha256:32a2336a07f72627e1ba82177f72cca20671c808606c08325b0cdda5c585a386
+    restart: on-failure
+    stop_grace_period: 1m
+    volumes:
+      - ${APP_DATA_DIR}:/app-data
+    environment:
+      DCRWALLET_RPC_USER: ${APP_SEED}
+      DCRWALLET_RPC_PASS: ${APP_SEED}
+      DCRD_RPC_USER: ${APP_SEED}
+      DCRD_RPC_PASS: ${APP_SEED}
+      DCRD_RPC_HOST: dcrd
+      DCRWALLET_GAP_LIMIT: 400
+      TOR_PROXY_IP: ${TOR_PROXY_IP}
+      TOR_PROXY_PORT: ${TOR_PROXY_PORT}
+    command: >
+      --gaplimit=400
+    depends_on:
+      dcrd:
+        condition: service_healthy
+    networks:
+      - default
+      - dcrpulse_internal
+    healthcheck:
+      test: ["CMD", "sh", "-c", "nc -z 127.0.0.1 9110 && nc -z 127.0.0.1 9111 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  dashboard:
+    image: ghcr.io/karamble/dcrpulse-dashboard@sha256:c7b0bd714e2dac2a3a5ae73cd6c27b2f8c595370e3377672cb6ee802a8fc5981
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}:/app-data:ro
+    environment:
+      PORT: 8080
+      DCRD_RPC_HOST: dcrd
+      DCRD_RPC_PORT: 9109
+      DCRD_RPC_USER: ${APP_SEED}
+      DCRD_RPC_PASS: ${APP_SEED}
+      DCRD_RPC_CERT: /app-data/dcrd/rpc.cert
+      DCRWALLET_RPC_HOST: dcrwallet
+      DCRWALLET_RPC_PORT: 9110
+      DCRWALLET_GRPC_PORT: 9111
+      DCRWALLET_RPC_USER: ${APP_SEED}
+      DCRWALLET_RPC_PASS: ${APP_SEED}
+      DCRWALLET_RPC_CERT: /app-data/dcrd/rpc.cert
+    depends_on:
+      dcrd:
+        condition: service_healthy
+      dcrwallet:
+        condition: service_healthy
+    networks:
+      - default
+      - dcrpulse_internal
+
+networks:
+  dcrpulse_internal:
+    internal: true
