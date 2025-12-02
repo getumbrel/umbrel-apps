@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: synapse
 category: social
 name: Synapse
-version: "1.142.1"
+version: "1.143.0"
 tagline: Matrix homeserver
 description: >-
   Synapse is an open source Matrix homeserver implementation, written and maintained by Element. Matrix is the open standard for secure and interoperable real time communications.
@@ -42,7 +42,15 @@ torOnly: false
 submitter: Umbrel
 submission: https://github.com/getumbrel/umbrel/commit/c9f0975e766e79d4bd6adf4255cd081f54d654cb
 releaseNotes: >-
-  This release fixes a bug that prevented certain authentication service endpoints from working correctly.
+  🚨 This release drops support for PostgreSQL 13. Synapse now requires PostgreSQL 14 or newer.
+
+
+  Key highlights in this release include:
+    - Support for multiple configuration files when registering new Matrix users
+    - Improved the `delayed_events` endpoint by removing authentication and allowing actions in the path
+    - Fixed a bug where background updates were only run on the main database
+    - Fixed an issue preventing subpaths in MAS endpoints from working
+    - Improved the SQLite-to-PostgreSQL migration script for the `delayed_events` table
 
 
   Full release notes are found at https://github.com/element-hq/synapse/releases
