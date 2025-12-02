@@ -3,7 +3,7 @@ id: open-webui
 name: Open WebUI
 tagline: Chat with Ollama models like DeepSeek-R1 and LLama, or use an OpenAI API key
 category: ai
-version: "0.6.36"
+version: "0.6.40"
 port: 2876
 description: >-
   Open WebUI lets you chat with advanced AI models running locally on your own device or connect to online models using an API key.
@@ -38,22 +38,24 @@ dependencies:
   - ollama
 releaseNotes: >-
   This release includes new features, important bug fixes and improvements:
-    - 🖼️ Major image generation overhaul with full editing, new engines, and improved UI
-    - 🔒 Added CORS validation for WebSocket connections to boost security
-    - 🔄 App now auto-refreshes when a new version is detected
-    - 🐍 Prepared for Python 3.13 with updated dependencies and security fixes
-    - ⚡ Image compression now preserves original formats for faster loading
-    - 🎤 Added Mistral Voxtral text-to-speech model support
-    - 🔊 Improved TTS playback with a global audio queue system
-    - 🔊 Added support for custom ElevenLabs API endpoints
-    - 🔐 Added custom OAuth role separator for better LDAP compatibility
-    - 📄 External document loaders can forward user info for tracking and analytics
-    - ⌨️ Improved keyboard shortcuts and tooltips across the interface
-    - 📝 Simplified note creation directly from the search modal
-    - 🖨️ Code block outputs now preserve formatting for better readability
-    - ✏️ Added quick edit options and collapsible sidebar sections
-    - 🌙 Improved dark mode styling and UI consistency
-    - 🌐 Expanded translations and overall performance, stability, and security improvements
+    - 🔐 Enhanced security and access control with granular sharing permissions, password policy enforcement, and improved API key management
+    - 🖼️ Major improvements to image generation and editing, including better handling of large image streams and new API parameter support
+    - 🚀 Significant performance optimizations across the app, including faster model list loading, chat imports, batch file processing, and socket event broadcasting
+    - 🗄️ Expanded vector database support with Weaviate and improved PostgreSQL pgvector capabilities
+    - 🔍 New web search provider integration with Azure AI Search and enhanced hybrid search functionality
+    - 📂 Knowledge base uploads now support folder drag-and-drop with recursive directory handling
+    - 🤖 Added model cloning in admin settings and configurable default pinned models for new users
+    - 🎙️ Voice mode enhancements, including custom system prompts and forwarding user information to TTS/STT services
+    - 🎨 UI improvements such as scale adjustment, persistent sidebar states, and a copy button for tables in chat messages
+    - 🛠️ Numerous bug fixes addressing model updates, multi-image input, PWA refresh issues, chat search, RAG templates, and various UI elements
+    - 🗄️ Resolved a critical PostgreSQL user listing performance issue
+    - 🔄 General performance, stability, and security improvements
+    - 🌐 Expanded and improved translations
+
+
+  ⚠️ Breaking Changes:
+    - 🔐 API key creation is now controlled by granular user and group permissions. The environment variable "ENABLE_API_KEY" has been renamed to "ENABLE_API_KEYS" and is disabled by default. Related environment variables were also renamed.
+    - 🔧 Docling configuration has been consolidated into a single "DOCLING_PARAMS" JSON configuration and now supports API key authentication via "DOCLING_API_KEY". Users must migrate existing Docling settings to the new format.
 
 
   Full release notes are found at https://github.com/open-webui/open-webui/releases
