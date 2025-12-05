@@ -1,0 +1,14 @@
+version: "3.7"
+services:
+  app_proxy:
+    environment:
+      APP_HOST: zeronote_app_1
+      APP_PORT: 8000
+
+  app:
+    image: ghcr.io/besoeasy/zeronote:1.0.0@sha256:132e4e32dadca8cdf4a966a26728ea420d749419cb93f668d7f952ef86f90498
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 5m
+    environment:
+      - NODE_ENV=production
