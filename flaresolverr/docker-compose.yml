@@ -1,0 +1,23 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: flaresolverr_web_1
+      APP_PORT: 8000
+
+  web:
+    image: mrsunglasses/flaresolverr-status:0.0.2@sha256:5a12b6ee183b64b87546b5f30537abaf333f7b2cd83856e6e2bcca874d165dc9
+    environment:
+      - URL=http://flaresolverr_server_1:8191/v1
+    restart: on-failure
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  server:
+    image: ghcr.io/flaresolverr/flaresolverr:v3.4.2@sha256:42ffb1cc56088899e91a7382bc611b00fa7cbd016accfed12c0695275ca18451
+    environment:
+      LOG_LEVEL: info
+    restart: on-failure
