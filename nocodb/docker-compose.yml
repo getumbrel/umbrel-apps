@@ -1,0 +1,32 @@
+version: "3.7"
+
+services:
+
+  nocodb:
+    image: nocodb/nocodb:0.265.1@sha256:8fd57018accf775fb5390392910e4b0ef6bb154f17c5732b478eb76c40ee8d1e
+    restart: on-failure
+    user: "1000:1000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - 2183:8080
+    environment:
+      NC_DB: "pg://nocodb_postgres_1:5432?u=nocodb&p=itworkslocally&d=nocodb"
+    volumes:
+      - ${APP_DATA_DIR}/data/nc_data:/usr/app/data
+
+  postgres:
+    image: postgres:17-alpine
+    restart: on-failure
+    environment:
+      POSTGRES_DB: nocodb
+      POSTGRES_USER: nocodb
+      POSTGRES_PASSWORD: itworkslocally
+    healthcheck:
+      test: "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""
+      interval: 10s
+      timeout: 2s
+      retries: 10
+    volumes:
+      - ${APP_DATA_DIR}/data/db_data:/var/lib/postgresql/data
