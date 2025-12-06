@@ -1,4 +1,4 @@
-version: '3.7'
+version: "3.7"
 
 services:
   app_proxy:
@@ -12,8 +12,10 @@ services:
     entrypoint: >-
       /bin/sh -c '
         apk add --no-cache envsubst &&
-        envsubst < /config/ckpool.conf.template > /config/ckpool.conf &&
-        chown 1000:1000 /config/ckpool.conf
+        if [ ! -f /config/ckpool.conf ]; then
+          envsubst < /config/ckpool.conf.template > /config/ckpool.conf &&
+          chown 1000:1000 /config/ckpool.conf
+        fi
       '
     volumes:
       - ${APP_DATA_DIR}/data/config:/config
@@ -40,7 +42,7 @@ services:
       - ${APP_DATA_DIR}/data/www:/www
 
   ui:
-    image: ghcr.io/duckaxe/bassin-ui:main@sha256:840db0581bac0cbe743352a0155564df7e95f65064f30c720c9db78f4fbf4f2a
+    image: ghcr.io/duckaxe/bassin-ui:580689d@sha256:ece16d859295c01f3c7bdaf78679f5b3477073af93937c367ae6174191c0de19
     entrypoint: /bin/sh -c "cp -r /ui/* /www/"
     user: "1000:1000"
     volumes:
