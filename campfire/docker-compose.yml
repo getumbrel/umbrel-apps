@@ -8,7 +8,7 @@ services:
       PROXY_AUTH_ADD: 'false'
 
   server:
-    image: mauricewipf/campfire-umbrel:latest
+    image: mauricewipf/campfire-umbrel:0.1.6@sha256:27b325557234522c33f12146b52440e9fcea70ca23647406bf426b1ebba2b6d6
     volumes:
       - ${APP_DATA_DIR}/data/storage:/rails/storage
     environment:
@@ -40,7 +40,7 @@ services:
     restart: on-failure
 
   redis:
-    image: redis:7-alpine
+    image: redis:7-alpine@sha256:ee64a64eaab618d88051c3ade8f6352d11531fcf79d9a4818b9b183d8c1d18ba
     command: redis-server --save 60 1 --save 300 10 --save 900 100 --appendonly yes --loglevel warning
     volumes:
       - ${APP_DATA_DIR}/data/redis:/data
