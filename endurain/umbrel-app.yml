@@ -3,7 +3,7 @@ id: endurain
 name: Endurain
 tagline: Fitness tracking, Open Source, Self-Hosted
 category: social
-version: "0.15.9"
+version: "0.16.0"
 port: 8865
 description: >-
   Endurain is a self-hosted fitness tracking service designed to give users full control over their data and hosting environment. 
@@ -45,19 +45,33 @@ defaultUsername: "admin"
 defaultPassword: "admin"
 dependencies: []
 releaseNotes: >-
-  This release contains various new improvements and bug fixes.
+  ⚠️ Warning:
+    - The database schema has changed. While no impacts are expected, it is recommended to back up your database before updating
+    - MariaDB support has been dropped. Please use PostgreSQL as your database. Refer to the documentation if you need to migrate from MariaDB to PostgreSQL
+    - User sessions will be deleted on upgrade, requiring users to authenticate again
+    - Migration from previous Alpha and Release Candidate versions is not supported
 
 
   New features and improvements:
-    - Added support for kayaking, sailing, snow shoeing and inline skating activities
-    - Windsurf now displays speed instead of pace
-    - Cadence graph now displays SPM in running activities
-    - Support for all Garmin Index S2 stats
+    - Introduces support for external identity providers (Single Sign-On)
+    - Refresh tokens are now hashed before being stored, improving security
+    - Added support for Strava activity retrieval by date range
+    - Added steps, sleep, and resting heart rate (RHR) data to the Health section with charts
+    - Added health targets for sleep, steps, and weight
+    - Added a sleep scoring system for manual sleep entries
+    - Added user max heart rate override for heart rate zone calculations
+    - Activity visibility settings are now in a collapsible section
+    - Support for SMTP_PASSWORD as a Docker secret
 
 
   Bug fixes:
-    - Fixed gear list refresh after changing activity type
+    - Fixed pace calculation for lap swimming activities without splits
+    - Fixed an issue where following back did not show a modal
+    - Fixed an issue where the context menu could not be clicked after login
+    - Fixed an issue where some activities with GPS tracks did not show speed/pace charts
+    - Fixed incorrect units on public links
     - Added missing translations
+    - General bug fixes
 
 
   Full release notes can be found at https://github.com/joaovitoriasilva/endurain/releases
