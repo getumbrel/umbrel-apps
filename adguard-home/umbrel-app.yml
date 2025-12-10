@@ -2,7 +2,7 @@ manifestVersion: 1
 id: adguard-home
 category: networking
 name: AdGuard Home
-version: "0.107.70"
+version: "0.107.71"
 tagline: Network-wide software for blocking ads and tracking
 description: >-
   ⚠️ See below for important set-up instructions.
@@ -27,12 +27,14 @@ releaseNotes: >-
 
 
   Improvements:
-    - Stale records in the optimistic DNS cache now have an upper age limit of 12 hours
+    - Stale records in the optimistic DNS cache now have an upper age limit, configurable via `dns.cache_optimistic_max_age` (default 12 hours)
+    - The TTL for stale answers from optimistic DNS cache is now configurable via `dns.cache_optimistic_answer_ttl` (default 30 seconds)
     - The blocked services user interface has been updated
 
 
   Bug Fixes:
     - Fixed an issue where generated mobile configuration profiles could not be installed on macOS 26.1
+    - Fixed an issue where the optimistic DNS cache was not working
 
 
   Full release notes can be found at https://github.com/AdguardTeam/AdGuardHome/releases
