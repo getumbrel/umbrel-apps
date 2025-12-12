@@ -2,7 +2,7 @@ manifestVersion: 1
 id: ghostfolio
 category: finance
 name: Ghostfolio
-version: "2.212.0"
+version: "2.222.0"
 tagline: Manage your wealth like a boss
 description: >-
   Ghostfolio is a privacy-first, open source dashboard for your personal finances.
@@ -17,6 +17,8 @@ description: >-
   
   Ghostfolio empowers busy people to keep track of stocks, ETFs or cryptocurrencies
   without being tracked.
+backupIgnore:
+  - data/redis/*
 developer: Ghostfolio
 website: https://ghostfol.io/
 dependencies: []
@@ -32,18 +34,26 @@ deterministicPassword: false
 torOnly: false
 releaseNotes: >-
   This release includes several improvements and new features:
-    - Added a close holding button to the holding detail dialog
-    - Added the Sponsors section to the about page
-    - Extended the user detail dialog in the users section of the admin control panel
+    - Introduced data source transformation support in the import functionality for self-hosted environments
+    - Added OpenID Connect (OIDC) as a new login provider for self-hosted environments (experimental)
+    - Extended the accounts table menu with a View Details item
+    - Extended the portfolio summary tab on the home page by percentage values (experimental)
+    - Added an optional 3D hover effect to the membership card component
 
 
   UI and functionality enhancements:
-    - Improved the usability of the user detail dialog in the users section of the admin control panel
-    - Improved the language localization for German
+    - Increased the numerical precision for cryptocurrency quantities in the holding detail dialog
+    - Improved the dynamic numerical precision for various values in the portfolio summary tab
+    - Improved the validation of the currency management in the admin control panel
+    - Improved the search functionality in the Financial Modeling Prep service
+    - Improved the language localization for German and Chinese
 
 
   Bug fixes:
-    - Ensured the locale is available in the settings dialog to customize the rule thresholds
+    - Fixed an issue with the exchange rate calculation when converting between derived currencies and their root currencies
+    - Fixed an issue with the edit of future activities (drafts)
+    - Improved the country weightings in the Financial Modeling Prep service
+    - Resolved an issue where the user list was returning empty in the admin control panel's users section
 
 
   Full release notes are found at https://github.com/ghostfolio/ghostfolio/releases

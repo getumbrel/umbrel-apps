@@ -3,7 +3,7 @@ id: open-webui
 name: Open WebUI
 tagline: Chat with Ollama models like DeepSeek-R1 and LLama, or use an OpenAI API key
 category: ai
-version: "0.6.34"
+version: "0.6.41"
 port: 2876
 description: >-
   Open WebUI lets you chat with advanced AI models running locally on your own device or connect to online models using an API key.
@@ -37,16 +37,37 @@ defaultPassword: ""
 dependencies:
   - ollama
 releaseNotes: >-
-  Key highlights in this release include:
-    - 📄 Support for MinerU as a document parser backend
-    - 🔒 JWT token expiration now defaults to 4 weeks
-    - ⚡ Improved page loading performance
-    - 📁 File hash values included in knowledge endpoint responses
-    - 🎨 Enhanced chat dialog scrollbar visibility
+  This release introduces new features and improvements:
+    - Enhanced communication with new Group and Direct Message channels, including unread counts, message pinning, and user status indicators
+    - Improved security with sign-in rate limiting to protect against brute force attacks
+    - Administrators can now globally disable the folders feature and control user-level folder permissions
+    - Refined model editor interface and rebuilt knowledge base file management for better performance
+    - Added Azure Document Intelligence model selection
+    - General performance, stability, and security improvements
+    - Expanded and improved translations
 
 
-  ⚠️ System prompts are no longer duplicated in chat requests, which may affect some existing workflows.
+  Key bug fixes include:
+    - Resolved issues with tool call responses and web search domain filtering
+    - Corrected how custom models inherit connection types and improved active user count accuracy
+    - Fixed default group assignment for all user registration methods
+    - Addressed model list filtering, user profile image display, and Redis TLS connection failures
+    - Resolved web page attachment issues and ensured model allowlist persistence in multi-worker setups
+    - Prevented chat history infinite loading and improved database migration robustness
+    - Corrected OAuth group assignment and knowledge base file access inconsistencies
+    - Fixed embedding model auto-update functionality and reduced API response payload sizes
+    - Eliminated redundant API calls on admin and workspace pages
+    - Corrected button behavior, Ollama model deletion, and image generation in temporary chats
+    - Fixed audit logging failures and dark mode styling
+    - Resolved Milvus vector database query filtering issues
 
 
-  Full release notes can be found at https://github.com/open-webui/open-webui/releases
+  Notable changes:
+    - Channel creation is now restricted to administrators only
+    - The active user count indicator was removed from the sidebar
+    - The user table was restructured for API keys and OAuth data storage
+    - The knowledge base API was restructured to support the new file relationship model
+
+
+  Full release notes are found at https://github.com/open-webui/open-webui/releases
 path: ""

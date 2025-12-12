@@ -2,7 +2,7 @@ manifestVersion: 1
 id: adguard-home
 category: networking
 name: AdGuard Home
-version: "0.107.68"
+version: "0.107.71"
 tagline: Network-wide software for blocking ads and tracking
 description: >-
   ⚠️ See below for important set-up instructions.
@@ -19,11 +19,16 @@ description: >-
   This ensures that the app will not conflict with other apps from the Umbrel App Store, and that the app will be accessible
   when clicking on the app icon in the umbrelOS homescreen.
 releaseNotes: >-
-  This release includes improvements and new features:
-    - Added new option to enable and disable DNS rewrite rules
-    - Optimized matching of filtering rules
-    - Added support for configuring the default HTTP port in the installation wizard
-    - Enhanced DNS rewrite settings and blocked services API
+  This release includes improvements and bug fixes.
+
+
+  Improvements:
+    - Stale records in the optimistic DNS cache now have an upper age limit, configurable via `dns.cache_optimistic_max_age` (default 12 hours)
+    - The TTL for stale answers from optimistic DNS cache is now configurable via `dns.cache_optimistic_answer_ttl` (default 30 seconds)
+
+
+  Bug Fixes:
+    - Fixed an issue where the optimistic DNS cache was not working
 
 
   Full release notes can be found at https://github.com/AdguardTeam/AdGuardHome/releases

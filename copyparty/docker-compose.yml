@@ -1,0 +1,19 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: copyparty_web_1
+      APP_PORT: 3923
+
+  web:
+    image: ghcr.io/9001/copyparty-ac:1.19.21@sha256:b1f8be53f068ad37f583cfd93b6a3611472ee8c30e98177389629631a4b6b4ca
+    restart: on-failure
+    user: "1000:1000"
+    volumes:
+      - ${APP_DATA_DIR}/data/config/config.conf:/cfg/config.conf:ro
+      - ${APP_DATA_DIR}/data/cp_data:/cfg/hists
+      - ${APP_DATA_DIR}/data/shared:/shr
+      - ${APP_DATA_DIR}/data/media:/media      
+    environment:
+      TZ: UTC

@@ -2,7 +2,7 @@ manifestVersion: 1
 id: whoogle-search
 category: networking
 name: Whoogle Search
-version: "1.1.0"
+version: "1.1.2"
 tagline: A self-hosted, ad-free, privacy-respecting metasearch engine
 description: >-
   Get Google search results, but without any ads, javascript, AMP links, 
@@ -71,18 +71,15 @@ releaseNotes: >-
   ⚠️ Google's recent changes have made it difficult to provide JavaScript-free search results, which may affect Whoogle's functionality.
 
 
-  This release introduces Mullvad Leta as the default search backend:
-    - Privacy-focused search powered by Google results without tracking
-    - Can be disabled in settings to fall back to traditional Google search
-    - Seamless result formatting and optimized layout
-    - Only regular web search is supported (no image, video, news, or map searches)
+  This release reverts the Mullvad Leta implementation and introduces new features to improve search reliability:
+    - Added a feature to randomly generate User Agent (UA) strings based on working patterns
+    - Option to use your own rotating list of UAs or a static UA
+    - A configuration toggle to display the active UA at the bottom of search results for debugging
+    - Introduced two new tools: one to generate offline UA lists and another to automatically test them
+    - Maps, Videos, and News searches are now working again
+    - ⚠️ Known issue: Image Search still displays an "Update your browser" message
 
 
-  Other improvements include:
-    - Updated UI Config to respect User Agent in ENV file if it exists
-    - Added Turkish language translation update
-
-
-  Full release notes are found at https://github.com/benbusby/whoogle-search/compare/v0.9.3...v1.1.0
+  Full release notes are found at https://github.com/benbusby/whoogle-search/compare/v1.1.0...v1.1.2
 submitter: Jasper
 submission: https://github.com/getumbrel/umbrel-apps/pull/117
