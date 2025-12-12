@@ -2,16 +2,8 @@ version: "3.7"
 
 x-environment: &env
   # ---- External URL & ports ----
-  WEB_URL: http://${DEVICE_DOMAIN_NAME}:8762
-  API_BASE_URL: http://${DEVICE_DOMAIN_NAME}:8762
-  LIVE_SERVER_SECRET_KEY: $APP_SEED
-
-  NGINX_HOST: ${DEVICE_DOMAIN_NAME}
   NGINX_PORT: 8762
-
   LISTEN_HTTP_PORT: 8762
-  APP_DOMAIN: ${DEVICE_DOMAIN_NAME}:8762
-  APP_PROTOCOL: http
 
   # ---- Bucket name used by frontend for /uploads paths ----
   BUCKET_NAME: uploads
@@ -45,9 +37,7 @@ x-environment: &env
 
   # ---- Django / app ----
   SECRET_KEY: $APP_SEED
-  ALLOWED_HOSTS: ${DEVICE_DOMAIN_NAME}
-  CORS_ALLOWED_ORIGINS: http://${DEVICE_DOMAIN_NAME}:8762,http://${DEVICE_DOMAIN_NAME}
-  CSRF_TRUSTED_ORIGINS: http://${DEVICE_DOMAIN_NAME}:8762,http://${DEVICE_DOMAIN_NAME}
+  LIVE_SERVER_SECRET_KEY: $APP_SEED
   # optional but often helps behind proxies
   USE_X_FORWARDED_HOST: 1
   SECURE_SSL_REDIRECT: 0
@@ -77,6 +67,8 @@ services:
     restart: on-failure
     environment:
       <<: *env
+    env_file:
+      - ${APP_DATA_DIR}/settings.env
     volumes:
       - ${APP_DATA_DIR}/data/db:/var/lib/postgresql/data
     healthcheck:
@@ -98,6 +90,8 @@ services:
     restart: on-failure
     environment:
       <<: *env
+    env_file:
+      - ${APP_DATA_DIR}/settings.env
     volumes:
       - ${APP_DATA_DIR}/data/rabbitmq:/var/lib/rabbitmq
 
@@ -108,6 +102,8 @@ services:
     command: server /export --console-address ":8763"
     environment:
       <<: *env
+    env_file:
+      - ${APP_DATA_DIR}/settings.env
     volumes:
       - ${APP_DATA_DIR}/data/uploads:/export
     ports:
@@ -116,11 +112,13 @@ services:
     container_name: plane-minio-1
 
   api:
-    image: makeplane/plane-backend:v1.1.0@sha256:5ceabae0ae6434d1d1e60eebe039693e2453c6b559727b577b7f750bbd34c53f
+    image: makeplane/plane-backend:v1.2.1@sha256:b9317c167743c2d56c51a19b3f151d064d4a40cc4d011fee0976f8985881e03d
     user: "1000:1000"
     restart: on-failure
     environment:
       <<: *env
+    env_file:
+      - ${APP_DATA_DIR}/settings.env
     depends_on:
       db:
         condition: service_healthy
@@ -130,11 +128,13 @@ services:
         condition: service_started
 
   worker:
-    image: makeplane/plane-backend:v1.1.0@sha256:5ceabae0ae6434d1d1e60eebe039693e2453c6b559727b577b7f750bbd34c53f
+    image: makeplane/plane-backend:v1.2.1@sha256:b9317c167743c2d56c51a19b3f151d064d4a40cc4d011fee0976f8985881e03d
     user: "1000:1000"
     restart: on-failure
     environment:
       <<: *env
+    env_file:
+      - ${APP_DATA_DIR}/settings.env
     depends_on:
       api:
         condition: service_started
@@ -145,11 +145,13 @@ services:
     command: ["sh","-c","celery -A plane worker --loglevel=info"]
 
   beat-worker:
-    image: makeplane/plane-backend:v1.1.0@sha256:5ceabae0ae6434d1d1e60eebe039693e2453c6b559727b577b7f750bbd34c53f
+    image: makeplane/plane-backend:v1.2.1@sha256:b9317c167743c2d56c51a19b3f151d064d4a40cc4d011fee0976f8985881e03d
     user: "1000:1000"
     restart: on-failure
     environment:
       <<: *env
+    env_file:
+      - ${APP_DATA_DIR}/settings.env
     depends_on:
       api:
         condition: service_started
@@ -162,48 +164,58 @@ services:
     command: ["sh","-c","celery -A plane beat --loglevel=info"]
 
   migrator:
-    image: makeplane/plane-backend:v1.1.0@sha256:5ceabae0ae6434d1d1e60eebe039693e2453c6b559727b577b7f750bbd34c53f
+    image: makeplane/plane-backend:v1.2.1@sha256:b9317c167743c2d56c51a19b3f151d064d4a40cc4d011fee0976f8985881e03d
     user: "1000:1000"
     restart: on-failure
     environment:
       <<: *env
+    env_file:
+      - ${APP_DATA_DIR}/settings.env
     depends_on:
       db:
         condition: service_healthy
     command: ["sh","-c","python manage.py wait_for_db && python manage.py migrate"]
 
   web:
-    image: makeplane/plane-frontend:v1.1.0@sha256:cd66043932d0872527ae186b7ad35d26c5deca67881c4bed3a2f1d5f183b6026
+    image: makeplane/plane-frontend:v1.2.1@sha256:2a3d8dfbb9c0b53697efc65c1944c2d36efdd80189d08f101e116a1f4677ebc0
     user: "1000:1000"
     restart: on-failure
     environment:
       <<: *env
+    env_file:
+      - ${APP_DATA_DIR}/settings.env
     depends_on:
       - api
 
   live:
-    image: makeplane/plane-live:v1.1.0@sha256:fc12847a8feb2de4c7b70459502bb232d81ca4b901284744d738e42363907dcf
+    image: makeplane/plane-live:v1.2.1@sha256:7a145cd50f9b30ed829a5f2a326eee81066623ffa2ba7114b44224dbff5371f3
     user: "1000:1000"
     restart: on-failure
     environment:
       <<: *env
+    env_file:
+      - ${APP_DATA_DIR}/settings.env
     depends_on:
       - api
 
   space:
-    image: makeplane/plane-space:v1.1.0@sha256:b97ff9529fcc742211c73844f574193357a9784137b474b79e0df917e7357539
+    image: makeplane/plane-space:v1.2.1@sha256:94fb3476434d993ba7d268c26bda8239787faa3e6b70516e97ab8a68316240b4
     user: "1000:1000"
     restart: on-failure
     environment:
       <<: *env
+    env_file:
+      - ${APP_DATA_DIR}/settings.env
     depends_on:
       - api
 
   admin:
-    image: makeplane/plane-admin:v1.1.0@sha256:170fdf392c7e9eb6bfc718922f54a81cdb9c97ff94de114b254340b0c404416c
+    image: makeplane/plane-admin:v1.2.1@sha256:962da7f871101282892896ae8625b03413d80aa3d3351e1d68bf355550479b39
     user: "1000:1000"
     restart: on-failure
     environment:
       <<: *env
+    env_file:
+      - ${APP_DATA_DIR}/settings.env
     depends_on:
       - api
