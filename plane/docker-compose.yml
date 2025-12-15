@@ -43,8 +43,6 @@ x-environment: &env
   SECURE_SSL_REDIRECT: 0
   SESSION_COOKIE_SECURE: 0
   CSRF_COOKIE_SECURE: 0
-  ENABLE_SIGNUP: 0
-  DEBUG: 0
 
 services:
   app_proxy:
@@ -178,7 +176,6 @@ services:
 
   web:
     image: makeplane/plane-frontend:v1.2.1@sha256:2a3d8dfbb9c0b53697efc65c1944c2d36efdd80189d08f101e116a1f4677ebc0
-    user: "1000:1000"
     restart: on-failure
     environment:
       <<: *env
@@ -208,10 +205,15 @@ services:
       - ${APP_DATA_DIR}/settings.env
     depends_on:
       - api
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"require('http').get('http://127.0.0.1:3000/', (r) => process.exit(r.statusCode < 500 ? 0 : 1)).on('error', () => process.exit(1))\""]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
 
   admin:
     image: makeplane/plane-admin:v1.2.1@sha256:962da7f871101282892896ae8625b03413d80aa3d3351e1d68bf355550479b39
-    user: "1000:1000"
     restart: on-failure
     environment:
       <<: *env
