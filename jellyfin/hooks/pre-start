@@ -9,12 +9,15 @@ APP_COMPOSE_FILE="${APP_DIR}/docker-compose.yml"
 JELLYFIN_SYSTEM_FILE="${APP_DATA_DIR}/config/system.xml"
 JELLYFIN_UPDATE_FLAG_FILE="${APP_DATA_DIR}/POST_1_10_VERSION"
 MIGRATION_IN_PROGRESS_FILE="${APP_DATA_DIR}/MIGRATION_IN_PROGRESS"
+LIBRARY_DB_OLD="${APP_DATA_DIR}/config/data/data/library.db.old"
+MIGRATION_FIX_FLAG="${APP_DATA_DIR}/MIGRATION_20250618_FIXED"
 
 # If database files do not yet exist
 # Then it's likely a new install
 # Create a flag file to indicate that it is a 1.10+ version
 if [[ ! -f "${JELLYFIN_SYSTEM_FILE}" ]]; then
     touch "${JELLYFIN_UPDATE_FLAG_FILE}"
+    touch "${MIGRATION_FIX_FLAG}"
 fi
 
 # Exit if flag file exists
@@ -69,6 +72,46 @@ sleep 90
 # Stop the app
 echo "Stopping Jellyfin v1.10.7..."
 "${UMBREL_ROOT}/scripts/app" stop jellyfin
+
+# Apply UserDatas table fix to library.db BEFORE 10.11.5 starts
+# 10.11.5's MigrateLibraryDb migration will rename library.db to library.db.old
+# Then MigrateLibraryUserData will try to read UserDatas from library.db.old
+# So we add the table to library.db now, before it gets renamed
+LIBRARY_DB="${APP_DATA_DIR}/config/data/data/library.db"
+if [[ -f "${LIBRARY_DB}" && ! -f "${MIGRATION_FIX_FLAG}" ]]; then
+    echo "Applying UserDatas table fix to library.db (before 10.11.5 renames it)..."
+    
+    python3 -c "
+import sqlite3
+conn = sqlite3.connect('${LIBRARY_DB}')
+cursor = conn.cursor()
+cursor.execute('''
+    CREATE TABLE IF NOT EXISTS UserDatas (
+        key TEXT NOT NULL,
+        userId TEXT NOT NULL,
+        rating REAL,
+        played INTEGER NOT NULL,
+        playCount INTEGER NOT NULL,
+        isFavorite INTEGER NOT NULL,
+        playbackPositionTicks INTEGER NOT NULL,
+        lastPlayedDate TEXT,
+        AudioStreamIndex INTEGER,
+        SubtitleStreamIndex INTEGER,
+        PRIMARY KEY (key, userId)
+    )
+''')
+conn.commit()
+conn.close()
+"
+    
+    if [ $? -eq 0 ]; then
+        echo "UserDatas table fix applied successfully"
+        touch "${MIGRATION_FIX_FLAG}"
+    else
+        echo "Failed to apply UserDatas table fix"
+        exit 1
+    fi
+fi
 
 echo "Step 2: Updating to latest version"
 update_compose_images "${original_server_image}"
