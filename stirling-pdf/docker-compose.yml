@@ -6,9 +6,8 @@ services:
       APP_HOST: stirling-pdf_app_1
       APP_PORT: 8080
       PROXY_AUTH_WHITELIST: "/api/*"
-  
   app:
-    image: stirlingtools/stirling-pdf:1.5.0@sha256:bfe2b8dd378c4f3d5fc1d2fc7649a357d0916b3a713022aa70ac3f08d6302cbc
+    image: stirlingtools/stirling-pdf:2.1.3@sha256:6ec3e0d5d92977c58c40ce5ab78a6237b1e9a86e80b28792b4ff76db1d3fdf90
     # Stirling PDF does not work with a custom user
     #user: "1000:1000"
     restart: on-failure
@@ -18,8 +17,10 @@ services:
       - ${APP_DATA_DIR}/data/tessdata:/usr/share/tessdata
       - ${APP_DATA_DIR}/data/configs:/configs
       - ${APP_DATA_DIR}/data/logs:/logs
+      - ${APP_DATA_DIR}/data/pipeline:/pipeline
     environment:
       # Not needed as Umbrel authenticates the user
       DOCKER_ENABLE_SECURITY: "false"
       INSTALL_BOOK_AND_ADVANCED_HTML_OPS: "true"
       LANGS: ALL
+      SECURITY_ENABLELOGIN: "false"
