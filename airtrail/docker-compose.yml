@@ -1,15 +1,18 @@
 version: "3.7"
 
 services:
+  app_proxy:
+    environment:
+      APP_HOST: airtrail_app_1
+      APP_PORT: 3000
+      PROXY_AUTH_ADD: "false"
 
-  airtrail:
+  app:
     image: johly/airtrail:v3.3.0@sha256:8383ee594ecfc56265bae9bd297167a22015db5f97476537b98eddac1b27ff29
     restart: on-failure
     depends_on:
       postgres:
         condition: service_healthy
-    ports:
-      - 3256:3000
     environment:
       DB_DATABASE_NAME: airtrail
       DB_USERNAME: airtrail
@@ -31,4 +34,4 @@ services:
       retries: 5
       start_period: 30s
     volumes:
-      - ${APP_DATA_DIR}/data/db_data:/data
+      - ${APP_DATA_DIR}/data/db:/data
