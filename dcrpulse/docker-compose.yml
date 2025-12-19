@@ -2,10 +2,10 @@ services:
   app_proxy:
     environment:
       APP_HOST: dcrpulse_dashboard_1
-      APP_PORT: 8080
+      APP_PORT: 8735
 
   dcrd:
-    image: ghcr.io/karamble/dcrpulse-dcrd:2.1.0@sha256:63dde66bb5c06107192e12bc7431ef7f8f25be49c8be29b070aba92e691d4e24
+    image: ghcr.io/karamble/dcrpulse-dcrd:2.1.2@sha256:786e4d192ce866f89364c11f00b61e9f56a9cb99eb753e5cbc6e0453ccec2099
     user: "1000:1000"
     restart: on-failure
     stop_grace_period: 5m
@@ -26,9 +26,6 @@ services:
       --rpclisten=0.0.0.0:9109
       --rpccert=/app-data/dcrd/rpc.cert
       --rpckey=/app-data/dcrd/rpc.key
-    networks:
-      - default
-      - dcrpulse_internal
     healthcheck:
       test: ["CMD", "sh", "-c", "curl -k -u ${APP_SEED}:${APP_SEED} -H 'Content-Type: application/json' -d '{\"jsonrpc\":\"1.0\",\"method\":\"getinfo\",\"params\":[],\"id\":1}' https://127.0.0.1:9109 || exit 1"]
       interval: 30s
@@ -37,7 +34,7 @@ services:
       start_period: 120s
 
   dcrwallet:
-    image: ghcr.io/karamble/dcrpulse-dcrwallet:2.1.0@sha256:32a2336a07f72627e1ba82177f72cca20671c808606c08325b0cdda5c585a386
+    image: ghcr.io/karamble/dcrpulse-dcrwallet:2.1.2@sha256:8dfc0960acc45a6057529e680d0aeb7f4f13f7141859150597c353b6c3f33941
     user: "1000:1000"
     restart: on-failure
     stop_grace_period: 1m
@@ -57,9 +54,6 @@ services:
     depends_on:
       dcrd:
         condition: service_healthy
-    networks:
-      - default
-      - dcrpulse_internal
     healthcheck:
       test: ["CMD", "sh", "-c", "nc -z 127.0.0.1 9110 && nc -z 127.0.0.1 9111 || exit 1"]
       interval: 10s
@@ -68,13 +62,13 @@ services:
       start_period: 10s
 
   dashboard:
-    image: ghcr.io/karamble/dcrpulse-dashboard:1.0.0@sha256:c7b0bd714e2dac2a3a5ae73cd6c27b2f8c595370e3377672cb6ee802a8fc5981
+    image: ghcr.io/karamble/dcrpulse-dashboard:1.0.2@sha256:ee6101dc1f0b25553b33a31eff256f2b938ad28f066ce691f300cb101aea4959
     user: "1000:1000"
     restart: on-failure
     volumes:
       - ${APP_DATA_DIR}/data:/app-data:ro
     environment:
-      PORT: 8080
+      PORT: 8735
       DCRD_RPC_HOST: dcrd
       DCRD_RPC_PORT: 9109
       DCRD_RPC_USER: ${APP_SEED}
@@ -91,10 +85,3 @@ services:
         condition: service_healthy
       dcrwallet:
         condition: service_healthy
-    networks:
-      - default
-      - dcrpulse_internal
-
-networks:
-  dcrpulse_internal:
-    internal: true
