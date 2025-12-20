@@ -1,0 +1,86 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# This script adapts the default password of Stalwart.
+
+APP_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")"
+APP_DATA_DIR="$APP_DIR/data"
+CONFIG_FILE="$APP_DATA_DIR/etc/config.toml"
+
+# Sentinel file to check if admin was already initialised
+ADMIN_SENTINEL="${APP_DATA_DIR}/.admin_created"
+
+# Maximum number of retries to check for config file
+MAX_RETRIES=10
+RETRY_DELAY=2
+
+# Check if the admin password has already been initialized
+check_already_processed() {
+    if [ -f "$ADMIN_SENTINEL" ]; then
+        echo "Admin already initialized. Skipping..."
+        exit 0
+    fi
+}
+
+# Wait for config file to be available with retries
+wait_for_config() {
+    local retries=0
+    while [ $retries -lt $MAX_RETRIES ]; do
+        if [ -f "$CONFIG_FILE" ]; then
+            echo "Config file found at $CONFIG_FILE"
+            return 0
+        fi
+        
+        retries=$((retries + 1))
+        echo "Config file not found. Retry $retries/$MAX_RETRIES in ${RETRY_DELAY}s..."
+        sleep $RETRY_DELAY
+    done
+    
+    echo "Error: Config file not found at $CONFIG_FILE after $MAX_RETRIES attempts"
+    exit 1
+}
+
+# Replace the secret in the config file
+update_secret() {
+    if [ -z "${APP_PASSWORD:-}" ]; then
+        echo "Error: APP_PASSWORD environment variable not set"
+        exit 1
+    fi
+    
+    # Generate new secret using the same salt
+    NEW_SECRET=$(openssl passwd -6 -salt 8woP51TKJO.JKOp9 "${APP_PASSWORD}")
+    
+    # Check if the fallback-admin section exists
+    if ! grep -q "\[authentication.fallback-admin\]" "$CONFIG_FILE"; then
+        echo "Error: [authentication.fallback-admin] section not found in config file"
+        exit 1
+    fi
+    
+    # Replace the secret value
+    sed -i.bak "/^\[authentication\.fallback-admin\]/,/^\[/s|^secret = .*|secret = \"$NEW_SECRET\"|" "$CONFIG_FILE"
+    
+    # Remove backup file
+    rm -f "$CONFIG_FILE.bak"
+    
+    # Create sentinel file to mark admin as initialized
+    touch "$ADMIN_SENTINEL"
+    
+    echo "Successfully updated admin password in $CONFIG_FILE"
+    
+    echo "Restarting app to apply new password..."
+    "${UMBREL_ROOT}/scripts/app" restart "${APP_ID}" &
+}
+
+# Main execution
+echo "Starting Stalwart post-start configuration..."
+
+# Check if already processed
+check_already_processed
+
+# Wait for config file
+wait_for_config
+
+# Update the secret
+update_secret
+
+echo "Stalwart post-start configuration completed."

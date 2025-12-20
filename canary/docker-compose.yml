@@ -1,0 +1,35 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: canary_web_1
+      APP_PORT: 3000
+      PROXY_AUTH_WHITELIST: "/api/*"
+
+  backend:
+    image: schjonhaug/canary-backend:v1.1.0@sha256:1f028a0b54d8ceb81d34602756845dba6117822889d23ab5f6cbda3d6fbad700
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      CANARY_NETWORK: mainnet
+      CANARY_ELECTRUM_URL: tcp://$APP_ELECTRS_NODE_IP:$APP_ELECTRS_NODE_PORT
+      CANARY_BIND_ADDRESS: 0.0.0.0:3001
+      CANARY_DATA_DIR: /app/data
+      CANARY_MODE: "self-hosted"
+      CANARY_ENABLE_NTFY: "true"
+      CANARY_ENABLE_TWILIO: "false"
+      CANARY_SYNC_INTERVAL: 60
+    volumes:
+      - ${APP_DATA_DIR}/data:/app/data
+
+  web:
+    image: schjonhaug/canary-frontend:v1.1.0@sha256:0598c7b7ba0d78f1c38ea06484917452af1feeae68182b90dd25f165e08d1b39
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      API_URL: http://canary_backend_1:3001
+    depends_on:
+      - backend
