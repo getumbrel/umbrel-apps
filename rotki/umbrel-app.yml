@@ -2,7 +2,7 @@ manifestVersion: 1
 id: rotki
 category: finance
 name: rotki
-version: "1.41.2"
+version: "1.41.3"
 tagline: Portfolio tracking, analytics, accounting and tax reporting
 description: >-
   rotki is an open source portfolio tracking, analytics, accounting and tax reporting tool that protects your privacy. 
@@ -27,20 +27,18 @@ repo: https://github.com/rotki/rotki
 support: https://github.com/rotki/rotki/issues
 port: 8084
 releaseNotes: >-
-  This is a patch release fixing issues reported over the past three weeks.
+  This is a patch release fixing issues reported over the past two weeks.
 
 
   Key improvements include:
-    - Fixed the queries of historical events on Optimism, Base, and BSC with new customizable indexers (Blockscout and Routescan)
-    - Support for new formats of Coinbase API keys
-    - Proper decoding of Cowswap transactions on Polygon
-    - Fixed duplicated Binance events from CSV imports
-    - Improved date/time range selector in the PnL report generation menu
-    - Support for Yearn staking transactions
-    - Better handling of Binance CSV imports with multiple trades
-
-
-  ⚠️ For users importing events from Binance CSV imports: In order to not have duplicate events, from this release and on, please purge your existing Binance data and re-import.
+    - Falling back to other indexers when Blockscout has incomplete data
+    - Detecting staked GRT balances on Arbitrum after The Graph's Horizon upgrade
+    - Pulling newer Coinbase events
+    - Support for Binance Convert trades
+    - Proper handling of Kraken margin events
+    - Improved date time picker and calendar navigation
+    - Fixed Sushiswap LP balance display
+    - Corrected validator rewards and APR calculations for accumulating validators
 
 
   ⚠️ As always when upgrading, all your EVM history events will need to be redecoded. This takes time depending on the amount of events but is required to apply all changes.
