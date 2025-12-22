@@ -14,8 +14,6 @@ services:
       postgres:
         condition: service_healthy
     environment:
-      DB_DATABASE_NAME: airtrail
-      DB_USERNAME: airtrail
       DB_URL: postgres://airtrail:itworkslocally@airtrail_postgres_1:5432/airtrail
 
   postgres:
@@ -28,7 +26,7 @@ services:
       POSTGRES_PASSWORD: itworkslocally
       PGDATA: /data/pgdata
     healthcheck:
-      test: "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""
+      test: "pg_isready -U airtrail -h localhost -d airtrail"
       interval: 10s
       timeout: 5s
       retries: 5
