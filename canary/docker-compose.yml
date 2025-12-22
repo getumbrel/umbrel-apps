@@ -8,7 +8,7 @@ services:
       PROXY_AUTH_WHITELIST: "/api/*"
 
   backend:
-    image: schjonhaug/canary-backend:v1.1.0@sha256:1f028a0b54d8ceb81d34602756845dba6117822889d23ab5f6cbda3d6fbad700
+    image: schjonhaug/canary-backend:v1.2.0@sha256:e89ea0e166b7a883b1b96d90f3a9f5f52433c83bee19e1a3b4112700d9b3014b
     user: "1000:1000"
     restart: on-failure
     stop_grace_period: 1m
@@ -18,14 +18,12 @@ services:
       CANARY_BIND_ADDRESS: 0.0.0.0:3001
       CANARY_DATA_DIR: /app/data
       CANARY_MODE: "self-hosted"
-      CANARY_ENABLE_NTFY: "true"
-      CANARY_ENABLE_TWILIO: "false"
       CANARY_SYNC_INTERVAL: 60
     volumes:
       - ${APP_DATA_DIR}/data:/app/data
 
   web:
-    image: schjonhaug/canary-frontend:v1.1.0@sha256:0598c7b7ba0d78f1c38ea06484917452af1feeae68182b90dd25f165e08d1b39
+    image: schjonhaug/canary-frontend:v1.2.0@sha256:26e412a23c332c0d2d751198ff3802321beb0db6144c851abb979785dafce20f
     user: "1000:1000"
     restart: on-failure
     stop_grace_period: 1m
