@@ -1,0 +1,44 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: rocketchat_app_1
+      APP_PORT: 3000
+
+  db:
+    image: mongo:7@sha256:a814f930db8c4514f5fe5dc3e489f58637fb7ee32a7b9bb0b7064d3274e90b8e
+    hostname: rocketchat-db
+    command: ["--replSet", "rs0", "--bind_ip_all"]
+    volumes:
+      - ${APP_DATA_DIR}/data/db:/data/db
+    restart: on-failure
+
+  init-replica:
+    image: mongo:7@sha256:a814f930db8c4514f5fe5dc3e489f58637fb7ee32a7b9bb0b7064d3274e90b8e
+    depends_on:
+      - db
+    entrypoint:
+      - bash
+      - -lc
+      - >
+        mongosh --host db:27017 --quiet --eval
+        'try{if(rs.status().ok!=1)rs.initiate({_id:"rs0",members:[{_id:0,host:"db:27017"}]});1}catch(e){rs.initiate({_id:"rs0",members:[{_id:0,host:"db:27017"}]})};'
+    restart: "no"
+
+  app:
+    image: rocketchat/rocket.chat:7.13.0@sha256:136ed9124aece2ae475dbbc877527a7f00880945ceb846caee659c4a6bc5c9d7
+    hostname: rocketchat
+    environment:
+      MONGO_URL: mongodb://db:27017/rocketchat?replicaSet=rs0&retryWrites=false
+      MONGO_OPLOG_URL: mongodb://db:27017/local?replicaSet=rs0
+      ROOT_URL: http://${APP_DOMAIN}:3112
+      URL: http://${APP_DOMAIN}:3112
+      PORT: "3000"
+      DEPLOY_METHOD: docker
+    volumes:
+      - ${APP_DATA_DIR}/data/uploads:/app/uploads
+    restart: on-failure
+    depends_on:
+      - db
+      - init-replica
