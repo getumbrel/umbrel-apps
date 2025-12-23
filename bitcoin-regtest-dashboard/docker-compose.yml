@@ -59,6 +59,8 @@ services:
     image: getumbrel/electrs:v0.11.0@sha256:0a2c6f573abfd8d724651c6ba1c1f3a9c740219c1cf0f4468043c3342170d8a5
     user: "1000:1000"
     restart: on-failure
+    ports:
+      - "60401:50001"
     environment:
       ELECTRS_ELECTRUM_RPC_ADDR: "0.0.0.0:50001"
       ELECTRS_DAEMON_RPC_ADDR: "bitcoin-regtest-dashboard_bitcoin_1:18443"
@@ -74,7 +76,7 @@ services:
 
   # Bitcoin Regtest Dashboard
   dashboard:
-    image: coreylphillips/bitcoin-regtest-dashboard:v1.0.0@sha256:f017c61f5820ea43eee0df4bd65dfc9d8dafa08fa603249c1a2718ddd50c16ac
+    image: coreylphillips/bitcoin-regtest-dashboard:v1.0.1@sha256:ee51e0eae38ec654b469726f413db925ebe9eb22734466393c2ab2333724cbd5
     user: "1000:1000"
     restart: on-failure
     environment:
@@ -84,7 +86,7 @@ services:
       BITCOIN_COOKIE_FILE: /bitcoin/.bitcoin/regtest/.cookie
       ELECTRS_HOST: bitcoin-regtest-dashboard_electrs_1
       ELECTRS_PORT: 50001
-      ELECTRS_EXTERNAL_PORT: 50001
+      ELECTRS_EXTERNAL_PORT: 60401
     volumes:
       - ${APP_DATA_DIR}/data/bitcoin:/bitcoin/.bitcoin:ro
     depends_on:
