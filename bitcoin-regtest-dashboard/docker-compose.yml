@@ -42,11 +42,6 @@ services:
         wait $$BITCOIND_PID
     volumes:
       - ${APP_DATA_DIR}/data/bitcoin:/data/.bitcoin
-    expose:
-      - "18443"
-      - "18444"
-      - "28332"
-      - "28333"
     healthcheck:
       test: ["CMD-SHELL", "test -f /data/.bitcoin/regtest/.ready && chmod 644 /data/.bitcoin/regtest/.cookie && bitcoin-cli -regtest -rpccookiefile=/data/.bitcoin/regtest/.cookie getblockchaininfo"]
       interval: 5s
