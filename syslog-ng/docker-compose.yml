@@ -26,9 +26,11 @@ services:
     image: rickraven/logdy:0.17.1@sha256:a1438c758ed3735e9b06205168a3c63e39bd0895bc5f0cd1adf4ed2270ae66cb
     user: "1000:1000"
     restart: on-failure
-    entrypoint: ["/usr/local/bin/logdy"]
-    command: ["follow", "/logs/messages", "--full-read", "--port", "8080", "--ui-ip", "0.0.0.0"]
+    environment:
+      LOGDY_MODE: "follow"
+      LOGDY_FOLLOW_FILES: "/data/*.log"
+      LOGDY_PASS: ${APP_PASSWORD}
     volumes:
-      - ${APP_DATA_DIR}/data/logs:/logs:ro
+      - ${APP_DATA_DIR}/data/logs:/data:ro
     depends_on:
       - syslog
