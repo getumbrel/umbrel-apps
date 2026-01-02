@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+
+# This script updates the btcsig in ckpool.conf for existing users
+# who installed when the default was "/mined by Bassin/"
+# Only runs once to avoid overriding user's intentional changes
+
+APP_DATA_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")"
+CKPOOL_CONFIG_FILE="${APP_DATA_DIR}/data/config/ckpool.conf"
+BTCSIG_MIGRATION_FLAG="${APP_DATA_DIR}/BTCSIG_MIGRATED"
+
+# Skip if migration has already run
+if [[ -f "${BTCSIG_MIGRATION_FLAG}" ]]; then
+	exit
+fi
+
+# Check if the config file exists
+if [[ ! -f "${CKPOOL_CONFIG_FILE}" ]]; then
+	touch "${BTCSIG_MIGRATION_FLAG}"
+	exit
+fi
+
+OLD_BTCSIG='"btcsig" : "/mined by Bassin/",'
+NEW_BTCSIG='"btcsig" : "/mined by Bassin on Umbrel/",'
+
+# Check if the exact old btcsig line exists
+if grep -qF "${OLD_BTCSIG}" "${CKPOOL_CONFIG_FILE}"; then
+	echo "App: ${APP_ID} - Updating btcsig in ckpool.conf"
+	sed -i "s|${OLD_BTCSIG}|${NEW_BTCSIG}|" "${CKPOOL_CONFIG_FILE}"
+fi
+
+# Mark migration as complete
+touch "${BTCSIG_MIGRATION_FLAG}"
