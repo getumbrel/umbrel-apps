@@ -1,0 +1,49 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: chainforensics_web_1
+      APP_PORT: 80
+
+  web:
+    image: nginx:1.25-alpine@sha256:f2802c2a9d09c7aa3ace27445dfc5656ff24355da28e7b958074a0111e3fc076
+    restart: on-failure
+    stop_grace_period: 1m
+    user: "1000:1000"
+    volumes:
+      - ${APP_DATA_DIR}/frontend:/usr/share/nginx/html:ro
+      - ${APP_DATA_DIR}/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - api
+    networks:
+      default:
+        ipv4_address: $APP_CHAINFORENSICS_WEB_IP
+
+  api:
+    image: dirtmcgrit/chainforensics@sha256:17c2a825ece849f98a589fcbf2e495e3cef5fa4bfc3fdbd8a99ccc8296bb1bb8
+    restart: on-failure
+    stop_grace_period: 1m
+    user: "1000:1000"
+    init: true
+    environment:
+      DEBUG: "false"
+      API_PORT: "3000"
+      DATABASE_URL: "sqlite+aiosqlite:////data/chainforensics.db"
+      BITCOIN_RPC_HOST: $APP_BITCOIN_NODE_IP
+      BITCOIN_RPC_PORT: "8332"
+      BITCOIN_RPC_USER: $APP_BITCOIN_RPC_USER
+      BITCOIN_RPC_PASS: $APP_BITCOIN_RPC_PASS
+      BITCOIN_RPC_TIMEOUT: "120"
+      FULCRUM_HOST: $APP_FULCRUM_NODE_IP
+      FULCRUM_PORT: "50002"
+      MAX_TRACE_DEPTH: "50"
+      DEFAULT_TRACE_DEPTH: "10"
+      ENABLE_BACKGROUND_INDEXER: "true"
+      PUID: "1000"
+      PGID: "1000"
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+    networks:
+      default:
+        ipv4_address: $APP_CHAINFORENSICS_API_IP
