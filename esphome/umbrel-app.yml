@@ -2,7 +2,7 @@ manifestVersion: 1
 id: esphome
 category: automation
 name: ESPHome
-version: "2025.12.1"
+version: "2025.12.5"
 tagline: Intelligently manage all your ESP8266/ESP32 devices
 description: >-
   ESPHome is a system to control your ESP8266/ESP32 by simple yet powerful configuration files and control them remotely through Home Automation systems.
@@ -21,13 +21,21 @@ defaultUsername: ""
 defaultPassword: ""
 torOnly: false
 releaseNotes: >-
-  This release includes important bug fixes and stability improvements:
-    - Fixed default frequencies for CC1101 radio modules
-    - Fixed PM1006 particulate matter sensor detection when update interval is set to "never"
-    - Fixed support for multiple BME68x BSEC2 I2C sensors on the same device
-    - Fixed I2C driver conflicts between ESP32 camera and other components
-    - Fixed compilation errors in template alarm control panel when binary sensors are not used
-    - Fixed crashes and error messages when Bluetooth is disabled during device boot
+  This release includes bug fixes and stability improvements:
+    - Fixed arc background angles in LVGL displays
+    - Fixed write-only channel errors with SN74HC595 shift registers on ESP-IDF
+    - Fixed negative temperature values for WTS01 sensors
+    - Removed network requirement for ESP32 Bluetooth functionality
+    - Fixed frequency validation for PCA9685, SX126x, and SX127x components
+    - Fixed WiFi info reporting when static IP is configured
+    - Fixed display menu callbacks to trigger after value updates
+    - Fixed syslog timestamp handling when time source is unavailable
+    - Fixed CC1101 radio option defaults and RSSI/LQI readings in packet mode
+    - Improved ESP32 camera frame logging to reduce overhead
+    - Fixed LVGL canvas actions when called from outside LVGL context
+    - Fixed incremental build failures on ESP32-Arduino
+    - Fixed WiFi connection reporting on ESP-IDF before DHCP completes
+    - Added PLL lock verification and retry support for CC1101
 
 
   Full release notes can be found at https://esphome.io/changelog/2025.12.0.html
