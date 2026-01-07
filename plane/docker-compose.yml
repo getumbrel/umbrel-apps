@@ -1,0 +1,223 @@
+version: "3.7"
+
+x-environment: &env
+  # ---- External URL & ports ----
+  NGINX_PORT: 8762
+  LISTEN_HTTP_PORT: 8762
+
+  # ---- Bucket name used by frontend for /uploads paths ----
+  BUCKET_NAME: uploads
+
+  # ---- API Workers ----
+  GUNICORN_WORKERS: 2
+
+  # ---- Database ----
+  POSTGRES_DB: plane
+  POSTGRES_USER: plane
+  POSTGRES_PASSWORD: umbrelplane
+  DATABASE_URL: postgresql://plane:umbrelplane@plane_db_1:5432/plane
+
+  # ---- Cache / broker ----
+  REDIS_URL: redis://plane_redis_1:6379/0
+  RABBITMQ_DEFAULT_USER: plane
+  RABBITMQ_DEFAULT_PASS: umbrelplane
+  RABBITMQ_DEFAULT_VHOST: plane
+  CELERY_BROKER_URL: amqp://plane:umbrelplane@plane_rabbitmq_1:5672/plane
+
+  # ---- Object storage (MinIO; S3-compatible) ----
+  USE_MINIO: 1
+  AWS_ACCESS_KEY_ID: umbrel
+  AWS_SECRET_ACCESS_KEY: $APP_PASSWORD
+  AWS_S3_ENDPOINT_URL: http://plane-minio-1:9000
+  AWS_S3_BUCKET_NAME: uploads
+  FILE_SIZE_LIMIT: 52428800  # 50 MB
+  MINIO_ENDPOINT_SSL: 0
+  MINIO_ROOT_USER: umbrel
+  MINIO_ROOT_PASSWORD: $APP_PASSWORD
+
+  # ---- Django / app ----
+  SECRET_KEY: $APP_SEED
+  LIVE_SERVER_SECRET_KEY: $APP_SEED
+  # optional but often helps behind proxies
+  USE_X_FORWARDED_HOST: 1
+  SECURE_SSL_REDIRECT: 0
+  SESSION_COOKIE_SECURE: 0
+  CSRF_COOKIE_SECURE: 0
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: plane_nginx_1
+      APP_PORT: 8762
+      PROXY_AUTH_ADD: "false"
+  
+  nginx:
+    image: nginx:alpine3.22@sha256:d67ea0d64d518b1bb04acde3b00f722ac3e9764b3209a9b0a98924ba35e4b779
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/config/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - web
+
+  db:
+    image: postgres:17.7-alpine@sha256:9a78577340f3d26384b6aebeb475c0d46d664fd4ffa68503b4be4e4462745f94
+    user: "1000:1000"
+    restart: on-failure
+    environment:
+      <<: *env
+    env_file:
+      - ${APP_DATA_DIR}/settings.env
+    volumes:
+      - ${APP_DATA_DIR}/data/db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: valkey/valkey:7.2.11-alpine@sha256:7b2019b47ad58be661fa6eba5ea66106eadde03459387113aaed29a464a5876b
+    user: "1000:1000"
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data/redis:/data
+
+  rabbitmq:
+    image: rabbitmq:3.13.7-management-alpine@sha256:0c64ec4fc5596406d755dcca75e8a3b618192cc5fb69f8f0340f06290b1cc08c
+    user: "1000:1000"
+    restart: on-failure
+    environment:
+      <<: *env
+    env_file:
+      - ${APP_DATA_DIR}/settings.env
+    volumes:
+      - ${APP_DATA_DIR}/data/rabbitmq:/var/lib/rabbitmq
+
+  minio:
+    image: alpine/minio:RELEASE.2025-10-15T17-29-55Z@sha256:cf23643a6cf9ce159c57643ceb88279e431262282428c9e0bf3a7ef1a97e84b4
+    user: "1000:1000"
+    restart: on-failure
+    command: server /export --console-address ":8763"
+    environment:
+      <<: *env
+    env_file:
+      - ${APP_DATA_DIR}/settings.env
+    volumes:
+      - ${APP_DATA_DIR}/data/uploads:/export
+    ports:
+      - "8763:8763"
+    # fails to connect if name contains underscore
+    container_name: plane-minio-1
+
+  api:
+    image: makeplane/plane-backend:v1.2.1@sha256:b9317c167743c2d56c51a19b3f151d064d4a40cc4d011fee0976f8985881e03d
+    user: "1000:1000"
+    restart: on-failure
+    environment:
+      <<: *env
+    env_file:
+      - ${APP_DATA_DIR}/settings.env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      rabbitmq:
+        condition: service_started
+
+  worker:
+    image: makeplane/plane-backend:v1.2.1@sha256:b9317c167743c2d56c51a19b3f151d064d4a40cc4d011fee0976f8985881e03d
+    user: "1000:1000"
+    restart: on-failure
+    environment:
+      <<: *env
+    env_file:
+      - ${APP_DATA_DIR}/settings.env
+    depends_on:
+      api:
+        condition: service_started
+      redis:
+        condition: service_started
+      rabbitmq:
+        condition: service_started
+    command: ["sh","-c","celery -A plane worker --loglevel=info"]
+
+  beat-worker:
+    image: makeplane/plane-backend:v1.2.1@sha256:b9317c167743c2d56c51a19b3f151d064d4a40cc4d011fee0976f8985881e03d
+    user: "1000:1000"
+    restart: on-failure
+    environment:
+      <<: *env
+    env_file:
+      - ${APP_DATA_DIR}/settings.env
+    depends_on:
+      api:
+        condition: service_started
+      redis:
+        condition: service_started
+      rabbitmq:
+        condition: service_started
+      migrator:
+        condition: service_completed_successfully
+    command: ["sh","-c","celery -A plane beat --loglevel=info"]
+
+  migrator:
+    image: makeplane/plane-backend:v1.2.1@sha256:b9317c167743c2d56c51a19b3f151d064d4a40cc4d011fee0976f8985881e03d
+    user: "1000:1000"
+    restart: on-failure
+    environment:
+      <<: *env
+    env_file:
+      - ${APP_DATA_DIR}/settings.env
+    depends_on:
+      db:
+        condition: service_healthy
+    command: ["sh","-c","python manage.py wait_for_db && python manage.py migrate"]
+
+  web:
+    image: makeplane/plane-frontend:v1.2.1@sha256:2a3d8dfbb9c0b53697efc65c1944c2d36efdd80189d08f101e116a1f4677ebc0
+    restart: on-failure
+    environment:
+      <<: *env
+    env_file:
+      - ${APP_DATA_DIR}/settings.env
+    depends_on:
+      - api
+
+  live:
+    image: makeplane/plane-live:v1.2.1@sha256:7a145cd50f9b30ed829a5f2a326eee81066623ffa2ba7114b44224dbff5371f3
+    user: "1000:1000"
+    restart: on-failure
+    environment:
+      <<: *env
+    env_file:
+      - ${APP_DATA_DIR}/settings.env
+    depends_on:
+      - api
+
+  space:
+    image: makeplane/plane-space:v1.2.1@sha256:94fb3476434d993ba7d268c26bda8239787faa3e6b70516e97ab8a68316240b4
+    user: "1000:1000"
+    restart: on-failure
+    environment:
+      <<: *env
+    env_file:
+      - ${APP_DATA_DIR}/settings.env
+    depends_on:
+      - api
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"require('http').get('http://127.0.0.1:3000/', (r) => process.exit(r.statusCode < 500 ? 0 : 1)).on('error', () => process.exit(1))\""]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+
+  admin:
+    image: makeplane/plane-admin:v1.2.1@sha256:962da7f871101282892896ae8625b03413d80aa3d3351e1d68bf355550479b39
+    restart: on-failure
+    environment:
+      <<: *env
+    env_file:
+      - ${APP_DATA_DIR}/settings.env
+    depends_on:
+      - api
