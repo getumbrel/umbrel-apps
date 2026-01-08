@@ -12,18 +12,18 @@ services:
     restart: on-failure
     stop_grace_period: 1m
     ports:
-      # BitTorrent / DHT ports:
       - "3334:3334/tcp"
       - "3334:3334/udp"
+    user: "1000:1000"
     environment:
+      HOME: /tmp
+      XDG_CONFIG_HOME: /config
       POSTGRES_HOST: postgres
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ${APP_PASSWORD}
       POSTGRES_NAME: bitmagnet
-      # Optional, recommended for better performance:
-      # TMDB_API_KEY: "your_api_key"
     volumes:
-      - ${APP_DATA_DIR}/data/config:/root/.config/bitmagnet
+      - ${APP_DATA_DIR}/data/config:/config/bitmagnet
     command:
       - worker
       - run
