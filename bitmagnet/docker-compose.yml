@@ -8,7 +8,7 @@ services:
       PROXY_AUTH_ADD: "false"
 
   bitmagnet:
-    image: ghcr.io/bitmagnet-io/bitmagnet:v0.10.0
+    image: ghcr.io/bitmagnet-io/bitmagnet:v0.10@cf2c16fac5b51f1c18e630b4710175d35d7e44b83012cfd05a2b43712feec05e
     restart: on-failure
     stop_grace_period: 1m
     ports:
@@ -35,7 +35,7 @@ services:
         condition: service_healthy
 
   postgres:
-    image: postgres:16-alpine
+    image: postgres:16-alpine@23e88eb049fd5d54894d70100df61d38a49ed97909263f79d4ff4c30a5d5fca2
     restart: on-failure
     environment:
       POSTGRES_PASSWORD: ${APP_PASSWORD}
