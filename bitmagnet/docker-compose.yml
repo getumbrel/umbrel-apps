@@ -1,0 +1,53 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: bitmagnet_bitmagnet_1
+      APP_PORT: 3333
+      PROXY_AUTH_ADD: "false"
+
+  bitmagnet:
+    image: ghcr.io/bitmagnet-io/bitmagnet:v0.10.0
+    restart: on-failure
+    stop_grace_period: 1m
+    ports:
+      # BitTorrent / DHT ports:
+      - "3334:3334/tcp"
+      - "3334:3334/udp"
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${APP_PASSWORD}
+      POSTGRES_NAME: bitmagnet
+      # Optional, recommended for better performance:
+      # TMDB_API_KEY: "your_api_key"
+    volumes:
+      - ${APP_DATA_DIR}/data/config:/root/.config/bitmagnet
+    command:
+      - worker
+      - run
+      - --keys=http_server
+      - --keys=queue_server
+      - --keys=dht_crawler
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:16-alpine
+    restart: on-failure
+    environment:
+      POSTGRES_PASSWORD: ${APP_PASSWORD}
+      POSTGRES_DB: bitmagnet
+      POSTGRES_USER: postgres
+      PGUSER: postgres
+    shm_size: 1g
+    volumes:
+      - ${APP_DATA_DIR}/data/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready
+      start_period: 20s
+      interval: 10s
