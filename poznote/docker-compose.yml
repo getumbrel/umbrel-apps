@@ -1,0 +1,18 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: poznote_app_1
+      APP_PORT: 80
+
+  app:
+    image: ghcr.io/timothepoznanski/poznote:1.16.8@sha256:3aca813313bb4e8b6ececc88d8188b973f562b179d955e69e08fb42ed9511558
+    restart: on-failure
+    environment:
+      SQLITE_DATABASE: /var/www/html/data/database/poznote.db
+      POZNOTE_USERNAME: admin
+      POZNOTE_PASSWORD: ${APP_PASSWORD}
+      HTTP_WEB_PORT: 80
+    volumes:
+      - ${APP_DATA_DIR}/data:/var/www/html/data
