@@ -3,16 +3,15 @@ version: "3.7"
 services:
   app_proxy:
     environment:
-      # MinerSentinel frontend container
       APP_HOST: miner-sentinel_frontend_1
       APP_PORT: 80
 
   postgres:
-    image: postgres:16-alpine@sha256:492898505cb45f9835acc327e98711eaa9298ed804e0bb36f29e08394229550d
+    image: postgres:17-alpine@sha256:d4b770d9b26b92b5755a7dc0da0b1b8df9ffd18a71a7fdc047d8a2154e3fad43
     restart: on-failure
     stop_grace_period: 1m
     volumes:
-      - ${APP_DATA_DIR}/data/postgres:/var/lib/postgresql/data
+      - ${APP_DATA_DIR}/db/postgres:/var/lib/postgresql/data
     environment:
       POSTGRES_USER: minersentinel
       POSTGRES_PASSWORD: minersentinel
