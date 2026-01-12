@@ -3,7 +3,7 @@ id: open-webui
 name: Open WebUI
 tagline: Chat with Ollama models like DeepSeek-R1 and LLama, or use an OpenAI API key
 category: ai
-version: "0.6.43"
+version: "0.7.2"
 port: 2876
 description: >-
   Open WebUI lets you chat with advanced AI models running locally on your own device or connect to online models using an API key.
@@ -37,11 +37,18 @@ defaultPassword: ""
 dependencies:
   - ollama
 releaseNotes: >-
-  This release includes important bug fixes:
-    - Resolved Python dependency installation issues that prevented setup in certain environments
-    - Fixed speech-to-text default content type handling to ensure correct MIME type usage across providers
-    - Corrected temporary chat image handling so images are properly processed, stored, and displayed
-    - Restored image action button functionality for generation and editing from the chat interface
+  This release includes important improvements and bug fixes:
+    - Native function calling with built-in tools allows models to perform multi-step tasks combining web research, knowledge base queries, note-taking, and image generation in a single conversation
+    - Models can now search through your notes, past chats, and channel messages to find relevant context
+    - Models can search knowledge bases and retrieve documents without manual file attachment
+    - Web search results now appear as clickable citations in real-time for source verification
+    - Significantly improved performance across the entire application through reengineered database connection handling
+    - Faster page loads through dynamic loading of document processing libraries
+    - Users can now click citation links to jump directly to relevant portions of source documents with automatic text highlighting
+    - Enhanced security with backend permission checks for Image Generation, Web Search, Audio APIs, and Tools
+    - Fixed database connection timeouts under high concurrency
+    - Resolved issues with workspace prompts creation and saving
+    - Fixed local Whisper speech-to-text functionality when STT_ENGINE is left empty
 
 
   Full release notes are found at https://github.com/open-webui/open-webui/releases
