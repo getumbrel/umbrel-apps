@@ -2,7 +2,7 @@ manifestVersion: 1
 id: jotty
 category: files
 name: Jotty
-version: "1.16.1"
+version: "1.17.1"
 tagline: A simple app, for your checklists and notes
 description: >-
   Tired of bloated, cloud-based to-do apps? Jotty is a lightweight alternative for managing your personal checklists and notes.
@@ -24,25 +24,34 @@ port: 8345
 submitter: Kanishk Pachauri
 submission: https://github.com/getumbrel/umbrel-apps/pull/3961
 releaseNotes: >-
-  This release fixes a critical bug affecting shared notes with non-admin users.
+  This release fixes critical bugs affecting fresh installations and shared notes, and adds several new features including OIDC enhancements and improved editor functionality.
+
+
+  New features:
+    - Editor toolbar added to markdown mode for improved editing experience
+    - Ability to convert between task and simple checklist while persisting data
+    - OIDC user groups and roles mapping for better access control
+    - Ability to load OIDC secret values from files
+    - About modal with app information
+    - Autocomplete input for checklist statuses to set complete status automatically
 
 
   Improvements:
-    - Improved security by obfuscating sensitive data on logged in instances
-    - Updated mobile interface with better hand gesture support and larger touch targets
-    - Added left-handed mode option in user preferences
-    - Note editor action buttons moved to bottom right (or bottom left for left-handed mode)
-    - Clear all button for completed and uncompleted checklists with confirmation modal
-    - Brute force protection for accounts after failed login attempts
-    - Improved checklist drag and drop experience with clearer dropzones
-    - Added Polish and German translations
+    - Improved checklist drag and drop experience using draggable instead of sortable
+    - Better handling of OIDC user info claims when response is JWT format
+    - Enhanced editor dirty state detection to reduce false alerts about unsaved changes
+    - Checklist items now always accessible from mobile
+    - Better autosave behavior in markdown editor
 
 
   Bug fixes:
+    - Fixed redirect loop on new registration that prevented fresh installs
     - Fixed sharing permission bug where edit and delete permissions don't work for non-admin users
-    - Fixed file rename mode setting that was previously not working
+    - Fixed issue where last couple of lines in wysiwyg mode were not visible
+    - Fixed public routes being inaccessible when sharing file doesn't have a category
+    - Fixed local auth visibility when OIDC fallback is disabled
+    - Fixed complete and reset all subtasks functionality
     - Fixed issue where renaming folder or category of shared item made it inaccessible
-    - Fixed mobile bubble menu positioning to avoid conflicts
 
 
   Full release notes are found at https://github.com/fccview/jotty/releases
