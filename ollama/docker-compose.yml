@@ -15,3 +15,12 @@ services:
     volumes:
       - ${APP_DATA_DIR}/data:/root/.ollama
     restart: on-failure
+    
+    # --- GPU Configuration Added Below ---
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all # Use 1 for a single GPU, or 'all' for everything available
+              capabilities: [gpu]
