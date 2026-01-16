@@ -1,0 +1,40 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: planka_app_1
+      APP_PORT: 1337
+
+  app:
+    image: ghcr.io/plankanban/planka:2.0.0-rc.4@sha256:818323130a584abd4461ad42ee3c06933171e983a7cae2e8fa903c368952ebe1
+    restart: on-failure
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      BASE_URL: http://${DEVICE_DOMAIN_NAME}:8546
+      DATABASE_URL: 'postgresql://postgres@planka_db_1/planka'
+      DEFAULT_ADMIN_PASSWORD: ${APP_PASSWORD}
+      DEFAULT_ADMIN_NAME: Demo Demo
+      DEFAULT_ADMIN_USERNAME: umbrel
+      DEFAULT_ADMIN_EMAIL: demo@demo.com
+      SECRET_KEY: ${APP_SEED}
+      TRUST_PROXY: 0
+    volumes:
+      - ${APP_DATA_DIR}/data/favicons:/app/public/favicons
+      - ${APP_DATA_DIR}/data/avatars:/app/public/user-avatars
+      - ${APP_DATA_DIR}/data/backgrounds:/app/public/background-images
+      - ${APP_DATA_DIR}/data/attachments:/app/private/attachments
+
+  db:
+    image: postgres:16.6-alpine3.21@sha256:589f3b24f30e60a2b33f79543ed51c8f897589bcde5c59f4dc0e814551eeeb0f
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: planka
+      POSTGRES_HOST_AUTH_METHOD: trust
+    volumes:
+      - ${APP_DATA_DIR}/data/db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d planka"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
