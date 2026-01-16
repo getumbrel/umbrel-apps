@@ -2,7 +2,7 @@ manifestVersion: 1
 id: btcpay-server
 category: bitcoin
 name: BTCPay Server
-version: "2.3.2"
+version: "2.3.3"
 tagline: Accept Bitcoin payments with 0 fees & no 3rd party
 description: >-
   BTCPay Server is a payment processor that allows you to receive
@@ -34,34 +34,30 @@ path: ""
 defaultUsername: ""
 defaultPassword: ""
 releaseNotes: >-
-  This release comes with multiple new features, improvements and bug fixes.
+  This release comes with a notable change, new features and several bug fixes.
 
 
-  New Features:
-    - Disable zero-amount invoices in PoS
-    - Subscriptions for recurring payments
-    - Subscriptions API (Greenfield)
-    - Payment request reports and improved filtering
-    - Ambassadors can monetize server access
-    - Installable backend language packs
-    - Advanced server email rules (conditions, placeholders, CC/BCC)
+  ⚠️ **Note**
+  CoinGecko's API now mandates the use of an API Key for accessing rates. Consequently, it's been decided to discontinue support of CoinGecko-based rate sources. For those who relied on CoinGecko, invoice creation will now fail, and they must choose an alternative rate provider.
+
+
+  New features:
+    - Cold wallet transaction support via Greenfield API
+    - Add Norwegian lang in the available language packs
 
   Bug fixes:
-    - Alternative payment methods not showing with BTC Unified QR
-    - Subscription payment reminders not sent
-    - Prefilled subscriber email ignored
-    - Subscription checkout QR redirect issues
-    - Lost server email settings after update to 2.3.0
-    - Plugin crashes causing startup loops
-    - Monetized subscribers not deleted with user
-    - Various UI, email, and wallet display issues
+    - It shouldn't be possible to create an invoice when all store users are disabled
+    - Remove CoinGecko and any rate source provided by them
+    - Change the default rate source for LTC conversion from CoinGecko to Kraken
+    - In monetization, it was impossible to recreate a user with email of a previously deleted user
+    - Backend translations would sometimes fail to load during startup
+    - Subs plan checkout always showed 'per month'
+    - Editing a plan subscription set the Currency back to USD
+    - Disable zero amount invoices in PoS doesn't show when Keypad mode is selected
+    - Adding labels payment requests would sometimes not work as expected
+    - PSBT Scan via Camera was not closing the modal dialog when signing a multisig transaction
+    - Selecting some rate source would crash the Stores/Rates page
 
-  Improvements:
-    - Hide payment method selector when only one option exists
-    - Show payment request title in wallet transaction tooltip
-    - Hide wallet creation when permissions are disabled
-    - Improved PSBT error messages
-    - Automatic cleanup of expired data
 
   Full release notes can be found at https://github.com/btcpayserver/btcpayserver/releases
 submitter: Umbrel
