@@ -42,7 +42,7 @@ services:
       - ${APP_DATA_DIR}/data/static:/wger/static:ro
       - ${APP_DATA_DIR}/data/media:/wger/media:ro
     healthcheck:
-      test: service nginx status
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1:80/"]
       interval: 10s
       timeout: 5s
       retries: 5
