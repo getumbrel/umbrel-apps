@@ -1,0 +1,24 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: music_assistant_app_1
+      APP_PORT: 8095
+
+  app:
+    image: ghcr.io/music-assistant/server:2.7.5@sha256:3522e8a7a8f0ad18d790350dc692d3062c4f1df6c9567f838c959e03b251d00d
+    restart: unless-stopped
+    # Network mode must be set to host for MA to work correctly
+    network_mode: host
+    volumes:
+      - ${APP_DATA_DIR}/data:/data/
+    ports:
+      - 8097:8097 # Streamserver
+      - 8927:8927 # Sendspin
+    # privileged caps (and security-opt) needed to mount smb folders within the container
+    cap_add:
+      - SYS_ADMIN
+      - DAC_READ_SEARCH
+    security_opt:
+      - apparmor=unconfined
