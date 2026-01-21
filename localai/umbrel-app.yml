@@ -2,7 +2,7 @@ manifestVersion: 1
 id: localai
 category: ai
 name: LocalAI
-version: "v3.8.0"
+version: "v3.10.0"
 tagline: Drop-in OpenAI replacement
 description: >-
   LocalAI is the free, Open Source OpenAI alternative. LocalAI act as a drop-in replacement REST API that's compatible with OpenAI API specifications for local inferencing.
@@ -15,25 +15,28 @@ description: >-
 
   Before running a model, make sure your device has enough free RAM to support it. Attempting to run a model that exceeds your available memory could cause your device to crash or become unresponsive. Always check the model requirements before downloading or starting it.
 releaseNotes: >-
-  This release focuses on enhancing the user experience and providing more control without requiring restarts or complex configurations. It introduces a new onboarding flow and a universal model loader.
+  This release focuses on agent capabilities, multi-modal support, and cross-platform reliability. It introduces native Anthropic API support, a new Video Generation UI, Open Responses API compatibility, and enhanced performance with a unified GPU backend system.
 
 
   Key highlights include:
-    - Universal Model Import - Easily import models from Hugging Face, Ollama, OCI, or local paths, with automatic backend and chat template detection
-    - UI & Index Overhaul - Enjoy a new onboarding wizard, automatic model selection on startup, and a cleaner interface for managing models
-    - MCP Live Streaming - Agent actions and tool calls are now streamed live, allowing you to see reasoning in real-time
-    - Hot-Reloadable Settings - Modify watchdogs, API keys, and peer-to-peer settings instantly without restarting the app
-    - Chat enhancements - Chat history and parallel conversations are now saved in your browser
-    - Improved OpenAI API Compatibility - Streaming responses now strictly match OpenAI specifications, resolving issues with various clients
-    - Advanced Configuration - Fine-tune settings like context shifting, RAM limits for the KV cache, and parallel workers for optimized performance
-    - Logprobs & Logitbias Support - Added token-level probability support for advanced agent workflows
+    - Anthropic API Support - Fully compatible /v1/messages endpoint for seamless drop-in replacement of Claude
+    - Open Responses API - Native support for stateful agents with tool calling, streaming, background mode, and multi-turn conversations
+    - Video & Image Generation Suite - New video gen UI with LTX-2 support for text-to-video and image-to-video
+    - Unified GPU Backends - GPU libraries (CUDA, ROCm, Vulkan) packaged inside backend containers, works out of the box on Nvidia, AMD, and ARM64
+    - Tool Streaming & XML Parsing - Full support for streaming tool calls and XML-formatted tool outputs
+    - System-Aware Backend Gallery - Only see backends your system can run (e.g., hide MLX on Linux)
+    - Moonshine Backend - Ultra-fast transcription engine for low-end devices
+    - Pocket-TTS - Lightweight, high-fidelity text-to-speech with voice cloning
+    - Vulkan arm64 builds - Backends and images now available for Vulkan on arm64
 
 
   Additional fixes and improvements:
-    - Model Preview - See filename and size before downloading models
-    - Tool Handling - Fixed issues related to missing or malformed tool content
-    - TTS - Corrected dropdown selection states for text-to-speech models
-    - True Cancellation - Stopping a stream now immediately halts generation and frees resources
+    - Prevents crashes on AVX-only CPUs (Intel Sandy/Ivy Bridge) that lack BMI2 instructions
+    - Fixed swapped VRAM usage reporting on AMD GPUs
+    - Request tracing for debugging agents and fine-tuning
+    - New 'reasoning' field to extract thinking steps from model output
+    - Fixed authentication requirement for health check endpoints
+    - UI improvements including fixed navbar ordering and consistent button styling
 
 
   Full release notes can be found at https://github.com/mudler/LocalAI/releases
