@@ -1,0 +1,33 @@
+version: '3.7'
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: fedimint-gateway_gatewayd_1
+      APP_PORT: 8176 # ui
+
+  gatewayd:
+    image: fedimint/gatewayd:v0.10.0@sha256:eee28e1b20171efd1940ccdb51f5b7f903b01df020417526b97273a7d979f6f0
+    restart: on-failure
+    ports:
+      - 8177:8177/udp # iroh
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+      - ${APP_LIGHTNING_NODE_DATA_DIR}:/lnd:ro
+    environment:
+      FM_GATEWAY_DATA_DIR: "/data"
+      FM_GATEWAY_NETWORK: ${APP_BITCOIN_NETWORK_ELECTRS}
+      FM_GATEWAY_LISTEN_ADDR: 0.0.0.0:8176
+      FM_GATEWAY_IROH_LISTEN_ADDR: 0.0.0.0:8177
+      APP_PASSWORD: "${APP_PASSWORD}"
+
+      # LND connection environment variables
+      FM_LND_RPC_ADDR: "https://${APP_LIGHTNING_NODE_IP}:${APP_LIGHTNING_NODE_GRPC_PORT}"
+      FM_LND_TLS_CERT: "/lnd/tls.cert"
+      FM_LND_MACAROON: "/lnd/data/chain/bitcoin/${APP_BITCOIN_NETWORK}/admin.macaroon"
+
+      # Bitcoind connection environment variables
+      FM_BITCOIND_USERNAME: ${APP_BITCOIN_RPC_USER}
+      FM_BITCOIND_PASSWORD: ${APP_BITCOIN_RPC_PASS}
+      FM_BITCOIND_URL: "http://${APP_BITCOIN_NODE_IP}:${APP_BITCOIN_RPC_PORT}"
+    entrypoint: /data/entrypoint.sh
