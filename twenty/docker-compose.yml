@@ -8,7 +8,7 @@ services:
       PROXY_AUTH_ADD: "false"
 
   server:
-    image: twentycrm/twenty:v1.13.7@sha256:4b6d067245e576e7d26f629e30f7952f24047a42848987519ec9e58258b16c27
+    image: twentycrm/twenty:v1.15.0@sha256:d49e3161742e5b2f99792cd85fdf1366a814dc3d31d8b5dbec53bb951fe5eec6
     user: "1000:1000"
     volumes:
       - ${APP_DATA_DIR}/data/server-local-data:/app/packages/twenty-server/.local-storage
@@ -26,13 +26,13 @@ services:
         condition: service_started
     healthcheck:
       test: curl --fail http://localhost:3000/healthz
-      interval: 5s
-      timeout: 5s
+      interval: 10s
+      timeout: 30s
       retries: 10
     restart: on-failure
 
   worker:
-    image: twentycrm/twenty:v1.13.0@sha256:4b6d067245e576e7d26f629e30f7952f24047a42848987519ec9e58258b16c27
+    image: twentycrm/twenty:v1.15.0@sha256:d49e3161742e5b2f99792cd85fdf1366a814dc3d31d8b5dbec53bb951fe5eec6
     user: "1000:1000"
     volumes:
       - ${APP_DATA_DIR}/data/server-local-data:/app/packages/twenty-server/.local-storage
@@ -62,8 +62,8 @@ services:
       POSTGRES_PASSWORD: postgres
     healthcheck:
       test: pg_isready -U postgres -h localhost -d postgres
-      interval: 5s
-      timeout: 5s
+      interval: 10s
+      timeout: 30s
       retries: 10
     restart: on-failure
 
