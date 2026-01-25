@@ -10,6 +10,7 @@ services:
     # Custom Clawdbot Docker image for Umbrel
     # Built from: https://github.com/harmalh/clawdbot-umbrel
     image: ghcr.io/harmalh/clawdbot-umbrel:v2026.1.23@sha256:60c7f6e066702485acc9faa0abd0fc55ee5804fdd0f80015857136fa816fb9a1
+    user: "1000:1000"
     
     environment:
       # Pass Umbrel's app password as the gateway token
@@ -28,11 +29,8 @@ services:
       HOME: /home/node
     
     volumes:
-      # Persistent data directories
-      # All Clawdbot state is stored here and survives container updates
-      - "${APP_DATA_DIR}/clawdbot:/data/.clawdbot"
-      - "${APP_DATA_DIR}/workspace:/data/clawd"
-      - "${APP_DATA_DIR}/logs:/data/logs"
+      # Persistent data directory - all Clawdbot state survives container updates
+      - "${APP_DATA_DIR}/data:/data"
     
     restart: on-failure
     
