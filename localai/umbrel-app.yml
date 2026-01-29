@@ -2,7 +2,7 @@ manifestVersion: 1
 id: localai
 category: ai
 name: LocalAI
-version: "v3.10.0"
+version: "v3.10.1"
 tagline: Drop-in OpenAI replacement
 description: >-
   LocalAI is the free, Open Source OpenAI alternative. LocalAI act as a drop-in replacement REST API that's compatible with OpenAI API specifications for local inferencing.
@@ -15,28 +15,16 @@ description: >-
 
   Before running a model, make sure your device has enough free RAM to support it. Attempting to run a model that exceeds your available memory could cause your device to crash or become unresponsive. Always check the model requirements before downloading or starting it.
 releaseNotes: >-
-  This release focuses on agent capabilities, multi-modal support, and cross-platform reliability. It introduces native Anthropic API support, a new Video Generation UI, Open Responses API compatibility, and enhanced performance with a unified GPU backend system.
+  This is a small patch release providing bugfixes and minor improvements, along with support for Qwen-TTS that was just released.
 
 
-  Key highlights include:
-    - Anthropic API Support - Fully compatible /v1/messages endpoint for seamless drop-in replacement of Claude
-    - Open Responses API - Native support for stateful agents with tool calling, streaming, background mode, and multi-turn conversations
-    - Video & Image Generation Suite - New video gen UI with LTX-2 support for text-to-video and image-to-video
-    - Unified GPU Backends - GPU libraries (CUDA, ROCm, Vulkan) packaged inside backend containers, works out of the box on Nvidia, AMD, and ARM64
-    - Tool Streaming & XML Parsing - Full support for streaming tool calls and XML-formatted tool outputs
-    - System-Aware Backend Gallery - Only see backends your system can run (e.g., hide MLX on Linux)
-    - Moonshine Backend - Ultra-fast transcription engine for low-end devices
-    - Pocket-TTS - Lightweight, high-fidelity text-to-speech with voice cloning
-    - Vulkan arm64 builds - Backends and images now available for Vulkan on arm64
-
-
-  Additional fixes and improvements:
-    - Prevents crashes on AVX-only CPUs (Intel Sandy/Ivy Bridge) that lack BMI2 instructions
-    - Fixed swapped VRAM usage reporting on AMD GPUs
-    - Request tracing for debugging agents and fine-tuning
-    - New 'reasoning' field to extract thinking steps from model output
-    - Fixed authentication requirement for health check endpoints
-    - UI improvements including fixed navbar ordering and consistent button styling
+  Key improvements include:
+    - Fixed reasoning detection on reasoning and instruct models
+    - Support for reasoning blocks with Open Responses API
+    - API fixes to correctly run LTX-2 video generation
+    - Added support for Qwen3-TTS text-to-speech backend
+    - Fixed tracing buffer creation to enable runtime tracing
+    - Improved thinking support detection from backends
 
 
   Full release notes can be found at https://github.com/mudler/LocalAI/releases
