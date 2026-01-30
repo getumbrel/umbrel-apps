@@ -1,0 +1,68 @@
+# List of endpoints to listen on
+# currently supporting srt/tcp/file/test-pattern
+# All the endpoints must be valid URI's
+endpoints:
+  - "rtmp://0.0.0.0:1935"
+
+# Public hostname which points to the IP address used to listen for all [endpoints]
+endpoints_public_hostname: "umbrel.local"
+
+# Output directory for recording / hls
+output_dir: "./out"
+
+# Public URL for serving files for [output_dir]
+public_url: "http://umbrel.local"
+
+# Admin pukey (hex), this must be set if you want to use the Admin UI
+admin_pubkey: "63fe6318dc58583cfe16810f86dd09e18bfd76aabc24a0081ce2856f330504ed"
+
+# Bind address for http server serving files from [output_dir]
+listen_http: "0.0.0.0:8080"
+
+# Overseer is the main control structure which controls access to the service
+overseer:
+  # At what balance we should alert the streamer to topup
+  low_balance_threshold: 500
+
+  # Primary nsec key for publishing stream events
+  nsec: "nsec1wya428srvpu96n4h78gualaj7wqw4ecgatgja8d5ytdqrxw56r2se440y4"
+
+  # Nostr relays to publish stream events to
+  relays:
+    - "wss://nos.lol"
+    - "wss://relay.snort.social"
+    - "wss://relay.damus.io"
+    - "wss://relay.fountain.fm"
+    - "wss://relay.primal.net"
+    - "ws://umbrel.local:4848" # try to use the local umbrel relay
+
+  # MySQL database connection string
+  database: "mysql://root:root@mariadb/zap_stream?max_connections=2"
+
+  # Payment system config
+  payments:
+    # LUD-21 is required to use a lightning address backend
+    #lnurl:
+    #  address: "v0l@getalby.com"
+    #bitvora:
+    #  api_token: "abc123"
+    #  webhook_secret: "abc123"
+    nwc:
+      url: "nostr+walletconnect://5dd410ab6d3696cf15ea038008bc34c4aa7ac52f55fdb5760892c19ed68ee941?relay=wss://relay.getalby.com/v1&secret=ca0a2712ae2dd2d27a7ce445b8672c577880cf55ee28473cb1f7a5991eb3018b"
+    #lnd:
+    #  address: "https://127.0.0.1:10001"
+    #  cert: "/home/kieran/.polar/networks/1/volumes/lnd/alice/tls.cert"
+    #  macaroon: "/home/kieran/.polar/networks/1/volumes/lnd/alice/data/chain/bitcoin/regtest/admin.macaroon"
+  # Advertise this server on nostr for public use (NIP-89)
+  #advertise:
+  #  # Optional override for the NIP-89 'd' tag identifier
+  #  # Only use this if you have more than 1 zap-stream-core server per pubkey
+  #  # The default value is 'zap-stream-core'
+  #  #id: "instance-1"
+  #  name: "My Stream Server"
+  #  about: "Running zap-stream-core!"
+  #  picture: "https://zap.stream/logo.png"
+
+# Redis server for coordination
+redis:
+  url: "redis://redis:6379"
