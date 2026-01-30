@@ -1,0 +1,28 @@
+version: "3.7"
+
+services:
+  pogolo:
+    image: docker.io/0xf0xx0/pogolo:v1.0.0@sha256:2fb815c5fbec7130dd067f95d65e23fae75ff904d37a92b168137caa11604b2d
+    restart: on-failure
+    stop_grace_period: 30s
+    ports:
+      # You do not need to expose the port that your app's web server is listening on if you're using the app_proxy service.
+      # This is handled by the APP_HOST and APP_PORT environment variables in the service above.
+      #
+      # If you need to expose additional ports, you can do so like this, replacing <port> with the port number:
+      - 5661:5661 # stratum
+      - 5662:5662 # api
+    volumes:
+      - "${APP_DATA_DIR}/data:/config:ro"
+    environment:
+      POGOLO_HOST: "0.0.0.0"
+      POGOLO_BACKEND_HOST: "$APP_BITCOIN_NODE_IP:$APP_BITCOIN_RPC_PORT"
+      POGOLO_BACKEND_AUTH: "$APP_BITCOIN_RPC_USER:$APP_BITCOIN_RPC_PASS"
+      # colorful logs
+      FORCE_COLOR: 1
+
+  widget-server:
+   image: docker.io/0xf0xx0/umbrel-pogolo-widget:v1.0.0@sha256:4f2576a0ffbeec0c61b142f7411d2e065b0694db9ed40e9ac16c6ef0d98ab66a
+   restart: on-failure
+   environment:
+     POGOLO_API_URL: "http://pogolo_pogolo_1:5662"
