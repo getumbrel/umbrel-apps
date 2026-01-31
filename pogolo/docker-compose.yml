@@ -5,6 +5,7 @@ services:
   pogolo:
     image: docker.io/0xf0xx0/pogolo:v1.0.0@sha256:aa05acbf32f74d8ace4efa48b54e56f56bcc1254f5331bcb2eca56690d249b77
     restart: on-failure
+    user: "1000:1000"
     stop_grace_period: 30s
     ports:
       # You do not need to expose the port that your app's web server is listening on if you're using the app_proxy service.
@@ -25,5 +26,6 @@ services:
   widget-server:
    image: docker.io/0xf0xx0/umbrel-pogolo-widget:v1.0.0@sha256:4355198345deb2b6c7f6f38ad9ef5e91e3fbdc5e13d5465446fe89c968ecf852
    restart: on-failure
+   user: "1000:1000"
    environment:
      POGOLO_API_URL: "http://pogolo_pogolo_1:5662"
