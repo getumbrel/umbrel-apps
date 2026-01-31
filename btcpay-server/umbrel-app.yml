@@ -2,7 +2,7 @@ manifestVersion: 1
 id: btcpay-server
 category: bitcoin
 name: BTCPay Server
-version: "2.3.3"
+version: "2.3.4"
 tagline: Accept Bitcoin payments with 0 fees & no 3rd party
 description: >-
   BTCPay Server is a payment processor that allows you to receive
@@ -34,30 +34,24 @@ path: ""
 defaultUsername: ""
 defaultPassword: ""
 releaseNotes: >-
-  This release comes with a notable change, new features and several bug fixes.
-
-
-  ⚠️ **Note**
-  CoinGecko's API now mandates the use of an API Key for accessing rates. Consequently, it's been decided to discontinue support of CoinGecko-based rate sources. For those who relied on CoinGecko, invoice creation will now fail, and they must choose an alternative rate provider.
+  This release comes with new features and several bug fixes.
 
 
   New features:
-    - Cold wallet transaction support via Greenfield API
-    - Add Norwegian lang in the available language packs
+    - Set LUNO as the default exchange for ZAR currency
+    - Add a deliveryTime property to webhook deliveries in the API and UI
+    - Add subscriber's metadata to email placeholders
 
   Bug fixes:
-    - It shouldn't be possible to create an invoice when all store users are disabled
-    - Remove CoinGecko and any rate source provided by them
-    - Change the default rate source for LTC conversion from CoinGecko to Kraken
-    - In monetization, it was impossible to recreate a user with email of a previously deleted user
-    - Backend translations would sometimes fail to load during startup
-    - Subs plan checkout always showed 'per month'
-    - Editing a plan subscription set the Currency back to USD
-    - Disable zero amount invoices in PoS doesn't show when Keypad mode is selected
-    - Adding labels payment requests would sometimes not work as expected
-    - PSBT Scan via Camera was not closing the modal dialog when signing a multisig transaction
-    - Selecting some rate source would crash the Stores/Rates page
-
+    - Fix: Deleting webhooks could time out
+    - Fix: Offering and Customer metadata email placeholders couldn't be used
+    - Subscribers with enough credits were receiving payment reminder emails and not being automatically renewed
+    - Fix scan-qrcode icon alignment
+    - Public node info page no longer lists local network IPs
+    - Forms with an optional empty email field can now be submitted
+    - Keypad POS now displays “Any amount” items correctly
+    - CanModifyInvoices permission now includes viewing Lightning invoices for the store
+    - Certain HTTP status codes no longer cause webhooks to be retried
 
   Full release notes can be found at https://github.com/btcpayserver/btcpayserver/releases
 submitter: Umbrel
