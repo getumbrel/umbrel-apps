@@ -1,0 +1,46 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: openclaw_gateway_1
+      APP_PORT: 18789
+
+  gateway:
+    # Custom OpenClaw Docker image for Umbrel
+    # Built from: https://github.com/harmalh/openclaw-umbrel
+    image: ghcr.io/harmalh/openclaw-umbrel:v2026.1.30@sha256:cf1cbe7cdf2cb5a65cb3e873405bf9910a1bfa784f912a6ff22b2d68da8de685
+    user: "1000:1000"
+    
+    environment:
+      # Pass Umbrel's app password as the gateway token
+      # Users can copy this from Umbrel UI to authenticate in Control UI
+      CLAWDBOT_GATEWAY_TOKEN: "${APP_PASSWORD}"
+      
+      # Data directories (must match Dockerfile paths)
+      CLAWDBOT_STATE_DIR: /data/.clawdbot
+      CLAWDBOT_WORKSPACE_DIR: /data/clawd
+      CLAWDBOT_LOG_DIR: /data/logs
+      
+      # Node environment
+      NODE_ENV: production
+      
+      # Home directory (matches Dockerfile user)
+      HOME: /home/node
+    
+    volumes:
+      # Persistent data directory - all OpenClaw state survives container updates
+      - "${APP_DATA_DIR}/data:/data"
+    
+    restart: on-failure
+    
+    # Use init for proper signal handling (PID 1 zombie reaping)
+    init: true
+    
+    # Healthcheck disabled for Umbrel:
+    # - Umbrel's app_proxy service handles health monitoring
+    # - Docker healthchecks can cause lock conflicts with gateway lock files
+    # - The /health endpoint is still available for manual checks via app_proxy
+    
+    # Stop gracefully
+    stop_grace_period: 30s
