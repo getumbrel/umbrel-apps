@@ -1,8 +1,8 @@
-manifestVersion: 1
+manifestVersion: 1.1
 id: snowflake
 category: networking
 name: Tor Snowflake Proxy
-version: "v2.7.0"
+version: "v2.11.0"
 tagline: Help defeat internet censorship
 description: >-
   Snowflake is a system to defeat internet censorship. People who are
@@ -26,43 +26,42 @@ deterministicPassword: false
 torOnly: false
 releaseNotes: >-
   Various bugfixes and enhancements:
-  
-  - fix(proxy): Correctly close connection pipe when dealing with error 
-  
-  - Remove proxy churn measurements from broker.
-  
-  - fix(proxy): remove _potential_ deadlock
-  
-  - Maintain backward compatability with old clients
-  
-  - Randomly select front domain from comma-separated list
-  
-  - Update dependencies
-  
-  - chore(deps): update module github.com/xtaci/kcp-go/v5 to v5.6.3
-  
-  - Remove Golang 1.20 from CI Testing
-  
-  - Update CI targets to test android from golang 1.21
-  
-  - Use ShouldBeNil to check for nil values
-  
-  - chore(deps): update module github.com/smartystreets/goconvey to v1.8.1
+    - Fix data race warnings for tokens_t
+    - Fix race condition in proxy connection count stats
+    - Make NATPolicy thread-safe
+    - Fix race conditions with error scope
+    - Fix race condition with proxy isClosing variable
+    - Issue 40454: Update broker metrics to count matches, denials, and timeouts
+    - Add proxy event and metrics for failed connections
+    - Issue 40377: Create CI artifact if shadow fails
+    - Issue 40438: Copy base client config for each SOCKS connection
+    - Fix minor data race in Snowflake broker metrics
+    - Issue 40363: Process and read broker SQS messages more quickly
+    - Issue 40419: delay before calling dc.Close() to improve NAT test on proxy
+    - Add country stats to proxy prometheus metrics
+    - Issue 40381: Avoid snowflake client dependency in proxy
+    - Issue 40446: Lower broker ClientTimeout to 5 seconds in line with CDN77 defaults
+    - Refactor out utls library into ptutil/utls
+    - Issue 40414: Use /etc/localtime for CI
+    - Issue 40440: Add LE self-signed ISRG Root X1 to cert pool
+    - Proxy refactor to simplify tokens.ret() on error
+    - Clarify ephemeral-ports-range proxy option
+    - Issue 40417: Fixes and updates to CI containers
+    - Issue 40178: Handle unknown client type better
+    - Issue 40304: Update STUN server list
+    - Issue 40210: Remove proxy log when offer is nil
+    - Issue 40413: Log EventOnCurrentNATTypeDetermined for proxy
+    - Use named return for some functions to improve readability
+    - Issue 40271: Use pion SetIPFilter rather than our own StripLocalAddress
+    - Issue 40413: Suppress logs of proxy events by default
+    - Add IsLinkLocalUnicast in IsLocal
+    - Fix comments
+    - Bump versions of dependencies
 
-  - chore(deps): update module gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/goptlib to v1.5.0
 
-  - chore(deps): update module github.com/pion/webrtc/v3 to v3.2.20
-
-  - Update CI targets to include only Go 1.20 and 1.21
-
-  - chore(deps): update module golang.org/x/net to v0.15.0
-
-  - Update module golang.org/x/sys to v0.12.0
-
-  
   Release information: https://gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/snowflake/-/releases
 
 
-  Compare to v2.1.0: https://gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/snowflake/-/compare/v2.4.1...v2.7.0
+  Compare to v2.7.0: https://gitlab.torproject.org/tpo/anti-censorship/pluggable-transports/snowflake/-/compare/v2.7.0...v2.11.0
 submitter: Umbrel
 submission: https://github.com/getumbrel/umbrel/pull/1284

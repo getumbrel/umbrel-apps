@@ -1,3 +1,21 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+### Update index.html for snowflake if it is not up-to-date
+
+APP_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")"
+APP_DATA_DIR="${APP_DIR}/data"
+
+INDEX_HTML_FILE="${APP_DATA_DIR}/index.html"
+
+# We use a marker at the top of the file to identify the canonical index.html for snowflake
+MARKER_REGEX='^<!-- Umbrel Snowflake canonical index.html 24-Jan-2026 -->'
+
+# We check if the index.html file does not exist or if it exists and the marker is not up-to-date
+if [[ ! -f "${INDEX_HTML_FILE}" ]] || ! grep -qx "${MARKER_REGEX}" "${INDEX_HTML_FILE}"; then
+  echo "Updating index.html file for snowflake."
+  # Overwrite the index.html file
+  cat >"${INDEX_HTML_FILE}" <<'EOF'
 <!-- Umbrel Snowflake canonical index.html 24-Jan-2026 -->
 <!doctype html>
 <html>
@@ -163,3 +181,8 @@
     </script>
   </body>
 </html>
+EOF
+
+echo "Updated index.html file for snowflake."
+
+fi
