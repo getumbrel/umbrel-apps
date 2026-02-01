@@ -1,17 +1,30 @@
 version: "3.7"
 
 services:
+  app_proxy:
+    environment:
+      APP_HOST: pogolo_dozzle_1
+      APP_PORT: 5663
+
+  dozzle:
+    image: amir20/dozzle:latest@sha256:2d59d09503f2c947133a4f231fdeb1f4c99e23aa0d4137f81bb1a6318e0e06cf
+    restart: on-failure
+    stop_grace_period: 30s
+    # needs to be root
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      DOZZLE_FILTER: label=logopo
+      DOZZLE_ADDR: :5663
 
   pogolo:
     image: docker.io/0xf0xx0/pogolo:v1.0.0@sha256:aa05acbf32f74d8ace4efa48b54e56f56bcc1254f5331bcb2eca56690d249b77
     restart: on-failure
     user: "1000:1000"
     stop_grace_period: 30s
+    labels:
+      - logopo
     ports:
-      # You do not need to expose the port that your app's web server is listening on if you're using the app_proxy service.
-      # This is handled by the APP_HOST and APP_PORT environment variables in the service above.
-      #
-      # If you need to expose additional ports, you can do so like this, replacing <port> with the port number:
       - 5661:5661 # stratum
       - 5662:5662 # api
     volumes:
@@ -24,8 +37,8 @@ services:
       FORCE_COLOR: 1
 
   widget-server:
-   image: docker.io/0xf0xx0/umbrel-pogolo-widget:v1.0.0@sha256:4355198345deb2b6c7f6f38ad9ef5e91e3fbdc5e13d5465446fe89c968ecf852
-   restart: on-failure
-   user: "1000:1000"
-   environment:
-     POGOLO_API_URL: "http://pogolo_pogolo_1:5662"
+    image: docker.io/0xf0xx0/umbrel-pogolo-widget:v1.0.0@sha256:4355198345deb2b6c7f6f38ad9ef5e91e3fbdc5e13d5465446fe89c968ecf852
+    restart: on-failure
+    user: "1000:1000"
+    environment:
+      POGOLO_API_URL: "http://pogolo_pogolo_1:5662"
