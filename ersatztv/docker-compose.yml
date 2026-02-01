@@ -10,13 +10,11 @@ services:
     image: ghcr.io/ersatztv/ersatztv:v26.1.1@sha256:2a0a8faa0dd07041e7d862c448bd136a2d66df6d831b663205fa34572c6dc260
     restart: on-failure
     user: "1000:1000"
-    ports:
-      - 8409:8409
     volumes:
      # Required: Configuration data (must be writable)
       - ${APP_DATA_DIR}/config:/config
      # Required: media directories - Where your media files are stored. Use :ro at the end of the path to limit container to Read-Only
-      - ${UMBREL_ROOT}/data/storage/videos:/media:ro
+      - ${UMBREL_ROOT}/data/storage/downloads:/media:ro
     # tmpfs is optional but recommended: Limits writing to SSD/disk by using RAM for transcode files. Comment out to disable
     tmpfs:
       - /transcode
