@@ -1,0 +1,17 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: mealie_web_1
+      APP_PORT: 8000
+
+  web:
+    image: git.quad4.io/rns-things/meshchatx:latest@sha256:ca4cfcd17a8d6252b739f046b6a53ef2ce7aad9bdbd60e732bbdc05d61469983
+    restart: on-failure
+    user: "1000:1000"
+    volumes:
+     # - $PWD/storage:/data
+      - ${APP_DATA_DIR}/storage:/data
+    environment:
+      MESHCHAT_NO_HTTPS: "true" # disable https
