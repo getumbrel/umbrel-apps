@@ -2,7 +2,7 @@ manifestVersion: 1
 id: bazarr
 category: media
 name: Bazarr
-version: "1.5.4"
+version: "1.5.5"
 tagline: Manage and download subtitles for Sonarr and Radarr
 description: >-
   Bazarr is a companion application to Sonarr and Radarr that manages and downloads subtitles based on your requirements.
@@ -19,19 +19,20 @@ description: >-
   You will also need to input your API key for Sonarr and/or Radarr. You can find your API keys in the settings of the Sonarr and Radarr apps.
 releaseNotes: >-
   Key improvements in this release include:
-    - Added new jobs management system with notifications drawer to track job status
-    - Improved Plex integration with multiselect for libraries and unique instance identification
-    - Added new subtitle providers (AnimeSub.info for Polish anime, subsource.net)
-    - Enhanced subtitle translation with Lingarr API authentication and improved source language detection
-    - Added emoji removal and Japanese parentheses to HI removal mods
-    - Improved performance of episode synchronization and job scheduling
-    - Fixed issues with WhisperAI audio stream mapping and external subtitle saving
-    - Fixed subtitle format conversion when "use original format" is enabled
-    - Added support for PostgreSQL URL configuration
-    - Fixed various provider issues (Karagarga login, subdl throttling, titrari.ro search)
-    - Improved announcements caching using CDN provider
-    - Added Autopulse external webhook support
-    - Fixed race conditions in jobs manager and improved error handling
+    - Removed OpenSubtitles.org provider and associated functionality
+    - Added Subtis.io subtitles provider
+    - Improved jobs manager to allow concurrent execution with reordering and force starting pending jobs
+    - Fixed path traversal security vulnerability (CVE-2024-40348)
+    - Improved thread safety in jobs manager with added locks and refactored job execution logic
+    - Enhanced release group matching logic for improved accuracy
+    - Added retry logic to NapiProjekt provider for improved resilience
+    - Fixed subtitles uploading formats validation
+    - Improved opensubtitles.com search parameters and added option to allow machine translated subtitles
+    - Fixed episodes synchronization with Sonarr v3
+    - Fixed custom path not taken into account when translating or modding subtitles
+    - Improved subsource to fallback to title search if IMDB returns empty result
+    - Fixed whisperai provider audio stream language mapping
+    - Python 3.13 is now officially supported
 
 
   Full release notes are found at https://github.com/morpheus65535/bazarr/releases
