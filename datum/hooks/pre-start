@@ -10,7 +10,7 @@ if [ -f "${DATUM_CONFIG_FILE}" ]; then
   echo "Checking DATUM configuration file."
   
   # Check if Knots environment variables are set
-  if [ -z "${APP_BITCOIN_KNOTS_RPC_USER}" ] || [ -z "${APP_BITCOIN_KNOTS_RPC_PASS}" ] || [ -z "${APP_BITCOIN_KNOTS_NODE_IP}" ] || [ -z "${APP_BITCOIN_KNOTS_INTERNAL_RPC_PORT}" ]; then
+  if [ -z "${APP_BITCOIN_KNOTS_RPC_USER}" ] || [ -z "${APP_BITCOIN_KNOTS_RPC_PASS}" ] || [ -z "${APP_BITCOIN_KNOTS_NODE_IP}" ] || [ -z "${APP_BITCOIN_KNOTS_RPC_PORT}" ]; then
     echo "Missing Bitcoin Knots environment variables. Exiting."
     exit 1
   fi
@@ -20,7 +20,7 @@ if [ -f "${DATUM_CONFIG_FILE}" ]; then
   # Update the configuration
   jq --arg user "$APP_BITCOIN_KNOTS_RPC_USER" \
      --arg pass "$APP_BITCOIN_KNOTS_RPC_PASS" \
-     --arg url "${APP_BITCOIN_KNOTS_NODE_IP}:${APP_BITCOIN_KNOTS_INTERNAL_RPC_PORT}" \
+     --arg url "${APP_BITCOIN_KNOTS_NODE_IP}:${APP_BITCOIN_KNOTS_RPC_PORT}" \
      '.bitcoind.rpcuser = $user | 
       .bitcoind.rpcpassword = $pass | 
       .bitcoind.rpcurl = $url' \
