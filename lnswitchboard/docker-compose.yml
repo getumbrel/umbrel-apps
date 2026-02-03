@@ -1,0 +1,22 @@
+version: "3.9"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: lnswitchboard_app_1
+      APP_PORT: 22121
+      PROXY_AUTH_WHITELIST: "/.well-known/*"
+
+  app:
+    image: ghcr.io/ryleastark/lnswitchboard:0.1.2@sha256:016759004ebe8aeb3e31c9a6ca7e0c7e99417e12cadb51a25970ff1204ab464c
+    user: "1000:1000"
+    restart: on-failure
+    environment:
+      SERVICE_PORT: 22121
+      LND_HOST: "$APP_LIGHTNING_NODE_IP"
+      LND_GRPC_PORT: "$APP_LIGHTNING_NODE_GRPC_PORT"
+      LND_TLS_PATH: "/lnd/tls.cert"
+      DATA_STORE_PATH: "secrets/lnswitchboard.db"
+    volumes:
+      - ${APP_DATA_DIR}/data/secrets:/app/secrets:rw
+      - ${UMBREL_ROOT}/app-data/lightning/data/lnd:/lnd:ro
