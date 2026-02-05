@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+APP_DATA_DIR="$(readlink -f $(dirname "${BASH_SOURCE[0]}")/..)/data"
+
+# Remove stale docker.pid file that can cause issues after power outages or crashes
+rm -f "${APP_DATA_DIR}/docker/docker.pid"

@@ -1,0 +1,28 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: docuseal_server_1
+      APP_PORT: 3000
+
+  server:
+    image: docuseal/docuseal:2.3.1@sha256:04a473de1f92d4623e87eec5cf95d2aab2d35742ce398f4f514a663cae995ee6
+    user: "1000:1000"
+    depends_on:
+      - db
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      DATABASE_URL: 'postgresql://docusealuser:docusealpass@docuseal_db_1:5432/docuseal?sslmode=disable'
+    volumes:
+      - ${APP_DATA_DIR}/data/app:/data/docuseal
+  
+  db:
+    image: postgres:17.3@sha256:0321e2252ebfeecb8bc1a899755084d29bce872953e1a5a3e25ec0860b739098
+    user: "1000:1000"
+    environment:
+      POSTGRES_DB: docuseal
+      POSTGRES_USER: docusealuser
+      POSTGRES_PASSWORD: docusealpass
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data/db:/var/lib/postgresql/data

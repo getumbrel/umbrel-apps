@@ -1,0 +1,16 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: convertx_server_1
+      APP_PORT: 3000
+
+  server:
+    image: c4illin/convertx:v0.17.0@sha256:e1f85be04bbaf8a55ead9261194c3ae0fa0957d303ea537127154860b2552afd
+    restart: on-failure
+    stop_grace_period: 1m
+    user: "1000:1000"
+    environment:
+      - HTTP_ALLOWED=true
+      - ACCOUNT_REGISTRATION=true
+    volumes:
+      - ${APP_DATA_DIR}/data/app:/app/data

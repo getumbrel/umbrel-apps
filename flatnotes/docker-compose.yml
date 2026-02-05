@@ -1,0 +1,20 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: flatnotes_server_1
+      APP_PORT: 8080
+      PROXY_AUTH_ADD: "false"
+
+  server:
+    image: dullage/flatnotes:v5.5.4@sha256:a509830073d6548d35450a98be3a432716430b674cc70ac93cbbaed1555b5a28
+    environment:
+      PUID: 1000
+      PGID: 1000
+      FLATNOTES_AUTH_TYPE: "password"
+      FLATNOTES_USERNAME: "admin"
+      FLATNOTES_PASSWORD: ${APP_PASSWORD}
+      FLATNOTES_SECRET_KEY: ${APP_SEED}
+    restart: on-failure
+    stop_grace_period: 1m
+    volumes:
+      - ${APP_DATA_DIR}/data:/data

@@ -1,0 +1,96 @@
+manifestVersion: 1
+id: formicaio
+name: Formicaio
+tagline: Run nodes on the Autonomi peer-to-peer (P2P) network
+category: crypto
+version: "0.6.2"
+port: 52100
+description: >-
+  ## Simplify your decentralized experience with Formicaio
+
+  Formicaio is an intuitive application designed to help you run nodes on
+  the [Autonomi](https://autonomi.com) network. This P2P network allows users
+  to share storage and bandwidth in exchange for ANT tokens, an ERC-20 token
+  on the Arbitrum One network.
+
+  The name "Formicaio" is derived from the Italian word for "anthill"
+  symbolizing the collaborative and structured nature of both ants and the
+  decentralized network it supports. Just as ants work together to build and
+  maintain their colonies, Formicaio empowers users to collaborate and contribute
+  to the Autonomi network.
+
+  ## Node management made easy
+
+  With Formicaio, you can easily run and manage nodes using either a graphical
+  user interface (GUI) or a terminal. This flexibility allows you to perform
+  various actions on individual nodes or groups of selected nodes, including:
+  - Creating new nodes
+  - Starting or stopping nodes
+  - Recycling nodes to generate a new peer ID
+  - Removing nodes
+  - Upgrading nodes when a new binary version is available
+  - Viewing individual node logs in real time
+  - Monitoring memory and CPU usage with detailed charts
+  - Sorting nodes by different criteria, such as creation date, status, or number of connected peers
+
+  The Formicaio backend actively monitors your nodes, providing real-time
+  status updates and statistics, including:
+  - Rewards balance for each node
+  - Memory and CPU usage
+  - Number of records stored locally
+  - Current peer connections
+  - Peers in the routing table
+  - Peers that have shunned the node(s)
+  - Estimated total nodes in the network
+
+  ## Customizable monitoring and management
+
+  A settings panel allows you to customize monitoring tasks and node management, including:
+  - Auto-upgrading nodes when a new binary version is available
+  - Delay settings for node upgrades
+  - Frequency of version checks for the node binary
+  - Frequency of token balance queries
+  - Frequency of metrics and node information retrieval
+  - Configuration of the ERC20 token contract address and RPC URL for reward balance queries
+
+  ## Connection types for nodes
+
+  When setting up nodes, you can define their connection type and custom data directory:
+  - UPnP support: Attempts to use UPnP to open a port on your home router for incoming connections. If your router doesn't support UPnP, create nodes with UPnP disabled to ensure connectivity.
+  - Listening IP address: This address determines which network interface the node will bind to for incoming connections. The application supports both IPv4 (e.g., `0.0.0.0`, `127.0.0.1`) and IPv6 (e.g., `::`, `fe80::1`) addresses, allowing users to control whether the node is accessible on all interfaces, only locally, or on a specific network. This flexibility is useful for running nodes in different environments, such as local development, private networks, or public-facing deployments.
+  - Custom data directory: This directory is where the node will store its persistent data, such as chunks, logs, and configuration files. By assigning a unique data directory to each node, or batch of nodes, users can run multiple nodes on the same machine without data conflicts. This option is especially valuable for advanced setups or when running nodes with different hard disks or mounting points.
+widgets:
+  - id: "formicaio-stats"
+    type: "four-stats"
+    refresh: "5s"
+    endpoint: "formicaio_proxy:52100/api/stats_widget"
+    link: ""
+    example:
+      type: "four-stats"
+      link: ""
+      items:
+        - title: "Total balance"
+          text: "1.7181"
+          subtext: ""
+        - title: "Active nodes"
+          text: "15/15"
+          subtext: ""
+        - title: "Stored records"
+          text: "69"
+          subtext: ""
+        - title: "Network size"
+          text: "3897207"
+          subtext: ""
+developer: bochaco
+website: https://github.com/bochaco/formicaio
+submitter: bochaco
+submission: https://github.com/getumbrel/umbrel-apps/pull/1565
+dependencies: []
+repo: https://github.com/bochaco/formicaio
+support: https://github.com/bochaco/formicaio/issues
+gallery:
+  - 1.jpg
+  - 2.jpg
+  - 3.jpg
+releaseNotes: ""
+path: ""
