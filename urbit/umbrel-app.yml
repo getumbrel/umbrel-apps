@@ -35,19 +35,18 @@ torOnly: false
 submitter: ~mopfel-winrux
 submission: https://github.com/getumbrel/umbrel/pull/1246
 releaseNotes: >-
-  vere-v4.x is a major runtime series release with the following highlighted changes:
-    - Introduces a completely rewritten allocator that reduces memory usage, decreases snapshot size, and fixes rare loom corruption issues.
-    - Implements the mars / urth split, a major refactor of vere’s multiprocess architecture.
-    - Adds stateful urwasm jets and declares compatibility with the upcoming 409-k arvo release.
-    - Adds support for the 409 fastboot brass pill, reducing initial ship boot time from minutes to seconds.
-    - Adds support for the 409 spin hint, exposing call stacks for local performance monitoring.
-    - Restores compatibility with 2015-era Intel-based MacBooks and brings back the Windows build.
-    - Fixes multiple allocator, signal handling, sorting, HTTP response, and scry-over-HTTP bugs.
-    - Introduces the %jinx hint for event computation timeouts and the %loop hint to crash on obvious non-terminating loops, extending %memo use cases.
-    - Fixes a regression where shutting down a ship unmounted all desks from the host system (users must remount desks once after upgrading).
+  vere-v4.2 is a runtime release with the following highlighted changes:
+    - Fix rare loom corruption caused by allocator bugs and longstanding signal handling issues.
+    - Fix a regression in the vere 4 sort jet that caused it to behave as an unstable sort in some scenarios.
+    - Fix a buffer overflow when adding bodies to eyre HTTP responses that should not have any (e.g. 204 responses).
+    - Fix various bugs in scry-over-HTTP.
+    - Introduce the %jinx hint to enable event computation timeouts.
+    - Introduce the %loop hint to crash on obvious non-terminating loops, extending the use cases of the %memo hint.
+    - Restore the Windows build.
+    - Fix a regression where shutting down a ship would unmount all desks from the host system.
 
 
-  Note: Ships upgraded to vere-v4.0 or later cannot downgrade to earlier runtime versions.
+  Note: After upgrading, users will need to unmount and mount any desks they want mounted once.
 
 
   Full release notes here: https://github.com/urbit/vere/releases
