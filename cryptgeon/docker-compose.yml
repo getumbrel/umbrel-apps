@@ -1,0 +1,21 @@
+version: "3.7"
+services:
+  app_proxy:
+    environment:
+      APP_HOST: cryptgeon_web_1
+      APP_PORT: "8000"
+      PROXY_AUTH_ADD: "false"
+
+  redis:
+    image: redis:7.0-alpine@sha256:c9d92d840fd011c908f040592857c724ae6d877f2aba5c40ad963276507386b2
+    restart: on-failure
+    tmpfs:
+      - /data
+  web:
+    image: cupcakearmy/cryptgeon:2@sha256:9d52b458855e14384460be37b735e7e6e661a42fc77d2b29654a682da9bdf1d0
+    depends_on:
+      - redis
+    restart: on-failure
+    environment:
+      # Size limit for a single note.
+      SIZE_LIMIT: 20 MiB
