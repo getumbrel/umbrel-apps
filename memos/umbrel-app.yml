@@ -2,7 +2,7 @@ manifestVersion: 1
 id: memos
 category: files
 name: Memos
-version: "0.26.0"
+version: "0.26.1"
 tagline: Easily capture and share your great thoughts
 description: >-
   A privacy-first, lightweight note-taking service.
@@ -18,26 +18,21 @@ description: >-
 
   - RESTful API for third-party services. Embrace the power of integration and unleash new possibilities with our RESTful API support.
 releaseNotes: >-
-  This release brings major new features and improvements:
-    - Enhanced authentication security with refresh token rotation and sliding window session expiration
-    - Streaming support for video and audio files to prevent memory issues
-    - Automatic EXIF metadata stripping from uploaded images for better privacy
-    - New memo map view in user profiles to visualize memo locations
-    - HDR image and video support
-    - New midnight theme option
-    - Focus Mode for distraction-free writing
-    - Improved markdown rendering following CommonMark and GFM specifications
-    - Better attachment handling with MIME type validation
-    - Ability to delete unused attachments to save storage space
-
-
-  Bug fixes and improvements:
-    - Fixed math rendering issues
-    - Improved editor auto-scroll and Safari IME handling
-    - Fixed calendar header month parsing
-    - Better text contrast in default dark mode
-    - Fixed todo command functionality
-    - Improved access control checks for attachments, comments, and reactions
+  This release includes important bug fixes and improvements:
+    - Fixed inbox crashes when handling deleted memos
+    - Corrected environment variable parsing for variables containing underscores
+    - Fixed video attachment handling
+    - Prevented 401 errors on window focus when access token expires
+    - Fixed shortcut edit button to open edit dialog instead of create
+    - Blocked Ctrl+Enter from saving while editor is still loading content
+    - Fixed nested task list rendering and checkbox interactions
+    - Made OAuth PKCE optional during sign-in
+    - Prevented private memos from disappearing during token refresh
+    - Added Unicode case-insensitive search support for SQLite
+    - Corrected handling of pasted files in the memo editor
+    - Restored access token creation flow
+    - Preserved tag case when extracting Markdown tags
+    - Auto-fixed permission issues when upgrading from 0.25.3 to 0.26.0
 
 
   Full release notes are available at https://github.com/usememos/memos/releases
