@@ -1,0 +1,13 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: opencode_app_1
+      APP_PORT: 4096
+
+  app:
+    image: ghcr.io/besoeasy/opencode:20260210@sha256:5e0b8ee369132eee2c637051c6a1654545d54b445a3f8142075f661173dfaabe
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data/opencode:/root/.opencode
