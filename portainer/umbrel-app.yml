@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: portainer
 category: developer
 name: Portainer
-version: "2.33.6-1"
+version: "2.33.7"
 tagline: Run custom Docker containers on your Umbrel
 description: >-
   ⚠️ Make sure to only use named Docker volumes for your stacks and containers. Data in bind-mounted volumes
@@ -51,7 +51,22 @@ path: ""
 defaultUsername: "admin"
 defaultPassword: "changeme"
 releaseNotes: >-
-  This update fixes an issue where the Docker daemon would not start after a power outage or crash.
+  ⚠️ Make sure to only use named Docker volumes for your stacks and containers. Data in bind-mounted volumes
+  will be lost when the Portainer app is restarted or updated.
+
+
+  ⚠️ Watch out for port conflicts between your custom Docker containers and your umbrelOS apps.
+
+
+  This update includes several improvements and fixes:
+    - Fixed an issue where clicking the Update stack button would do nothing
+    - Fixed an issue that would cause the Containers page to not load
+    - Fixed an error when updating Edge Stacks
+    - Fixed a panic in Edge Group creation
+    - Fixed a deadlock in the auto onboarding
+    - Fixed a problem in Edge Stacks and GitOps when the entry file name was not at the repository root
+    - Upgraded compose to v2.40.3 to fix a nil pointer error
+    - Resolved multiple security vulnerabilities
 
 
   Full release notes are found at https://github.com/portainer/portainer/releases.
