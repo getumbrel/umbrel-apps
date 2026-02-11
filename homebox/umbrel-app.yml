@@ -3,7 +3,7 @@ id: homebox
 name: HomeBox
 tagline: An inventory and organization system built for the home user
 category: files
-version: "0.21.0"
+version: "0.23.1"
 port: 7745
 description: >-
   Homebox is an inventory and organization system built for the home user! With a focus on simplicity and ease of use, Homebox is the perfect solution for your home inventory, organization, and management needs. 
@@ -24,19 +24,30 @@ torOnly: false
 defaultUsername: ""
 defaultPassword: ""
 releaseNotes: >-
-  ⚠️ It is highly recommended to keep backups of your database and stored attachments for this update.
+  ⚠️ It is highly recommended to keep backups of your database and stored attachments before updating.
 
 
-  Key improvements and changes:
-    - Added product fetching using barcodes
-    - Support for listening on unix sockets and systemd sockets
-    - Added plugin to set image sizes in Markdown
-    - Support for postgres certificate authentication
-    - Created hardened docker image (experimental)
-    - Fixed Windows paths
-    - Fixed photo display issue when adding additional attachments to items
-    - Improved search functionality
-    - Various bug fixes and performance improvements
+  ⚠️ You cannot revert back to a previous version of Homebox after upgrading to this release due to database schema changes. Always ensure that you have functioning backups before upgrading.
+
+
+  Major new features in this release:
+    - Collections: Users can now be part of multiple collections, each entirely separate and unique
+    - User Management: Basic user management capabilities added for collections
+    - Authentication Rate Limiting: New rate limiting middleware to help secure against brute force attacks
+    - Better Memory Management: Improved attachment upload handling and CSV import optimization
+    - MQTT Client: Now available in regular and rootless Docker containers
+    - Label Generator: Option to hide "Homebox" text on labels
+    - Wipe Inventory: New action to clear inventory data with demo mode protection
+    - Tags: Labels have been converted to tags for better organization
+
+
+  Bug fixes in this release:
+    - Fixed attachments not appearing
+    - Fixed QR codes missing URL portion
+    - Fixed tag dropdown not closing
+    - Fixed version link in bottom of page
+    - Fixed password change modal issue
+    - Fixed search query from navbar search
 
 
   Full release notes can be found at https://github.com/sysadminsmedia/homebox/releases
