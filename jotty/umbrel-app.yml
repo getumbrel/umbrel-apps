@@ -2,7 +2,7 @@ manifestVersion: 1
 id: jotty
 category: files
 name: Jotty
-version: "1.19.1"
+version: "1.20.0"
 tagline: A simple app, for your checklists and notes
 description: >-
   Tired of bloated, cloud-based to-do apps? Jotty is a lightweight alternative for managing your personal checklists and notes.
@@ -24,36 +24,40 @@ port: 8345
 submitter: Kanishk Pachauri
 submission: https://github.com/getumbrel/umbrel-apps/pull/3961
 releaseNotes: >-
-  This release patches an important security issue with exports functionality and includes the major tags feature from version 1.19.0.
-
-
-  Security fix:
-    - Fixed exports functionality to properly authenticate and prevent users from accessing other users' content
+  This release upgrades Jotty to Next.js 16 and introduces offline caching for PWA users, along with live updates across devices.
 
 
   New features:
-    - Tags support with sidebar organization and nested subtags
-    - Tags can be fully disabled from admin settings if you prefer simplicity
-    - Hovering on tags shows all notes using that tag
-    - Clone notes/checklists to different categories via modal
-    - Copy raw markdown to clipboard from note menu
-    - Clicking category/tag names on homepage filters content
+    - Offline caching for PWA in read-only mode - visited pages stay cached for 30 days
+    - Live updates across screens when content changes (excluding the editor)
+    - Connection indicator dot on logo to show websocket status
+    - Ruler in markdown editor to set visual breaking points for line size
+    - Swipe gestures on mobile to navigate between notes
+    - Improved sidebar open/close gesture on mobile
+    - Public URLs now use UUID instead of category/name for better security
+    - New list items now appear at the top of todo lists
 
 
   Improvements:
-    - Reduced checklist item size on mobile for better screen usage
-    - Table controls now appear above highlighted cells
-    - Better PDF view and print functionality
-    - Support for Zig syntax in code blocks
+    - Significant performance optimizations for instances with many files
+    - Sidebar now uses metadata only instead of full note content
+    - Search by UUID is now almost instantaneous
+    - Markdown editor settings persist across notes in your session
 
 
   Bug fixes:
-    - Fixed note cards scrolling issue on homepage
-    - Fixed embedded images disappearing when first element in note
-    - Fixed bulk checklist creation and item deletion for read-only users
-    - Fixed permission issues when sharing to non-admin users
-    - Fixed sidebar scrolling and history move actions
-    - Fixed code highlighting in lists
+    - Fixed sidebar state and flickering when navigating back from notes
+    - Fixed circular loop crash when users share notes with each other
+    - Fixed visual bug on long checklist items with no spaces
+    - Fixed table of contents scroll behavior
+    - Fixed quick note creation to prioritize current category
+    - Fixed inconsistent behavior when deleting shared notes
+
+
+  Security updates:
+    - Fixed HTTP request deserialization DoS vulnerability in Next.js
+    - Fixed DoS vulnerability via Image Optimizer in self-hosted applications
+    - Fixed uncontrolled resource consumption issue
 
 
   Full release notes are found at https://github.com/fccview/jotty/releases
