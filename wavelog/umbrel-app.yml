@@ -1,7 +1,7 @@
 manifestVersion: 1.1
 id: wavelog
 name: Wavelog
-version: "2.2.2"
+version: "2.3"
 tagline: "Amateur radio logging software"
 description: >-
   ⚠️ See below for important set-up instructions.
@@ -35,20 +35,22 @@ dependencies: []
 submitter: LU5JPL
 submission: https://github.com/getumbrel/umbrel-apps/pull/3323
 releaseNotes: >-
-  ⚠️ This version includes critical security fixes. It is strongly recommended to update to this version immediately.
+  This is the 2nd anniversary release with significant performance improvements and new features.
 
 
   Key highlights include:
-    - Fixed several dangerous security issues to prevent SQL injection attacks
-    - Introduced DBTools in the Advanced Logbook for checking and correcting continent, DXCC, CQ zone, ITU zone, distances, state, and gridsquares
-    - Added options for duplicate search in the Advanced Logbook
-    - Added monthly statistics to the Analytics page
-    - Added squelch feature for the DXWaterfall to hide artificial noise
-    - Improved DXCC identifier for certain callsigns
-    - Added feature for operators to pull station location to the first QSO tab
-    - Refactored eQSL image download and gallery view for better performance
-    - Fixed bug where manually entered frequency wasn't saved during contest sessions without CAT
-    - Implemented callbook lookup failover logic
+    - Completely refactored DXCC lookup for faster and more reliable identification
+    - Session handling now uses HMAC SHA256 instead of bcrypt for significantly faster performance
+    - New caching system supporting Redis, Memcached, and APCu in addition to file-based caching
+    - Added automatic garbage collector for expired cache files
+    - Enhanced Advanced Logbook with improved column and map options, sort order controls, and batch editing capabilities
+    - Added silent hybrid websocket connection for third-party tools
+    - Improved satellite handling, especially for satellites not yet supported by LoTW
+    - Added callsign filter in the gridsquare map
+    - Fixed various issues with LoTW certificate uploads and password-protected certificates
+    - Added rate limiting for APIs
+    - Improved Clublog interface
+    - Various performance optimizations for QSO saving, dashboard, and logbook overview
 
 
   Full release notes can be found at https://github.com/wavelog/wavelog/releases
