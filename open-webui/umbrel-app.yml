@@ -3,7 +3,7 @@ id: open-webui
 name: Open WebUI
 tagline: Chat with Ollama models like DeepSeek-R1 and LLama, or use an OpenAI API key
 category: ai
-version: "0.7.2"
+version: "0.8.0"
 port: 2876
 description: >-
   Open WebUI lets you chat with advanced AI models running locally on your own device or connect to online models using an API key.
@@ -37,18 +37,22 @@ defaultPassword: ""
 dependencies:
   - ollama
 releaseNotes: >-
-  This release includes important improvements and bug fixes:
-    - Native function calling with built-in tools allows models to perform multi-step tasks combining web research, knowledge base queries, note-taking, and image generation in a single conversation
-    - Models can now search through your notes, past chats, and channel messages to find relevant context
-    - Models can search knowledge bases and retrieve documents without manual file attachment
-    - Web search results now appear as clickable citations in real-time for source verification
-    - Significantly improved performance across the entire application through reengineered database connection handling
-    - Faster page loads through dynamic loading of document processing libraries
-    - Users can now click citation links to jump directly to relevant portions of source documents with automatic text highlighting
-    - Enhanced security with backend permission checks for Image Generation, Web Search, Audio APIs, and Tools
-    - Fixed database connection timeouts under high concurrency
-    - Resolved issues with workspace prompts creation and saving
-    - Fixed local Whisper speech-to-text functionality when STT_ENGINE is left empty
+  ⚠️ This release includes database changes that require adequate downtime for migration, especially for larger deployments with extensive chat histories. Make sure you have a backup before updating.
+
+
+  Key highlights in this release include:
+    - Analytics dashboard showing model usage statistics, token consumption, and user activity rankings for administrators
+    - Experimental support for Skills - reusable AI skills with detailed instructions that can be referenced in chats or attached to models
+    - Message queuing allows you to continue typing while a response is generating, with messages automatically sent when complete
+    - Prompt version control with full history tracking, allowing you to view past versions and roll back changes
+    - Shared chats and file management from Settings, providing centralized control over your content
+    - Significantly improved performance with faster authentication, chat completions, model loading, and search operations
+    - Enhanced access control with per-user resource sharing alongside existing per-group sharing
+    - Fixed database connection pool exhaustion and timeout errors during concurrent usage
+    - Fixed LDAP authentication hang when logging in with non-existent accounts
+    - Fixed knowledge base file uploads and reindexing issues
+    - Fixed MCP tools reliability after regression in previous version
+    - Fixed code execution with markdown fences and ANSI color codes
 
 
   Full release notes are found at https://github.com/open-webui/open-webui/releases
