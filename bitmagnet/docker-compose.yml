@@ -1,0 +1,53 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: bitmagnet_bitmagnet_1
+      APP_PORT: 3333
+
+  bitmagnet:
+    image: ghcr.io/bitmagnet-io/bitmagnet:v0.10.0@sha256:cf2c16fac5b51f1c18e630b4710175d35d7e44b83012cfd05a2b43712feec05e
+    restart: on-failure
+    stop_grace_period: 1m
+    ports:
+      - "3336:3334/tcp"
+      - "3336:3334/udp"
+    user: "1000:1000"
+    environment:
+      HOME: /tmp
+      XDG_CONFIG_HOME: /config
+      POSTGRES_HOST: bitmagnet_postgres_1
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${APP_PASSWORD}
+      POSTGRES_NAME: bitmagnet
+    volumes:
+      - ${APP_DATA_DIR}/data/config:/config/bitmagnet
+    command:
+      - worker
+      - run
+      - --keys=http_server
+      - --keys=queue_server
+      - --keys=dht_crawler
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:16-alpine@sha256:23e88eb049fd5d54894d70100df61d38a49ed97909263f79d4ff4c30a5d5fca2
+    restart: on-failure
+    user: "1000:1000"
+    environment:
+      POSTGRES_PASSWORD: ${APP_PASSWORD}
+      POSTGRES_DB: bitmagnet
+      POSTGRES_USER: postgres
+      PGUSER: postgres
+    shm_size: 1g
+    volumes:
+      - ${APP_DATA_DIR}/data/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready
+      start_period: 20s
+      interval: 10s
