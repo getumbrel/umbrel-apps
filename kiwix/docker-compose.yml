@@ -1,0 +1,16 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: kiwix_web_1
+      APP_PORT: 8080
+
+  web:
+    image: ghcr.io/kiwix/kiwix-serve:3.8.1@sha256:9dbbc25fb8a4e9daa01aa5f8305220acd745ef46ebaf24044659405c26d2a07a
+    user: "1000:1000"
+    restart: on-failure
+    volumes:
+      - ${UMBREL_ROOT}/data/storage/downloads:/data
+    command: >
+      /data/*.zim -k
