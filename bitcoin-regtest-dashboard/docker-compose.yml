@@ -1,0 +1,89 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: bitcoin-regtest-dashboard_dashboard_1
+      APP_PORT: 3000
+
+  # Bitcoin Core in regtest mode (self-contained, no dependencies)
+  bitcoin:
+    image: ghcr.io/getumbrel/docker-bitcoind:v30.0@sha256:f5826a32aed9287cc5ffdec0996f5272634c4b346529cb8627224986ff555101
+    user: "1000:1000"
+    restart: on-failure
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        rm -f /data/.bitcoin/regtest/.ready
+        bitcoind -regtest \
+          -server=1 \
+          -rpcbind=0.0.0.0 \
+          -rpcallowip=0.0.0.0/0 \
+          -rpcport=18443 \
+          -txindex=1 \
+          -fallbackfee=0.00001 \
+          -disablewallet=0 \
+          -zmqpubrawblock=tcp://0.0.0.0:28332 \
+          -zmqpubrawtx=tcp://0.0.0.0:28333 &
+        BITCOIND_PID=$$!
+        while [ ! -f /data/.bitcoin/regtest/.cookie ]; do sleep 1; done
+        chmod 755 /data/.bitcoin/regtest
+        chmod 644 /data/.bitcoin/regtest/.cookie
+        sleep 2
+        bitcoin-cli -regtest -rpccookiefile=/data/.bitcoin/regtest/.cookie createwallet "regtest_wallet" 2>/dev/null || \
+          bitcoin-cli -regtest -rpccookiefile=/data/.bitcoin/regtest/.cookie loadwallet "regtest_wallet" 2>/dev/null || true
+        bitcoin-cli -regtest -rpccookiefile=/data/.bitcoin/regtest/.cookie -rpcwallet=regtest_wallet -generate 1 >/dev/null 2>&1 || true
+        touch /data/.bitcoin/regtest/.ready
+        while kill -0 $$BITCOIND_PID 2>/dev/null; do
+          chmod 755 /data/.bitcoin/regtest 2>/dev/null
+          chmod 644 /data/.bitcoin/regtest/.cookie 2>/dev/null
+          sleep 5
+        done &
+        wait $$BITCOIND_PID
+    volumes:
+      - ${APP_DATA_DIR}/data/bitcoin:/data/.bitcoin
+    healthcheck:
+      test: ["CMD-SHELL", "test -f /data/.bitcoin/regtest/.ready && chmod 644 /data/.bitcoin/regtest/.cookie && bitcoin-cli -regtest -rpccookiefile=/data/.bitcoin/regtest/.cookie getblockchaininfo"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  # Electrs - Electrum Server implementation
+  electrs:
+    image: getumbrel/electrs:v0.11.0@sha256:0a2c6f573abfd8d724651c6ba1c1f3a9c740219c1cf0f4468043c3342170d8a5
+    user: "1000:1000"
+    restart: on-failure
+    ports:
+      - "60401:50001"
+    environment:
+      ELECTRS_ELECTRUM_RPC_ADDR: "0.0.0.0:50001"
+      ELECTRS_DAEMON_RPC_ADDR: "bitcoin-regtest-dashboard_bitcoin_1:18443"
+      ELECTRS_DAEMON_P2P_ADDR: "bitcoin-regtest-dashboard_bitcoin_1:18444"
+      ELECTRS_LOG_FILTERS: "INFO"
+      ELECTRS_NETWORK: "regtest"
+    volumes:
+      - ${APP_DATA_DIR}/data/electrs:/data
+      - ${APP_DATA_DIR}/data/bitcoin:/data/.bitcoin:ro
+    depends_on:
+      bitcoin:
+        condition: service_healthy
+
+  # Bitcoin Regtest Dashboard
+  dashboard:
+    image: coreylphillips/bitcoin-regtest-dashboard:v1.0.2@sha256:2e485c790163fd13347a692e685cb753ff178d571651dd7eea7c9a91e8fc0817
+    user: "1000:1000"
+    restart: on-failure
+    environment:
+      PORT: 3000
+      BITCOIN_RPC_HOST: bitcoin-regtest-dashboard_bitcoin_1
+      BITCOIN_RPC_PORT: 18443
+      BITCOIN_COOKIE_FILE: /bitcoin/.bitcoin/regtest/.cookie
+      ELECTRS_HOST: bitcoin-regtest-dashboard_electrs_1
+      ELECTRS_PORT: 50001
+      ELECTRS_EXTERNAL_PORT: 60401
+    volumes:
+      - ${APP_DATA_DIR}/data/bitcoin:/bitcoin/.bitcoin:ro
+    depends_on:
+      bitcoin:
+        condition: service_healthy
