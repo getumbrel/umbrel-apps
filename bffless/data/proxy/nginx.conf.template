@@ -1,0 +1,221 @@
+# Bffless Nginx Configuration for Umbrel
+#
+# This template is processed by envsubst at container startup.
+# ${PRIMARY_DOMAIN} is read from /app/config/domain.txt
+#
+# Server blocks:
+# 1. Internal access (umbrel.local, localhost) - shows CF Tunnel setup instructions
+# 2. Admin panel (admin.${PRIMARY_DOMAIN}) - serves the React admin dashboard
+# 3. Primary domain (${PRIMARY_DOMAIN}, www.${PRIMARY_DOMAIN}) - welcome page when content not configured
+# 4. Wildcard subdomains (*.${PRIMARY_DOMAIN}) - proxies to backend for subdomain content (default_server)
+
+# Define $block_scanner variable (required by generated configs in sites-enabled)
+# Set to 0 to disable scanner blocking - Cloudflare handles this at the edge
+map $request_uri $block_scanner {
+    default 0;
+}
+
+# ============================================================================
+# Server 1: Internal Access - Show Cloudflare Tunnel Setup Instructions
+# ============================================================================
+server {
+    listen 5537;
+    server_name umbrel.local localhost;
+
+    root /usr/share/nginx/html/setup;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}
+
+# ============================================================================
+# Server 2: Admin Panel - Serve React Dashboard
+# ============================================================================
+server {
+    listen 5537;
+    server_name admin.${PRIMARY_DOMAIN};
+
+    root /usr/share/nginx/html/app;
+    index index.html;
+
+    # Allow large file uploads
+    client_max_body_size 100M;
+
+    # Increase proxy buffer size for large headers (SuperTokens cookies)
+    proxy_buffer_size 128k;
+    proxy_buffers 4 256k;
+    proxy_busy_buffers_size 256k;
+
+    # Gzip compression
+    gzip on;
+    gzip_vary on;
+    gzip_min_length 1024;
+    gzip_types text/plain text/css text/xml text/javascript application/x-javascript application/xml+rss application/json application/javascript;
+
+    # Security headers
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+
+    # Proxy API requests to backend
+    location /api {
+        proxy_pass http://backend:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_cache_bypass $http_upgrade;
+
+        # Default timeouts for API requests
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 60s;
+        proxy_read_timeout 60s;
+    }
+
+    # SSL certificate verification - needs longer timeout for ACME challenges
+    location /api/domains/ssl {
+        proxy_pass http://backend:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_cache_bypass $http_upgrade;
+
+        # Extended timeouts for ACME certificate verification (can take 2-3 minutes)
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 300s;
+        proxy_read_timeout 300s;
+    }
+
+    # Proxy auth requests to backend
+    location /auth {
+        proxy_pass http://backend:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+
+    # Proxy public content requests to backend (for iframe previews)
+    location /public {
+        proxy_pass http://backend:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_cache_bypass $http_upgrade;
+
+        # Extended timeouts for large file downloads
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 300s;
+        proxy_read_timeout 300s;
+
+        # Disable buffering for large file downloads to prevent HTTP/2 protocol errors
+        proxy_buffering off;
+        proxy_request_buffering off;
+
+        # Allow large file downloads (same as upload limit)
+        proxy_max_temp_file_size 0;
+    }
+
+    # React Router - serve index.html for all routes (SPA fallback)
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # Cache static assets (excluding API/auth/public paths)
+    location ~* ^/(?!api/|auth/|public/).*\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+}
+
+# ============================================================================
+# Server 3: Wildcard Subdomains - Proxy to Backend for Subdomain Content
+# ============================================================================
+# Routes all *.${PRIMARY_DOMAIN} subdomains to backend for alias resolution
+# This enables preview via auto-generated subdomain aliases
+server {
+    listen 5537 default_server;
+    server_name *.${PRIMARY_DOMAIN};
+
+    # Allow large file uploads
+    client_max_body_size 100M;
+
+    # Increase proxy buffer size for large headers
+    proxy_buffer_size 128k;
+    proxy_buffers 4 256k;
+    proxy_busy_buffers_size 256k;
+
+    # Gzip compression
+    gzip on;
+    gzip_vary on;
+    gzip_min_length 1024;
+    gzip_types text/plain text/css text/xml text/javascript application/x-javascript application/xml+rss application/json application/javascript;
+
+    # Security headers
+    # Use CSP frame-ancestors to allow cross-subdomain iframing from admin panel
+    add_header Content-Security-Policy "frame-ancestors 'self' https://*.${PRIMARY_DOMAIN} https://${PRIMARY_DOMAIN}" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+
+    # Extract subdomain from host header
+    # e.g., ca996e-wsaopens-a7f3-7d2f.example.com -> ca996e-wsaopens-a7f3-7d2f
+    set $subdomain "";
+    if ($host ~ "^([^.]+)\.") {
+        set $subdomain $1;
+    }
+
+    # Route all requests to backend subdomain-alias endpoint
+    location / {
+        rewrite ^/(.*)$ /public/subdomain-alias/$subdomain/$1 break;
+
+        proxy_pass http://backend:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_set_header X-Original-URI $request_uri;
+
+        # Don't intercept errors - let backend's styled 404 page pass through
+        proxy_intercept_errors off;
+
+        # Extended timeouts for large file downloads
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 300s;
+        proxy_read_timeout 300s;
+
+        # Disable buffering for large file downloads
+        proxy_buffering off;
+        proxy_request_buffering off;
+        proxy_max_temp_file_size 0;
+    }
+}
+
+# ============================================================================
+# Include custom domain configs written by backend
+# ============================================================================
+# The backend's NginxConfigService writes server blocks for custom domains
+# to /etc/nginx/sites-enabled/. These configs handle domain-specific routing.
+include /etc/nginx/sites-enabled/*.conf;

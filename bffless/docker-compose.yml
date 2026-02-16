@@ -1,0 +1,182 @@
+services:
+  # Umbrel app proxy - routes external traffic to our nginx
+  app_proxy:
+    environment:
+      APP_HOST: nginx
+      APP_PORT: 5537
+      PROXY_AUTH_ADD: "false"
+
+  # Nginx reverse proxy - serves frontend, routes API calls
+  nginx:
+    image: nginx:1.27-alpine
+    restart: on-failure
+    stop_grace_period: 30s
+    entrypoint: ["sh", "-c"]
+    command:
+      - |
+        echo "🚀 Starting nginx..."
+        apk add --no-cache inotify-tools >/dev/null 2>&1
+        mkdir -p /etc/nginx/sites-enabled
+
+        # Read PRIMARY_DOMAIN from config file if it exists
+        DOMAIN_FILE="/app/config/domain.txt"
+        if [ -f "$$DOMAIN_FILE" ]; then
+          export PRIMARY_DOMAIN=$$(cat "$$DOMAIN_FILE" | tr -d '[:space:]')
+          echo "📍 Domain configured: $$PRIMARY_DOMAIN"
+        else
+          export PRIMARY_DOMAIN="localhost"
+          echo "📍 No domain configured - using localhost"
+        fi
+
+        # Generate nginx config from template using envsubst
+        echo "📝 Generating nginx config for domain: $$PRIMARY_DOMAIN"
+        envsubst '$$PRIMARY_DOMAIN' < /etc/nginx/nginx.conf.template > /etc/nginx/conf.d/default.conf
+
+        # Validate config
+        if ! nginx -t 2>&1; then
+          echo "❌ Nginx config validation failed!"
+          exit 1
+        fi
+        echo "✅ Nginx config generated successfully"
+
+        # Config watcher - reloads nginx when backend writes new domain configs
+        (while true; do
+          inotifywait -e create,modify,delete -q /etc/nginx/sites-enabled/ 2>/dev/null
+          sleep 1
+          if nginx -t 2>&1 | grep -q "successful"; then
+            nginx -s reload
+            echo "🔄 Nginx reloaded at $$(date)"
+          fi
+          sleep 2
+        done) &
+        exec nginx -g "daemon off;"
+    volumes:
+      - ${APP_DATA_DIR}/data/proxy/nginx.conf.template:/etc/nginx/nginx.conf.template:ro
+      - ${APP_DATA_DIR}/data/config:/app/config:ro
+      - ${APP_DATA_DIR}/data/setup:/usr/share/nginx/html/setup:ro
+      - frontend-dist:/usr/share/nginx/html/app:ro
+      - nginx-sites:/etc/nginx/sites-enabled
+    depends_on:
+      - backend
+      - frontend
+
+  # PostgreSQL database
+  postgres:
+    image: postgres:17-alpine
+    restart: on-failure
+    stop_grace_period: 30s
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: staticfilesgobrrrr
+      POSTGRES_DB: assethost
+    volumes:
+      - ${APP_DATA_DIR}/data/postgres:/var/lib/postgresql/data
+      - ${APP_DATA_DIR}/data/db/init-databases.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    command: >
+      postgres
+      -c shared_buffers=64MB
+      -c effective_cache_size=128MB
+      -c work_mem=4MB
+      -c maintenance_work_mem=32MB
+      -c max_connections=20
+      -c wal_buffers=4MB
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # SuperTokens authentication service
+  supertokens:
+    image: registry.supertokens.io/supertokens/supertokens-postgresql:9.3
+    restart: on-failure
+    stop_grace_period: 30s
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # Use individual params instead of connection URI (more reliable)
+      POSTGRESQL_HOST: postgres
+      POSTGRESQL_PORT: "5432"
+      POSTGRESQL_USER: postgres
+      POSTGRESQL_PASSWORD: staticfilesgobrrrr
+      POSTGRESQL_DATABASE_NAME: supertokens
+      # Increased memory for JVM startup on ARM64
+      JAVA_OPTS: "-Xmx192m -Xms96m -XX:+UseSerialGC -XX:MaxMetaspaceSize=64m"
+      POSTGRESQL_CONNECTION_POOL_SIZE: "3"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3567/hello"]
+      interval: 15s
+      timeout: 10s
+      retries: 8
+      start_period: 45s
+
+  # NestJS backend API
+  backend:
+    image: ghcr.io/bffless/ce-backend:umbrel@sha256:dd66f4735bfae146ad114428b0d5a9ca53cb551a05d3d5ef57bf815cf63bc7ba
+    restart: on-failure
+    stop_grace_period: 30s
+    entrypoint: /app/umbrel-entrypoint.sh
+    depends_on:
+      postgres:
+        condition: service_healthy
+      supertokens:
+        condition: service_healthy
+    environment:
+      NODE_OPTIONS: "--max-old-space-size=128"
+      NODE_ENV: production
+      PORT: "3000"
+      LOG_LEVEL: "error,warn,log"
+      # Umbrel provides APP_SEED - entrypoint derives ENCRYPTION_KEY, JWT_SECRET, API_KEY_SALT
+      APP_SEED: ${APP_SEED:-}
+      APP_DATA_DIR: ${APP_DATA_DIR:-/data}
+      # Database
+      DATABASE_URL: postgresql://postgres:staticfilesgobrrrr@postgres:5432/assethost
+      # Storage - local filesystem (no MinIO)
+      STORAGE_TYPE: local
+      ENABLE_MINIO: "false"
+      # Cache - in-memory (no Redis)
+      CACHE_TYPE: memory
+      ENABLE_REDIS: "false"
+      # SuperTokens
+      SUPERTOKENS_MODE: local
+      SUPERTOKENS_CONNECTION_URI: http://supertokens:3567
+      SUPERTOKENS_API_KEY: ""
+      # Default URLs - overridden by entrypoint if domain.txt exists
+      PRIMARY_DOMAIN: localhost
+      FRONTEND_URL: http://localhost:5537
+      API_DOMAIN: http://localhost:5537
+      ADMIN_DOMAIN: localhost
+      # Cookie settings - overridden by entrypoint for real domains
+      COOKIE_SECURE: "false"
+      COOKIE_DOMAIN: "umbrel.local"
+      # Nginx config
+      NGINX_SITES_PATH: /etc/nginx/sites-enabled
+      NGINX_RELOAD_WAIT_MS: "3000"
+      NGINX_LISTEN_PORT: "5537"
+      BACKEND_HOST: backend
+      # SSL is handled by Cloudflare Tunnel - nginx generates non-SSL configs
+      PROXY_MODE: "cloudflare-tunnel"
+      # Feature flags (UI-related)
+      FEATURE_WILDCARD_SSL: "false"
+      FEATURE_WILDCARD_SSL_BANNER: "false"
+      FEATURE_DOMAIN_SSL_TOGGLE: "false"
+    volumes:
+      - ${APP_DATA_DIR}/data/uploads:/app/apps/backend/uploads
+      - ${APP_DATA_DIR}/data/entrypoint/umbrel-entrypoint.sh:/app/umbrel-entrypoint.sh:ro
+      - ${APP_DATA_DIR}/data/config:/app/config:ro
+      - nginx-sites:/etc/nginx/sites-enabled
+
+  # React frontend (serves static files)
+  frontend:
+    image: ghcr.io/bffless/ce-frontend:umbrel@sha256:7f228aaac94dbbe9845797270652267cea6ac05956e5be35f773867274525933
+    restart: on-failure
+    stop_grace_period: 30s
+    volumes:
+      - frontend-dist:/app/dist
+    depends_on:
+      - backend
+
+volumes:
+  frontend-dist:
+  nginx-sites:
