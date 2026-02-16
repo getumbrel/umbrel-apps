@@ -2,13 +2,13 @@ services:
   # Umbrel app proxy - routes external traffic to our nginx
   app_proxy:
     environment:
-      APP_HOST: nginx
+      APP_HOST: bffless_nginx_1
       APP_PORT: 5537
       PROXY_AUTH_ADD: "false"
 
   # Nginx reverse proxy - serves frontend, routes API calls
   nginx:
-    image: nginx:1.27-alpine
+    image: nginx:1.27-alpine@sha256:62223d644fa234c3a1cc785ee14242ec47a77364226f1c811d2f669f96dc2ac8
     restart: on-failure
     stop_grace_period: 30s
     entrypoint: ["sh", "-c"]
@@ -62,7 +62,7 @@ services:
 
   # PostgreSQL database
   postgres:
-    image: postgres:17-alpine
+    image: postgres:17-alpine@sha256:71f7c22ad853f78289f5bc0df92095b314dbfd486845f0768c52d4380b1ca330
     restart: on-failure
     stop_grace_period: 30s
     environment:
@@ -88,7 +88,7 @@ services:
 
   # SuperTokens authentication service
   supertokens:
-    image: registry.supertokens.io/supertokens/supertokens-postgresql:9.3
+    image: registry.supertokens.io/supertokens/supertokens-postgresql:9.3@sha256:c90f10b365ef9f4dd742dd5b4d26db6511a3c46f502c45e367a3868bf3c25022
     restart: on-failure
     stop_grace_period: 30s
     depends_on:
