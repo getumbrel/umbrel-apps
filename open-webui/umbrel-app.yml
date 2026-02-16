@@ -3,7 +3,7 @@ id: open-webui
 name: Open WebUI
 tagline: Chat with Ollama models like DeepSeek-R1 and LLama, or use an OpenAI API key
 category: ai
-version: "0.8.0"
+version: "0.8.2"
 port: 2876
 description: >-
   Open WebUI lets you chat with advanced AI models running locally on your own device or connect to online models using an API key.
@@ -41,18 +41,16 @@ releaseNotes: >-
 
 
   Key highlights in this release include:
-    - Analytics dashboard showing model usage statistics, token consumption, and user activity rankings for administrators
-    - Experimental support for Skills - reusable AI skills with detailed instructions that can be referenced in chats or attached to models
-    - Message queuing allows you to continue typing while a response is generating, with messages automatically sent when complete
-    - Prompt version control with full history tracking, allowing you to view past versions and roll back changes
-    - Shared chats and file management from Settings, providing centralized control over your content
-    - Significantly improved performance with faster authentication, chat completions, model loading, and search operations
-    - Enhanced access control with per-user resource sharing alongside existing per-group sharing
-    - Fixed database connection pool exhaustion and timeout errors during concurrent usage
-    - Fixed LDAP authentication hang when logging in with non-existent accounts
-    - Fixed knowledge base file uploads and reindexing issues
-    - Fixed MCP tools reliability after regression in previous version
-    - Fixed code execution with markdown fences and ANSI color codes
+    - Skills now inject full content when user-selected, while model-attached skills show only name and description for flexibility
+    - Chat toggles now control built-in tools, allowing users to disable web search, image generation, and code execution per conversation
+    - Image preview in file management modal makes it easier to identify and manage uploaded images
+    - Batch tag operations and faster group list loading significantly improve performance
+    - Skills sharing permissions now available for administrators to control per-group access
+    - Fixed OAuth session error handling to gracefully clean up corrupted sessions
+    - Fixed tool call message preservation to prevent models from hallucinating tool outputs
+    - Fixed external tool servers to initialize automatically on startup for proper containerized deployments
+    - Fixed resource handle cleanup to prevent file handle leaks during audio transcription
+    - Fixed keyboard shortcut conflict where Ctrl+Shift+S would strike through text instead of toggling sidebar
 
 
   Full release notes are found at https://github.com/open-webui/open-webui/releases
