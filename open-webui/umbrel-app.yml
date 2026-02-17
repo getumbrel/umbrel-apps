@@ -3,7 +3,7 @@ id: open-webui
 name: Open WebUI
 tagline: Chat with Ollama models like DeepSeek-R1 and LLama, or use an OpenAI API key
 category: ai
-version: "0.8.2"
+version: "0.8.3"
 port: 2876
 description: >-
   Open WebUI lets you chat with advanced AI models running locally on your own device or connect to online models using an API key.
@@ -37,20 +37,15 @@ defaultPassword: ""
 dependencies:
   - ollama
 releaseNotes: >-
-  ⚠️ This release includes database changes that require adequate downtime for migration, especially for larger deployments with extensive chat histories. Make sure you have a backup before updating.
-
-
   Key highlights in this release include:
-    - Skills now inject full content when user-selected, while model-attached skills show only name and description for flexibility
-    - Chat toggles now control built-in tools, allowing users to disable web search, image generation, and code execution per conversation
-    - Image preview in file management modal makes it easier to identify and manage uploaded images
-    - Batch tag operations and faster group list loading significantly improve performance
-    - Skills sharing permissions now available for administrators to control per-group access
-    - Fixed OAuth session error handling to gracefully clean up corrupted sessions
-    - Fixed tool call message preservation to prevent models from hallucinating tool outputs
-    - Fixed external tool servers to initialize automatically on startup for proper containerized deployments
-    - Fixed resource handle cleanup to prevent file handle leaks during audio transcription
-    - Fixed keyboard shortcut conflict where Ctrl+Shift+S would strike through text instead of toggling sidebar
+    - Model edit shortcut allows editing models directly from the dropdown menu for faster access
+    - Improved tool call display with cleaner formatting and responsive layout
+    - Faster model filtering and loading for better performance
+    - Fixed user email variable to correctly return email addresses in prompts
+    - Fixed image and file attachment handling so uploads work properly with vision models
+    - Fixed missing function errors that previously caused the models endpoint to crash
+    - Fixed startup errors to log warnings instead of crashing the application
+    - Fixed database compatibility issues with group queries on PostgreSQL
 
 
   Full release notes are found at https://github.com/open-webui/open-webui/releases
