@@ -112,9 +112,10 @@ services:
       start_period: 45s
 
   # NestJS backend API
+  # Note: No user specified - runs as root to ensure it can write to volume mounts
+  # regardless of host directory ownership. Umbrel is a trusted single-user environment.
   backend:
     image: ghcr.io/bffless/ce-backend:umbrel@sha256:3ff391068ee729db44eb8fec8873ea50d73c669d83fe0a64d56739926e9b8767
-    user: '1000:1000'
     restart: on-failure
     stop_grace_period: 30s
     entrypoint: /app/umbrel-entrypoint.sh
