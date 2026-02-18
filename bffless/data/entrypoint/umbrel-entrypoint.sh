@@ -17,6 +17,7 @@ if [ -f "$DOMAIN_CONFIG" ]; then
         export PRIMARY_DOMAIN="$CONFIGURED_DOMAIN"
         export FRONTEND_URL="https://${CONFIGURED_DOMAIN}"
         export API_DOMAIN="https://${CONFIGURED_DOMAIN}"
+        export PUBLIC_URL="https://${CONFIGURED_DOMAIN}"
         export ADMIN_DOMAIN="admin.$CONFIGURED_DOMAIN"
         export COOKIE_DOMAIN="$CONFIGURED_DOMAIN"
         # Enable secure cookies when using a real domain with HTTPS

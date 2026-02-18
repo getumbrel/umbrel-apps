@@ -113,7 +113,7 @@ services:
 
   # NestJS backend API
   backend:
-    image: ghcr.io/bffless/ce-backend:umbrel@sha256:cd8a4dfd881ee06278263b2213e8272b2f4d50d100ad6001fa89f044dffa098e
+    image: ghcr.io/bffless/ce-backend:umbrel@sha256:3ff391068ee729db44eb8fec8873ea50d73c669d83fe0a64d56739926e9b8767
     user: '1000:1000'
     restart: on-failure
     stop_grace_period: 30s
@@ -169,9 +169,10 @@ services:
       - nginx-sites:/etc/nginx/sites-enabled
 
   # React frontend (serves static files)
+  # Note: No user specified - runs as root to ensure it can overwrite volume files
+  # regardless of ownership. This container only copies files and sleeps.
   frontend:
     image: ghcr.io/bffless/ce-frontend:umbrel@sha256:f2ca9754948911a75b4a587eddcd0be0280a90bbfb1621ee1de33600e99f843f
-    user: '1000:1000'
     restart: on-failure
     stop_grace_period: 30s
     volumes:
