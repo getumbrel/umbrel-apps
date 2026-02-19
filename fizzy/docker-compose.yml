@@ -1,0 +1,44 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: fizzy_server_1
+      APP_PORT: 80
+      PROXY_AUTH_ADD: 'false'
+
+  # Init container to fix permissions before main server starts
+  storage-init:
+    image: busybox:1.37.0@sha256:d80cd694d3e9467884fcb94b8ca1e20437d8a501096cdf367a5a1918a34fc2fd
+    volumes:
+      - ${APP_DATA_DIR}/data/storage:/rails/storage
+    command: >
+      sh -c "
+        mkdir -p /rails/storage &&
+        chmod -R 777 /rails/storage
+      "
+    restart: on-failure
+
+  server:
+    image: ghcr.io/mauricewipf/fizzy-umbrel:754aaa5@sha256:3c74a27d749db915c76654bf7590b4d2eee5eeb9cb495e23a52ebe3c51b5e372
+    volumes:
+      - ${APP_DATA_DIR}/data/storage:/rails/storage
+    environment:
+      RAILS_ENV: production
+      SECRET_KEY_BASE: ${APP_SEED}
+      DATABASE_ADAPTER: sqlite
+      ACTIVE_STORAGE_SERVICE: local
+      SOLID_QUEUE_IN_PUMA: 'true'
+      FORCE_SSL: 'false'
+      ASSUME_SSL: 'false'
+    depends_on:
+      - storage-init
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '2'
+        reservations:
+          memory: 512M
+          cpus: '0.5'
+    restart: on-failure
