@@ -3,7 +3,7 @@ id: openclaw
 name: OpenClaw
 tagline: The AI that actually does things
 category: ai
-version: "2026.2.17"
+version: "2026.2.19"
 port: 18789
 path: ""
 description: >-
@@ -39,17 +39,17 @@ gallery:
   - 2.jpg
   - 3.jpg
 releaseNotes: >-
-  This release adds iOS app support, enhanced messaging platform features, and improved reliability:
-    - New iOS app with share extension, Talk Mode background listening, and improved onboarding with QR pairing
-    - Slack native streaming support for real-time message updates
-    - Discord interactive components can now be reusable and support per-button user restrictions
-    - Telegram inline button styling, improved streaming behavior, and better voice note handling
-    - Anthropic 1M context window support and Sonnet 4.6 model compatibility
-    - Enhanced subagent capabilities with better context management and announce routing
-    - Improved tool loop detection with progress-aware blocking
-    - Better cron job handling with webhook delivery modes and session continuity
-    - Voice call improvements including pre-cached greetings and automatic call ending on disconnect
-    - Security fixes for credential protection and config file handling
+  This release brings Apple Watch support, major security hardening, and numerous reliability improvements:
+    - Apple Watch companion app with inbox UI and notification relay
+    - iOS background wake via push notifications to reduce invoke failures when the app is backgrounded
+    - Paired device management with commands to remove or clear paired devices
+    - Telegram channel posts now share the same pipeline as regular messages for consistent behavior
+    - Cron and heartbeat delivery now correctly targets configured Telegram topics
+    - Gateway auth now defaults to token mode with auto-generated tokens on startup
+    - Security fixes for SSRF, prototype pollution, privilege escalation, path traversal, and command injection across multiple components
+    - Browser URL navigation now routed through SSRF-guarded validation
+    - Rate limiting added to control-plane write operations
+    - Webhook ingress hardened for Feishu and Zalo with token checks and replay protection
 
 
   Full release notes can be found at https://github.com/openclaw/openclaw/releases
