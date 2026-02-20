@@ -2,7 +2,7 @@ manifestVersion: 1
 id: adguard-home
 category: networking
 name: AdGuard Home
-version: "0.107.71"
+version: "0.107.72"
 tagline: Network-wide software for blocking ads and tracking
 description: >-
   ⚠️ See below for important set-up instructions.
@@ -19,16 +19,25 @@ description: >-
   This ensures that the app will not conflict with other apps from the Umbrel App Store, and that the app will be accessible
   when clicking on the app icon in the umbrelOS homescreen.
 releaseNotes: >-
-  This release includes improvements and bug fixes.
+  This release includes security updates, new features, improvements, and bug fixes.
+
+
+  ⚠️ Security Update:
+    - The underlying Go version has been updated to address potential vulnerabilities
+
+
+  New Features:
+    - TLS certificate and key files are now automatically tracked and reloaded when updated
+    - New query parameter for defining statistics lookback period
 
 
   Improvements:
-    - Stale records in the optimistic DNS cache now have an upper age limit, configurable via `dns.cache_optimistic_max_age` (default 12 hours)
-    - The TTL for stale answers from optimistic DNS cache is now configurable via `dns.cache_optimistic_answer_ttl` (default 30 seconds)
+    - Deleting or renaming hosts files now updates runtime clients and DNS filtering results
 
 
   Bug Fixes:
-    - Fixed an issue where the optimistic DNS cache was not working
+    - Fixed executable permissions in some Docker installations
+    - Unknown blocked services are now logged instead of causing server crashes
 
 
   Full release notes can be found at https://github.com/AdguardTeam/AdGuardHome/releases
