@@ -2,7 +2,7 @@ manifestVersion: 1
 id: btcpay-server
 category: bitcoin
 name: BTCPay Server
-version: "2.3.4"
+version: "2.3.5"
 tagline: Accept Bitcoin payments with 0 fees & no 3rd party
 description: >-
   BTCPay Server is a payment processor that allows you to receive
@@ -34,24 +34,26 @@ path: ""
 defaultUsername: ""
 defaultPassword: ""
 releaseNotes: >-
-  This release comes with new features and several bug fixes.
+  This release comes with new features, bug fixes, and improvements.
 
 
   New features:
-    - Set LUNO as the default exchange for ZAR currency
-    - Add a deliveryTime property to webhook deliveries in the API and UI
-    - Add subscriber's metadata to email placeholders
+    - Allow BTCPay Server to start without any on-chain payment methods with BTCPAY_NODEFAULTCHAIN
+    - Add custom textbox for checkout
+    - Add CoinDCX rate provider for BTC/INR rates
+    - Add Desiboard rate provider for BTC/USD and BTC/INR rates
+    - Dashboard: Support multi-crypto wallet balance widgets
+    - Ability to update a previously downloaded language pack
 
   Bug fixes:
-    - Fix: Deleting webhooks could time out
-    - Fix: Offering and Customer metadata email placeholders couldn't be used
-    - Subscribers with enough credits were receiving payment reminder emails and not being automatically renewed
-    - Fix scan-qrcode icon alignment
-    - Public node info page no longer lists local network IPs
-    - Forms with an optional empty email field can now be submitted
-    - Keypad POS now displays “Any amount” items correctly
-    - CanModifyInvoices permission now includes viewing Lightning invoices for the store
-    - Certain HTTP status codes no longer cause webhooks to be retried
+    - Fix: Images in Point of Sale Cart doesn't show on mobile
+    - Fix: Payments getting undetected on LND when the node restarted
+    - Fix: Do not show claim button in pull payments if it is archived
+    - Fix: Unable to edit roles when navigating from store level to Roles
+
+  Improvements:
+    - Throttle Greenfield API calls with Basic auth
+    - Added missing translations strings for various files
 
   Full release notes can be found at https://github.com/btcpayserver/btcpayserver/releases
 submitter: Umbrel
