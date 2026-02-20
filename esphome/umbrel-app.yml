@@ -2,7 +2,7 @@ manifestVersion: 1
 id: esphome
 category: automation
 name: ESPHome
-version: "2026.1.5"
+version: "2026.2.0"
 tagline: Intelligently manage all your ESP8266/ESP32 devices
 description: >-
   ESPHome is a system to control your ESP8266/ESP32 by simple yet powerful configuration files and control them remotely through Home Automation systems.
@@ -21,17 +21,19 @@ defaultUsername: ""
 defaultPassword: ""
 torOnly: false
 releaseNotes: >-
-  This release includes bug fixes and stability improvements:
-    - Fixed incorrect field order in RD03D component
-    - Added capacity check to component registration
-    - Fixed CLI upload option display when only HTTP request platform is configured
-    - Resolved WebSocket zombie connections after process exit
-    - Fixed logger printk functionality for NRF52
-    - Fixed LVGL crash with unconfigured top layer
-    - Improved cache directory handling for ESP32
-    - Fixed AQI calculation for specific PM2.5 and PM10 readings
+  This release focuses on performance, stability, and new hardware support:
+    - Significant ESP32 build optimizations: 36% faster Arduino builds, 44% less flash, 50% less RAM usage
+    - Major runtime improvements: ~85% less CPU for BLE tracker, ~6.5% CPU savings from MQTT consolidation
+    - ESP8266 RAM recovery by moving constant strings and tables to flash across 19+ components
+    - Scheduler refactored to be 25% smaller with improved memory efficiency
+    - Security hardening: constant-time auth checks, cryptographic random generation, protobuf parser hardening
+    - New components: DLMS/COSEM smart meter, CH423 I/O expander, SY6970 battery management IC
+    - 7 new display models added, including ESP32-P4 Waveshare panels and a 4-color e-paper display
+    - Zigbee/nRF52 enhancements: time sync, number component support, custom vendor OUI
+    - LibreTiny updated to v1.12.1 with new board support and WiFi stability fixes
+    - 16 UART-based components now batch-read serial data, reducing CPU overhead
 
 
-  Full release notes can be found at https://esphome.io/changelog/2026.1.0.html
+  Full release notes can be found at https://esphome.io/changelog/2026.2.0/
 submitter: ShonP40
 submission: https://github.com/getumbrel/umbrel-apps/pull/43
