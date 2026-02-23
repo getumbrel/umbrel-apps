@@ -17,12 +17,12 @@ services:
       - ${APP_DATA_DIR}/data/db:/var/lib/mysql
 
   memcached:
-    image: memcached:1.6.18@sha256:4ab520657d9919221f752771bb013d632c9b39cea9dfae9162244b2e39885bcd
+    image: memcached:1.6.39@sha256:050de63e6c082df85f93ffed9c388004b3c6257a06f1904e8628a6f87658eb99
     container_name: seafile-memcached
     entrypoint: memcached -m 256
 
   seafile:
-    image: seafileltd/seafile-mc:12.0.14@sha256:8d0dd6b682c12cb0e1d4f1f73ba223b0176e9e3d43805408a2f631706e9c10e8
+    image: seafileltd/seafile-mc:13.0.12@sha256:6d0ed39fc1b9af7c41975e61c770b309442f86fc6caff5e5ec35f329875af03b
     container_name: seafile
     volumes:
       - ${APP_DATA_DIR}/data/seafile-data:/shared
@@ -41,7 +41,7 @@ services:
       - memcached
 
   seadoc:
-    image: seafileltd/sdoc-server:1.0.5@sha256:b5d3aff910be22388d329053c7dc2847a6760a6c7cfd7f0b1ef0e4f445b158b3
+    image: seafileltd/sdoc-server:2.0.8@sha256:08ab42d274f47ec84e050af7fd3b70222dc31fe9e035e71c853c087d66dde1f4
     volumes:
       - ${APP_DATA_DIR}/data/seadoc-data:/shared
     ports:
