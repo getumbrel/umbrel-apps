@@ -11,10 +11,5 @@ services:
     restart: on-failure
     user: "1000:1000"
     volumes:
-     # Required: Configuration data (must be writable)
       - ${APP_DATA_DIR}/config:/config
-     # Required: media directories - Where your media files are stored. Use :ro at the end of the path to limit container to Read-Only
       - ${UMBREL_ROOT}/data/storage/downloads:/media:ro
-    # tmpfs is optional but recommended: Limits writing to SSD/disk by using RAM for transcode files. Comment out to disable
-    tmpfs:
-      - /transcode
