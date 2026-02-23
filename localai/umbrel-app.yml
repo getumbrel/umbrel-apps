@@ -2,7 +2,7 @@ manifestVersion: 1
 id: localai
 category: ai
 name: LocalAI
-version: "v3.11.0"
+version: "v3.12.1"
 tagline: Drop-in OpenAI replacement
 description: >-
   LocalAI is the free, Open Source OpenAI alternative. LocalAI act as a drop-in replacement REST API that's compatible with OpenAI API specifications for local inferencing.
@@ -15,22 +15,17 @@ description: >-
 
   Before running a model, make sure your device has enough free RAM to support it. Attempting to run a model that exceeds your available memory could cause your device to crash or become unresponsive. Always check the model requirements before downloading or starting it.
 releaseNotes: >-
-  This is a massive update for audio and multimodal capabilities, introducing realtime audio conversations, music generation, and expanded speech recognition and text-to-speech backends.
+  This is a patch release fixing incompatibilities with Qwen 3 Coder, along with stability improvements and minor enhancements from v3.12.0.
 
 
   Key highlights include:
-    - Realtime Audio Conversations - Native support for fluid voice interactions with agents, enabling low-latency audio-in/audio-out workflows with tool calling support
-    - Music Generation UI - New interface for generating music from text prompts using Ace-Step (MusicGen) directly in the browser
-    - Expanded Speech Recognition - Added WhisperX with speaker diarization, VibeVoice ASR, Qwen-ASR, and Nvidia NeMo backends
-    - TTS Streaming - Text-to-speech now supports streaming mode for lower latency responses
-    - New TTS Backends - Added VoxCPM and Qwen-TTS support, plus most remaining Piper voices from Hugging Face
-    - vLLM Omni Support - New backend integration for vLLM Omni models
-    - Hardware Expansion - Extended support for CUDA 12/13, L4T (Jetson), SBSA, and improved Metal (Apple Silicon) integration with MLX backends
-
-
-  ⚠️ Breaking Changes
-
-  ExLlama (deprecated) and Bark (unmaintained) backends have been removed
+    - Fixed Qwen 3 Coder incompatibilities via updated llama.cpp
+    - Multi-modal Realtime - Send text, images, and audio in real-time conversations
+    - Voxtral Backend - New high-quality text-to-speech backend
+    - Multi-GPU Support - Improved Diffusers performance with multiple GPUs
+    - Improved UI with dark/light theme variants and better navigation
+    - Security fix for SSRF vulnerability in content fetching endpoints
+    - Various realtime stability fixes for audio, image, and model handling
 
 
   Full release notes can be found at https://github.com/mudler/LocalAI/releases
