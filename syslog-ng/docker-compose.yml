@@ -1,0 +1,36 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: syslog-ng_web_1
+      APP_PORT: 8080
+
+  syslog:
+    image: lscr.io/linuxserver/syslog-ng:4.8.3@sha256:bec512bde2c63927796192d069d5ab0a46db40ade4c3aa434eb0812c3ed2dbe4
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=${TZ}
+    ports:
+      - "514:5514/udp"
+      - "601:6601/tcp"
+    volumes:
+      - ${APP_DATA_DIR}/data/config:/config
+      - ${APP_DATA_DIR}/data/logs:/var/log
+
+  web:
+    image: rickraven/logdy:0.17.1@sha256:a1438c758ed3735e9b06205168a3c63e39bd0895bc5f0cd1adf4ed2270ae66cb
+    user: "1000:1000"
+    restart: on-failure
+    environment:
+      LOGDY_MODE: "follow"
+      LOGDY_FOLLOW_FILES: "/data/*.log"
+      LOGDY_PASS: ${APP_PASSWORD}
+    volumes:
+      - ${APP_DATA_DIR}/data/logs:/data:ro
+    depends_on:
+      - syslog
