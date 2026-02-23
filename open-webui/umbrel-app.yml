@@ -3,7 +3,7 @@ id: open-webui
 name: Open WebUI
 tagline: Chat with Ollama models like DeepSeek-R1 and LLama, or use an OpenAI API key
 category: ai
-version: "0.8.3"
+version: "0.8.5"
 port: 2876
 description: >-
   Open WebUI lets you chat with advanced AI models running locally on your own device or connect to online models using an API key.
@@ -38,14 +38,21 @@ dependencies:
   - ollama
 releaseNotes: >-
   Key highlights in this release include:
-    - Model edit shortcut allows editing models directly from the dropdown menu for faster access
-    - Improved tool call display with cleaner formatting and responsive layout
-    - Faster model filtering and loading for better performance
-    - Fixed user email variable to correctly return email addresses in prompts
-    - Fixed image and file attachment handling so uploads work properly with vision models
-    - Fixed missing function errors that previously caused the models endpoint to crash
-    - Fixed startup errors to log warnings instead of crashing the application
-    - Fixed database compatibility issues with group queries on PostgreSQL
+    - Voice dictation can now be toggled with a keyboard shortcut (Cmd+Shift+L or Ctrl+Shift+L)
+    - Provider URL suggestions make it easier to configure connections to popular AI services
+    - Individual provider connections and prompts can now be enabled or disabled without deleting them
+    - Agents can now list and delete stored memories for better memory management
+    - Anthropic Messages API proxy support allows tools like Claude Code to work through Open WebUI
+    - Significant performance improvements across chat history loading, notes, tools, and database queries
+    - Global model defaults let administrators set capabilities and parameters that apply to all models
+    - Fixed model access errors that caused the models endpoint to crash with incomplete metadata
+    - Fixed frontend initialization so the app loads even if individual API calls fail
+    - Fixed a security vulnerability where multiple admin accounts could be created on fresh deployments
+    - Fixed RAG template being repeatedly injected into messages during multiple tool calls
+    - Fixed hybrid search returning empty or duplicate results
+    - Fixed cyclic chat history references causing the backend to freeze
+    - Fixed model fallback routing and default model selection when starting new chats
+    - Fixed iframe sandbox security to prevent embedded tools from accessing same-origin content
 
 
   Full release notes are found at https://github.com/open-webui/open-webui/releases
