@@ -1,0 +1,17 @@
+version: "3.7"
+services:
+  app_proxy:
+    environment:
+      APP_HOST: pyload-ng_web_1
+      APP_PORT: "8000"
+
+  web:
+    image: lscr.io/linuxserver/pyload-ng:0.5.0@sha256:0e07d490ae733921a0f48e49041f4fcd31a9c8f04016052006e9715b8f7184ca
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data/config:/config
+      - ${UMBREL_ROOT}/data/storage/downloads:/downloads
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
