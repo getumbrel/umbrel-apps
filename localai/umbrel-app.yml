@@ -2,7 +2,7 @@ manifestVersion: 1
 id: localai
 category: ai
 name: LocalAI
-version: "v3.8.0"
+version: "v3.12.1"
 tagline: Drop-in OpenAI replacement
 description: >-
   LocalAI is the free, Open Source OpenAI alternative. LocalAI act as a drop-in replacement REST API that's compatible with OpenAI API specifications for local inferencing.
@@ -15,25 +15,17 @@ description: >-
 
   Before running a model, make sure your device has enough free RAM to support it. Attempting to run a model that exceeds your available memory could cause your device to crash or become unresponsive. Always check the model requirements before downloading or starting it.
 releaseNotes: >-
-  This release focuses on enhancing the user experience and providing more control without requiring restarts or complex configurations. It introduces a new onboarding flow and a universal model loader.
+  This is a patch release fixing incompatibilities with Qwen 3 Coder, along with stability improvements and minor enhancements from v3.12.0.
 
 
   Key highlights include:
-    - Universal Model Import - Easily import models from Hugging Face, Ollama, OCI, or local paths, with automatic backend and chat template detection
-    - UI & Index Overhaul - Enjoy a new onboarding wizard, automatic model selection on startup, and a cleaner interface for managing models
-    - MCP Live Streaming - Agent actions and tool calls are now streamed live, allowing you to see reasoning in real-time
-    - Hot-Reloadable Settings - Modify watchdogs, API keys, and peer-to-peer settings instantly without restarting the app
-    - Chat enhancements - Chat history and parallel conversations are now saved in your browser
-    - Improved OpenAI API Compatibility - Streaming responses now strictly match OpenAI specifications, resolving issues with various clients
-    - Advanced Configuration - Fine-tune settings like context shifting, RAM limits for the KV cache, and parallel workers for optimized performance
-    - Logprobs & Logitbias Support - Added token-level probability support for advanced agent workflows
-
-
-  Additional fixes and improvements:
-    - Model Preview - See filename and size before downloading models
-    - Tool Handling - Fixed issues related to missing or malformed tool content
-    - TTS - Corrected dropdown selection states for text-to-speech models
-    - True Cancellation - Stopping a stream now immediately halts generation and frees resources
+    - Fixed Qwen 3 Coder incompatibilities via updated llama.cpp
+    - Multi-modal Realtime - Send text, images, and audio in real-time conversations
+    - Voxtral Backend - New high-quality text-to-speech backend
+    - Multi-GPU Support - Improved Diffusers performance with multiple GPUs
+    - Improved UI with dark/light theme variants and better navigation
+    - Security fix for SSRF vulnerability in content fetching endpoints
+    - Various realtime stability fixes for audio, image, and model handling
 
 
   Full release notes can be found at https://github.com/mudler/LocalAI/releases

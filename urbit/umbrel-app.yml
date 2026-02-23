@@ -2,7 +2,7 @@ manifestVersion: 1
 id: urbit
 category: networking
 name: Urbit
-version: "v4.0"
+version: "v4.2"
 tagline: Run Urbit on your Umbrel
 description: >-
   Urbit is a personal server for self-sovereign personal & networked
@@ -35,24 +35,18 @@ torOnly: false
 submitter: ~mopfel-winrux
 submission: https://github.com/getumbrel/umbrel/pull/1246
 releaseNotes: >-
-  vere-v4.0 is a major runtime release with the following highlighted
-  features:
-  
-  -   A completely rewritten allocator that reduces memory usage and
-      decreases snapshot size.
-  -   The mars / urth split, a major refactor of the vere multiprocess
-      architecture.
-  -   Stateful urwasm jets, improving on the stateless urwasm capabilities
-      shipped with 410.
-  -   Restored compatibility with 2015-era Intel based macbooks.
-  -   Declare compatibility with the upcoming 409-k arvo release.
-  -   Support for the 409 “fastboot” brass pill that reduces ship initial
-      boot time from minutes to seconds.
-  -   Support for the 409 spin hint that exposes a call stack for local
-      performance monitoring.
-  
-  Note that ships that upgrade to vere-v4.0 will be unable to downgrade
-  runtime versions.
+  vere-v4.2 is a runtime release with the following highlighted changes:
+    - Fix rare loom corruption caused by allocator bugs and longstanding signal handling issues.
+    - Fix a regression in the vere 4 sort jet that caused it to behave as an unstable sort in some scenarios.
+    - Fix a buffer overflow when adding bodies to eyre HTTP responses that should not have any (e.g. 204 responses).
+    - Fix various bugs in scry-over-HTTP.
+    - Introduce the %jinx hint to enable event computation timeouts.
+    - Introduce the %loop hint to crash on obvious non-terminating loops, extending the use cases of the %memo hint.
+    - Restore the Windows build.
+    - Fix a regression where shutting down a ship would unmount all desks from the host system.
 
 
-  Full release notes here: https://github.com/urbit/vere/releases/tag/vere-v4.0
+  Note: After upgrading, users will need to unmount and mount any desks they want mounted once.
+
+
+  Full release notes here: https://github.com/urbit/vere/releases

@@ -8,7 +8,7 @@ services:
       APP_PORT: 8888
 
   influxdb:
-    image: influxdb:1.11.8@sha256:a69e60fd29edb02921947605fd25fd252a0082ce811bff552d407896262e48a7
+    image: influxdb:1.12.2@sha256:db03b9c599588cd5caded6df8b8258841017bf186898c6133a4f99b4d6134395
     user: 1000:1000
     restart: on-failure
     stop_grace_period: 1m
@@ -20,7 +20,8 @@ services:
       INFLUXDB_HTTP_AUTH_ENABLED: "true"
 
   chronograf:
-    image: chronograf:1.9.4@sha256:928cd75952b597df3666886197cfdcd24a4017289422c0e12ec937c56f0131f4
+    image: chronograf:1.10.8@sha256:42e7b310399e57126053f3ff8eb551290b942ebbd8fd08186af03cfce512bbff
+    user: "1000:1000"
     environment:
       INFLUXDB_URL: "http://influxdb_influxdb_1:8086"
       INFLUXDB_USERNAME: admin

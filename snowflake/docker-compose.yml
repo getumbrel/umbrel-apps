@@ -7,7 +7,7 @@ services:
       APP_PORT: 3800
 
   proxy:
-    image: getumbrel/snowflake:v2.7.0@sha256:acc5713c5268d3e8c1349a69452451e4a73fe016ccf49621e36ed06f49d72948
+    image: thetorproject/snowflake-proxy:v2.11.0@sha256:1ddc5069d35489a87257b90ccd6a93444e59a2dd3b9b240dbee75a578d6c92ca
     restart: on-failure
     stop_grace_period: 1m
     command: "-log /data/snowflake.log -verbose"
@@ -15,9 +15,9 @@ services:
       - ${APP_DATA_DIR}/data:/data
 
   web:
-    image: getumbrel/gotty:v1.0.1@sha256:100571d271cfbae25603acac216afce511eece9961218c6db427e0fa4a58716a
+    image: sorenisanerd/gotty:v1.6.0@sha256:23b4669973e96d8d7d37b3bfd9e6566bdd701aa1a56eee2dc0e0362bd927ed88
     restart: on-failure
     stop_grace_period: 1m
-    command: --port 3800 --index "/snowflake/index.html" --title-format "Tor Snowflake Proxy" bash -c 'tail -n 10000 -f /snowflake/snowflake.log | grep "Traffic Relayed"'
+    command: gotty --port 3800 --index "/snowflake/index.html" --title-format "Tor Snowflake Proxy" bash -c 'tail -n 10000 -f /snowflake/snowflake.log | grep "Traffic Relayed"'
     volumes:
       - ${APP_DATA_DIR}/data:/snowflake

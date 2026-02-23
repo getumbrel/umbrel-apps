@@ -1,0 +1,152 @@
+#!/usr/bin/env bash
+# This script handles version migrations for Jellyfin to ensure safe upgrades through required intermediate versions.
+
+set -euo pipefail
+
+APP_DIR="$(readlink -f $(dirname "${BASH_SOURCE[0]}")/..)"
+APP_DATA_DIR="${APP_DIR}/data"
+APP_COMPOSE_FILE="${APP_DIR}/docker-compose.yml"
+JELLYFIN_SYSTEM_FILE="${APP_DATA_DIR}/config/system.xml"
+JELLYFIN_UPDATE_FLAG_FILE="${APP_DATA_DIR}/POST_1_10_VERSION"
+MIGRATION_IN_PROGRESS_FILE="${APP_DATA_DIR}/MIGRATION_IN_PROGRESS"
+MIGRATION_FIX_FLAG="${APP_DATA_DIR}/MIGRATION_20250618_FIXED"
+
+# If database files do not yet exist
+# Then it's likely a new install
+# Create a flag file to indicate that it is a 1.10+ version
+if [[ ! -f "${JELLYFIN_SYSTEM_FILE}" ]]; then
+    touch "${JELLYFIN_UPDATE_FLAG_FILE}"
+    touch "${MIGRATION_FIX_FLAG}"
+fi
+
+# Exit if flag file exists
+if [[ -f "${JELLYFIN_UPDATE_FLAG_FILE}" ]]; then
+    echo "Jellyfin update flag file already exists at ${JELLYFIN_UPDATE_FLAG_FILE}. Skipping migration steps."
+    exit 0
+fi
+
+# Check if migration is already in progress to prevent infinite loops
+if [[ -f "${MIGRATION_IN_PROGRESS_FILE}" ]]; then
+    echo "Migration already in progress, exiting to prevent loops"
+    exit 0
+fi
+
+# Mark migration as in progress
+touch "${MIGRATION_IN_PROGRESS_FILE}"
+
+# Cleanup function for trap
+cleanup() {
+    local exit_code=$?
+    if [[ $exit_code -ne 0 ]]; then
+        echo "Migration failed, cleaning up..."
+        # Restore original compose file if we have the original image
+        if [[ -n "${original_server_image:-}" ]]; then
+            yq -i ".services.server.image = \"${original_server_image}\"" "${APP_COMPOSE_FILE}" 2>/dev/null || true
+        fi
+    fi
+    rm -f "${MIGRATION_IN_PROGRESS_FILE}"
+}
+trap cleanup EXIT
+
+# If no flag file exists, update to v1.10.7 first, then continue to latest version
+echo "No POST_1_10_VERSION flag found - performing update to v1.10.7 and then to latest version"
+
+# Docker images for v1.10.7 intermediate step
+INTERMEDIATE_SERVER_IMAGE="linuxserver/jellyfin:10.10.7@sha256:01c9d2311eb7710867fb3a8c2718068a276cff468a71d2a2dc58a0f5165ad0d2"
+
+# Get current images from docker-compose.yml
+get_current_images_from_compose() {
+    local server_image=$(yq '.services.server.image' "${APP_COMPOSE_FILE}" 2>/dev/null || echo "")
+    echo "${server_image}"
+}
+
+# Update compose file with new images
+update_compose_images() {
+    local server_image="${1}"
+    
+    yq -i ".services.server.image = \"${server_image}\"" "${APP_COMPOSE_FILE}"
+}
+
+# Store original image for final step
+original_server_image=$(get_current_images_from_compose)
+
+echo "Step 1: Updating to v1.10.7 for safe migration"
+update_compose_images "${INTERMEDIATE_SERVER_IMAGE}"
+
+# Start with v1.10.7
+echo "Starting Jellyfin v1.10.7..."
+"${UMBREL_ROOT}/scripts/app" start jellyfin
+
+# Wait for startup and migrations to complete
+echo "Waiting for v1.10.7 to complete startup and migrations..."
+
+# Poll health endpoint with timeout
+MAX_WAIT=300
+POLL_INTERVAL=5
+elapsed=0
+
+while [[ $elapsed -lt $MAX_WAIT ]]; do
+    if curl -sf "http://localhost:8096/health" > /dev/null 2>&1; then
+        echo "Jellyfin v1.10.7 is healthy after ${elapsed}s"
+        # Give extra time for any remaining migrations to complete
+        sleep 10
+        break
+    fi
+    sleep $POLL_INTERVAL
+    elapsed=$((elapsed + POLL_INTERVAL))
+done
+
+if [[ $elapsed -ge $MAX_WAIT ]]; then
+    echo "Warning: Jellyfin health check timed out after ${MAX_WAIT}s, proceeding anyway"
+fi
+
+# Stop the app
+echo "Stopping Jellyfin v1.10.7..."
+"${UMBREL_ROOT}/scripts/app" stop jellyfin
+
+# Apply UserDatas table fix to library.db BEFORE 10.11.5 starts
+# 10.11.5's MigrateLibraryDb migration will rename library.db to library.db.old
+# Then MigrateLibraryUserData will try to read UserDatas from library.db.old
+# So we add the table to library.db now, before it gets renamed
+LIBRARY_DB="${APP_DATA_DIR}/config/data/data/library.db"
+if [[ -f "${LIBRARY_DB}" && ! -f "${MIGRATION_FIX_FLAG}" ]]; then
+    echo "Applying UserDatas table fix to library.db (before 10.11.5 renames it)..."
+    
+    if python3 -c "
+import sqlite3
+conn = sqlite3.connect('${LIBRARY_DB}')
+cursor = conn.cursor()
+cursor.execute('''
+    CREATE TABLE IF NOT EXISTS UserDatas (
+        key TEXT NOT NULL,
+        userId TEXT NOT NULL,
+        rating REAL,
+        played INTEGER NOT NULL,
+        playCount INTEGER NOT NULL,
+        isFavorite INTEGER NOT NULL,
+        playbackPositionTicks INTEGER NOT NULL,
+        lastPlayedDate TEXT,
+        AudioStreamIndex INTEGER,
+        SubtitleStreamIndex INTEGER,
+        PRIMARY KEY (key, userId)
+    )
+''')
+conn.commit()
+conn.close()
+"; then
+        echo "UserDatas table fix applied successfully"
+        touch "${MIGRATION_FIX_FLAG}"
+    else
+        echo "Failed to apply UserDatas table fix"
+        exit 1
+    fi
+fi
+
+echo "Step 2: Updating to latest version"
+update_compose_images "${original_server_image}"
+
+# Create the flag file to prevent this migration from running again
+touch "${JELLYFIN_UPDATE_FLAG_FILE}"
+
+echo "Migration completed: v1.10.7 -> latest version"
+echo "Created ${JELLYFIN_UPDATE_FLAG_FILE} flag file"

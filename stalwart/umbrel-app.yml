@@ -3,7 +3,7 @@ id: stalwart
 name: Stalwart
 tagline: All-in-one Mail & Collaboration server
 category: files
-version: "v0.15.2"
+version: "v0.15.5"
 port: 8745
 description: >-
   📧 Stalwart is a fast, secure, and scalable open-source server for email, calendars, contacts, and file sharing, built in Rust for top-tier performance and safety.
@@ -54,20 +54,13 @@ releaseNotes: >-
   ⚠️ If you are upgrading from v0.14.x and below, this version includes multiple breaking changes. Make sure to have a backup before updating: https://github.com/stalwartlabs/stalwart/blob/main/UPGRADING/v0_15.md
 
 
-  Key highlights in this release:
-    - OAuth device authorization endpoint support
-    - Improved spam auto-learning from traps and multiple blocklist hits
-    - Enhanced search functionality with pagination support for ElasticSearch
-    - Better handling of large text fields in MySQL and PostgreSQL
-
-
-  Bug fixes include:
-    - Fixed shared folder double nesting in IMAP
-    - Corrected spam tag detection logic
-    - Improved JMAP search results handling when index is not ready
-    - Fixed JMAP email import to use latest received header
-    - Resolved LDAP attribute comparison issues
-    - Fixed CLI JMAP redirection on non-standard ports
+  Bug fixes in this release:
+    - Fixed memory issues when handling cyclical MIME structures in IMAP and JMAP
+    - Corrected tracing indexing when using separate stores
+    - Improved JMAP query changes handling and state computation
+    - Fixed JMAP to include created IDs when the property is present
+    - Resolved JMAP to respect query arguments in Email/queryChanges
+    - Corrected container and item change ID returns when there are no changes
 
 
   Full release notes can be found at https://github.com/stalwartlabs/stalwart/releases
