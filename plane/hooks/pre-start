@@ -1,0 +1,101 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# This script checks the environment file for placeholder values and replaces them with system variables.
+
+APP_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")"
+APP_DATA_DIR="$APP_DIR/data"
+DESIRED_OWNER="1000:1000"
+ENV_FILE="$APP_DIR/settings.env"
+
+# Check if the file exists
+if [ ! -f "$ENV_FILE" ]; then
+    echo "Error: Environment file not found at $ENV_FILE"
+    exit 1
+fi
+
+# Check if WEB_URL value is set to "changeme"
+if grep -Eq '^WEB_URL= *changeme$' "$ENV_FILE"; then
+    echo "Placeholder value for WEB_URL detected. Setting from DEVICE_DOMAIN_NAME..."
+    
+    # Replace the placeholder with the domain-based URL
+    sed -i -E 's|^WEB_URL= *changeme$|WEB_URL="http://'"${DEVICE_DOMAIN_NAME}"':8762"|' "$ENV_FILE"
+    
+    echo "Updated WEB_URL in $ENV_FILE"
+else
+    echo "WEB_URL is already set. No changes made."
+fi
+
+# Check if API_BASE_URL value is set to "changeme"
+if grep -Eq '^API_BASE_URL= *changeme$' "$ENV_FILE"; then
+    echo "Placeholder value for API_BASE_URL detected. Setting from DEVICE_DOMAIN_NAME..."
+    
+    # Replace the placeholder with the domain-based URL
+    sed -i -E 's|^API_BASE_URL= *changeme$|API_BASE_URL="http://'"${DEVICE_DOMAIN_NAME}"':8762"|' "$ENV_FILE"
+    
+    echo "Updated API_BASE_URL in $ENV_FILE"
+else
+    echo "API_BASE_URL is already set. No changes made."
+fi
+
+# Check if APP_DOMAIN value is set to "changeme"
+if grep -Eq '^APP_DOMAIN= *changeme$' "$ENV_FILE"; then
+    echo "Placeholder value for APP_DOMAIN detected. Setting from DEVICE_DOMAIN_NAME..."
+    
+    # Replace the placeholder with the domain
+    sed -i -E 's|^APP_DOMAIN= *changeme$|APP_DOMAIN="'"${DEVICE_DOMAIN_NAME}"':8762"|' "$ENV_FILE"
+    
+    echo "Updated APP_DOMAIN in $ENV_FILE"
+else
+    echo "APP_DOMAIN is already set. No changes made."
+fi
+
+# Check if ALLOWED_HOSTS value is set to "changeme"
+if grep -Eq '^ALLOWED_HOSTS= *changeme$' "$ENV_FILE"; then
+    echo "Placeholder value for ALLOWED_HOSTS detected. Setting from DEVICE_DOMAIN_NAME..."
+    
+    # Replace the placeholder with the domain
+    sed -i -E 's|^ALLOWED_HOSTS= *changeme$|ALLOWED_HOSTS="'"${DEVICE_DOMAIN_NAME}"'"|' "$ENV_FILE"
+    
+    echo "Updated ALLOWED_HOSTS in $ENV_FILE"
+else
+    echo "ALLOWED_HOSTS is already set. No changes made."
+fi
+
+# Check if CORS_ALLOWED_ORIGINS value is set to "changeme"
+if grep -Eq '^CORS_ALLOWED_ORIGINS= *changeme$' "$ENV_FILE"; then
+    echo "Placeholder value for CORS_ALLOWED_ORIGINS detected. Setting from DEVICE_DOMAIN_NAME..."
+    
+    # Replace the placeholder with the domain-based origins
+    sed -i -E 's|^CORS_ALLOWED_ORIGINS= *changeme$|CORS_ALLOWED_ORIGINS="http://'"${DEVICE_DOMAIN_NAME}"':8762,http://'"${DEVICE_DOMAIN_NAME}"'"|' "$ENV_FILE"
+    
+    echo "Updated CORS_ALLOWED_ORIGINS in $ENV_FILE"
+else
+    echo "CORS_ALLOWED_ORIGINS is already set. No changes made."
+fi
+
+# Check if CSRF_TRUSTED_ORIGINS value is set to "changeme"
+if grep -Eq '^CSRF_TRUSTED_ORIGINS= *changeme$' "$ENV_FILE"; then
+    echo "Placeholder value for CSRF_TRUSTED_ORIGINS detected. Setting from DEVICE_DOMAIN_NAME..."
+    
+    # Replace the placeholder with the domain-based origins
+    sed -i -E 's|^CSRF_TRUSTED_ORIGINS= *changeme$|CSRF_TRUSTED_ORIGINS="http://'"${DEVICE_DOMAIN_NAME}"':8762,http://'"${DEVICE_DOMAIN_NAME}"'"|' "$ENV_FILE"
+    
+    echo "Updated CSRF_TRUSTED_ORIGINS in $ENV_FILE"
+else
+    echo "CSRF_TRUSTED_ORIGINS is already set. No changes made."
+fi
+
+# Check if NGINX_HOST value is set to "changeme"
+if grep -Eq '^NGINX_HOST= *changeme$' "$ENV_FILE"; then
+    echo "Placeholder value for NGINX_HOST detected. Setting from DEVICE_DOMAIN_NAME..."
+    
+    # Replace the placeholder with the domain
+    sed -i -E 's|^NGINX_HOST= *changeme$|NGINX_HOST="'"${DEVICE_DOMAIN_NAME}"'"|' "$ENV_FILE"
+    
+    echo "Updated NGINX_HOST in $ENV_FILE"
+else
+    echo "NGINX_HOST is already set. No changes made."
+fi
+
+exit 0
