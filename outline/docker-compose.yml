@@ -1,0 +1,80 @@
+version: '3.7'
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: outline_web_1
+      APP_PORT: 3000
+      PROXY_AUTH_ADD: "false"
+
+  web:
+    image: outlinewiki/outline:1.1.0@sha256:51db3e893d3eabdbf9092712c9c8ed5362efb20e4c1d35b941ccacaed1c0f010
+    user: "1000:1000"
+    restart: on-failure
+    depends_on:
+      - db
+      - redis
+      - dex
+    environment:
+      NODE_ENV: production
+      SECRET_KEY: ${APP_SEED}
+      UTILS_SECRET: ${APP_SEED}
+      DATABASE_URL: postgres://outline:outlinepass@outline_db_1:5432/outline
+      PGSSLMODE: disable
+      REDIS_URL: redis://outline_redis_1:6379
+      URL: "http://${DEVICE_DOMAIN_NAME}:${APP_OUTLINE_PORT}"
+      PORT: 3000
+      FILE_STORAGE: local
+      FILE_STORAGE_LOCAL_ROOT_DIR: /var/lib/outline/data
+      FILE_STORAGE_UPLOAD_MAX_SIZE: 262144000
+      OIDC_CLIENT_ID: outline
+      OIDC_CLIENT_SECRET: ${APP_SEED}
+      OIDC_AUTH_URI: "http://${DEVICE_DOMAIN_NAME}:8943/dex/auth"
+      OIDC_TOKEN_URI: "http://outline_dex_1:5556/dex/token"
+      OIDC_USERINFO_URI: "http://outline_dex_1:5556/dex/userinfo"
+      OIDC_USERNAME_CLAIM: preferred_username
+      OIDC_DISPLAY_NAME: Dex
+      OIDC_SCOPES: "openid profile email"
+    env_file:
+      - ${APP_DATA_DIR}/settings.env
+    volumes:
+      - ${APP_DATA_DIR}/data/app:/var/lib/outline/data
+
+  db:
+    image: postgres:17.7-alpine@sha256:9a78577340f3d26384b6aebeb475c0d46d664fd4ffa68503b4be4e4462745f94
+    user: "1000:1000"
+    restart: on-failure
+    environment:
+      POSTGRES_USER: outline
+      POSTGRES_PASSWORD: outlinepass
+      POSTGRES_DB: outline
+    volumes:
+      - ${APP_DATA_DIR}/data/db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-d", "outline", "-U", "outline"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  redis:
+    image: redis:8.4.0-alpine@sha256:6cbef353e480a8a6e7f10ec545f13d7d3fa85a212cdcc5ffaf5a1c818b9d3798
+    user: "1000:1000"
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data/redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 30s
+      retries: 3
+
+  dex:
+    image: dexidp/dex:v2.44.0@sha256:5d0656fce7d453c0e3b2706abf40c0d0ce5b371fb0b73b3cf714d05f35fa5f86
+    user: "1000:1000"
+    restart: on-failure
+    ports:
+      - 8943:5556
+    volumes:
+      - ${APP_DATA_DIR}/data/config:/etc/dex
+      - ${APP_DATA_DIR}/data/dex:/var/dex
+    command: ["dex", "serve", "/etc/dex/config.yaml"]
