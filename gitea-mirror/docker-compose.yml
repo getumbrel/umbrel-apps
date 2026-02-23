@@ -1,0 +1,31 @@
+version: '3.7'
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: gitea-mirror_web_1
+      APP_PORT: 4321
+
+  web:
+    image: ghcr.io/raylabshq/gitea-mirror:v3.9.2@sha256:6e3edc29884c11a8a7bb3f65adae266d4f51c32d829c857152372e7dba35a410
+    restart: on-failure
+    user: "1000:1000"
+    volumes:
+      - ${APP_DATA_DIR}/data:/app/data
+    environment:
+      BETTER_AUTH_SECRET: ${APP_SEED}
+      BETTER_AUTH_URL: http://${DEVICE_DOMAIN_NAME}:${APP_GITEA_MIRROR_PORT}
+      BETTER_AUTH_TRUSTED_ORIGINS: http://${DEVICE_DOMAIN_NAME}:${APP_GITEA_MIRROR_PORT},http://${DEVICE_HOSTNAME}:${APP_GITEA_MIRROR_PORT},${APP_GITEA_MIRROR_LOCAL_URLS}
+      NODE_ENV: production
+      DATABASE_URL: file:data/gitea-mirror.db
+      HOST: 0.0.0.0
+      PORT: "4321"
+      PUBLIC_BETTER_AUTH_URL: http://${DEVICE_DOMAIN_NAME}:${APP_GITEA_MIRROR_PORT}
+      MIRROR_ISSUE_CONCURRENCY: "3"
+      MIRROR_PULL_REQUEST_CONCURRENCY: "5"
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=3", "--spider", "http://localhost:4321/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 15s
