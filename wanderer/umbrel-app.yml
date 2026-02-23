@@ -3,7 +3,7 @@ id: wanderer
 name: Wanderer
 tagline: A self-hosted trail database
 category: files
-version: "0.18.4"
+version: "0.18.5"
 port: 3111
 description: >-
   🗺️ Wanderer is a self-hosted, open-source platform designed for outdoor enthusiasts who want to manage, explore, and share hiking and biking routes on their own terms. It provides a clean and modern interface for uploading GPX files, drawing new routes on an interactive map, and organizing them with detailed metadata such as difficulty, duration, and elevation gain. Wanderer supports full-text search and powerful filtering to help users find exactly the route they are looking for based on various criteria like region, length, or type of activity.
@@ -28,17 +28,19 @@ gallery:
   - 6.jpg
   - 7.jpg
 releaseNotes: >-
-  This release includes bug fixes and new features:
-    - Tags can now be properly removed from trails
-    - Trails can now be added to multiple lists at once
-    - Fixed issue where creating more than 29 lists prevented lists from loading
-    - Fixed GPS data being removed from summit logs after editing
-    - Fixed infinite loop when creating a list with federation active
-    - Fixed bicycle routing options being incorrectly applied to car routing
-    - Fixed filtering by multiple categories not working as expected
-    - Fixed imported tracks being marked private despite public-by-default settings
-    - External user access now requires authentication for ActivityPub
-    - Added Norwegian translation
+  This release includes a security fix, new features, and bug fixes:
+    - Fixed a security vulnerability related to XML processing
+    - Trail list filter settings are now saved and restored when navigating back from a trail
+    - Fixed elevation correction to preserve original GPX values when routing data is invalid
+    - Fixed ascent and descent calculation for high-frequency GPX tracks
+    - Fixed trail upload failing for new users without default privacy settings
+    - Fixed duplicate "Cancel" button and focus loss in trail filter search
+    - Fixed bulk trail assignment in list search modal
+    - Fixed locale detection and locale-related errors
+    - Fixed PDF and print layout so descriptions no longer overlap waypoints
+    - Fixed map state saving for amenity names
+    - Fixed a race condition that caused errors when printing a trail
+    - Added Czech language support
 
 
   Full release notes: https://github.com/Flomp/wanderer/releases
