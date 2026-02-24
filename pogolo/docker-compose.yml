@@ -3,19 +3,8 @@ version: "3.7"
 services:
   app_proxy:
     environment:
-      APP_HOST: pogolo_dozzle_1
+      APP_HOST: pogolo_pogolo_1
       APP_PORT: 5663
-
-  dozzle:
-    image: amir20/dozzle:v9@sha256:2d59d09503f2c947133a4f231fdeb1f4c99e23aa0d4137f81bb1a6318e0e06cf
-    restart: on-failure
-    stop_grace_period: 30s
-    # needs to be root
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    environment:
-      DOZZLE_FILTER: label=logopo
-      DOZZLE_ADDR: :5663
 
   pogolo:
     image: 0xf0xx0/pogolo:v1.x@sha256:f98f732ec613bdca6d69421ef2e53234a70ff9b6a2450d807e81f6fb7be7cc2f
