@@ -7,54 +7,17 @@ services:
       PROXY_AUTH_ADD: 'false'
 
   # Nginx reverse proxy - serves frontend, routes API calls
+  # Uses custom umbrel image with baked-in config template and setup page
   nginx:
-    image: nginx:1.27-alpine@sha256:65645c7bb6a0661892a8b03b89d0743208a18dd2f3f17a54ef4b76fb8e2f2a10
+    image: ghcr.io/bffless/ce-nginx:umbrel@sha256:8638488361540a47640686048c3a2a48e6789d7bff195a728a91b6bf2660e34b
     restart: on-failure
     stop_grace_period: 30s
-    entrypoint: ['sh', '-c']
-    command:
-      - |
-        echo "🚀 Starting nginx..."
-        apk add --no-cache inotify-tools >/dev/null 2>&1
-        mkdir -p /etc/nginx/sites-enabled
-
-        # Read PRIMARY_DOMAIN from config file if it exists
-        DOMAIN_FILE="/app/config/domain.txt"
-        if [ -f "$$DOMAIN_FILE" ]; then
-          export PRIMARY_DOMAIN=$$(cat "$$DOMAIN_FILE" | tr -d '[:space:]')
-          echo "📍 Domain configured: $$PRIMARY_DOMAIN"
-        else
-          export PRIMARY_DOMAIN="localhost"
-          echo "📍 No domain configured - using localhost"
-        fi
-
-        # Generate nginx config from template using envsubst
-        echo "📝 Generating nginx config for domain: $$PRIMARY_DOMAIN"
-        envsubst '$$PRIMARY_DOMAIN' < /etc/nginx/nginx.conf.template > /etc/nginx/conf.d/default.conf
-
-        # Validate config
-        if ! nginx -t 2>&1; then
-          echo "❌ Nginx config validation failed!"
-          exit 1
-        fi
-        echo "✅ Nginx config generated successfully"
-
-        # Config watcher - reloads nginx when backend writes new domain configs
-        (while true; do
-          inotifywait -e create,modify,delete -q /etc/nginx/sites-enabled/ 2>/dev/null
-          sleep 1
-          if nginx -t 2>&1 | grep -q "successful"; then
-            nginx -s reload
-            echo "🔄 Nginx reloaded at $$(date)"
-          fi
-          sleep 2
-        done) &
-        exec nginx -g "daemon off;"
     volumes:
-      - ${APP_DATA_DIR}/data/proxy/nginx.conf.template:/etc/nginx/nginx.conf.template:ro
+      # User config (domain.txt) - writable by user
       - ${APP_DATA_DIR}/data/config:/app/config:ro
-      - ${APP_DATA_DIR}/data/setup:/usr/share/nginx/html/setup:ro
+      # Frontend static files from frontend container
       - frontend-dist:/usr/share/nginx/html/app:ro
+      # Dynamic domain configs written by backend
       - nginx-sites:/etc/nginx/sites-enabled
     depends_on:
       - backend
@@ -112,13 +75,11 @@ services:
       start_period: 45s
 
   # NestJS backend API
-  # Note: No user specified - runs as root to ensure it can write to volume mounts
-  # regardless of host directory ownership. Umbrel is a trusted single-user environment.
+  # Uses custom umbrel image with baked-in entrypoint that derives keys from APP_SEED
   backend:
-    image: ghcr.io/bffless/ce-backend:umbrel@sha256:e86ca77aabec9205583f25edb40627c5cfc372def7aa8fd11dbd0bef5635d166
+    image: ghcr.io/bffless/ce-backend:umbrel@sha256:d4a1b90707a743f445b1e9056fa5207ad1067f942d900c2fb68de5ecc7f57ee3
     restart: on-failure
     stop_grace_period: 30s
-    entrypoint: /app/umbrel-entrypoint.sh
     depends_on:
       postgres:
         condition: service_healthy
@@ -164,16 +125,16 @@ services:
       FEATURE_WILDCARD_SSL_BANNER: 'false'
       FEATURE_DOMAIN_SSL_TOGGLE: 'false'
     volumes:
+      # User uploads
       - ${APP_DATA_DIR}/data/uploads:/app/apps/backend/uploads
-      - ${APP_DATA_DIR}/data/entrypoint/umbrel-entrypoint.sh:/app/umbrel-entrypoint.sh:ro
+      # User config (domain.txt)
       - ${APP_DATA_DIR}/data/config:/app/config:ro
+      # Dynamic nginx configs written by backend
       - nginx-sites:/etc/nginx/sites-enabled
 
   # React frontend (serves static files)
-  # Note: No user specified - runs as root to ensure it can overwrite volume files
-  # regardless of ownership. This container only copies files and sleeps.
   frontend:
-    image: ghcr.io/bffless/ce-frontend:umbrel@sha256:0fb99664e596fcb9fa6b8957c43094bd6f15600c2d3fc7e511915cbde0146df2
+    image: ghcr.io/bffless/ce-frontend:umbrel@sha256:d6dbb2798b7844b5e251ee1bc982ccc17c29b1b56f091d2a229429fa4ffa7a2e
     restart: on-failure
     stop_grace_period: 30s
     volumes:
