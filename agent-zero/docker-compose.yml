@@ -1,0 +1,15 @@
+version: '3.7'
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: agent-zero_web_1
+      APP_PORT: 80
+
+  web:
+    image: agent0ai/agent-zero:v0.9.7@sha256:ef3993faf67928d8bea4e1979c7cff417fcfb1d456b62af2831e43e7a47ebfb4
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data:/a0
+    environment:
+      - ALLOWED_ORIGINS=http://${DEVICE_DOMAIN_NAME}:${APP_AGENTZERO_PORT},http://${DEVICE_HOSTNAME}:${APP_AGENTZERO_PORT},${APP_AGENTZERO_LOCAL_URLS}
