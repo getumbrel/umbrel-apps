@@ -1,21 +1,16 @@
-export APP_CORE_LIGHTNING_IP="10.21.21.94"
+# 1. DR Abstracts Umbrel OS build script of legacy "APP_CORE_LIGHTNING_* until updated with 'APP_CLN_REST_'
 export APP_CORE_LIGHTNING_PORT="2103"
-export APP_CORE_LIGHTNING_DAEMON_IP="10.21.21.96"
-export APP_CORE_LIGHTNING_DAEMON_PORT="9736"
-export APP_CORE_LIGHTNING_DAEMON_GRPC_PORT="2110"
-export APP_CORE_LIGHTNING_WEBSOCKET_PORT="2106"
-export APP_CORE_LIGHTNING_DATA_DIR="${EXPORTS_APP_DIR}/data/lightningd"
-export CORE_LIGHTNING_REST_PORT="2107"
+export APP_CORE_LIGHTNING_DAEMON_PORT="9735"
 
-export APP_CORE_LIGHTNING_BITCOIN_NETWORK="${APP_BITCOIN_NETWORK}"
-if [[ "${APP_BITCOIN_NETWORK}" == "mainnet" ]]; then
-	export APP_CORE_LIGHTNING_BITCOIN_NETWORK="bitcoin"
-fi
+# 2. DR FIX GAP with Native cln-rest Source Keys (completes v25.09.3-hotfix.1)
+export APP_CLN_REST_PORT="2107"
+export APP_CLN_REST_WEBSOCKET_PORT="2104"
+export APP_CLN_REST_GRPC_PORT="2110"
 
-lightning_hidden_service_file="${EXPORTS_TOR_DATA_DIR}/app-${EXPORTS_APP_ID}-rest/hostname"
-export APP_CORE_LIGHTNING_HIDDEN_SERVICE="$(cat "${lightning_hidden_service_file}" 2>/dev/null || echo "notyetset.onion")"
+# 3. DR Abstracts Umbrel OS build script of legacy "APP_CORE_LIGHTNING_* until updated with 'APP_CLN_REST_'
+export APP_CLN_REST_IP="${APP_CORE_LIGHTNING_DAEMON_IP}"
+export APP_CLN_REST_DATA_DIR="${CORE_LIGHTNING_PATH}"
+export APP_CLN_REST_RPC_PATH="${CORE_LIGHTNING_PATH}/bitcoin/lightning-rpc"
 
-export APP_CONFIG_DIR="/data/app"
-export APP_MODE="production"
-export CORE_LIGHTNING_PATH="/root/.lightning"
-export COMMANDO_CONFIG="/root/.lightning/.commando-env"
+# 4. Authentication Interface linkage due to remainng hard-coded linking to new CLN_REST_PATH key 
+export COMMANDO_CONFIG="${CORE_LIGHTNING_PATH}/.commando-env"
