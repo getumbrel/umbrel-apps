@@ -3,8 +3,9 @@ version: "3.7"
 services:
   app_proxy:
     environment:
-      APP_HOST: $APP_CORE_LIGHTNING_IP
-      APP_PORT: $APP_CORE_LIGHTNING_PORT
+      APP_HOST: ${APP_CORE_LIGHTNING_IP}
+      APP_PORT: ${APP_CORE_LIGHTNING_PORT}
+
   app:
     image: ghcr.io/elementsproject/cln-application:25.07.3@sha256:af22cebd21e1175651049d09cf2dd547da569fddd55e4c7766e5956bd47e91fa
     command: npm run start
@@ -46,21 +47,17 @@ services:
     networks:
       default:
         ipv4_address: ${APP_CORE_LIGHTNING_IP}
-lightningd:
-    image: elementsproject/lightningd:v25.09.3-hotfix.1
-    container_name: core-lightning_lightningd_1
-    user: "0:0"
+
+  lightningd:
+    image: elementsproject/lightningd:v25.09.3@sha256:ca95610b7db23a8fad5cf6e36044ecd4ff9124dcc7dae50bd151084d39feaf70
     restart: on-failure
-    expose:
-      - "2107"
     ports:
-      - "${APP_CORE_LIGHTNING_DAEMON_PORT}:9735"
-      - "${APP_CORE_LIGHTNING_WEBSOCKET_PORT}:${APP_CORE_LIGHTNING_WEBSOCKET_PORT}"
-      - "${CORE_LIGHTNING_REST_PORT}:${CORE_LIGHTNING_REST_PORT}"
-      - "${APP_CORE_LIGHTNING_DAEMON_GRPC_PORT}:${APP_CORE_LIGHTNING_DAEMON_GRPC_PORT}"
+      - ${APP_CORE_LIGHTNING_DAEMON_PORT}:9735
+      - ${APP_CORE_LIGHTNING_WEBSOCKET_PORT}:${APP_CORE_LIGHTNING_WEBSOCKET_PORT}
+      - ${CORE_LIGHTNING_REST_PORT}:${CORE_LIGHTNING_REST_PORT}
+      - ${APP_CORE_LIGHTNING_DAEMON_GRPC_PORT}:${APP_CORE_LIGHTNING_DAEMON_GRPC_PORT}
     environment:
-      - LIGHTNINGD_NETWORK=${APP_CORE_LIGHTNING_BITCOIN_NETWORK}
-      - CORE_LIGHTNING_REST_PORT=2107
+      LIGHTNINGD_NETWORK: ${APP_CORE_LIGHTNING_BITCOIN_NETWORK}
     command:
       - --bitcoin-rpcconnect=${APP_BITCOIN_NODE_IP}
       - --bitcoin-rpcuser=${APP_BITCOIN_RPC_USER}
@@ -77,13 +74,14 @@ lightningd:
       - --grpc-host=${APP_CORE_LIGHTNING_DAEMON_IP}
       - --grpc-port=${APP_CORE_LIGHTNING_DAEMON_GRPC_PORT}
       - --clnrest-host=${APP_CORE_LIGHTNING_DAEMON_IP}
-      - --clnrest-port=2107
+      - --clnrest-port=${CORE_LIGHTNING_REST_PORT}
     volumes:
-      - "${APP_CORE_LIGHTNING_DATA_DIR}:${CORE_LIGHTNING_PATH}"
+      - ${APP_CORE_LIGHTNING_DATA_DIR}:${CORE_LIGHTNING_PATH}
     networks:
       default:
         ipv4_address: ${APP_CORE_LIGHTNING_DAEMON_IP}
-tor:
+
+  tor:
     image: getumbrel/tor:0.4.7.8@sha256:2ace83f22501f58857fa9b403009f595137fa2e7986c4fda79d82a8119072b6a
     user: "1000:1000"
     restart: on-failure
@@ -91,4 +89,4 @@ tor:
       - ${APP_DATA_DIR}/torrc:/etc/tor/torrc:ro
       - ${TOR_DATA_DIR}:/data
     environment:
-      - HOME: "/tmp"
+      HOME: "/tmp"
