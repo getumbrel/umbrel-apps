@@ -76,7 +76,20 @@ services:
       - --clnrest-host=${APP_CORE_LIGHTNING_DAEMON_IP}
       - --clnrest-port=${CORE_LIGHTNING_REST_PORT}
     volumes:
-      - ${APP_CORE_LIGHTNING_DATA_DIR}:${CORE_LIGHTNING_PATH}
+      # --- Umbrel Ligntning Servie Provider Tier ---
+      - ${APP_CONFIG_DIR}:${APP_CONFIG_DIR}
+      - ${APP_CLN_REST_DATA_DIR}:${CLN_REST_PATH}
+      - ${APP_CLN_DATA_DIR}:/root/.lightning
+      - ${APP_DATA_DIR}/../nostr-relay/data/relay:/nostr-relay
+      - ${APP_DATA_DIR}/../core-lightning-rtl/data/rtl:/rtl
+      - ${APP_DATA_DIR}/../core-lightning-rtl/data/boltz:/boltz
+      - ${APP_DATA_DIR}/../lightning/data/lnd:/lnd:ro
+      # --- Umbrel API Economy Consumer Tier--
+      - ${APP_DATA_DIR}/../fedimint/data:/fedimint
+      - ${APP_DATA_DIR}/../lnbits-cln/data/lnbits-cln:/lnbits-cln
+      - ${APP_DATA_DIR}/../lnbits/data/lnbits:/lnbits
+      - ${APP_DATA_DIR}/../wordpress/data/wordpress:/wordpress
+      
     networks:
       default:
         ipv4_address: ${APP_CORE_LIGHTNING_DAEMON_IP}
