@@ -2,7 +2,7 @@ manifestVersion: 1
 id: memos
 category: files
 name: Memos
-version: "0.26.1"
+version: "0.26.2"
 tagline: Easily capture and share your great thoughts
 description: >-
   A privacy-first, lightweight note-taking service.
@@ -19,20 +19,18 @@ description: >-
   - RESTful API for third-party services. Embrace the power of integration and unleash new possibilities with our RESTful API support.
 releaseNotes: >-
   This release includes important bug fixes and improvements:
-    - Fixed inbox crashes when handling deleted memos
-    - Corrected environment variable parsing for variables containing underscores
-    - Fixed video attachment handling
-    - Prevented 401 errors on window focus when access token expires
-    - Fixed shortcut edit button to open edit dialog instead of create
-    - Blocked Ctrl+Enter from saving while editor is still loading content
-    - Fixed nested task list rendering and checkbox interactions
-    - Made OAuth PKCE optional during sign-in
-    - Prevented private memos from disappearing during token refresh
-    - Added Unicode case-insensitive search support for SQLite
-    - Corrected handling of pasted files in the memo editor
-    - Restored access token creation flow
-    - Preserved tag case when extracting Markdown tags
-    - Auto-fixed permission issues when upgrading from 0.25.3 to 0.26.0
+    - Fixed spurious logout on page reload with expired access token
+    - Fixed explore page showing private tags
+    - Fixed default memo visibility not being correctly applied
+    - Fixed cross-tab session loss by persisting auth token in localStorage
+    - Fixed a security vulnerability in the webhook dispatcher (SSRF)
+    - Fixed attachment and memo deletion when local file is missing
+    - Fixed comment reactions and deletion not updating correctly
+    - Fixed calendar navigation and year picker
+    - Fixed redirect to auth page instead of explore on session expiry
+    - Fixed ampersand support in tags to enable compound tags
+    - Fixed memo batch attachment truncation
+    - Improved MemoEditor layout and timestamp popover styling
 
 
   Full release notes are available at https://github.com/usememos/memos/releases
