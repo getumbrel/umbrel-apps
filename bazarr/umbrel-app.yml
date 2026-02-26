@@ -2,7 +2,7 @@ manifestVersion: 1
 id: bazarr
 category: media
 name: Bazarr
-version: "1.5.5"
+version: "1.5.6"
 tagline: Manage and download subtitles for Sonarr and Radarr
 description: >-
   Bazarr is a companion application to Sonarr and Radarr that manages and downloads subtitles based on your requirements.
@@ -19,20 +19,20 @@ description: >-
   You will also need to input your API key for Sonarr and/or Radarr. You can find your API keys in the settings of the Sonarr and Radarr apps.
 releaseNotes: >-
   Key improvements in this release include:
-    - Removed OpenSubtitles.org provider and associated functionality
-    - Added Subtis.io subtitles provider
-    - Improved jobs manager to allow concurrent execution with reordering and force starting pending jobs
-    - Fixed path traversal security vulnerability (CVE-2024-40348)
-    - Improved thread safety in jobs manager with added locks and refactored job execution logic
-    - Enhanced release group matching logic for improved accuracy
-    - Added retry logic to NapiProjekt provider for improved resilience
-    - Fixed subtitles uploading formats validation
-    - Improved opensubtitles.com search parameters and added option to allow machine translated subtitles
-    - Fixed episodes synchronization with Sonarr v3
-    - Fixed custom path not taken into account when translating or modding subtitles
-    - Improved subsource to fallback to title search if IMDB returns empty result
-    - Fixed whisperai provider audio stream language mapping
-    - Python 3.13 is now officially supported
+    - Added Spain vs LATAM Spanish detection to SubX provider
+    - Added SubX subtitle proxy for Subdivx Latam Spanish provider
+    - Removed subdivx provider as it is no longer supported
+    - Added hostname setting in General for webhook security to prevent hostname poisoning
+    - Added audio delay detection in MKV headers for WhisperAI using FFprobe
+    - Added Plex library refresh after subtitle deletions or modifications
+    - Improved subdl provider with search by TMDB ID and better error handling
+    - Improved Gestdown provider release matching
+    - Fixed assrt provider skipping season pack subtitles for episode searches
+    - Fixed missing audio_exclude migration in language profile upgrades
+    - Fixed post-processing failing on non-English Windows systems
+    - Fixed subssabbz search, diacritics, language comparison, and download error handling
+    - Improved job queue handling to prevent high CPU usage from busy waiting
+    - Improved performance by replacing blocking job progress monitoring with async implementation
 
 
   Full release notes are found at https://github.com/morpheus65535/bazarr/releases
