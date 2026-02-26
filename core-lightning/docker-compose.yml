@@ -76,18 +76,47 @@ services:
       - --clnrest-host=${APP_CLN_REST_DAEMON_IP}
       - --clnrest-port=${CLN_REST_REST_PORT}
     volumes:
-      # --- Umbrel Ligntning Servie Provider Tier ---
+      # =============================================================
+      # TIER 1: umbrelOS ⚡SERVICE PROVIDER GATEWAY
+      # =============================================================
+      # Core Lightning (CLN) AI, BOLT12, Fedimint, NIP-57 ZAP, NWC/NIP dev
       - ${APP_CONFIG_DIR}:${APP_CONFIG_DIR}
-      - ${APP_CLN_DATA_DIR}:/root/.lightning
       - ${APP_CLN_REST_DATA_DIR}:${CLN_REST_PATH}
+      - ${APP_CLN_DATA_DIR}:/root/.lightning
+      - ${APP_BITCOIN_DATA_DIR}:/bitcoin:ro
+      
+      # LND: RO SECURE ACCESS FOR SERVICE COMPOSITION (not competition)
+      # Using relative path to guarantee cross-app resolution bypassing manifest limits
+      - ${APP_DATA_DIR}/../lightning/data/lnd:/lnd:ro
+
+      # ==============================================================
+      # TIER 2: STACK UTILITIES (Nostr NIP, Liquidity Management)
+      # ==============================================================
+      # Nostr Relay: DECENTRALIZED BUS ABSTRACTS INTENT FROM SETTLMENT
       - ${APP_DATA_DIR}/../nostr-relay/data/relay:/nostr-relay
+      
+      # Ride The Lightning (CLN Liquidity and Channel Managment)
       - ${APP_DATA_DIR}/../core-lightning-rtl/data/rtl:/rtl
       - ${APP_DATA_DIR}/../core-lightning-rtl/data/boltz:/boltz
-      - ${APP_DATA_DIR}/../lightning/data/lnd:/lnd:ro
-      # --- Umbrel API Economy Consumer Tier--
-      - ${APP_DATA_DIR}/../fedimint/data:/fedimint
+
+      # ================================================================
+      # TIER 3: API ECONOMY PROVIDERS THAT CONSUME CLN ENGINE SERVICES
+      # ================================================================
+      # Fixed standard 'fedimint' directory name (removed the 'd')
+      - ${APP_DATA_DIR}/../fedimintd/data:/fedimintd
+      
+      # Fixed duplicate lines: Maps BOTH the custom CLN hack and standard LNbits
       - ${APP_DATA_DIR}/../lnbits-cln/data/lnbits-cln:/lnbits-cln
       - ${APP_DATA_DIR}/../lnbits/data/lnbits:/lnbits
+
+      # ===============================================================
+      # TIER 4: STACK ROUTING (PUBLIC STACK SERVICE CONSUMPTION)
+      # ===============================================================      
+      # Nginx Proxy Manager: https://subdomain.mysite.com stack integration
+      - ${APP_DATA_DIR}/../nginx-proxy-manager/data/data:/npm/data
+      - ${APP_DATA_DIR}/../nginx-proxy-manager/data/letsencrypt:/npm/letsencrypt
+      
+      # WordPress: (mysite.com) LNbits (lnbits.mysite.com) LNURLp + NIP 
       - ${APP_DATA_DIR}/../wordpress/data/wordpress:/wordpress
       
     networks:
