@@ -2,7 +2,7 @@ manifestVersion: 1
 id: esphome
 category: automation
 name: ESPHome
-version: "2026.2.1"
+version: "2026.2.2"
 tagline: Intelligently manage all your ESP8266/ESP32 devices
 description: >-
   ESPHome is a system to control your ESP8266/ESP32 by simple yet powerful configuration files and control them remotely through Home Automation systems.
@@ -22,16 +22,20 @@ defaultPassword: ""
 torOnly: false
 releaseNotes: >-
   This release includes bug fixes and stability improvements:
-    - Fixed infinitely large BLE characteristic values in esp32_ble_server
-    - Fixed socket exhaustion issues in UDP and web server components
-    - Fixed pulse counter compilation on ESP32-C6, C5, H2, and P4
-    - Fixed E1.31 support on ESP8266 and RP2040
-    - Fixed PCNT glitch filter calculation that was off by 1000x
-    - Improved frame synchronization for LD2410, LD2450, and LD2420 radar components
-    - Fixed WiFi output power sync to prevent brownout resets
-    - Fixed UART pin setup for UART0 default pins on ESP-IDF
+    - Fixed typo in max7219digit action names
+    - Fixed build error when using lambda returning StringRef in Home Assistant event data
+    - Fixed uninitialized HonSettings causing API connection failures in Haier component
+    - Fixed bme68x_bsec2 compilation on ESP32 Arduino
+    - Fixed water_heater device_id missing from state responses
+    - Fixed PID deadband threshold conversion for Fahrenheit
+    - Fixed ld2420 sizeof vs value bug in register memcpy
+    - Fixed speaker playback bugs in rtttl component
+    - Fixed wrong gain for 88uT range in hmc5883l
+    - Fixed delta filter percentage mode regression in sensor component
+    - Fixed components getting stuck forever on a failed can_proceed check
+    - Improved OTA URL handling by percent-encoding credentials
 
 
-  Full release notes can be found at https://esphome.io/changelog/2026.2.1/
+  Full release notes can be found at https://esphome.io/changelog/2026.2.2/
 submitter: ShonP40
 submission: https://github.com/getumbrel/umbrel-apps/pull/43
