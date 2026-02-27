@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: core-lightning
 category: bitcoin
 name: Core Lightning
-version: "25.09.3-hotfix.1"
+version: "25.09.3-hotfix.2"
 tagline: Run your personal Core Lightning node
 description: >-
   Get started with the Lightning network today with Core Lightning - a
@@ -32,11 +32,19 @@ defaultPassword: ""
 submitter: Blockstream
 submission: https://github.com/getumbrel/umbrel-apps/pull/475
 releaseNotes: >-
+  This hotfix release restores internal connectivity for Umbrel apps (RTL, LNbits, etc.) that use the Core Lightning REST API.
+  The built-in clnrest plugin is now bound to all network interfaces (0.0.0.0) instead of only the specific Docker internal IP,
+  making it accessible from other Umbrel app Docker networks.
+
+
+  **Previous release notes (hotfix.1):**
+
+
   This hotfix release fixes an issue where users were unable to connect external wallet clients to their Core Lightning node.
   If you were previously unable to connect a wallet, please go to "Settings" in the top right > Connect wallet > and select your desired connection method to see corrected connection details.
 
 
-  **Previous release notes:**
+  **v25.09.3:**
 
 
   This updates cln-application to v25.07.3, lightningd to v25.09.3, and replaces the legacy c-lightning-rest service with the built-in REST interface of lightningd.
