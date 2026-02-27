@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: core-lightning
 category: bitcoin
 name: Core Lightning
-version: "25.09.3-hotfix.8"
+version: "25.09.3-hotfix.9"
 tagline: Run your personal Core Lightning node
 description: >-
   Get started with the Lightning network today with Core Lightning - a
@@ -32,38 +32,61 @@ defaultPassword: ""
 submitter: Blockstream
 submission: https://github.com/getumbrel/umbrel-apps/pull/475
 releaseNotes: >-
-  This hotfix completes the HA micropayment gateway baseline by adding Nostr Relay as
-  a discoverable decentralized message bus alongside the CLN REST API stack.
+  This hotfix completes the HA/DR hardening baseline: IP drift is now
+  abstracted to stable Docker DNS names across all stack apps.
 
 
-  **New in hotfix.8 — nostr-relay app-tier exports (message bus decoupling):**
+  **New in hotfix.9 — IP→DNS abstraction (container_name labels):**
 
-  `nostr-relay/exports.sh` is now published, exposing four canonical variables:
+  The root cause of IP-drift failures during OS/app restarts and DR recovery
+  is that Docker may reassign IP addresses when networks are rebuilt. The fix
+  is to use Docker's embedded DNS (container hostnames) for inter-service
+  routing instead of static IPs. Three changes close this gap:
 
-  - `APP_NOSTR_RELAY_HOST` / `APP_NOSTR_RELAY_PORT` — internal relay WebSocket endpoint
 
-  - `APP_NOSTR_RELAY_PROXY_HOST` / `APP_NOSTR_RELAY_PROXY_PORT` — relay-proxy API endpoint
+  1. `core-lightning/docker-compose.yml` — `app_proxy APP_HOST` updated from the
+  static IP `$APP_CORE_LIGHTNING_IP` to the DNS name `core-lightning_app_1`.
+  Explicit `container_name` labels added to the `app` and `lightningd` services
+  so Docker DNS is deterministic and resilient across container rebuilds.
 
-  This closes the loose-coupling gap in the Hub-and-Spoke HA pattern: CLN micropayment
-  consumers (LNbits, Boltz, future BOLT12/Fedimint integrations) can now discover the
-  Nostr Relay bus via standard `APP_NOSTR_RELAY_*` variables rather than hardcoding
-  Docker container names. The relay database and relay-proxy state are already persisted
-  via volume mounts in the existing `nostr-relay/docker-compose.yml`.
+
+  2. `core-lightning/exports.sh` — Two new DNS-stable exports added:
+  `APP_CORE_LIGHTNING_APP_HOST=core-lightning_app_1` and
+  `APP_CORE_LIGHTNING_DAEMON_HOST=core-lightning_lightningd_1`.
+  Stack consumers (LNbits, BOLT12, Fedimint integrations) can now reference
+  the container hostname instead of the static IP in plain HTTP/WebSocket
+  contexts. The legacy `*_IP` and `*_DAEMON_IP` exports are retained as-is
+  for backward compat and for TLS-bound connections (gRPC, mTLS) whose
+  certificates encode the IP as a SAN.
+
+
+  3. `core-lightning-rtl/docker-compose.yml` — Explicit `container_name` added
+  to the `web` and `boltz` services, pinning the DNS names already hardcoded
+  in `app_proxy APP_HOST` and `BOLTZ_SERVER_URL` to their canonical values.
+
+
+  4. `nostr-relay/docker-compose.yml` — Explicit `container_name` added to
+  `web`, `relay`, and `relay-proxy` services, making the Nostr Relay message
+  bus DNS (`nostr-relay_relay_1`, `nostr-relay_relay-proxy_1`) stable across
+  restart/update cycles. This anchors the Hub-and-Spoke HA baseline: CLN
+  micropayment providers can discover the relay bus via the `APP_NOSTR_RELAY_*`
+  exports (hotfix.8) and rely on stable DNS resolution at runtime.
+
+
+  **From hotfix.8 — nostr-relay app-tier exports:**
+
+  `nostr-relay/exports.sh` published `APP_NOSTR_RELAY_HOST/PORT` and
+  `APP_NOSTR_RELAY_PROXY_HOST/PORT` for loosely-coupled stack consumers.
 
 
   **From hotfix.7 — datum volume baseline:**
 
-  The `datum` app mounts a persistent `logs` volume (`${APP_DATA_DIR}/data/logs:/app/logs`),
-  giving the DATUM gateway stable operational state across container restarts and DR events.
+  `datum` app logs volume persists across restarts and DR events.
 
 
   **From hotfix.6 — canonical CLNRest app-tier exports:**
 
-  `APP_CORE_LIGHTNING_CLNREST_PORT` and `APP_CORE_LIGHTNING_CLNREST_HOST` added to
-  `exports.sh`, with backward-compat `REST_*` aliases for RTL, LNbits, Boltz and torrc.template.
-
-
-  **Previous release notes (hotfix.5):**
+  `APP_CORE_LIGHTNING_CLNREST_PORT`/`HOST` with backward-compat `REST_*` aliases.
 
 
   This hotfix release completes the variable naming gap-map fix: all shell exports in exports.sh now
