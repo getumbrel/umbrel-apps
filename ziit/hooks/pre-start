@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# This scripts checks the environment file for placeholder values and replaces them with generated keys or system variables.
+
+APP_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")"
+ENV_FILE="$APP_DIR/settings.env"
+
+# Check if the file exists
+if [ ! -f "$ENV_FILE" ]; then
+    echo "Error: Environment file not found at $ENV_FILE"
+    exit 1
+fi
+
+# Check if the NUXT_HOST value is set to "changeme"
+if grep -Eq '^NUXT_HOST= *changeme' "$ENV_FILE"; then
+    echo "Placeholder value for NUXT_HOST detected. Adding proper hostname..."
+
+    # Replace the placeholder with the hostname
+    sed -i -E 's|^NUXT_HOST= *changeme( *#.*)?$|NUXT_HOST="'"http://${DEVICE_DOMAIN_NAME}:8865"'" \1|' "$ENV_FILE"
+
+    echo "Updated NUXT_HOST in $ENV_FILE"
+else
+    echo "NUXT_HOST is already set. No changes made."
+fi
