@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: core-lightning
 category: bitcoin
 name: Core Lightning
-version: "25.09.3-hotfix.2"
+version: "25.09.3-hotfix.3"
 tagline: Run your personal Core Lightning node
 description: >-
   Get started with the Lightning network today with Core Lightning - a
@@ -32,6 +32,16 @@ defaultPassword: ""
 submitter: Blockstream
 submission: https://github.com/getumbrel/umbrel-apps/pull/475
 releaseNotes: >-
+  This hotfix release adds a dedicated `APP_CORE_LIGHTNING_REST_HOST` export to exports.sh,
+  mapping the clnrest endpoint to the daemon's internal IP. This was missing from the hotfix.2 build,
+  preventing other apps from reliably discovering the REST API host via the standard
+  `APP_CORE_LIGHTNING_*` variable convention. The Tor hidden service and RTL connection URL
+  now reference this new variable directly.
+
+
+  **Previous release notes (hotfix.2):**
+
+
   This hotfix release restores internal connectivity for Umbrel apps (RTL, LNbits, etc.) that use the Core Lightning REST API.
   The built-in clnrest plugin is now bound to all network interfaces (0.0.0.0) instead of only the specific Docker internal IP,
   making it accessible from other Umbrel app Docker networks.
