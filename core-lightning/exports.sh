@@ -27,3 +27,17 @@ export APP_CONFIG_DIR="/data/app"
 export APP_MODE="production"
 export CORE_LIGHTNING_PATH="/root/.lightning"
 export COMMANDO_CONFIG="/root/.lightning/.commando-env"
+
+# ---------------------------------------------------------------------------
+# DR Recovery / Manual Auth Override Scaffolding — "build as you go"
+# Uncomment and fill in these values when performing a node restore or
+# first-time CLN + RTL + LNbits commissioning on a fresh umbrelOS install.
+# Leave commented out for normal operation; umbrelOS sources these
+# automatically from the system environment and app data directories.
+#
+# export UMBREL_AUTH_SECRET=""       # umbrelOS SSO secret (see /home/umbrel/umbrel/secrets/umbrel-auth-secret)
+# export LIGHTNING_PUBKEY=""         # your CLN node public key (hex, 66 chars)
+# export LIGHTNING_RUNE=""           # CLN commando rune for RTL / LNbits access
+# export APP_CLN_RUNE_PATH=""        # path to commando-env file (default: /root/.lightning/.commando-env)
+# export TOR_PASSWORD=""             # Tor HS password passed via --tor-service-password
+# ---------------------------------------------------------------------------

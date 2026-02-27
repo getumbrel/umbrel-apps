@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: core-lightning
 category: bitcoin
 name: Core Lightning
-version: "25.09.3-hotfix.10"
+version: "25.09.3-hotfix.12"
 tagline: Run your personal Core Lightning node
 description: >-
   Get started with the Lightning network today with Core Lightning - a
@@ -32,7 +32,27 @@ defaultPassword: ""
 submitter: Blockstream
 submission: https://github.com/getumbrel/umbrel-apps/pull/475
 releaseNotes: >-
-  **Gen3 Stabilization & Recovery Baseline (hotfix.10)**
+  **Gen3 Stabilization & DR Scaffolding (hotfix.12)**
+
+
+  Added commented-out DR Recovery / Manual Auth Override scaffolding to `exports.sh`.
+  These entries are **inactive by default** (all commented out) and serve as a
+  "build as you go" reference for operators performing a first-time commissioning
+  or node restore on a fresh umbrelOS install:
+
+
+  - `UMBREL_AUTH_SECRET` — umbrelOS single-sign-on secret
+  - `LIGHTNING_PUBKEY` — your CLN node public key (hex)
+  - `LIGHTNING_RUNE` — CLN commando rune for RTL / LNbits access
+  - `APP_CLN_RUNE_PATH` — path to commando-env file
+  - `TOR_PASSWORD` — Tor hidden service password
+
+
+  Uncomment and fill in the values you need during a DR restore; leave
+  commented out for normal operation (umbrelOS sources these automatically).
+
+
+  **Previous release notes (hotfix.10) — NPM_CONFIG_VERSION + container_name:**
 
 
   This release closes the final gap in the HA/DR hardening series: the "Variable
