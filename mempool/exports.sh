@@ -2,6 +2,10 @@ export APP_MEMPOOL_IP="10.21.21.26"
 export APP_MEMPOOL_PORT="3006"
 export APP_MEMPOOL_API_IP="10.21.21.27"
 export APP_MEMPOOL_DB_IP="10.21.21.28"
+# DNS-stable container hostnames (resilient to IP drift across restarts / DR recovery)
+export APP_MEMPOOL_WEB_HOST="mempool_web_1"
+export APP_MEMPOOL_API_HOST="mempool_api_1"
+export APP_MEMPOOL_DB_HOST="mempool_mariadb_1"
 
 hidden_service_file="${EXPORTS_TOR_DATA_DIR}/app-${EXPORTS_APP_ID}/hostname"
 export APP_MEMPOOL_HIDDEN_SERVICE="$(cat "${hidden_service_file}" 2>/dev/null || echo "")"
