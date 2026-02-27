@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: core-lightning
 category: bitcoin
 name: Core Lightning
-version: "25.09.3-hotfix.9"
+version: "25.09.3-hotfix.10"
 tagline: Run your personal Core Lightning node
 description: >-
   Get started with the Lightning network today with Core Lightning - a
@@ -32,61 +32,57 @@ defaultPassword: ""
 submitter: Blockstream
 submission: https://github.com/getumbrel/umbrel-apps/pull/475
 releaseNotes: >-
-  This hotfix completes the HA/DR hardening baseline: IP drift is now
-  abstracted to stable Docker DNS names across all stack apps.
+  **Gen3 Stabilization & Recovery Baseline (hotfix.10)**
 
 
-  **New in hotfix.9 — IP→DNS abstraction (container_name labels):**
-
-  The root cause of IP-drift failures during OS/app restarts and DR recovery
-  is that Docker may reassign IP addresses when networks are rebuilt. The fix
-  is to use Docker's embedded DNS (container hostnames) for inter-service
-  routing instead of static IPs. Three changes close this gap:
+  This release closes the final gap in the HA/DR hardening series: the "Variable
+  Vacuum" and browser session drift that can occur during high-load
+  JSON-RPC→CLN-REST translation (e.g., wallet DB recovery on RasPi5).
 
 
-  1. `core-lightning/docker-compose.yml` — `app_proxy APP_HOST` updated from the
-  static IP `$APP_CORE_LIGHTNING_IP` to the DNS name `core-lightning_app_1`.
-  Explicit `container_name` labels added to the `app` and `lightningd` services
-  so Docker DNS is deterministic and resilient across container rebuilds.
+  **New in hotfix.10 — NPM_CONFIG_VERSION + container_name for NPM & WordPress:**
 
 
-  2. `core-lightning/exports.sh` — Two new DNS-stable exports added:
-  `APP_CORE_LIGHTNING_APP_HOST=core-lightning_app_1` and
-  `APP_CORE_LIGHTNING_DAEMON_HOST=core-lightning_lightningd_1`.
-  Stack consumers (LNbits, BOLT12, Fedimint integrations) can now reference
-  the container hostname instead of the static IP in plain HTTP/WebSocket
-  contexts. The legacy `*_IP` and `*_DAEMON_IP` exports are retained as-is
-  for backward compat and for TLS-bound connections (gRPC, mTLS) whose
-  certificates encode the IP as a SAN.
+  1. `core-lightning/docker-compose.yml` — Added `NPM_CONFIG_VERSION: "latest"` to
+  the `app` service environment. This directs the CLN Application TypeScript daemon's
+  npm environment builder to always pull the latest configuration schema during
+  startup and high-load translation phases (e.g., JSON-RPC to CLN-REST key
+  rotation during wallet recovery). Prevents the "Variable Vacuum" where critical
+  env vars like `COMMANDO_CONFIG` or `UMBREL_AUTH_SECRET` are silently dropped
+  under concurrent container initialization pressure on multi-core SBCs (RasPi5).
 
 
-  3. `core-lightning-rtl/docker-compose.yml` — Explicit `container_name` added
-  to the `web` and `boltz` services, pinning the DNS names already hardcoded
-  in `app_proxy APP_HOST` and `BOLTZ_SERVER_URL` to their canonical values.
+  2. `nginx-proxy-manager/docker-compose.yml` — Added `container_name: nginx-proxy-manager_web_1`
+  alongside the existing `hostname:`. `hostname` sets the in-container name; `container_name`
+  pins the Docker-network DNS entry. Without `container_name`, any container rebuild
+  after a "Rewind" or OS update can reassign the Docker-assigned name, breaking
+  `app_proxy APP_HOST` resolution and causing an Internal Outage for the NPM→CLN-REST
+  proxy chain (RTL ↔ CLN-REST ↔ LNbits ↔ NPM).
 
 
-  4. `nostr-relay/docker-compose.yml` — Explicit `container_name` added to
-  `web`, `relay`, and `relay-proxy` services, making the Nostr Relay message
-  bus DNS (`nostr-relay_relay_1`, `nostr-relay_relay-proxy_1`) stable across
-  restart/update cycles. This anchors the Hub-and-Spoke HA baseline: CLN
-  micropayment providers can discover the relay bus via the `APP_NOSTR_RELAY_*`
-  exports (hotfix.8) and rely on stable DNS resolution at runtime.
+  3. `wordpress/docker-compose.yml` — Added `container_name: wordpress_app_1` and
+  `container_name: wordpress_db_1`. WordPress uses PHP session cookies for user auth.
+  If the `app` container's Docker DNS name drifts after an update, `app_proxy`
+  routes requests to a stale container reference — killing active browser sessions.
+  Pinning `container_name` anchors cookie/session routing stability across
+  OS/app restarts and DR recovery replays.
 
 
-  **From hotfix.8 — nostr-relay app-tier exports:**
+  **From hotfix.9 — IP→DNS abstraction (container_name labels):**
 
-  `nostr-relay/exports.sh` published `APP_NOSTR_RELAY_HOST/PORT` and
-  `APP_NOSTR_RELAY_PROXY_HOST/PORT` for loosely-coupled stack consumers.
-
-
-  **From hotfix.7 — datum volume baseline:**
-
-  `datum` app logs volume persists across restarts and DR events.
+  `app_proxy APP_HOST` for CLN migrated from static IP to `core-lightning_app_1`.
+  `container_name` labels added to CLN, CLN-RTL, and nostr-relay services.
 
 
-  **From hotfix.6 — canonical CLNRest app-tier exports:**
+  **From hotfix.8 — nostr-relay app-tier exports (message bus):**
 
-  `APP_CORE_LIGHTNING_CLNREST_PORT`/`HOST` with backward-compat `REST_*` aliases.
+  `APP_NOSTR_RELAY_HOST/PORT` and `APP_NOSTR_RELAY_PROXY_HOST/PORT` published.
+
+
+  **From hotfix.7 — datum logs volume baseline.**
+
+
+  **From hotfix.6 — canonical CLNRest exports with backward-compat REST aliases.**
 
 
   This hotfix release completes the variable naming gap-map fix: all shell exports in exports.sh now
