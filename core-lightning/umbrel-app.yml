@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: core-lightning
 category: bitcoin
 name: Core Lightning
-version: "25.09.3-hotfix.3"
+version: "25.09.3-hotfix.4"
 tagline: Run your personal Core Lightning node
 description: >-
   Get started with the Lightning network today with Core Lightning - a
@@ -32,6 +32,17 @@ defaultPassword: ""
 submitter: Blockstream
 submission: https://github.com/getumbrel/umbrel-apps/pull/475
 releaseNotes: >-
+  This hotfix release completes the variable naming gap-map fix: all shell exports in exports.sh now
+  follow the consistent `APP_CORE_LIGHTNING_*` prefix convention. Previously, five variables
+  (`CORE_LIGHTNING_REST_PORT`, `CORE_LIGHTNING_PATH`, `COMMANDO_CONFIG`, `APP_CONFIG_DIR`, `APP_MODE`)
+  were missing their app-scoped prefix, causing DR (disaster-recovery) and harness-reconnection
+  failures on external consumers such as RasPi5. All docker-compose.yml, torrc.template, and
+  dependent RTL service references have been updated to use the new canonical names.
+
+
+  **Previous release notes (hotfix.3):**
+
+
   This hotfix release adds a dedicated `APP_CORE_LIGHTNING_REST_HOST` export to exports.sh,
   mapping the clnrest endpoint to the daemon's internal IP. This was missing from the hotfix.2 build,
   preventing other apps from reliably discovering the REST API host via the standard
