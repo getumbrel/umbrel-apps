@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: core-lightning
 category: bitcoin
 name: Core Lightning
-version: "25.09.3-hotfix.7"
+version: "25.09.3-hotfix.8"
 tagline: Run your personal Core Lightning node
 description: >-
   Get started with the Lightning network today with Core Lightning - a
@@ -32,32 +32,35 @@ defaultPassword: ""
 submitter: Blockstream
 submission: https://github.com/getumbrel/umbrel-apps/pull/475
 releaseNotes: >-
-  This hotfix completes the volume baseline for the Bitcoin/Lightning mining stack,
-  and consolidates all CLN REST API naming fixes applied since hotfix.5.
+  This hotfix completes the HA micropayment gateway baseline by adding Nostr Relay as
+  a discoverable decentralized message bus alongside the CLN REST API stack.
 
 
-  **New in hotfix.7 — datum volume baseline:**
+  **New in hotfix.8 — nostr-relay app-tier exports (message bus decoupling):**
 
-  The `datum` app now mounts a persistent `logs` volume (`${APP_DATA_DIR}/data/logs:/app/logs`),
-  giving the DATUM gateway a stable location for log files and operational state across
-  container restarts and DR (disaster-recovery) events. Previously, any file-based log
-  or data written inside the container was lost on restart, leaving mining operators blind
-  during node reconstruction.
+  `nostr-relay/exports.sh` is now published, exposing four canonical variables:
+
+  - `APP_NOSTR_RELAY_HOST` / `APP_NOSTR_RELAY_PORT` — internal relay WebSocket endpoint
+
+  - `APP_NOSTR_RELAY_PROXY_HOST` / `APP_NOSTR_RELAY_PROXY_PORT` — relay-proxy API endpoint
+
+  This closes the loose-coupling gap in the Hub-and-Spoke HA pattern: CLN micropayment
+  consumers (LNbits, Boltz, future BOLT12/Fedimint integrations) can now discover the
+  Nostr Relay bus via standard `APP_NOSTR_RELAY_*` variables rather than hardcoding
+  Docker container names. The relay database and relay-proxy state are already persisted
+  via volume mounts in the existing `nostr-relay/docker-compose.yml`.
+
+
+  **From hotfix.7 — datum volume baseline:**
+
+  The `datum` app mounts a persistent `logs` volume (`${APP_DATA_DIR}/data/logs:/app/logs`),
+  giving the DATUM gateway stable operational state across container restarts and DR events.
 
 
   **From hotfix.6 — canonical CLNRest app-tier exports:**
 
-  Two new canonical app-tier exports were added to `exports.sh` to unambiguously identify
-  the modern CLNRest API (3rd-gen, built into CLN from v23.08+):
-
-  - `APP_CORE_LIGHTNING_CLNREST_PORT` — the clnrest listen port (2107)
-
-  - `APP_CORE_LIGHTNING_CLNREST_HOST` — the clnrest daemon IP
-
-  The legacy `APP_CORE_LIGHTNING_REST_PORT` / `REST_HOST` are retained as backward-compat
-  aliases so RTL, LNbits, Boltz and torrc.template continue to work without changes.
-  This closes the DR gap where users recovering a CLN wallet could not distinguish the
-  deprecated c-lightning-REST (2nd-gen) plugin endpoint from the modern clnrest API.
+  `APP_CORE_LIGHTNING_CLNREST_PORT` and `APP_CORE_LIGHTNING_CLNREST_HOST` added to
+  `exports.sh`, with backward-compat `REST_*` aliases for RTL, LNbits, Boltz and torrc.template.
 
 
   **Previous release notes (hotfix.5):**
