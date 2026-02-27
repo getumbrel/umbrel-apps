@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: core-lightning
 category: bitcoin
 name: Core Lightning
-version: "25.09.3-hotfix.4"
+version: "25.09.3-hotfix.5"
 tagline: Run your personal Core Lightning node
 description: >-
   Get started with the Lightning network today with Core Lightning - a
@@ -32,6 +32,26 @@ defaultPassword: ""
 submitter: Blockstream
 submission: https://github.com/getumbrel/umbrel-apps/pull/475
 releaseNotes: >-
+  This hotfix applies the correct app-tier vs data-tier variable separation.
+
+
+  `CORE_LIGHTNING_*` variables (`CORE_LIGHTNING_REST_PORT`, `CORE_LIGHTNING_PATH`,
+  `COMMANDO_CONFIG`, `APP_CONFIG_DIR`, `APP_MODE`) are **data-tier** — they describe
+  container-internal paths and are used as-is inside `docker-compose.yml`. These are
+  restored to their original names; neither `core-lightning/docker-compose.yml` nor
+  `core-lightning-rtl/docker-compose.yml` are changed from their original state.
+
+
+  `APP_CORE_LIGHTNING_*` variables are **app-tier** — exported in `exports.sh` for
+  cross-app discovery by other Umbrel apps. Two new app-tier exports are added:
+  `APP_CORE_LIGHTNING_REST_PORT` (alias of `CORE_LIGHTNING_REST_PORT`) and
+  `APP_CORE_LIGHTNING_REST_HOST` (the clnrest host IP), both available to dependent
+  apps such as RTL and LNbits without polluting the data-tier namespace.
+
+
+  **Previous release notes (hotfix.4):**
+
+
   This hotfix release completes the variable naming gap-map fix: all shell exports in exports.sh now
   follow the consistent `APP_CORE_LIGHTNING_*` prefix convention. Previously, five variables
   (`CORE_LIGHTNING_REST_PORT`, `CORE_LIGHTNING_PATH`, `COMMANDO_CONFIG`, `APP_CONFIG_DIR`, `APP_MODE`)
