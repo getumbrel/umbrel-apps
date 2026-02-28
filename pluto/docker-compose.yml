@@ -1,0 +1,95 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: pluto_frontend_1
+      APP_PORT: 7777
+    depends_on:
+      - frontend
+    restart: on-failure
+
+  discovery:
+    image: registry.gitlab.com/plutomining/pluto/pluto-discovery:0.6.0-rc.1@sha256:3da84654b98c07a64ffc93f14c525a742753f6afe776526de3adcf9c728169d0
+    network_mode: "host"
+    pid: host
+    cap_add:
+      - NET_RAW
+      - NET_ADMIN
+    restart: on-failure
+    environment:
+      - PORT=7775
+    volumes:
+      - ${APP_DATA_DIR}/data/leveldb:/home/node/app/data
+    user: "1000:1000"
+
+  backend:
+    image: registry.gitlab.com/plutomining/pluto/pluto-backend:0.6.0-rc.1@sha256:a49645cbb156ebb43ea4a36c024631cb0e26027b9324b0468ba31aa643055a25
+    pid: host
+    restart: on-failure
+    environment:
+      - PORT=7776
+      - AUTO_LISTEN=true
+      - DISCOVERY_SERVICE_HOST=http://172.17.0.1:7775
+      - GF_HOST=http://pluto_grafana_1:3000
+      - DELETE_DATA_ON_DEVICE_REMOVE=true
+    volumes:
+      - ${APP_DATA_DIR}/data/leveldb:/home/node/app/data
+      - ${APP_DATA_DIR}/data/grafana:/home/node/app/grafana
+    depends_on:
+      prometheus:
+        condition: service_healthy
+      grafana:
+        condition: service_healthy
+    user: "1000:1000"
+
+  frontend:
+    image: registry.gitlab.com/plutomining/pluto/pluto-frontend:0.6.0-rc.1@sha256:56740751392358c835d6430404603424ba01261eaeb0e111bd2df8903046e52f
+    pid: host
+    restart: on-failure
+    depends_on:
+      - backend
+    environment:
+      - PORT=7777
+      - GF_HOST=http://pluto_grafana_1:3000
+      - BACKEND_DESTINATION_HOST=http://pluto_backend_1:7776
+    volumes:
+      - ${APP_DATA_DIR}/umbrel-app.yml:/tmp/umbrel-app.yml:ro
+    user: "1000:1000"
+
+  prometheus:
+    image: prom/prometheus:v2.53.1@sha256:f20d3127bf2876f4a1df76246fca576b41ddf1125ed1c546fbd8b16ea55117e6
+    volumes:
+      - ${APP_DATA_DIR}/data/prometheus:/prometheus
+      - ${APP_DATA_DIR}/conf/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    pid: host
+    healthcheck:
+      test:
+        - "CMD-SHELL"
+        - "wget --spider --quiet http://localhost:9090/-/ready || exit 1"
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    user: "65534:65534"
+
+  grafana:
+    image: grafana/grafana:11.1.2@sha256:3d605614c7c7ce2e96f71abaccd09eb3cfacef48fea5fda4b02a555c95a73edc
+    pid: host
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=${APP_PASSWORD}
+      - GF_INSTALL_PLUGINS=marcusolsson-treemap-panel
+    volumes:
+      - ${APP_DATA_DIR}/data/grafana:/var/lib/grafana
+      - ${APP_DATA_DIR}/conf/grafana/grafana.ini:/etc/grafana/grafana.ini
+      - ${APP_DATA_DIR}/conf/grafana/dashboard.yaml:/etc/grafana/provisioning/dashboards/main.yaml
+      - ${APP_DATA_DIR}/conf/grafana/datasource.yaml:/etc/grafana/provisioning/datasources/main.yaml
+    healthcheck:
+      test:
+        - "CMD-SHELL"
+        - "wget --spider --quiet http://localhost:3000/api/health || exit 1"
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    depends_on:
+      prometheus:
+        condition: service_healthy
+    user: "472:472"
