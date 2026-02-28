@@ -3,10 +3,11 @@ version: "3.7"
 services:
   app_proxy:
     environment:
-      APP_HOST: $APP_CORE_LIGHTNING_IP
+      APP_HOST: core-lightning_app_1
       APP_PORT: $APP_CORE_LIGHTNING_PORT
   app:
     image: ghcr.io/elementsproject/cln-application:25.07.3@sha256:af22cebd21e1175651049d09cf2dd547da569fddd55e4c7766e5956bd47e91fa
+    container_name: core-lightning_app_1
     command: npm run start
     restart: on-failure
     volumes:
@@ -21,6 +22,7 @@ services:
       LIGHTNING_TOR_HOST: ${APP_CORE_LIGHTNING_HIDDEN_SERVICE}
       APP_CONNECT: COMMANDO
       APP_MODE: ${APP_MODE}
+      NPM_CONFIG_VERSION: "latest"
       LIGHTNING_DATA_DIR: ${CORE_LIGHTNING_PATH}
       APP_CONFIG_FILE: ${APP_CONFIG_DIR}/config.json
       LIGHTNING_VARS_FILE: ${COMMANDO_CONFIG}
@@ -48,6 +50,7 @@ services:
         ipv4_address: ${APP_CORE_LIGHTNING_IP}
   lightningd:
     image: elementsproject/lightningd:v25.09.3@sha256:ca95610b7db23a8fad5cf6e36044ecd4ff9124dcc7dae50bd151084d39feaf70
+    container_name: core-lightning_lightningd_1
     restart: on-failure
     ports:
       - ${APP_CORE_LIGHTNING_DAEMON_PORT}:9735
@@ -71,7 +74,7 @@ services:
       - --database-upgrade=true
       - --grpc-host=${APP_CORE_LIGHTNING_DAEMON_IP}
       - --grpc-port=${APP_CORE_LIGHTNING_DAEMON_GRPC_PORT}
-      - --clnrest-host=${APP_CORE_LIGHTNING_DAEMON_IP}
+      - --clnrest-host=0.0.0.0
       - --clnrest-port=${CORE_LIGHTNING_REST_PORT}
     volumes:
       - "${APP_CORE_LIGHTNING_DATA_DIR}:${CORE_LIGHTNING_PATH}"

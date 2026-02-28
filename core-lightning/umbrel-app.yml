@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: core-lightning
 category: bitcoin
 name: Core Lightning
-version: "25.09.3-hotfix.1"
+version: "25.09.3-baseline"
 tagline: Run your personal Core Lightning node
 description: >-
   Get started with the Lightning network today with Core Lightning - a
@@ -32,11 +32,115 @@ defaultPassword: ""
 submitter: Blockstream
 submission: https://github.com/getumbrel/umbrel-apps/pull/475
 releaseNotes: >-
+  **Gen3 Stabilization & DR Scaffolding (hotfix.12)**
+
+
+  Added commented-out DR Recovery / Manual Auth Override scaffolding to `exports.sh`.
+  These entries are **inactive by default** (all commented out) and serve as a
+  "build as you go" reference for operators performing a first-time commissioning
+  or node restore on a fresh umbrelOS install:
+
+
+  - `UMBREL_AUTH_SECRET` — umbrelOS single-sign-on secret
+  - `LIGHTNING_PUBKEY` — your CLN node public key (hex)
+  - `LIGHTNING_RUNE` — CLN commando rune for RTL / LNbits access
+  - `APP_BITCOIN_NODE_IP` — The IP address of your Bitcoin Knots node
+  - `APP_BITCOIN_RPC_USER` — CLN username for Bitcoin node
+  - `APP_BITCOIN_RPC_PASS` — CLN password for Bitcoin node
+  - `TOR_PASSWORD` — Tor hidden service password
+
+
+  Uncomment and fill in the values you need during a DR restore; leave
+  commented out for normal operation (umbrelOS sources these automatically).
+
+
+  **Previous release notes (hotfix.10) — NPM_CONFIG_VERSION + container_name:**
+
+
+  This release closes the final gap in the HA/DR hardening series: the "Variable
+  Vacuum" and browser session drift that can occur during high-load
+  JSON-RPC→CLN-REST translation (e.g., wallet DB recovery on RasPi5).
+
+
+  **New in hotfix.10 — NPM_CONFIG_VERSION + container_name for NPM & WordPress:**
+
+
+  1. `core-lightning/docker-compose.yml` — Added `NPM_CONFIG_VERSION: "latest"` to
+  the `app` service environment. This directs the CLN Application TypeScript daemon's
+  npm environment builder to always pull the latest configuration schema during
+  startup and high-load translation phases (e.g., JSON-RPC to CLN-REST key
+  rotation during wallet recovery). Prevents the "Variable Vacuum" where critical
+  env vars like `COMMANDO_CONFIG` or `UMBREL_AUTH_SECRET` are silently dropped
+  under concurrent container initialization pressure on multi-core SBCs (RasPi5).
+
+
+  2. `nginx-proxy-manager/docker-compose.yml` — Added `container_name: nginx-proxy-manager_web_1`
+  alongside the existing `hostname:`. `hostname` sets the in-container name; `container_name`
+  pins the Docker-network DNS entry. Without `container_name`, any container rebuild
+  after a "Rewind" or OS update can reassign the Docker-assigned name, breaking
+  `app_proxy APP_HOST` resolution and causing an Internal Outage for the NPM→CLN-REST
+  proxy chain (RTL ↔ CLN-REST ↔ LNbits ↔ NPM).
+
+
+  3. `wordpress/docker-compose.yml` — Added `container_name: wordpress_app_1` and
+  `container_name: wordpress_db_1`. WordPress uses PHP session cookies for user auth.
+  If the `app` container's Docker DNS name drifts after an update, `app_proxy`
+  routes requests to a stale container reference — killing active browser sessions.
+  Pinning `container_name` anchors cookie/session routing stability across
+  OS/app restarts and DR recovery replays.
+
+
+  **From hotfix.9 — IP→DNS abstraction (container_name labels):**
+
+  `app_proxy APP_HOST` for CLN migrated from static IP to `core-lightning_app_1`.
+  `container_name` labels added to CLN, CLN-RTL, and nostr-relay services.
+
+
+  **From hotfix.8 — nostr-relay app-tier exports (message bus):**
+
+  `APP_NOSTR_RELAY_HOST/PORT` and `APP_NOSTR_RELAY_PROXY_HOST/PORT` published.
+
+
+  **From hotfix.7 — datum logs volume baseline.**
+
+
+  **From hotfix.6 — canonical CLNRest exports with backward-compat REST aliases.**
+
+
+  This hotfix release completes the variable naming gap-map fix: all shell exports in exports.sh now
+  follow the consistent `APP_CORE_LIGHTNING_*` prefix convention. Previously, five variables
+  (`CORE_LIGHTNING_REST_PORT`, `CORE_LIGHTNING_PATH`, `COMMANDO_CONFIG`, `APP_CONFIG_DIR`, `APP_MODE`)
+  were missing their app-scoped prefix, causing DR (disaster-recovery) and harness-reconnection
+  failures on external consumers such as RasPi5. All docker-compose.yml, torrc.template, and
+  dependent RTL service references have been updated to use the new canonical names.
+
+
+  **Previous release notes (hotfix.3):**
+
+
+  This hotfix release adds a dedicated `APP_CORE_LIGHTNING_REST_HOST` export to exports.sh,
+  mapping the clnrest endpoint to the daemon's internal IP. This was missing from the hotfix.2 build,
+  preventing other apps from reliably discovering the REST API host via the standard
+  `APP_CORE_LIGHTNING_*` variable convention. The Tor hidden service and RTL connection URL
+  now reference this new variable directly.
+
+
+  **Previous release notes (hotfix.2):**
+
+
+  This hotfix release restores internal connectivity for Umbrel apps (RTL, LNbits, etc.) that use the Core Lightning REST API.
+  The built-in clnrest plugin is now bound to all network interfaces (0.0.0.0) instead of only the specific Docker internal IP,
+  making it accessible from other Umbrel app Docker networks.
+
+
+  **Previous release notes (hotfix.1):**
+
+
   This hotfix release fixes an issue where users were unable to connect external wallet clients to their Core Lightning node.
   If you were previously unable to connect a wallet, please go to "Settings" in the top right > Connect wallet > and select your desired connection method to see corrected connection details.
 
 
-  **Previous release notes:**
+  **v25.09.3:**
 
 
   This updates cln-application to v25.07.3, lightningd to v25.09.3, and replaces the legacy c-lightning-rest service with the built-in REST interface of lightningd.
