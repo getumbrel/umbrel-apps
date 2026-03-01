@@ -1,0 +1,39 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: zap-stream-core_core_1
+      APP_PORT: 8080
+
+  mariadb:
+    image: mariadb:12@sha256:03a03a6817bb9eaa21e5aed1b734d432ec3f80021f5a2de1795475f158217545
+    user: 1000:1000
+    restart: on-failure
+    environment:
+      MARIADB_ROOT_PASSWORD: root
+      MARIADB_DATABASE: zap_stream
+    volumes:
+      - ${APP_DATA_DIR}/data/mysql:/var/lib/mysql
+
+  # No storage needed
+  redis:
+    restart: on-failure
+    user: 1000:1000
+    image: redis:8@sha256:5fa2edb1e408fa8235e6db8fab01d1afaaae96c9403ba67b70feceb8661e8621
+
+  # Main service hosting HTTP/RTMP server
+  core:
+    image: voidic/zap-stream-core@sha256:5ca70da1ab80bfc132a496e146e40e9c208bd97b24be35ce0fbc41efbb2dfcad
+    user: 1000:1000
+    restart: on-failure
+    depends_on:
+      - db
+      - redis
+    environment:
+      - "RUST_LOG=info"
+    volumes:
+      - "${APP_DATA_DIR}/data/mysql:/app/data" # Path to store media
+      - "${APP_DATA_DIR}/data/config.yaml:/app/config.yaml"
+    ports:
+      - "1935:1935"
