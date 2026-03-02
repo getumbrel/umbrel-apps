@@ -1,5 +1,8 @@
 export APP_ELECTRS_IP="10.21.22.4"
 export APP_ELECTRS_NODE_IP="10.21.21.10"
+# DNS-stable container hostnames (resilient to IP drift across restarts / DR recovery)
+export APP_ELECTRS_APP_HOST="electrs_app_1"
+export APP_ELECTRS_NODE_HOST="electrs_electrs_1"
 
 export APP_ELECTRS_NODE_PORT="50001"
 

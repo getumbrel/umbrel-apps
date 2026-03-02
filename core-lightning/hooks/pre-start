@@ -1,6 +1,47 @@
 #!/usr/bin/env bash
 
+# ---------------------------------------------------------------------------
+# Pre-start recovery validation
+# Abort early with a clear message if any env var required by CLN containers
+# is missing.  This prevents silent mis-starts during a DR restore where
+# umbrelOS may not yet have sourced all secrets into the environment.
+# ---------------------------------------------------------------------------
+
+REQUIRED_VARS=(
+	APP_BITCOIN_NODE_IP
+	APP_BITCOIN_RPC_USER
+	APP_BITCOIN_RPC_PASS
+	APP_BITCOIN_RPC_PORT
+	TOR_PROXY_IP
+	TOR_PROXY_PORT
+	TOR_PASSWORD
+	CORE_LIGHTNING_PATH
+	APP_CORE_LIGHTNING_DAEMON_IP
+	APP_CORE_LIGHTNING_BITCOIN_NETWORK
+	APP_CORE_LIGHTNING_DAEMON_GRPC_PORT
+	CORE_LIGHTNING_REST_PORT
+)
+
+missing=()
+for var in "${REQUIRED_VARS[@]}"; do
+	if [[ -z "${!var:-}" ]]; then
+		missing+=("${var}")
+	fi
+done
+
+if [[ ${#missing[@]} -gt 0 ]]; then
+	echo "App: ${APP_ID:-core-lightning} - ERROR: the following required environment variables are not set:" >&2
+	for var in "${missing[@]}"; do
+		echo "  - ${var}" >&2
+	done
+	echo "App: ${APP_ID:-core-lightning} - Cannot start Core Lightning." \
+		"Check core-lightning/exports.sh and umbrelOS secrets (${UMBREL_ROOT:-<umbrel-root>}/secrets/), then retry." >&2
+	exit 1
+fi
+
+# ---------------------------------------------------------------------------
 # Delay booting Core Lightning until the REST Tor Hidden Service is ready
+# ---------------------------------------------------------------------------
 
 HIDDEN_SERVICE_FILE="${TOR_DATA_DIR}/app-${APP_ID}-rest/hostname"
 

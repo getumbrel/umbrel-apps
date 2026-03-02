@@ -3,11 +3,12 @@ version: "3.7"
 services:
   app_proxy:
     environment:
-      APP_HOST: $APP_ELECTRS_IP
+      APP_HOST: electrs_app_1
       APP_PORT: 3006
 
   app:
     image: getumbrel/umbrel-electrs:v1.0.4@sha256:fa2fd04f4c7515aad84f21640f5feab1417bc18e20bc65cda7ed97e59b8458db
+    container_name: electrs_app_1
     depends_on:
       - electrs
     restart: on-failure
@@ -25,6 +26,7 @@ services:
   
   electrs:
     image: getumbrel/electrs:v0.11.0@sha256:0a2c6f573abfd8d724651c6ba1c1f3a9c740219c1cf0f4468043c3342170d8a5
+    container_name: electrs_electrs_1
     restart: always
     environment:
       ELECTRS_LOG_FILTERS: "INFO"
