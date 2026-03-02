@@ -1,0 +1,147 @@
+services:
+  # Umbrel app proxy - routes external traffic to our nginx
+  app_proxy:
+    environment:
+      APP_HOST: bffless_nginx_1
+      APP_PORT: 5537
+      PROXY_AUTH_ADD: 'false'
+
+  # Nginx reverse proxy - serves frontend, routes API calls
+  # Uses custom umbrel image with baked-in config template and setup page
+  nginx:
+    image: ghcr.io/bffless/ce-nginx:umbrel@sha256:6a2bd32db1fd02b6341ecfe21b603736e45f005671308dd61cc79d9e1ca06ea1
+    restart: on-failure
+    stop_grace_period: 30s
+    volumes:
+      # User config (domain.txt) - writable by user
+      - ${APP_DATA_DIR}/data/config:/app/config:ro
+      # Frontend static files from frontend container
+      - frontend-dist:/usr/share/nginx/html/app:ro
+      # Dynamic domain configs written by backend
+      - nginx-sites:/etc/nginx/sites-enabled
+    depends_on:
+      - backend
+      - frontend
+
+  # PostgreSQL database
+  postgres:
+    image: postgres:17-alpine@sha256:3430fe182f5065a6ea505c3d432d2c7fff18fbab954df8f277c1dbf4c70124af
+    restart: on-failure
+    stop_grace_period: 30s
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: staticfilesgobrrrr
+      POSTGRES_DB: assethost
+    volumes:
+      - ${APP_DATA_DIR}/data/postgres:/var/lib/postgresql/data
+      - ${APP_DATA_DIR}/data/db/init-databases.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    command: >
+      postgres
+      -c shared_buffers=64MB
+      -c effective_cache_size=128MB
+      -c work_mem=4MB
+      -c maintenance_work_mem=32MB
+      -c max_connections=20
+      -c wal_buffers=4MB
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # SuperTokens authentication service
+  supertokens:
+    image: supertokens/supertokens-postgresql:9.3@sha256:39c36693b19c4e231684c9e614422c1c95751c346c6fc3ffd74980161d0b041c
+    restart: on-failure
+    stop_grace_period: 30s
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # Use individual params instead of connection URI (more reliable)
+      POSTGRESQL_HOST: postgres
+      POSTGRESQL_PORT: '5432'
+      POSTGRESQL_USER: postgres
+      POSTGRESQL_PASSWORD: staticfilesgobrrrr
+      POSTGRESQL_DATABASE_NAME: supertokens
+      # Increased memory for JVM startup on ARM64
+      JAVA_OPTS: '-Xmx192m -Xms96m -XX:+UseSerialGC -XX:MaxMetaspaceSize=64m'
+      POSTGRESQL_CONNECTION_POOL_SIZE: '3'
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:3567/hello']
+      interval: 15s
+      timeout: 10s
+      retries: 8
+      start_period: 45s
+
+  # NestJS backend API
+  # Uses custom umbrel image with baked-in entrypoint that derives keys from APP_SEED
+  backend:
+    image: ghcr.io/bffless/ce-backend:umbrel@sha256:94faa8b510ca45c4c140670a77753d9fcdc41349d19a034395927fec3485ea6c
+    restart: on-failure
+    stop_grace_period: 30s
+    depends_on:
+      postgres:
+        condition: service_healthy
+      supertokens:
+        condition: service_healthy
+    environment:
+      NODE_OPTIONS: '--max-old-space-size=128'
+      NODE_ENV: production
+      PORT: '3000'
+      LOG_LEVEL: 'error,warn,log'
+      # Umbrel provides APP_SEED - entrypoint derives ENCRYPTION_KEY, JWT_SECRET, API_KEY_SALT
+      APP_SEED: ${APP_SEED:-}
+      APP_DATA_DIR: ${APP_DATA_DIR:-/data}
+      # Database
+      DATABASE_URL: postgresql://postgres:staticfilesgobrrrr@postgres:5432/assethost
+      # Storage - local filesystem (no MinIO)
+      STORAGE_TYPE: local
+      ENABLE_MINIO: 'false'
+      # Cache - in-memory (no Redis)
+      CACHE_TYPE: memory
+      ENABLE_REDIS: 'false'
+      # SuperTokens
+      SUPERTOKENS_MODE: local
+      SUPERTOKENS_CONNECTION_URI: http://supertokens:3567
+      SUPERTOKENS_API_KEY: ''
+      # Default URLs - overridden by entrypoint if domain.txt exists
+      PRIMARY_DOMAIN: localhost
+      FRONTEND_URL: http://localhost:5537
+      API_DOMAIN: http://localhost:5537
+      ADMIN_DOMAIN: localhost
+      # Cookie settings - overridden by entrypoint for real domains
+      COOKIE_SECURE: 'false'
+      COOKIE_DOMAIN: 'umbrel.local'
+      # Nginx config
+      NGINX_SITES_PATH: /etc/nginx/sites-enabled
+      NGINX_RELOAD_WAIT_MS: '3000'
+      NGINX_LISTEN_PORT: '5537'
+      BACKEND_HOST: backend
+      # SSL is handled by Cloudflare Tunnel - nginx generates non-SSL configs
+      PROXY_MODE: 'cloudflare-tunnel'
+      # Feature flags (UI-related)
+      FEATURE_WILDCARD_SSL: 'false'
+      FEATURE_WILDCARD_SSL_BANNER: 'false'
+      FEATURE_DOMAIN_SSL_TOGGLE: 'false'
+    volumes:
+      # User uploads
+      - ${APP_DATA_DIR}/data/uploads:/app/apps/backend/uploads
+      # User config (domain.txt)
+      - ${APP_DATA_DIR}/data/config:/app/config:ro
+      # Dynamic nginx configs written by backend
+      - nginx-sites:/etc/nginx/sites-enabled
+
+  # React frontend (serves static files)
+  frontend:
+    image: ghcr.io/bffless/ce-frontend:umbrel@sha256:c5db20bb65393f7f46010f3cc94752023726821446516a2e4e0bba841c22b356
+    restart: on-failure
+    stop_grace_period: 30s
+    volumes:
+      - frontend-dist:/app/dist
+    depends_on:
+      - backend
+
+volumes:
+  frontend-dist:
+  nginx-sites:
