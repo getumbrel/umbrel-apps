@@ -1,0 +1,43 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: pogolo_gotty_1
+      APP_PORT: 5663
+
+  gotty:
+    image: sorenisanerd/gotty:v1.6.0@sha256:23b4669973e96d8d7d37b3bfd9e6566bdd701aa1a56eee2dc0e0362bd927ed88
+    restart: on-failure
+    user: "1000:1000"
+    stop_grace_period: 1m
+    command: ["gotty", "--port", "5663", "--width", "80", "--title-format", "pogolo (on Umbrel)", "sh", "-c", "tail -n 10000 -f /data/pogolo.log"]
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+
+  pogolo:
+    image: 0xf0xx0/pogolo:v1.x@sha256:f692a1fb4bb338a42089bbafbb1f22304a989590548da21b3fb5bf16ad590093
+    restart: on-failure
+    user: "1000:1000"
+    stop_grace_period: 30s
+    labels:
+      - logopo
+    ports:
+      - 5661:5661 # stratum
+      - 5662:5662 # api
+    volumes:
+      - "${APP_DATA_DIR}/data:/data"
+    environment:
+      POGOLO_HOST: "0.0.0.0"
+      POGOLO_BACKEND_HOST: "$APP_BITCOIN_NODE_IP:$APP_BITCOIN_RPC_PORT"
+      POGOLO_BACKEND_RPCAUTH: "$APP_BITCOIN_RPC_USER:$APP_BITCOIN_RPC_PASS"
+      # colorful logs
+      FORCE_COLOR: 1
+    command: ["/pogolo", "--conf", "/data/pogolo.toml", "--logfile", "/data/pogolo.log"]
+
+  widget-server:
+    image: 0xf0xx0/umbrel-pogolo-widget:v1.0.0@sha256:4355198345deb2b6c7f6f38ad9ef5e91e3fbdc5e13d5465446fe89c968ecf852
+    restart: on-failure
+    user: "1000:1000"
+    environment:
+      POGOLO_API_URL: "http://pogolo_pogolo_1:5662"
