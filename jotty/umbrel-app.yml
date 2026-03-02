@@ -2,7 +2,7 @@ manifestVersion: 1
 id: jotty
 category: files
 name: Jotty
-version: "1.14.4"
+version: "1.20.0"
 tagline: A simple app, for your checklists and notes
 description: >-
   Tired of bloated, cloud-based to-do apps? Jotty is a lightweight alternative for managing your personal checklists and notes.
@@ -24,18 +24,40 @@ port: 8345
 submitter: Kanishk Pachauri
 submission: https://github.com/getumbrel/umbrel-apps/pull/3961
 releaseNotes: >-
-  This release includes Docker image optimization, new encryption options, and various bug fixes.
+  This release upgrades Jotty to Next.js 16 and introduces offline caching for PWA users, along with live updates across devices.
 
 
   New features:
-    - Added XChaCha20 encryption as default option alongside PGP for note encryption
+    - Offline caching for PWA in read-only mode - visited pages stay cached for 30 days
+    - Live updates across screens when content changes (excluding the editor)
+    - Connection indicator dot on logo to show websocket status
+    - Ruler in markdown editor to set visual breaking points for line size
+    - Swipe gestures on mobile to navigate between notes
+    - Improved sidebar open/close gesture on mobile
+    - Public URLs now use UUID instead of category/name for better security
+    - New list items now appear at the top of todo lists
 
 
   Improvements:
-    - Docker image size reduced from 2.1GB to 274MB
-    - Fixed markdown syntax highlighting
-    - Fixed encryption/decryption for non-admin users
-    - Only users with edit permissions can encrypt/decrypt content
+    - Significant performance optimizations for instances with many files
+    - Sidebar now uses metadata only instead of full note content
+    - Search by UUID is now almost instantaneous
+    - Markdown editor settings persist across notes in your session
+
+
+  Bug fixes:
+    - Fixed sidebar state and flickering when navigating back from notes
+    - Fixed circular loop crash when users share notes with each other
+    - Fixed visual bug on long checklist items with no spaces
+    - Fixed table of contents scroll behavior
+    - Fixed quick note creation to prioritize current category
+    - Fixed inconsistent behavior when deleting shared notes
+
+
+  Security updates:
+    - Fixed HTTP request deserialization DoS vulnerability in Next.js
+    - Fixed DoS vulnerability via Image Optimizer in self-hosted applications
+    - Fixed uncontrolled resource consumption issue
 
 
   Full release notes are found at https://github.com/fccview/jotty/releases

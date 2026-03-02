@@ -3,7 +3,7 @@ id: open-webui
 name: Open WebUI
 tagline: Chat with Ollama models like DeepSeek-R1 and LLama, or use an OpenAI API key
 category: ai
-version: "0.6.43"
+version: "0.8.5"
 port: 2876
 description: >-
   Open WebUI lets you chat with advanced AI models running locally on your own device or connect to online models using an API key.
@@ -37,11 +37,22 @@ defaultPassword: ""
 dependencies:
   - ollama
 releaseNotes: >-
-  This release includes important bug fixes:
-    - Resolved Python dependency installation issues that prevented setup in certain environments
-    - Fixed speech-to-text default content type handling to ensure correct MIME type usage across providers
-    - Corrected temporary chat image handling so images are properly processed, stored, and displayed
-    - Restored image action button functionality for generation and editing from the chat interface
+  Key highlights in this release include:
+    - Voice dictation can now be toggled with a keyboard shortcut (Cmd+Shift+L or Ctrl+Shift+L)
+    - Provider URL suggestions make it easier to configure connections to popular AI services
+    - Individual provider connections and prompts can now be enabled or disabled without deleting them
+    - Agents can now list and delete stored memories for better memory management
+    - Anthropic Messages API proxy support allows tools like Claude Code to work through Open WebUI
+    - Significant performance improvements across chat history loading, notes, tools, and database queries
+    - Global model defaults let administrators set capabilities and parameters that apply to all models
+    - Fixed model access errors that caused the models endpoint to crash with incomplete metadata
+    - Fixed frontend initialization so the app loads even if individual API calls fail
+    - Fixed a security vulnerability where multiple admin accounts could be created on fresh deployments
+    - Fixed RAG template being repeatedly injected into messages during multiple tool calls
+    - Fixed hybrid search returning empty or duplicate results
+    - Fixed cyclic chat history references causing the backend to freeze
+    - Fixed model fallback routing and default model selection when starting new chats
+    - Fixed iframe sandbox security to prevent embedded tools from accessing same-origin content
 
 
   Full release notes are found at https://github.com/open-webui/open-webui/releases

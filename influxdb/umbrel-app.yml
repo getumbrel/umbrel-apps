@@ -1,9 +1,9 @@
-manifestVersion: 1
+manifestVersion: 1.1
 id: influxdb
 name: InfluxDB
 tagline: High performance time series database
 category: developer
-version: "1.11.8"
+version: "1.12.2"
 port: 8888
 description: >-
   InfluxDB is an open-source, high-performance time series database packaged with Chronograf, the official web-based visualization tool.
@@ -49,7 +49,39 @@ gallery:
   - 2.jpg
   - 3.jpg
 releaseNotes: >-
-  This update bumps InfluxDB to version 1.11.8 to match the version already used in the container.
+  This release brings InfluxDB to version 1.12.2 and Chronograf to version 1.10.8.
+
+
+  Features: 
+    - Add additional log output when using influx_inspect buildtsi to rebuild the TSI index.
+    - Use influx_inspect export with -tsmfile option to export a single TSM file.
+    - Add fluxQueryRespBytes metric to the /debug/vars metrics endpoint.
+    - Add aggressive-points-per-block configuration option to prevent TSM files from not getting fully compacted.
+    - Improve error handling.
+
+
+  InfluxQL updates:
+    - Delete series by retention policy.
+    - Allow retention policies to discard writes that fall within their range, but outside of FUTURE LIMIT and PAST LIMIT.
+
+  Bug fixes
+    - Log rejected writes to subscriptions.
+    - Update xxhash and avoid stringtoslicebyte in the cache.
+    - Prevent a panic when a shard group has no shards.
+    - Fix file handle leaks in Compactor.write.
+    - Ensure fields in memory match the fields on disk.
+    - Ensure temporary files are removed after failed compactions.
+    - Do not panic on invalid multiple subqueries.
+
+  Other
+    - Update Go to 1.23.5.
+    - Upgrade Flux to v0.196.1.
+    - Upgrade InfluxQL to v1.4.1.
+    - Various other dependency updates.
+
+  Full changes can be found here:
+    - InfluxDB v1.12.2: https://docs.influxdata.com/influxdb/v1/about_the_project/release-notes/
+    - Chronograf v1.10.8: https://docs.influxdata.com/chronograf/v1/about_the_project/release-notes/
 dependencies: []
 path: ""
 defaultUsername: "admin"

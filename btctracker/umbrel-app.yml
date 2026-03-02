@@ -3,7 +3,7 @@ id: btctracker
 name: BTC Tracker
 tagline: A simple, privacy-focused Bitcoin investment tracker
 category: bitcoin
-version: "0.6.7"
+version: "0.6.9"
 port: 3947
 description: >-
   BTC Tracker is a user-friendly yet powerful application designed for managing and analyzing Bitcoin investments. It was created to offer a privacy-focused and straightforward alternative to existing tracking tools, which are often cluttered with unnecessary features, complicated to set up, or designed for managing large, diversified portfolios. Many of those tools require connections to external services and the sharing of sensitive information such as wallet addresses or transaction histories.
@@ -34,49 +34,29 @@ gallery:
   - 3.jpg
   - 4.jpg
 releaseNotes: >-
-  🚨 Breaking Change since version 0.6.0: all existing data will be deleted and the update is not backward compatible, so please export your transactions from the previous version before updating. After installation, register again and reimport your data.
-  
-  
-  🔐 Security
-  
-    - Two-Factor Authentication (2FA) - Secure your account with TOTP-based 2FA
-    - Works with Google Authenticator, Authy, and other authenticator apps
-    - 10 backup codes generated for account recovery
-    - Available in Profile and Settings panels
-    - Critical: Updated Next.js from 15.3.4 to 15.3.6 to fix CVE-2025-66478 (CVSS 10.0) - Remote Code Execution vulnerability
-    - Fixed npm audit vulnerabilities
-  
-  
   ✨ New Features
-  
-    - External Transfer Tracking - Track BTC transfers in/out without affecting P&L
-    - Transfer In: Add BTC from gifts, mining rewards, payments received
-    - Transfer Out: Remove BTC for donations, payments sent, gifts given
-    - System Status Dialog - View all background services in Settings → Price Data
-    - Transaction markers on chart - Buy/sell dots with tooltips showing details
-    - BTC/Fiat Price switch - Calculate price from either BTC amount or fiat total
-  
-  
-  🚀 Improvements
-  
-    - Improved Migration System - Automatic handling of legacy databases and upgrade issues
-    - Improved CSV Import/Export - Better handling of whitespace, quotes, and edge cases
-    - 21bitcoin Parser - Support for 21bitcoin CSV export format
-    - Simplified Migration Output - Less verbose logs, use --verbose flag for details
-  
-  
+    - Multiple named wallets — create and manage multiple hot/cold wallets with custom names; wallets are selectable when recording transfers and displayed with per-wallet BTC balances in the Wallet Distribution widget and portfolio metrics
+    - River CSV import — supports Buy transactions, zero-cost Interest rows, and external Receive transfers
+    - Strike CSV import — now supports both older and newer export layouts with automatic format detection
+    - REST API documentation added for automation and n8n integration
+    - Persistent API tokens added to profile for automation purposes
+
+
   🐛 Bug Fixes
-  
-    - Fixed P&L calculation in BitcoinChart for non-USD currencies
-    - Fixed avatar display in navigation bar and persistence across Docker restarts
-    - Fixed double migration execution in Docker
-    - Removed unused migrate.sh script
-  
-  
-  🎨 UI
-  
-    - Migrated more components to shadcn/ui design system
-    - Better avatar handling with automatic refresh 
+    - Dashboard BTC price header now shows the user's display currency instead of hardcoded USD
+    - Dashboard widgets, Analytics, and Transactions pages now convert values to display currency correctly
+    - DCA scenario calculator fixed for negative historical CAGR rates
+    - DCA scheduler now converts BTC price to the transaction's currency for non-USD users
+    - Bitcoin price chart no longer renders as a flat line when resized small
+    - Admin panel now shows inactive/deactivated users
+
+
+  🔒 Security
+    - Next.js updated to 15.5.12 — fixes multiple CVEs including source code exposure and DoS vulnerabilities
+    - axios, qs, and preact updated to fix security issues
+
+  🔧 Improvements
+    - Docker image reduced ~60% via Next.js standalone mode and optimized Prisma runtime dependencies
 dependencies: []
 path: ""
 defaultUsername: ""
