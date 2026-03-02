@@ -1,0 +1,24 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: netbird_web_1
+      APP_PORT: 80
+
+  app:
+    image: netbirdio/netbird:0.60.7-rootless@sha256:653e167bc304e36d6d3e2bafd63d3e12a25b58310630f128a8c5e953d2faf6e0
+    user: "1000:1000"
+    cap_add:
+      - NET_ADMIN
+      - SYS_ADMIN
+      - SYS_RESOURCE
+    network_mode: host
+    volumes:
+      - ${APP_DATA_DIR}/data/app_data:/var/lib/netbird:rw
+
+  web:
+    image: nginx:1.27@sha256:124b44bfc9ccd1f3cedf4b592d4d1e8bddb78b51ec2ed5056c52d3692baebc19
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data/www:/usr/share/nginx/html:ro
