@@ -3,7 +3,7 @@ id: termix
 name: Termix
 tagline: Manage your servers with built-in SSH, tunnels, and file access
 category: developer
-version: "1.9.0"
+version: "1.11.1"
 port: 6444
 description: >-
   💻 Termix is designed to simplify server administration by bringing powerful management tools into a single, unified interface. At its core, it provides direct access to SSH terminals inside the browser, eliminating the need for external clients. Sessions can be opened in tabs or arranged in split screens, allowing administrators to multitask and manage different systems simultaneously with ease. The terminal experience is responsive and reliable, ensuring that routine tasks such as configuration, updates, and troubleshooting can be performed quickly.
@@ -18,7 +18,7 @@ description: >-
   To support the handling of multiple servers, Termix includes a host manager where connections can be organized and grouped. Tags and folders make it simple to categorize different environments, whether they are development, staging, or production systems. This structure ensures that administrators can quickly find and connect to the right host without sifting through long lists of saved credentials.
 
 
-  Another significant capability of Termix is real-time monitoring. The application presents detailed statistics on system resources, including processor load, memory usage, and storage consumption. These insights help administrators understand the current state of their infrastructure and identify potential issues before they develop into critical problems.
+  Another significant capability of Termix is real-time monitoring. The application presents detailed statistics on system resources, including processor load, memory usage, and storage consumption. These insights help administrators identify potential issues before they develop into critical problems.
 
 
   All of these features are wrapped in a clean and modern interface that prioritizes usability. The design emphasizes clarity and efficiency, enabling both experienced administrators and newcomers to interact with complex systems in a straightforward way. Termix transforms server management from a fragmented set of tools into a cohesive, accessible, and user-friendly experience.
@@ -26,15 +26,45 @@ developer: LukeGus
 website: https://docs.termix.site/
 submitter: dennysubke
 submission: https://github.com/getumbrel/umbrel-apps/pull/3845
-repo: https://github.com/LukeGus/Termix
-support: https://github.com/LukeGus/Termix/issues
+repo: https://github.com/Termix-SSH/Termix/
+support: https://github.com/Termix-SSH/Termix/issues
 gallery:
   - 1.jpg
   - 2.jpg
   - 3.jpg
   - 4.jpg
   - 5.jpg
-releaseNotes: ""
+releaseNotes: >-
+  New features and improvements in this release:
+    - Updated OPKSSH support for improved SSH key authentication
+    - Improved web-based mobile terminal experience
+    - Enhanced backend logging with more detailed logging points
+    - Moved add credential and add host buttons to a new location in the UI
+    - SSH key validation added
+    - Username in credentials is now optional and can be set when adding a host
+    - User profile toggle for snippet confirmations
+    - Configurable base path for reverse proxy sub-path deployment
+    - Copy deploy command for SSH keys without password authentication
+    - Manage OIDC configuration via environment variables (overrides database)
+    - Added modern DH group key exchange algorithms
+    - IP address fields now indicate FQDN is supported
+    - Added Ctrl+V / Cmd+V shortcut for clipboard paste
+    - HTTP proxy support for GitHub API requests
+
+
+  Bug fixes:
+    - Fixed file manager disconnecting after a few navigations
+    - Fixed Docker permission error when running as non-root
+    - Fixed data loss caused by encrypted database format mismatch
+    - Disabled browser caching for file manager API
+    - Fixed special character input issues on macOS
+    - File manager entries now sorted alphabetically with directories first
+    - Added timeout for SFTP readlink to prevent request hangs
+    - All SSH data fields are now preserved during database export and import
+    - Fixed dashboard cards taking up full width on smaller displays
+
+
+  Full release notes can be found at https://github.com/Termix-SSH/Termix/releases
 dependencies: []
 path: ""
 defaultUsername: ""
