@@ -1,0 +1,17 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: iobroker_server_1
+      APP_PORT: 8099
+
+  server:
+    image: buanet/iobroker:v9.1.2@sha256:84f0699976f54fde3a9e321240f94d7d526ba9cc73e3f2f669a8facc6f4da294
+    restart: on-failure
+    environment:
+      IOB_ADMINPORT: 8099
+    volumes:
+      - ${APP_DATA_DIR}/data:/opt/iobroker
+      - ${UMBREL_ROOT}/home/Downloads:/media
+      - /run/dbus:/run/dbus:ro
