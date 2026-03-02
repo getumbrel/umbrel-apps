@@ -1,0 +1,33 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: robosats-notifier_web_1
+      APP_PORT: 12597
+
+  web:
+    image: orangepanther21/robosats-notifier:1.0.0@sha256:5d2a1a31086ca1b54eca8abf702d53881118fd8137ca8cbdc83e4dd74dc96394
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 1m
+    init: true
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+      - ${APP_DATA_DIR}/auth:/app/.wwebjs_auth
+    environment:
+      # RoboSats configuration - use Docker network name on Umbrel
+      ROBOSATS_API_URL: http://robosats_web_1:12596
+      ROBOSATS_COORDINATORS: temple,moon,lake
+      
+      # Configuration file path
+      CONFIG_FILE: /data/config.json
+      
+      # Web UI port and logging
+      WEB_PORT: 12597
+      LOG_LEVEL: info
+      
+      # Default settings (can be changed via web UI)
+      BOT_ENABLED: "true"
+      CHECK_INTERVAL_MINUTES: "5"
+      LANGUAGE: EN
