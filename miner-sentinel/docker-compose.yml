@@ -1,0 +1,89 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: miner-sentinel_frontend_1
+      APP_PORT: 80
+
+  postgres:
+    image: postgres:17.7@sha256:bac8128cd62a35471a1e97966861aa2ac88c8d2f408767a425ae70695a607c99
+    restart: on-failure
+    stop_grace_period: 1m
+    volumes:
+      - ${APP_DATA_DIR}/data/db:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: minersentinel
+      POSTGRES_PASSWORD: minersentinel
+      POSTGRES_DB: minersentinel
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U minersentinel"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    image: dcbert/minersentinel-backend:1.0.0@sha256:0a545cb0dbbaa7772560963ebb4cff63ad3919ac1ba8750aa5850388a7b1788c
+    restart: on-failure
+    stop_grace_period: 1m
+    depends_on:
+      - postgres
+    environment:
+      # Database configuration
+      POSTGRES_HOST: miner-sentinel_postgres_1
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: minersentinel
+      POSTGRES_USER: minersentinel
+      POSTGRES_PASSWORD: minersentinel
+      # Django settings
+      DJANGO_SECRET_KEY: ${APP_SEED}
+      DJANGO_DEBUG: "False"
+      ALLOWED_HOSTS: "*"
+      CORS_ALLOWED_ORIGINS: "http://${DEVICE_DOMAIN_NAME}:3080,http://*.ts.net:3080"
+      CSRF_TRUSTED_ORIGINS: "http://${DEVICE_DOMAIN_NAME}:3080,http://*.ts.net:3080"
+      DJANGO_SUPERUSER_USERNAME: admin
+      DJANGO_SUPERUSER_PASSWORD: $APP_PASSWORD
+      DJANGO_SUPERUSER_EMAIL: "admin@umbrel.local"
+      # API URL for frontend
+      API_BASE_URL: "http://${DEVICE_DOMAIN_NAME}:3080"
+    command: >
+      sh -c "
+        python manage.py migrate &&
+        python manage.py collectstatic --noinput &&
+        (python manage.py createsuperuser --no-input ||
+        echo 'Superuser already exists or created — winning!') &&
+        gunicorn minersentinel.wsgi:application --bind 0.0.0.0:8000 --workers 2 --timeout 120
+      "
+
+  frontend:
+    image: dcbert/minersentinel-frontend:1.0.0@sha256:2144eb49160f841f0d4191a59942f7b18a1a3e89058332c2e6e807886158652a
+    restart: on-failure
+    stop_grace_period: 1m
+    depends_on:
+      - backend
+    environment:
+      VITE_API_URL: "http://${DEVICE_DOMAIN_NAME}:3080"
+
+  data-service:
+    image: dcbert/minersentinel-data-service:1.0.0@sha256:aee26fe4db5f5d6d403154e73f609b454eccc54e7c78f21998dfda7ff4f5f589
+    restart: on-failure
+    stop_grace_period: 1m
+    depends_on:
+      - postgres
+      - backend
+    environment:
+      # Database configuration
+      POSTGRES_HOST: miner-sentinel_postgres_1
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: minersentinel
+      POSTGRES_USER: minersentinel
+      POSTGRES_PASSWORD: minersentinel
+      # Backend API
+      BACKEND_URL: "http://miner-sentinel_backend_1:8000"
+      # Polling intervals (in seconds)
+      BITAXE_POLL_INTERVAL: 60
+      AVALON_POLL_INTERVAL: 60
+      POOL_POLL_INTERVAL: 300
+      # Telegram notifications (optional - configure via Django admin)
+      TELEGRAM_BOT_TOKEN: ""
+      TELEGRAM_CHAT_ID: ""
