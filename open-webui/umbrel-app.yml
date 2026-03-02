@@ -3,7 +3,7 @@ id: open-webui
 name: Open WebUI
 tagline: Chat with Ollama models like DeepSeek-R1 and LLama, or use an OpenAI API key
 category: ai
-version: "0.8.5"
+version: "0.8.7"
 port: 2876
 description: >-
   Open WebUI lets you chat with advanced AI models running locally on your own device or connect to online models using an API key.
@@ -38,21 +38,19 @@ dependencies:
   - ollama
 releaseNotes: >-
   Key highlights in this release include:
-    - Voice dictation can now be toggled with a keyboard shortcut (Cmd+Shift+L or Ctrl+Shift+L)
-    - Provider URL suggestions make it easier to configure connections to popular AI services
-    - Individual provider connections and prompts can now be enabled or disabled without deleting them
-    - Agents can now list and delete stored memories for better memory management
-    - Anthropic Messages API proxy support allows tools like Claude Code to work through Open WebUI
-    - Significant performance improvements across chat history loading, notes, tools, and database queries
-    - Global model defaults let administrators set capabilities and parameters that apply to all models
-    - Fixed model access errors that caused the models endpoint to crash with incomplete metadata
-    - Fixed frontend initialization so the app loads even if individual API calls fail
-    - Fixed a security vulnerability where multiple admin accounts could be created on fresh deployments
-    - Fixed RAG template being repeatedly injected into messages during multiple tool calls
-    - Fixed hybrid search returning empty or duplicate results
-    - Fixed cyclic chat history references causing the backend to freeze
-    - Fixed model fallback routing and default model selection when starting new chats
-    - Fixed iframe sandbox security to prevent embedded tools from accessing same-origin content
+    - Fixed a privacy bug where tool server and terminal connections with no access grants were visible to all users instead of being restricted to admins
+    - Fixed a memory leak in the chat controls panel that could degrade performance during extended use
+    - Fixed model parameters not being saved correctly when starting a temporary chat
+    - Improved streaming performance by reducing redundant processing when tokens arrive quickly
+    - Open Terminal integration allows connecting to terminal instances to browse, read, and upload files directly in chat
+    - Significant streaming performance improvements including faster rendering, scrolling, and message updates
+    - Fixed database migrations failing silently on startup due to a circular import issue
+    - Fixed tool calls crashing chat when models generate malformed JSON arguments
+    - Fixed models being called twice unnecessarily when no tools are configured
+    - Fixed multiple memory leaks across tooltips, message input, notes, sidebar, and other components
+    - Fixed RAG templates being duplicated when models make multiple tool calls
+    - Fixed web search domain filtering not being applied correctly
+    - Fixed password manager autofill not capturing passwords correctly on login
 
 
   Full release notes are found at https://github.com/open-webui/open-webui/releases
