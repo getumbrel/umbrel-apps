@@ -1,7 +1,9 @@
-#!/bin/bash
+export APP_LNBITS_CLN_IP="10.21.21.97"
+export APP_LNBITS_CLN_PORT="3008"
+export APP_LNBITS_CLN_DATA_DIR="${EXPORTS_APP_DIR}/data"
 
-# Environment variable exports for CLN resource discovery
-
-export CLN_RESOURCE_DISCOVERY_URL="https://example.com/cln_discovery"
-export CLN_API_KEY="your_api_key_here"
-export CLN_TIMEOUT="30"
+# CLN Resource Discovery (auto-exported from core-lightning)
+export CLNRPC_SOCKET="unix://${APP_CORE_LIGHTNING_DATA_DIR}/bitcoin/lightning-rpc"
+export CLNREST_URL="https://${APP_CORE_LIGHTNING_REST_HOST}:${CORE_LIGHTNING_REST_PORT}"
+export CLNREST_CA="${APP_CORE_LIGHTNING_DATA_DIR}/bitcoin/ca.pem"
+export CLNREST_CERT="${APP_CORE_LIGHTNING_DATA_DIR}/bitcoin/server.pem"
