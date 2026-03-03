@@ -3,7 +3,7 @@ id: ollama
 name: Ollama
 tagline: Self-host open source AI models like DeepSeek-R1, Llama, and more
 category: ai
-version: "0.17.0"
+version: "0.17.5"
 port: 11434
 description: >-
   Ollama allows you to download and run advanced AI models directly on your own hardware. Self-hosting AI models ensures full control over your data and protects your privacy.
@@ -38,13 +38,15 @@ defaultUsername: ""
 defaultPassword: ""
 dependencies: []
 releaseNotes: >-
-  This release introduces OpenClaw integration and performance improvements.
+  This release fixes crashes and memory issues in Qwen 3.5 models.
 
 
   Key highlights in this release:
-    - OpenClaw can now be installed and configured automatically via `ollama launch openclaw`, making it easy to get started with open models like Kimi-K2.5, GLM-5, and Minimax-M2.5
-    - Websearch is enabled in OpenClaw when using cloud models
-    - Improved tokenizer performance
+    - Fixed crash in Qwen 3.5 models when split over GPU and CPU
+    - Fixed Qwen 3.5 models repeating themselves due to missing presence penalty (you may need to re-download affected models, e.g. `ollama pull qwen3.5:35b`)
+    - Fixed memory issues and crashes in the MLX runner
+    - Fixed inability to run models imported from Qwen 3.5 GGUF files
+    - `ollama run --verbose` now shows peak memory usage when using the MLX engine
 
 
   Full release notes are available at https://github.com/ollama/ollama/releases

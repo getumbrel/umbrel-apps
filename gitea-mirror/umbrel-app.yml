@@ -3,7 +3,7 @@ id: gitea-mirror
 name: Gitea Mirror
 tagline: Mirror your GitHub repositories to a Gitea instance automatically
 category: developer
-version: "3.9.5"
+version: "3.11.0"
 port: 4322
 description: >-
   Gitea Mirror automatically mirrors your GitHub repositories to a self-hosted Gitea instance. It supports mirroring public and private repositories, organizations, starred repos, issues, wikis, and pull requests.
@@ -42,10 +42,13 @@ defaultUsername: ""
 defaultPassword: ""
 dependencies: []
 releaseNotes: >-
-  🛡️ Improvements
-    - Pre-sync snapshot protection to prevent data loss during mirror rewrites
-    - Disabled repositories are now excluded from cleanup while skipping new imports
-    - Clearer error guidance shown when an invalid origin is detected during authentication
+  ✨ New Features
+    - Smart Force-Push Protection (Beta): detect and protect against destructive force-pushes on GitHub before they overwrite your Gitea mirrors
+    - New backup strategies configurable via Settings → GitHub Configuration → Destructive Update Protection: Disabled, Always Backup, Smart (default), and Block & Approve
+    - Smart mode compares branch SHAs before each sync and only creates backups when force-pushes are actually detected
+    - Block & Approve strategy shows an amber badge on affected repositories with Approve/Dismiss actions
+    - New pending-approval status for repositories blocked by the Block & Approve strategy
+    - Optional target organization field when adding a single repository to mirror
 
 
   Full release notes can be found at https://github.com/raylabshq/gitea-mirror
