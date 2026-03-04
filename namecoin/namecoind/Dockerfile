@@ -47,6 +47,8 @@ RUN apt-get update && apt-get install -y \
     ca-certificates \
     curl \
     libevent-2.1-7 \
+    libevent-core-2.1-7 \
+    libevent-pthreads-2.1-7 \
     libdb5.3++ \
     libsqlite3-0 \
     libzmq5 \
