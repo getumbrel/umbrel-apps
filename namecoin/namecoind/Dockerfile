@@ -48,6 +48,7 @@ RUN apt-get update && apt-get install -y \
     curl \
     libevent-2.1-7 \
     libevent-core-2.1-7 \
+    libevent-extra-2.1-7 \
     libevent-pthreads-2.1-7 \
     libdb5.3++ \
     libsqlite3-0 \
