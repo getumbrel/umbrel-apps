@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Namecoin Core</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #0a0e17;
+      color: #e0e0e0;
+      min-height: 100vh;
+      padding: 2rem;
+    }
+    .container { max-width: 640px; margin: 0 auto; }
+    .header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .header h1 {
+      font-size: 1.75rem;
+      font-weight: 600;
+      color: #ffffff;
+      margin-bottom: 0.25rem;
+    }
+    .header p { color: #8892a4; font-size: 0.9rem; }
+    .status-badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      margin-top: 0.75rem;
+    }
+    .status-syncing { background: rgba(251, 191, 36, 0.15); color: #fbbf24; }
+    .status-synced { background: rgba(52, 211, 153, 0.15); color: #34d399; }
+    .status-offline { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+    .card {
+      background: #131a2b;
+      border: 1px solid #1e293b;
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+    }
+    .card-title {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #64748b;
+      margin-bottom: 1rem;
+    }
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid #1e293b;
+    }
+    .stat-row:last-child { border-bottom: none; }
+    .stat-label { color: #8892a4; font-size: 0.875rem; }
+    .stat-value {
+      color: #ffffff;
+      font-size: 0.875rem;
+      font-family: "SF Mono", "Fira Code", monospace;
+      word-break: break-all;
+      text-align: right;
+      max-width: 60%;
+    }
+    .progress-bar {
+      width: 100%;
+      height: 6px;
+      background: #1e293b;
+      border-radius: 3px;
+      margin-top: 0.5rem;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #3b82f6, #60a5fa);
+      border-radius: 3px;
+      transition: width 0.5s ease;
+    }
+    .connect-field {
+      background: #0a0e17;
+      border: 1px solid #1e293b;
+      border-radius: 8px;
+      padding: 0.75rem;
+      margin-bottom: 0.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .connect-field code {
+      font-family: "SF Mono", "Fira Code", monospace;
+      font-size: 0.8rem;
+      color: #94a3b8;
+    }
+    .copy-btn {
+      background: #1e293b;
+      border: none;
+      color: #94a3b8;
+      padding: 0.35rem 0.65rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.75rem;
+    }
+    .copy-btn:hover { background: #334155; color: #e2e8f0; }
+    .copy-btn.copied { color: #34d399; }
+    .loading { text-align: center; padding: 4rem 0; color: #64748b; }
+    .name-lookup {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+    .name-lookup input {
+      flex: 1;
+      background: #0a0e17;
+      border: 1px solid #1e293b;
+      border-radius: 8px;
+      padding: 0.6rem 0.75rem;
+      color: #e0e0e0;
+      font-size: 0.85rem;
+      font-family: "SF Mono", "Fira Code", monospace;
+      outline: none;
+    }
+    .name-lookup input:focus { border-color: #3b82f6; }
+    .name-lookup button {
+      background: #3b82f6;
+      border: none;
+      color: #ffffff;
+      padding: 0.6rem 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+    .name-lookup button:hover { background: #2563eb; }
+    .name-result {
+      margin-top: 0.75rem;
+      background: #0a0e17;
+      border: 1px solid #1e293b;
+      border-radius: 8px;
+      padding: 0.75rem;
+      font-family: "SF Mono", "Fira Code", monospace;
+      font-size: 0.8rem;
+      color: #94a3b8;
+      white-space: pre-wrap;
+      word-break: break-all;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Namecoin Core</h1>
+      <p>Decentralized DNS & Identity</p>
+      <div id="statusBadge" class="status-badge status-offline">Connecting...</div>
+    </div>
+
+    <div id="loading" class="loading">Loading node status...</div>
+
+    <div id="content" style="display:none;">
+      <div class="card">
+        <div class="card-title">Blockchain</div>
+        <div class="stat-row">
+          <span class="stat-label">Block Height</span>
+          <span class="stat-value" id="blockHeight">—</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Headers</span>
+          <span class="stat-value" id="headers">—</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Sync Progress</span>
+          <span class="stat-value" id="syncProgress">—</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Disk Usage</span>
+          <span class="stat-value" id="diskUsage">—</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Pruned</span>
+          <span class="stat-value" id="pruned">—</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Network</div>
+        <div class="stat-row">
+          <span class="stat-label">Connections</span>
+          <span class="stat-value" id="connections">—</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Version</span>
+          <span class="stat-value" id="version">—</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Mempool</span>
+          <span class="stat-value" id="mempool">—</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Name Lookup</div>
+        <p style="color: #8892a4; font-size: 0.8rem; margin-bottom: 0.5rem;">
+          Look up a Namecoin name (e.g. <code style="color:#60a5fa">d/example</code>)
+        </p>
+        <div class="name-lookup">
+          <input type="text" id="nameInput" placeholder="d/example" />
+          <button onclick="lookupName()">Lookup</button>
+        </div>
+        <div class="name-result" id="nameResult"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Connection Details</div>
+        <div class="connect-field">
+          <code id="rpcHost">—</code>
+          <button class="copy-btn" onclick="copyText('rpcHost', this)">Copy</button>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">RPC User</span>
+          <span class="stat-value" id="rpcUser">—</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">RPC Password</span>
+          <span class="stat-value" id="rpcPass">—</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">RPC Port</span>
+          <span class="stat-value" id="rpcPort">—</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">P2P Port</span>
+          <span class="stat-value" id="p2pPort">—</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    async function fetchStatus() {
+      try {
+        const res = await fetch("/api/status");
+        const data = await res.json();
+
+        document.getElementById("loading").style.display = "none";
+        document.getElementById("content").style.display = "block";
+
+        const badge = document.getElementById("statusBadge");
+
+        if (data.error) {
+          badge.textContent = "Offline";
+          badge.className = "status-badge status-offline";
+          document.getElementById("rpcUser").textContent = data.rpcUser || "—";
+          document.getElementById("rpcPass").textContent = data.rpcPass || "—";
+          document.getElementById("rpcPort").textContent = data.rpcPort || "—";
+          document.getElementById("p2pPort").textContent = data.p2pPort || "—";
+          return;
+        }
+
+        const progress = (data.verificationProgress * 100);
+        const synced = progress > 99.9;
+
+        badge.textContent = synced ? "Synced" : `Syncing ${progress.toFixed(1)}%`;
+        badge.className = `status-badge ${synced ? "status-synced" : "status-syncing"}`;
+
+        document.getElementById("blockHeight").textContent = data.blocks.toLocaleString();
+        document.getElementById("headers").textContent = data.headers.toLocaleString();
+        document.getElementById("syncProgress").textContent = progress.toFixed(2) + "%";
+        document.getElementById("progressFill").style.width = Math.min(progress, 100) + "%";
+        document.getElementById("diskUsage").textContent = formatBytes(data.sizeOnDisk);
+        document.getElementById("pruned").textContent = data.pruned ? "Yes" : "No";
+        document.getElementById("connections").textContent = data.connections;
+        document.getElementById("version").textContent = data.version;
+        document.getElementById("mempool").textContent = data.mempoolSize + " txns";
+        document.getElementById("rpcHost").textContent = window.location.hostname + ":" + data.rpcPort;
+        document.getElementById("rpcUser").textContent = data.rpcUser;
+        document.getElementById("rpcPass").textContent = data.rpcPass;
+        document.getElementById("rpcPort").textContent = data.rpcPort;
+        document.getElementById("p2pPort").textContent = data.p2pPort;
+      } catch (e) {
+        console.error("Failed to fetch status:", e);
+      }
+    }
+
+    async function lookupName() {
+      const name = document.getElementById("nameInput").value.trim();
+      const resultEl = document.getElementById("nameResult");
+      if (!name) return;
+
+      resultEl.style.display = "block";
+      resultEl.textContent = "Looking up...";
+
+      try {
+        const res = await fetch(`/api/name/${encodeURIComponent(name)}`);
+        const data = await res.json();
+        resultEl.textContent = JSON.stringify(data, null, 2);
+      } catch (e) {
+        resultEl.textContent = "Error: " + e.message;
+      }
+    }
+
+    document.getElementById("nameInput").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") lookupName();
+    });
+
+    function formatBytes(bytes) {
+      if (!bytes) return "—";
+      const gb = bytes / (1024 * 1024 * 1024);
+      return gb.toFixed(2) + " GB";
+    }
+
+    function copyText(id, btn) {
+      const text = document.getElementById(id).textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        btn.textContent = "Copied";
+        btn.classList.add("copied");
+        setTimeout(() => {
+          btn.textContent = "Copy";
+          btn.classList.remove("copied");
+        }, 1500);
+      });
+    }
+
+    fetchStatus();
+    setInterval(fetchStatus, 10000);
+  </script>
+</body>
+</html>
