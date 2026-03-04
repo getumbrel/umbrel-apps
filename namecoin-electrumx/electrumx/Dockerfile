@@ -18,8 +18,8 @@ RUN git clone --depth 1 --branch ${ELECTRUMX_BRANCH} https://github.com/namecoin
 WORKDIR /build/electrumx
 
 RUN pip install --no-cache-dir --prefix=/install \
-    aiorpcx>=0.18.1,<0.23 \
-    aiohttp>=3.3 \
+    'aiorpcx>=0.18.1,<0.23' \
+    'aiohttp>=3.3' \
     attrs \
     plyvel \
     pylru \
