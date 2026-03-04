@@ -96,6 +96,12 @@
       font-size: 0.8rem;
       color: #94a3b8;
     }
+    .connect-label {
+      font-size: 0.75rem;
+      color: #64748b;
+      margin-bottom: 0.25rem;
+      margin-top: 0.5rem;
+    }
     .copy-btn {
       background: #1e293b;
       border: none;
@@ -104,6 +110,8 @@
       border-radius: 6px;
       cursor: pointer;
       font-size: 0.75rem;
+      flex-shrink: 0;
+      margin-left: 0.5rem;
     }
     .copy-btn:hover { background: #334155; color: #e2e8f0; }
     .copy-btn.copied { color: #34d399; }
@@ -150,6 +158,16 @@
       word-break: break-all;
       display: none;
     }
+    .net-badge {
+      display: inline-block;
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      font-weight: 500;
+      margin-left: 0.25rem;
+    }
+    .net-on { background: rgba(52, 211, 153, 0.15); color: #34d399; }
+    .net-off { background: rgba(100, 116, 139, 0.15); color: #64748b; }
   </style>
 </head>
 <body>
@@ -197,6 +215,14 @@
           <span class="stat-value" id="connections">—</span>
         </div>
         <div class="stat-row">
+          <span class="stat-label">Inbound / Outbound</span>
+          <span class="stat-value" id="connBreakdown">—</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-label">Reachable via</span>
+          <span class="stat-value" id="networkBadges">—</span>
+        </div>
+        <div class="stat-row">
           <span class="stat-label">Version</span>
           <span class="stat-value" id="version">—</span>
         </div>
@@ -220,10 +246,29 @@
 
       <div class="card">
         <div class="card-title">Connection Details</div>
+
+        <div class="connect-label">Local RPC</div>
         <div class="connect-field">
           <code id="rpcHost">—</code>
           <button class="copy-btn" onclick="copyText('rpcHost', this)">Copy</button>
         </div>
+
+        <div id="torP2pSection" style="display:none;">
+          <div class="connect-label">Tor P2P Address</div>
+          <div class="connect-field">
+            <code id="torP2p">—</code>
+            <button class="copy-btn" onclick="copyText('torP2p', this)">Copy</button>
+          </div>
+        </div>
+
+        <div id="torRpcSection" style="display:none;">
+          <div class="connect-label">Tor RPC Address</div>
+          <div class="connect-field">
+            <code id="torRpc">—</code>
+            <button class="copy-btn" onclick="copyText('torRpc', this)">Copy</button>
+          </div>
+        </div>
+
         <div class="stat-row">
           <span class="stat-label">RPC User</span>
           <span class="stat-value" id="rpcUser">—</span>
@@ -262,6 +307,7 @@
           document.getElementById("rpcPass").textContent = data.rpcPass || "—";
           document.getElementById("rpcPort").textContent = data.rpcPort || "—";
           document.getElementById("p2pPort").textContent = data.p2pPort || "—";
+          showTorAddresses(data);
           return;
         }
 
@@ -278,15 +324,47 @@
         document.getElementById("diskUsage").textContent = formatBytes(data.sizeOnDisk);
         document.getElementById("pruned").textContent = data.pruned ? "Yes" : "No";
         document.getElementById("connections").textContent = data.connections;
+        document.getElementById("connBreakdown").textContent =
+          (data.connectionsIn ?? "—") + " in / " + (data.connectionsOut ?? "—") + " out";
         document.getElementById("version").textContent = data.version;
         document.getElementById("mempool").textContent = data.mempoolSize + " txns";
+
+        // Network reachability badges
+        if (data.networks) {
+          const badgesEl = document.getElementById("networkBadges");
+          badgesEl.innerHTML = "";
+          const order = ["ipv4", "ipv6", "onion", "i2p"];
+          const labels = { ipv4: "IPv4", ipv6: "IPv6", onion: "Tor", i2p: "I2P" };
+          for (const net of order) {
+            if (net in data.networks) {
+              const span = document.createElement("span");
+              span.className = "net-badge " + (data.networks[net] ? "net-on" : "net-off");
+              span.textContent = labels[net] || net;
+              badgesEl.appendChild(span);
+            }
+          }
+        }
+
         document.getElementById("rpcHost").textContent = window.location.hostname + ":" + data.rpcPort;
         document.getElementById("rpcUser").textContent = data.rpcUser;
         document.getElementById("rpcPass").textContent = data.rpcPass;
         document.getElementById("rpcPort").textContent = data.rpcPort;
         document.getElementById("p2pPort").textContent = data.p2pPort;
+
+        showTorAddresses(data);
       } catch (e) {
         console.error("Failed to fetch status:", e);
+      }
+    }
+
+    function showTorAddresses(data) {
+      if (data.p2pHiddenService && data.p2pHiddenService !== "notyetset.onion") {
+        document.getElementById("torP2pSection").style.display = "block";
+        document.getElementById("torP2p").textContent = data.p2pHiddenService + ":" + data.p2pPort;
+      }
+      if (data.rpcHiddenService && data.rpcHiddenService !== "notyetset.onion") {
+        document.getElementById("torRpcSection").style.display = "block";
+        document.getElementById("torRpc").textContent = data.rpcHiddenService + ":" + data.rpcPort;
       }
     }
 

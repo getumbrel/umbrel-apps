@@ -9,6 +9,10 @@ const NAMECOIND_HOST = process.env.NAMECOIND_HOST || "localhost";
 const NAMECOIND_RPC_PORT = process.env.NAMECOIND_RPC_PORT || "8336";
 const NAMECOIND_RPC_USER = process.env.NAMECOIND_RPC_USER || "umbrel";
 const NAMECOIND_RPC_PASS = process.env.NAMECOIND_RPC_PASS || "namecoinrpc";
+const P2P_PORT = process.env.P2P_PORT || "8334";
+const P2P_HIDDEN_SERVICE = process.env.P2P_HIDDEN_SERVICE || "";
+const RPC_HIDDEN_SERVICE = process.env.RPC_HIDDEN_SERVICE || "";
+const DEVICE_DOMAIN_NAME = process.env.DEVICE_DOMAIN_NAME || "";
 
 function rpcCall(method, params = []) {
   return new Promise((resolve, reject) => {
@@ -66,11 +70,24 @@ app.use(express.static(path.join(__dirname, "public")));
 
 app.get("/api/status", async (req, res) => {
   try {
-    const [blockchainInfo, networkInfo, mempoolInfo] = await Promise.all([
+    const [blockchainInfo, networkInfo, mempoolInfo, peerInfo] = await Promise.all([
       rpcCall("getblockchaininfo"),
       rpcCall("getnetworkinfo"),
       rpcCall("getmempoolinfo"),
+      rpcCall("getpeerinfo"),
     ]);
+
+    // Count inbound vs outbound peers
+    const inbound = peerInfo.filter(p => p.inbound).length;
+    const outbound = peerInfo.filter(p => !p.inbound).length;
+
+    // Summarise network reachability
+    const networks = {};
+    if (networkInfo.networks) {
+      for (const net of networkInfo.networks) {
+        networks[net.name] = net.reachable;
+      }
+    }
 
     res.json({
       chain: blockchainInfo.chain,
@@ -81,13 +98,19 @@ app.get("/api/status", async (req, res) => {
       sizeOnDisk: blockchainInfo.size_on_disk,
       pruned: blockchainInfo.pruned,
       connections: networkInfo.connections,
+      connectionsIn: inbound,
+      connectionsOut: outbound,
       version: networkInfo.subversion,
       protocolVersion: networkInfo.protocolversion,
       mempoolSize: mempoolInfo.size,
+      networks,
       rpcUser: NAMECOIND_RPC_USER,
       rpcPass: NAMECOIND_RPC_PASS,
       rpcPort: NAMECOIND_RPC_PORT,
-      p2pPort: "8334",
+      p2pPort: P2P_PORT,
+      p2pHiddenService: P2P_HIDDEN_SERVICE,
+      rpcHiddenService: RPC_HIDDEN_SERVICE,
+      deviceDomainName: DEVICE_DOMAIN_NAME,
     });
   } catch (err) {
     res.json({
@@ -95,7 +118,10 @@ app.get("/api/status", async (req, res) => {
       rpcUser: NAMECOIND_RPC_USER,
       rpcPass: NAMECOIND_RPC_PASS,
       rpcPort: NAMECOIND_RPC_PORT,
-      p2pPort: "8334",
+      p2pPort: P2P_PORT,
+      p2pHiddenService: P2P_HIDDEN_SERVICE,
+      rpcHiddenService: RPC_HIDDEN_SERVICE,
+      deviceDomainName: DEVICE_DOMAIN_NAME,
     });
   }
 });
