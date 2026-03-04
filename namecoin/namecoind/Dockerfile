@@ -70,6 +70,6 @@ RUN chmod +x /usr/local/bin/entrypoint.sh
 
 RUN mkdir -p /data/.namecoin && chown -R 1000:1000 /data
 
-EXPOSE 8334 8336
+EXPOSE 8334 8335 8336 8337 38332 38333 38334 38335 38336
 
 ENTRYPOINT ["tini", "--", "entrypoint.sh"]
