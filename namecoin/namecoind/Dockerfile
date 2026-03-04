@@ -36,8 +36,8 @@ RUN cmake -B build \
     -DCMAKE_INSTALL_PREFIX=/usr/local
 RUN cmake --build build -j$(nproc)
 RUN mkdir -p /output/usr/local/bin && \
-    cp build/src/namecoind build/src/namecoin-cli build/src/namecoin-tx /output/usr/local/bin/ 2>/dev/null || \
-    cp build/src/bitcoin build/src/bitcoin-cli build/src/bitcoin-tx /output/usr/local/bin/ 2>/dev/null
+    find build/src -maxdepth 1 -type f \( -name 'namecoind' -o -name 'namecoin-cli' -o -name 'namecoin-tx' -o -name 'bitcoin' \) -executable -exec cp {} /output/usr/local/bin/ \; && \
+    ls -la /output/usr/local/bin/
 
 # Stage 2: Runtime
 FROM debian:bookworm-slim
@@ -54,13 +54,13 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /output/usr/local/bin/ /usr/local/bin/
-# Namecoin Core nc30.x builds binaries named 'bitcoin', 'bitcoin-cli', 'bitcoin-tx'
-# Create symlinks for namecoin-prefixed names
-RUN for bin in bitcoin bitcoin-cli bitcoin-tx; do \
-      if [ -f /usr/local/bin/$bin ]; then \
-        ln -sf $bin /usr/local/bin/namecoin${bin#bitcoin}; \
-      fi; \
-    done
+# Ensure namecoind exists (may be built as 'bitcoin' in some versions)
+RUN if [ ! -f /usr/local/bin/namecoind ] && [ -f /usr/local/bin/bitcoin ]; then \
+      ln -sf bitcoin /usr/local/bin/namecoind; \
+    fi && \
+    if [ ! -f /usr/local/bin/namecoin-cli ] && [ -f /usr/local/bin/bitcoin-cli ]; then \
+      ln -sf bitcoin-cli /usr/local/bin/namecoin-cli; \
+    fi
 
 COPY entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/entrypoint.sh
