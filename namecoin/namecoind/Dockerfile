@@ -36,7 +36,7 @@ RUN cmake -B build \
     -DCMAKE_INSTALL_PREFIX=/usr/local
 RUN cmake --build build -j$(nproc)
 RUN mkdir -p /output/usr/local/bin && \
-    find build/src -maxdepth 1 -type f \( -name 'namecoind' -o -name 'namecoin-cli' -o -name 'namecoin-tx' -o -name 'bitcoin' \) -executable -exec cp {} /output/usr/local/bin/ \; && \
+    find build/bin build/src -maxdepth 1 -type f \( -name 'namecoind' -o -name 'namecoin-cli' -o -name 'namecoin-tx' -o -name 'bitcoin' \) -executable -exec cp {} /output/usr/local/bin/ \; && \
     ls -la /output/usr/local/bin/
 
 # Stage 2: Runtime
