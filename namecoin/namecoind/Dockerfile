@@ -7,6 +7,7 @@ FROM debian:bookworm-slim AS builder
 ARG NAMECOIN_VERSION=nc30.2
 
 RUN apt-get update && apt-get install -y \
+    autoconf \
     automake \
     autotools-dev \
     bsdmainutils \
