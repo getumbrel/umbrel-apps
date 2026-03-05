@@ -1,9 +1,7 @@
-version: "3.7"
-
 services:
   app_proxy:
     environment:
-      APP_HOST: lnbits_web_1
+      APP_HOST: umbrel-lnbits-cln_web_1
       APP_PORT: 3008
       PROXY_AUTH_ADD: "false"
 
@@ -11,26 +9,36 @@ services:
     image: lnbits/lnbits:v1.4.2@sha256:b1cd8dc2e30672a39d460dd640d6a4d1adfcfd7f24f5cbdce694a1ed5ab72779
     container_name: umbrel-lnbits-cln_web_1
     init: true
+    user: "1000:1000"
     restart: on-failure
     stop_grace_period: 1m
     volumes:
       - ${APP_DATA_DIR}/data:/app/data
+      # JSON-RPC socket mount - requires CLN data dir export from core-lightning
       - ${APP_CORE_LIGHTNING_DATA_DIR}/bitcoin/lightning-rpc:/rpc/lightning-rpc:ro
+      # CLNREST certificates for future migration
+      - ${APP_CORE_LIGHTNING_DATA_DIR}/bitcoin/ca.pem:/certs/ca.pem:ro
     environment:
       LNBITS_HOST: "0.0.0.0"
       LNBITS_PORT: 3008
       LNBITS_DATA_FOLDER: "/app/data"
-      LNBITS_BACKEND_WALLET_CLASS: CLNRPCWallet
-      CLNRPC_SOCKET: unix:///rpc/lightning-rpc
+      # JSON-RPC backend (stable, proven)
+      LNBITS_BACKEND_WALLET_CLASS: CoreLightningWallet
+      CORELIGHTNING_RPC: "/rpc/lightning-rpc"
+      # CLNREST ready (uncomment to switch after channel testing)
+      # LNBITS_BACKEND_WALLET_CLASS: CLNRestWallet  
+      # CLNREST_URL: "https://${APP_CORE_LIGHTNING_REST_HOST}:${APP_CORE_LIGHTNING_REST_PORT}"
+      # CLNREST_CERT: "/certs/ca.pem"
       LNBITS_SITE_TITLE: "LNbits - CLN - Umbrel"
       LNBITS_DEFAULT_WALLET_NAME: "Core Lightning Wallet"
       LNBITS_DISABLED_EXTENSIONS: "amilk"
       LNBITS_ADMIN_EXTENSIONS: "ngrok"
       LNBITS_ADMIN_UI: "true"
     networks:
-      app_proxy:
-        ipv4_address: "10.21.21.97"
+      default:
+        ipv4_address: ${APP_LNBITS_CLN_IP}
 
 networks:
-  app_proxy:
+  default:
+    name: umbrel_main_network
     external: true
