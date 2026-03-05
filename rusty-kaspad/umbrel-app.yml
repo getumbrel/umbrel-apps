@@ -2,7 +2,7 @@ manifestVersion: 1
 id: rusty-kaspad
 category: crypto
 name: Rusty Kaspad
-version: "v1.0.1"
+version: "v1.1.0"
 tagline: A Rust implementation of a Kaspa full node
 description: |
   Rusty Kaspad is a Rust implementation of a Kaspa full node. This node software provides essential Kaspa network services including peer-to-peer networking and RPC functionality.
@@ -24,5 +24,20 @@ path: ""
 gallery:
   - 1.jpg
   - 2.jpg
+releaseNotes: >-
+  ⚠️ This release upgrades the database schema to version 6. Downgrading to an older node version after upgrading may require deleting the database.
+
+
+  Key highlights in this release:
+    - New VSPC API v2 (`GetVirtualChainFromBlockV2`) makes integrating Kaspa simpler by returning chain updates and accepted transaction data in a single call
+    - Faster and more reliable initial sync and catchup behavior, with smoother recovery under real-world conditions
+    - Significant storage and performance improvements, including up to ~3x faster header-stage sync on some machines
+    - Lower storage usage, reduced write overhead, and faster header and pruning processing
+    - Improved pruning proof stability and correctness
+    - RocksDB preset system added for archive and HDD use cases, with WAL-directory support and cache controls
+    - In-house Rusty Kaspa Stratum Bridge released as BETA
+
+
+  Full release notes can be found at https://github.com/kaspanet/rusty-kaspa/releases
 submitter: Luke Dunshea
 submission: https://github.com/getumbrel/umbrel-apps/pull/2060
