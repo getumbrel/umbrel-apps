@@ -69,6 +69,20 @@ zmqpubhashblock=tcp://${NAMECOIND_IP}:${ZMQ_HASHBLOCK_PORT}
 zmqpubsequence=tcp://${NAMECOIND_IP}:${ZMQ_SEQUENCE_PORT}
 zmqpubhashtx=tcp://${NAMECOIND_IP}:${ZMQ_HASHTX_PORT}
 
+# Disable compiled-in Bitcoin DNS seeds (upstream Namecoin Core bug)
+dnsseed=0
+
+# Namecoin DNS seeds
+seednode=dnsseed.nmc.testls.space
+seednode=namecoin.seed.cypherstack.com
+
+# Fallback fixed seed nodes (from Namecoin Core contrib/seeds)
+seednode=31.179.204.142:8334
+seednode=45.62.228.132:8334
+seednode=65.21.235.170:8334
+seednode=162.252.82.124:8334
+seednode=173.249.22.83:8334
+
 # Logging
 printtoconsole=1
 EOF
