@@ -3,7 +3,7 @@ id: open-webui
 name: Open WebUI
 tagline: Chat with Ollama models like DeepSeek-R1 and LLama, or use an OpenAI API key
 category: ai
-version: "0.8.7"
+version: "0.8.8"
 port: 2876
 description: >-
   Open WebUI lets you chat with advanced AI models running locally on your own device or connect to online models using an API key.
@@ -38,19 +38,13 @@ dependencies:
   - ollama
 releaseNotes: >-
   Key highlights in this release include:
-    - Fixed a privacy bug where tool server and terminal connections with no access grants were visible to all users instead of being restricted to admins
-    - Fixed a memory leak in the chat controls panel that could degrade performance during extended use
-    - Fixed model parameters not being saved correctly when starting a temporary chat
-    - Improved streaming performance by reducing redundant processing when tokens arrive quickly
-    - Open Terminal integration allows connecting to terminal instances to browse, read, and upload files directly in chat
-    - Significant streaming performance improvements including faster rendering, scrolling, and message updates
-    - Fixed database migrations failing silently on startup due to a circular import issue
-    - Fixed tool calls crashing chat when models generate malformed JSON arguments
-    - Fixed models being called twice unnecessarily when no tools are configured
-    - Fixed multiple memory leaks across tooltips, message input, notes, sidebar, and other components
-    - Fixed RAG templates being duplicated when models make multiple tool calls
-    - Fixed web search domain filtering not being applied correctly
-    - Fixed password manager autofill not capturing passwords correctly on login
+    - Users can now move files and folders between directories in the Open Terminal file browser by dragging and dropping them
+    - HTML files can now be previewed directly in the Open Terminal file browser with a rendered view and source toggle
+    - Administrators can now enable or disable the Interactive Terminal feature via configuration
+    - Fixed an issue where older messages in long chats were not loaded when scrolling to the top
+    - Fixed Open Terminal tools not being available to the model when using direct connection settings
+    - Fixed null parameters in terminal tool calls causing validation errors
+    - Fixed a reactivity issue where the active tab state in the chat controls panel was not saved when switching chats
 
 
   Full release notes are found at https://github.com/open-webui/open-webui/releases
