@@ -37,4 +37,4 @@ echo "  SERVICES:     ${SERVICES}"
 echo "  CACHE_MB:     ${CACHE_MB:-400}"
 echo "  LOG_LEVEL:    ${LOG_LEVEL:-info}"
 
-exec python3 -m electrumx_server
+exec electrumx_server
