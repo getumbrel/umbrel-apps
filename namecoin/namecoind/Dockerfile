@@ -66,7 +66,7 @@ RUN if [ ! -f /usr/local/bin/namecoind ] && [ -f /usr/local/bin/bitcoin ]; then 
     fi
 
 COPY entrypoint.sh /usr/local/bin/
-RUN chmod +x /usr/local/bin/entrypoint.sh
+RUN chmod 755 /usr/local/bin/entrypoint.sh
 
 RUN mkdir -p /data/.namecoin && chown -R 1000:1000 /data
 
