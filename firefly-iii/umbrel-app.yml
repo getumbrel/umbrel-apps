@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: firefly-iii
 category: finance
 name: Firefly III
-version: "6.5.3"
+version: "6.5.4"
 tagline: Your personal finance manager
 description: >-
   Firefly III is a manager for your personal finances. It is self-hosted and open source. This means that it's free, it has no ads and no tracking.
@@ -47,11 +47,14 @@ path: ""
 deterministicPassword: false
 torOnly: false
 releaseNotes: >-
+  ⚠️ This release includes a security fix - upgrading is recommended.
+
+
   Key improvements in this release:
-    - Fixed a ReflectionException error on transaction list requests
-    - Improved currency info returned for tag journal entries
-    - Added note about the EU origins of Firefly III
-    - Expanded code linting and checks to improve code quality
+    - Fixed piggy bank +/- sometimes sending 0.00 and failing with "Cannot add 0" error
+    - Fixed incorrect transaction count due to wrong meta field search
+    - Added debug info to help diagnose available budget calculation issues
+    - Blocked some reserved IP ranges from being used as webhook URLs to improve security
 
 
   Full release notes are found at https://github.com/firefly-iii/firefly-iii/releases
