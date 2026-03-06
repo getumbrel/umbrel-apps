@@ -18,8 +18,14 @@ set_correct_permissions() {
 	fi
 }
 
+# Ensure data directories exist with correct ownership
+for dir in "${APP_DATA_DIR}/data/namecoind" "${APP_DATA_DIR}/data/i2pd"; do
+	mkdir -p "${dir}"
+	chown "${DESIRED_OWNER}" "${dir}"
+done
+
 # Set correct permissions for any files that may have been created by a previous run as root
-set_correct_permissions "${APP_DATA_DIR}/namecoind/namecoin.conf"
+set_correct_permissions "${APP_DATA_DIR}/data/namecoind/namecoin.conf"
 
 # Set permissions recursively on i2pd data directory
 if [[ -d "${APP_DATA_DIR}/i2pd" ]]; then
