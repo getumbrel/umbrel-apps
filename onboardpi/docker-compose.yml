@@ -7,7 +7,7 @@ services:
       APP_PORT: 8080
 
   web:
-    image: bgunson/onboardpi-web:latest
+    image: bgunson/onboardpi-web:latest@sha256:6640957b5ae3f661e32cb35bfec094065a3e79ee6bf84105ff875d698f5448ed
     restart: on-failure
     stop_grace_period: 1m
     volumes:
@@ -22,7 +22,7 @@ services:
       - db
 
   db:
-    image: timescale/timescaledb:latest-pg14
+    image: timescale/timescaledb:latest-pg14@sha256:0f5553d37abbe0f20bfe0a04dab5d1238955b5cda2711aba403090f95b6e51ff
     restart: on-failure
     stop_grace_period: 1m
     volumes:
@@ -33,7 +33,7 @@ services:
       POSTGRES_DB: onboardpi
 
   obd:
-    image: bgunson/onboardpi-obd:latest
+    image: bgunson/onboardpi-obd:latest@sha256:b0553e63699680695a5f5e007ecdbddb04db3b9ca85493d92f2b8a69d6e3eedf
     restart: on-failure
     stop_grace_period: 1m
     privileged: true
