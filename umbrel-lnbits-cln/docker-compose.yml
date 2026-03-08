@@ -1,0 +1,39 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: umbrel-lnbits-cln_web_1
+      APP_PORT: 3008
+      PROXY_AUTH_ADD: "false"
+
+  web:
+    image: lnbits/lnbits:v1.5.0@sha256:47567b98e19e38639824b40de0a6029d31ccdf5d323ffb4995f0a8b4b560b59f
+    init: true
+    restart: on-failure
+    stop_grace_period: 1m
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+      - ${APP_CORE_LIGHTNING_RPC_SOCKET}:/rpc/lightning-rpc:ro
+    environment:
+      # Global
+      LNBITS_HOST: "0.0.0.0"
+      LNBITS_PORT: 3008
+      LNBITS_DATA_FOLDER: "/data"
+
+      # Core Lightning
+      LNBITS_BACKEND_WALLET_CLASS: CoreLightningWallet
+      CORELIGHTNING_RPC: "/rpc/lightning-rpc"
+
+      # App
+      LNBITS_SITE_TITLE: "LNbits - CLN - Umbrel"
+      LNBITS_DEFAULT_WALLET_NAME: "Core Lightning Wallet"
+      LNBITS_DISABLED_EXTENSIONS: "amilk"
+      LNBITS_ADMIN_EXTENSIONS: "ngrok"
+      LNBITS_ADMIN_UI: "true"
+    networks:
+      default:
+        ipv4_address: ${APP_LNBITS_CLN_IP}
+
+networks:
+  default:
+    name: umbrel_main_network
+    external: true

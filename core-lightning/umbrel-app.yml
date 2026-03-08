@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: core-lightning
 category: bitcoin
 name: Core Lightning
-version: "25.09.3-hotfix.1"
+version: "25.09.3-stable"
 tagline: Run your personal Core Lightning node
 description: >-
   Get started with the Lightning network today with Core Lightning - a
@@ -32,34 +32,30 @@ defaultPassword: ""
 submitter: Blockstream
 submission: https://github.com/getumbrel/umbrel-apps/pull/475
 releaseNotes: >-
-  This hotfix release fixes an issue where users were unable to connect external wallet clients to their Core Lightning node.
-  If you were previously unable to connect a wallet, please go to "Settings" in the top right > Connect wallet > and select your desired connection method to see corrected connection details.
+  Stabilization release for Core Lightning v25.09.3 on umbrelOS. Fixes internal CLNRest wiring left unpatched after hotfix.1, adds Provider Contract for consumer apps, and introduces startup ordering.
 
 
-  **Previous release notes:**
+  **Provider Contract (exports.sh):**
+    - Canonical CLNREST_HOST, CLNREST_PORT, CLNREST_URL, CLNREST_CERT, CLNREST_CA, CLNREST_RUNE_PATH exports
+    - Consumer apps (RTL, LNbits) bind to contract variables instead of reconstructing URLs
+    - Backward-compatible aliases preserved for DR recovery safety
 
 
-  This updates cln-application to v25.07.3, lightningd to v25.09.3, and replaces the legacy c-lightning-rest service with the built-in REST interface of lightningd.
+  **CLNRest bind fix (docker-compose.yml):**
+    - --clnrest-host=0.0.0.0 binds to all interfaces (was defaulting to 127.0.0.1, unreachable from sibling containers)
+    - --clnrest-port=2107 explicit (was implicit default)
+    - --experimental-dual-fund enabled
+    - --disable-plugin=bookkeeper (workaround for assertion crash on v25.09.3, resolved in v25.12)
 
 
-  **CLN Application v25.07.3:**
-    - Proactive mitigation against a widespread npm ecosystem threat involving malicious code in popular packages.
-    - Updated and streamlined environment variables for improved configuration and usability
-    - Added support for running Commando over secure WebSocket (eg. wss-proxy) connections
-    - Removed version and commit suffix from node aliases for a cleaner display
-    - Updated BKPR date format from YYYY-MM-DD to UI standard DD MMM, YYYY
-    - Added infinite scroll support for BTC Transactions, CLN Offers, and CLN Transactions
+  **Startup ordering:**
+    - tor starts before lightningd (needs SOCKS proxy)
+    - lightningd starts before app (CLN GUI needs CLNRest/gRPC ready)
+    - app_proxy remains independent, no dependency on other services
 
-  **CLN v25.09.3:**
-    - Bookkeeper has been migrated into core lightning, allowing visibility into payments, fees and channel activities.
-    - xpay can now directly pay BIP353 addresses (like ₿cln@blockstream.com) and simple offers without extra steps.
-    - Better feedback when channel creation fails due to capacity limits.
-    - Now limiting the number of parts a payment can be split on xpay and askrene
-    - Reckless now supports the modern uv package manager for Python plugins.
-    - Improvements to the rate of feasible solutions found in the main loop of the solver on askrene
-    - Splicing improvements allow for better compatibility with Eclair and continuous routing during channel modifications.
-    - Improve security by ensuring all peers must support channel type.
-    - Payment secrets now mandatory in BOLT11 invoices for better payment protection.
+
+  **Previous release notes (hotfix.1):**
+    - Fixed external wallet client connections (Zeus/Tor/clearnet)
 
 backupIgnore:
   - data/lightningd/bitcoin/lightningd.sqlite3
