@@ -1,7 +1,7 @@
 version: '3.7'
 services:
   tunnelsats:
-    image: tunnelsats/ts-umbrel-app:latest@sha256:513c4f2ae327a11dc55521394f2e81da2b72a6081b123e482a84dd84c876c4b8
+    image: tunnelsats/ts-umbrel-app:v3.0.0@sha256:513c4f2ae327a11dc55521394f2e81da2b72a6081b123e482a84dd84c876c4b8
     container_name: tunnelsats
     restart: on-failure
     network_mode: "host"
@@ -11,8 +11,7 @@ services:
     security_opt:
       - apparmor:unconfined
     volumes:
-      # Mount the app's persistent storage for configs
-      - ${APP_DATA_DIR:-./data}:/data
+      - ${APP_DATA_DIR}/data:/data
       # Try to mount LN config directories to automate config insertion (graceful degradation if missing)
       - ${APP_LIGHTNING_NODE_DATA_DIR}:/lightning-data/lnd
       - ${APP_CORE_LIGHTNING_DATA_DIR}:/lightning-data/cln
