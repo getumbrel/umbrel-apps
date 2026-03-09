@@ -3,7 +3,7 @@ id: booklore
 name: BookLore
 tagline: An app for managing and reading books
 category: files
-version: "2.0.5"
+version: "2.1.0"
 port: 6060
 description: >-
   📖 BookLore is a modern web application created to transform the way digital libraries are managed and experienced. It is designed for readers who want to bring order and beauty to their collection of books and comics while also making them instantly accessible. Instead of leaving files scattered across folders, BookLore gathers them into a central library that can be explored and enjoyed directly through the browser. It provides a seamless reading environment where organization, discovery, and enjoyment flow together.
@@ -48,14 +48,26 @@ gallery:
   - 5.jpg
   - 6.jpg
 releaseNotes: >-
+  New features and improvements in this release:
+    - Bulk ISBN import from a file
+    - Import and export magic shelf rules as JSON from the UI
+    - Physical and digital book states can now coexist for the same book
+    - ASIN lookup added to author search
+    - Option to regenerate only missing covers
+    - Falls back to folder cover images when embedded cover extraction fails
+    - Magnifying glass tool added to the CBX reader
+    - Minimum password length increased to 8 characters
+    - Metadata search provider selection is now remembered across book switches
+    - "Book Type" label renamed to "File Format"
+
+
   Bug fixes in this release:
-    - Fixed /app/data and /bookdrop folder ownership on fresh installs
-    - Fixed EPUB metadata extraction restoring Calibre and BookLore fields including age and content rating
-    - Fixed ASIN field not being populated from Audible metadata search results
-    - Fixed image downloads failing on HTTPS URLs
-    - Added Ukrainian and Indonesian language support
-    - Auto book search is now turned off by default
-    - Various translation updates
+    - Fixed cover download failing when CDN redirects to a raw IP address
+    - Fixed datetime errors caused by daylight saving time on certain database columns
+    - Fixed OIDC group scope not being included in authorization requests
+    - Fixed organize files preview missing the subtitle
+    - Fixed shelf view overrides not being respected
+    - Fixed OPDS feed now sorts libraries by name
 
 
   Full release notes can be found at: https://github.com/booklore-app/booklore/releases
