@@ -3,7 +3,7 @@ id: open-webui
 name: Open WebUI
 tagline: Chat with Ollama models like DeepSeek-R1 and LLama, or use an OpenAI API key
 category: ai
-version: "0.8.8"
+version: "0.8.10"
 port: 2876
 description: >-
   Open WebUI lets you chat with advanced AI models running locally on your own device or connect to online models using an API key.
@@ -38,13 +38,18 @@ dependencies:
   - ollama
 releaseNotes: >-
   Key highlights in this release include:
-    - Users can now move files and folders between directories in the Open Terminal file browser by dragging and dropping them
-    - HTML files can now be previewed directly in the Open Terminal file browser with a rendered view and source toggle
-    - Administrators can now enable or disable the Interactive Terminal feature via configuration
-    - Fixed an issue where older messages in long chats were not loaded when scrolling to the top
-    - Fixed Open Terminal tools not being available to the model when using direct connection settings
-    - Fixed null parameters in terminal tool calls causing validation errors
-    - Fixed a reactivity issue where the active tab state in the chat controls panel was not saved when switching chats
+    - Administrators can now configure a custom OIDC logout URL for providers like AWS Cognito
+    - Added MariaDB Vector as a new supported vector database backend
+    - Chat messages sent to task models for title and tag generation can now be truncated to reduce token usage
+    - Fixed a bug where HTTP errors in pipeline filters could silently corrupt chat payloads
+    - Fixed knowledge file updates leaving stale embeddings in the database causing duplicate search results
+    - Fixed Docker deployments failing to start due to a missing OpenTelemetry dependency
+    - Fixed non-admin users being unable to view tools due to a missing function import
+    - Fixed YAML file uploads failing when Docling was enabled
+    - Fixed custom model fallback not working when the base model is unavailable
+    - Fixed images in queued messages appearing blank
+    - Fixed Azure text-to-speech using incomplete locale codes in SSML
+    - Fixed token usage analytics not being filtered by user group correctly
 
 
   Full release notes are found at https://github.com/open-webui/open-webui/releases
