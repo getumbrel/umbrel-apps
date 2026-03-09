@@ -1,8 +1,7 @@
 version: '3.7'
 services:
   tunnelsats:
-    build: .
-    image: tunnelsats/umbrel-app:latest
+    image: tunnelsats/ts-umbrel-app:latest@sha256:513c4f2ae327a11dc55521394f2e81da2b72a6081b123e482a84dd84c876c4b8
     container_name: tunnelsats
     restart: on-failure
     network_mode: "host"
@@ -15,7 +14,7 @@ services:
       # Mount the app's persistent storage for configs
       - ${APP_DATA_DIR:-./data}:/data
       # Try to mount LN config directories to automate config insertion (graceful degradation if missing)
-      - ${APP_DATA_DIR:-./data}/../lightning/data/lnd:/lightning-data/lnd
-      - ${APP_DATA_DIR:-./data}/../core-lightning/data/lightningd/bitcoin:/lightning-data/cln
+      - ${APP_LIGHTNING_NODE_DATA_DIR}:/lightning-data/lnd
+      - ${APP_CORE_LIGHTNING_DATA_DIR}:/lightning-data/cln
       # Required to interrogate container IPs dynamically (Umbrel 1.6+)
       - /var/run/docker.sock:/var/run/docker.sock:ro
