@@ -7,7 +7,7 @@ services:
       APP_PORT: 4321
 
   web:
-    image: ghcr.io/raylabshq/gitea-mirror:v3.12.4@sha256:4ae7770fce22ea876d89c78bbc2b74356e061f2a2ff7eefbd2267d552b72756a
+    image: ghcr.io/raylabshq/gitea-mirror:v3.12.5@sha256:935c1d05c771045e4b8b04b8b7a39c0f6ea1396e1cf8f52029a83e02e6be5257
     restart: on-failure
     user: "1000:1000"
     volumes:
@@ -15,7 +15,7 @@ services:
     environment:
       BETTER_AUTH_SECRET: ${APP_SEED}
       BETTER_AUTH_URL: http://${DEVICE_DOMAIN_NAME}:${APP_GITEA_MIRROR_PORT}
-      BETTER_AUTH_TRUSTED_ORIGINS: http://${DEVICE_DOMAIN_NAME}:${APP_GITEA_MIRROR_PORT},http://${DEVICE_HOSTNAME}:${APP_GITEA_MIRROR_PORT},${APP_GITEA_MIRROR_LOCAL_URLS}
+      BETTER_AUTH_TRUSTED_ORIGINS: "*"
       NODE_ENV: production
       DATABASE_URL: file:data/gitea-mirror.db
       HOST: 0.0.0.0
