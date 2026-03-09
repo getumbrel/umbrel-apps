@@ -2,7 +2,7 @@ manifestVersion: 1
 id: frigate
 category: automation
 name: Frigate
-version: "0.16.4"
+version: "0.17.0"
 tagline: A complete and local NVR
 description: >-
   A complete and local NVR designed for Home Assistant with AI object detection. 
@@ -20,14 +20,34 @@ releaseNotes: >-
   ⚠️ As usual, Frigate will attempt to update its configuration automatically. It is still recommended to back up your current config and database before upgrading.
 
 
-  🚨 This release includes a critical security fix for authenticated users:
-    - Fixed a vulnerability that could allow authenticated remote command execution and container escape
+  🚨 This is a major release with several breaking changes:
+    - GenAI config restructured: global `genai` now only configures the provider; other fields moved under `objects -> genai`
+    - Recordings retention is now fully tiered with separate `record -> continuous` and `record -> motion` fields
+    - LPR models updated: most users should manually switch to the `small` model
+    - `strftime_fmt` has been fully removed; date/time formatting is now based on UI language selection
+    - Camera auto-detection resolution logic has changed; you may need to explicitly set `detect` width and height if Frigate hangs on startup
+    - The `exec`, `expr`, and `echo` sources for go2rtc are now removed by default to reduce security risk
+    - Nvidia GTX 900 series GPUs are no longer supported
 
 
-  Other improvements in this update include:
-    - Updated documentation for Reolink, Wyze, Hikvision, and other camera models
-    - Fixed OpenVINO D-FINE configuration defaults
-    - Improved go2rtc port checking
+  New features and improvements in this update include:
+    - New classification model training: train local models for state classification (e.g. gate open/closed) and object classification (e.g. identify specific dogs or people)
+    - Custom viewer roles to limit user access to specific cameras
+    - GenAI can now summarize review items with a title, description, and activity classification
+    - Semantic Search Triggers to automate actions when a tracked object matches an image or description
+    - Nvidia GPU performance improved with CUDA Graphs support
+    - Intel OpenVINO now supports NPU inference with reduced memory and CPU usage
+    - RKNN improvements including automatic ONNX model conversion and accelerated enrichment support
+    - Apple Silicon NPU object detection support
+    - YOLOv9 support on Google Coral devices
+    - New community-supported detectors: MemryX, Degirum SDK, and Synaptics
+    - Add Camera Wizard in the UI to add cameras without editing config files
+    - Many more settings can now be saved dynamically without restarting Frigate
+    - Configuration Safe Mode highlights invalid config issues in the UI
+    - Audio transcription support using local models
+    - LPR normalization configuration and updated PaddleOCR models with Chinese character support
+    - IPv6 can now be toggled via config
+    - Revamped Settings menu with sidebar navigation
 
 
   Full release notes are available at https://github.com/blakeblackshear/frigate/releases
