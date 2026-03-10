@@ -13,7 +13,7 @@ services:
     volumes:
       - ${APP_DATA_DIR}/data:/data
       # Try to mount LN config directories to automate config insertion (graceful degradation if missing)
-      - ${APP_LIGHTNING_NODE_DATA_DIR}:/lightning-data/lnd
-      - ${APP_CORE_LIGHTNING_DATA_DIR}:/lightning-data/cln
+      - ${APP_DATA_DIR}/../lightning/data/lnd:/lightning-data/lnd
+      - ${APP_DATA_DIR}/../core-lightning/data/lightningd:/lightning-data/cln
       # Required to interrogate container IPs dynamically (Umbrel 1.6+)
       - /var/run/docker.sock:/var/run/docker.sock:ro
