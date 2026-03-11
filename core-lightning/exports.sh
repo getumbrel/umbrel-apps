@@ -51,7 +51,7 @@ export APP_CORE_LIGHTNING_CLIENT_KEY="${EXPORTS_APP_DIR}/data/lightningd/${APP_C
 # Replaces the deprecated c-lightning-REST Node.js plugin.
 # CLNREST_HOST is the bind address for lightningd's --clnrest-host flag.
 # CLNREST_URL is the consumer-facing endpoint (routable from other containers).
-# Consumers: RTL, LNbits (CLNRestWallet), cln-application
+# Consumers: RTL, cln-application, LNbits (CLNRestWallet default; JSON-RPC fallback)
 # =============================================================================
 export CLNREST_HOST="0.0.0.0"
 export CLNREST_PORT="2107"
@@ -89,7 +89,7 @@ export APP_CORE_LIGHTNING_GRPC_PORT="${APP_CORE_LIGHTNING_DAEMON_GRPC_PORT}"
 
 # =============================================================================
 # JSON-RPC Interface (unix domain socket)
-# Consumers: LNbits (CoreLightningWallet via pyln-client)
+# Consumers: LNbits JSON-RPC fallback (CoreLightningWallet via pyln-client)
 # =============================================================================
 export APP_CORE_LIGHTNING_RPC_SOCKET="${EXPORTS_APP_DIR}/data/lightningd/${APP_CORE_LIGHTNING_BITCOIN_NETWORK}/lightning-rpc"
 
