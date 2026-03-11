@@ -1,5 +1,15 @@
 # High Availability Reference — satwise/umbrel-apps LSP Stack
 
+## Operator Flow
+
+Use this document as the short-form companion to the DR runbook:
+
+- A. Break / Fix: recover services in dependency order and restore minimum routing capability.
+- B. Recover / Verify: confirm CLN, LND, and dependent apps return in the expected sequence.
+- C. Best Practice: use the timing and monitoring guidance here to avoid introducing a second failure during recovery.
+
+Primary deep-dive reference: [docs/DR-RUNBOOK.md](c:/Users/edjan/umbrel-apps/docs/DR-RUNBOOK.md).
+
 ## Recovery Order
 
 When restarting after power loss or system failure, services must start in dependency order:
@@ -15,6 +25,8 @@ When restarting after power loss or system failure, services must start in depen
 ```
 
 UmbrelOS handles this automatically via `dependencies:` in `umbrel-app.yml`, but during manual recovery, follow this order.
+
+For manual recovery on UmbrelOS 1.5, restart apps from `~/umbrel/app-data/<app-id>/` with `docker compose down` then `source exports.sh && docker compose up -d`. Avoid older `./scripts/app` guidance.
 
 ## Restart Policies
 

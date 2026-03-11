@@ -158,11 +158,14 @@ This means if you configure an MCP server in Claude Desktop's `claude_desktop_co
 After restarting VS Code or the machine, treat MCP readiness as a two-part check:
 
 1. **Workspace config check**
-  - `.vscode/mcp.json` answers whether this repo defines local MCP servers.
-  - In `satwise/umbrel-apps`, this file is intentionally empty by default.
-2. **Discovery check**
-  - `.vscode/settings.json` must keep `chat.mcp.discovery.enabled` on for external MCP sources.
-  - If workspace MCP is empty but discovery is enabled, Copilot may still have MCP tools from Claude Desktop, Cursor, GitHub PR, GitLens, or other extension/user-level registrations.
+
+- `.vscode/mcp.json` answers whether this repo defines local MCP servers.
+- In `satwise/umbrel-apps`, this file is intentionally empty by default.
+
+1. **Discovery check**
+
+- `.vscode/settings.json` must keep `chat.mcp.discovery.enabled` on for external MCP sources.
+- If workspace MCP is empty but discovery is enabled, Copilot may still have MCP tools from Claude Desktop, Cursor, GitHub PR, GitLens, or other extension/user-level registrations.
 
 **Important distinction:**
 

@@ -4,6 +4,18 @@
 
 This runbook covers recovery procedures for the CLN + LND dual-stack LSP running on UmbrelOS 1.5 (Pi5). Use the VS Code task runner (`Ctrl+Shift+P` → `Tasks: Run Task`) for pre-built commands.
 
+**UmbrelOS 1.5 lifecycle note:** the legacy `./scripts/app` path is no longer the operator-safe interface. For recovery, use the Umbrel Web UI when possible, or restart from `~/umbrel/app-data/<app-id>/` with `docker compose down` and `docker compose up -d` after sourcing `exports.sh`.
+
+## Operator Reading Order
+
+Read the runbook in this order after a successful Rewind or live recovery:
+
+| Phase                              | Goal                                                  | Start Here      |
+| ---------------------------------- | ----------------------------------------------------- | --------------- |
+| A. Break / Fix                     | Get the node reachable again                          | Scenarios 1-7   |
+| B. Recovery hardening              | Fix common post-restore drift and funding-mode issues | Scenarios 10-11 |
+| C. Best practice / operator safety | Prevent re-breaks during future deploys and debugging | Scenarios 8-9   |
+
 ---
 
 ## CLN Hive / Revenue Ops skill
@@ -53,8 +65,9 @@ For upstream-linked guidance and Umbrel-safe persistence patterns:
 3. If disk full, prune:
 
    ```bash
-   # Add prune=550 to bitcoin.conf, restart
-   ssh umbrel@umbrel.local 'cd ~/umbrel && ./scripts/app stop bitcoin && ./scripts/app start bitcoin'
+   # Add prune=550 to bitcoin.conf, then restart the installed Bitcoin app.
+   # Replace APP with bitcoin or bitcoin-knots.
+   ssh umbrel@umbrel.local 'APP=bitcoin-knots; cd ~/umbrel/app-data/$APP && source exports.sh && docker compose down && docker compose up -d'
    ```
 
 4. Monitor with task: `Test: Bitcoin Node Sync`
@@ -78,10 +91,10 @@ For upstream-linked guidance and Umbrel-safe persistence patterns:
 
 **Recovery with hsm_secret:**
 
-1. Stop CLN: `./scripts/app stop core-lightning`
+1. Stop CLN from the Web UI, or run: `cd ~/umbrel/app-data/core-lightning && docker compose down`
 2. Place `hsm_secret` at `~/umbrel/app-data/core-lightning/data/lightningd/bitcoin/hsm_secret`
 3. If you have `emergency.recover`, place it alongside
-4. Start CLN: `./scripts/app start core-lightning`
+4. Start CLN from the Web UI, or run: `cd ~/umbrel/app-data/core-lightning && source exports.sh && docker compose up -d`
 5. CLN will attempt to recover channels from the network
 6. Monitor: VS Code task `Logs: Core Lightning`
 
@@ -104,17 +117,17 @@ For upstream-linked guidance and Umbrel-safe persistence patterns:
 
 **Recovery with SCB:**
 
-1. Stop LND: `./scripts/app stop lightning`
+1. Stop LND from the Web UI, or run: `cd ~/umbrel/app-data/lightning && docker compose down`
 2. Place `channel.backup` at the correct path
-3. Start LND: `./scripts/app start lightning`
+3. Start LND from the Web UI, or run: `cd ~/umbrel/app-data/lightning && source exports.sh && docker compose up -d`
 4. Restore:
 
    ```bash
    ssh umbrel@umbrel.local 'docker exec lightning_lnd_1 lncli restorechanbackup --multi_file /data/.lnd/data/chain/bitcoin/mainnet/channel.backup'
    ```
 
-5. LND will force-close all channels. Funds return to on-chain wallet after timelock (up to 2 weeks).
-6. Monitor: VS Code task `Logs: LND`
+- LND will force-close all channels. Funds return to on-chain wallet after timelock (up to 2 weeks).
+- Monitor with VS Code task `Logs: LND`.
 
 ---
 
@@ -133,10 +146,10 @@ For upstream-linked guidance and Umbrel-safe persistence patterns:
 
 ```bash
 # Stop and restart the app
-ssh umbrel@umbrel.local 'cd ~/umbrel && ./scripts/app stop <app-id> && ./scripts/app start <app-id>'
+ssh umbrel@umbrel.local 'cd ~/umbrel/app-data/<app-id> && docker compose down && source exports.sh && docker compose up -d'
 
 # Nuclear option: reset app data (CAUTION — loses all app state)
-ssh umbrel@umbrel.local 'cd ~/umbrel && ./scripts/app stop <app-id> && rm -rf app-data/<app-id>/data && ./scripts/app start <app-id>'
+ssh umbrel@umbrel.local 'cd ~/umbrel/app-data/<app-id> && docker compose down && rm -rf data && source exports.sh && docker compose up -d'
 
 # If disk is full
 ssh umbrel@umbrel.local 'docker system prune -f'
@@ -158,7 +171,7 @@ ssh umbrel@umbrel.local 'docker system prune -f'
 
 ```bash
 # Restart the affected app (forces network re-join)
-ssh umbrel@umbrel.local 'cd ~/umbrel && ./scripts/app stop <app-id> && ./scripts/app start <app-id>'
+ssh umbrel@umbrel.local 'cd ~/umbrel/app-data/<app-id> && docker compose down && source exports.sh && docker compose up -d'
 
 # If the whole network is broken, restart all apps in dependency order:
 # 1. bitcoin  2. core-lightning / lightning  3. dependent apps

@@ -273,7 +273,7 @@ docker context create rpi --docker "host=ssh://umbrel@umbrel.local"
 
 **Workspace-level** (`.vscode/mcp.json`):
 
-- `filesystem` — npx @modelcontextprotocol/server-filesystem (scoped to project)
+- Empty by design in this repo unless a project-specific MCP server is intentionally added
 
 Verify: Command Palette → `MCP: List Servers`
 
@@ -328,15 +328,15 @@ MSYS_NO_PATHCONV=1 gh api /repos/getumbrel/umbrel-apps/...  # Required for API p
 
 ## 9. Active PRs & Issues
 
-| ID                                                             | Type  | Title                                                                                      | Status                     |
-| -------------------------------------------------------------- | ----- | ------------------------------------------------------------------------------------------ | -------------------------- |
-| [PR #5014](https://github.com/getumbrel/umbrel-apps/pull/5014) | PR    | Core Lightning v25.09.3-stable: Provider Contract, dynamic linking, LNbits-CLN, DR harness | OPEN                       |
-| [#4823](https://github.com/getumbrel/umbrel-apps/issues/4823)  | Issue | RTL ECONNRESET crash loop                                                                  | OPEN → Closes via PR #5014 |
-| [#4753](https://github.com/getumbrel/umbrel-apps/issues/4753)  | Issue | LNbits CLN missing from App Store                                                          | OPEN → Closes via PR #5014 |
-| [#4785](https://github.com/getumbrel/umbrel-apps/issues/4785)  | Issue | CLN v25.12.1 + cln-application v26.01.2 upgrade                                            | OPEN (follow-on)           |
-| [#4786](https://github.com/getumbrel/umbrel-apps/issues/4786)  | Issue | nostr-relay v0.9.0                                                                         | OPEN (separate scope)      |
+| ID                                                             | Type  | Title                                                                                      | Status                      |
+| -------------------------------------------------------------- | ----- | ------------------------------------------------------------------------------------------ | --------------------------- |
+| [PR #5014](https://github.com/getumbrel/umbrel-apps/pull/5014) | PR    | Core Lightning v25.09.3-stable: Provider Contract, dynamic linking, LNbits-CLN, DR harness | OPEN                        |
+| [#4823](https://github.com/getumbrel/umbrel-apps/issues/4823)  | Issue | RTL ECONNRESET crash loop                                                                  | OPEN, addressed by PR #5014 |
+| [#4753](https://github.com/getumbrel/umbrel-apps/issues/4753)  | Issue | LNbits CLN missing from App Store                                                          | OPEN, addressed by PR #5014 |
+| [#4785](https://github.com/getumbrel/umbrel-apps/issues/4785)  | Issue | CLN v25.12.1 + cln-application v26.01.2 upgrade                                            | OPEN (follow-on)            |
+| [#4786](https://github.com/getumbrel/umbrel-apps/issues/4786)  | Issue | nostr-relay v0.9.0                                                                         | OPEN (separate scope)       |
 
-### PR #5014 commit: `dfb0868b` (11 files, +177/−36)
+### PR #5014 current scope
 
 Key files: `core-lightning/exports.sh` (Provider Contract), `core-lightning/docker-compose.yml` (clnrest bind + startup ordering), `core-lightning/umbrel-app.yml` (v25.09.3-stable), `core-lightning-rtl/` (dynamic linking, RTL v0.15.8), `umbrel-lnbits-cln/` (new app), `electrs/` (restart fix).
 
@@ -344,6 +344,8 @@ Key files: `core-lightning/exports.sh` (Provider Contract), `core-lightning/dock
 
 - [774b](https://gist.github.com/satwise/774b8e6af7f47ed3912d13c9e0668303) — CLN Stack Stabilization v25.09.3-stable
 - [c4cd](https://gist.github.com/satwise/c4cd04ed77e9cb7de596d7c445ccf533) — LNbits CLN Support Gap
+
+Treat the gists as narrative snapshots, not the canonical source of live PR state. Before reusing them, verify merge status, issue state, and wallet-backend details against the active PR and repo docs.
 
 ---
 
