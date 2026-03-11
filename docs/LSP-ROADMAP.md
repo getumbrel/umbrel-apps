@@ -397,6 +397,25 @@ existing users to BOLT-12 offers when Phase 4 ships.
 - **Go** only if all 10 checks pass twice: once immediately, once after restart.
 - **No-Go** if any check fails; remove plugin lines, restart CLN, and return to baseline contract stack.
 
+#### Step 3 (Preserved Test Gate): LNbits Funding Source via New Dual-Funded Channels
+
+**Objective:** Prove that LNbits can reliably fund from newly opened dual-funded CLN channels
+through backend-mode changes and cold reboot.
+
+**Execution (operator sequence):**
+
+1. Keep default `CoreLightningWallet` and verify wallet operations
+2. Validate invoice create/pay against new dual-funded channel liquidity
+3. Switch to `CLNRestWallet` and repeat wallet operations
+4. Cold reboot UmbrelOS
+5. Re-validate LNbits funding-source behavior and channel health
+
+**Exit criteria:**
+
+- Dual-funded channel visible and `CHANNELD_NORMAL` after reboot
+- LNbits funding operations succeed in both backend modes
+- No sustained CLN socket/rune/auth errors in `lnbits-cln` and CLN logs
+
 ### Phase 4: Zap Bridge (Domain 4 — THE missing piece)
 
 **Goal**: Nostr zaps flow through your own CLN node

@@ -169,3 +169,56 @@ docker ps --format 'table {{.Names}}\t{{.Status}}' | grep -E 'light|rtl|lnbits' 
 echo "=== Network ===" && \
 docker network inspect umbrel_main_network --format='{{range .Containers}}{{.Name}} {{.IPv4Address}}{{"\n"}}{{end}}' | grep -E 'light|rtl' | sort
 ```
+
+---
+
+## 7. Step 3 — LNbits Funding Source Test (Dual-Funded Channels)
+
+Purpose: validate LNbits funding behavior from new dual-funded CLN channels before and after
+backend switching and cold reboot.
+
+### 7.1 Baseline (CoreLightningWallet)
+
+```bash
+docker exec lnbits-cln_web_1 sh -lc 'printenv LNBITS_BACKEND_WALLET_CLASS'
+docker exec core-lightning_lightningd_1 lightning-cli listpeerchannels | grep -c '"CHANNELD_NORMAL"'
+```
+
+Expected:
+
+- Backend class = `CoreLightningWallet`
+- At least one active channel
+
+### 7.2 Wallet funding operations
+
+Run user-flow in LNbits UI:
+
+1. Read balance
+2. Create invoice
+3. Pay invoice
+
+Monitor in parallel:
+
+```bash
+docker logs --tail 100 -f lnbits-cln_web_1
+docker logs --tail 100 -f core-lightning_lightningd_1
+```
+
+### 7.3 Switch backend and retest
+
+Switch to `CLNRestWallet`, restart app, then repeat 7.2.
+
+### 7.4 Cold reboot survival gate
+
+After UmbrelOS reboot, re-run:
+
+```bash
+docker exec core-lightning_lightningd_1 lightning-cli listpeerchannels | grep -c '"CHANNELD_NORMAL"'
+docker exec lnbits-cln_web_1 sh -lc 'printenv LNBITS_BACKEND_WALLET_CLASS'
+```
+
+Pass condition:
+
+- Channel state remains active
+- LNbits funding flow still works
+- No sustained socket/rune/auth errors in logs

@@ -520,11 +520,206 @@ The `app_proxy` service is injected by umbreld from a global template (`getumbre
 
 ---
 
+---
+
+## Scenario 12: Bitcoin Knots Privacy Configuration (LSP Tor+I2P Mode)
+
+**Context:** As an LSP, Osias runs Bitcoin Knots in a privacy-maximized posture: outbound clearnet
+disabled, inbound P2P bound to the internal Docker IP only.
+
+### Port Reference
+
+| Port        | Protocol | Binding            | Purpose                                                            |
+| ----------- | -------- | ------------------ | ------------------------------------------------------------------ |
+| 9332        | JSON-RPC | `10.21.21.7`       | RPC — CLN, Electrs, bitcoin-cli all use this                       |
+| 9333        | P2P      | `10.21.21.7`       | Peer connections (internal Docker net only)                        |
+| 9335        | P2P      | `10.21.21.7`       | Whitelisted P2P (internal Docker net only)                         |
+| 8334        | P2P/Tor  | `10.21.21.7=onion` | Onion-bound P2P listener for Tor peers                             |
+| 48332–48336 | ZMQ      | `0.0.0.0`          | Inter-container event streams (Docker-internal — not host-exposed) |
+
+**Port 9332 = RPC. Port 9333 = P2P.** These are often confused — 9332 is what apps dial, 9333 is what Bitcoin peers dial.
+
+### Privacy Posture
+
+**Current state (applied 2026-03-11):**
+
+| Vector                   | Status      | Config                                                                |
+| ------------------------ | ----------- | --------------------------------------------------------------------- |
+| Outbound IPv4/IPv6       | Blocked ✅  | `onlynet=onion`, `onlynet=i2p`                                        |
+| Outbound Onion           | Active ✅   | `onion=10.21.22.12:9050`                                              |
+| Outbound I2P             | Active ✅   | `i2psam=10.21.22.13:7656`                                             |
+| Inbound clearnet P2P     | Partially exposed ⚠️ | `bind=10.21.21.7:9333` helps, but `ports: 9333:9333` in compose still publishes host-level NAT |
+| Onion advertised address | Active ✅   | `ysj5dkk6jxj3cmdvkakl4ex743dudy3xuu5yodltt5usufp5cf7kmuid.onion:8333` |
+| I2P advertised address   | Active ✅   | `rwbvwk7th2dfb6h3q7blvosz6hvralt3w4xwtn6k6loisryx3kqq.b32.i2p`        |
+| Bitcoin Core REST API    | Disabled ✅ | `rest=0` — no unauthenticated UTXO/mempool endpoint                   |
+| CLNRest                  | Internal ✅ | Bound to `10.21.21.96:2107`, not exposed to clearnet                  |
+
+### Key Config in `umbrel-bitcoin.conf`
+
+The authoritative file lives at:
+`~/umbrel/app-data/bitcoin-knots/data/bitcoin/umbrel-bitcoin.conf`
+
+**Note:** This file is managed by the Bitcoin Knots app. Umbrel may regenerate binds section
+when you save settings in the Knots UI. After any Knots settings save, re-verify and re-apply:
+
+```bash
+# Verify current bind state
+grep -E "^bind=|^whitebind=" ~/umbrel/app-data/bitcoin-knots/data/bitcoin/umbrel-bitcoin.conf
+
+# Re-apply if Knots UI reset them to 0.0.0.0
+sed -i "s/^bind=0\.0\.0\.0:9333$/bind=10.21.21.7:9333/; s/^whitebind=0\.0\.0\.0:9335$/whitebind=10.21.21.7:9335/" \
+  ~/umbrel/app-data/bitcoin-knots/data/bitcoin/umbrel-bitcoin.conf
+```
+
+**After any bind change, restart Bitcoin Knots** from the Umbrel web UI (not Update — Start).
+
+### Verifying Tor+I2P-Only is Active
+
+```bash
+ssh pi5 'docker exec bitcoin-knots_app_1 bitcoin-cli -rpcport=9332 -datadir=/data/bitcoin getnetworkinfo 2>/dev/null | python3 -c "
+import sys,json
+d=json.load(sys.stdin)
+for n in d[\"networks\"]:
+    print(f\"{n[chr(110)+chr(97)+chr(109)+chr(101)]}: reachable={n[chr(114)+chr(101)+chr(97)+chr(99)+chr(104)+chr(97)+chr(98)+chr(108)+chr(101)]}\")"'
+```
+
+Expected output:
+
+```
+ipv4: reachable=False
+ipv6: reachable=False
+onion: reachable=True
+i2p: reachable=True
+cjdns: reachable=False
+```
+
+### Checking Active Peer Network Breakdown
+
+```bash
+ssh pi5 'docker exec bitcoin-knots_app_1 bitcoin-cli -rpcport=9332 -datadir=/data/bitcoin getpeerinfo 2>/dev/null | python3 -c "
+import sys,json
+peers=json.load(sys.stdin)
+by_net={}
+[by_net.update({p.get(\"network\",\"?\"):by_net.get(p.get(\"network\",\"?\"),0)+1}) for p in peers]
+print(f\"Total: {len(peers)}\")
+[print(f\"  {k}: {v}\") for k,v in sorted(by_net.items())]"'
+```
+
+After bind hardening alone, IPv4 inbound may still appear because Docker `ports:` publishes
+host-level NAT rules. For strict privacy posture, combine bind hardening with localhost-only
+port publishing in `bitcoin-knots/docker-compose.yml`.
+
+### Security Decision Gate (last-mile privacy)
+
+**What bind hardening does:** limits bitcoind's internal listen target.
+
+**What it does NOT do by itself:** remove Docker host-level NAT exposure created by:
+
+```yaml
+ports:
+  - "${APP_BITCOIN_KNOTS_P2P_PORT}:${APP_BITCOIN_KNOTS_P2P_PORT}"
+  - "${APP_BITCOIN_KNOTS_RPC_PORT}:${APP_BITCOIN_KNOTS_RPC_PORT}"
+```
+
+**Recommended hardened publish rule (no external clearnet exposure):**
+
+```yaml
+ports:
+  - "127.0.0.1:${APP_BITCOIN_KNOTS_P2P_PORT}:${APP_BITCOIN_KNOTS_P2P_PORT}"
+  - "127.0.0.1:${APP_BITCOIN_KNOTS_RPC_PORT}:${APP_BITCOIN_KNOTS_RPC_PORT}"
+```
+
+This preserves internal container connectivity while removing host-wide exposure.
+Validate CLN/Electrs connectivity after change before declaring final privacy state.
+
+---
+
+## Scenario 13: Critical Path Startup Sequence
+
+After a cold reboot, the 6 critical path containers start in dependency order. Knowing the
+expected timeline prevents false "stack is broken" diagnoses when everything is actually normal.
+
+### Startup Timeline (observed on Pi5 / Tor+I2P mode)
+
+```
+t+0s    bitcoin-knots_app_1        ← Docker starts all containers immediately
+t+2s    core-lightning-rtl_web_1   ← UI starts, CLN socket not yet ready
+t+2s    lnbits-cln_web_1           ← UI starts, CLN socket not yet ready
+t+4s    mempool_api_1              ← Independent of CLN, may be ready in ~60s
+t+4s    electrs_app_1              ← UI starts, electrs indexer not yet ready
+
+--- ~20-23 min gap: Knots loading UTXO set, Tor bootstrap (~3-4 min of that) ---
+
+t+~21m  electrs_electrs_1          ← Indexer connects to Knots P2P, begins indexing
+t+~23m  core-lightning_lightningd_1 ← lightningd connects to Knots RPC, syncs chain tip
+```
+
+**Why the gap?** Knots in Tor+I2P-only mode takes ~3-4 min to bootstrap Tor circuits, then
+~17-20 min to load the UTXO set and begin serving RPC. Electrs and lightningd both have
+`restart: on-failure` — they crash-loop until Knots RPC comes up, then stabilize.
+
+**RTL and LNbits are "Up" in `docker ps` within seconds**, but they won't have a live CLN
+socket until `core-lightning_lightningd_1` starts at ~t+23m. This is expected and correct.
+
+**I2P slow start:** `bitcoin-knots_i2pd_daemon_1` starts up to 90 minutes after main boot
+on first run. I2P tunnel establishment is slow by design. I2P peers accumulate gradually
+after that. This does not block CLN or LNbits.
+
+### Checking Startup Order After a Reboot
+
+```bash
+ssh pi5 'docker inspect --format "{{.Name}} | {{.State.StartedAt}}" \
+  bitcoin-knots_app_1 electrs_electrs_1 mempool_api_1 \
+  core-lightning_lightningd_1 core-lightning-rtl_web_1 lnbits-cln_web_1 \
+  2>&1 | sort -t"|" -k2 | awk -F"|" "{printf \"%-42s %s\n\", \$1, \$2}"'
+```
+
+---
+
 ## Backup Schedule Recommendation
 
-| Item              | Frequency                      | Task                                  |
-| ----------------- | ------------------------------ | ------------------------------------- |
-| CLN hsm_secret    | Once (then store offline)      | `DR: Channel Backup Export (CLN)`     |
-| LND SCB           | After every channel open/close | `DR: Channel Backup Export (LND SCB)` |
-| Disk space check  | Weekly                         | `DR: Disk Space Check`                |
-| Full health sweep | Daily (or after power events)  | `DR: Health Sweep`                    |
+| Item              | Frequency                      | Task                                                |
+| ----------------- | ------------------------------ | --------------------------------------------------- |
+| CLN hsm_secret    | Once (then store offline)      | `DR: Channel Backup Export (CLN)`                   |
+| LND SCB           | After every channel open/close | `DR: Channel Backup Export (LND SCB)`               |
+| Disk space check  | Weekly                         | `DR: Disk Space Check`                              |
+| Full health sweep | Daily (or after power events)  | `DR: Health Sweep`                                  |
+| Knots bind check  | After any Knots settings save  | `grep -E "^bind=\|^whitebind=" umbrel-bitcoin.conf` |
+
+---
+
+## Scenario 14: Step 3 Test Preparation — LNbits Funding Source via Dual-Funded Channels
+
+**Goal:** Validate that LNbits (CLN) can use newly created dual-funded CLN channels as a stable
+funding source across backend modes and reboot survival.
+
+### Step 3 Test Sequence
+
+1. Baseline (`CoreLightningWallet` default)
+2. Verify LNbits wallet funding operations (balance, invoice create/pay)
+3. Switch LNbits backend to `CLNRestWallet`
+4. Repeat funding operations
+5. Cold reboot UmbrelOS
+6. Re-verify LNbits funding operations and channel visibility
+
+### Minimum acceptance for Step 3
+
+- LNbits wallet reads CLN balance
+- LNbits can create invoice and settle payment
+- LNbits can pay invoice from CLN-backed wallet
+- No persistent auth/rune/socket errors in logs after reboot
+- Dual-funded channel remains active (`CHANNELD_NORMAL`) after reboot
+
+### Monitoring scope for Step 3
+
+- `core-lightning_lightningd_1`
+- `core-lightning-rtl_web_1`
+- `lnbits-cln_web_1`
+
+Use VS Code tasks:
+
+- `Logs: Core Lightning`
+- `Logs: LNbits CLN`
+- `Test: CLN lightningd Health`
+- `Test: App Proxy (umbrel-lnbits-cln)`
+- `DR: Health Sweep`
