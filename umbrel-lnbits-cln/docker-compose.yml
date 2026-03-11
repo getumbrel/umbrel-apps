@@ -12,16 +12,39 @@ services:
     stop_grace_period: 1m
     volumes:
       - ${APP_DATA_DIR}/data:/data
+      # JSON-RPC socket for CoreLightningWallet backend
       - ${APP_CORE_LIGHTNING_RPC_SOCKET}:/rpc/lightning-rpc:ro
+      # CLN data dir for CLNRestWallet backend (certs + rune file)
+      - ${APP_CORE_LIGHTNING_DATA_DIR}:/cln:ro
     environment:
       # Global
       LNBITS_HOST: "0.0.0.0"
       LNBITS_PORT: 3009
       LNBITS_DATA_FOLDER: "/data"
 
-      # Core Lightning
-      LNBITS_BACKEND_WALLET_CLASS: CoreLightningWallet
+      # ---------------------------------------------------------------
+      # Backend selection — choose ONE wallet class:
+      #
+      # Option A: CoreLightningWallet (JSON-RPC unix socket)
+      #   Full admin access via pyln-client. Simple, no TLS/runes.
+      #   Requires: CORELIGHTNING_RPC volume mount above.
+      #
+      # Option B: CLNRestWallet (HTTPS + fine-grained runes)
+      #   Principle of least privilege. Each rune is method-restricted.
+      #   Requires: CLNREST_* vars + certs volume mount above.
+      #   Runes are created by hooks/pre-start on first boot.
+      # ---------------------------------------------------------------
+      LNBITS_BACKEND_WALLET_CLASS: CLNRestWallet
+
+      # --- Option A: CoreLightningWallet (JSON-RPC) ---
       CORELIGHTNING_RPC: "/rpc/lightning-rpc"
+
+      # --- Option B: CLNRestWallet (HTTPS + runes) ---
+      CLNREST_URL: "${CLNREST_URL}"
+      CLNREST_CA: "/cln/${APP_CORE_LIGHTNING_BITCOIN_NETWORK}/ca.pem"
+      CLNREST_READONLY_RUNE: "${APP_LNBITS_CLN_READONLY_RUNE}"
+      CLNREST_INVOICE_RUNE: "${APP_LNBITS_CLN_INVOICE_RUNE}"
+      CLNREST_PAY_RUNE: "${APP_LNBITS_CLN_PAY_RUNE}"
 
       # App
       LNBITS_SITE_TITLE: "LNbits - CLN - Umbrel"
