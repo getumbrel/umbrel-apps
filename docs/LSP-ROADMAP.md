@@ -354,6 +354,49 @@ Nostr relay (D2) publishes zap receipts. All converge at the user's `@janx.com`.
 This is a free alias change in LNURLp (many-to-one). Creates task: migrate
 existing users to BOLT-12 offers when Phase 4 ships.
 
+### Phase 3c: Hive Liquidity Onboarding (immediate)
+
+**Goal**: Join Lightning Goats Hive to reduce rebalance cost and accelerate liquidity learning before broad rollout.
+
+**Upstream inputs (active repos):**
+
+- `lightning-goats/cl_revenue_ops` (Python, updated recently)
+- `lightning-goats/cl-hive` (Python, updated recently)
+
+**Execution scope (advisor-first):**
+
+- Install external plugins in persistent Umbrel path:
+  - `~/umbrel/app-data/core-lightning/data/lightningd/bitcoin/plugins/`
+- Register plugins in persisted CLN config:
+  - `plugin=/data/lightningd/bitcoin/plugins/cl-hive.py`
+  - `plugin=/data/lightningd/bitcoin/plugins/cl-revenue-ops.py`
+- Keep governance in `advisor` mode initially (human approval for queued actions)
+- Request invite ticket from Hive admins and open at least one channel to a member
+
+**Hard requirements before enablement:**
+
+- CLN v23.05+
+- Python 3.10+
+- `sling` plugin present (required for `cl-revenue-ops` rebalancing)
+
+**Pre-review sanity gate (must pass):**
+
+1. `lightning-cli plugin list` shows both plugins active.
+2. `lightning-cli revenue-status` returns healthy status.
+3. `lightning-cli revenue-hive-status` reports integration state.
+4. `lightning-cli hive-status` confirms advisor mode and membership state.
+5. `lightning-cli hive-pending-actions` returns queue (even if empty) without error.
+6. `lightning-cli revenue-config get` shows expected safety rails.
+7. No CLNrest regression in RTL/LNbits connectivity.
+8. At least one successful rebalance path evaluation via `revenue-rebalance-debug`.
+9. No boot-loop or restart anomalies after app restart.
+10. Re-run DR health checks from `docs/DR-RUNBOOK.md` after plugin enablement.
+
+**Go/No-Go rule:**
+
+- **Go** only if all 10 checks pass twice: once immediately, once after restart.
+- **No-Go** if any check fails; remove plugin lines, restart CLN, and return to baseline contract stack.
+
 ### Phase 4: Zap Bridge (Domain 4 — THE missing piece)
 
 **Goal**: Nostr zaps flow through your own CLN node

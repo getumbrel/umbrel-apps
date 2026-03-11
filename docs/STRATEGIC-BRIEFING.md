@@ -208,6 +208,24 @@ Lightning Labs is monetizing via Taproot Assets (stablecoins on Lightning) — a
 1. **LSP roadmap phases 2–8** — Each phase is a PR to getumbrel/umbrel-apps. Each one adds an app or fixes integration gaps. satwise does the work, submits PRs, tests on production Pi5 hardware.
 2. **CLN v25.12.1 testing** — Offer the Pi5 as a production test bed for the next CLN upgrade. Moves from consumer to contributor.
 
+### Tactical Execution Before Pre-Review
+
+Immediate move: onboard to the Lightning Goats Hive path to improve liquidity coordination while keeping node sovereignty.
+
+- Upstream projects are actively maintained and Python-based:
+  - `lightning-goats/cl_revenue_ops`
+  - `lightning-goats/cl-hive`
+- Execution posture: advisor-first, safety-rail constrained, no autonomous expansion until sanity gates pass.
+
+Pre-review entry criteria:
+
+1. `cl-hive` and `cl-revenue-ops` load from persisted Umbrel plugin path.
+2. `revenue-status`, `revenue-hive-status`, and `hive-status` are healthy.
+3. No regressions in CLN provider contract consumers (RTL, LNbits-CLN).
+4. Restart test passes with identical plugin/runtime state.
+
+This keeps the roadmap aligned to the core objective: composition over competition, but with measurable operational safety before scaling.
+
 ### What satwise gets
 
 - **Training wheels for LSP operation** — Running the stack on Umbrel is practice for running it at scale.
