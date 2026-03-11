@@ -255,6 +255,43 @@ docker ps --format '{{.Names}}' | grep -E '<app-id>|<service-name>'
 
 ---
 
+## Scenario 11: LNbits PRE-DR Funding Mode (Temporary JSON-RPC)
+
+**When to use:** CLNRest is intermittently unavailable during channel bootstrap and you need
+LNbits wallet operations to remain stable while funding channels.
+
+**Mode choice:**
+
+- Temporary funding mode: `CoreLightningWallet` (JSON-RPC unix socket)
+- Target steady-state mode: `CLNRestWallet` (least-privilege runes)
+
+**Procedure:**
+
+1. Edit `~/umbrel/app-data/lnbits-cln/docker-compose.yml`
+2. Set `LNBITS_BACKEND_WALLET_CLASS: CoreLightningWallet`
+3. Restart `lnbits-cln` via Umbrel app-script/web UI
+4. Verify LNbits can read balance and create/pay invoices
+5. After channel funding is complete, switch back to `CLNRestWallet` and restart
+
+**Validation after restart:**
+
+```bash
+ssh umbrel@umbrel.local
+
+# Confirm active backend class inside container
+docker exec lnbits-cln_web_1 sh -lc 'printenv LNBITS_BACKEND_WALLET_CLASS'
+
+# Confirm JSON-RPC socket is mounted (funding mode)
+docker exec lnbits-cln_web_1 sh -lc 'ls -l /rpc/lightning-rpc'
+```
+
+**Notes:**
+
+- This is an operational fallback for bootstrap/recovery windows, not the final security posture.
+- Keep the repository default as `CLNRestWallet` for least-privilege production behavior.
+
+---
+
 ## Scenario 8: "Update" Button Overwrites Fork Changes
 
 **Symptoms:** After deploying branch files to `~/umbrel/app-data/<app>/`, the Umbrel web UI shows "updates available" and prompts to update.
