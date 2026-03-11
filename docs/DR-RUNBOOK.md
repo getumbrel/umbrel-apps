@@ -1,0 +1,442 @@
+# Disaster Recovery Runbook — satwise/umbrel-apps LSP Stack
+
+## Overview
+
+This runbook covers recovery procedures for the CLN + LND dual-stack LSP running on UmbrelOS 1.5 (Pi5). Use the VS Code task runner (`Ctrl+Shift+P` → `Tasks: Run Task`) for pre-built commands.
+
+---
+
+## CLN Hive / Revenue Ops skill
+
+For upstream-linked guidance and Umbrel-safe persistence patterns:
+
+- [`.github/skills/cln-hive-revenue-ops/SKILL.md`](../.github/skills/cln-hive-revenue-ops/SKILL.md)
+
+---
+
+## Scenario 1: Pi5 Won't Boot
+
+**Symptoms:** SSH fails, `ping umbrel.local` no response.
+
+**Steps:**
+
+1. Check power supply (must be USB-C PD, 5V/5A recommended for Pi 5)
+2. Check activity LED — steady red = no boot, blinking green = reading SD/NVMe
+3. Try power cycle: unplug 10 seconds, replug
+4. If SD card boot: try re-seating the SD card
+5. If NVMe boot: check NVMe hat connection
+6. Serial console (if available): connect UART to GPIO 14/15, 115200 baud
+7. Last resort: re-flash UmbrelOS to SD, NVMe data should be intact
+
+**Recovery from backup drive:**
+
+- UmbrelOS stores app data at `~/umbrel/app-data/`
+- If disk is readable, mount on another Linux box and copy `app-data/core-lightning/` and `app-data/lightning/`
+
+---
+
+## Scenario 2: Bitcoin Node Resync Required
+
+**Symptoms:** `verificationprogress` < 0.999, blocks < headers.
+
+**VS Code task:** `DR: Bitcoin Data Size` to check current state.
+
+**Steps:**
+
+1. Check sync progress (use `bitcoin_app_1` if running the `bitcoin` app):
+
+   ```bash
+   ssh umbrel@umbrel.local 'docker exec bitcoin-knots_app_1 bitcoin-cli getblockchaininfo'
+   ```
+
+2. If IBD (Initial Block Download): expect 2-5 days on Pi 5 with NVMe
+3. If disk full, prune:
+
+   ```bash
+   # Add prune=550 to bitcoin.conf, restart
+   ssh umbrel@umbrel.local 'cd ~/umbrel && ./scripts/app stop bitcoin && ./scripts/app start bitcoin'
+   ```
+
+4. Monitor with task: `Test: Bitcoin Node Sync`
+
+**Important:** CLN and LND will not function until Bitcoin is synced. Don't panic — let it sync.
+
+---
+
+## Scenario 3: CLN Channel Loss
+
+**Critical files:**
+
+- `hsm_secret` — the master key. Without this, funds are **permanently lost**.
+- `lightningd.sqlite3` — channel state database
+- `emergency.recover` — emergency recovery file
+
+**Backup (run regularly):**
+
+- VS Code task: `DR: Channel Backup Export (CLN)`
+- Manual: `ssh umbrel@umbrel.local 'cp ~/umbrel/app-data/core-lightning/data/lightningd/bitcoin/hsm_secret /safe/location/'`
+
+**Recovery with hsm_secret:**
+
+1. Stop CLN: `./scripts/app stop core-lightning`
+2. Place `hsm_secret` at `~/umbrel/app-data/core-lightning/data/lightningd/bitcoin/hsm_secret`
+3. If you have `emergency.recover`, place it alongside
+4. Start CLN: `./scripts/app start core-lightning`
+5. CLN will attempt to recover channels from the network
+6. Monitor: VS Code task `Logs: Core Lightning`
+
+**Without hsm_secret:** Funds are unrecoverable. This is why backups matter.
+
+---
+
+## Scenario 4: LND Channel Loss
+
+**Critical files:**
+
+- `wallet.db` — wallet seed/keys
+- `channel.backup` (SCB — Static Channel Backup) — channel recovery data
+- `tls.cert` / `tls.key` — TLS identity
+- `admin.macaroon` — auth credentials
+
+**Backup (run regularly):**
+
+- VS Code task: `DR: Channel Backup Export (LND SCB)`
+
+**Recovery with SCB:**
+
+1. Stop LND: `./scripts/app stop lightning`
+2. Place `channel.backup` at the correct path
+3. Start LND: `./scripts/app start lightning`
+4. Restore:
+
+   ```bash
+   ssh umbrel@umbrel.local 'docker exec lightning_lnd_1 lncli restorechanbackup --multi_file /data/.lnd/data/chain/bitcoin/mainnet/channel.backup'
+   ```
+
+5. LND will force-close all channels. Funds return to on-chain wallet after timelock (up to 2 weeks).
+6. Monitor: VS Code task `Logs: LND`
+
+---
+
+## Scenario 5: App Container Crash Loop
+
+**Symptoms:** Container restarting repeatedly, app UI unreachable.
+
+**Diagnosis:**
+
+1. Check restart counts: VS Code task `OM: Container Restart Counts`
+2. Check logs: VS Code tasks `Logs: Core Lightning`, `Logs: LNbits CLN`, `Logs: LND`
+3. Check disk space: VS Code task `DR: Disk Space Check`
+4. Check resources: VS Code task `DR: Container Resource Usage`
+
+**Recovery:**
+
+```bash
+# Stop and restart the app
+ssh umbrel@umbrel.local 'cd ~/umbrel && ./scripts/app stop <app-id> && ./scripts/app start <app-id>'
+
+# Nuclear option: reset app data (CAUTION — loses all app state)
+ssh umbrel@umbrel.local 'cd ~/umbrel && ./scripts/app stop <app-id> && rm -rf app-data/<app-id>/data && ./scripts/app start <app-id>'
+
+# If disk is full
+ssh umbrel@umbrel.local 'docker system prune -f'
+```
+
+---
+
+## Scenario 6: Network / IP Drift
+
+**Symptoms:** Apps can't reach each other, cross-app dependencies fail.
+
+**Diagnosis:**
+
+1. VS Code task: `Test: Umbrel Network Connectivity` — shows all container IPs
+2. VS Code task: `DR: Validate Exports` — shows what IPs exports.sh expects
+3. Compare: IPs in `docker network inspect` must match `exports.sh` values
+
+**Recovery:**
+
+```bash
+# Restart the affected app (forces network re-join)
+ssh umbrel@umbrel.local 'cd ~/umbrel && ./scripts/app stop <app-id> && ./scripts/app start <app-id>'
+
+# If the whole network is broken, restart all apps in dependency order:
+# 1. bitcoin  2. core-lightning / lightning  3. dependent apps
+```
+
+**Prevention:** Using `container_name:` in docker-compose.yml ensures DNS-stable hostnames regardless of IP changes.
+
+---
+
+## Scenario 7: Manual Docker Compose — Tor Authentication Failure
+
+**Symptoms:** CLN `connectd` crashes with `Tor 515 authentication` error when started via `docker compose up` outside umbreld.
+
+**Root cause:** The `.env` file in the app directory contains a placeholder Tor password (`moneyprintergobrrr`). The **real** Tor password is injected at runtime by umbreld's `app-script.ts`, not from `.env`.
+
+**How to find the real Tor password:**
+
+```bash
+ssh umbrel@umbrel.local
+
+# 1. Find app-script.ts (the TypeScript wrapper that injects env vars)
+grep -r "TOR_PASSWORD" /usr/local/lib/node_modules/umbreld/ --include="*.ts" -l
+
+# 2. Extract the password value
+grep "TOR_PASSWORD" /usr/local/lib/node_modules/umbreld/source/modules/apps/legacy-compat/app-script.ts
+```
+
+**Recovery (manual compose only):**
+
+```bash
+# Export the real Tor password before starting
+export TOR_PASSWORD='<value from app-script.ts>'
+export TOR_HASHED_PASSWORD='<hashed value from app-script.ts>'
+
+# Then start with compose fragments
+docker compose \
+  -f docker-compose.yml \
+  -f /usr/local/lib/node_modules/umbreld/source/modules/apps/legacy-compat/docker-compose.common.yml \
+  -f /usr/local/lib/node_modules/umbreld/source/modules/apps/legacy-compat/docker-compose.app_proxy.yml \
+  up -d
+```
+
+**Prevention:** Always prefer restarting apps via Umbrel web UI, which handles Tor authentication automatically. Only use manual `docker compose` for debugging when you understand the env injection chain.
+
+**umbreld compose fragment overlay system:**
+
+umbreld assembles the final compose from multiple files at `/usr/local/lib/node_modules/umbreld/source/modules/apps/legacy-compat/`:
+
+| Fragment                       | Purpose                              |
+| ------------------------------ | ------------------------------------ |
+| `docker-compose.common.yml`    | Connects to `umbrel_main_network`    |
+| `docker-compose.app_proxy.yml` | Provides `getumbrel/app-proxy:1.0.0` |
+| `docker-compose.tor.yml`       | Tor hidden service (if `torEnabled`) |
+
+The `app-script.ts` wrapper handles `source_app()` — cascading dependency exports from parent apps (e.g., `core-lightning/exports.sh` is sourced before starting `core-lightning-rtl`).
+
+---
+
+## Scenario 8: "Update" Button Overwrites Fork Changes
+
+**Symptoms:** After deploying branch files to `~/umbrel/app-data/<app>/`, the Umbrel web UI shows "updates available" and prompts to update.
+
+**The trap:** Clicking **"Update"** (or "Update all") pulls from `~/umbrel/app-stores/` (upstream cache synced from `getumbrel/umbrel-apps`), which **overwrites** your fork files in `app-data/` with the upstream version.
+
+**How it works:**
+
+| Action      | Source directory         | Effect on `app-data/`         |
+| ----------- | ------------------------ | ----------------------------- |
+| **Start**   | `app-data/` (your code)  | Safe — runs your branch files |
+| **Update**  | `app-stores/` (upstream) | **DANGEROUS** — overwrites    |
+| **Install** | `app-stores/` (upstream) | **DANGEROUS** — overwrites    |
+
+**Version comparison (check before any action):**
+
+```bash
+ssh umbrel@umbrel.local
+
+# What's deployed (your code)
+grep '^version:' ~/umbrel/app-data/core-lightning/umbrel-app.yml
+
+# What upstream wants to install
+grep '^version:' ~/umbrel/app-stores/getumbrel-umbrel-apps-github/core-lightning/umbrel-app.yml
+```
+
+**Recovery if you accidentally clicked Update:**
+
+1. Stop the app via web UI
+2. Re-copy your branch files from the local checkout:
+
+   ```bash
+   # From your dev machine
+   scp -r core-lightning/* umbrel@umbrel.local:~/umbrel/app-data/core-lightning/
+   ```
+
+3. Start via web UI (not Update)
+
+**Prevention:**
+
+- **NEVER** click "Update" or "Update all" during fork development
+- Always use **Start** to launch apps (it reads from `app-data/`)
+- After manual `docker compose` testing, always stop those containers and restart via web UI to return to the umbreld harness
+- Consider disabling upstream sync (`upstream-sync.yml` workflow) during active development
+
+---
+
+## Scenario 9: Debug Environment Setup (Standalone Docker Compose)
+
+**Symptoms:** `docker compose config` fails with `variable is not set` warnings. You need to run compose commands outside of umbreld for debugging.
+
+**Root cause:** umbreld injects environment variables through a multi-stage chain that doesn't exist when you run `docker compose` manually:
+
+```
+umbreld app start core-lightning
+  │
+  ├─ 1. Sources bitcoin/exports.sh     → APP_BITCOIN_RPC_PASS, APP_BITCOIN_NODE_IP, ...
+  ├─ 2. Sources core-lightning/exports.sh → CLNREST_PORT, APP_CORE_LIGHTNING_IP, ...
+  ├─ 3. Injects platform vars           → APP_DATA_DIR, DEVICE_DOMAIN_NAME, TOR_PASSWORD, ...
+  ├─ 4. Writes .env to app-data/        → flat file with ALL resolved values
+  ├─ 5. Merges compose fragments         → app_proxy, common network, tor HS
+  └─ 6. docker compose up               → fully interpolated
+```
+
+When you SSH in and run `docker compose config` directly, steps 1–3 and 5 are missing. The `.env` file (step 4) only has what umbreld wrote on the last `app start` — which may use old variable names or lack derived values from `exports.sh`.
+
+### Variable Reference (Core Lightning)
+
+These are the variables `docker-compose.yml` requires, grouped by source:
+
+**From `core-lightning/exports.sh` (Provider Contract):**
+
+| Variable                              | Example Value                       | Purpose                          |
+| ------------------------------------- | ----------------------------------- | -------------------------------- |
+| `APP_CORE_LIGHTNING_IP`               | `10.21.21.94`                       | cln-application container IP     |
+| `APP_CORE_LIGHTNING_PORT`             | `2103`                              | cln-application web UI port      |
+| `APP_CORE_LIGHTNING_DAEMON_IP`        | `10.21.21.96`                       | lightningd container IP          |
+| `APP_CORE_LIGHTNING_DAEMON_PORT`      | `9736`                              | Lightning P2P port               |
+| `APP_CORE_LIGHTNING_WEBSOCKET_PORT`   | `2106`                              | WebSocket port                   |
+| `APP_CORE_LIGHTNING_DAEMON_GRPC_PORT` | `2110`                              | gRPC port                        |
+| `APP_CORE_LIGHTNING_BITCOIN_NETWORK`  | `bitcoin`                           | Network name (mainnet→bitcoin)   |
+| `APP_CORE_LIGHTNING_DATA_DIR`         | `<EXPORTS_APP_DIR>/data/lightningd` | Host path to CLN data            |
+| `APP_CORE_LIGHTNING_HIDDEN_SERVICE`   | `<onion>.onion`                     | Tor hidden service hostname      |
+| `CLNREST_HOST`                        | `0.0.0.0`                           | CLNRest bind address             |
+| `CLNREST_PORT`                        | `2107`                              | CLNRest port                     |
+| `CLNREST_URL`                         | `https://10.21.21.96:2107`          | Consumer-facing CLNRest endpoint |
+| `CORE_LIGHTNING_PATH`                 | `/root/.lightning`                  | Container-internal lightning dir |
+| `COMMANDO_CONFIG`                     | `/root/.lightning/.commando-env`    | Commando rune file path          |
+
+**From `bitcoin/exports.sh` (dependency injection):**
+
+| Variable               | Example Value |
+| ---------------------- | ------------- |
+| `APP_BITCOIN_NODE_IP`  | `10.21.21.7`  |
+| `APP_BITCOIN_RPC_PORT` | `9332`        |
+| `APP_BITCOIN_RPC_USER` | `umbrel`      |
+| `APP_BITCOIN_RPC_PASS` | `<generated>` |
+| `APP_BITCOIN_NETWORK`  | `mainnet`     |
+
+**From umbreld platform (injected at runtime):**
+
+| Variable             | Example Value                                 |
+| -------------------- | --------------------------------------------- |
+| `APP_DATA_DIR`       | `/home/umbrel/umbrel/app-data/core-lightning` |
+| `APP_CONFIG_DIR`     | `/data/app`                                   |
+| `DEVICE_DOMAIN_NAME` | `umbrel.local`                                |
+| `TOR_PROXY_IP`       | `10.21.21.11`                                 |
+| `TOR_PROXY_PORT`     | `9050`                                        |
+| `TOR_DATA_DIR`       | `/home/umbrel/umbrel/tor/data`                |
+| `TOR_PASSWORD`       | `<generated>`                                 |
+| `APP_PASSWORD`       | `<set at onboarding>`                         |
+
+### Setup: Create a Debug Harness
+
+On your Pi5, create two files in `~/umbrel/app-data/core-lightning/`:
+
+**`.env.example`** — Template with safe defaults (no secrets):
+
+```bash
+# UmbrelOS Platform
+DEVICE_DOMAIN_NAME=umbrel.local
+APP_MODE=production
+APP_DATA_DIR=/home/umbrel/umbrel/app-data/core-lightning
+APP_CONFIG_DIR=/data/app
+
+# Tor
+TOR_PROXY_IP=10.21.21.11
+TOR_PROXY_PORT=9050
+TOR_DATA_DIR=/home/umbrel/umbrel/tor/data
+# TOR_PASSWORD=<extracted by load-secrets.sh>
+
+# Bitcoin
+APP_BITCOIN_NETWORK=mainnet
+APP_BITCOIN_NODE_IP=10.21.21.7
+APP_BITCOIN_RPC_PORT=9332
+APP_BITCOIN_RPC_USER=umbrel
+# APP_BITCOIN_RPC_PASS=<extracted by load-secrets.sh>
+
+# Core Lightning (Provider Contract)
+APP_CORE_LIGHTNING_IP=10.21.21.94
+APP_CORE_LIGHTNING_PORT=2103
+APP_CORE_LIGHTNING_DAEMON_IP=10.21.21.96
+APP_CORE_LIGHTNING_DAEMON_PORT=9736
+APP_CORE_LIGHTNING_WEBSOCKET_PORT=2106
+APP_CORE_LIGHTNING_BITCOIN_NETWORK=bitcoin
+CLNREST_HOST=0.0.0.0
+CLNREST_PORT=2107
+CLNREST_URL=https://10.21.21.96:2107
+APP_CORE_LIGHTNING_DAEMON_GRPC_PORT=2110
+CORE_LIGHTNING_PATH=/root/.lightning
+COMMANDO_CONFIG=/root/.lightning/.commando-env
+```
+
+**`load-secrets.sh`** — Extracts secrets from the umbreld-generated `.env`:
+
+```bash
+#!/bin/bash
+# Loads .env.example (safe defaults) then extracts secrets from the
+# umbreld-generated .env file. Secrets never leave memory.
+#
+# Usage: cd ~/umbrel/app-data/core-lightning && source load-secrets.sh
+#        docker compose config --quiet  # verify interpolation
+
+HARNESS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
+UMBREL_ENV="${HARNESS_DIR}/.env"
+
+# 1. Load non-sensitive defaults
+if [ -f "${HARNESS_DIR}/.env.example" ]; then
+  set -a && . "${HARNESS_DIR}/.env.example" && set +a
+fi
+
+# 2. Extract only secrets from the umbreld .env (written on last app start)
+if [ -f "${UMBREL_ENV}" ]; then
+  _secrets="$(grep -E '^(APP_PASSWORD|APP_BITCOIN_RPC_PASS|TOR_PASSWORD|UMBREL_AUTH_SECRET)=' "${UMBREL_ENV}")"
+  eval "export ${_secrets}"
+  unset _secrets
+  echo "✓  Secrets loaded from ${UMBREL_ENV}"
+fi
+
+# 3. Derived vars that exports.sh computes
+export EXPORTS_APP_DIR="${HARNESS_DIR}"
+export EXPORTS_APP_ID="core-lightning"
+export APP_CORE_LIGHTNING_DATA_DIR="${HARNESS_DIR}/data/lightningd"
+export CLNREST_CERT="${HARNESS_DIR}/data/lightningd/${APP_CORE_LIGHTNING_BITCOIN_NETWORK}/server.pem"
+export CLNREST_CA="${HARNESS_DIR}/data/lightningd/${APP_CORE_LIGHTNING_BITCOIN_NETWORK}/ca.pem"
+```
+
+### Using the Harness
+
+```bash
+# SSH into Pi5
+ssh umbrel@umbrel.local
+cd ~/umbrel/app-data/core-lightning
+
+# Load environment
+source load-secrets.sh
+
+# Verify compose interpolation (expect only the app_proxy stub warning)
+docker compose config --quiet
+
+# Start just the debuggable services (app_proxy requires umbreld)
+docker compose up -d lightningd app tor
+
+# Check CLN is responding
+docker exec core-lightning_lightningd_1 lightning-cli --lightning-dir=/root/.lightning getinfo
+```
+
+**Important:** The umbreld-generated `.env` is **overwritten** on every `app start`. Your `.env.example` and `load-secrets.sh` are safe — umbreld doesn't touch them.
+
+### What You Cannot Run Standalone
+
+The `app_proxy` service is injected by umbreld from a global template (`getumbrel/app-proxy:1.0.0`). The compose file only defines a stub with `APP_HOST` and `APP_PORT`. This is normal — no Umbrel app can build `app_proxy` standalone. For debugging, skip it and access services directly on their container IPs.
+
+---
+
+## Backup Schedule Recommendation
+
+| Item              | Frequency                      | Task                                  |
+| ----------------- | ------------------------------ | ------------------------------------- |
+| CLN hsm_secret    | Once (then store offline)      | `DR: Channel Backup Export (CLN)`     |
+| LND SCB           | After every channel open/close | `DR: Channel Backup Export (LND SCB)` |
+| Disk space check  | Weekly                         | `DR: Disk Space Check`                |
+| Full health sweep | Daily (or after power events)  | `DR: Health Sweep`                    |

@@ -13,10 +13,11 @@ There are 4 steps:
 1. [🛳 Containerizing the app using Docker](#1-containerizing-the-app-using-docker)
 1. [☂️ Packaging the app for umbrelOS](#2-%EF%B8%8Fpackaging-the-app-for-umbrelos)
 1. [🛠 Testing the app on umbrelOS](#3-testing-the-app-on-umbrelos)
-    1. [Test using an umbrelOS development environment on your local machine](#31-test-using-an-umbrelos-development-environment-on-your-local-machine)
-    1. [Test using umbrelOS running on a physical device](#32-test-using-umbrelos-running-on-a-physical-device)
+   1. [Test using an umbrelOS development environment on your local machine](#31-test-using-an-umbrelos-development-environment-on-your-local-machine)
+   1. [Test using umbrelOS running on a physical device](#32-test-using-umbrelos-running-on-a-physical-device)
 1. [🚀 Submitting the app](#4-submitting-the-app)
-___
+
+---
 
 ## 1. 🛳&nbsp;&nbsp;Containerizing the app using Docker
 
@@ -65,7 +66,7 @@ docker buildx build --platform linux/arm64,linux/amd64 --tag getumbrel/btc-rpc-e
 
 > You need to enable ["experimental features"](https://docs.docker.com/engine/reference/commandline/cli/#experimental-features) in Docker to use `docker buildx`.
 
-___
+---
 
 ## 2. ☂️&nbsp;&nbsp;Packaging the app for umbrelOS
 
@@ -108,7 +109,7 @@ services:
       # Note that the '_1' at the end is needed
       APP_HOST: <web-container-dns-name>
       APP_PORT: <web-container-port-number>
-  
+
   web:
     image: <docker-image>:<tag>@sha256:<digest>
     restart: on-failure
@@ -155,7 +156,6 @@ services:
   # db:
   #   image: <docker-image>:<tag>@sha256:<digest>
   #   ...
-
 ```
 
 Our app manifest YAML file tells Umbrel details about our app such as the name, description, dependencies, port number to access the app, etc.
@@ -215,6 +215,7 @@ The `dependencies` section within the app manifest gives Umbrel a list of app ID
 The `exports.sh` shell script is a simple script to export environmental variables that your `docker-compose.yml` can read. These environment variables are also accessible when other apps start through their `docker-compose.yml` files. Most applications will not require this feature.
 
 If we (for example) wanted to share BTC RPC Explorer's Address API with other apps; that would look like this:
+
 ```sh
 export APP_BTC_RPC_EXPLORER_ADDRESS_API="electrumx"
 ```
@@ -244,7 +245,6 @@ services:
     stop_grace_period: 1m
     environment:
       BTCEXP_PORT: 8080
-
 ```
 
 5\. Next, let's set the environment variables required by our app to connect to Bitcoin Core, Electrum server, and for app-related configuration ([as required by the app](https://github.com/janoside/btc-rpc-explorer/blob/master/.env-sample)).
@@ -259,7 +259,7 @@ services:
     environment:
       APP_HOST: btc-rpc-explorer_web_1
       APP_PORT: 8080
-      
+
   web:
     image: getumbrel/btc-rpc-explorer:v2.0.2
     restart: on-failure
@@ -285,8 +285,7 @@ services:
       BTCEXP_PRIVACY_MODE: "true"
       BTCEXP_NO_RATES: "true"
       BTCEXP_RPC_ALLOWALL: "false"
-      BTCEXP_BASIC_AUTH_PASSWORD: ""  
-
+      BTCEXP_BASIC_AUTH_PASSWORD: ""
 ```
 
 6\. We're pretty much done here. The next step is to commit the changes, push it to our fork's branch, and test out the app on Umbrel.
@@ -297,7 +296,7 @@ git commit -m "Add BTC RPC Explorer"
 git push
 ```
 
-___
+---
 
 ## 3. 🛠&nbsp;&nbsp;Testing the app on umbrelOS
 
@@ -326,7 +325,7 @@ npm run dev
 > [!NOTE]
 > If this is your first time running the development environment, it may take a while to build the OS image locally on your machine.
 
-Once initialized, umbrelOS will be accessible at http://umbrel-dev.local. 
+Once initialized, umbrelOS will be accessible at http://umbrel-dev.local.
 
 3\. Copy the app's directory (with any .gitkeep files excluded) to the app-store directory on umbrel-dev.
 
@@ -366,7 +365,7 @@ npm run dev client -- apps.uninstall.mutate -- --appId btc-rpc-explorer
 ### 3.2 Test using umbrelOS running on a physical device
 
 You can get up and running with umbrelOS in a few different ways:
-  
+
 1. [Install umbrelOS on a Raspberry Pi 5](https://github.com/getumbrel/umbrel/wiki/Install-umbrelOS-on-a-Raspberry-Pi-5)
 2. [Install umbrelOS on any x86 system](https://github.com/getumbrel/umbrel/wiki/Install-umbrelOS-on-x86-Systems)
 3. [Install umbrelOS in a VM](https://github.com/getumbrel/umbrel/wiki/Install-umbrelOS-on-a-Linux-VM)
@@ -409,7 +408,7 @@ umbreld client apps.uninstall.mutate --appId btc-rpc-explorer
 >
 > When stopping/starting the app, all data in volumes will be persisted and anything else will be discarded. When uninstalling/installing an app, even persistent data will be discarded.
 
-___
+---
 
 ## 4. 🚀&nbsp;&nbsp;Submitting the app
 
@@ -452,21 +451,27 @@ This is where the above information is used when the app goes live in the Umbrel
 ## Advanced configuration
 
 ### App Proxy
+
 The Umbrel App Proxy automatically protects an app by requiring the user to enter their Umbrel password (either when they login into the main Web UI or by visiting an app directly e.g. `http://umbrel.local:3002`)
 
 ##### Disable
+
 There could be cases where you wish to disable this authentication. That can be done by adding this env. var. to the `app_proxy` Docker Compose service:
+
 ```
 PROXY_AUTH_ADD: "false"
 ```
 
 ##### Whitelist/blacklist
+
 Some apps host a user-facing UI at the root of their web application and then an API at e.g. `/api`. And in this case we would like `/` to be protected by Umbrel and `/api` protected by the apps existing/inbuilt API token system. This can be achieved by adding this env. var. to the `app_proxy` Docker Compose service:
+
 ```
 PROXY_AUTH_WHITELIST: "/api/*"
 ```
 
 Another example could be that the root of the web application (`/`) should be publicly accessible but the admin section be protected by Umbrel. This can be achieved by adding these env. vars. to the `app_proxy` Docker Compose service:
+
 ```
 PROXY_AUTH_WHITELIST: "*"
 PROXY_AUTH_BLACKLIST: "/admin/*"
@@ -478,8 +483,19 @@ PROXY_AUTH_BLACKLIST: "/admin/*"
 
 1. **How do I push app updates?**
 
-    Every time you release a new version of your app, you should build, tag, and push the new Docker images to Docker Hub. Then open a new PR on our main app repo (getumbrel/umbrel-apps) with your up-to-date docker image, and updated `version` and `releaseNotes` in your app's `umbrel-app.yml` file.
+   Every time you release a new version of your app, you should build, tag, and push the new Docker images to Docker Hub. Then open a new PR on our main app repo (getumbrel/umbrel-apps) with your up-to-date docker image, and updated `version` and `releaseNotes` in your app's `umbrel-app.yml` file.
 
 1. **I need help with something else**
 
-    Feel free to open an [issue](https://github.com/getumbrel/umbrel-apps/issues) on this GitHub repository.
+   Feel free to open an [issue](https://github.com/getumbrel/umbrel-apps/issues) on this GitHub repository.
+
+---
+
+## CLN advanced operations skill
+
+- [CLN Hive + Revenue Ops (Umbrel-safe)](./.github/skills/cln-hive-revenue-ops/SKILL.md)
+
+For canonical plugin definitions maintained upstream:
+
+- [Core Lightning plugin architecture (PLUGINS.md)](https://github.com/ElementsProject/lightning/blob/master/doc/PLUGINS.md)
+- [Core Lightning config semantics (lightningd-config.5.md)](https://github.com/ElementsProject/lightning/blob/master/doc/lightningd-config.5.md)
