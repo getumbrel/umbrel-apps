@@ -10,12 +10,20 @@ Let's jump into action by packaging [BTC RPC Explorer](https://github.com/janosi
 
 There are 4 steps:
 
-1. [🛳 Containerizing the app using Docker](#1-containerizing-the-app-using-docker)
-1. [☂️ Packaging the app for umbrelOS](#2-%EF%B8%8Fpackaging-the-app-for-umbrelos)
-1. [🛠 Testing the app on umbrelOS](#3-testing-the-app-on-umbrelos)
-   1. [Test using an umbrelOS development environment on your local machine](#31-test-using-an-umbrelos-development-environment-on-your-local-machine)
-   1. [Test using umbrelOS running on a physical device](#32-test-using-umbrelos-running-on-a-physical-device)
-1. [🚀 Submitting the app](#4-submitting-the-app)
+- [Umbrel App Framework](#umbrel-app-framework)
+  - [1. 🛳  Containerizing the app using Docker](#1-containerizing-the-app-using-docker)
+    - [A good Dockerfile](#a-good-dockerfile)
+  - [2. ☂️  Packaging the app for umbrelOS](#2-️packaging-the-app-for-umbrelos)
+  - [3. 🛠  Testing the app on umbrelOS](#3-testing-the-app-on-umbrelos)
+    - [3.1 Test using an umbrelOS development environment on your local machine](#31-test-using-an-umbrelos-development-environment-on-your-local-machine)
+    - [3.2 Test using umbrelOS running on a physical device](#32-test-using-umbrelos-running-on-a-physical-device)
+  - [4. 🚀  Submitting the app](#4-submitting-the-app)
+  - [Advanced configuration](#advanced-configuration)
+    - [App Proxy](#app-proxy)
+      - [Disable](#disable)
+      - [Whitelist/blacklist](#whitelistblacklist)
+  - [FAQs](#faqs)
+  - [CLN advanced operations skill](#cln-advanced-operations-skill)
 
 ---
 
@@ -48,7 +56,7 @@ EXPOSE 3002
 CMD ["npm", "start"]
 ```
 
-### A good Dockerfile:
+### A good Dockerfile
 
 - [x] Uses a lightweight base image - this results in less storage consumption and faster app installs.
 - [x] Uses [multi-stage builds](https://docs.docker.com/develop/develop-images/multistage-build/) for smaller image size.
@@ -454,7 +462,7 @@ This is where the above information is used when the app goes live in the Umbrel
 
 The Umbrel App Proxy automatically protects an app by requiring the user to enter their Umbrel password (either when they login into the main Web UI or by visiting an app directly e.g. `http://umbrel.local:3002`)
 
-##### Disable
+#### Disable
 
 There could be cases where you wish to disable this authentication. That can be done by adding this env. var. to the `app_proxy` Docker Compose service:
 
@@ -462,7 +470,7 @@ There could be cases where you wish to disable this authentication. That can be 
 PROXY_AUTH_ADD: "false"
 ```
 
-##### Whitelist/blacklist
+#### Whitelist/blacklist
 
 Some apps host a user-facing UI at the root of their web application and then an API at e.g. `/api`. And in this case we would like `/` to be protected by Umbrel and `/api` protected by the apps existing/inbuilt API token system. This can be achieved by adding this env. var. to the `app_proxy` Docker Compose service:
 
