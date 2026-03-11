@@ -166,6 +166,10 @@ ssh umbrel@umbrel.local 'cd ~/umbrel && ./scripts/app stop <app-id> && ./scripts
 
 **Prevention:** Using `container_name:` in docker-compose.yml ensures DNS-stable hostnames regardless of IP changes.
 
+For forked apps, prefer `app_proxy.environment.APP_HOST` set to an exported app IP
+variable (for example `${APP_LNBITS_CLN_IP}`) instead of hardcoded container
+hostnames. This avoids drift when project/container prefixes differ from app id.
+
 ---
 
 ## Scenario 7: Manual Docker Compose — Tor Authentication Failure
@@ -214,6 +218,40 @@ umbreld assembles the final compose from multiple files at `/usr/local/lib/node_
 | `docker-compose.tor.yml`       | Tor hidden service (if `torEnabled`) |
 
 The `app-script.ts` wrapper handles `source_app()` — cascading dependency exports from parent apps (e.g., `core-lightning/exports.sh` is sourced before starting `core-lightning-rtl`).
+
+---
+
+## Scenario 10: App Proxy Hostname Drift After Restore/Manual Deploy
+
+**Symptoms:** App container is running, but opening the app via Umbrel dashboard fails or returns gateway/proxy errors.
+
+**Typical cause:** `app_proxy` points to a stale hostname (e.g. `umbrel-lnbits-cln_web_1`) while
+actual container name uses a different project prefix (e.g. `lnbits-cln_web_1`).
+
+**Diagnosis:**
+
+```bash
+ssh umbrel@umbrel.local
+
+# 1) Inspect proxy target
+grep -n "APP_HOST\|APP_PORT" ~/umbrel/app-data/<app-id>/docker-compose.yml
+
+# 2) Check actual container names
+docker ps --format '{{.Names}}' | grep -E '<app-id>|<service-name>'
+```
+
+**Recovery:**
+
+1. Edit app compose file and set `APP_HOST` to exported app IP variable (recommended),
+   for example `${APP_LNBITS_CLN_IP}`.
+2. Restart app through Umbrel app-script/web UI so templates/env are re-applied.
+3. Re-test via dashboard and direct container reachability.
+
+**Best practice:**
+
+- Prefer `APP_HOST: ${APP_<APPID>_IP}` over hardcoded service hostnames in `app_proxy`.
+- Keep app id, compose project naming, and exported IP variables aligned to reduce drift risk
+  during REWIND, manual restores, and branch-to-branch file copies.
 
 ---
 
