@@ -3,7 +3,7 @@ id: copyparty
 name: copyparty
 tagline: A versatile all-in-one file server for everything
 category: files
-version: "1.20.11"
+version: "1.20.12"
 port: 3923
 description: >-
   📼 copyparty is a lightweight yet incredibly powerful file sharing platform designed to give you complete control over your data. It transforms any environment into a personal and fully featured file hub where you can upload, download, edit, and organize files directly through an intuitive web interface. Everything happens in the browser without the need for additional software, making it fast, convenient, and accessible from virtually anywhere.
@@ -32,23 +32,12 @@ gallery:
   - 4.jpg
   - 5.jpg
 releaseNotes: >-
-  ⚠️ This release fixes a security vulnerability — SVG images could execute JavaScript when opened, allowing a malicious user with write access to run scripts in your browser — updating is strongly recommended
-
-
-  New features in this release:
-    - Added an optional version checker that can alert you when running a vulnerable version of copyparty
+  ⚠️ This release fixes a security vulnerability — if you use FTP or SFTP with file shares, other files in the same folder could be accessed by guessing filenames — updating is strongly recommended if you have FTP or SFTP enabled
 
 
   Bugfixes in this release:
-    - Fixed SVG images being able to execute JavaScript despite the nohtml restriction
-    - Fixed several upload rules not handling certain edge cases correctly
-    - Fixed excessive config reloading when using certain identity provider settings
-    - Fixed a file descriptor leak when indexing compressed files such as epub books
-
-
-  Other improvements:
-    - Chinese translation received a major update
-    - Improved rclone connection advice on the connect page
+    - Fixed FTP and SFTP allowing access to sibling files within a shared folder when using file-specific shares
+    - Fixed a secondary minor security issue unrelated to file access
 
 
   Full release notes can be found at https://github.com/9001/copyparty/releases
