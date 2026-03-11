@@ -1,0 +1,48 @@
+name: Upstream Sync
+
+on:
+  schedule:
+    - cron: "0 6 * * 1" # Every Monday at 06:00 UTC
+  workflow_dispatch:
+
+jobs:
+  sync:
+    name: Sync from upstream
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure upstream
+        run: |
+          git remote add upstream https://github.com/getumbrel/umbrel-apps.git 2>/dev/null || true
+          git fetch upstream master
+
+      - name: Check for new commits
+        id: check
+        run: |
+          COUNT=$(git rev-list HEAD..upstream/master --count)
+          echo "count=$COUNT" >> "$GITHUB_OUTPUT"
+          echo "$COUNT new commits from upstream"
+
+      - name: Create sync branch and PR
+        if: steps.check.outputs.count > 0
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          BRANCH="upstream-sync/$(date +%Y%m%d)"
+          git checkout -b "$BRANCH"
+          git merge upstream/master --no-edit || {
+            echo "::warning::Merge conflicts detected. Manual resolution required."
+            git merge --abort
+            exit 0
+          }
+          git push origin "$BRANCH"
+          gh pr create \
+            --title "Upstream sync: $(date +%Y-%m-%d) (${{ steps.check.outputs.count }} commits)" \
+            --body "Automated sync from getumbrel/umbrel-apps master.\n\n**Commits:** ${{ steps.check.outputs.count }}\n\nReview carefully for conflicts with satwise customizations." \
+            --label "type:upstream-sync"

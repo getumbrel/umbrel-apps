@@ -1,0 +1,53 @@
+name: Bug Report
+description: Report a bug in an Umbrel app configuration
+title: "[Bug]: "
+labels: ["type:bug"]
+body:
+  - type: dropdown
+    id: app
+    attributes:
+      label: Affected App
+      options:
+        - bitcoin
+        - core-lightning
+        - core-lightning-rtl
+        - lightning (LND)
+        - umbrel-lnbits-cln
+        - lnbits
+        - lndg
+        - lightning-terminal
+        - other
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: What happened? What did you expect to happen?
+      placeholder: "When I start the app, it fails with..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant Logs
+      description: "Paste container logs (use VS Code task: Logs: <app>)"
+      render: shell
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: "Run VS Code task 'DR: Umbrel System Info' and paste output"
+      render: shell
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Pre-submission Checklist
+      options:
+        - label: I checked container logs for error messages
+        - label: I verified port consistency (umbrel-app.yml vs docker-compose.yml)
+        - label: "I ran DR: Health Sweep to check overall stack status"
