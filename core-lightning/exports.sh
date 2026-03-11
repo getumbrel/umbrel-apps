@@ -41,9 +41,13 @@ export APP_MODE="production"
 export CLNREST_HOST="0.0.0.0"
 export CLNREST_PORT="2107"
 export CLNREST_URL="https://${APP_CORE_LIGHTNING_DAEMON_IP}:${CLNREST_PORT}"
-export CLNREST_CERT="${EXPORTS_APP_DIR}/data/lightningd/${APP_CORE_LIGHTNING_BITCOIN_NETWORK}/server.pem"
+# CLNREST_SERVER_CERT: path to lightningd's own TLS certificate (server.pem).
+# Use CLNREST_CA (ca.pem) to verify the server — not this cert directly.
+export CLNREST_SERVER_CERT="${EXPORTS_APP_DIR}/data/lightningd/${APP_CORE_LIGHTNING_BITCOIN_NETWORK}/server.pem"
 export CLNREST_CA="${EXPORTS_APP_DIR}/data/lightningd/${APP_CORE_LIGHTNING_BITCOIN_NETWORK}/ca.pem"
 export CLNREST_RUNE_PATH="${CORE_LIGHTNING_PATH}/.commando-env"
+# Backward-compat alias — remove after all consumers migrate to CLNREST_SERVER_CERT
+export CLNREST_CERT="${CLNREST_SERVER_CERT}"
 
 # Legacy aliases — keep for backward compat with existing build scripts
 export CORE_LIGHTNING_REST_PORT="${CLNREST_PORT}"
