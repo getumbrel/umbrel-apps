@@ -93,7 +93,12 @@ Apps declare dependencies in `umbrel-app.yml` (`dependencies:` field). UmbrelOS 
 - `core-lightning-rtl` → `core-lightning` → `bitcoin` (CLN stack)
 - `umbrel-lnbits-cln` → `core-lightning` → `bitcoin` (CLN LNbits)
 - `lnbits` → `lightning` → `bitcoin` (LND LNbits)
-- `core-lightning/exports.sh` defines the **Provider Contract**: `CLNREST_HOST`, `CLNREST_PORT`, `CLNREST_URL`, `CLNREST_CERT`, `CLNREST_CA`, `CLNREST_RUNE_PATH`. Consumers bind to these — they never reconstruct URLs.
+- `core-lightning/exports.sh` defines the **Provider Contract**: consumers bind to these — they never reconstruct URLs or hardcode cert paths.
+  - **Ports:** `APP_CORE_LIGHTNING_DAEMON_PORT` (host P2P, 9736), `APP_CORE_LIGHTNING_P2P_PORT` (internal P2P, 9735), `APP_CORE_LIGHTNING_WEBSOCKET_PORT`, `APP_CORE_LIGHTNING_DAEMON_GRPC_PORT`, `CLNREST_PORT`
+  - **URLs:** `CLNREST_URL` (HTTPS REST), `APP_CORE_LIGHTNING_WEBSOCKET_URL` (WS), `APP_CORE_LIGHTNING_GRPC_URL` (host:port)
+  - **Certs (canonical):** `APP_CORE_LIGHTNING_CA_CERT`, `APP_CORE_LIGHTNING_SERVER_CERT`, `APP_CORE_LIGHTNING_CLIENT_CERT`, `APP_CORE_LIGHTNING_CLIENT_KEY`
+  - **CLNREST aliases:** `CLNREST_HOST`, `CLNREST_SERVER_CERT` (= server.pem), `CLNREST_CA` (= ca.pem), `CLNREST_CLIENT_CERT`, `CLNREST_CLIENT_KEY`, `CLNREST_RUNE_PATH`
+  - **Compat aliases:** `CLNREST_CERT` (= CLNREST_SERVER_CERT, deprecated), `CORE_LIGHTNING_REST_PORT`, `COMMANDO_CONFIG`
 
 ## PR Gating — Mandatory User Confirmation
 
