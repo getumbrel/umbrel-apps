@@ -153,6 +153,23 @@ Enable cross-tool MCP discovery so Copilot finds servers configured for other AI
 
 This means if you configure an MCP server in Claude Desktop's `claude_desktop_config.json` or in Cursor's settings, VS Code Copilot will also discover and use it — no duplication needed.
 
+### Restart Readiness Check
+
+After restarting VS Code or the machine, treat MCP readiness as a two-part check:
+
+1. **Workspace config check**
+  - `.vscode/mcp.json` answers whether this repo defines local MCP servers.
+  - In `satwise/umbrel-apps`, this file is intentionally empty by default.
+2. **Discovery check**
+  - `.vscode/settings.json` must keep `chat.mcp.discovery.enabled` on for external MCP sources.
+  - If workspace MCP is empty but discovery is enabled, Copilot may still have MCP tools from Claude Desktop, Cursor, GitHub PR, GitLens, or other extension/user-level registrations.
+
+**Important distinction:**
+
+- Empty `.vscode/mcp.json` does **not** mean MCP is unavailable.
+- It only means the repo itself does not declare workspace-local MCP servers.
+- Final validation should confirm both repo-local config and active session tool availability before concluding that MCP is unavailable after restart.
+
 ---
 
 ## 4. Customization File Hierarchy
