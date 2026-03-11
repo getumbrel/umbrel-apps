@@ -461,12 +461,12 @@ PROXY_AUTH_ADD: "false"
 ```
 
 ##### Whitelist/blacklist
-Some apps host a user facing at the root of their web application and then an API at e.g. `/api`. And in this case we would like `/` to be protected by Umbrel and `/api` protected by the apps existing/inbuilt API token system. This can be achieved by adding this env. var. to the `app_proxy` Docker Compose service:
+Some apps host a user-facing UI at the root of their web application and then an API at e.g. `/api`. And in this case we would like `/` to be protected by Umbrel and `/api` protected by the apps existing/inbuilt API token system. This can be achieved by adding this env. var. to the `app_proxy` Docker Compose service:
 ```
 PROXY_AUTH_WHITELIST: "/api/*"
 ```
 
-Another example could be that the root of the web application (`/`) should be publically accessible but the admin section be protected by Umbrel. This can be achieved by adding these env. vars. to the `app_proxy` Docker Compose service:
+Another example could be that the root of the web application (`/`) should be publicly accessible but the admin section be protected by Umbrel. This can be achieved by adding these env. vars. to the `app_proxy` Docker Compose service:
 ```
 PROXY_AUTH_WHITELIST: "*"
 PROXY_AUTH_BLACKLIST: "/admin/*"

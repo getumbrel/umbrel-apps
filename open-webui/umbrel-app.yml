@@ -3,7 +3,7 @@ id: open-webui
 name: Open WebUI
 tagline: Chat with Ollama models like DeepSeek-R1 and LLama, or use an OpenAI API key
 category: ai
-version: "0.7.2"
+version: "0.8.10"
 port: 2876
 description: >-
   Open WebUI lets you chat with advanced AI models running locally on your own device or connect to online models using an API key.
@@ -37,18 +37,19 @@ defaultPassword: ""
 dependencies:
   - ollama
 releaseNotes: >-
-  This release includes important improvements and bug fixes:
-    - Native function calling with built-in tools allows models to perform multi-step tasks combining web research, knowledge base queries, note-taking, and image generation in a single conversation
-    - Models can now search through your notes, past chats, and channel messages to find relevant context
-    - Models can search knowledge bases and retrieve documents without manual file attachment
-    - Web search results now appear as clickable citations in real-time for source verification
-    - Significantly improved performance across the entire application through reengineered database connection handling
-    - Faster page loads through dynamic loading of document processing libraries
-    - Users can now click citation links to jump directly to relevant portions of source documents with automatic text highlighting
-    - Enhanced security with backend permission checks for Image Generation, Web Search, Audio APIs, and Tools
-    - Fixed database connection timeouts under high concurrency
-    - Resolved issues with workspace prompts creation and saving
-    - Fixed local Whisper speech-to-text functionality when STT_ENGINE is left empty
+  Key highlights in this release include:
+    - Administrators can now configure a custom OIDC logout URL for providers like AWS Cognito
+    - Added MariaDB Vector as a new supported vector database backend
+    - Chat messages sent to task models for title and tag generation can now be truncated to reduce token usage
+    - Fixed a bug where HTTP errors in pipeline filters could silently corrupt chat payloads
+    - Fixed knowledge file updates leaving stale embeddings in the database causing duplicate search results
+    - Fixed Docker deployments failing to start due to a missing OpenTelemetry dependency
+    - Fixed non-admin users being unable to view tools due to a missing function import
+    - Fixed YAML file uploads failing when Docling was enabled
+    - Fixed custom model fallback not working when the base model is unavailable
+    - Fixed images in queued messages appearing blank
+    - Fixed Azure text-to-speech using incomplete locale codes in SSML
+    - Fixed token usage analytics not being filtered by user group correctly
 
 
   Full release notes are found at https://github.com/open-webui/open-webui/releases

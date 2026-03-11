@@ -2,7 +2,7 @@ manifestVersion: 1
 id: memos
 category: files
 name: Memos
-version: "0.26.0"
+version: "0.26.2"
 tagline: Easily capture and share your great thoughts
 description: >-
   A privacy-first, lightweight note-taking service.
@@ -18,26 +18,19 @@ description: >-
 
   - RESTful API for third-party services. Embrace the power of integration and unleash new possibilities with our RESTful API support.
 releaseNotes: >-
-  This release brings major new features and improvements:
-    - Enhanced authentication security with refresh token rotation and sliding window session expiration
-    - Streaming support for video and audio files to prevent memory issues
-    - Automatic EXIF metadata stripping from uploaded images for better privacy
-    - New memo map view in user profiles to visualize memo locations
-    - HDR image and video support
-    - New midnight theme option
-    - Focus Mode for distraction-free writing
-    - Improved markdown rendering following CommonMark and GFM specifications
-    - Better attachment handling with MIME type validation
-    - Ability to delete unused attachments to save storage space
-
-
-  Bug fixes and improvements:
-    - Fixed math rendering issues
-    - Improved editor auto-scroll and Safari IME handling
-    - Fixed calendar header month parsing
-    - Better text contrast in default dark mode
-    - Fixed todo command functionality
-    - Improved access control checks for attachments, comments, and reactions
+  This release includes important bug fixes and improvements:
+    - Fixed spurious logout on page reload with expired access token
+    - Fixed explore page showing private tags
+    - Fixed default memo visibility not being correctly applied
+    - Fixed cross-tab session loss by persisting auth token in localStorage
+    - Fixed a security vulnerability in the webhook dispatcher (SSRF)
+    - Fixed attachment and memo deletion when local file is missing
+    - Fixed comment reactions and deletion not updating correctly
+    - Fixed calendar navigation and year picker
+    - Fixed redirect to auth page instead of explore on session expiry
+    - Fixed ampersand support in tags to enable compound tags
+    - Fixed memo batch attachment truncation
+    - Improved MemoEditor layout and timestamp popover styling
 
 
   Full release notes are available at https://github.com/usememos/memos/releases

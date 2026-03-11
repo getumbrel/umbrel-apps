@@ -2,7 +2,7 @@ manifestVersion: 1
 id: btcpay-server
 category: bitcoin
 name: BTCPay Server
-version: "2.3.3"
+version: "2.3.5"
 tagline: Accept Bitcoin payments with 0 fees & no 3rd party
 description: >-
   BTCPay Server is a payment processor that allows you to receive
@@ -34,30 +34,26 @@ path: ""
 defaultUsername: ""
 defaultPassword: ""
 releaseNotes: >-
-  This release comes with a notable change, new features and several bug fixes.
-
-
-  ⚠️ **Note**
-  CoinGecko's API now mandates the use of an API Key for accessing rates. Consequently, it's been decided to discontinue support of CoinGecko-based rate sources. For those who relied on CoinGecko, invoice creation will now fail, and they must choose an alternative rate provider.
+  This release comes with new features, bug fixes, and improvements.
 
 
   New features:
-    - Cold wallet transaction support via Greenfield API
-    - Add Norwegian lang in the available language packs
+    - Allow BTCPay Server to start without any on-chain payment methods with BTCPAY_NODEFAULTCHAIN
+    - Add custom textbox for checkout
+    - Add CoinDCX rate provider for BTC/INR rates
+    - Add Desiboard rate provider for BTC/USD and BTC/INR rates
+    - Dashboard: Support multi-crypto wallet balance widgets
+    - Ability to update a previously downloaded language pack
 
   Bug fixes:
-    - It shouldn't be possible to create an invoice when all store users are disabled
-    - Remove CoinGecko and any rate source provided by them
-    - Change the default rate source for LTC conversion from CoinGecko to Kraken
-    - In monetization, it was impossible to recreate a user with email of a previously deleted user
-    - Backend translations would sometimes fail to load during startup
-    - Subs plan checkout always showed 'per month'
-    - Editing a plan subscription set the Currency back to USD
-    - Disable zero amount invoices in PoS doesn't show when Keypad mode is selected
-    - Adding labels payment requests would sometimes not work as expected
-    - PSBT Scan via Camera was not closing the modal dialog when signing a multisig transaction
-    - Selecting some rate source would crash the Stores/Rates page
+    - Fix: Images in Point of Sale Cart doesn't show on mobile
+    - Fix: Payments getting undetected on LND when the node restarted
+    - Fix: Do not show claim button in pull payments if it is archived
+    - Fix: Unable to edit roles when navigating from store level to Roles
 
+  Improvements:
+    - Throttle Greenfield API calls with Basic auth
+    - Added missing translations strings for various files
 
   Full release notes can be found at https://github.com/btcpayserver/btcpayserver/releases
 submitter: Umbrel
