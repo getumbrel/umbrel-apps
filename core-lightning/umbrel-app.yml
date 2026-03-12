@@ -53,6 +53,13 @@ releaseNotes: >-
     - Forensic delta from HotFix 1: internal consumer wiring now binds to canonical `CLNREST_*` exports instead of mixed legacy host/port reconstruction
 
 
+  **Snapshot / Rewind hardening:**
+    - `lightningd.sqlite3` is excluded from Umbrel snapshots via `backupIgnore` — restoring a stale channel-state DB would trigger revocation penalties on all open channels
+    - Umbrel Rewind does NOT protect CLN channel state; operators must maintain out-of-band backups of `hsm_secret` and `emergency.recover`
+    - Recovery procedure: DR-RUNBOOK.md Scenario 3 (Channel Loss)
+    - Use VS Code task `DR: Channel Backup Export (CLN)` to automate `hsm_secret` exports
+
+
   **Upgrade track:**
     - Next validation target is CLN v25.12.1
     - Focus areas are BIP-39 mnemonic support for recovery and removing the current `bookkeeper` workaround once stability is restored

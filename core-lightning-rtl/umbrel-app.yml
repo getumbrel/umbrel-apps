@@ -61,6 +61,12 @@ releaseNotes: >-
     - Forensic delta from HotFix 1: replaces `APP_CORE_LIGHTNING_REST_HOST + CORE_LIGHTNING_REST_PORT` URL reconstruction with direct `CLNREST_URL` contract consumption
 
 
+  **Snapshot / Rewind hardening:**
+    - RTL holds no channel state — Umbrel Rewind of RTL app data is safe and non-destructive
+    - CLN channel state (`lightningd.sqlite3`) is excluded from Umbrel snapshots; RTL recovery depends on CLN being recovered first
+    - Recovery procedure: restore CLN per DR-RUNBOOK.md Scenario 3, then restart RTL from Umbrel UI
+
+
   **Operator references:**
     - Recovery and reboot validation guidance: `docs/DR-RUNBOOK.md`
     - Operational sequencing and grace-window guidance: `docs/HA.md`
