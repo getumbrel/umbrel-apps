@@ -64,7 +64,7 @@ services:
       - -c
       - |
         BACKEND_CLASS="$$LNBITS_BACKEND_WALLET_CLASS"
-        if [ -z "$$BACKEND_CLASS" ] && [ -f /data/database.sqlite3 ]; then
+        if [ -z "$$BACKEND_CLASS" ] && [ -s /data/database.sqlite3 ]; then
           BACKEND_CLASS="$$(python3 -c "import sqlite3; row=sqlite3.connect('/data/database.sqlite3').execute(\"SELECT value FROM system_settings WHERE id='lnbits_backend_wallet_class'\").fetchone(); v=(row[0] if row and row[0] else ''); print(v.strip('\\\"'))")" || {
             echo "Failed to read lnbits_backend_wallet_class from DB; retrying container startup."
             exit 1
