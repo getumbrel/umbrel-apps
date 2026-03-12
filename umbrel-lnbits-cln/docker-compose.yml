@@ -16,8 +16,6 @@ services:
     stop_grace_period: 1m
     volumes:
       - ${APP_DATA_DIR}/data:/data
-      # JSON-RPC socket for CoreLightningWallet backend
-      - ${APP_CORE_LIGHTNING_RPC_SOCKET}:/rpc/lightning-rpc:ro
       # CLN data dir for CLNRestWallet backend (certs + rune file)
       - ${APP_CORE_LIGHTNING_DATA_DIR}:/cln:ro
     environment:
@@ -44,7 +42,7 @@ services:
       LNBITS_ALLOWED_FUNDING_SOURCES: "CLNRestWallet,CoreLightningWallet,VoidWallet"
 
       # --- Option A: CoreLightningWallet (JSON-RPC) ---
-      CORELIGHTNING_RPC: "/rpc/lightning-rpc"
+      CORELIGHTNING_RPC: "/cln/${APP_CORE_LIGHTNING_BITCOIN_NETWORK:-bitcoin}/lightning-rpc"
 
       # --- Option B: CLNRestWallet (HTTPS + runes) ---
       CLNREST_URL: "${CLNREST_URL}"
@@ -88,6 +86,22 @@ services:
             fi
             if [ "$$i" -eq 90 ]; then
               echo "CLNRest not ready after timeout; failing startup to retry."
+              exit 1
+            fi
+            sleep 2
+          done
+        elif [ "$$BACKEND_CLASS" = "CoreLightningWallet" ]; then
+          SOCKET_PATH="/cln/${APP_CORE_LIGHTNING_BITCOIN_NETWORK:-bitcoin}/lightning-rpc"
+          # Keep persisted LNbits setting aligned with this app's mounted socket path.
+          python3 -c "import os,sqlite3; p=os.environ.get('CORELIGHTNING_RPC',''); c=sqlite3.connect('/data/database.sqlite3'); v='\"'+p+'\"'; c.execute(\"INSERT INTO system_settings(id,value,tag) VALUES('corelightning_rpc', ?, 'core') ON CONFLICT(id) DO UPDATE SET value=excluded.value\", (v,)); c.commit(); c.close()" >/dev/null 2>&1 || true
+          echo "Waiting for CoreLightning socket readiness before starting LNbits..."
+          for i in $$(seq 1 90); do
+            if [ -S "$$SOCKET_PATH" ] && python3 -c "import socket,sys; s=socket.socket(socket.AF_UNIX); s.settimeout(2); s.connect(sys.argv[1]); s.close()" "$$SOCKET_PATH" >/dev/null 2>&1; then
+              echo "CoreLightning socket ready. Starting LNbits."
+              break
+            fi
+            if [ "$$i" -eq 90 ]; then
+              echo "CoreLightning socket not ready after timeout; failing startup to retry."
               exit 1
             fi
             sleep 2
