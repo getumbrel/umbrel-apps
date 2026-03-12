@@ -38,7 +38,11 @@ services:
       #   Requires: CLNREST_* vars + certs volume mount above.
       #   Runes are created by hooks/pre-start on first boot.
       # ---------------------------------------------------------------
-      LNBITS_BACKEND_WALLET_CLASS: CoreLightningWallet
+      LNBITS_BACKEND_WALLET_CLASS: CLNRestWallet
+      # Constrain funding-source choices to CLN-only backends.
+      # Allows seamless switch to CoreLightningWallet (JSON-RPC fallback)
+      # without exposing LND or legacy options. Both survive OS restart.
+      LNBITS_ALLOWED_FUNDING_SOURCES: "CLNRestWallet,CoreLightningWallet,VoidWallet"
 
       # --- Option A: CoreLightningWallet (JSON-RPC) ---
       CORELIGHTNING_RPC: "/rpc/lightning-rpc"
