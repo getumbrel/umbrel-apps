@@ -38,7 +38,6 @@ services:
       #   Requires: CLNREST_* vars + certs volume mount above.
       #   Runes are created by hooks/pre-start on first boot.
       # ---------------------------------------------------------------
-      LNBITS_BACKEND_WALLET_CLASS: CLNRestWallet
       # Constrain allowed wallet classes for LNbits operations to CLN-focused
       # backends plus VoidWallet. Note: LNbits admin UI may still display the
       # full upstream backend list; this allowlist is still enforced at runtime.
@@ -66,7 +65,16 @@ services:
       - sh
       - -c
       - |
-        if [ "$$LNBITS_BACKEND_WALLET_CLASS" = "CLNRestWallet" ]; then
+        BACKEND_CLASS="$$LNBITS_BACKEND_WALLET_CLASS"
+        if [ -z "$$BACKEND_CLASS" ] && [ -f /data/database.sqlite3 ]; then
+          BACKEND_CLASS="$$(python3 -c "import sqlite3; row=sqlite3.connect('/data/database.sqlite3').execute(\"SELECT value FROM system_settings WHERE id='lnbits_backend_wallet_class'\").fetchone(); v=(row[0] if row and row[0] else ''); print(v.strip('\\\"'))" 2>/dev/null || true)"
+        fi
+        if [ -z "$$BACKEND_CLASS" ]; then
+          # First boot default when no persisted backend exists yet.
+          BACKEND_CLASS="CLNRestWallet"
+        fi
+
+        if [ "$$BACKEND_CLASS" = "CLNRestWallet" ]; then
           echo "Waiting for CLNRest readiness before starting LNbits..."
           for i in $$(seq 1 90); do
             if curl -sk --max-time 5 \
