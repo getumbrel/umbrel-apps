@@ -44,10 +44,19 @@ gallery:
 path: ""
 deterministicPassword: true
 releaseNotes: >-
-  This release contains the following updates:
-    - Bump RTL to v0.15.8-beta-boltz
-    - Switch to provider-contract dynamic linking for CLN connection
-      (LN_SERVER_URL=${CLNREST_URL}, RUNE_PATH=${CLNREST_RUNE_PATH})
-    - Bump boltz-client to 2.10.2
+  RTL bump to v0.15.8-beta-boltz with provider-contract integration for Core Lightning.
+
+
+  **What changed:**
+    - Upgraded RTL to v0.15.8-beta-boltz
+    - Upgraded boltz-client to v2.10.2
+    - Switched CLN connection wiring to exported provider-contract variables:
+      `LN_SERVER_URL=${CLNREST_URL}` and `RUNE_PATH=${CLNREST_RUNE_PATH}`
+
+
+  **Why this matters:**
+    - Reduces endpoint drift between Core Lightning and RTL during restarts/upgrades
+    - Keeps TLS+rune material aligned with Core Lightning contract exports
+    - Improves consistency for recovery testing and future CLN upgrade validation
 submitter: Umbrel
 submission: https://github.com/getumbrel/umbrel-apps/pull/7

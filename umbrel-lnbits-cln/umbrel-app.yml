@@ -30,6 +30,26 @@ gallery:
 path: ""
 defaultUsername: ""
 defaultPassword: ""
-releaseNotes: ""
+releaseNotes: >-
+  Initial app-store release of LNbits (CLN) on Umbrel with dual-backend support and reboot-safe startup behavior.
+
+
+  **Default backend:**
+    - CLNRestWallet (Core Lightning REST plugin) with mTLS certs + fine-grained runes
+
+
+  **Operator fallback path:**
+    - CoreLightningWallet (unix socket) remains available from LNbits admin funding-source selection
+
+
+  **Reliability hardening in this release:**
+    - Startup gate waits for the selected backend to become ready before launching LNbits
+    - Fail-fast retry behavior prevents silent boot on an unavailable backend
+    - Persisted funding-source selection survives app restart and full OS reboot
+    - CoreLightning RPC path is normalized to `/cln/<network>/lightning-rpc` for consistency
+
+
+  **Operational note:**
+    - After OS reboot, app-proxy may take a short warm-up window before UI becomes reachable while dependencies settle
 submitter: satwise
 submission: https://github.com/getumbrel/umbrel-apps/pull/5014
