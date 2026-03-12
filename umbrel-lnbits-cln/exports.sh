@@ -1,5 +1,5 @@
 #!/bin/bash
-export APP_LNBITS_CLN_IP="10.21.21.97"
+export APP_LNBITS_CLN_IP="10.21.21.98"
 export APP_LNBITS_CLN_PORT="3009"
 export APP_LNBITS_CLN_DATA_DIR="${EXPORTS_APP_DIR}/data"
 
