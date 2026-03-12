@@ -2,8 +2,11 @@
 export APP_LNBITS_CLN_IP="10.21.21.98"
 export APP_LNBITS_CLN_PORT="3009"
 export APP_LNBITS_CLN_DATA_DIR="${EXPORTS_APP_DIR}/data"
-# Public base URL for LNURL pay links, LNDHub, and NIP-05 external resolution.
-# Override in app-data/umbrel-lnbits-cln/.env: APP_LNBITS_CLN_PUBLIC_URL=https://lnbits.yourdomain.com
+
+# Public URL overrides — set these to your operator domain so LNURL, LNDHub,
+# and NIP-05 links emit your public domain instead of http://umbrel.local:PORT.
+# Leave empty to keep LNbits default (local address).
+export APP_LNBITS_CLN_BASE_URL="${APP_LNBITS_CLN_BASE_URL:-}"
 export APP_LNBITS_CLN_PUBLIC_URL="${APP_LNBITS_CLN_PUBLIC_URL:-}"
 
 # ---------------------------------------------------------------------------

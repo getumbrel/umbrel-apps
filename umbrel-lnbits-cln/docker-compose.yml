@@ -53,11 +53,13 @@ services:
       CLNREST_INVOICE_RUNE: "${APP_LNBITS_CLN_INVOICE_RUNE}"
       CLNREST_PAY_RUNE: "${APP_LNBITS_CLN_PAY_RUNE}"
 
-      # Public base URL — required for LNURL pay links, LNDHub, and NIP-05
-      # to resolve correctly from outside the LAN. Set APP_LNBITS_CLN_PUBLIC_URL
-      # in app-data/umbrel-lnbits-cln/.env (e.g. https://lnbits.yourdomain.com).
-      # Leave empty for LAN-only operation.
-      LNBITS_BASE_URL: "${APP_LNBITS_CLN_PUBLIC_URL:-}"
+      # Public URL overrides — required for LNURL, LNDHub, and NIP-05 to emit
+      # the operator's public domain instead of http://umbrel.local:PORT.
+      # Set APP_LNBITS_CLN_BASE_URL and APP_LNBITS_CLN_PUBLIC_URL in
+      # exports.sh (or the .env file in app-data) before starting the app.
+      # Example: APP_LNBITS_CLN_BASE_URL=https://byob.janx.com
+      #          APP_LNBITS_CLN_PUBLIC_URL=https://janx.com
+      LNBITS_BASE_URL: "${APP_LNBITS_CLN_BASE_URL:-}"
       LNBITS_PUBLIC_URL: "${APP_LNBITS_CLN_PUBLIC_URL:-}"
 
       # App
