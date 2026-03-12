@@ -65,12 +65,19 @@ services:
       - |
         BACKEND_CLASS="$$LNBITS_BACKEND_WALLET_CLASS"
         if [ -z "$$BACKEND_CLASS" ] && [ -f /data/database.sqlite3 ]; then
-          BACKEND_CLASS="$$(python3 -c "import sqlite3; row=sqlite3.connect('/data/database.sqlite3').execute(\"SELECT value FROM system_settings WHERE id='lnbits_backend_wallet_class'\").fetchone(); v=(row[0] if row and row[0] else ''); print(v.strip('\\\"'))" 2>/dev/null || true)"
+          BACKEND_CLASS="$$(python3 -c "import sqlite3; row=sqlite3.connect('/data/database.sqlite3').execute(\"SELECT value FROM system_settings WHERE id='lnbits_backend_wallet_class'\").fetchone(); v=(row[0] if row and row[0] else ''); print(v.strip('\\\"'))")" || {
+            echo "Failed to read lnbits_backend_wallet_class from DB; retrying container startup."
+            exit 1
+          }
         fi
         if [ -z "$$BACKEND_CLASS" ]; then
           # First boot default when no persisted backend exists yet.
           BACKEND_CLASS="CLNRestWallet"
+          python3 -c "import sqlite3; c=sqlite3.connect('/data/database.sqlite3'); c.execute(\"INSERT OR REPLACE INTO system_settings(id,value,tag) VALUES('lnbits_backend_wallet_class','\\\"CLNRestWallet\\\"','core')\"); c.commit(); c.close()" >/dev/null 2>&1 || true
         fi
+
+        # Make runtime backend explicit so LNbits startup matches persisted selection.
+        export LNBITS_BACKEND_WALLET_CLASS="$$BACKEND_CLASS"
 
         if [ "$$BACKEND_CLASS" = "CLNRestWallet" ]; then
           echo "Waiting for CLNRest readiness before starting LNbits..."
