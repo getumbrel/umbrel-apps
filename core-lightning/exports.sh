@@ -75,9 +75,11 @@ export APP_CORE_LIGHTNING_WEBSOCKET_URL="ws://${APP_CORE_LIGHTNING_DAEMON_IP}:${
 # gRPC address format: host:port (used by grpc libs, not a full URL scheme)
 export APP_CORE_LIGHTNING_GRPC_URL="${APP_CORE_LIGHTNING_DAEMON_IP}:${APP_CORE_LIGHTNING_DAEMON_GRPC_PORT}"
 
-# Legacy aliases — keep for backward compat with existing build scripts
+# Legacy aliases — no consumers in this fork; kept only for upstream RTL compat
+# (upstream core-lightning-rtl/docker-compose.yml reconstructs LN_SERVER_URL from CORE_LIGHTNING_REST_PORT)
+# Our fork's RTL uses ${CLNREST_URL} directly. Remove these when upstream RTL migrates.
 export CORE_LIGHTNING_REST_PORT="${CLNREST_PORT}"
-export COMMANDO_CONFIG="${CLNREST_RUNE_PATH}"  # cln-application reads via LIGHTNING_VARS_FILE
+export COMMANDO_CONFIG="${CLNREST_RUNE_PATH}"
 
 # =============================================================================
 # gRPC Interface
