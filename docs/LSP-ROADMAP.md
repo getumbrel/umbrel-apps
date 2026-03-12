@@ -148,14 +148,15 @@ D6: AI GATEWAY  Ollama/LocalAI → LNbits LNURL-pay → CLN (sell inference for 
 
 ### Monitoring & DR
 
-| App                  | Role           | Status    |
-| -------------------- | -------------- | --------- |
-| grafana              | Dashboards     | Available |
-| influxdb / influxdb2 | Time-series DB | Available |
-| uptime-kuma          | Uptime monitor | Available |
-| duplicati            | Backup         | Available |
-| syncthing            | File sync      | Available |
-| Umbrel Rewind        | Built-in DR    | Available |
+| App                  | Role                                                         | Status                                    |
+| -------------------- | ------------------------------------------------------------ | ----------------------------------------- |
+| grafana              | Dashboards                                                   | Available                                 |
+| influxdb / influxdb2 | Time-series DB                                               | Available                                 |
+| uptime-kuma          | Uptime monitor                                               | Available                                 |
+| duplicati            | Backup                                                       | Available                                 |
+| syncthing            | File sync                                                    | Available                                 |
+| Umbrel Rewind        | Point-in-time file recovery (snapshots)                      | Available (1.5.0)                         |
+| Umbrel Backups       | Kopia-backed external backup — `backupIgnore` surfaced in UI | umbrelOS 1.6.1 (tagged, not yet released) |
 
 ---
 
@@ -247,18 +248,18 @@ BIP-353 maps `user@domain` to a BOLT-12 offer via DNS TXT records.
 
 ## Gaps (ordered by impact)
 
-| #     | Gap                             | Impact                                         | Complexity | Blocks                           |
-| ----- | ------------------------------- | ---------------------------------------------- | ---------- | -------------------------------- |
-| ~~1~~ | ~~CLNREST_HOST=0.0.0.0 bind~~   | ~~CLNrest unreachable from outside container~~ | ~~Low~~    | **Fixed in PR #5014**            |
-| 2     | Blind Oracle port 8095→8102     | Jade can't PIN-unlock                          | Low        | Jade HW wallet                   |
-| 2b    | Tor crash-loops (host-net apps) | Tailscale + AdGuard Tor sidecars restart-loop  | Low        | CPU waste, unstable `docker ps`  |
-| 3     | Liquid Electrs (new app)        | No private L-BTC indexing                      | Medium     | Green/Aqua self-sovereignty      |
-| 4     | Nostr relay 0.8.1→0.9.0         | No NIP-42 auth, No NIP-40 expiry               | Medium     | Zap Bridge, relay access control |
-| 5     | Zap Bridge (Domain 4)           | No Nostr↔Lightning integration                 | High       | Full LSP Nostr capability        |
-| 6     | LNbits CLNRestWallet migration  | Socket mount coupling                          | Low        | Clean provider contract          |
-| 7     | PeerSwap CLN manifest           | Liquid atomic swaps CLN-blocked                | Medium     | CLN↔Liquid interop               |
-| 8     | Fedimint Gateway wiring         | No ecash↔Lightning bridge                      | High       | Fedimint federation launch       |
-| 9     | AI Micropayment Gateway (D6)    | No inference monetization                      | Medium     | AI revenue, NIP-05 sales         |
+| #     | Gap                             | Impact                                         | Complexity | Blocks                                                                                                                                                 |
+| ----- | ------------------------------- | ---------------------------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| ~~1~~ | ~~CLNREST_HOST=0.0.0.0 bind~~   | ~~CLNrest unreachable from outside container~~ | ~~Low~~    | **Fixed in PR #5014**                                                                                                                                  |
+| 2     | Blind Oracle port 8095→8102     | Jade can't PIN-unlock                          | Low        | Jade HW wallet                                                                                                                                         |
+| 2b    | Tor crash-loops (host-net apps) | Tailscale + AdGuard Tor sidecars restart-loop  | Low        | CPU waste, unstable `docker ps`                                                                                                                        |
+| 3     | Liquid Electrs (new app)        | No private L-BTC indexing                      | Medium     | Green/Aqua self-sovereignty                                                                                                                            |
+| 4     | Nostr relay 0.8.1→0.9.0         | No NIP-42 auth, No NIP-40 expiry               | Medium     | Zap Bridge, relay access control — **on upgrade track with CLN 25.12**                                                                                 |
+| 5     | Zap Bridge (Domain 4)           | No Nostr↔Lightning integration                 | High       | Full LSP Nostr capability                                                                                                                              |
+| 6     | LNbits CLNRestWallet migration  | Socket mount coupling                          | Low        | Clean provider contract — `COMMANDO_CONFIG` tombstoned; compose wires `CLNREST_RUNE_PATH` directly; JSON-RPC socket volume mount is last remaining gap |
+| 7     | PeerSwap CLN manifest           | Liquid atomic swaps CLN-blocked                | Medium     | CLN↔Liquid interop                                                                                                                                     |
+| 8     | Fedimint Gateway wiring         | No ecash↔Lightning bridge                      | High       | Fedimint federation launch                                                                                                                             |
+| 9     | AI Micropayment Gateway (D6)    | No inference monetization                      | Medium     | AI revenue, NIP-05 sales                                                                                                                               |
 
 ---
 
@@ -431,9 +432,9 @@ through backend-mode changes and cold reboot.
 
 **Goal**: Remove filesystem coupling, pure HTTP REST
 
-- [ ] LNBITS_BACKEND_WALLET_CLASS: CLNRestWallet
-- [ ] Use CLNREST_URL + CLNREST_CERT + CLNREST_RUNE_PATH
-- [ ] Remove JSON-RPC socket volume mount
+- [ ] LNBITS_BACKEND_WALLET_CLASS: CLNRestWallet (already default in umbrel-lnbits-cln)
+- [ ] Use `CLNREST_URL` + `CLNREST_CA` + `CLNREST_CLIENT_CERT` + `CLNREST_CLIENT_KEY` + `CLNREST_RUNE_PATH` (LNbits already consumes these canonical names directly — `CLNREST_CERT` alias is zero-consumer)
+- [ ] Remove JSON-RPC socket volume mount (last remaining coupling)
 - [ ] Verify: NWC still works (Shopstr, Alby)
 
 ### Phase 6: Liquid Interop
@@ -493,14 +494,16 @@ Remaining for production LSP:
 
 ## CLNREST Provider Contract (reference)
 
-| New Variable      | Legacy (kept)            | Why Kept               |
-| ----------------- | ------------------------ | ---------------------- |
-| CLNREST_HOST      | —                        | New: bind 0.0.0.0      |
-| CLNREST_PORT      | CORE_LIGHTNING_REST_PORT | torrc.template         |
-| CLNREST_URL       | —                        | New: consumer endpoint |
-| CLNREST_CERT      | —                        | New: mTLS cert path    |
-| CLNREST_CA        | —                        | New: mTLS CA path      |
-| CLNREST_RUNE_PATH | COMMANDO_CONFIG          | cln-application image  |
+| New Variable      | Legacy (kept)            | Why Kept                                                                           |
+| ----------------- | ------------------------ | ---------------------------------------------------------------------------------- |
+| CLNREST_HOST      | —                        | New: bind 0.0.0.0                                                                  |
+| CLNREST_PORT      | CORE_LIGHTNING_REST_PORT | torrc.template                                                                     |
+| CLNREST_URL       | —                        | New: consumer endpoint                                                             |
+| CLNREST_CERT      | —                        | New: mTLS cert path                                                                |
+| CLNREST_CA        | —                        | New: mTLS CA path                                                                  |
+| CLNREST_RUNE_PATH | COMMANDO_CONFIG          | upstream CLN compose still passes via LIGHTNING_VARS_FILE; our fork wired directly |
+
+**Alias tombstone status (fork):** All three compat aliases (`CLNREST_CERT`, `CORE_LIGHTNING_REST_PORT`, `COMMANDO_CONFIG`) are **zero-consumer** in this fork as of PR #5014. Our compose uses canonical vars directly. Aliases retained in `exports.sh` so the PR diff shows the migration path to upstream reviewers. Drop all three once PR #5014 merges.
 
 All `APP_CORE_LIGHTNING_*` vars preserved for backward compat.
 
@@ -513,9 +516,22 @@ All `APP_CORE_LIGHTNING_*` vars preserved for backward compat.
 - **Container recreation**: Must use app-script or `docker compose up -d --force-recreate`
   (`docker restart` does NOT pick up new env vars)
 - **Boot race**: CLNrest starts after lightningd → restart consumer containers if ECONNREFUSED
-- **Rewind**: Recovers wallet + on-chain funds. Channels require cooperative close.
-  `hsm_secret` MUST be backed up separately.
+- **Rewind** (1.5.0): Point-in-time file recovery. Recovers wallet + on-chain funds. Channels require cooperative close. `hsm_secret` MUST be backed up separately.
+- **Backups** (1.6.1, tagged not released): Kopia-backed external backup. `backupIgnore` entries from `umbrel-app.yml` are surfaced as "auto-excluded paths" in the Backups Configure Wizard UI. Our `lightningd.sqlite3` exclusion will be visible to operators — no code change needed, already in `core-lightning/umbrel-app.yml`.
 
 ---
 
-_Recovered from Copilot repo memory — March 7, 2026_
+---
+
+## Upgrade Track (next PRs)
+
+| App                  | Target version              | Blocker                                                                              | Branch |
+| -------------------- | --------------------------- | ------------------------------------------------------------------------------------ | ------ |
+| `core-lightning`     | v25.12.1 → v26.xx           | Bookkeeper plugin requires RTL v0.15.8+ (already shipped in PR #5014)                | TBD    |
+| `core-lightning-rtl` | v0.15.8-beta-boltz → stable | Already on v0.15.8; track stable RTL release                                         | TBD    |
+| `nostr-relay`        | 0.8.1 → 0.9.0               | NIP-42 auth + NIP-40 expiry; Dockerfile change needed                                | TBD    |
+| umbrelOS             | 1.5.0 → 1.6.1               | 1.6.1 tagged (`3e4ad45`) but no public release yet; plan to participate in beta test | TBD    |
+
+---
+
+_Recovered from Copilot repo memory — March 7, 2026. Updated March 12, 2026._
