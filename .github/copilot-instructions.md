@@ -98,6 +98,7 @@ Apps declare dependencies in `umbrel-app.yml` (`dependencies:` field). UmbrelOS 
   **Two-tier naming convention (must be preserved across all upgrades):**
   - `CLNREST_*` = **API provider identity** (service runtime): bind address, port, pre-built URL, cert material consumed by the REST API at connection time. These track the CLNRest plugin interface.
   - `APP_CORE_LIGHTNING_*` = **Umbrel durable resource anchors** (upgrade/DR invariants): static IPs assigned by `umbrel_main_network`, persistent data directory paths, deterministic cert file paths on disk. These **must not change** across app restarts, OS upgrades, and DR recovery — the test harness, upgrade validation pipeline, and DR runbook all bind to them. Image-only upgrades (e.g., v25.09.3 → v25.12.1) must not modify any `APP_CORE_LIGHTNING_*` var.
+  - Future CLN consumers (for example Fedimint, Nostr Zap-verification relays, and other CLN-native services) must bind to this contract and must not introduce ad-hoc endpoint or cert-path reconstruction.
 
   - **Ports:** `APP_CORE_LIGHTNING_DAEMON_PORT` (host P2P, 9736), `APP_CORE_LIGHTNING_P2P_PORT` (internal P2P, 9735), `APP_CORE_LIGHTNING_WEBSOCKET_PORT`, `APP_CORE_LIGHTNING_DAEMON_GRPC_PORT`, `CLNREST_PORT`
   - **URLs:** `CLNREST_URL` (HTTPS REST), `APP_CORE_LIGHTNING_WEBSOCKET_URL` (WS), `APP_CORE_LIGHTNING_GRPC_URL` (host:port)
