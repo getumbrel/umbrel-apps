@@ -543,16 +543,16 @@ disabled, inbound P2P bound to the internal Docker IP only.
 
 **Current state (applied 2026-03-11):**
 
-| Vector                   | Status      | Config                                                                |
-| ------------------------ | ----------- | --------------------------------------------------------------------- |
-| Outbound IPv4/IPv6       | Blocked ✅  | `onlynet=onion`, `onlynet=i2p`                                        |
-| Outbound Onion           | Active ✅   | `onion=10.21.22.12:9050`                                              |
-| Outbound I2P             | Active ✅   | `i2psam=10.21.22.13:7656`                                             |
+| Vector                   | Status               | Config                                                                                         |
+| ------------------------ | -------------------- | ---------------------------------------------------------------------------------------------- |
+| Outbound IPv4/IPv6       | Blocked ✅           | `onlynet=onion`, `onlynet=i2p`                                                                 |
+| Outbound Onion           | Active ✅            | `onion=10.21.22.12:9050`                                                                       |
+| Outbound I2P             | Active ✅            | `i2psam=10.21.22.13:7656`                                                                      |
 | Inbound clearnet P2P     | Partially exposed ⚠️ | `bind=10.21.21.7:9333` helps, but `ports: 9333:9333` in compose still publishes host-level NAT |
-| Onion advertised address | Active ✅   | `ysj5dkk6jxj3cmdvkakl4ex743dudy3xuu5yodltt5usufp5cf7kmuid.onion:8333` |
-| I2P advertised address   | Active ✅   | `rwbvwk7th2dfb6h3q7blvosz6hvralt3w4xwtn6k6loisryx3kqq.b32.i2p`        |
-| Bitcoin Core REST API    | Disabled ✅ | `rest=0` — no unauthenticated UTXO/mempool endpoint                   |
-| CLNRest                  | Internal ✅ | Bound to `10.21.21.96:2107`, not exposed to clearnet                  |
+| Onion advertised address | Active ✅            | `ysj5dkk6jxj3cmdvkakl4ex743dudy3xuu5yodltt5usufp5cf7kmuid.onion:8333`                          |
+| I2P advertised address   | Active ✅            | `rwbvwk7th2dfb6h3q7blvosz6hvralt3w4xwtn6k6loisryx3kqq.b32.i2p`                                 |
+| Bitcoin Core REST API    | Disabled ✅          | `rest=0` — no unauthenticated UTXO/mempool endpoint                                            |
+| CLNRest                  | Internal ✅          | Bound to `10.21.21.96:2107`, not exposed to clearnet                                           |
 
 ### Key Config in `umbrel-bitcoin.conf`
 

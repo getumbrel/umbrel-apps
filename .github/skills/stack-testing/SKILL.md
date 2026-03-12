@@ -222,3 +222,111 @@ Pass condition:
 - Channel state remains active
 - LNbits funding flow still works
 - No sustained socket/rune/auth errors in logs
+
+---
+
+## 8. Proven Capture Sequence (OS Reboot + LNbits CLNRest)
+
+Use this sequence for authoritative reboot survival validation. It prevents false
+positives from container-up checks and catches LNbits fallback behavior.
+
+### 8.1 Start monitors before reboot
+
+1. SSH down/up monitor (reboot outage window)
+2. Critical container bring-up order monitor
+3. LNbits backend transition monitor (`Funding source`, `Connecting`, `connected`, `Fallback to VoidWallet`)
+4. CLN channel state monitor (`CHANNELD_NORMAL` count)
+5. Functional CLNRest API probe from LNbits container (`POST /v1/listfunds`)
+
+### 8.2 Required endpoint and scheme rules
+
+- CLNRest endpoint must be `https://<reachable-host>:2107`
+- Do not use `http://` for CLNRest
+
+Recommended in this stack:
+
+```bash
+https://10.21.21.96:2107
+```
+
+### 8.3 Functional API probe (authoritative)
+
+Run from inside `lnbits-cln_web_1`:
+
+```bash
+curl -sk --max-time 5 \
+  --cacert /cln/bitcoin/ca.pem \
+  --cert /cln/bitcoin/client.pem \
+  --key /cln/bitcoin/client-key.pem \
+  -H "rune: $CLNREST_READONLY_RUNE" \
+  -X POST "$CLNREST_URL/v1/listfunds"
+```
+
+Expected: JSON containing `channels`.
+
+### 8.4 Interpretation rules
+
+- `GET /v1/getinfo` returning `405` only proves transport path; it is not sufficient
+  to declare LNbits backend healthy.
+- The authoritative success signal is BOTH:
+  - LNbits log line: `Backend CLNRestWallet connected`
+  - Functional `POST /v1/listfunds` success from LNbits container
+
+### 8.5 Known startup pattern
+
+After reboot, LNbits may attempt CLNRest too early and log repeated
+`Unable to connect to 'v1/listfunds'`, then fall back to `VoidWallet`.
+If CLNRest path is healthy afterward, a single LNbits restart usually recovers:
+
+1. `Connecting to backend CLNRestWallet...`
+2. `Backend CLNRestWallet connected...`
+3. Channels remain visible (`CHANNELD_NORMAL` count stable)
+
+---
+
+## 9. Quick Run + Top 5 Remaining Problems
+
+### 9.1 Quick Run (operator fast path)
+
+1. Start 4 monitors: SSH up/down, critical container order, LNbits backend events, CLN channel count.
+2. Reboot OS.
+3. Wait for SSH return and container stabilization.
+4. Confirm LNbits backend line: `Backend CLNRestWallet connected`.
+5. Run functional probe (`POST /v1/listfunds`) from LNbits container.
+6. Confirm channel continuity (`CHANNELD_NORMAL` unchanged or recovering to baseline).
+
+### 9.2 Top 5 Remaining Problems to track
+
+1. **LNbits startup race vs CLNRest readiness**
+   - Symptom: immediate backend retries then fallback to VoidWallet.
+   - Temporary mitigation: one LNbits restart after CLN is fully ready.
+
+2. **Fallback auto-recovery gap**
+   - Symptom: LNbits falls to VoidWallet and may stay there without operator action.
+   - Target behavior: automatic retry/rejoin once CLNRest becomes healthy.
+
+3. **Health check ambiguity**
+   - Symptom: transport-level checks pass while functional wallet path still fails.
+   - Rule: require functional `listfunds` plus backend-connected log line.
+
+4. **Cold-boot timing variability**
+   - Symptom: service order and readiness latencies differ by boot.
+   - Action: always capture full timeline before judging regressions.
+
+5. **Operator signal-to-noise drift**
+   - Symptom: side observations dilute decision quality during DR testing.
+   - Action: report only three core signals: backend connect/fallback, functional probe, channel continuity.
+
+---
+
+## 10. Documentation Final Step
+
+When editing or extending this skill, always finish with a markdown lint check on the
+edited file and clear any reported issues before considering the update complete.
+
+Standard practice:
+
+1. Run markdown diagnostics on the file.
+2. Fix formatting issues such as hard tabs, spacing, or list indentation.
+3. Re-run diagnostics.
+4. Do not stop until the file reports no markdown errors.
