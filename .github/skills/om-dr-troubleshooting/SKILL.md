@@ -95,6 +95,25 @@ docker logs core-lightning_lightningd_1 > /tmp/cln-$(date +%Y%m%d).log 2>&1
 
 ## 4. DR: Critical Files & Backup
 
+### Umbrel Rewind — What It Is
+
+**Rewind** is UmbrelOS's built-in snapshot DR tool (Web UI → Settings → Rewind). It stores point-in-time snapshots on a declining cadence:
+
+- **Hourly** for the last 24 hours
+- **Daily** for the last 30 days
+- **Monthly** after that
+- **Origin snapshot** (app install) kept permanently
+
+**For Lightning apps, Rewind is partially bypassed by design:**
+
+- CLN's `lightningd.sqlite3` is listed in `backupIgnore` — Rewind skips it to prevent stale channel-state restores (which cause revocation penalties)
+- LND's `channel.backup` can become stale if Rewound past a channel open/close — always re-export after a Rewind
+- RTL holds no channel state — Rewind of RTL app data is safe
+
+**Bottom line:** Rewind ≠ CLN channel protection. Always maintain out-of-band `hsm_secret` and `emergency.recover` backups independently of Rewind.
+
+---
+
 ### CLN
 
 | File                                 | Purpose                                  | Backup Frequency                         |

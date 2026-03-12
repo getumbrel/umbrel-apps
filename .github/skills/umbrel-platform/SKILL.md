@@ -242,6 +242,44 @@ UmbrelOS handles this automatically. During manual recovery, follow this order.
 
 ---
 
+## 6a. Umbrel Rewind — Snapshot DR Tool
+
+UmbrelOS ships a built-in point-in-time recovery tool called **Rewind**, accessible from the Umbrel Web UI. It uses an automated snapshot schedule:
+
+| Age           | Snapshot cadence        |
+| ------------- | ----------------------- |
+| Last 24 hours | Every hour              |
+| Last 30 days  | Every day               |
+| Older         | Monthly (best-effort)   |
+| Origin        | App install snapshot kept permanently |
+
+### What Rewind covers
+
+- App configuration files (`docker-compose.yml`, `umbrel-app.yml`, `exports.sh`)
+- App `data/` directory contents **except files listed in `backupIgnore`**
+- UmbrelOS system config (`umbrel.yaml`)
+
+### What Rewind does NOT protect — Lightning apps
+
+| File                         | App | Why excluded                                                                              |
+| ---------------------------- | --- | ----------------------------------------------------------------------------------------- |
+| `lightningd.sqlite3`         | CLN | `backupIgnore` — restoring a stale channel-state DB triggers revocation penalties         |
+| `hsm_secret`                 | CLN | Not excluded, but Rewind of a stale state without matching sqlite3 is dangerous            |
+| `channel.backup` (SCB)       | LND | Stale SCB restore causes force-close of all channels at time of backup                   |
+
+**Rule:** Umbrel Rewind is safe for stateless apps (RTL, LNbits config). For CLN channel state, Rewind is intentionally bypassed — operators must maintain their own out-of-band backups of `hsm_secret` and `emergency.recover`.
+
+### Operator backup responsibility for CLN
+
+```bash
+# Run regularly — VS Code task: DR: Channel Backup Export (CLN)
+ssh pi5 'cp ~/umbrel/app-data/core-lightning/data/lightningd/bitcoin/hsm_secret /safe/offline/location/'
+```
+
+→ DR-RUNBOOK.md Scenario 3 for full CLN channel recovery procedure.
+
+---
+
 ## 7. VS Code Workspace Recovery
 
 After an IDE crash, verify these are intact:
