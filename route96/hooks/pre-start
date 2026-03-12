@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+APP_DATA_DIR="$(readlink -f $(dirname "${BASH_SOURCE[0]}")/..)/data"
+
+# Create required directories
+mkdir -p "${APP_DATA_DIR}/uploads"
+mkdir -p "${APP_DATA_DIR}/db"
+
+# Generate config.yaml on first run
+CONFIG_FILE="${APP_DATA_DIR}/config.yaml"
+if [[ ! -f "${CONFIG_FILE}" ]]; then
+  cat > "${CONFIG_FILE}" <<EOF
+# Listen address for webserver
+listen: "0.0.0.0:8000"
+
+# Database connection string (MySQL/MariaDB)
+database: "mysql://route96:route96password@route96_db_1:3306/route96"
+
+# Directory to store uploads
+storage_dir: "/app/data"
+
+# Maximum supported file size for uploading (100 MB)
+max_upload_bytes: 104857600
+
+# Public facing URL (update this to your Umbrel's address)
+public_url: "http://umbrel.local:8000"
+EOF
+fi
+
+chown -R 1000:1000 "${APP_DATA_DIR}" 2>/dev/null || true
