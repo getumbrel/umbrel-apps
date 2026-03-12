@@ -93,7 +93,7 @@ services:
         elif [ "$$BACKEND_CLASS" = "CoreLightningWallet" ]; then
           SOCKET_PATH="/cln/${APP_CORE_LIGHTNING_BITCOIN_NETWORK:-bitcoin}/lightning-rpc"
           # Keep persisted LNbits setting aligned with this app's mounted socket path.
-          python3 -c "import os,sqlite3; p=os.environ.get('CORELIGHTNING_RPC',''); c=sqlite3.connect('/data/database.sqlite3'); v='\"'+p+'\"'; c.execute(\"INSERT INTO system_settings(id,value,tag) VALUES('corelightning_rpc', ?, 'core') ON CONFLICT(id) DO UPDATE SET value=excluded.value\", (v,)); c.commit(); c.close()" >/dev/null 2>&1 || true
+          python3 -c "import os,sqlite3; p=os.environ.get('CORELIGHTNING_RPC',''); c=sqlite3.connect('/data/database.sqlite3'); v='\"'+p+'\"'; cur=c.cursor(); cur.execute(\"UPDATE system_settings SET value=? WHERE id='corelightning_rpc' AND tag='core'\", (v,)); cur.execute(\"INSERT INTO system_settings(id,value,tag) SELECT 'corelightning_rpc', ?, 'core' WHERE NOT EXISTS (SELECT 1 FROM system_settings WHERE id='corelightning_rpc' AND tag='core')\", (v,)); c.commit(); c.close()" >/dev/null 2>&1 || true
           echo "Waiting for CoreLightning socket readiness before starting LNbits..."
           for i in $$(seq 1 90); do
             if [ -S "$$SOCKET_PATH" ] && python3 -c "import socket,sys; s=socket.socket(socket.AF_UNIX); s.settimeout(2); s.connect(sys.argv[1]); s.close()" "$$SOCKET_PATH" >/dev/null 2>&1; then
