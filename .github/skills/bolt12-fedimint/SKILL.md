@@ -156,6 +156,9 @@ Nostr NIP-47 (NWC)       →  wallet control via sovereign messaging
 
 Paper cash always preserved the inherent sovereign right of private transaction between two people. As society leaves behind paper and coin for digital cash, that right must be preserved by protocol — not entrusted to intermediaries. BOLT-12 + Nostr is that protocol.
 
+> **Lightning milestone — $1M single payment (March 2026):** Amboss documented a $1,000,000 USD Lightning payment settled in a single transaction — no credit card network, no correspondent banking, no 3-day clearing window.
+> Native internet money is not theoretical: https://www.amboss.tech/blog/lightning-network-settles-one-million-dollar-payment
+
 > 22 of 36 frontier AI models chose Bitcoin as #1 preferred money (btcpolicy.org, 2025).
 > 91.3% peak preference (Claude 4.5). Zero models chose fiat as top pick.
 > o4-mini cited Lightning Network specifically for urgent payments.
