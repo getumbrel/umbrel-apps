@@ -3,7 +3,7 @@ id: openclaw
 name: OpenClaw
 tagline: The AI that actually does things
 category: ai
-version: "2026.3.8"
+version: "2026.3.11"
 port: 18789
 path: ""
 description: >-
@@ -39,20 +39,22 @@ gallery:
   - 2.jpg
   - 3.jpg
 releaseNotes: >-
-  What's new in OpenClaw (v2026.3.2 → v2026.3.8):
-    - New backup commands to create and verify local state archives
-    - Configurable Talk mode silence timeout for voice interactions
-    - TUI now infers the active agent from the current workspace automatically
-    - Brave web search adds opt-in LLM Context mode for richer grounding results
-    - ACP provenance metadata support for tracing agent-to-agent interactions
-    - Spanish locale support added to the Control UI
-    - Context engine plugin interface for alternative memory and compaction strategies
-    - Persistent ACP Discord channel and Telegram topic bindings that survive restarts
-    - Per-topic agent routing in Telegram forum groups
-    - Docker multi-stage build for smaller runtime images
-    - Gemini 3.1 Flash-Lite added to built-in provider catalog
-    - Numerous Telegram, Feishu, Discord, Slack, LINE, Signal, and WhatsApp reliability fixes
-    - Security hardening across browser navigation, sandbox boundaries, webhook auth, and exec approvals
+  🚨 Security fix: A cross-site WebSocket hijacking vulnerability has been patched that could have allowed untrusted origins to gain admin access in trusted-proxy mode. Updating is strongly recommended.
+
+
+  What's new in OpenClaw (v2026.3.8 → v2026.3.11):
+    - Critical WebSocket security fix enforcing browser origin validation for all connections
+    - First-class Ollama setup with Local or Cloud + Local modes and curated model suggestions
+    - New OpenCode Go provider with shared key setup for both OpenCode profiles
+    - Multimodal image and audio indexing for memory search using Gemini embeddings
+    - Hunter Alpha and Healer Alpha free stealth models added via OpenRouter
+    - iOS home canvas redesigned with live agent overview and docked toolbar
+    - macOS chat model picker with persistent thinking-level selections
+    - ACP spawned sessions can now resume existing conversations instead of always starting fresh
+    - Discord auto-created thread archiving duration is now configurable
+    - Cron jobs can no longer send ad hoc notifications outside their delivery channel (breaking change — run `openclaw doctor --fix` to migrate)
+    - Numerous fixes for Telegram, Feishu, Discord, Mattermost, MS Teams, Signal, and Matrix reliability
+    - Security hardening across sandbox writes, secret files, archive extraction, plugin routes, and session auth
     - And much more. Full details at https://github.com/openclaw/openclaw/releases
 submitter: Umbrel
 submission: https://github.com/getumbrel/umbrel-apps/pull/4649
