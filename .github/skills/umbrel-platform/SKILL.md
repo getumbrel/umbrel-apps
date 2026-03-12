@@ -244,13 +244,17 @@ UmbrelOS handles this automatically. During manual recovery, follow this order.
 
 ## 6a. Umbrel Rewind — Snapshot DR Tool
 
+**Source:** [github.com/getumbrel/umbrel](https://github.com/getumbrel/umbrel) — Rewind is part of the `umbreld` daemon built into umbrelOS. There is no separate repository; it is implemented inside the platform.
+
+**Current OS version:** umbrelOS **1.5.0** (stable, released Nov 5 2025). No 1.6.x beta has been published as of March 2026 — confirmed against [github.com/getumbrel/umbrel/releases](https://github.com/getumbrel/umbrel/releases). Monitor that page for any 1.6.0-beta.1 pre-release.
+
 UmbrelOS ships a built-in point-in-time recovery tool called **Rewind**, accessible from the Umbrel Web UI. It uses an automated snapshot schedule:
 
-| Age           | Snapshot cadence        |
-| ------------- | ----------------------- |
-| Last 24 hours | Every hour              |
-| Last 30 days  | Every day               |
-| Older         | Monthly (best-effort)   |
+| Age           | Snapshot cadence                      |
+| ------------- | ------------------------------------- |
+| Last 24 hours | Every hour                            |
+| Last 30 days  | Every day                             |
+| Older         | Monthly (best-effort)                 |
 | Origin        | App install snapshot kept permanently |
 
 ### What Rewind covers
@@ -261,13 +265,21 @@ UmbrelOS ships a built-in point-in-time recovery tool called **Rewind**, accessi
 
 ### What Rewind does NOT protect — Lightning apps
 
-| File                         | App | Why excluded                                                                              |
-| ---------------------------- | --- | ----------------------------------------------------------------------------------------- |
-| `lightningd.sqlite3`         | CLN | `backupIgnore` — restoring a stale channel-state DB triggers revocation penalties         |
-| `hsm_secret`                 | CLN | Not excluded, but Rewind of a stale state without matching sqlite3 is dangerous            |
-| `channel.backup` (SCB)       | LND | Stale SCB restore causes force-close of all channels at time of backup                   |
+| File                   | App | Why excluded                                                                      |
+| ---------------------- | --- | --------------------------------------------------------------------------------- |
+| `lightningd.sqlite3`   | CLN | `backupIgnore` — restoring a stale channel-state DB triggers revocation penalties |
+| `hsm_secret`           | CLN | Not excluded, but Rewind of a stale state without matching sqlite3 is dangerous   |
+| `channel.backup` (SCB) | LND | Stale SCB restore causes force-close of all channels at time of backup            |
 
 **Rule:** Umbrel Rewind is safe for stateless apps (RTL, LNbits config). For CLN channel state, Rewind is intentionally bypassed — operators must maintain their own out-of-band backups of `hsm_secret` and `emergency.recover`.
+
+### `backupIgnore` origin — upstream vs. our PR
+
+**Key finding (verified March 12 2026):** The `backupIgnore: - data/lightningd/bitcoin/lightningd.sqlite3` line is **already present in upstream `getumbrel/umbrel-apps` master** at version `25.09.3-hotfix.1`. It is NOT a new introduction by our PR #5014 — it was added by Blockstream/Umbrel previously.
+
+**Our PR #5014 carries it forward unmodified.** The Snapshot/Rewind hardening blocks added to the release notes document what the field means for operators — a documentation gap, not a code gap.
+
+**No upstream issue specifically targets CLN `backupIgnore` or Rewind safety for Lightning nodes** — searched `getumbrel/umbrel` and `getumbrel/umbrel-apps` issue trackers. There is no 1.6.1 fix planned for this. Our `backupIgnore` is the authoritative protection; operator education (release notes + DR-RUNBOOK.md) is the only remaining gap we are closing.
 
 ### Operator backup responsibility for CLN
 
