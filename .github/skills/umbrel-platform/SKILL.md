@@ -242,13 +242,18 @@ UmbrelOS handles this automatically. During manual recovery, follow this order.
 
 ---
 
-## 6a. Umbrel Rewind — Snapshot DR Tool
+## 6a. Umbrel Rewind & Backups — Snapshot DR Tool
 
-**Source:** [github.com/getumbrel/umbrel](https://github.com/getumbrel/umbrel) — Rewind is part of the `umbreld` daemon built into umbrelOS. There is no separate repository; it is implemented inside the platform.
+**Source:** [github.com/getumbrel/umbrel](https://github.com/getumbrel/umbrel) — Rewind and the new Backups module are part of the `umbreld` daemon (`packages/umbreld/source/modules/backups/`). There is no separate repository; everything is inside the platform.
 
-**Current OS version:** umbrelOS **1.5.0** (stable, released Nov 5 2025). No 1.6.x beta has been published as of March 2026 — confirmed against [github.com/getumbrel/umbrel/releases](https://github.com/getumbrel/umbrel/releases). Monitor that page for any 1.6.0-beta.1 pre-release.
+**umbrelOS version status (verified March 12 2026):**
 
-UmbrelOS ships a built-in point-in-time recovery tool called **Rewind**, accessible from the Umbrel Web UI. It uses an automated snapshot schedule:
+- **1.5.0** — current stable, released Nov 5 2025 (published GitHub Release)
+- **1.6.1** — tag exists at commit [`3e4ad45`](https://github.com/getumbrel/umbrel/commit/3e4ad453ad63629251648326177fc50402e3514d), merged into master ~Feb 2026, but **no GitHub Release page published yet**. 588 files changed. Introduces a full Backups system (Kopia-based) alongside Rewind.
+
+### Rewind — Point-in-Time File Recovery
+
+Rewind is accessible via Umbrel Web UI → Files. It uses an automated snapshot schedule:
 
 | Age           | Snapshot cadence                      |
 | ------------- | ------------------------------------- |
@@ -257,29 +262,34 @@ UmbrelOS ships a built-in point-in-time recovery tool called **Rewind**, accessi
 | Older         | Monthly (best-effort)                 |
 | Origin        | App install snapshot kept permanently |
 
-### What Rewind covers
+### New in 1.6.1 — Backups Module (Kopia-based)
 
-- App configuration files (`docker-compose.yml`, `umbrel-app.yml`, `exports.sh`)
-- App `data/` directory contents **except files listed in `backupIgnore`**
-- UmbrelOS system config (`umbrel.yaml`)
+1.6.1 adds a full **Backups** feature to the Umbrel Web UI (`Settings → Backups`):
 
-### What Rewind does NOT protect — Lightning apps
+- Backs up `~/umbrel/` data using [Kopia](https://kopia.io/) to an external device or USB drive
+- Generates a `.kopiaignore` file at backup time by reading `backupIgnore` from every installed app's `umbrel-app.yml`
+- **The Backups Configure Wizard shows a UI panel** listing which app files are auto-excluded (`backups-exclusions.tsx` → `useAppsAutoExcludedPaths` hook → `app.getBackupIgnoredFilePaths()`)
+- Operators will **see `lightningd.sqlite3` listed as auto-excluded** from their CLN backups in this UI
+
+**Backend flow:** `backups.ts` `createIgnoreFile()` → calls `app.getBackupIgnoredFilePaths()` for every installed app → injects those paths into the `.kopiaignore` file passed to Kopia. This happens at every backup run.
+
+### What Rewind/Backups does NOT protect — Lightning apps
 
 | File                   | App | Why excluded                                                                      |
 | ---------------------- | --- | --------------------------------------------------------------------------------- |
 | `lightningd.sqlite3`   | CLN | `backupIgnore` — restoring a stale channel-state DB triggers revocation penalties |
-| `hsm_secret`           | CLN | Not excluded, but Rewind of a stale state without matching sqlite3 is dangerous   |
+| `hsm_secret`           | CLN | Not excluded, but restoring a stale state without matching sqlite3 is dangerous   |
 | `channel.backup` (SCB) | LND | Stale SCB restore causes force-close of all channels at time of backup            |
 
-**Rule:** Umbrel Rewind is safe for stateless apps (RTL, LNbits config). For CLN channel state, Rewind is intentionally bypassed — operators must maintain their own out-of-band backups of `hsm_secret` and `emergency.recover`.
+**Rule:** Rewind/Backups is safe for stateless apps (RTL, LNbits config). For CLN channel state, `backupIgnore` intentionally bypasses backup — operators must maintain out-of-band backups of `hsm_secret` and `emergency.recover`.
 
 ### `backupIgnore` origin — upstream vs. our PR
 
-**Key finding (verified March 12 2026):** The `backupIgnore: - data/lightningd/bitcoin/lightningd.sqlite3` line is **already present in upstream `getumbrel/umbrel-apps` master** at version `25.09.3-hotfix.1`. It is NOT a new introduction by our PR #5014 — it was added by Blockstream/Umbrel previously.
+**Key finding (verified March 12 2026):** The `backupIgnore: - data/lightningd/bitcoin/lightningd.sqlite3` line is **already present in upstream `getumbrel/umbrel-apps` master** at version `25.09.3-hotfix.1`. Not a new PR #5014 introduction — added by Blockstream/Umbrel previously.
 
-**Our PR #5014 carries it forward unmodified.** The Snapshot/Rewind hardening blocks added to the release notes document what the field means for operators — a documentation gap, not a code gap.
+**Our PR #5014 carries it forward unmodified.** With 1.6.1, this field gains new significance: it will be **visible to operators in the Backups UI** as an automatic exclusion, making our release-note documentation of _why_ it's excluded even more valuable.
 
-**No upstream issue specifically targets CLN `backupIgnore` or Rewind safety for Lightning nodes** — searched `getumbrel/umbrel` and `getumbrel/umbrel-apps` issue trackers. There is no 1.6.1 fix planned for this. Our `backupIgnore` is the authoritative protection; operator education (release notes + DR-RUNBOOK.md) is the only remaining gap we are closing.
+**No upstream issue targets CLN `backupIgnore` or Rewind safety** — our solution is complete and correctly positioned ahead of the 1.6.1 UI upgrade.
 
 ### Operator backup responsibility for CLN
 
