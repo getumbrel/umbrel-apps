@@ -39,9 +39,9 @@ services:
       #   Runes are created by hooks/pre-start on first boot.
       # ---------------------------------------------------------------
       LNBITS_BACKEND_WALLET_CLASS: CLNRestWallet
-      # Constrain funding-source choices to CLN-only backends.
-      # Allows seamless switch to CoreLightningWallet (JSON-RPC fallback)
-      # without exposing LND or legacy options. Both survive OS restart.
+      # Constrain allowed wallet classes for LNbits operations to CLN-focused
+      # backends plus VoidWallet. Note: LNbits admin UI may still display the
+      # full upstream backend list; this allowlist is still enforced at runtime.
       LNBITS_ALLOWED_FUNDING_SOURCES: "CLNRestWallet,CoreLightningWallet,VoidWallet"
 
       # --- Option A: CoreLightningWallet (JSON-RPC) ---
@@ -79,8 +79,8 @@ services:
               break
             fi
             if [ "$$i" -eq 90 ]; then
-              echo "CLNRest not ready after timeout; starting LNbits anyway."
-              break
+              echo "CLNRest not ready after timeout; failing startup to retry."
+              exit 1
             fi
             sleep 2
           done
