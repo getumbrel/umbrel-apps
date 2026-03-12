@@ -49,7 +49,9 @@ services:
 
       # --- Option B: CLNRestWallet (HTTPS + runes) ---
       CLNREST_URL: "${CLNREST_URL}"
-      CLNREST_CA: "/cln/${APP_CORE_LIGHTNING_BITCOIN_NETWORK}/ca.pem"
+      CLNREST_CA: "/cln/${APP_CORE_LIGHTNING_BITCOIN_NETWORK:-bitcoin}/ca.pem"
+      CLNREST_CLIENT_CERT: "/cln/${APP_CORE_LIGHTNING_BITCOIN_NETWORK:-bitcoin}/client.pem"
+      CLNREST_CLIENT_KEY: "/cln/${APP_CORE_LIGHTNING_BITCOIN_NETWORK:-bitcoin}/client-key.pem"
       CLNREST_READONLY_RUNE: "${APP_LNBITS_CLN_READONLY_RUNE}"
       CLNREST_INVOICE_RUNE: "${APP_LNBITS_CLN_INVOICE_RUNE}"
       CLNREST_PAY_RUNE: "${APP_LNBITS_CLN_PAY_RUNE}"
@@ -60,6 +62,30 @@ services:
       LNBITS_DISABLED_EXTENSIONS: "amilk"
       LNBITS_ADMIN_EXTENSIONS: "ngrok"
       LNBITS_ADMIN_UI: "true"
+    command:
+      - sh
+      - -c
+      - |
+        if [ "$$LNBITS_BACKEND_WALLET_CLASS" = "CLNRestWallet" ]; then
+          echo "Waiting for CLNRest readiness before starting LNbits..."
+          for i in $$(seq 1 90); do
+            if curl -sk --max-time 5 \
+              --cacert "$$CLNREST_CA" \
+              --cert "$$CLNREST_CLIENT_CERT" \
+              --key "$$CLNREST_CLIENT_KEY" \
+              -H "rune: $$CLNREST_READONLY_RUNE" \
+              -X POST "$$CLNREST_URL/v1/listfunds" | grep -q '"channels"'; then
+              echo "CLNRest ready. Starting LNbits."
+              break
+            fi
+            if [ "$$i" -eq 90 ]; then
+              echo "CLNRest not ready after timeout; starting LNbits anyway."
+              break
+            fi
+            sleep 2
+          done
+        fi
+        exec uv run lnbits --port "$$LNBITS_PORT" --host "$$LNBITS_HOST" --forwarded-allow-ips='*'
     networks:
       default:
         ipv4_address: ${APP_LNBITS_CLN_IP}
