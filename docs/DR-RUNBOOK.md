@@ -377,22 +377,22 @@ These are the variables `docker-compose.yml` requires, grouped by source:
 
 **From `core-lightning/exports.sh` (Provider Contract):**
 
-| Variable                              | Example Value                       | Purpose                          |
-| ------------------------------------- | ----------------------------------- | -------------------------------- |
-| `APP_CORE_LIGHTNING_IP`               | `10.21.21.94`                       | cln-application container IP     |
-| `APP_CORE_LIGHTNING_PORT`             | `2103`                              | cln-application web UI port      |
-| `APP_CORE_LIGHTNING_DAEMON_IP`        | `10.21.21.96`                       | lightningd container IP          |
-| `APP_CORE_LIGHTNING_DAEMON_PORT`      | `9736`                              | Lightning P2P port               |
-| `APP_CORE_LIGHTNING_WEBSOCKET_PORT`   | `2106`                              | WebSocket port                   |
-| `APP_CORE_LIGHTNING_DAEMON_GRPC_PORT` | `2110`                              | gRPC port                        |
-| `APP_CORE_LIGHTNING_BITCOIN_NETWORK`  | `bitcoin`                           | Network name (mainnet→bitcoin)   |
-| `APP_CORE_LIGHTNING_DATA_DIR`         | `<EXPORTS_APP_DIR>/data/lightningd` | Host path to CLN data            |
-| `APP_CORE_LIGHTNING_HIDDEN_SERVICE`   | `<onion>.onion`                     | Tor hidden service hostname      |
-| `CLNREST_HOST`                        | `0.0.0.0`                           | CLNRest bind address             |
-| `CLNREST_PORT`                        | `2107`                              | CLNRest port                     |
-| `CLNREST_URL`                         | `https://10.21.21.96:2107`          | Consumer-facing CLNRest endpoint |
-| `CORE_LIGHTNING_PATH`                 | `/root/.lightning`                  | Container-internal lightning dir |
-| `COMMANDO_CONFIG`                     | `/root/.lightning/.commando-env`    | Commando rune file path          |
+| Variable                              | Example Value                       | Purpose                                             |
+| ------------------------------------- | ----------------------------------- | --------------------------------------------------- |
+| `APP_CORE_LIGHTNING_IP`               | `10.21.21.94`                       | `app` service (cln-application Node.js engine) IP   |
+| `APP_CORE_LIGHTNING_PORT`             | `2103`                              | `app` service port (proxied by `app_proxy` to user) |
+| `APP_CORE_LIGHTNING_DAEMON_IP`        | `10.21.21.96`                       | lightningd container IP                             |
+| `APP_CORE_LIGHTNING_DAEMON_PORT`      | `9736`                              | Lightning P2P port                                  |
+| `APP_CORE_LIGHTNING_WEBSOCKET_PORT`   | `2106`                              | WebSocket port                                      |
+| `APP_CORE_LIGHTNING_DAEMON_GRPC_PORT` | `2110`                              | gRPC port                                           |
+| `APP_CORE_LIGHTNING_BITCOIN_NETWORK`  | `bitcoin`                           | Network name (mainnet→bitcoin)                      |
+| `APP_CORE_LIGHTNING_DATA_DIR`         | `<EXPORTS_APP_DIR>/data/lightningd` | Host path to CLN data                               |
+| `APP_CORE_LIGHTNING_HIDDEN_SERVICE`   | `<onion>.onion`                     | Tor hidden service hostname                         |
+| `CLNREST_HOST`                        | `0.0.0.0`                           | CLNRest bind address                                |
+| `CLNREST_PORT`                        | `2107`                              | CLNRest port                                        |
+| `CLNREST_URL`                         | `https://10.21.21.96:2107`          | Consumer-facing CLNRest endpoint                    |
+| `CORE_LIGHTNING_PATH`                 | `/root/.lightning`                  | Container-internal lightning dir                    |
+| `COMMANDO_CONFIG`                     | `/root/.lightning/.commando-env`    | Commando rune file path                             |
 
 **From `bitcoin/exports.sh` (dependency injection):**
 

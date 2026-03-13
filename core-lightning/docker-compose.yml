@@ -82,11 +82,7 @@ services:
       # this flag has shipped since CLN v0.11.1 and is production-stable.
       # Without it, the funder plugin is silently inert with no operator warning.
       - --experimental-dual-fund
-      # Bookkeeper was migrated into CLN core in v25.09.3 and has a crash regression
-      # on this release that destabilizes the cln-application proxy and DR recovery.
-      # Remove this line in the v25.12.1 upgrade PR when the upstream fix lands.
-      # Tracked: https://github.com/getumbrel/umbrel-apps/issues/4785
-      - --disable-plugin=bookkeeper
+
     volumes:
       - "${APP_CORE_LIGHTNING_DATA_DIR}:${CORE_LIGHTNING_PATH}"
     networks:

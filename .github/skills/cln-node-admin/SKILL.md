@@ -408,11 +408,11 @@ Source: [grubles/cln-cheatsheet](https://github.com/grubles/cln-cheatsheet)
 
 ### Component Versions
 
-| Component                | Version        | Image                                                 |
-| ------------------------ | -------------- | ----------------------------------------------------- |
-| lightningd               | v25.09.3       | `elementsproject/lightningd:v25.09.3@sha256:ca956...` |
-| cln-application (App UI) | v25.07.3       | `ghcr.io/elementsproject/cln-application:25.07.3`     |
-| Manifest                 | 25.09.3-stable | `core-lightning/umbrel-app.yml`                       |
+| Component                       | Version        | Image                                                 |
+| ------------------------------- | -------------- | ----------------------------------------------------- |
+| lightningd                      | v25.09.3       | `elementsproject/lightningd:v25.09.3@sha256:ca956...` |
+| cln-application (`app` service) | v25.07.3       | `ghcr.io/elementsproject/cln-application:25.07.3`     |
+| Manifest                        | 25.09.3-stable | `core-lightning/umbrel-app.yml`                       |
 
 ### Key Upgrade: c-lightning-rest → CLNrest (built-in)
 
@@ -449,19 +449,48 @@ v25.09.3 replaces the deprecated `c-lightning-rest` sidecar with CLNrest built d
 | `--experimental-peer-storage` | Peer backup storage for mobile clients          | Not added     | Useful for mobile LSP clients                                                            |
 | `--experimental-anchors`      | Anchor outputs for fee bumping                  | Not added     | Being stabilized upstream                                                                |
 
-### Bookkeeper: The app_proxy Gap
+### core-lightning Service Topology (CRITICAL — memorize this)
 
-Bookkeeper was migrated into core lightningd in v25.09.3. The Blockstream GUI (cln-application v25.07.3) has a **BKPR** tab that displays accounting data. With `--disable-plugin=bookkeeper`, the GUI shows empty/error state for:
+`core-lightning/docker-compose.yml` defines exactly 4 services:
 
-- BTC Transaction list with dates
-- Channel earnings (bkpr-channelsapy)
-- Income events export
+| Service      | Image                                             | Role                                                                                                                                                                                                                                                                         |
+| ------------ | ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `app_proxy`  | Umbrel standard (v1.0.0)                          | **The UI the user sees** — Umbrel's auth + reverse proxy shell. Presents the app in the Umbrel dashboard. Routes to `app` at `APP_HOST:APP_PORT`. Every Umbrel app has one. NOT a GUI itself — it proxies to `app`.                                                          |
+| `app`        | `ghcr.io/elementsproject/cln-application:25.07.3` | **Node.js application engine** — NOT a "desktop GUI". A server-side Node.js service (`npm run start`) that bridges `app_proxy` and `lightningd`'s APIs. Consumes CLNRest, WebSocket, and gRPC from `lightningd`. Has the BKPR accounting tab glitch in v25.07.3 on v25.09.3. |
+| `lightningd` | `elementsproject/lightningd:v25.09.3`             | **The CLN daemon AND the API.** CLNRest is native in v25.09.3. Exposes: CLNRest (CLNREST_PORT), WebSocket, gRPC (2110), P2P (9735/9736). `lightningd` IS the Lightning API that `app` calls.                                                                                 |
+| `tor`        | Umbrel standard                                   | Tor hidden service.                                                                                                                                                                                                                                                          |
 
-**Fix path**: Re-enable bookkeeper when the crash bug is fixed upstream (expected v25.12.1 or v26.01). This restores:
+**Version split — why `lightningd` is v25.09.3 but `app` is v25.07.3:**
 
-1. Full accounting visibility in the Blockstream desktop GUI
-2. `bkpr-listbalances`, `bkpr-listincome`, `bkpr-channelsapy` commands
-3. Income CSV export for tax reporting
+In the **prior Umbrel CLN release**, c-lightning-rest and COMMANDO lived as separate plugins/components alongside `lightningd`. They were the API layer consumers (RTL, etc.) depended on.
+
+**v25.09.3 is a watershed release:**
+
+- c-lightning-rest was **gutted** — CLNRest is now **natively integrated** into `lightningd` itself
+- **Bookkeeper is now native** to `lightningd` — no longer a separate plugin to install
+- COMMANDO remains but CLNRest is the primary API surface
+- This is the **first stable release** with this integrated architecture
+
+Umbrel stitched the upgrade by keeping `app` at cln-application v25.07.3 (the proven Node.js engine that works with this daemon) rather than jumping to a newer release. Upgrading `app` to a newer cln-application version is a future roadmap item.
+
+**Other wiring notes:**
+
+- `app_proxy` is Umbrel boilerplate present in every app — it's the Umbrel auth+proxy shell, not the content server
+- LNbits (`umbrel-lnbits-cln`) is wired differently: its `app` service IS the full UI+API. `app_proxy` is still present as boilerplate.
+
+### Bookkeeper: The cln-application BKPR Display Glitch
+
+v25.09.3 migrated bookkeeper into core `lightningd`. This introduced a **display glitch in the `app` service** (cln-application v25.07.3 Node.js engine) — specifically in the Bookkeeper/BKPR accounting tab of the UI it serves.
+
+**What works fine:**
+
+- `lightningd` itself — fully stable
+- `app_proxy` — unaffected, standard boilerplate
+- RTL (`core-lightning-rtl`) — consumes bookkeeper without issue, full channel management and DR recovery work
+- LNbits CLN — unaffected
+- All `lightning-cli bkpr-*` commands — work correctly
+
+**The glitch:** The `app` container's BKPR accounting screen shows incorrect/empty data. This is a UI rendering issue in cln-application v25.07.3 against the newly integrated bookkeeper. The node is fully operational. This is the **maximum stable configuration for v25.09.3** — bookkeeper stays enabled. The glitch resolves when Umbrel upgrades `app` to cln-application v26.01.2 (expected with v25.12.1).
 
 ### xpay + askrene: The Payment Engine Upgrade
 
