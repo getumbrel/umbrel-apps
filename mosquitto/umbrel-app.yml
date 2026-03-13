@@ -3,7 +3,7 @@ id: mosquitto
 name: Mosquitto
 tagline: An open source MQTT broker
 category: automation
-version: "2.0.22"
+version: "2.1.2"
 port: 9021
 description: >-
   Eclipse Mosquitto is an open source (EPL/EDL licensed) message broker that implements the MQTT protocol versions 5.0, 3.1.1 and 3.1. Mosquitto is lightweight and is suitable for use on all devices from low power single board computers to full servers.
@@ -24,12 +24,25 @@ gallery:
   - 2.jpg
   - 3.jpg
 releaseNotes: >-
-  This update includes several bug fixes and improvements:
-    - Improved bridge functionality and idle timeout handling
-    - Fixed problems with message queuing and client disconnections
-    - Resolved compilation and linking issues on various platforms
-    - Enhanced websockets support, including secure websockets
-    - Improved memory management and error handling
+  This is a major new release with many new features and improvements:
+    - Added built-in WebSockets support that no longer requires libwebsockets
+    - Added support for PROXY protocol v1 and v2
+    - Added broker-created topic aliases for MQTT v5
+    - Added new `global_plugin`, `global_max_clients`, and `global_max_connections` options
+    - Added `accept_protocol_versions` option to limit which MQTT versions are allowed per listener
+    - Added `--test-config` option to validate configuration before going live
+    - Added support for PUID/PGID environment variables for setting user/group privileges
+    - Added `bridge_receive_maximum` and `bridge_session_expiry_interval` options for MQTT v5 bridges
+    - Improved idle performance by reducing unnecessary process wakeups
+    - Added new acl-file, password-file, persist-sqlite, and sparkplug-aware plugins
+    - Dynamic security plugin now generates an initial configuration if none is present
+    - ⚠️ `max_packet_size` now defaults to 2,000,000 bytes instead of 256MB - update your config if you use large payloads
+    - ⚠️ The `acl_file` and `password_file` options are deprecated in favour of the new plugins
+    - ⚠️ Support for TLS v1.1 has been removed
+    - ⚠️ Support for OpenSSL versions older than 3.0 has been removed
+    - Fixed PUID/PGID checking for Docker
+    - Fixed persistence plugin conflict when used alongside `persistence true`
+    - Various build fixes including missing libedit in Docker builds
 
 
   Full release notes can be found at https://mosquitto.org/blog/
