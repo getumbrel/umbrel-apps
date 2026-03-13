@@ -6,7 +6,7 @@ services:
 
   app:
     image: s1t5/mailarchiver:2603.1@sha256:080c429b19565b2faed1a299cf0c037dc7fc0a52219f95c1686f787c1bdfdb26
-    restart: always
+    restart: on-failure
     environment:
       USER: 1000:1000
     volumes:
@@ -18,7 +18,7 @@ services:
 
   postgres:
     image: postgres:17.9-alpine3.23@sha256:6f30057d31f5861b66f3545d4821f987aacf1dd920765f0acadea0c58ff975b1
-    restart: always
+    restart: on-failure
     environment:
       POSTGRES_DB: mailarchiver
       POSTGRES_USER: mailarchiver
