@@ -158,7 +158,7 @@ Paper cash always preserved the inherent sovereign right of private transaction 
 
 > **Lightning milestone — $1M single payment (March 2026):** Amboss documented a $1,000,000 USD Lightning payment settled in a single transaction — no credit card network, no correspondent banking, no 3-day clearing window.
 > Native internet money is not theoretical: https://www.amboss.tech/blog/lightning-network-settles-one-million-dollar-payment
-
+>
 > 22 of 36 frontier AI models chose Bitcoin as #1 preferred money (btcpolicy.org, 2025).
 > 91.3% peak preference (Claude 4.5). Zero models chose fiat as top pick.
 > o4-mini cited Lightning Network specifically for urgent payments.
@@ -334,11 +334,11 @@ Cashu's sat-minimum means 1 sat (~$0.0006) is the floor. Fedimint's msat tokens 
 
 ## 6. Umbrel Apps — Ecash Stack
 
-| App               | Role                          | Deps      | Status                        |
-| ----------------- | ----------------------------- | --------- | ----------------------------- |
-| `fedimintd`       | Federation daemon             | [bitcoin] | Available (not yet installed) |
-| `cashu-me`        | Ecash wallet (Cashu protocol) | []        | Available                     |
-| `nutstash-wallet` | Ecash wallet (Cashu protocol) | []        | Available                     |
+| App               | Role                          | Deps        | Status                        |
+| ----------------- | ----------------------------- | ----------- | ----------------------------- |
+| `fedimintd`       | Federation daemon             | `[bitcoin]` | Available (not yet installed) |
+| `cashu-me`        | Ecash wallet (Cashu protocol) | `[]`        | Available                     |
+| `nutstash-wallet` | Ecash wallet (Cashu protocol) | `[]`        | Available                     |
 
 ### Gap: No Fedimint ↔ CLN wiring in Umbrel
 
