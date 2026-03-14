@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: core-lightning-rtl
 category: bitcoin
 name: Ride The Lightning (Core Lightning)
-version: "0.15.6-beta-boltz"
+version: "0.15.8-beta-boltz"
 tagline: Manage your Core Lightning node with RTL
 description: >-
   This version of RTL is specifically configured to use your Core Lightning node.
@@ -44,7 +44,31 @@ gallery:
 path: ""
 deterministicPassword: true
 releaseNotes: >-
-  This release contains the following updates:
-    - Bump boltz-client to 2.10.2
+  RTL bump to v0.15.8-beta-boltz with provider-contract integration for Core Lightning.
+
+
+  **What changed:**
+    - Upgraded RTL to v0.15.8-beta-boltz — **required**: v0.15.6 cannot parse the `bookkeeper` plugin responses introduced in CLN v25.12.1, breaking channel-list rendering and blocking channel fund recovery
+    - Upgraded boltz-client to v2.10.2
+    - Switched CLN connection wiring to exported provider-contract variables:
+      `LN_SERVER_URL=${CLNREST_URL}` and `RUNE_PATH=${CLNREST_RUNE_PATH}`
+
+
+  **Why this matters:**
+    - Reduces endpoint drift between Core Lightning and RTL during restarts/upgrades
+    - Keeps TLS+rune material aligned with Core Lightning contract exports
+    - Improves consistency for recovery testing and future CLN upgrade validation
+    - Forensic delta from HotFix 1: replaces `APP_CORE_LIGHTNING_REST_HOST + CORE_LIGHTNING_REST_PORT` URL reconstruction with direct `CLNREST_URL` contract consumption
+
+
+  **Snapshot / Rewind hardening:**
+    - RTL holds no channel state — Umbrel Rewind of RTL app data is safe and non-destructive
+    - CLN channel state (`lightningd.sqlite3`) is excluded from Umbrel snapshots; RTL recovery depends on CLN being recovered first
+    - Recovery procedure: restore CLN per DR-RUNBOOK.md Scenario 3, then restart RTL from Umbrel UI
+
+
+  **Operator references:**
+    - Recovery and reboot validation guidance: `docs/DR-RUNBOOK.md`
+    - Operational sequencing and grace-window guidance: `docs/HA.md`
 submitter: Umbrel
 submission: https://github.com/getumbrel/umbrel-apps/pull/7

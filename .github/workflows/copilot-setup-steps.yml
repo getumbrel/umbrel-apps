@@ -1,0 +1,42 @@
+name: "Copilot Setup Steps"
+
+# Run automatically when this file changes (for validation), and allow manual testing
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+  pull_request:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+
+jobs:
+  # MUST be called copilot-setup-steps or Copilot coding agent won't pick it up
+  copilot-setup-steps:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install ShellCheck (for exports.sh / hook validation)
+        run: sudo apt-get update && sudo apt-get install -y shellcheck
+
+      - name: Install yq (for umbrel-app.yml validation)
+        run: |
+          sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/download/v4.44.6/yq_linux_amd64
+          sudo chmod +x /usr/local/bin/yq
+
+      - name: Verify tools
+        run: |
+          echo "=== Tool versions ==="
+          shellcheck --version | head -2
+          yq --version
+          docker compose version
+          echo "=== Workspace ==="
+          ls -la
+          echo "=== Copilot instructions ==="
+          test -f .github/copilot-instructions.md && echo "✓ copilot-instructions.md found" || echo "✗ missing"

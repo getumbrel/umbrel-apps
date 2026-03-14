@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: core-lightning
 category: bitcoin
 name: Core Lightning
-version: "25.09.3-hotfix.1"
+version: "25.09.3-stable"
 tagline: Run your personal Core Lightning node
 description: >-
   Get started with the Lightning network today with Core Lightning - a
@@ -32,34 +32,42 @@ defaultPassword: ""
 submitter: Blockstream
 submission: https://github.com/getumbrel/umbrel-apps/pull/475
 releaseNotes: >-
-  This hotfix release fixes an issue where users were unable to connect external wallet clients to their Core Lightning node.
-  If you were previously unable to connect a wallet, please go to "Settings" in the top right > Connect wallet > and select your desired connection method to see corrected connection details.
+  Stabilization release for Core Lightning v25.09.3 on umbrelOS.
 
 
-  **Previous release notes:**
+  This app-store bump formalizes Core Lightning as a provider for dependent apps
+  (RTL and LNbits-CLN) and hardens CLNRest reachability for inter-app traffic.
 
 
-  This updates cln-application to v25.07.3, lightningd to v25.09.3, and replaces the legacy c-lightning-rest service with the built-in REST interface of lightningd.
+  **Provider Contract:**
+    - Canonical exports for CLNRest URL, certs, rune path, WebSocket, and gRPC
+    - Consumer apps bind to exported contract variables instead of reconstructing endpoints
+    - Backward-compatible aliases retained for recovery and migration safety
 
 
-  **CLN Application v25.07.3:**
-    - Proactive mitigation against a widespread npm ecosystem threat involving malicious code in popular packages.
-    - Updated and streamlined environment variables for improved configuration and usability
-    - Added support for running Commando over secure WebSocket (eg. wss-proxy) connections
-    - Removed version and commit suffix from node aliases for a cleaner display
-    - Updated BKPR date format from YYYY-MM-DD to UI standard DD MMM, YYYY
-    - Added infinite scroll support for BTC Transactions, CLN Offers, and CLN Transactions
+  **Runtime hardening:**
+    - CLNRest explicitly bound and published on 2107 for sibling container access
+    - Startup sequencing ensures tor -> lightningd -> app dependencies settle in order
+    - `--experimental-dual-fund` enabled for modern channel workflows
+    - `bookkeeper` remains disabled on v25.09.3 as a known temporary workaround
+    - Forensic delta from HotFix 1: internal consumer wiring now binds to canonical `CLNREST_*` exports instead of mixed legacy host/port reconstruction
 
-  **CLN v25.09.3:**
-    - Bookkeeper has been migrated into core lightning, allowing visibility into payments, fees and channel activities.
-    - xpay can now directly pay BIP353 addresses (like ₿cln@blockstream.com) and simple offers without extra steps.
-    - Better feedback when channel creation fails due to capacity limits.
-    - Now limiting the number of parts a payment can be split on xpay and askrene
-    - Reckless now supports the modern uv package manager for Python plugins.
-    - Improvements to the rate of feasible solutions found in the main loop of the solver on askrene
-    - Splicing improvements allow for better compatibility with Eclair and continuous routing during channel modifications.
-    - Improve security by ensuring all peers must support channel type.
-    - Payment secrets now mandatory in BOLT11 invoices for better payment protection.
+
+  **umbrelOS Rewind / Snapshot hardening:**
+    - `lightningd.sqlite3` is excluded from Umbrel snapshots via `backupIgnore` — restoring a stale channel-state DB would trigger revocation penalties on all open channels
+    - Umbrel Rewind does NOT protect CLN channel state; operators must maintain out-of-band backups of `hsm_secret` and `emergency.recover`
+    - Recovery procedure: DR-RUNBOOK.md Scenario 3 (Channel Loss)
+    - Use VS Code task `DR: Channel Backup Export (CLN)` to automate `hsm_secret` exports
+
+
+  **Upgrade track:**
+    - Next validation target is CLN v25.12.1
+    - Focus areas are BIP-39 mnemonic support for recovery and removing the current `bookkeeper` workaround once stability is restored
+
+
+  **Operator references:**
+    - Recovery and reboot validation guidance: `docs/DR-RUNBOOK.md`
+    - Operational sequencing and grace-window guidance: `docs/HA.md`
 
 backupIgnore:
   - data/lightningd/bitcoin/lightningd.sqlite3

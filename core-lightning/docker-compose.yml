@@ -9,6 +9,8 @@ services:
     image: ghcr.io/elementsproject/cln-application:25.07.3@sha256:af22cebd21e1175651049d09cf2dd547da569fddd55e4c7766e5956bd47e91fa
     command: npm run start
     restart: on-failure
+    depends_on:
+      - lightningd
     volumes:
       - ${APP_DATA_DIR}/data/app:${APP_CONFIG_DIR}
       - ${APP_CORE_LIGHTNING_DATA_DIR}:${CORE_LIGHTNING_PATH}
@@ -23,7 +25,7 @@ services:
       APP_MODE: ${APP_MODE}
       LIGHTNING_DATA_DIR: ${CORE_LIGHTNING_PATH}
       APP_CONFIG_FILE: ${APP_CONFIG_DIR}/config.json
-      LIGHTNING_VARS_FILE: ${COMMANDO_CONFIG}
+      LIGHTNING_VARS_FILE: ${CLNREST_RUNE_PATH}
       LIGHTNING_WS_PROTOCOL: ws
       LIGHTNING_WS_PORT: ${APP_CORE_LIGHTNING_WEBSOCKET_PORT}
       LIGHTNING_WS_CLIENT_KEY_FILE: ${CORE_LIGHTNING_PATH}/${APP_CORE_LIGHTNING_BITCOIN_NETWORK}/client-key.pem
@@ -32,7 +34,7 @@ services:
       LIGHTNING_REST_PROTOCOL: https
       LIGHTNING_REST_HOST: ${DEVICE_DOMAIN_NAME}
       LIGHTNING_REST_TOR_HOST: ${APP_CORE_LIGHTNING_HIDDEN_SERVICE}
-      LIGHTNING_REST_PORT: ${CORE_LIGHTNING_REST_PORT}
+      LIGHTNING_REST_PORT: ${CLNREST_PORT}
       LIGHTNING_REST_CLIENT_KEY_FILE: ${CORE_LIGHTNING_PATH}/${APP_CORE_LIGHTNING_BITCOIN_NETWORK}/client-key.pem
       LIGHTNING_REST_CLIENT_CERT_FILE: ${CORE_LIGHTNING_PATH}/${APP_CORE_LIGHTNING_BITCOIN_NETWORK}/client.pem
       LIGHTNING_REST_CA_CERT_FILE: ${CORE_LIGHTNING_PATH}/${APP_CORE_LIGHTNING_BITCOIN_NETWORK}/ca.pem
@@ -49,10 +51,12 @@ services:
   lightningd:
     image: elementsproject/lightningd:v25.09.3@sha256:ca95610b7db23a8fad5cf6e36044ecd4ff9124dcc7dae50bd151084d39feaf70
     restart: on-failure
+    depends_on:
+      - tor
     ports:
       - ${APP_CORE_LIGHTNING_DAEMON_PORT}:9735
       - ${APP_CORE_LIGHTNING_WEBSOCKET_PORT}:${APP_CORE_LIGHTNING_WEBSOCKET_PORT}
-      - ${CORE_LIGHTNING_REST_PORT}:${CORE_LIGHTNING_REST_PORT}
+      - ${CLNREST_PORT}:${CLNREST_PORT}
       - ${APP_CORE_LIGHTNING_DAEMON_GRPC_PORT}:${APP_CORE_LIGHTNING_DAEMON_GRPC_PORT}
     environment:
       LIGHTNINGD_NETWORK: ${APP_CORE_LIGHTNING_BITCOIN_NETWORK}
@@ -71,8 +75,14 @@ services:
       - --database-upgrade=true
       - --grpc-host=${APP_CORE_LIGHTNING_DAEMON_IP}
       - --grpc-port=${APP_CORE_LIGHTNING_DAEMON_GRPC_PORT}
-      - --clnrest-host=${APP_CORE_LIGHTNING_DAEMON_IP}
-      - --clnrest-port=${CORE_LIGHTNING_REST_PORT}
+      - --clnrest-host=${CLNREST_HOST}
+      - --clnrest-port=${CLNREST_PORT}
+      # Activates the built-in funder plugin for dual-funded (cooperative) channel opens.
+      # "experimental" reflects BOLTs spec status (#851), not implementation maturity —
+      # this flag has shipped since CLN v0.11.1 and is production-stable.
+      # Without it, the funder plugin is silently inert with no operator warning.
+      - --experimental-dual-fund
+
     volumes:
       - "${APP_CORE_LIGHTNING_DATA_DIR}:${CORE_LIGHTNING_PATH}"
     networks:

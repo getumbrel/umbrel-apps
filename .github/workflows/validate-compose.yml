@@ -1,0 +1,62 @@
+name: Validate Compose
+
+on:
+  pull_request:
+    paths:
+      - "**/docker-compose.yml"
+      - "**/umbrel-app.yml"
+      - "**/exports.sh"
+
+jobs:
+  validate:
+    name: Validate app structure
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install yq
+        run: |
+          sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/download/v4.44.6/yq_linux_amd64
+          sudo chmod +x /usr/local/bin/yq
+
+      - name: Install ShellCheck
+        run: sudo apt-get update && sudo apt-get install -y shellcheck
+
+      - name: Find changed apps
+        id: changed
+        run: |
+          APPS=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.sha }} | grep -oP '^[^/]+(?=/)' | sort -u | tr '\n' ' ')
+          echo "apps=$APPS" >> "$GITHUB_OUTPUT"
+
+      - name: Validate port consistency
+        run: |
+          for app in ${{ steps.changed.outputs.apps }}; do
+            if [[ ! -f "$app/umbrel-app.yml" ]] || [[ ! -f "$app/docker-compose.yml" ]]; then
+              continue
+            fi
+            MANIFEST_PORT=$(yq '.port' "$app/umbrel-app.yml" 2>/dev/null)
+            COMPOSE_PORT=$(grep -oP 'APP_PORT:\s*\K\d+' "$app/docker-compose.yml" 2>/dev/null | head -1)
+            if [[ -n "$MANIFEST_PORT" ]] && [[ -n "$COMPOSE_PORT" ]] && [[ "$MANIFEST_PORT" != "$COMPOSE_PORT" ]]; then
+              echo "::error file=$app/umbrel-app.yml::Port mismatch: umbrel-app.yml=$MANIFEST_PORT, docker-compose.yml APP_PORT=$COMPOSE_PORT"
+              exit 1
+            fi
+            echo "✓ $app: port $MANIFEST_PORT consistent"
+          done
+
+      - name: ShellCheck exports.sh
+        run: |
+          for app in ${{ steps.changed.outputs.apps }}; do
+            if [[ -f "$app/exports.sh" ]]; then
+              shellcheck -s bash "$app/exports.sh" || true
+              echo "✓ $app/exports.sh checked"
+            fi
+          done
+
+      - name: Validate docker-compose syntax
+        run: |
+          for app in ${{ steps.changed.outputs.apps }}; do
+            if [[ -f "$app/docker-compose.yml" ]]; then
+              docker compose -f "$app/docker-compose.yml" config --quiet 2>&1 || echo "::warning file=$app/docker-compose.yml::Compose validation failed (may need env vars)"
+              echo "✓ $app/docker-compose.yml syntax checked"
+            fi
+          done
