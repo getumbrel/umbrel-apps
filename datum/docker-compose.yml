@@ -12,6 +12,10 @@ services:
     command: ["--config=/app/conf/datum_gateway_config.json"]
     user: 1000:1000
     restart: on-failure
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 524288
     volumes:
       - ${APP_DATA_DIR}/data/settings/:/app/conf/
     ports:
