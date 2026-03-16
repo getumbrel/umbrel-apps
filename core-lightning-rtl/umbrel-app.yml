@@ -44,31 +44,11 @@ gallery:
 path: ""
 deterministicPassword: true
 releaseNotes: >-
-  RTL bump to v0.15.8-beta-boltz with provider-contract integration for Core Lightning.
+  Bumped to RTL v0.15.8-beta-boltz and boltz-client v2.10.2.
 
 
-  **What changed:**
-    - Upgraded RTL to v0.15.8-beta-boltz — **required**: v0.15.6 cannot parse the `bookkeeper` plugin responses introduced in CLN v25.12.1, breaking channel-list rendering and blocking channel fund recovery
-    - Upgraded boltz-client to v2.10.2
-    - Switched CLN connection wiring to exported provider-contract variables:
-      `LN_SERVER_URL=${CLNREST_URL}` and `RUNE_PATH=${CLNREST_RUNE_PATH}`
+  - Fixes ECONNRESET crash loop when loading channels on CLN v25.09.3 (unhandled ONCHAIN state in the RTL channel parser)
 
-
-  **Why this matters:**
-    - Reduces endpoint drift between Core Lightning and RTL during restarts/upgrades
-    - Keeps TLS+rune material aligned with Core Lightning contract exports
-    - Improves consistency for recovery testing and future CLN upgrade validation
-    - Forensic delta from HotFix 1: replaces `APP_CORE_LIGHTNING_REST_HOST + CORE_LIGHTNING_REST_PORT` URL reconstruction with direct `CLNREST_URL` contract consumption
-
-
-  **Snapshot / Rewind hardening:**
-    - RTL holds no channel state — Umbrel Rewind of RTL app data is safe and non-destructive
-    - CLN channel state (`lightningd.sqlite3`) is excluded from Umbrel snapshots; RTL recovery depends on CLN being recovered first
-    - Recovery procedure: restore CLN per DR-RUNBOOK.md Scenario 3, then restart RTL from Umbrel UI
-
-
-  **Operator references:**
-    - Recovery and reboot validation guidance: `docs/DR-RUNBOOK.md`
-    - Operational sequencing and grace-window guidance: `docs/HA.md`
+  - CLN connection now reads `CLNREST_URL` and `CLNREST_RUNE_PATH` directly from Core Lightning exports — no hardcoded IP/port reconstruction
 submitter: Umbrel
 submission: https://github.com/getumbrel/umbrel-apps/pull/7
