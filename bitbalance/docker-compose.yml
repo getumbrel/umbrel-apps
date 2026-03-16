@@ -1,1 +1,24 @@
+services:
 
+  app:
+    container_name: bitbalance
+    build: .
+    restart: unless-stopped
+
+    ports:
+      - "3710:3710"
+
+    environment:
+      - PORT=3710
+      - ELECTRUM_HOST=electrs
+      - ELECTRUM_PORT=50001
+
+    volumes:
+      - ./data/wallets.json:/app/data/wallets.json
+
+    networks:
+      - umbrel_main_network
+
+networks:
+  umbrel_main_network:
+    external: true
