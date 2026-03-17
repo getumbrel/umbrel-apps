@@ -3,7 +3,7 @@ id: ntfy
 name: ntfy
 tagline: Send notifications to your phone or desktop via scripts from any computer, and/or using a REST API
 category: automation
-version: "2.18.0"
+version: "2.19.2"
 port: 13119
 description: >-
   ntfy (pronounced notify) is a simple HTTP-based pub-sub notification service. It allows you to send notifications to
@@ -52,12 +52,16 @@ gallery:
   - 2.jpg
   - 3.jpg
 releaseNotes: >-
-  This release adds experimental PostgreSQL support as an alternative database backend, making it the largest server update ever released.
+  This release includes several bugfixes for PostgreSQL support, along with new features introduced since v2.18.0.
 
 
   Key highlights:
-    - Experimental PostgreSQL support as an alternative to SQLite for storing messages, users, and web push subscriptions
-    - Preserve line breaks in HTML-only emails received via SMTP
+    - PostgreSQL read replica support to offload non-critical read queries from the primary database
+    - Interactive config generator added to the documentation
+    - Fixed race condition in web push subscriptions causing database constraint errors
+    - Fixed invalid UTF-8 characters in messages causing PostgreSQL insert failures
+    - Throttled notification sound in the web app to avoid rapid repeated playback
+    - Added hover tooltips to icon buttons in the web app
 
 
   Full release notes can be found at https://github.com/binwiederhier/ntfy/releases
