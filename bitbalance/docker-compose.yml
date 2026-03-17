@@ -1,20 +1,23 @@
+version: "3.7"
+
 services:
+  app_proxy:
+    environment:
+      APP_HOST: bitbalance_app_1
+      APP_PORT: 3710
 
   app:
-    container_name: bitbalance
-    build: .
+    image: ghcr.io/egzola/bitbalance:1.0.15
     restart: on-failure
-
-    ports:
-      - "3710:3710"
+    stop_grace_period: 1m
 
     environment:
-      - PORT=3710
-      - ELECTRUM_HOST=electrs
-      - ELECTRUM_PORT=50001
+      PORT: 3710
+      ELECTRUM_HOST: $APP_ELECTRS_NODE_IP
+      ELECTRUM_PORT: $APP_ELECTRS_NODE_PORT
 
     volumes:
-      - ${APP_DATA_DIR}/data:/app/data
+      - ${APP_DATA_DIR}:/data
 
     networks:
       - umbrel_main_network
