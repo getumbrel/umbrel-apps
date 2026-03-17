@@ -1,12 +1,114 @@
-version: '3.7'
+version: "3.7"
 
 services:
   app_proxy:
     environment:
       APP_HOST: lobe-chat_app_1
       APP_PORT: 3210
+      PROXY_AUTH_ADD: "false"
 
   app:
-    image: lobehub/lobehub:2.0.10@sha256:14570e08848e3d8114b258a57e6ab49fcab70f863c55f884a00529e6f6c21365
+    image: lobehub/lobehub:2.1.43
     restart: on-failure
-    user: "1000:1000"
+    env_file:
+      - ${APP_DATA_DIR}/settings.env
+    environment:
+      APP_URL: http://${DEVICE_DOMAIN_NAME}:7455
+      AUTH_TRUSTED_ORIGINS: http://${DEVICE_DOMAIN_NAME}:7455
+      DATABASE_URL: postgresql://postgres:${APP_PASSWORD}@lobe-chat_postgres_1:5432/lobehub
+      REDIS_URL: redis://lobe-chat_redis_1:6379
+      REDIS_PREFIX: lobechat
+      REDIS_TLS: "0"
+      S3_ENDPOINT: http://${DEVICE_DOMAIN_NAME}:7458
+      S3_BUCKET: lobe
+      S3_ACCESS_KEY: lobehub
+      S3_ENABLE_PATH_STYLE: "1"
+      S3_ACCESS_KEY_ID: lobehub
+      S3_SECRET_ACCESS_KEY: ${APP_PASSWORD}
+      S3_SET_ACL: "0"
+      LLM_VISION_IMAGE_USE_BASE64: "1"
+      SEARXNG_URL: http://lobe-chat_searxng_1:8080
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rustfs:
+        condition: service_healthy
+      rustfs-init:
+        condition: service_completed_successfully
+
+  postgres:
+    image: paradedb/paradedb:latest-pg17
+    restart: on-failure
+    environment:
+      POSTGRES_DB: lobehub
+      POSTGRES_PASSWORD: ${APP_PASSWORD}
+    volumes:
+      - ${APP_DATA_DIR}/data/db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d lobehub"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7.4.3
+    restart: on-failure
+    command: redis-server --save 60 1000 --appendonly yes
+    volumes:
+      - ${APP_DATA_DIR}/data/redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  rustfs:
+    image: rustfs/rustfs:latest
+    restart: on-failure
+    ports:
+      - "7458:9000"
+    volumes:
+      - ${APP_DATA_DIR}/data/rustfs:/data
+      - ${APP_DATA_DIR}/data/rustfs-logs:/logs
+    environment:
+      RUSTFS_ADDRESS: 0.0.0.0:9000
+      RUSTFS_CONSOLE_ADDRESS: 0.0.0.0:9001
+      RUSTFS_CONSOLE_ENABLE: "true"
+      RUSTFS_VOLUMES: /data
+      RUSTFS_ACCESS_KEY: lobehub
+      RUSTFS_SECRET_KEY: ${APP_PASSWORD}
+      RUSTFS_OBS_LOG_DIRECTORY: /logs
+    healthcheck:
+      test:
+        ["CMD", "sh", "-c", "curl -f http://127.0.0.1:9000/health && curl -f http://127.0.0.1:9001/rustfs/console/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  rustfs-init:
+    image: minio/mc:latest
+    restart: "no"
+    depends_on:
+      rustfs:
+        condition: service_healthy
+    volumes:
+      - ./bucket.config.json:/bucket.config.json:ro
+    entrypoint: /bin/sh
+    command:
+      - -c
+      - >
+        set -eux;
+        mc --version;
+        mc alias set rustfs "http://lobe-chat_rustfs_1:9000" "lobehub" "${APP_PASSWORD}";
+        mc ls rustfs || true;
+        mc mb "rustfs/lobe" --ignore-existing;
+        mc anonymous set download rustfs/lobe
+
+  searxng:
+    image: ghcr.io/searxng/searxng:2025.12.9-b719d559b@sha256:95e59f5ba7d48b4c7ee92f2705907e52c5b98715b0d8c4802863322a502a8c4a
+    restart: on-failure
+    environment:
+      SEARXNG_SECRET: ${APP_SEED}
