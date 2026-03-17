@@ -7,7 +7,7 @@ services:
       APP_PORT: 3710
 
   app:
-    image: ghcr.io/egzola/bitbalance:1.0.15
+    image: ghcr.io/egzola/bitbalance:1.0.15@sha256:0ff33873dea6ec2701586a5e6478d159d5ca47e85bf54cc6718ad3c55067bcd6
     restart: on-failure
     stop_grace_period: 1m
 
@@ -17,7 +17,7 @@ services:
       ELECTRUM_PORT: $APP_ELECTRS_NODE_PORT
 
     volumes:
-      - ${APP_DATA_DIR}:/data
+      - ${APP_DATA_DIR}/data:/data
 
     networks:
       - umbrel_main_network
