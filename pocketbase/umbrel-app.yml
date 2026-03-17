@@ -3,7 +3,7 @@ id: pocketbase
 name: PocketBase
 tagline: Open Source backend for your next SaaS and Mobile app in 1 file
 category: developer
-version: "0.36.6"
+version: "0.36.7"
 port: 5400
 description: >-
   PocketBase is an open source backend consisting of embedded database (SQLite) with realtime subscriptions, built-in auth management, convenient dashboard UI and simple REST-ish API.
@@ -44,12 +44,11 @@ path: /_/
 dependencies: []
 releaseNotes: >-
   This release includes several improvements and bug fixes:
-    - View collection schema fields now correctly use integer-only number fields when the column expression returns int-only values
-    - Added extra safeguard to prevent race conditions when reading and writing shared data
-    - Fixed empty records check for client-side filter constraints introduced in v0.32.0
+    - Fixed high memory usage with large file uploads
+    - Updated rate limiter to use a more traditional fixed window strategy, making it more intuitive and predictable
 
 
-  ⚠️ Client-side filtering and sorting of relations now requires List/Search API rule access to all intermediate collections to minimize security risks
+  ⚠️ SQLite was updated to fix a rare database corruption bug - upgrading is advised
 
 
   Full release notes are found at https://github.com/pocketbase/pocketbase/releases
