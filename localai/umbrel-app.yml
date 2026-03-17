@@ -2,7 +2,7 @@ manifestVersion: 1
 id: localai
 category: ai
 name: LocalAI
-version: "v3.12.1"
+version: "v4.0.0"
 tagline: Drop-in OpenAI replacement
 description: >-
   LocalAI is the free, Open Source OpenAI alternative. LocalAI act as a drop-in replacement REST API that's compatible with OpenAI API specifications for local inferencing.
@@ -15,17 +15,21 @@ description: >-
 
   Before running a model, make sure your device has enough free RAM to support it. Attempting to run a model that exceeds your available memory could cause your device to crash or become unresponsive. Always check the model requirements before downloading or starting it.
 releaseNotes: >-
-  This is a patch release fixing incompatibilities with Qwen 3 Coder, along with stability improvements and minor enhancements from v3.12.0.
+  This is a major release that transforms LocalAI into a complete AI orchestration platform with a fully rewritten React UI, native agentic capabilities, and many new backends.
 
 
   Key highlights include:
-    - Fixed Qwen 3 Coder incompatibilities via updated llama.cpp
-    - Multi-modal Realtime - Send text, images, and audio in real-time conversations
-    - Voxtral Backend - New high-quality text-to-speech backend
-    - Multi-GPU Support - Improved Diffusers performance with multiple GPUs
-    - Improved UI with dark/light theme variants and better navigation
-    - Security fix for SSRF vulnerability in content fetching endpoints
-    - Various realtime stability fixes for audio, image, and model handling
+    - Native Agentic Orchestration - Manage, create, and run AI agents with memory and skills via the new UI, plus the new Agenthub community hub for sharing agents
+    - Revamped React UI - Complete frontend rewrite for a faster, modern experience with Canvas mode for previewing code artifacts
+    - MCP Client-Side Support - Full Model Context Protocol support with MCP Apps, tool streaming, and a new LOCALAI_DISABLE_MCP option to disable it
+    - WebRTC Realtime - WebRTC support for low-latency realtime audio conversations
+    - New Backends - Added experimental MLX Distributed, fish-speech, ace-step.cpp, and faster-qwen3-tts
+    - Data Separation - New LOCALAI_DATA_PATH env var to separate persistent data (agents, skills) from configuration
+    - Model RAM Warnings - Visual warnings when a model's storage size exceeds available system RAM
+
+
+  ⚠️ Breaking Changes
+    - HuggingFace backend support has been removed
 
 
   Full release notes can be found at https://github.com/mudler/LocalAI/releases
