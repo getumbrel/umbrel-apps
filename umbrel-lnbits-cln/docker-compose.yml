@@ -94,7 +94,7 @@ services:
         if [ "$$BACKEND_CLASS" = "CLNRestWallet" ]; then
           echo "Waiting for CLNRest readiness before starting LNbits..."
           for i in $$(seq 1 90); do
-            if curl -sk --max-time 5 \
+            if curl -s --fail --max-time 5 \
               --cacert "$$CLNREST_CA" \
               --cert "$$CLNREST_CLIENT_CERT" \
               --key "$$CLNREST_CLIENT_KEY" \
