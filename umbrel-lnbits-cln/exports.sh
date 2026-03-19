@@ -10,6 +10,13 @@ export APP_LNBITS_CLN_BASE_URL="${APP_LNBITS_CLN_BASE_URL:-}"
 export APP_LNBITS_CLN_PUBLIC_URL="${APP_LNBITS_CLN_PUBLIC_URL:-}"
 
 # ---------------------------------------------------------------------------
+# CLNRest URL fallback — if CLNREST_URL is not provided by core-lightning's
+# exports.sh (PR #5111), construct it from known upstream exports.
+# Once PR #5111 merges, this fallback becomes redundant but harmless.
+# ---------------------------------------------------------------------------
+export CLNREST_URL="${CLNREST_URL:-https://${APP_CORE_LIGHTNING_DAEMON_IP}:${CORE_LIGHTNING_REST_PORT}}"
+
+# ---------------------------------------------------------------------------
 # Fine-grained CLNRest runes (created by hooks/pre-start, persisted in data/)
 # Each rune is method-restricted per the principle of least privilege.
 # The pre-start hook writes these to a rune cache file; we read them here.
