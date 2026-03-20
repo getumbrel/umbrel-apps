@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: arcane
 category: developer
 name: Arcane
-version: "1.16.1"
+version: "1.16.3"
 tagline: An easy and modern Docker management platform
 description: >-
   ⚠️ Make sure to only use named Docker volumes for your containers and projects. Data in bind-mounted volumes will be lost when the Arcane app is restarted or updated.
@@ -49,12 +49,12 @@ defaultUsername: "arcane"
 defaultPassword: "arcane-admin"
 releaseNotes: >-
   Bug fixes in this release:
-    - Fixed Docker API version not being set correctly based on daemon version
-    - Fixed dockerfile_inline builds not working from projects
-    - Fixed env variables not resolving in volumes and labels
-    - Fixed remote git build contexts not being allowed
-    - Fixed last used date not being updated for environment API keys
-    - Added ability to roll back database migrations via an environment variable
+    - Fixed container creation on older Docker API versions by attaching the primary network first
+    - Fixed security scan (Trivy) configuration options not being applied correctly
+    - Fixed Trivy scans not using the configured Docker host
+    - Fixed missing labels required for the auto-updater to work correctly
+    - Fixed inability to edit environment variables when a project is synced from Git
+    - Fixed image update checks falling back incorrectly when using distribution inspect
 
 
   Full release notes are found at https://github.com/getarcaneapp/arcane/releases
