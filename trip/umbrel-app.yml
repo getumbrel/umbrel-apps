@@ -3,7 +3,7 @@ id: trip
 name: Trip
 tagline: Minimalist Map Tracker and Trip Planner
 category: files
-version: "1.42.0"
+version: "1.43.0"
 port: 8980
 description: >-
   🗺️ TRIP is a self-hostable minimalist Map tracker and Trip planner to visualize your points of interest (POI) and organize your next adventure details.
@@ -16,13 +16,6 @@ description: >-
 
 
   No telemetry. No tracking. No ads. Free, forever.
-
-
-  ⚠️ After installing, no user is admin by default. To grant admin rights, run the following inside the app container:
-
-  `apt update && apt install -y sqlite3`
-
-  `sqlite3 storage/trip.sqlite "UPDATE user SET is_admin = 1 WHERE username = 'your_username'; SELECT changes() as updated;"`
 developer: itskovacs
 website: https://itskovacs-trip.netlify.app/
 repo: https://github.com/itskovacs/trip
@@ -31,23 +24,18 @@ submitter: itskovacs
 submission: https://github.com/getumbrel/umbrel-apps/pull/3830
 releaseNotes: >-
   New Features:
-    - Admin UI with user management, magic invites for disabled registration, and live configuration updates
+    - Added full server backups via the admin UI
+    - The first registered user is now automatically granted admin rights
+    - Orphaned images are automatically removed on startup
 
   UI/UX Improvements:
-    - Added a text and place toggle in trips
-    - Removed the BETA UI modal
-    - Made links clickable within trip notes
-    - Categories with places are now removable
+    - Unplanned markers are now dimmed when a specific day is highlighted in trips
+    - Updated backups styling in settings
+    - Unified textarea appearance
 
   Bug Fixes:
-    - Fixed an issue where pretty print failed in shared trips
-    - Fixed model cascade behaviors and completed model refactoring
-
-  ⚠️ After updating, no user is admin by default. To grant admin rights, run the following inside the app container:
-  
-  `apt update && apt install -y sqlite3`
-
-  `sqlite3 storage/trip.sqlite "UPDATE user SET is_admin = 1 WHERE username = 'your_username'; SELECT changes() as updated;"`
+    - Resolved all scrolling issues
+    - Fixed printing on iOS and iPadOS
 
 
   Full release notes are found at https://github.com/itskovacs/trip/releases
