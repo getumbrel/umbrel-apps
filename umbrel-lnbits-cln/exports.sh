@@ -3,11 +3,10 @@ export APP_LNBITS_CLN_IP="10.21.21.98"
 export APP_LNBITS_CLN_PORT="3009"
 export APP_LNBITS_CLN_DATA_DIR="${EXPORTS_APP_DIR}/data"
 
-# Public URL overrides — set these to your operator domain so LNURL, LNDHub,
+# Public URL override — set to your operator domain so LNURL, LNDHub,
 # and NIP-05 links emit your public domain instead of http://umbrel.local:PORT.
 # Leave empty to keep LNbits default (local address).
-export APP_LNBITS_CLN_BASE_URL="${APP_LNBITS_CLN_BASE_URL:-}"
-export APP_LNBITS_CLN_PUBLIC_URL="${APP_LNBITS_CLN_PUBLIC_URL:-}"
+export APP_LNBITS_CLN_BASEURL="${APP_LNBITS_CLN_BASEURL:-}"
 
 # ---------------------------------------------------------------------------
 # CLNRest URL fallback — if CLNREST_URL is not provided by core-lightning's

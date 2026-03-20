@@ -55,12 +55,10 @@ services:
 
       # Public URL overrides — required for LNURL, LNDHub, and NIP-05 to emit
       # the operator's public domain instead of http://umbrel.local:PORT.
-      # Set APP_LNBITS_CLN_BASE_URL and APP_LNBITS_CLN_PUBLIC_URL in
-      # exports.sh (or the .env file in app-data) before starting the app.
-      # Example: APP_LNBITS_CLN_BASE_URL=https://byob.janx.com
-      #          APP_LNBITS_CLN_PUBLIC_URL=https://janx.com
-      LNBITS_BASE_URL: "${APP_LNBITS_CLN_BASE_URL:-}"
-      LNBITS_PUBLIC_URL: "${APP_LNBITS_CLN_PUBLIC_URL:-}"
+      # Set APP_LNBITS_CLN_BASEURL in exports.sh (or the .env file in app-data)
+      # to control the public-facing URL used in LNURL callbacks and Lightning
+      # Addresses. Example: APP_LNBITS_CLN_BASEURL=https://yourdomain.com
+      LNBITS_BASEURL: "${APP_LNBITS_CLN_BASEURL:-}"
 
       # Exchange rate providers (comma-separated; no API key required for kraken)
       LNBITS_EXCHANGE_PROVIDERS: "kraken,yadio"
