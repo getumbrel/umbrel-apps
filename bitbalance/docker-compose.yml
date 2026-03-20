@@ -10,18 +10,9 @@ services:
     image: ghcr.io/egzola/bitbalance:1.0.17@sha256:baa763abcf2c46f8e5c6109264630c72e45f8770781bb931fc1a70a9a8748f9f
     restart: on-failure
     stop_grace_period: 1m
-
     environment:
       PORT: 3710
       ELECTRUM_HOST: $APP_ELECTRS_NODE_IP
       ELECTRUM_PORT: $APP_ELECTRS_NODE_PORT
-
     volumes:
       - ${APP_DATA_DIR}/data:/data
-
-    networks:
-      - umbrel_main_network
-
-networks:
-  umbrel_main_network:
-    external: true
