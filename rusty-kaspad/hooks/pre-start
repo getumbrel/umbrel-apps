@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+APP_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")"
+APP_DATA_DIR="${APP_DIR}/data"
+APP_ID="${APP_ID:-rusty-kaspad}"
+CONTAINER_NAME="${APP_ID}_kaspad_1"
+DEST_DATA_DIR="${APP_DATA_DIR}/app"
+DEST_DB_DIR="${DEST_DATA_DIR}/.rusty-kaspa"
+
+mkdir -p "${DEST_DATA_DIR}"
+
+if [[ -d "${DEST_DB_DIR}" ]]; then
+	echo "Rusty Kaspad data already stored in Umbrel app data. Skipping migration..."
+	exit 0
+fi
+
+SOURCE_VOLUME_NAME="$(
+	{
+		docker inspect "${CONTAINER_NAME}" \
+			--format '{{range .Mounts}}{{if and (eq .Destination "/app/data") (eq .Type "volume")}}{{println .Name}}{{end}}{{end}}' \
+			2>/dev/null || true
+	} | head -n1 | tr -d '[:space:]'
+)"
+
+if [[ -z "${SOURCE_VOLUME_NAME}" ]]; then
+	echo "No legacy /app/data volume found for ${CONTAINER_NAME}. Skipping migration..."
+	exit 0
+fi
+
+SOURCE_DB_DIR="/var/lib/docker/volumes/${SOURCE_VOLUME_NAME}/_data/.rusty-kaspa"
+
+if [[ ! -d "${SOURCE_DB_DIR}" ]]; then
+	echo "Legacy volume ${SOURCE_VOLUME_NAME} does not contain a Rusty Kaspad database. Skipping migration..."
+	exit 0
+fi
+
+echo "Migrating Rusty Kaspad database from Docker volume ${SOURCE_VOLUME_NAME} into Umbrel app data..."
+mv "${SOURCE_DB_DIR}" "${DEST_DATA_DIR}/"
+
+if [[ ! -d "${DEST_DB_DIR}" ]]; then
+	echo "Rusty Kaspad database migration failed."
+	exit 1
+fi
+
+echo "Rusty Kaspad database migration completed successfully."
