@@ -2,7 +2,7 @@ manifestVersion: 1
 id: esphome
 category: automation
 name: ESPHome
-version: "2026.3.0"
+version: "2026.3.1"
 tagline: Intelligently manage all your ESP8266/ESP32 devices
 description: >-
   ESPHome is a system to control your ESP8266/ESP32 by simple yet powerful configuration files and control them remotely through Home Automation systems.
@@ -21,25 +21,21 @@ defaultUsername: ""
 defaultPassword: ""
 torOnly: false
 releaseNotes: >-
-  This release is a major performance and reliability overhaul across the entire ESPHome stack:
-    - Main loop socket polling up to 99x faster on ESP32 via direct LwIP reads replacing lwip_select()
-    - GPIO and UART wake-on-RX now triggers instantly via ISR instead of waiting up to 16ms
-    - millis() is 2-2.5x faster; new millis_64() provides native 64-bit uptime on all platforms
-    - Light gamma correction 8-10x faster, API/protobuf encoding 6-12x faster
-    - RP2040/RP2350 reaches first-class support: pico-sdk 2.0, GCC 14, 143+ board definitions, BLE foundation, captive portal, crash handler, and BOOTSEL upload via picotool
-    - Long-standing LWIP use-after-free bug causing heap corruption crashes on ESP8266 and RP2040 finally fixed
-    - LibreTiny (BK72xx/RTL87xx): ~26KB RAM freed via lwIP buffer tuning, loop stalls fixed by raising task priority
-    - nRF52 gains BLE/serial OTA via MCUmgr, early boot crash logging, and bidirectional BLE UART
-    - ESP32 now captures crash backtraces across reboots and reports them over the API — no serial cable needed
-    - 86-fix correctness sweep across 100+ components: buffer overflows, millis() rollover bugs, uninitialized variables, and logic errors
-    - New media player architecture with pluggable sources, playlists, and Ogg Opus support
-    - New components: SEN6x environmental sensor, HDC302x temperature/humidity, dew point sensor, serial proxy (experimental)
-    - 11-20KB+ flash savings via printf wrapping, scanf removal, timezone refactoring, and devirtualization
-    - ⚠️ opentherm: rename opentherm_version to opentherm_version_controller
-    - ⚠️ sgp30: expect up to 12h recalibration after update due to serial number fix
-    - ⚠️ RP2040 external components using old pico-sdk APIs may need updates (e.g. padsbank0_hw renamed)
+  This release includes bug fixes and stability improvements:
+    - Fixed BLE RSSI sensor reporting the same value for all clients
+    - Fixed HTTP request component launching duplicate update tasks
+    - Fixed ESP8266 crash at VERY_VERBOSE log level
+    - Fixed UART0 default pin IOMUX loopback on ESP32
+    - Fixed timezone offset functions always returning UTC
+    - Fixed light constant_brightness broken by gamma LUT refactor
+    - Fixed gamma LUT quantizing small brightness values to zero
+    - Fixed SHT4x heater causing measurement jitter
+    - Fixed MQTT rate-limiting to prevent watchdog resets on reconnect
+    - Fixed ultrasonic sensor ISR edge detection with debounce
+    - Fixed web server task stack size to prevent stack overflow
+    - ⚠️ WiFi power_save_mode LIGHT/HIGH were swapped on ESP8266 — check your config if you use this setting
 
 
-  Full release notes can be found at https://esphome.io/changelog/2026.3.0/
+  Full release notes can be found at https://esphome.io/changelog/2026.3.1/
 submitter: ShonP40
 submission: https://github.com/getumbrel/umbrel-apps/pull/43
