@@ -3,7 +3,7 @@ id: open-webui
 name: Open WebUI
 tagline: Chat with Ollama models like DeepSeek-R1 and LLama, or use an OpenAI API key
 category: ai
-version: "0.8.10"
+version: "0.8.11"
 port: 2876
 description: >-
   Open WebUI lets you chat with advanced AI models running locally on your own device or connect to online models using an API key.
@@ -38,18 +38,25 @@ dependencies:
   - ollama
 releaseNotes: >-
   Key highlights in this release include:
-    - Administrators can now configure a custom OIDC logout URL for providers like AWS Cognito
-    - Added MariaDB Vector as a new supported vector database backend
-    - Chat messages sent to task models for title and tag generation can now be truncated to reduce token usage
-    - Fixed a bug where HTTP errors in pipeline filters could silently corrupt chat payloads
-    - Fixed knowledge file updates leaving stale embeddings in the database causing duplicate search results
-    - Fixed Docker deployments failing to start due to a missing OpenTelemetry dependency
-    - Fixed non-admin users being unable to view tools due to a missing function import
-    - Fixed YAML file uploads failing when Docling was enabled
-    - Fixed custom model fallback not working when the base model is unavailable
-    - Fixed images in queued messages appearing blank
-    - Fixed Azure text-to-speech using incomplete locale codes in SSML
-    - Fixed token usage analytics not being filtered by user group correctly
+    - Page and markdown rendering are now approximately 25% faster with significantly less memory usage
+    - Responses API now properly handles tool call streaming and supports experimental stateful sessions
+    - File viewing in knowledge bases now supports pagination for reading large files in chunks
+    - Knowledge search now respects model-attached knowledge bases when searching
+    - Tools can now return binary data such as images, displayed directly in chat
+    - Users can now drag chats from the sidebar and drop them into the message input as references
+    - Files and folders in the File Navigator can now be renamed by double-clicking or using the context menu
+    - Terminal folders can now be downloaded as ZIP archives
+    - Memory management now supports search and sort for easier navigation
+    - Fixed a security vulnerability where external clients could bypass model access controls
+    - Fixed OAuth session persistence so users stay logged in for the configured duration
+    - Fixed password complexity rules not being enforced when users change their password
+    - Fixed OAuth role enforcement not properly denying access for users with non-matching roles
+    - Fixed memory tool registration causing a retry loop with thinking-capable models
+    - Fixed duplicate items appearing in paginated lists across chats, knowledge, notes, and search
+    - Fixed tool server connection updates not being saved to persistent storage
+    - Fixed shared chats crashing when viewed by unauthenticated users
+    - Fixed RAG query generation failing with thinking models like DeepSeek-R1
+    - Fixed Ollama embedding requests failing on long documents by adding truncation support
 
 
   Full release notes are found at https://github.com/open-webui/open-webui/releases
