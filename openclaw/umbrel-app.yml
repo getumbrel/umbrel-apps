@@ -3,7 +3,7 @@ id: openclaw
 name: OpenClaw
 tagline: The AI that actually does things
 category: ai
-version: "2026.3.13"
+version: "2026.3.24"
 port: 18789
 path: ""
 description: >-
@@ -39,19 +39,22 @@ gallery:
   - 2.jpg
   - 3.jpg
 releaseNotes: >-
-  What's new in OpenClaw (v2026.3.8 → v2026.3.13):
-    - Refreshed gateway dashboard with modular views, command palette, mobile bottom tabs, and richer chat tools
-    - OpenAI GPT-5.4 (including updated Codex default in tests) and Anthropic Claude fast mode support with configurable session-level toggles
-    - Ollama, vLLM, and SGLang moved to a more modular provider-plugin architecture
-    - New sessions_yield tool so orchestrators can end a turn immediately and carry a follow-up into the next
-    - Slack agents can now send Block Kit messages through standard outbound delivery, with new interactive reply support
-    - UI/UX refinements across navigation, chat rendering, dashboard stability, and theme variants
-    - Numerous Telegram, Slack, Discord, Signal, Feishu, and browser automation reliability and delivery fixes
-    - Memory and session improvements including better compaction validation, continuity preservation, and transcript handling
-    - Performance improvements including reduced build memory usage and improved runtime stability
-    - Developer experience improvements including CLI help text, schema validation, plugin safety checks, and expanded test coverage
-    - Docker and deployment enhancements including timezone support, package updates, and improved service handling
-    - Multiple security fixes including Docker token leak prevention, improved SSRF/media handling, safer gateway/auth flows, and stricter request bounds
+  What's new in OpenClaw (v2026.3.13 → v2026.3.24):
+    - OpenAI compatibility improvements: added `/v1/models` and `/v1/embeddings` endpoints for broader client and RAG tool support
+    - Microsoft Teams support upgraded with streaming replies, welcome cards, typing indicators, message edit/delete, and native AI labeling
+    - Skills panel redesigned with status-filter tabs (All / Ready / Needs Setup / Disabled), one-click install recipes, and API key setup guidance
+    - Tools panel now shows only what the current agent can actually use, with a live "Available Right Now" section in the Control UI
+    - Slack interactive replies restored with richer button/select rendering and improved setup defaults
+    - Discord auto-threads can now be renamed asynchronously with LLM-generated titles
+    - CLI gains `--container` flag to run commands inside a running Docker or Podman OpenClaw container
+    - Agent workspace files now show inline markdown previews with rich rendering for headings, tables, code blocks, and more
+    - Security fix: closed a `mediaUrl`/`fileUrl` alias bypass that could escape media-root sandbox restrictions
+    - Fixed fresh Docker installs failing before the gateway comes up
+    - Fixed broken channel startup where one failing channel could block all others from starting
+    - Fixed WhatsApp group echo suppression and reply-to-bot detection in linked-account group chats
+    - Fixed Telegram forum topic routing, photo dimension validation, and permanent delivery failure handling
+    - Fixed Discord gateway supervision crashes and timeout reply delivery
+    - Fixed restart sentinel so interrupted agent sessions resume correctly in the right Telegram topic or Slack thread
     - And much more. Full details at https://github.com/openclaw/openclaw/releases
 submitter: Umbrel
 submission: https://github.com/getumbrel/umbrel-apps/pull/4649
