@@ -3,7 +3,7 @@ id: grafana
 name: Grafana
 tagline: The open-source platform for monitoring and observability
 category: networking
-version: "12.4.1"
+version: "12.4.2"
 port: 3030
 description: >-
   Grafana allows you to query, visualize, alert on and understand your metrics no matter where they are stored. Create, explore, and share dashboards with your team and foster a data-driven culture:
@@ -36,17 +36,23 @@ gallery:
   - 2.jpg
   - 3.jpg
 releaseNotes: >-
+  🚨 This release includes multiple security fixes (CVE-2026-27876, CVE-2026-27877, CVE-2026-28375, CVE-2026-27879, CVE-2026-27880)
+
+
   This release includes bug fixes and enhancements:
-    - Fixed CollateAlertRuleGroup migration for MariaDB compatibility in alerting
-    - Fixed receiver testing scope to use supported resource type in alerting
-    - Added support for custom CA certificates in the Image Renderer
-    - Invalidated scope resolver cache on datasource deletion for improved access control
+    - Fixed dashboard loading issues related to team member data
+    - Fixed plugin installer disabled condition
+    - Fixed plugin processes using incorrect temp directory in restricted environments
+    - Improved dashboard accessibility by not opening time zone menu on focus
+    - Resolved display names by identity in dashboard version history
+    - Added forwarding of AWS SDK credential chain environment variables to external AWS plugins
+    - Prevented unintended operations on public dashboards from different organizations
 
 
   Full release notes are available at https://github.com/grafana/grafana/releases
+submitter: phelipebf
+submission: https://github.com/getumbrel/umbrel-apps/pull/1664
 dependencies: []
 path: ""
 defaultUsername: "admin"
 defaultPassword: "admin"
-submitter: phelipebf
-submission: https://github.com/getumbrel/umbrel-apps/pull/1664
