@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: firefly-iii-importer
 category: finance
 name: Firefly III Importer
-version: "2.2.1"
+version: "2.2.2"
 tagline: Import your transactions into Firefly III
 description: >-
   Firefly III is a manager for your personal finances. The data importer is built to help you import transactions into Firefly III. It is separated from Firefly III for security and maintenance reasons.
@@ -30,9 +30,16 @@ path: ""
 deterministicPassword: false
 torOnly: false
 releaseNotes: >-
-  This release includes a new feature and bug fixes:
-    - Added BBAN support in Enable Banking imports for better transfer matching
-    - Fixed auto-import secret not being validated correctly
+  ⚠️ Some changes in this release may lead to duplicate transactions due to changes in data handling routines.
+
+
+  This release improves Enable Banking imports and fixes several issues:
+    - Added support for Enable Banking private key as a raw PEM string
+    - Fixed Enable Banking continuation key not being used
+    - Fixed positive transactions in CAMT files failing to import
+    - Fixed broken auto-import when using an import configuration with no flow key
+    - Fixed Enable Banking not finding duplicate transactions when changing status
+    - Fixed SimpleFIN using the wrong field for transaction date
 
 
   Full release notes can be found at https://github.com/firefly-iii/data-importer/releases
