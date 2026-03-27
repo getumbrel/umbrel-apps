@@ -5,8 +5,17 @@ services:
       APP_PORT: 3000
       PROXY_AUTH_ADD: "false"
 
+  migrate:
+    image: ghcr.io/kanbn/kan-migrate:0.5.6@sha256:a2460e460b70a77ad60a12a8057b2a720cb9e4037a015ea508574887c5bceca1
+    environment:
+      POSTGRES_URL: 'postgresql://kanuser:kanpassword@kan_db_1:5432/kan?sslmode=disable'
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: on-failure
+
   server:
-    image: ghcr.io/kanbn/kan:0.5.4@sha256:22c7ef03e2e97ab3f3d9e3c79ef5906f5e10a899cd79fa5c82f434dd09988bbe
+    image: ghcr.io/kanbn/kan:0.5.6@sha256:3509af72635922b8195fc08e052f6257f8a05c50c8afcadc636f78c717667673
     environment:
       NEXT_PUBLIC_BASE_URL: http://${DEVICE_DOMAIN_NAME}:8373
       BETTER_AUTH_SECRET: ${APP_SEED}
@@ -23,6 +32,11 @@ services:
       POSTGRES_DB: kan
       POSTGRES_USER: kanuser
       POSTGRES_PASSWORD: kanpassword
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kan -d kan"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
     restart: on-failure
     volumes:
       - ${APP_DATA_DIR}/data/db:/var/lib/postgresql/data
