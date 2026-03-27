@@ -1,0 +1,26 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: openresty-manager_web_1
+      APP_PORT: 34567
+      
+  web:
+    image: uusec/openresty-manager:2.4.2@sha256:008cdf48b77961e04120863991c83fb6fdcfe6b19057281a4e411f283502b26b
+    hostname: openresty-manager_web_1
+    restart: on-failure
+    ports:
+      - 3080:80
+      - 3443:443
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ${APP_DATA_DIR}/data/acme:/opt/om/acme
+      - ${APP_DATA_DIR}/data/data:/opt/om/data
+      - ${APP_DATA_DIR}/data/conf:/opt/om/nginx/conf
+      - ${APP_DATA_DIR}/data/logs:/opt/om/nginx/logs
+    environment:
+      - OM_USE_HTTPS=no
+      - NGINX_RESOLVER=resolver 127.0.0.11 valid=30s ipv6=off local=on;
+      - PUID=1000
+      - PGID=1000

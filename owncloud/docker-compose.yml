@@ -1,0 +1,71 @@
+version: '3.7'
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: owncloud_server_1
+      APP_PORT: 8080
+      PROXY_AUTH_ADD: "false"
+
+  server:
+    image: owncloud/server:10.16.0@sha256:62c93574d2bd0f98d17ac1a541f703653822e4572a628dcf993a8e65b2400e97
+    # Does not work rootless
+    #user: "1000:1000"
+    restart: on-failure
+    depends_on:
+      - mariadb
+      - redis
+    environment:
+      - OWNCLOUD_DOMAIN=${DEVICE_DOMAIN_NAME}:8080
+      - OWNCLOUD_TRUSTED_DOMAINS=${DEVICE_DOMAIN_NAME},${DEVICE_HOSTNAME},${APP_OWNCLOUD_LOCAL_IPS}
+      - OWNCLOUD_DB_TYPE=mysql
+      - OWNCLOUD_DB_NAME=owncloud
+      - OWNCLOUD_DB_USERNAME=owncloud
+      - OWNCLOUD_DB_PASSWORD=owncloud
+      - OWNCLOUD_DB_HOST=owncloud_mariadb_1
+      - OWNCLOUD_ADMIN_USERNAME=admin
+      - OWNCLOUD_ADMIN_PASSWORD=${APP_PASSWORD}
+      - OWNCLOUD_MYSQL_UTF8MB4=true
+      - OWNCLOUD_REDIS_ENABLED=true
+      - OWNCLOUD_REDIS_HOST=owncloud_redis_1
+      - OWNCLOUD_LOG_LEVEL=2
+    healthcheck:
+      test: ["CMD", "/usr/bin/healthcheck"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    volumes:
+      - ${APP_DATA_DIR}/data/app:/mnt/data
+      - ${APP_DATA_DIR}/data/config:/var/www/html/config
+
+  mariadb:
+    image: mariadb:10.11@sha256:24bb6e3d8e46f4581ddcc2b2c22fd78c99c77ac4e3fb7c9aba3a5c4c4d934ca2
+    user: "1000:1000"
+    restart: on-failure
+    environment:
+      - MYSQL_ROOT_PASSWORD=owncloud
+      - MYSQL_USER=owncloud
+      - MYSQL_PASSWORD=owncloud
+      - MYSQL_DATABASE=owncloud
+      - MARIADB_AUTO_UPGRADE=1
+    command: ["--max-allowed-packet=128M", "--innodb-log-file-size=64M"]
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-u", "root", "--password=owncloud"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - ${APP_DATA_DIR}/data/db:/var/lib/mysql
+
+  redis:
+    image: redis:6-alpine@sha256:7fe72c486b910f6b1a9769c937dad5d63648ddee82e056f47417542dd40825bb
+    user: "1000:1000"
+    restart: on-failure
+    command: ["--databases", "1"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - ${APP_DATA_DIR}/data/redis:/data

@@ -2,7 +2,7 @@ manifestVersion: 1
 id: transmission
 category: networking
 name: Transmission
-version: "4.0.6"
+version: "4.1.1"
 tagline: A fast, easy and free BitTorrent client
 description: >-
   Transmission is designed for easy, powerful use. We've set the defaults to just work and it only takes a few clicks to configure advanced features like watch directories, bad peer blocklists, and the web interface. When Ubuntu chose Transmission as its default BitTorrent client, one of the most-cited reasons was its easy learning curve.
@@ -33,7 +33,21 @@ defaultUsername: ""
 defaultPassword: ""
 torOnly: false
 releaseNotes: >-
-  This release includes several bug fixes and improvements for better performance and stability. Full release notes are available at https://github.com/transmission/transmission/releases
+  This bugfix release fixes 20+ bugs and includes performance improvements:
+    - Fixed torrents' queuing order sometimes being lost between sessions
+    - Fixed crash when pausing a torrent and editing its tracker list at the same time
+    - Fixed crash on arm32 devices
+    - Fixed RPC change that broke some third-party clients by returning wrong number types for speed limit fields
+    - Fixed laggy user interface when bandwidth usage is high
+    - Improved network traffic algorithm to spread bandwidth more evenly amongst peers
+    - Fixed broken icons in the torrent list on Windows
+    - Fixed magnet links not being addable from the "Add URL" dialog on GTK
+    - Fixed keyboard shortcuts broken when built with GTK3
+    - Fixed wrong encryption mode shown in GTK Preferences dialog
+    - Reverted web client change that merged "Remove torrent" and "Trash torrent" confirmation dialogs
+
+
+  Full release notes are available at https://github.com/transmission/transmission/releases
 permissions:
   - STORAGE_DOWNLOADS
 widgets:

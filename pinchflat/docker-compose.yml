@@ -1,0 +1,14 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: pinchflat_web_1
+      APP_PORT: 8945
+
+  web:
+    image: ghcr.io/kieraneglin/pinchflat:v2025.6.6@sha256:4e975edf58f0861a5cbfe8fc6aac4851ff5a02dfc3f05ffeea4982e3084a5a4a
+    environment:
+      - PUID=1000
+      - PGID=1000
+    volumes:
+      - ${APP_DATA_DIR}/data/config:/config
+      - ${UMBREL_ROOT}/data/storage/downloads:/downloads

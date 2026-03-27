@@ -1,0 +1,69 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: bassin_www_1
+      APP_PORT: 80
+      PROXY_AUTH_ADD: "false"
+
+  init:
+    image: alpine:3.22.1@sha256:4bcff63911fcb4448bd4fdacec207030997caf25e9bea4045fa6c8c44de311d1
+    entrypoint: >-
+      /bin/sh -c '
+        apk add --no-cache envsubst &&
+        if [ ! -f /config/ckpool.conf ]; then
+          envsubst < /config/ckpool.conf.template > /config/ckpool.conf &&
+          chown 1000:1000 /config/ckpool.conf
+        fi
+      '
+    volumes:
+      - ${APP_DATA_DIR}/data/config:/config
+    environment:
+      - APP_BITCOIN_NODE_IP=${APP_BITCOIN_NODE_IP}
+      - APP_BITCOIN_RPC_PORT=${APP_BITCOIN_RPC_PORT}
+      - APP_BITCOIN_RPC_USER=${APP_BITCOIN_RPC_USER}
+      - APP_BITCOIN_RPC_PASS=${APP_BITCOIN_RPC_PASS}
+      - APP_BITCOIN_ZMQ_HASHBLOCK_PORT=${APP_BITCOIN_ZMQ_HASHBLOCK_PORT}
+
+  ckpool:
+    image: ghcr.io/getumbrel/docker-ckpool-solo:590fb2a@sha256:4e6b8f4f9c7d74c2111a6e082a2bbdc936fa510989a81e7cef714d1da944336b
+    command: '-k -B -c /config/ckpool.conf'
+    user: "1000:1000"
+    depends_on:
+      init:
+        condition: service_completed_successfully
+    restart: on-failure
+    stop_grace_period: 30s
+    ports:
+      - "3456:3333/tcp"
+    volumes:
+      - ${APP_DATA_DIR}/data/config:/config:ro
+      - ${APP_DATA_DIR}/data/www:/www
+
+  ui:
+    image: ghcr.io/duckaxe/bassin-ui:580689d@sha256:ece16d859295c01f3c7bdaf78679f5b3477073af93937c367ae6174191c0de19
+    entrypoint: /bin/sh -c "cp -r /ui/* /www/"
+    user: "1000:1000"
+    volumes:
+      - ${APP_DATA_DIR}/data/www:/www
+    restart: on-failure
+
+  www:
+    image: halverneus/static-file-server:v1.8.11@sha256:2e91ce7ffb8519eeb882ba52d75c191ca6c921c16438447362128ef73ee2ea7e
+    user: "1000:1000"
+    environment:
+      - FOLDER=/www
+      - PORT=80
+    volumes:
+      - ${APP_DATA_DIR}/data/www:/www:ro
+    depends_on:
+      - ui
+    restart: on-failure
+
+  widget-server:
+    image: ghcr.io/duckaxe/umbrel-bassin-widget:main@sha256:293d4a17579bbef339c3f4595ed2dc36bef70699d34909bfa3ac20bba8facb7c
+    user: "1000:1000"
+    environment:
+      - BASSIN_API_POOL_URL=http://bassin_www_1/pool/pool.status
+    restart: on-failure

@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# We're forced to use user/group 33 (www-data)
+# So we set the owner of the data directories to 33:33
+APP_DATA_DIR="$(readlink -f $(dirname "${BASH_SOURCE[0]}")/..)/data"
+
+DESIRED_OWNER="33:33"
+
+CONFIG_DATA_DIR="${APP_DATA_DIR}/config"
+UPLOADS_DATA_DIR="${APP_DATA_DIR}/uploads"
+USERDATA_DATA_DIR="${APP_DATA_DIR}/userdata"
+
+wavelog_correct_permission() {
+	local -r path="${1}"
+
+	if [[ -d "${path}" ]]; then
+		owner=$(stat -c "%u:%g" "${path}")
+
+		if [[ "${owner}" != "${DESIRED_OWNER}" ]]; then
+			chown "${DESIRED_OWNER}" "${path}"
+		fi
+	fi
+}
+
+wavelog_correct_permission "${CONFIG_DATA_DIR}"
+wavelog_correct_permission "${UPLOADS_DATA_DIR}"
+wavelog_correct_permission "${USERDATA_DATA_DIR}"

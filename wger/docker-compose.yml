@@ -1,0 +1,113 @@
+version: '3.7'
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: wger_nginx_1
+      APP_PORT: 80
+
+  web:
+    image: wger/server:2.4-dev@sha256:96fceb2f6ae89e469ec05f0220447da72098ab0f9c25cfb18a2383cef77717e4
+    user: "1000:1000"
+    depends_on:
+      db:
+        condition: service_healthy
+      cache:
+        condition: service_healthy
+    environment:
+      SECRET_KEY: ${APP_SEED}
+      SIGNING_KEY: ${APP_SEED}
+      CSRF_TRUSTED_ORIGINS: http://${DEVICE_DOMAIN_NAME}:${APP_WGER_PORT},http://${DEVICE_HOSTNAME}:${APP_WGER_PORT},${APP_WGER_LOCAL_URLS}
+      SITE_URL: http://${DEVICE_DOMAIN_NAME}:8450
+      MEDIA_URL: http://${DEVICE_DOMAIN_NAME}:8450/media/
+    env_file:
+      - ${APP_DATA_DIR}/config/prod.env
+    volumes:
+      - ${APP_DATA_DIR}/data/static:/home/wger/static
+      - ${APP_DATA_DIR}/data/media:/home/wger/media
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider http://localhost:8000
+      interval: 10s
+      timeout: 5s
+      start_period: 300s
+      retries: 5
+    restart: on-failure
+
+  nginx:
+    image: nginx:alpine3.22@sha256:d67ea0d64d518b1bb04acde3b00f722ac3e9764b3209a9b0a98924ba35e4b779
+    depends_on:
+      - web
+    volumes:
+      - ${APP_DATA_DIR}/config/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ${APP_DATA_DIR}/data/static:/wger/static:ro
+      - ${APP_DATA_DIR}/data/media:/wger/media:ro
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1:80/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: on-failure
+
+  db:
+    image: postgres:17.5-alpine@sha256:6567bca8d7bc8c82c5922425a0baee57be8402df92bae5eacad5f01ae9544daa
+    user: "1000:1000"
+    environment:
+      POSTGRES_USER: wger
+      POSTGRES_PASSWORD: wger
+      POSTGRES_DB: wger
+      TZ: Europe/Berlin
+    volumes:
+      - ${APP_DATA_DIR}/data/postgres-data:/var/lib/postgresql/data/
+    healthcheck:
+      test: pg_isready -U wger
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: on-failure
+
+  cache:
+    image: redis:8.0.3-alpine@sha256:25c0ae32c6c2301798579f5944af53729766a18eff5660bbef196fc2e6214a9c
+    user: "1000:1000"
+    volumes:
+      - ${APP_DATA_DIR}/data/redis-data:/data
+    healthcheck:
+      test: redis-cli ping
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: on-failure
+
+  celery_worker:
+    image: wger/server:2.4-dev@sha256:96fceb2f6ae89e469ec05f0220447da72098ab0f9c25cfb18a2383cef77717e4
+    user: "1000:1000"
+    command: /start-worker
+    env_file:
+      - ${APP_DATA_DIR}/config/prod.env
+    volumes:
+      - ${APP_DATA_DIR}/data/media:/home/wger/media
+    depends_on:
+      web:
+        condition: service_healthy
+    healthcheck:
+      test: celery -A wger inspect ping
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: on-failure
+
+  celery_beat:
+    image: wger/server:2.4-dev@sha256:96fceb2f6ae89e469ec05f0220447da72098ab0f9c25cfb18a2383cef77717e4
+    user: "1000:1000"
+    command: /start-beat
+    volumes:
+      - ${APP_DATA_DIR}/data/celery-beat:${APP_DATA_DIR}/beat/
+    env_file:
+      - ${APP_DATA_DIR}/config/prod.env
+    depends_on:
+      celery_worker:
+        condition: service_healthy
+    restart: on-failure

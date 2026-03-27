@@ -2,7 +2,7 @@ manifestVersion: 1
 id: frigate
 category: automation
 name: Frigate
-version: "0.15.1"
+version: "0.17.1"
 tagline: A complete and local NVR
 description: >-
   A complete and local NVR designed for Home Assistant with AI object detection. 
@@ -20,9 +20,22 @@ releaseNotes: >-
   ⚠️ As usual, Frigate will attempt to update its configuration automatically. It is still recommended to back up your current config and database before upgrading.
 
 
-  This is a maintenance release that includes two bugfixes:
-    - Fixed a crash in the 'get_current_frame()' function
-    - Fixed the TensorRT model preparation script
+  🚨 This is a maintenance release with security fixes and bugfixes:
+    - Restricted raw config endpoint to admin role only
+    - Fixed cross-camera authentication in timeline and media endpoints
+    - Fixed RKNN ArcFace input format
+    - Fixed storage cleanup being attempted when Frigate is in safe mode
+
+
+  Other improvements in this update include:
+    - Improved playback of videos in Tracking Details
+    - Fixed preview retrieval to handle missing previews gracefully
+    - Fixed thumbnail encoding logic
+    - Fixed go2rtc config handling
+    - Fixed GenAI issues
+    - Fixed audio event maintainer
+    - Push notifications now filtered by user role camera access
+    - Various UI fixes and improvements
 
 
   Full release notes are available at https://github.com/blakeblackshear/frigate/releases
@@ -39,5 +52,7 @@ path: ""
 defaultUsername: ""
 deterministicPassword: true
 dependencies: []
+permissions:
+  - GPU
 submitter: ~dibref-labter
 submission: https://github.com/getumbrel/umbrel-apps/pull/843

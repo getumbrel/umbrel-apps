@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# sentinel file to check if user was already initialised
+USER_SENTINEL="${APP_DATA_DIR}/.user_created"
+
+# default user name and email
+USER_NAME="Umbrel"
+USER_EMAIL="umbrel@umbrel.local"
+
+# max number of tries and sleep time between them (60 seconds)
+MAX_TRIES=12
+SLEEP_SECS=5
+
+# ──────────────────────────────────────────────────────────────
+# Skip bootstrap entirely if user already initialised
+# ──────────────────────────────────────────────────────────────
+if [[ -f "$USER_SENTINEL" ]]; then
+  echo "Librechat: user already initialised - skipping bootstrap."
+  exit 0
+fi
+
+# ──────────────────────────────────────────────────────────────
+# Bring the full stack up so that migrations run automatically
+# We can probably only bring up necessary services here, but doing this for simplicity
+# --wait is ignored on old Compose versions (umbrelOS < 1.0)
+# ──────────────────────────────────────────────────────────────
+echo "Librechat: starting full stack to run migrations…"
+"${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" \
+  up -d --wait --wait-timeout 90
+
+# ──────────────────────────────────────────────────────────────
+# Retry until the user is created (max 60 s)
+# All containers are running, so this should succeed first try
+# But including a retry loop for robustness
+# ──────────────────────────────────────────────────────────────
+echo "Librechat: ensuring user exists…"
+for ((try=1; try<=MAX_TRIES; try++)); do
+  # - The helper exits 0 on success, letting the enclosing loop know we’re done.
+  if "${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" exec -T api node config/create-user.js "${USER_EMAIL}" "${USER_NAME}" "${USER_NAME}" "${APP_PASSWORD}" --email-verified=true ; then
+    touch "$USER_SENTINEL"
+    echo "Librechat: user ready."
+    break
+  fi
+  echo "  Attempt $try/$MAX_TRIES failed - retrying in ${SLEEP_SECS}s…"
+  sleep "$SLEEP_SECS"
+done
+
+if [[ ! -f "$USER_SENTINEL" ]]; then
+  echo "Librechat ERROR: could not create user after $MAX_TRIES attempts."
+  exit 1
+fi
+
+echo "Librechat: bootstrap finished - stopping stack for clean start…"
+"${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" stop

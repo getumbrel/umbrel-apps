@@ -1,0 +1,14 @@
+version: '3.7'
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: perplexica_web_1
+      APP_PORT: 3000
+
+  web:
+    image: itzcrazykns1337/perplexica:v1.12.0@sha256:1bf43c0fe2f86a6d17935a318c13e4238f3c034922339bd8bce430a8ba009dab
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data/app_data:/home/perplexica/data
+      - ${APP_DATA_DIR}/data/uploads:/home/perplexica/uploads

@@ -27,7 +27,7 @@ services:
       - ${APP_DATA_DIR}/data/docker:/data
 
   web:
-    image: ghcr.io/all-hands-ai/openhands:0.42.0@sha256:44a69156501994ae52e2d40b08c8b39b62d9d664cf3f59776161f45c47353a6e
+    image: ghcr.io/openhands/openhands:1.5.0@sha256:e6eed4f4d7c4a368cdbd0dc8751e6fa48340d21783addfc97714b87fbeda21fa
     stdin_open: true
     tty: true
     pull_policy: always
@@ -38,7 +38,7 @@ services:
       retries: 3
       start_period: 90s
     environment:
-      - SANDBOX_RUNTIME_CONTAINER_IMAGE=docker.all-hands.dev/all-hands-ai/runtime:0.42.0-nikolaik@sha256:f5b5fa5b91ed4433bbc3a7080ef18e64d6f14504c1fdc8bbea55977fde752494
+      - SANDBOX_RUNTIME_CONTAINER_IMAGE=docker.openhands.dev/openhands/runtime:0.62-nikolaik@sha256:95fc4d8e753f41d34cd564e78d3d64217c5d22296ea1cb7bf92614c8198de8f5
       - WORKSPACE_MOUNT_PATH=/opt/workspace_base
       - LOG_ALL_EVENTS=true
     volumes:

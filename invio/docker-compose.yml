@@ -1,0 +1,33 @@
+services:
+
+  app_proxy:
+    environment:
+      APP_HOST: invio_frontend_1
+      APP_PORT: 8000
+      PROXY_AUTH_ADD: "false"
+
+  backend:
+    image: ghcr.io/kittendevv/invio-backend:v1.11.1@sha256:639dfe7926ea4ae48a058a2a01d62c1ad1c9b173a4eaee9931e09ba910f719cc
+    environment:
+      ADMIN_USER: "admin"
+      ADMIN_PASS: ${APP_PASSWORD}
+      JWT_SECRET: ${APP_SEED}
+      SESSION_TTL_SECONDS: 43200
+      SECURE_HEADERS_DISABLED: "false"
+      ENABLE_HSTS: "true"
+      DATABASE_PATH: /app/data/invio.db
+    volumes:
+      - ${APP_DATA_DIR}/data:/app/data
+    restart: on-failure
+
+  frontend:
+    image: ghcr.io/kittendevv/invio-frontend:v1.11.1@sha256:8692569f9742add5fa33f0d7a7c993d637c2ae0242d1e9878ea434d9e9187b46
+    environment:
+      PORT: 8000
+      BACKEND_URL: http://invio_backend_1:3000
+      COOKIE_SECURE: "false"
+      FRONTEND_SECURE_HEADERS_DISABLED: "false"
+      ENABLE_HSTS: "false"
+    depends_on:
+      - backend
+    restart: on-failure

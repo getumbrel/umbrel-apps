@@ -1,0 +1,18 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: wizarr_app_1
+      APP_PORT: 5690
+      
+  app:
+    image: ghcr.io/wizarrrr/wizarr:v2026.2.1@sha256:855e2a9a98eb18ffee26f321aac5a58712bcb04a537f10c21b95d191f9407588
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - DISABLE_BUILTIN_AUTH=false
+      - TZ=UTC

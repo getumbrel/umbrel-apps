@@ -19,6 +19,8 @@ if [[ "${APP_BITCOIN_NETWORK}" == "mainnet" ]]; then
 	BIN_ARGS+=( "--bitcoin.mainnet" )
 elif [[ "${APP_BITCOIN_NETWORK}" == "testnet" ]]; then
 	BIN_ARGS+=( "--bitcoin.testnet" )
+elif [[ "${APP_BITCOIN_NETWORK}" == "testnet4" ]]; then
+	BIN_ARGS+=( "--bitcoin.testnet4" )
 elif [[ "${APP_BITCOIN_NETWORK}" == "signet" ]]; then
 	BIN_ARGS+=( "--bitcoin.signet" )
 elif [[ "${APP_BITCOIN_NETWORK}" == "regtest" ]]; then

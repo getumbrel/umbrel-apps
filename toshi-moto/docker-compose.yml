@@ -1,0 +1,39 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: toshi-moto_web_1
+      APP_PORT: 8021
+      PROXY_AUTH_ADD: "false"
+
+  api_web:
+    image: toshimoto821/toshi-moto-api:1.8.4@sha256:750927ef2d0b0bbcffcbb57632d861e567a8b7243381c0285b2b2660dc31244a
+    restart: on-failure
+    stop_grace_period: 1m
+    user: 1000:1000
+    depends_on:
+      - mongodb
+    environment:
+      PORT: 8121
+      MONGODB_URI: "mongodb://toshi-moto_mongodb_1:27017/toshi-moto"
+
+  web:
+    image: toshimoto821/toshi-moto:1.37.1@sha256:c4317ae166e7d4fd57acb5822f44cf2edaef71f5bf032ca0c866b8a12c71a470
+    restart: on-failure
+    user: 1000:1000
+    stop_grace_period: 1m
+    volumes:
+      - ${APP_DATA_DIR}/data/proxy/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - api_web
+    environment:
+      PORT: 8021
+
+  mongodb:
+    image: mongo:8.0.10@sha256:15fb53a5160ebabff5ecade8f8b5d48721b68ea190957a7f35b5b38e8340e62b
+    stop_grace_period: 1m
+    user: 1000:1000
+    command: mongod --noauth
+    volumes:
+      - ${APP_DATA_DIR}/data/db:/data/db
