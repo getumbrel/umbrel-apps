@@ -1,0 +1,16 @@
+version: "3.7"
+services:
+  app_proxy:
+    environment:
+      APP_HOST: dumbpad_web_1
+      APP_PORT: "3000"
+
+  web:
+    image: dumbwareio/dumbpad:1.0.4@sha256:03e4216d7842958287bccf6c51dde1c41735b35235844fb87c70b4443143ada6
+    user: "1000:1000"
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data:/app/data
+    environment:
+      SITE_TITLE: DumbPad
+      BASE_URL: http://$DEVICE_DOMAIN_NAME:3000

@@ -1,8 +1,8 @@
-manifestVersion: 1
+manifestVersion: 1.1
 id: portainer
 category: developer
 name: Portainer
-version: "2.27.7"
+version: "2.39.1"
 tagline: Run custom Docker containers on your Umbrel
 description: >-
   ⚠️ Make sure to only use named Docker volumes for your stacks and containers. Data in bind-mounted volumes
@@ -51,16 +51,21 @@ path: ""
 defaultUsername: "admin"
 defaultPassword: "changeme"
 releaseNotes: >-
-  This update includes several improvements and security fixes:
-
-
-    - Made improvements to the Helm feature including the ability to upgrade, rollback, and uninstall charts
-    - Added support for passing environment variables from edge agents to edge stacks
-    - Fixed an issue where users were unable to perform rolling restarts for deployments
-    - Resolved several security vulnerabilities
+  This update includes several fixes and security improvements:
+    - Fixed an issue where Git-based Docker stacks from GitLab failed validation for non-admin users
+    - Fixed an issue where groups were missing after an upgrade
+    - Fixed an issue where not all containers for a service were shown
+    - Fixed an issue where users could not add new environments to an existing group with many environments
+    - Fixed an issue where the Edit application button was disabled for non-admin users
+    - Fixed an issue where users could not view their containers or saw a blank dashboard
+    - Fixed an issue where custom template file content was accessible to unauthorized users
+    - Re-enabled image registries for FIPS
+    - Resolved multiple security vulnerabilities
 
 
   Full release notes are found at https://github.com/portainer/portainer/releases.
+permissions:
+  - GPU
 developer: Portainer
 submitter: Umbrel
 submission: https://github.com/getumbrel/umbrel-apps/pull/774

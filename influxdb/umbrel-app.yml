@@ -1,9 +1,9 @@
-manifestVersion: 1
+manifestVersion: 1.1
 id: influxdb
 name: InfluxDB
 tagline: High performance time series database
 category: developer
-version: "1.11.8"
+version: "1.12.3"
 port: 8888
 description: >-
   InfluxDB is an open-source, high-performance time series database packaged with Chronograf, the official web-based visualization tool.
@@ -49,7 +49,33 @@ gallery:
   - 2.jpg
   - 3.jpg
 releaseNotes: >-
-  This update bumps InfluxDB to version 1.11.8 to match the version already used in the container.
+  This release brings InfluxDB to version 1.12.3.
+
+
+  Features:
+    - Add support for skipping TLS certificate file permission checks
+    - Add configurable advance warnings for TLS certificate expiration
+    - Support TLS certificate reloading without restart
+    - Add continuous query and config diagnostics to the debug endpoint
+    - Improve logging for dropped points and show user info in query logs
+    - Add time format parameter for the HTTP API
+    - Report user query bytes
+
+
+  Bug fixes:
+    - Fix clause order for FUTURE LIMIT and PAST LIMIT in retention policy statements
+    - Fix authorizer leakage in SHOW QUERIES
+    - Resolve lock leakage in Store.DeleteSeries()
+    - Stop excessive logging about phantom shards
+    - Fix condition check for array cursor optimization
+    - Fix handling of nested files in compaction
+    - Reduce lock contention and races in purger
+    - Various other stability and correctness fixes
+
+
+  Full changes can be found here:
+    - InfluxDB v1.12.3: https://docs.influxdata.com/influxdb/v1/about_the_project/release-notes/
+    - Chronograf v1.10.8: https://docs.influxdata.com/chronograf/v1/about_the_project/release-notes/
 dependencies: []
 path: ""
 defaultUsername: "admin"

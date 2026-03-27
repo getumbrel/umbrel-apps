@@ -1,0 +1,53 @@
+version: '3.7'
+services:
+  app_proxy:
+    environment:
+      APP_HOST: tubearchivist_server_1
+      APP_PORT: 8000
+      PROXY_AUTH_ADD: "false"
+
+  server:
+    image: bbilly1/tubearchivist:v0.5.9@sha256:b827a713f55b2b1933f8b130f36dc8b38cec3dd56998c389b7c9694a7238f3df
+    volumes:
+      - ${APP_DATA_DIR}/data/media:/youtube
+      - ${APP_DATA_DIR}/data/cache:/cache
+    environment:
+      - ES_URL=http://tubearchivist_elasticsearch_1:9200
+      - REDIS_CON=redis://tubearchivist_redis_1:6379
+      - HOST_UID=1000
+      - HOST_GID=1000
+      - TA_HOST=http://${DEVICE_DOMAIN_NAME}:8079
+      - TA_USERNAME=admin
+      - TA_PASSWORD=${APP_PASSWORD}
+      - ELASTIC_PASSWORD=verysecret
+      - TZ=UTC
+    restart: on-failure
+    depends_on:
+      - elasticsearch
+      - redis
+
+  redis:
+    image: redis:8.2.2-bookworm@sha256:4521b581dbddea6e7d81f8fe95ede93f5648aaa66a9dacd581611bf6fe7527bd
+    user: "1000:1000"
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data/redis:/data
+    depends_on:
+      - elasticsearch
+
+  elasticsearch:
+    image: elasticsearch:8.19.6@sha256:e2d7e20893ad820bcad241bf47b89958787f6b38225478dfe100b66937840b0f
+    user: "1000:1000"
+    restart: on-failure
+    environment:
+      - "ELASTIC_PASSWORD=verysecret"
+      - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
+      - "xpack.security.enabled=true"
+      - "discovery.type=single-node"
+      - "path.repo=/usr/share/elasticsearch/data/snapshot"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - ${APP_DATA_DIR}/data/elasticsearch:/usr/share/elasticsearch/data

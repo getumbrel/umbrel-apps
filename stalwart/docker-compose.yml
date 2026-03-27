@@ -1,0 +1,25 @@
+version: "3.9"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: stalwart_server_1
+      APP_PORT: 8080
+      PROXY_AUTH_ADD: "false"
+
+  server:
+    image: stalwartlabs/stalwart:v0.15.5@sha256:dcf575db2d53d9ef86d6ced8abe4ba491984659a0f8862cc6079ee7b41c3c568
+    user: "1000:1000"
+    ports:
+      - 10443:443  # HTTPS
+      - 10025:25   # SMTP
+      - 10465:465  # SMTPS
+      - 10587:587  # SMTP Submission
+      - 10143:143  # IMAP
+      - 10993:993  # IMAPS
+      - 14190:4190 # Sieve
+      - 10110:110  # POP3
+      - 10995:995  # POP3S
+    volumes:
+      - ${APP_DATA_DIR}/data:/opt/stalwart
+    restart: on-failure

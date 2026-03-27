@@ -1,0 +1,30 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: bitaxe-sentry_web_1
+      APP_PORT: 7070
+
+  sentry:
+    image: zachprice105/bitaxe-sentry:v0.6.1@sha256:2326e3ea1f7e054da41768a4648277cd523d19a235490a2c0ae364315abbc8ee
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 1m
+    volumes:
+      - ${APP_DATA_DIR}/data/sentry:/var/lib/bitaxe
+    environment:
+      DB_PATH: "/var/lib/bitaxe/bitaxe_sentry.db"
+      DB_DATA_DIR: "/var/lib/bitaxe"
+
+  web:
+    image: zachprice105/bitaxe-sentry:v0.6.1@sha256:2326e3ea1f7e054da41768a4648277cd523d19a235490a2c0ae364315abbc8ee
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 1m
+    volumes:
+      - ${APP_DATA_DIR}/data/sentry:/var/lib/bitaxe
+    environment:
+      DB_PATH: "/var/lib/bitaxe/bitaxe_sentry.db"
+      DB_DATA_DIR: "/var/lib/bitaxe"
+    command: uvicorn bitaxe_sentry.sentry.webapp:app --host 0.0.0.0 --port 7070
+    depends_on:
+      - sentry

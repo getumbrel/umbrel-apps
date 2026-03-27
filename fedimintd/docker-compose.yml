@@ -1,0 +1,25 @@
+version: '3.7'
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: fedimintd_fedimintd_1
+      APP_PORT: 8175 # ui
+
+  fedimintd:
+    image: fedimint/fedimintd:v0.10.0@sha256:310533faa11cad65d51abcb1f65c5ed4a8afb49779593a309c282160192ff3e5
+    ports:
+      - 8173:8173/tcp # p2p tls
+      - 8173:8173/udp # p2p iroh
+      - 8174:8174/udp # api iroh
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+    environment:
+      FM_ENABLE_IROH: "true"
+      FM_DATA_DIR: "/data"
+      FM_BITCOIN_NETWORK: ${APP_BITCOIN_NETWORK_ELECTRS}
+      FM_BITCOIND_USERNAME: ${APP_BITCOIN_RPC_USER}
+      FM_BITCOIND_PASSWORD: ${APP_BITCOIN_RPC_PASS}
+      FM_BITCOIND_URL: "http://${APP_BITCOIN_NODE_IP}:${APP_BITCOIN_RPC_PORT}"
+      FM_BIND_UI: 0.0.0.0:8175
+    restart: on-failure

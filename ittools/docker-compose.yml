@@ -1,0 +1,17 @@
+version: '3.7'
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: ittools_app_1
+      APP_PORT: 80
+
+  app:
+    image: corentinth/it-tools:2024.10.22-7ca5933@sha256:8b8128748339583ca951af03dfe02a9a4d7363f61a216226fc28030731a5a61f
+    restart: on-failure
+    # not working rootless yet
+    #user: 1000:1000
+    mem_limit: 2g
+    cpu_shares: 768
+    security_opt:
+      - no-new-privileges:true

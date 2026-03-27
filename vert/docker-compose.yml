@@ -1,0 +1,15 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: vert_web_1
+      APP_PORT: 80
+
+  web:
+    image: ghcr.io/vert-sh/vert:sha-9154213@sha256:921bd61b3d786ecedce81e5ec0cb5112bce6c43d64e331a53af6862e56bd3ebd
+    restart: on-failure
+    environment:
+      PUB_HOSTNAME: http://${DEVICE_DOMAIN_NAME}:3884
+      PUB_VERTD_URL: http://${DEVICE_DOMAIN_NAME}:3884
+      PUB_ENV: production

@@ -2,7 +2,7 @@ manifestVersion: 1
 id: bazarr
 category: media
 name: Bazarr
-version: "1.5.2"
+version: "1.5.6"
 tagline: Manage and download subtitles for Sonarr and Radarr
 description: >-
   Bazarr is a companion application to Sonarr and Radarr that manages and downloads subtitles based on your requirements.
@@ -19,14 +19,20 @@ description: >-
   You will also need to input your API key for Sonarr and/or Radarr. You can find your API keys in the settings of the Sonarr and Radarr apps.
 releaseNotes: >-
   Key improvements in this release include:
-
-    - Enhanced subtitle search and matching capabilities
-    - Improved handling of embedded subtitles
-    - Better support for multiple languages and translations
-    - Added new subtitle provider options
-    - Improved series and episode management
-    - Enhanced settings organization and user interface
-    - Various performance improvements and bug fixes
+    - Added Spain vs LATAM Spanish detection to SubX provider
+    - Added SubX subtitle proxy for Subdivx Latam Spanish provider
+    - Removed subdivx provider as it is no longer supported
+    - Added hostname setting in General for webhook security to prevent hostname poisoning
+    - Added audio delay detection in MKV headers for WhisperAI using FFprobe
+    - Added Plex library refresh after subtitle deletions or modifications
+    - Improved subdl provider with search by TMDB ID and better error handling
+    - Improved Gestdown provider release matching
+    - Fixed assrt provider skipping season pack subtitles for episode searches
+    - Fixed missing audio_exclude migration in language profile upgrades
+    - Fixed post-processing failing on non-English Windows systems
+    - Fixed subssabbz search, diacritics, language comparison, and download error handling
+    - Improved job queue handling to prevent high CPU usage from busy waiting
+    - Improved performance by replacing blocking job progress monitoring with async implementation
 
 
   Full release notes are found at https://github.com/morpheus65535/bazarr/releases

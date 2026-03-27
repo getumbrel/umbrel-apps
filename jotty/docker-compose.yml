@@ -1,0 +1,17 @@
+version: "3.7"
+services:
+  app_proxy:
+    environment:
+      APP_HOST: jotty_web_1
+      APP_PORT: "3000"
+
+  web:
+    image: ghcr.io/fccview/jotty:1.21.1@sha256:275c844be9aae5736ad4d120f554278be41a48e125af3782d3713a72aff9e264
+    user: "1000:1000"
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data/app:/app/data
+      - ${APP_DATA_DIR}/data/config:/app/config
+      - ${APP_DATA_DIR}/data/cache:/app/.next/cache
+    environment:
+      - NODE_ENV=production

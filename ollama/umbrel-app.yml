@@ -3,7 +3,7 @@ id: ollama
 name: Ollama
 tagline: Self-host open source AI models like DeepSeek-R1, Llama, and more
 category: ai
-version: "0.9.2"
+version: "0.18.3"
 port: 11434
 description: >-
   Ollama allows you to download and run advanced AI models directly on your own hardware. Self-hosting AI models ensures full control over your data and protects your privacy.
@@ -22,6 +22,8 @@ description: >-
   If you want to connect Ollama to other apps or devices, here's how:
     - Apps running on UmbrelOS: Use ollama_ollama_1 as the host and 11434 as the port when configuring other apps to connect to Ollama. For example, the API Base URL would be: http://ollama_ollama_1:11434.
     - Custom Integrations: Connect Ollama to third-party apps or your own code using your UmbrelOS local domain (e.g., http://umbrel.local:11434) or your device's IP address, which you can find in the UmbrelOS Settings page (e.g., http://192.168.4.74:11434).
+backupIgnore:
+  - data/*
 developer: Ollama
 website: https://ollama.com/
 submitter: al-lac
@@ -36,21 +38,13 @@ defaultUsername: ""
 defaultPassword: ""
 dependencies: []
 releaseNotes: >-
-  This release includes several bug fixes and improvements to tool calling functionality.
+  This release adds Visual Studio Code integration and improvements to OpenClaw.
 
 
-  Key improvements in this release:
-    - Fixed issue where tool calls without parameters would not be returned correctly
-    - Fixed errors that previously showed "does not support generate"
-    - Fixed issue where some special tokens would not be tokenized properly for certain model architectures
-
-
-  Tool calling support has been added for new models:
-    - DeepSeek-R1-2508 (671B model)
-    - Magistral
-
-
-  Tool calling reliability has also been improved for existing models including Llama 4 and Mistral.
+  Key highlights in this release:
+    - Microsoft Visual Studio Code now directly integrates with Ollama via GitHub Copilot, allowing any local or cloud model from Ollama to be used within VS Code
+    - GLM parser improvements for tool calls
+    - OpenClaw integration improvements for gateway checks
 
 
   Full release notes are available at https://github.com/ollama/ollama/releases
