@@ -1,0 +1,27 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: dropgate_server_1
+      APP_PORT: 52443
+
+  server:
+    image: willtda/dropgate-server:3.0.9@sha256:8ca2a87100f144117f4e9f215b2358af64bf83305b27c2f1cc8fe2802484276b
+    restart: on-failure
+    stop_grace_period: 1m
+    ports:
+      - "52443:52443"
+    volumes:
+      - ${APP_DATA_DIR}/data:/usr/src/app/uploads
+    environment:
+      ENABLE_UPLOAD: "false"
+      ENABLE_P2P: "true"
+      ENABLE_WEB_UI: "true"
+      UPLOAD_PRESERVE_UPLOADS: "true"
+      UPLOAD_MAX_FILE_SIZE_MB: "100"
+      UPLOAD_MAX_STORAGE_GB: "10"
+      UPLOAD_MAX_FILE_LIFETIME_HOURS: "24"
+      UPLOAD_MAX_FILE_DOWNLOADS: "1"
+      UPLOAD_ENABLE_E2EE: "true"
+      LOG_LEVEL: "INFO"
