@@ -9,7 +9,7 @@ services:
   # Nginx reverse proxy - serves frontend, routes API calls
   # Uses custom umbrel image with baked-in config template and setup page
   nginx:
-    image: ghcr.io/bffless/ce-nginx:umbrel@sha256:08e55aa2efcb1e133e32c23f91e84e62f1a5607e8932ee491a236824611c599d
+    image: ghcr.io/bffless/ce-nginx:umbrel@sha256:6861ec1dc55babeb10d44ccd5092e832d49dc44b471a1cc595e0aaae18c46e13
     restart: on-failure
     stop_grace_period: 30s
     volumes:
@@ -25,7 +25,7 @@ services:
 
   # PostgreSQL database
   postgres:
-    image: postgres:17-alpine@sha256:3430fe182f5065a6ea505c3d432d2c7fff18fbab954df8f277c1dbf4c70124af
+    image: pgvector/pgvector:0.8.2-pg17@sha256:494dff7e67e7bc2c826b94c331364978d145ebb86fd338154138b084223b7f67
     restart: on-failure
     stop_grace_period: 30s
     environment:
@@ -134,7 +134,7 @@ services:
 
   # React frontend (serves static files)
   frontend:
-    image: ghcr.io/bffless/ce-frontend:umbrel@sha256:2ba21f7b50eccb3addb94fadb713c7bd242cd4f7c53496f2c4283fdc98f24b41
+    image: ghcr.io/bffless/ce-frontend:umbrel@sha256:4a04eee36b400ec568848db51b1374d220f54dbfb7903959e0fb55421a86591b
     restart: on-failure
     stop_grace_period: 30s
     volumes:
