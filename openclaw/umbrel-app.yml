@@ -3,7 +3,7 @@ id: openclaw
 name: OpenClaw
 tagline: The AI that actually does things
 category: ai
-version: "2026.3.24"
+version: "2026.3.28"
 port: 18789
 path: ""
 description: >-
@@ -39,22 +39,28 @@ gallery:
   - 2.jpg
   - 3.jpg
 releaseNotes: >-
-  What's new in OpenClaw (v2026.3.13 → v2026.3.24):
-    - OpenAI compatibility improvements: added `/v1/models` and `/v1/embeddings` endpoints for broader client and RAG tool support
-    - Microsoft Teams support upgraded with streaming replies, welcome cards, typing indicators, message edit/delete, and native AI labeling
-    - Skills panel redesigned with status-filter tabs (All / Ready / Needs Setup / Disabled), one-click install recipes, and API key setup guidance
-    - Tools panel now shows only what the current agent can actually use, with a live "Available Right Now" section in the Control UI
-    - Slack interactive replies restored with richer button/select rendering and improved setup defaults
-    - Discord auto-threads can now be renamed asynchronously with LLM-generated titles
-    - CLI gains `--container` flag to run commands inside a running Docker or Podman OpenClaw container
-    - Agent workspace files now show inline markdown previews with rich rendering for headings, tables, code blocks, and more
-    - Security fix: closed a `mediaUrl`/`fileUrl` alias bypass that could escape media-root sandbox restrictions
-    - Fixed fresh Docker installs failing before the gateway comes up
-    - Fixed broken channel startup where one failing channel could block all others from starting
-    - Fixed WhatsApp group echo suppression and reply-to-bot detection in linked-account group chats
-    - Fixed Telegram forum topic routing, photo dimension validation, and permanent delivery failure handling
-    - Fixed Discord gateway supervision crashes and timeout reply delivery
-    - Fixed restart sentinel so interrupted agent sessions resume correctly in the right Telegram topic or Slack thread
+  ⚠️ Breaking change: the Qwen `qwen-portal-auth` OAuth integration has been removed. Migrate to Model Studio using `openclaw onboard --auth-choice modelstudio-api-key`
+
+
+  What's new in OpenClaw (v2026.3.24 → v2026.3.28):
+    - xAI/Grok now uses the Responses API with built-in web search (`x_search`) and automatic plugin enablement — no manual toggles needed
+    - MiniMax image generation added for the `image-01` model, supporting generate and image-to-image editing
+    - Plugins can now pause tool execution and ask for your approval before proceeding, via Telegram buttons, Discord interactions, or the `/approve` command
+    - ACP binds added for Discord, BlueBubbles, and iMessage so you can turn any chat into a Codex-backed workspace
+    - Gemini CLI backend support added alongside Claude CLI and Codex CLI
+    - Slack gains an explicit file upload action for channels and DMs
+    - Microsoft Teams and Google Chat now support unified file sends via `upload-file`
+    - Fixed infinite echo loop in WhatsApp self-chat DM mode
+    - Fixed long Telegram messages splitting mid-word instead of at word boundaries
+    - Fixed Mistral API calls failing with 422 errors
+    - Fixed sensitive config being accidentally exposed in the Control UI raw editor
+    - Fixed Discord gateway recovery looping on poisoned resume state
+    - Fixed GitHub Copilot token refresh falling into a hot loop on large expiry values
+    - Fixed memory search failing with unknown provider errors across split plugin runtimes
+    - Fixed iMessage leaking inline reply tags into delivered message text
+    - Fixed WhatsApp mentions in quoted messages falsely triggering mention gating
+    - Fixed Telegram verbose tool summaries not appearing in forum topic sessions
+    - Multiple additional stability, delivery, and compatibility fixes across Telegram, Discord, Slack, Matrix, Feishu, and more
     - And much more. Full details at https://github.com/openclaw/openclaw/releases
 submitter: Umbrel
 submission: https://github.com/getumbrel/umbrel-apps/pull/4649
