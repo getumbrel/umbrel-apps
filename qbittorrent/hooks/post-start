@@ -12,10 +12,16 @@ echo "inside qbittorrent/hooks/post-start"
 APP_DATA_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")"
 QBITTORRENT_CONF_FILE="${APP_DATA_DIR}/data/config/config/qBittorrent.conf"
 UMBREL_QBITTORRENT_CONFIG_FLAG="${APP_DATA_DIR}/HAS_BEEN_CONFIGURED_BY_UMBREL"
+QBITTORRENT_DOWNLOADS_PATH_MIGRATION_FLAG="${APP_DATA_DIR}/DOWNLOADS_PATH_CONFIGURED_BY_UMBREL"
+RUN_EXISTING_INSTALL_MIGRATION=false
 
 if [[ -f "${UMBREL_QBITTORRENT_CONFIG_FLAG}" ]]; then
-  echo "qBittorrent has already been configured."
-  exit
+  if [[ -f "${QBITTORRENT_DOWNLOADS_PATH_MIGRATION_FLAG}" ]]; then
+    echo "qBittorrent has already been configured and migrated."
+    exit
+  fi
+  echo "qBittorrent has already been configured. Running existing install migration."
+  RUN_EXISTING_INSTALL_MIGRATION=true
 fi
 
 # Wait up to 30 seconds for the qBittorrent.conf file to exist
@@ -37,6 +43,22 @@ fi
 echo "Waiting 5 seconds for qBittorrent.conf file to be fully written..."
 sleep 5
 
+ensure_bittorrent_section() {
+	if ! grep --quiet '^\[BitTorrent\]$' "${QBITTORRENT_CONF_FILE}"; then
+		echo "[BitTorrent] section does not exist in qBittorrent.conf. Creating it."
+		printf '\n[BitTorrent]\n' >> "${QBITTORRENT_CONF_FILE}"
+	fi
+}
+
+set_default_save_path() {
+	echo "Setting Session\\DefaultSavePath=/downloads in qBittorrent.conf"
+	if grep -q '^Session\\DefaultSavePath=' "${QBITTORRENT_CONF_FILE}"; then
+		sed -i 's|^Session\\DefaultSavePath=.*|Session\\DefaultSavePath=/downloads|' "${QBITTORRENT_CONF_FILE}"
+	else
+		sed -i '/^\[BitTorrent\]/a Session\\DefaultSavePath=/downloads' "${QBITTORRENT_CONF_FILE}"
+	fi
+}
+
 ensure_preferences_section() {
 	if ! grep --quiet '^\[Preferences\]$' "${QBITTORRENT_CONF_FILE}"; then
 		echo "[Preferences] section does not exist in qBittorrent.conf. Creating it."
@@ -48,6 +70,16 @@ if "${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" stop server; then
   echo "qBittorrent stopped successfully."
 else
   echo "Failed to run stop command because we were sent here from the post-start hook. This is expected behavior. Continuing"
+fi
+
+ensure_bittorrent_section
+set_default_save_path
+
+if [[ "${RUN_EXISTING_INSTALL_MIGRATION}" == true ]]; then
+  touch "${QBITTORRENT_DOWNLOADS_PATH_MIGRATION_FLAG}"
+  echo "Starting qBittorrent..."
+  "${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" start server
+  exit
 fi
 
 ensure_preferences_section
@@ -69,6 +101,13 @@ if ! grep --quiet '^WebUI\\Password_PBKDF2' "${QBITTORRENT_CONF_FILE}"; then
 else
   # This is a legacy install and the user has already set a password. We don't want to overwrite it. 
   echo "'WebUI\\Password_PBKDF2' already exists in qBittorrent.conf. No changes made."
+fi
+
+echo "Setting Session\\DefaultSavePath=/downloads in qBittorrent.conf"
+if grep -q '^Session\\DefaultSavePath=' "${QBITTORRENT_CONF_FILE}"; then
+  sed -i 's|^Session\\DefaultSavePath=.*|Session\\DefaultSavePath=/downloads|' "${QBITTORRENT_CONF_FILE}"
+else
+  sed -i '/^\[BitTorrent\]/a Session\\DefaultSavePath=/downloads' "${QBITTORRENT_CONF_FILE}"
 fi
 
 # Users can overwrite these settings in the qBittorrent.conf file if they want to change them and this script won't overwrite them.
@@ -99,6 +138,7 @@ fi
 
 # Create the UMBREL_QBITTORRENT_CONFIG_FLAG file to indicate that we've configured qBittorrent
 touch "${UMBREL_QBITTORRENT_CONFIG_FLAG}"
+touch "${QBITTORRENT_DOWNLOADS_PATH_MIGRATION_FLAG}"
 
 # start the qBittorrent service
 echo "Starting qBittorrent..."
