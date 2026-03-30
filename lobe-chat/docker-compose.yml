@@ -40,6 +40,7 @@ services:
 
   postgres:
     image: paradedb/paradedb:0.22.3-pg17@sha256:746c263e546b9d8bfdd278d7da9584c47ce838670e6cdfdb32713147548b43ce
+    user: "1000:1000"
     restart: on-failure
     environment:
       POSTGRES_DB: lobehub
@@ -54,6 +55,7 @@ services:
 
   redis:
     image: redis:7.4.8@sha256:a5995dfdf108997f8a7c9587f54fad5e94ed5848de5236a6b28119e99efd67e0
+    user: "1000:1000"
     restart: on-failure
     command: redis-server --save 60 1000 --appendonly yes
     volumes:
@@ -90,7 +92,7 @@ services:
 
   rustfs-init:
     image: minio/mc:RELEASE.2025-08-13T08-35-41Z@sha256:a7fe349ef4bd8521fb8497f55c6042871b2ae640607cf99d9bede5e9bdf11727
-    restart: "no"
+    restart: on-failure
     depends_on:
       rustfs:
         condition: service_healthy
