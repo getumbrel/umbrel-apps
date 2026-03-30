@@ -2,7 +2,7 @@ manifestVersion: 1
 id: tautulli
 category: media
 name: tautulli
-version: "2.16.1"
+version: "2.17.0"
 tagline: Monitor your Plex Media Server
 description: >-
   Tautulli is a 3rd party application that you can run alongside your Plex Media Server to monitor activity and track various statistics.
@@ -29,16 +29,18 @@ defaultUsername: ""
 defaultPassword: ""
 torOnly: false
 releaseNotes: >-
-  ⚠️ Several security vulnerabilities have been identified in Tautulli versions <=2.15.3. Users are strongly encouraged to update to this latest version.
+  ⚠️ Several security vulnerabilities have been identified in Tautulli versions <=2.16.1. Users are strongly encouraged to update to this latest version.
 
 
-  This update includes several improvements and fixes:
-    - Added Tautulli Plex token expired notification trigger
-    - Added syntax highlighting and code formatting for newsletter message text
-    - Added new time format options for home stats and activity cards
-    - Backup files are now compressed to reduce file size
-    - Restricted graphs to guest user
-    - Removed timezone from IP address modal
+  This update includes several security fixes and improvements:
+    - Fixed remote code execution vulnerability in notification text evaluation (CVE-2026-28505)
+    - Fixed SQL injection vulnerability in get_home_stats API command (CVE-2026-31799)
+    - Fixed unauthenticated path traversal in newsletter image endpoint (CVE-2026-31831)
+    - Fixed unsanitized JSONP callback parameter (CVE-2026-32275)
+    - Added authentication to the PMS image proxy endpoint (CVE-2026-31804)
+    - Added ability to export square art images and theme music
+    - Fixed history modal not opening when clicking on graphs
+    - Fixed newsletter not showing media from certain Plex libraries
 
 
   Full release notes and detailed information are available at https://github.com/Tautulli/Tautulli/releases
