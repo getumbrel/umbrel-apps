@@ -37,11 +37,20 @@ fi
 echo "Waiting 5 seconds for qBittorrent.conf file to be fully written..."
 sleep 5
 
+ensure_preferences_section() {
+	if ! grep --quiet '^\[Preferences\]$' "${QBITTORRENT_CONF_FILE}"; then
+		echo "[Preferences] section does not exist in qBittorrent.conf. Creating it."
+		printf '\n[Preferences]\n' >> "${QBITTORRENT_CONF_FILE}"
+	fi
+}
+
 if "${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" stop server; then
   echo "qBittorrent stopped successfully."
 else
   echo "Failed to run stop command because we were sent here from the post-start hook. This is expected behavior. Continuing"
 fi
+
+ensure_preferences_section
 
 # As of v4.6.1, qBittorrent no longer supports a default password and instead prints a temporary password to the logs, which is not ideal for users.
 # Users are meant to start qBittorrent, copy the temporary password from the container logs, log in with the temporary password, and then set a new password from the UI.
@@ -78,6 +87,14 @@ if grep -q '^WebUI\\AuthSubnetWhitelistEnabled=' "${QBITTORRENT_CONF_FILE}"; the
   sed -i 's/^WebUI\\AuthSubnetWhitelistEnabled=.*/WebUI\\AuthSubnetWhitelistEnabled=true/' "${QBITTORRENT_CONF_FILE}"
 else
   sed -i '/^\[Preferences\]/a WebUI\\AuthSubnetWhitelistEnabled=true' "${QBITTORRENT_CONF_FILE}"
+fi
+
+# Ensure WebUI\HostHeaderValidation is set correctly
+echo "Setting WebUI\HostHeaderValidation=false in qBittorrent.conf"
+if grep -q '^WebUI\\HostHeaderValidation=' "${QBITTORRENT_CONF_FILE}"; then
+  sed -i 's/^WebUI\\HostHeaderValidation=.*/WebUI\\HostHeaderValidation=false/' "${QBITTORRENT_CONF_FILE}"
+else
+  sed -i '/^\[Preferences\]/a WebUI\\HostHeaderValidation=false' "${QBITTORRENT_CONF_FILE}"
 fi
 
 # Create the UMBREL_QBITTORRENT_CONFIG_FLAG file to indicate that we've configured qBittorrent
