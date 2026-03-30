@@ -5,7 +5,6 @@ services:
     environment:
       APP_HOST: rusty-kaspad_frontend_1
       APP_PORT: 4321
-    container_name: rusty-kaspad_app_proxy_1
 
   frontend:
     image: elldee/kaspa-frontend:v0.4.1@sha256:a77573dfbc706b632ba24b9087685dc0b44d588c60b5399e2c2df2a19bd38a93
@@ -13,7 +12,6 @@ services:
     stop_grace_period: 1m
     depends_on:
       - kaspad
-    container_name: rusty-kaspad_frontend_1
 
   kaspad:
     image: kaspanet/rusty-kaspad:v1.1.0@sha256:150ffa0c0dcc6497951f9199d1ba3e48c7d91ef958846b28c9fb5045459a2dca
@@ -26,4 +24,3 @@ services:
       - 16111:16111  # P2P
       - 17110:17110  # WRPC (Borsh)
       - 18110:18110  # WRPC (JSON)
-    container_name: rusty-kaspad_kaspad_1
