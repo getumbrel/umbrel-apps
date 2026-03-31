@@ -7,36 +7,20 @@ services:
       APP_PORT: 4321
 
   frontend:
-    image: elldee/kaspa-frontend:v0.3.0@sha256:129cff71ec174ea69bb38313cfb2a20518fa2c1fd371e2a2aa5fa4d75b74470c
+    image: elldee/kaspa-frontend:v0.4.1@sha256:a77573dfbc706b632ba24b9087685dc0b44d588c60b5399e2c2df2a19bd38a93
     restart: on-failure
     stop_grace_period: 1m
-    depends_on:
-      - kaspa-api
-  
-  kaspa-api:
-    image: elldee/kaspa-api:v0.3.0@sha256:272c62730984d0a89459337370d215ee75a315552e3031b1f4c4f11c673cb266
-    restart: on-failure
-    stop_grace_period: 1m
-    environment:
-      KASPAD_HOST: kaspad
-      KASPAD_RPC_PORT: 18110
-      KASPAD_CONTAINER_NAME: rusty-kaspad_kaspad_1
-    volumes:
-      - ${APP_DATA_DIR}/data/logs:/logs:ro  # For log parsing
     depends_on:
       - kaspad
 
   kaspad:
     image: kaspanet/rusty-kaspad:v1.1.0@sha256:150ffa0c0dcc6497951f9199d1ba3e48c7d91ef958846b28c9fb5045459a2dca
     restart: on-failure
-    stop_grace_period: 1m
+    stop_grace_period: 3m
     volumes:
-      - ${APP_DATA_DIR}/data/app:/data
-      - ${APP_DATA_DIR}/data/logs:/logs
-      - ${APP_DATA_DIR}/entrypoint.sh:/entrypoint.sh:ro
+      - ${APP_DATA_DIR}/data/app:/app/data
     ports:
       - 16110:16110  # GRPC
       - 16111:16111  # P2P
       - 17110:17110  # WRPC (Borsh)
       - 18110:18110  # WRPC (JSON)
-    entrypoint: /entrypoint.sh
