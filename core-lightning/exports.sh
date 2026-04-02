@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 export APP_CORE_LIGHTNING_IP="10.21.21.94"
 export APP_CORE_LIGHTNING_PORT="2103"
 export APP_CORE_LIGHTNING_DAEMON_IP="10.21.21.96"
@@ -34,7 +35,8 @@ if [[ "${APP_BITCOIN_NETWORK}" == "mainnet" ]]; then
 fi
 
 lightning_hidden_service_file="${EXPORTS_TOR_DATA_DIR}/app-${EXPORTS_APP_ID}-rest/hostname"
-export APP_CORE_LIGHTNING_HIDDEN_SERVICE="$(cat "${lightning_hidden_service_file}" 2>/dev/null || echo "notyetset.onion")"
+APP_CORE_LIGHTNING_HIDDEN_SERVICE="$(cat "${lightning_hidden_service_file}" 2>/dev/null || echo "notyetset.onion")"
+export APP_CORE_LIGHTNING_HIDDEN_SERVICE
 
 export APP_CONFIG_DIR="/data/app"
 export APP_MODE="production"
