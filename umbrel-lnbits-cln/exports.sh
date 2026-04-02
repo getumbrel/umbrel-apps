@@ -10,8 +10,8 @@ export APP_LNBITS_CLN_BASEURL="${APP_LNBITS_CLN_BASEURL:-}"
 
 # ---------------------------------------------------------------------------
 # CLNRest URL fallback — if CLNREST_URL is not provided by core-lightning's
-# exports.sh (PR #5111), construct it from known upstream exports.
-# Once PR #5111 merges, this fallback becomes redundant but harmless.
+# exports.sh (PR #5261), construct it from known upstream exports.
+# Once PR #5261 merges, this fallback becomes redundant but harmless.
 # ---------------------------------------------------------------------------
 export CLNREST_URL="${CLNREST_URL:-https://${APP_CORE_LIGHTNING_DAEMON_IP}:${CORE_LIGHTNING_REST_PORT}}"
 
