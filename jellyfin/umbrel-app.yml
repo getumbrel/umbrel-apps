@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: jellyfin
 category: media
 name: Jellyfin
-version: "10.11.6"
+version: "10.11.7"
 tagline: The Free Software Media System
 description: >-
   Jellyfin is the volunteer-built media solution that puts you in control of your media. Stream to any device from your own server, with no strings attached. Your media, your server, your way.
@@ -35,15 +35,43 @@ releaseNotes: >-
   ⚠️ This update includes significant improvements and may take a while to complete. Please make sure to create a backup before updating.
 
 
+  ⚠️ WARNING: This release contains several extremely important security fixes. Users of all versions prior to 10.11.7 are advised to upgrade immediately.
+
+
   Key improvements in this release:
-    - Improved search results with better matching
-    - Fixed artist and season display ordering
-    - Enhanced library monitoring to skip hidden directories
-    - Fixed watched state preservation during media replacement
-    - Improved metadata handling for music artists and person types
-    - Enhanced video format support and hardware acceleration
-    - Fixed various issues with playlists, ratings, and collections
-    - Improved system stability and performance
+
+
+  Security Fixes:
+    - Fix for GHSA-j2hf-x4q5-47j3
+    - Fix for GHSA-8fw7-f233-ffr8
+    - Fix for GHSA-v2jv-54xj-h76w
+    - Fix for GHSA-jh22-fw8w-2v9x
+
+
+  General Changes:
+    - Fix Null was not checked before using the H264 profile
+    - Remove -copyts and add -flush_packets 1 to subtitle extraction
+    - Fix nullref in font handling
+    - Fix restore backup metadata location
+    - Fix NFO saver using wrong provider ID for collectionnumber
+    - Fix readrate options in FFmpeg 8.1
+    - Apply analyzeduration and probesize for subtitle streams to improve codec parameter detection
+    - Fix filter detection in FFmpeg 8.1
+    - Fix subtitle extraction caching empty files
+    - Fix hls segment length adjustment for remuxed content
+    - Fix broken library subtitle download settings
+    - Checkpoint WAL before moving library.db in migration
+    - Fix nullref in Season.GetEpisodes when the season is detached from a series
+    - Reattach user data after item removal during library scan
+    - Deduplicate provider IDs during MigrateLibraryDb migration
+    - Skip image checks for empty folders
+    - Fix TMDB image URLs missing size parameter
+    - Fix random sort returning duplicate items
+    - Fix SessionInfoWebSocketListener not using SessionInfoDto
+    - Fix HLS playlist generation for transcodes with fractional framerate
+    - Rehydrate cached UserData after reattachment
+    - Fix TMDB crew department mapping
+    - Revert hidden directory ignore pattern
 
 
   Full release notes can be found at https://github.com/jellyfin/jellyfin/releases
