@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: navidrome
 category: media
 name: Navidrome
-version: "0.60.3"
+version: "0.61.0"
 tagline: Your personal streaming service
 description: >-
   Navidrome is an open source web-based music collection server and streamer.
@@ -51,16 +51,22 @@ path: ""
 permissions:
   - STORAGE_DOWNLOADS
 releaseNotes: >-
-  This update adds explicit status support in smart playlists and includes several bug fixes for the scanner, API, and UI.
+  ⚠️ Breaking change: The built-in Spotify integration has been removed. The Spotify.ID and Spotify.Secret configuration options are no longer supported. Use the Last.fm or Deezer agents instead.
 
+
+  This is a major update featuring a comprehensive artwork overhaul, a rebuilt search engine, and server-managed transcoding.
 
   Key improvements include:
-    - Added explicit status support in smart playlists
-    - Fixed metadata extraction warnings in scanner
-    - Improved format detection by passing filename hints
-    - Fixed JSONP callback parameter validation
-    - Added missing keys in Danish translation
-    - Fixed service restart behavior when upgrading
+    - Per-disc cover art support and custom artwork uploads for playlists, artists, and internet radio stations
+    - Animated image artwork (GIF, APNG, animated WebP) is now preserved during resize
+    - Faster and more accurate search powered by SQLite FTS5 with BM25 ranking
+    - Server-managed transcoding with automatic client codec detection and format-aware bitrate defaults
+    - MKA/Matroska audio file support added to the scanner
+    - New Dracula and Nutball UI themes
+    - Percentage-based limits and album/artist fields added to smart playlists
+    - Plugin system expanded with HTTP requests, persistent task queues, lyrics providers, and key-value storage
+    - Slovak language translation added
+    - Security fix: ownership checks added to share delete and update operations
 
 
   Full release notes are found at https://github.com/navidrome/navidrome/releases
