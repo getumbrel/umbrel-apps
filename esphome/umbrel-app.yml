@@ -2,7 +2,7 @@ manifestVersion: 1
 id: esphome
 category: automation
 name: ESPHome
-version: "2026.3.1"
+version: "2026.3.2"
 tagline: Intelligently manage all your ESP8266/ESP32 devices
 description: >-
   ESPHome is a system to control your ESP8266/ESP32 by simple yet powerful configuration files and control them remotely through Home Automation systems.
@@ -22,20 +22,19 @@ defaultPassword: ""
 torOnly: false
 releaseNotes: >-
   This release includes bug fixes and stability improvements:
-    - Fixed BLE RSSI sensor reporting the same value for all clients
-    - Fixed HTTP request component launching duplicate update tasks
-    - Fixed ESP8266 crash at VERY_VERBOSE log level
-    - Fixed UART0 default pin IOMUX loopback on ESP32
-    - Fixed timezone offset functions always returning UTC
-    - Fixed light constant_brightness broken by gamma LUT refactor
-    - Fixed gamma LUT quantizing small brightness values to zero
-    - Fixed SHT4x heater causing measurement jitter
-    - Fixed MQTT rate-limiting to prevent watchdog resets on reconnect
-    - Fixed ultrasonic sensor ISR edge detection with debounce
-    - Fixed web server task stack size to prevent stack overflow
-    - ⚠️ WiFi power_save_mode LIGHT/HIGH were swapped on ESP8266 — check your config if you use this setting
+    - Fixed WiFi roaming counter reset on disconnect during scan
+    - Fixed datetime state_as_esptime() returning invalid timestamp
+    - Fixed WiFi fast_connect filtering by band mode with background scan for roaming
+    - Fixed UART debug callback missing peeked byte and reading past end
+    - Fixed SGP4x NOx index_offset default value
+    - Fixed ESP32 BLE server set_value action with static data lists
+    - Fixed thermostat stale max_runtime_exceeded causing spurious supplemental heating/cooling
+    - Fixed Haier hOn half-degree temperature setting
+    - Fixed UART baud rate not applied on load_settings() for ESP32 (IDF)
+    - Fixed memory leak in mixer task on stop/start cycles
+    - Fixed BLE scan not restarting after OTA failure
 
 
-  Full release notes can be found at https://esphome.io/changelog/2026.3.1/
+  Full release notes can be found at https://esphome.io/changelog/2026.3.2/
 submitter: ShonP40
 submission: https://github.com/getumbrel/umbrel-apps/pull/43
