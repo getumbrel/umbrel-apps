@@ -23,8 +23,8 @@ export APP_CORE_LIGHTNING_REST_HOST="${APP_CORE_LIGHTNING_CLNREST_HOST}"
 
 # ---------------------------------------------------------------------------
 # CLNRest bind address — 0.0.0.0 allows other containers (RTL, LNbits) to
-# reach CLNRest. The daemon IP (10.21.21.96) is only reachable from within
-# the same container, breaking all consumer apps.
+# reach CLNRest. The key requirement is binding on an address/interface that
+# consumer containers can reach; binding too narrowly can break those apps.
 # ---------------------------------------------------------------------------
 export CLNREST_HOST="0.0.0.0"
 export CLNREST_URL="https://${APP_CORE_LIGHTNING_DAEMON_IP}:${CORE_LIGHTNING_REST_PORT}"
