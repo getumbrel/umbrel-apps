@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: romm
 category: media
 name: RomM
-version: "4.7.0"
+version: "4.8.0"
 tagline: A beautiful, powerful, self-hosted rom manager
 description: >-
   👾 RomM (ROM Manager) allows you to scan, enrich, browse and play your game collection with a clean and responsive interface.
@@ -37,14 +37,18 @@ defaultUsername: ""
 defaultPassword: ""
 releaseNotes: >-
   This release includes several exciting new features and improvements:
-    - Auto-export of ES-DE compatible gamelist.xml files during scans (enable via config.yml)
-    - Device-based save synchronization groundwork for multi-device save management
-    - Search by multiple keywords using | as a separator (e.g. zelda|mario|sonic)
-    - Group games with the same name but different tags as versions or siblings
-    - New PKGJ feed endpoints for PSP, PS Vita, and PSX games and DLC in .tsv format
-    - Add OIDC_AUTOLOGIN env var to automatically log in using OIDC
-    - Keyboard lock support in EmulatorJS
-    - ScummVM shortname support
+    - Client API tokens for safer app and device connections with QR-based pairing, regeneration, and revocation support
+    - Chunked uploads for more reliable ROM transfers, even on slow or unstable connections (note: UPLOAD_TIMEOUT env var has been removed)
+    - Local LaunchBox metadata import, including cover art, screenshots, and video previews
+    - Click to zoom game cover images
+    - Age rating data scraped and stored from ScreenScraper.fr
+    - Configurable invite token expiration via INVITE_TOKEN_EXPIRY_SECONDS env var
+    - New OIDC_SERVER_METADATA_URL env var to support providers with non-standard discovery URLs
+    - OIDC RP-Initiated Logout support via OIDC_RP_INITIATED_LOGOUT env var
+    - Configurable OAuth token expiry via OAUTH_ACCESS_TOKEN_EXPIRE_SECONDS and OAUTH_REFRESH_TOKEN_EXPIRE_SECONDS env vars
+    - Bulgarian translation added
+    - Auto-select firmware when only one option is available
+    - Show filtered ROM count in gallery and filter drawer
 
 
   Full release notes can be found at https://github.com/rommapp/romm/releases
