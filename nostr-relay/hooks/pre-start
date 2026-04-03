@@ -1,7 +1,38 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-APP_DATA_DIR="$(readlink -f $(dirname "${BASH_SOURCE[0]}")/..)/data"
+SCRIPT_DIR="$(dirname "${BASH_SOURCE[0]}")"
+APP_DATA_DIR="$(readlink -f "${SCRIPT_DIR}/..")/data"
 RELAY_PROXY_DATA_DIR="${APP_DATA_DIR}/relay-proxy"
 
 [ ! -d "${RELAY_PROXY_DATA_DIR}" ] && mkdir -p "${RELAY_PROXY_DATA_DIR}" && chown 1000:1000 "${RELAY_PROXY_DATA_DIR}"
+
+# ── store.json guard ─────────────────────────────────────────────────────────
+# relay-proxy crashes with "SyntaxError: Unexpected end of JSON input" if
+# store.json exists but is missing the required "relays" array.  Ensure the
+# file is always valid before the container starts.
+STORE_JSON="${RELAY_PROXY_DATA_DIR}/store.json"
+
+if [ ! -f "${STORE_JSON}" ]; then
+    printf '{"relays":[]}\n' > "${STORE_JSON}"
+    chown 1000:1000 "${STORE_JSON}"
+elif ! grep -q '"relays"' "${STORE_JSON}" 2>/dev/null; then
+    # File exists but is missing the relays key — preserve identifier if present
+    identifier=$(grep -o '"identifier"[[:space:]]*:[[:space:]]*"[^"]*"' \
+        "${STORE_JSON}" 2>/dev/null | sed 's/.*"\([^"]*\)"$/\1/' || true)
+    if [ -n "${identifier}" ]; then
+        printf '{"identifier":"%s","relays":[]}\n' "${identifier}" > "${STORE_JSON}"
+    else
+        printf '{"relays":[]}\n' > "${STORE_JSON}"
+    fi
+fi
+
+# ── pay_to_relay: pre-fill CLNRest node_url ──────────────────────────────────
+# If Core Lightning is installed, inject its CLNRest URL into config.toml so
+# users can enable pay_to_relay without manual configuration.
+CONFIG="${APP_DATA_DIR}/relay/config.toml"
+
+if [ -n "${CLNREST_URL:-}" ] && [ -f "${CONFIG}" ]; then
+    sed -i "s|#node_url = \"https://your-clnrest-host:.*\"|#node_url = \"${CLNREST_URL}\"|" \
+        "${CONFIG}"
+fi

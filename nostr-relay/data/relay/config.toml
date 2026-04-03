@@ -127,6 +127,12 @@ reject_future_seconds = 1800
 #  "887645fef0ce0c3c1218d2f5d8e6132a19304cdc57cd20281d082f38cfea0072",
 #]
 
+# Enable NIP-42 authentication (clients must AUTH before publishing)
+#nip42_auth = false
+
+# Send DMs (kind 4 and 44) and gift wraps (kind 1059) only to authenticated recipients
+#nip42_dms = false
+
 [verified_users]
 # NIP-05 verification of users.  Can be "enabled" to require NIP-05
 # metadata for event authors, "passive" to perform validation but
@@ -152,3 +158,26 @@ reject_future_seconds = 1800
 # How many consecutive failed checks before we give up on verifying
 # this author.
 #max_consecutive_failures = 20
+
+[pay_to_relay]
+# Enable pay to relay (requires CLNRest or LNBits)
+#enabled = false
+
+# Node interface to use: "ClnRest" or "LNBits"
+#processor = "ClnRest"
+
+# The cost in sats to be admitted to relay
+#admission_cost = 4200
+
+# The cost in sats per event post
+#cost_per_event = 0
+
+# URL of node API (CLNRest or LNBits)
+# If Core Lightning is installed, this will be auto-populated by the pre-start hook
+#node_url = "https://your-clnrest-host:2107"
+
+# LNBits API secret (if using LNBits)
+#api_secret = ""
+
+# Path to CLN rune file (if using CLNRest)
+#rune_path = "/path/to/rune"
