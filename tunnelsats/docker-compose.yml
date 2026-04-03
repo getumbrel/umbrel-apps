@@ -14,10 +14,10 @@ services:
       - apparmor:unconfined
     volumes:
       # Persistent peer directory (Uninstall-safe)
-      - ${APP_DATA_DIR}/../tunnelsats-data:/data
+      - ${APP_DATA_DIR}/data:/data
       # Lightning Node config mounts (Graceful discovery via relative paths)
       # These use relative paths to avoid the strict Umbrel "AND" dependency requirement
-      - ${APP_DATA_DIR:-./data}/../lightning/data/lnd:/lightning-data/lnd
-      - ${APP_DATA_DIR:-./data}/../core-lightning/data/lightningd/bitcoin:/lightning-data/cln
+      - ${APP_DATA_DIR}/../lightning/data/lnd:/lightning-data/lnd
+      - ${APP_DATA_DIR}/../core-lightning/data/lightningd/bitcoin:/lightning-data/cln
       # Host socket (For container detection & Docker API access)
       - /var/run/docker.sock:/var/run/docker.sock:ro
