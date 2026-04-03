@@ -3,7 +3,7 @@ id: openclaw
 name: OpenClaw
 tagline: The AI that actually does things
 category: ai
-version: "2026.4.1"
+version: "2026.4.2"
 port: 18789
 path: ""
 description: >-
@@ -39,37 +39,32 @@ gallery:
   - 2.jpg
   - 3.jpg
 releaseNotes: >-
-  ⚠️ Breaking change: the Qwen `qwen-portal-auth` OAuth integration has been removed. Migrate to Model Studio using `openclaw onboard --auth-choice modelstudio-api-key`
+  ⚠️ Breaking change: xAI `x_search` settings have moved to a new config path. Run `openclaw doctor --fix` to migrate automatically.
 
 
-  What's new in OpenClaw (v2026.3.28 → v2026.4.1):
-    - New `/tasks` chat command to view background tasks for the current session
-    - Built-in SearXNG web search provider plugin added with configurable host support
-    - Amazon Bedrock Guardrails support added
-    - macOS Voice Wake option added to trigger Talk Mode
-    - Feishu Drive comment-event flow added for document collaboration workflows
-    - Global default provider parameters now configurable via `agents.defaults.params`
-    - Per-job tool allowlists added for cron jobs via `openclaw cron --tools`
-    - WhatsApp agents can now react to messages with emoji
-    - Telegram delivery error suppression controls added to reduce noise from repeated failures
-    - New GLM models added to the Z.AI provider catalog
-    - QQ Bot added as a bundled channel plugin with multi-account support
-    - LINE outbound image, video, and audio sends added
-    - Matrix streaming replies now update the same message in place instead of sending new messages
-    - MCP remote HTTP/SSE server support added
-    - Fixed a gateway startup hang introduced in v2026.3.31 under SQLite pressure
-    - Fixed tasks showing stale completed entries in `/status`
-    - Fixed exec approvals not honoring security defaults in some configurations
-    - Fixed `/model` changes interrupting active runs instead of queuing behind them
-    - Fixed Anthropic thinking blocks being lost across compaction and context pruning
-    - Fixed MiniMax image generation requiring manual plugin allowlisting
-    - Fixed LINE channels failing to start after global npm installs on v2026.3.31
-    - Fixed bundled plugin runtime dependencies being lost after install or Docker builds
-    - Fixed memory session reindexes skipping transcripts on restart
-    - Fixed Discord gateway recovery and reconnect handling
-    - Fixed Telegram forum topic exec approvals staying in the correct topic thread
-    - Fixed auth profile SecretRef objects causing crashes on `.trim()` after upgrade
-    - Multiple additional stability, security, and compatibility fixes across channels and agents
+  ⚠️ Breaking change: Firecrawl `web_fetch` config has moved to a new plugin-owned config path. Run `openclaw doctor --fix` to migrate automatically.
+
+
+  What's new in OpenClaw (v2026.4.1 → v2026.4.2):
+    - Task Flow system restored with durable flow state tracking and `openclaw flows` inspection and recovery tools
+    - Plugins can now create and drive managed Task Flows, including managed child task spawning with cancel support
+    - Android assistant entrypoints added so OpenClaw can be launched from the Google Assistant trigger
+    - Matrix now sends spec-compliant mention metadata so mentions notify reliably in clients like Element
+    - Matrix streaming now updates the same message in place for live partial previews
+    - Agents can now opt out of the compaction start notice via `agents.defaults.compaction.notifyUser`
+    - Plugins can now short-circuit the LLM with synthetic replies using the new `before_agent_reply` hook
+    - Fixed gateway exec loopback failures introduced in v2026.3.31 causing pairing-required errors for local exec
+    - Fixed subagent gateway calls failing with scope-upgrade pairing errors
+    - Fixed Slack replies using generic Markdown instead of proper Slack mrkdwn formatting
+    - Fixed WhatsApp presence causing personal-phone users to lose push notifications while the gateway runs
+    - Fixed long MS Teams responses duplicating content when exceeding the streaming character limit
+    - Fixed Anthropic internal thinking tags leaking into user-visible replies
+    - Fixed browser CDP reconnection for remote WebSocket URLs with trailing-dot localhost hosts
+    - Fixed LINE reply directives and browser cleanup flows breaking when those plugins are disabled
+    - Fixed Telegram `allow-always` approval callbacks exceeding Telegram's callback data size limit
+    - Fixed exec environment variable overrides that could redirect trusted toolchains or config lookups
+    - Fixed gateway session kill endpoint not enforcing authentication before session lookup
+    - Multiple additional stability, security, and compatibility fixes across channels, agents, and providers
     - And much more. Full details at https://github.com/openclaw/openclaw/releases
 submitter: Umbrel
 submission: https://github.com/getumbrel/umbrel-apps/pull/4649
