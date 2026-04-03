@@ -1,13 +1,10 @@
 version: '3.7'
 services:
-  app_proxy:
-    environment:
-      APP_HOST: tunnelsats_tunnelsats_1
-      APP_PORT: 9739
-
   tunnelsats:
+    # Use the freshly built image (sha256:87699bc1... which defaulted dashboard port to 9739)
     image: tunnelsats/ts-umbrel-app:v3.1.0@sha256:87699bc1cd6e10c471a7b6fd1eff8483797ab8713aaddd1a3eafc774de859ab3
     restart: on-failure
+    network_mode: "host"
     cap_add:
       - NET_ADMIN
       - NET_RAW
