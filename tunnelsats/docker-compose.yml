@@ -1,8 +1,10 @@
-version: '3.7'
+version: "3.7"
+
 services:
   tunnelsats:
-    # Use the freshly built image (sha256:87699bc1... which defaulted dashboard port to 9739)
-    image: tunnelsats/ts-umbrel-app:v3.1.0@sha256:87699bc1cd6e10c471a7b6fd1eff8483797ab8713aaddd1a3eafc774de859ab3
+    # Use the specific version tag for production
+    image: tunnelsats/ts-umbrel-app:v3.1.0
+    container_name: tunnelsats
     restart: on-failure
     network_mode: "host"
     cap_add:
@@ -11,9 +13,11 @@ services:
     security_opt:
       - apparmor:unconfined
     volumes:
-      - ${APP_DATA_DIR}/data:/data
-      # Try to mount LN config directories to automate config insertion (graceful degradation if missing)
-      - ${APP_DATA_DIR}/../lightning/data/lnd:/lightning-data/lnd
-      - ${APP_DATA_DIR}/../core-lightning/data/lightningd:/lightning-data/cln
-      # Required to interrogate container IPs dynamically (Umbrel 1.6+)
+      # Persistent peer directory (Uninstall-safe)
+      - ${APP_DATA_DIR}/../tunnelsats-data:/data
+      # Lightning Node config mounts (Graceful discovery via relative paths)
+      # These use relative paths to avoid the strict Umbrel "AND" dependency requirement
+      - ${APP_DATA_DIR:-./data}/../lightning/data/lnd:/lightning-data/lnd
+      - ${APP_DATA_DIR:-./data}/../core-lightning/data/lightningd/bitcoin:/lightning-data/cln
+      # Host socket (For container detection & Docker API access)
       - /var/run/docker.sock:/var/run/docker.sock:ro
