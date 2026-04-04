@@ -16,7 +16,7 @@ services:
       API_SERVER_HOST: "0.0.0.0"
       API_SERVER_PORT: "8642"
     volumes:
-      - ${APP_DATA_DIR}/data/hermes:/opt/data
+      - ${APP_DATA_DIR}:/opt/data
     healthcheck:
       test:
         - CMD
@@ -32,7 +32,8 @@ services:
       start_period: 30s
 
   web:
-    image: ghcr.io/aidencole98/hermes-agent-web-ui:v2026.4.3@sha256:63d2e570d3f8d698bf314b2bfdab5273afdb54a6982f51ce5a8a302afed61808
+    image: ghcr.io/aidencole98/hermes-agent-web-ui:v2026.4.3@sha256:d25d119f95a540c672bd74bd0da0ddfa86284a8fe33607e332cd346aaef73036
+    user: "1000:1000"
     restart: on-failure
     depends_on:
       - server
