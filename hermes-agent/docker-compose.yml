@@ -4,11 +4,12 @@ services:
   app_proxy:
     environment:
       APP_HOST: hermes-agent_web_1
-      APP_PORT: 80
+      APP_PORT: 8080
 
   server:
     image: ghcr.io/aidencole98/hermes-agent-umbrel:v2026.4.3@sha256:ef75435acd68c20294cbc8e62d8f38c87ce388681b6344b20163cc3d71d629f3
     command: gateway run
+    user: "1000:1000"
     restart: on-failure
     environment:
       API_SERVER_ENABLED: "true"
@@ -31,7 +32,7 @@ services:
       start_period: 30s
 
   web:
-    image: nginx:1.27@sha256:6784fb0834aa7dbbe12e3d7471e69c290df3e6ba810dc38b34ae33d3c1c05f7d
+    image: nginxinc/nginx-unprivileged:1.27@sha256:f9dfa9c20b2b0b7c5cc830374f22f23dee3f750b6c5291ca7e0330b5c88e6403
     restart: on-failure
     depends_on:
       - server
