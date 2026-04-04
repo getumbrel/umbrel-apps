@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Hermes Agent</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #060607;
+      --bg-2: #0b0c10;
+      --panel: rgba(13, 14, 18, 0.8);
+      --line: rgba(255, 205, 94, 0.1);
+      --text: #fff5d8;
+      --muted: #cfbf9a;
+      --gold: #ffd95d;
+      --orange: #ff7f1f;
+      --shadow: 0 32px 100px rgba(0, 0, 0, 0.45);
+      --mono: "IBM Plex Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+      --sans: Inter, "IBM Plex Sans", "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { min-height: 100%; }
+
+    body {
+      margin: 0;
+      font-family: var(--sans);
+      color: var(--text);
+      background:
+        radial-gradient(circle at 18% 16%, rgba(255, 221, 106, 0.1), transparent 20%),
+        radial-gradient(circle at 82% 12%, rgba(255, 127, 31, 0.1), transparent 24%),
+        linear-gradient(180deg, #070708 0%, #060607 55%, #090a0d 100%);
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+      background-size: 44px 44px;
+      mask-image: radial-gradient(circle at center, black 38%, transparent 100%);
+      opacity: 0.14;
+    }
+
+    .wrap {
+      width: min(980px, calc(100% - 28px));
+      margin: 0 auto;
+      padding: 32px 0 40px;
+    }
+
+    .shell {
+      position: relative;
+      overflow: hidden;
+      border-radius: 28px;
+      border: 1px solid var(--line);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.022), rgba(255,255,255,0)),
+        var(--panel);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(16px);
+    }
+
+    .shell::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at top left, rgba(255, 213, 93, 0.06), transparent 28%),
+        radial-gradient(circle at top right, rgba(255, 127, 31, 0.05), transparent 24%);
+      pointer-events: none;
+    }
+
+    .hero {
+      position: relative;
+      padding: 34px 34px 28px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .banner {
+      display: block;
+      width: 100%;
+      max-width: 760px;
+      height: auto;
+      margin: 0 0 24px;
+    }
+
+    h1 {
+      margin: 0 0 12px;
+      font-size: clamp(2.05rem, 4vw, 4rem);
+      line-height: 0.98;
+      letter-spacing: -0.05em;
+      max-width: 11ch;
+      text-wrap: balance;
+    }
+
+    .lead {
+      margin: 0;
+      max-width: 58ch;
+      color: var(--muted);
+      font-size: 1.05rem;
+      line-height: 1.75;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+      padding: 24px 34px 18px;
+    }
+
+    .card {
+      border: 1px solid rgba(255, 205, 94, 0.1);
+      border-radius: 20px;
+      background: rgba(10, 11, 15, 0.56);
+      padding: 22px;
+    }
+
+    .card h2 {
+      margin: 0 0 10px;
+      font-size: 1.15rem;
+      letter-spacing: -0.02em;
+    }
+
+    .card p {
+      margin: 0 0 14px;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    ol {
+      margin: 0;
+      padding-left: 20px;
+      color: var(--muted);
+      line-height: 1.8;
+    }
+
+    code, pre { font-family: var(--mono); }
+
+    pre {
+      margin: 14px 0 0;
+      padding: 15px 16px;
+      border: 1px solid rgba(255, 205, 94, 0.14);
+      border-radius: 16px;
+      background: #050506;
+      color: #fff0b0;
+      overflow-x: auto;
+    }
+
+    .stack {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .pill {
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 205, 94, 0.08);
+      background: rgba(255, 181, 45, 0.03);
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .pill strong { color: var(--text); }
+
+    .footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 18px;
+      align-items: center;
+      padding: 0 34px 28px;
+      color: #c9b686;
+      font: 500 13px/1.6 var(--mono);
+      text-align: right;
+    }
+
+    a {
+      color: var(--gold);
+      text-decoration-color: rgba(255, 217, 114, 0.35);
+      text-underline-offset: 3px;
+    }
+
+    @media (max-width: 820px) {
+      .content { grid-template-columns: 1fr; }
+      h1 { max-width: none; }
+    }
+
+    @media (max-width: 640px) {
+      .wrap { width: min(100%, calc(100% - 16px)); padding: 16px 0 22px; }
+      .hero, .content { padding-left: 20px; padding-right: 20px; }
+      .hero { padding-top: 22px; padding-bottom: 22px; }
+      .footer { padding: 0 20px 22px; flex-direction: column; align-items: flex-start; }
+      h1 { font-size: clamp(2rem, 10vw, 3rem); }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <main class="shell">
+      <section class="hero">
+        <img class="banner" src="./assets/hermes-agent-banner.png" alt="Hermes Agent banner">
+        <h1>Your local Hermes Agent is up.</h1>
+        <p class="lead">
+          Hermes Agent is running on your Umbrel as a private local service. Drop into the app terminal for the native CLI,
+          or connect Hermes Workspace to this same backend for a full UI.
+        </p>
+      </section>
+
+      <section class="content">
+        <article class="card">
+          <h2>Option 1 · Use the Hermes CLI</h2>
+          <p>Open the app shell from umbrelOS, connect your model, then continue the whole session inside Hermes.</p>
+          <ol>
+            <li>Go to <strong>Settings -> Advanced Settings -> Terminal -> App</strong>.</li>
+            <li>Select <strong>Hermes Agent</strong>.</li>
+            <li>Set your AI model by running:</li>
+          </ol>
+          <pre><code>hermes model</code></pre>
+          <ol start="4">
+            <li>Once your model is connected, start chatting with your agent by running:</li>
+          </ol>
+          <pre><code>hermes</code></pre>
+          <ol start="5">
+            <li>From here, you can ask your agent for eg. <code>how to talk to you via telegram?</code> and continue.</li>
+          </ol>
+        </article>
+
+        <article class="card">
+          <h2>Option 2 · Use Hermes Workspace</h2>
+          <p>Install Hermes Workspace from the Umbrel App Store to work with this running Hermes backend through a web UI.</p>
+          <div class="stack">
+            <div class="pill"><strong>Same backend</strong><br>Workspace connects to the Hermes instance already running here.</div>
+            <div class="pill"><strong>Private by default</strong><br>Everything starts local, with no default public API exposure.</div>
+            <div class="pill"><strong>Configurable API access</strong><br>If you need other API clients, enable and secure that access inside Hermes for your setup.</div>
+          </div>
+        </article>
+      </section>
+
+      <div class="footer">
+        <div>Docs: <a href="https://hermes-agent.nousresearch.com/docs/" target="_blank" rel="noopener noreferrer">hermes-agent.nousresearch.com/docs</a></div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>
