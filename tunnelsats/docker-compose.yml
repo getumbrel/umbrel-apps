@@ -3,7 +3,7 @@ version: "3.7"
 services:
   tunnelsats:
     # Use the specific version tag for production
-    image: tunnelsats/ts-umbrel-app:v3.1.0
+    image: tunnelsats/ts-umbrel-app:v3.1.0@sha256:c38f7bd28742b5e94a29351bcd44328d4080e742f5b904676b5008dc847f8f6a
     container_name: tunnelsats
     restart: on-failure
     network_mode: "host"
@@ -14,12 +14,12 @@ services:
       - apparmor:unconfined
     volumes:
       # Persistent peer directory (Uninstall-safe)
-      - ${APP_DATA_DIR:-./data}/../tunnelsats-data:/data
+      - ${APP_DATA_DIR}/../tunnelsats-data:/data
       # Migration source support for legacy users
-      - ${APP_DATA_DIR:-./data}:/migration_source:ro
+      - ${APP_DATA_DIR}/.:/migration_source:ro
       # Lightning Node config mounts (Graceful discovery via relative paths)
       # These use relative paths to avoid the strict Umbrel "AND" dependency requirement
-      - ${APP_DATA_DIR:-./data}/../lightning/data/lnd:/lightning-data/lnd
-      - ${APP_DATA_DIR:-./data}/../core-lightning/data/lightningd/bitcoin:/lightning-data/cln
+      - ${APP_DATA_DIR}/../lightning/data/lnd:/lightning-data/lnd
+      - ${APP_DATA_DIR}/../core-lightning/data/lightningd/bitcoin:/lightning-data/cln
       # Host socket (For container detection & Docker API access)
       - /var/run/docker.sock:/var/run/docker.sock:ro
