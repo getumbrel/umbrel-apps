@@ -1,0 +1,20 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: hermes-workspace_web_1
+      APP_PORT: 3000
+
+  web:
+    image: ghcr.io/aidencole98/hermes-workspace-umbrel:0.1.0@sha256:d2af854f63dd6b3c42ac49a1b54ac04cdbaf4b727da9ed39a93ab116796e648f
+    user: "1000:1000"
+    restart: on-failure
+    environment:
+      HOME: /home/hermes
+      HERMES_HOME: /home/hermes/.hermes
+      HERMES_API_URL: ${APP_HERMES_AGENT_URL}
+      HERMES_WORKSPACE_DIR: /home/hermes/.hermes
+      PORT: "3000"
+    volumes:
+      - ${APP_HERMES_AGENT_HOME}:/home/hermes/.hermes
