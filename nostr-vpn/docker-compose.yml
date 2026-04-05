@@ -2,31 +2,15 @@ version: "3.7"
 
 services:
   server:
-    # TODO: Image to be built and published by Umbrel team from upstream
-    # Upstream: https://github.com/mmalmi/nostr-vpn
-    # This is a placeholder - will be replaced after PR merge
     image: ghcr.io/getumbrel/nostr-vpn:v0.3.4
-    user: "1000:1000"
     restart: on-failure
     stop_grace_period: 1m
     network_mode: host
-    labels:
-      yantr.app: "nostr-vpn"
-      yantr.service: "VPN Service"
     volumes:
-      - ${APP_DATA_DIR}/data:/data:rw
+      - ${APP_DATA_DIR}/data:/data
     cap_add:
       - NET_ADMIN
     devices:
-      - /dev/net/tun:/dev/net/tun:rwm
+      - /dev/net/tun:/dev/net/tun
     environment:
       - NVPN_DATA_DIR=/data
-      - HOME=/data
-    security_opt:
-      - no-new-privileges:true
-      - seccomp:unconfined
-    healthcheck:
-      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/')"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
