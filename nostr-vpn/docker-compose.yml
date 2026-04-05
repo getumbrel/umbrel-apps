@@ -1,0 +1,34 @@
+version: "3.7"
+
+services:
+  server:
+    image: ghcr.io/umbrel-apps/nostr-vpn:0.3.4@sha256:174f882a17e0daa7fca8e1c63a69c3c676c1d8c10d995550e80a45ba18600b25
+    restart: on-failure
+    stop_grace_period: 1m
+    network_mode: host
+    labels:
+      yantr.app: "nostr-vpn"
+      yantr.service: "VPN Service"
+    volumes:
+      # Note: Umbrel creates ${APP_DATA_DIR}/data with proper permissions (uid:1000) before
+      # starting the container. The container runs as non-root user (1000:1000).
+      # This is standard Umbrel behavior for all apps with persistent data.
+      - ${APP_DATA_DIR}/data:/data:rw
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun:rwm
+    environment:
+      - NVPN_DATA_DIR=/data
+      - HOME=/data
+    security_opt:
+      - no-new-privileges:true
+      - seccomp:unconfined
+    read_only: false
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    # Umbrel app proxy handles external auth - this service is internal only
+    # Web interface bound to 127.0.0.1 only

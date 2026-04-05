@@ -1,0 +1,11 @@
+# Nostr VPN environment exports
+
+# IP ADDRESSES
+export APP_NOSTR_VPN_NODE_IP="10.21.21.9"
+export APP_NOSTR_VPN_TOR_PROXY_IP="10.21.22.10"
+
+# DATA DIR
+export APP_NOSTR_VPN_DATA_DIR="${EXPORTS_APP_DIR}/data/nostr-vpn"
+
+# PORTS
+export APP_NOSTR_VPN_PORT="8080"
