@@ -5,11 +5,9 @@ services:
     environment:
       APP_HOST: sure_web_1
       APP_PORT: 3000
-      PROXY_AUTH_ADD: "false"
 
   web:
-    image: ghcr.io/we-promise/sure:stable@sha256:3d899b3eced520d8d3166a3d53184cbb1356670fb52d050f94f8e62e59754d70
-    user: "1000:1000"
+    image: ghcr.io/we-promise/sure:0.6.9@sha256:3d899b3eced520d8d3166a3d53184cbb1356670fb52d050f94f8e62e59754d70
     restart: on-failure
     stop_grace_period: 1m
     depends_on:
@@ -19,7 +17,7 @@ services:
         condition: service_healthy
     environment:
       SELF_HOSTED: "true"
-      SECRET_KEY_BASE: ${APP_SEED}
+      SECRET_KEY_BASE: $APP_SEED
       DB_HOST: sure_db_1
       DB_PORT: "5432"
       POSTGRES_USER: sure
@@ -28,12 +26,13 @@ services:
       REDIS_URL: redis://sure_redis_1:6379/1
       PORT: "3000"
       RAILS_ENV: production
+      RAILS_FORCE_SSL: "false"
+      RAILS_ASSUME_SSL: "false"
     volumes:
       - ${APP_DATA_DIR}/data/storage:/rails/storage
 
   worker:
-    image: ghcr.io/we-promise/sure:stable@sha256:3d899b3eced520d8d3166a3d53184cbb1356670fb52d050f94f8e62e59754d70
-    user: "1000:1000"
+    image: ghcr.io/we-promise/sure:0.6.9@sha256:3d899b3eced520d8d3166a3d53184cbb1356670fb52d050f94f8e62e59754d70
     restart: on-failure
     stop_grace_period: 1m
     command: bundle exec sidekiq
@@ -44,7 +43,7 @@ services:
         condition: service_healthy
     environment:
       SELF_HOSTED: "true"
-      SECRET_KEY_BASE: ${APP_SEED}
+      SECRET_KEY_BASE: $APP_SEED
       DB_HOST: sure_db_1
       DB_PORT: "5432"
       POSTGRES_USER: sure
@@ -52,18 +51,20 @@ services:
       POSTGRES_DB: sure
       REDIS_URL: redis://sure_redis_1:6379/1
       RAILS_ENV: production
+      RAILS_FORCE_SSL: "false"
+      RAILS_ASSUME_SSL: "false"
     volumes:
       - ${APP_DATA_DIR}/data/storage:/rails/storage
 
   db:
     image: postgres:16-alpine@sha256:20edbde7749f822887a1a022ad526fde0a47d6b2be9a8364433605cf65099416
-    user: "1000:1000"
     restart: on-failure
     stop_grace_period: 1m
     environment:
       POSTGRES_USER: sure
       POSTGRES_PASSWORD: moneyprintergobrrr
       POSTGRES_DB: sure
+      PGDATA: /var/lib/postgresql/data/pgdata
     volumes:
       - ${APP_DATA_DIR}/data/postgres:/var/lib/postgresql/data
     healthcheck:
@@ -81,6 +82,6 @@ services:
       - ${APP_DATA_DIR}/data/redis:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
+      interval: 5s
       timeout: 5s
       retries: 5
