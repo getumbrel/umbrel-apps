@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+APP_DIR="$(readlink -f "${SCRIPT_DIR}/..")"
+APP_DATA_DIR="${APP_DIR}/data"
+
+mkdir -p "${APP_DATA_DIR}"
+chown -R 1000:1000 "${APP_DATA_DIR}"
+
+exit 0
