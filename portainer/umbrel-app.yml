@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: portainer
 category: developer
 name: Portainer
-version: "2.39.1"
+version: "2.40.0"
 tagline: Run custom Docker containers on your Umbrel
 description: >-
   ⚠️ Make sure to only use named Docker volumes for your stacks and containers. Data in bind-mounted volumes
@@ -53,14 +53,16 @@ defaultPassword: "changeme"
 releaseNotes: >-
   This update includes several fixes and security improvements:
     - Fixed an issue where Git-based Docker stacks from GitLab failed validation for non-admin users
-    - Fixed an issue where groups were missing after an upgrade
-    - Fixed an issue where not all containers for a service were shown
-    - Fixed an issue where users could not add new environments to an existing group with many environments
-    - Fixed an issue where the Edit application button was disabled for non-admin users
-    - Fixed an issue where users could not view their containers or saw a blank dashboard
-    - Fixed an issue where custom template file content was accessible to unauthorized users
-    - Re-enabled image registries for FIPS
-    - Resolved multiple security vulnerabilities
+    - Added an information panel showing current and planned GitOps deployment details when a Git URL or config path is changed
+    - Docker Compose GitOps stacks can now have their Git URL, config path, and entry point edited after creation
+    - Cleaned up Git authentication token handling — GitHub tokens can now be entered directly in the Token field rather than the Basic auth field
+    - Added a -remove-orphans / prune option when deploying Docker Compose stacks
+    - Added support for -security-opt when creating Docker containers
+    - Upgraded Helm Go SDK to v4
+    - Upgraded Kubernetes dependencies to v1.35
+    - Implemented a few security updates
+    - Fixed 4 known CVE vulnerabilities (caused by dependencies)
+    - Fixed around 20+ bugs
 
 
   Full release notes are found at https://github.com/portainer/portainer/releases.
