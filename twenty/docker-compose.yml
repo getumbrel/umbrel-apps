@@ -10,6 +10,21 @@ services:
   server:
     image: twentycrm/twenty:v1.20.0@sha256:b3120df567a73c849a7a1ae58fa4f3d7bdd5072939312be702375960ed601557
     user: "1000:1000"
+    # Neutralize Twenty's bootstrap injection of SERVER_URL into the frontend
+    # HTML so the frontend's built-in window.location.origin fallback takes
+    # over. Without this, Twenty hardcodes http://umbrel.local:2020 as the
+    # API base URL, which breaks whenever the user accesses Umbrel via a
+    # different hostname — most notably Tailscale (umbrel.*.ts.net) or the
+    # LAN IP. With the injection disabled, the frontend auto-detects its
+    # backend URL from whichever hostname served the page, so Twenty works
+    # over LAN, Tailscale, and umbrel.local interchangeably.
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        printf '%s\n' '"use strict";' 'Object.defineProperty(exports, "__esModule", { value: true });' 'exports.generateFrontConfig = function () {};' > /app/packages/twenty-server/dist/utils/generate-front-config.js
+        sed -i 's|"REACT_APP_SERVER_BASE_URL": *"[^"]*"|"REACT_APP_SERVER_BASE_URL": ""|g' /app/packages/twenty-server/dist/front/index.html 2>/dev/null || true
+        exec /app/entrypoint.sh node dist/main
     volumes:
       - ${APP_DATA_DIR}/data/server-local-data:/app/packages/twenty-server/.local-storage
       - ${APP_DATA_DIR}/data/docker-data:/app/docker-data
