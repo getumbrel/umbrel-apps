@@ -4,23 +4,26 @@ services:
   app_proxy:
     environment:
       APP_HOST: hermes-agent_web_1
-      APP_PORT: 8080
+      APP_PORT: 9119
 
   server:
-    image: nousresearch/hermes-agent:latest@sha256:08e92cb8bf73041b8545f81f61f94b56f84bd4fd387d3d6ceb78e26ff7fb17d9
-    command: gateway run
-    user: "1000:1000"
+    image: nousresearch/hermes-agent:latest@sha256:ae4aca3179c38ce14cd480dd150d299dbcf6ac9317ae371bc77c3acb37253c6a
+    command:
+      - gateway
+      - run
     restart: on-failure
-    environment:
-      API_SERVER_ENABLED: "true"
-      API_SERVER_HOST: "0.0.0.0"
-      API_SERVER_PORT: "8642"
     volumes:
       - ${APP_DATA_DIR}/data/hermes:/opt/data
 
   web:
-    image: ghcr.io/aidencole98/hermes-agent-web-ui:v2026.4.8-upstream-r3@sha256:1c51ae0e96addb923fc37b19607af35fbd3f0cfc362edc7deb73f9e818c5b889
-    user: "1000:1000"
+    image: nousresearch/hermes-agent:latest@sha256:ae4aca3179c38ce14cd480dd150d299dbcf6ac9317ae371bc77c3acb37253c6a
+    command:
+      - dashboard
+      - --host
+      - 0.0.0.0
+      - --port
+      - "9119"
+      - --no-open
     restart: on-failure
     depends_on:
       - server
