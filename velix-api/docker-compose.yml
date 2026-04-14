@@ -1,0 +1,43 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: velix-api_server_1
+      APP_PORT: 8080
+
+  server:
+    image: ghcr.io/paulolinder/velix-api:0.1.0
+    restart: on-failure
+    environment:
+      DATABASE_URL: postgres://postgres:velix-umbrel@velix-api_db_1:5432/velix?sslmode=disable
+      REDIS_URL: redis://velix-api_redis_1:6379
+      JWT_SECRET: ${APP_SEED}-velix-jwt-secret-key-do-not-share
+      HTTP_PORT: "8080"
+      APP_ENV: production
+      LOG_LEVEL: info
+      MEDIA_STORAGE_PATH: /data/media
+      ENGINE_STORE_PATH: /data/instances
+      ENGINE_AUTO_RECONNECT: "true"
+      ENGINE_MAX_INSTANCES: "200"
+      REGISTRATION_ENABLED: "true"
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+    depends_on:
+      - db
+      - redis
+
+  db:
+    image: postgres:16-alpine
+    restart: on-failure
+    environment:
+      POSTGRES_DB: velix
+      POSTGRES_PASSWORD: velix-umbrel
+    volumes:
+      - ${APP_DATA_DIR}/postgres:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/redis:/data
