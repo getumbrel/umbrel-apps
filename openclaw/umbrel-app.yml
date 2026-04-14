@@ -3,7 +3,7 @@ id: openclaw
 name: OpenClaw
 tagline: The AI that actually does things
 category: ai
-version: "2026.4.2"
+version: "2026.4.12"
 port: 18789
 path: ""
 description: >-
@@ -45,26 +45,34 @@ releaseNotes: >-
   ⚠️ Breaking change: Firecrawl `web_fetch` config has moved to a new plugin-owned config path. Run `openclaw doctor --fix` to migrate automatically.
 
 
-  What's new in OpenClaw (v2026.4.1 → v2026.4.2):
-    - Task Flow system restored with durable flow state tracking and `openclaw flows` inspection and recovery tools
-    - Plugins can now create and drive managed Task Flows, including managed child task spawning with cancel support
-    - Android assistant entrypoints added so OpenClaw can be launched from the Google Assistant trigger
-    - Matrix now sends spec-compliant mention metadata so mentions notify reliably in clients like Element
-    - Matrix streaming now updates the same message in place for live partial previews
-    - Agents can now opt out of the compaction start notice via `agents.defaults.compaction.notifyUser`
-    - Plugins can now short-circuit the LLM with synthetic replies using the new `before_agent_reply` hook
-    - Fixed gateway exec loopback failures introduced in v2026.3.31 causing pairing-required errors for local exec
-    - Fixed subagent gateway calls failing with scope-upgrade pairing errors
-    - Fixed Slack replies using generic Markdown instead of proper Slack mrkdwn formatting
-    - Fixed WhatsApp presence causing personal-phone users to lose push notifications while the gateway runs
-    - Fixed long MS Teams responses duplicating content when exceeding the streaming character limit
-    - Fixed Anthropic internal thinking tags leaking into user-visible replies
-    - Fixed browser CDP reconnection for remote WebSocket URLs with trailing-dot localhost hosts
-    - Fixed LINE reply directives and browser cleanup flows breaking when those plugins are disabled
-    - Fixed Telegram `allow-always` approval callbacks exceeding Telegram's callback data size limit
-    - Fixed exec environment variable overrides that could redirect trusted toolchains or config lookups
-    - Fixed gateway session kill endpoint not enforcing authentication before session lookup
-    - Multiple additional stability, security, and compatibility fixes across channels, agents, and providers
+  ⚠️ Breaking change: Several legacy config aliases have been removed. Run `openclaw doctor --fix` to migrate automatically.
+
+
+  What's new in OpenClaw (v2026.4.2 → v2026.4.12):
+    - New Active Memory plugin gives OpenClaw a dedicated memory sub-agent before each reply, automatically surfacing relevant context without manual prompting
+    - New bundled LM Studio provider with onboarding, model discovery, and memory-search embeddings for local models
+    - New bundled Codex provider so `codex/gpt-*` models use Codex-managed auth and native threads
+    - New `openclaw exec-policy` command to manage exec approval settings from the CLI
+    - Video generation expanded with Seedance 2.0, xAI, Alibaba Wan, and Runway providers
+    - Music generation tool added with Google Lyria, MiniMax, and ComfyUI workflow support
+    - Memory Dreaming improvements including ChatGPT import, diary UI, grounded backfill, and more reliable promotion
+    - Memory Wiki restored with full CLI, sync, search, and contradiction-clustering tooling
+    - New bundled providers: Qwen, Fireworks AI, StepFun, Arcee AI, and Amazon Bedrock Mantle
+    - Control UI now available in 12 additional languages including Chinese, German, Spanish, and Japanese
+    - Matrix partial streaming now shows live typewriter animation via MSC4357 markers
+    - Feishu document comment sessions improved with richer context, reactions, and typing feedback
+    - Microsoft Teams gains reaction support, inline DM image downloads, and SSO sign-in callbacks
+    - Plugin loading narrowed to manifest-declared needs for faster startup and cleaner activation
+    - Gateway startup improved so channels resume first on Sandbox wake and WebSocket RPC stays available during sidecar startup
+    - Fixed gateway startup credential check — startup now fails if a placeholder example token is still configured
+    - Fixed WebSocket tick broadcasts being dropped, causing client disconnects during long-running work
+    - Fixed Telegram approval button callbacks deadlocking behind active agent turns
+    - Fixed audio transcription multipart requests failing with HTTP 400
+    - Fixed dreaming re-ingesting its own narrative transcripts and stalling below the durable-memory score threshold
+    - Fixed WhatsApp outbound media sends silently dropping attachments
+    - Fixed Matrix `requireMention` not working for non-OpenClaw clients
+    - Fixed exec environment variable overrides that could redirect trusted toolchains
+    - Multiple additional security hardening, stability, and compatibility fixes across channels, agents, and providers
     - And much more. Full details at https://github.com/openclaw/openclaw/releases
 submitter: Umbrel
 submission: https://github.com/getumbrel/umbrel-apps/pull/4649
