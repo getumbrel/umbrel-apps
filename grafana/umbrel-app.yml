@@ -3,7 +3,7 @@ id: grafana
 name: Grafana
 tagline: The open-source platform for monitoring and observability
 category: networking
-version: "12.4.2"
+version: "13.0.0"
 port: 3030
 description: >-
   Grafana allows you to query, visualize, alert on and understand your metrics no matter where they are stored. Create, explore, and share dashboards with your team and foster a data-driven culture:
@@ -36,17 +36,25 @@ gallery:
   - 2.jpg
   - 3.jpg
 releaseNotes: >-
-  🚨 This release includes multiple security fixes (CVE-2026-27876, CVE-2026-27877, CVE-2026-28375, CVE-2026-27879, CVE-2026-27880)
+  🚨 This release includes breaking changes and multiple security fixes (CVE-2026-27876, CVE-2026-27877, CVE-2026-28375, CVE-2026-27879, CVE-2026-27880)
 
 
-  This release includes bug fixes and enhancements:
+  This release includes new features, bug fixes, and enhancements:
+    - Added new colorblind-friendly themes for improved accessibility
+    - Introduced Git Sync and provisioning enabled by default for easier dashboard management
+    - Added Elasticsearch ES|QL support
+    - Improved alerting with single-node evaluation mode, managed routes access control, and saved searches for alert activity
+    - Added team folders with owner filtering in the dashboard browser
+    - Improved logs panel with support for persisting displayed fields, hiding log levels, and field selector in dashboards
+    - Added duration shortcut input support to the time picker
+    - Grafana Advisor is now generally available
+    - Removed the Elasticsearch core datasource (now available as a plugin)
+    - Removed deprecated passwordless (magic link) authentication
+    - Removed deprecated grafana-cli and grafana-server commands — use grafana cli or grafana server instead
     - Fixed dashboard loading issues related to team member data
-    - Fixed plugin installer disabled condition
-    - Fixed plugin processes using incorrect temp directory in restricted environments
-    - Improved dashboard accessibility by not opening time zone menu on focus
-    - Resolved display names by identity in dashboard version history
-    - Added forwarding of AWS SDK credential chain environment variables to external AWS plugins
-    - Prevented unintended operations on public dashboards from different organizations
+    - Fixed alerting issues including rule group deletion with large SQL variable sets and evaluation interval validation
+    - Fixed Prometheus aggregation by labels containing dots
+    - Fixed MSSQL connection when password contains a semicolon
 
 
   Full release notes are available at https://github.com/grafana/grafana/releases
