@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: navidrome
 category: media
 name: Navidrome
-version: "0.61.0"
+version: "0.61.2"
 tagline: Your personal streaming service
 description: >-
   Navidrome is an open source web-based music collection server and streamer.
@@ -54,19 +54,14 @@ releaseNotes: >-
   ⚠️ Breaking change: The built-in Spotify integration has been removed. The Spotify.ID and Spotify.Secret configuration options are no longer supported. Use the Last.fm or Deezer agents instead.
 
 
-  This is a major update featuring a comprehensive artwork overhaul, a rebuilt search engine, and server-managed transcoding.
-
-  Key improvements include:
-    - Per-disc cover art support and custom artwork uploads for playlists, artists, and internet radio stations
-    - Animated image artwork (GIF, APNG, animated WebP) is now preserved during resize
-    - Faster and more accurate search powered by SQLite FTS5 with BM25 ranking
-    - Server-managed transcoding with automatic client codec detection and format-aware bitrate defaults
-    - MKA/Matroska audio file support added to the scanner
-    - New Dracula and Nutball UI themes
-    - Percentage-based limits and album/artist fields added to smart playlists
-    - Plugin system expanded with HTTP requests, persistent task queues, lyrics providers, and key-value storage
-    - Slovak language translation added
-    - Security fix: ownership checks added to share delete and update operations
+  This patch release includes transcoding fixes, scanner improvements, and cover art updates. Key improvements include:
+    - Transcoding now properly clamps target channels to codec limits, fixing issues with high channel count codecs
+    - WAV files now play directly in browsers without unnecessary transcoding
+    - Scanner now picks up ORIGYEAR tags for VorbisComment and MP4 formats
+    - Max image upload size is now configurable via MaxImageUploadSize (default 10MB)
+    - Fixed disc cover art being affected by theme CSS filters
+    - Plugin developers now receive file path in TrackInfo for Scrobbler and Lyrics plugins
+    - Various server stability and error handling improvements
 
 
   Full release notes are found at https://github.com/navidrome/navidrome/releases
