@@ -3,7 +3,7 @@ id: duplicati
 name: Duplicati
 tagline: Store securely encrypted backups in the cloud
 category: files
-version: "v2.2.0.3_stable_2026-01-06"
+version: "v2.3.0.0_stable_2026-04-14"
 port: 38476
 description: >-
   Pick your own backend and store encrypted backups of your umbrel files anywhere!
@@ -38,27 +38,26 @@ gallery:
   - 2.jpg
   - 3.jpg
 releaseNotes: >-
-  This is a minor patch release to fix some issues uncovered with the latest stable release.
+  This is a major new release for Duplicati 2.3, introducing powerful new features and important improvements.
 
 
-  Key improvements:
-    - Support for limiting restore process disk usage to prevent running out of space
-    - Updated SSH library for better connection stability
-    - Fixed timeout issues with AliyunOSS backend
-    - Added support for changing backup passphrase with the recovery tool
-    - Fixed startup delay on the server not being respected
-    - Added stable authentication token support for Filen when using MFA
-    - Improved proxy support and custom CSS/JS file support
-    - Updated localizations and improved language support
+  Key highlights:
+    - Multiple backup destinations now supported in a single job, enabling a full 3-2-1 backup strategy
+    - Remote sources now support Box, Dropbox, OneDrive, and Google Drive
+    - Remote file locking support for S3, Azure Blob, Backblaze B2, iDrive e2, and Google Cloud Storage
+    - New templating engine for customizing backup report emails
+    - Soft delete support to rename files instead of deleting them, allowing lifecycle rules to handle cleanup
+    - SSH-Agent support for the SSH backend
+    - New languages added: Hungarian, Czech, and Polish
+    - Now runs on .NET 10 for improved performance
+    - Linux AppImage builds now available
 
 
-  User interface improvements:
-    - Simplified schedule setup page
-    - Restore flow now defaults to not overwrite existing files
-    - Added custom UIs for supported S3 providers
-    - Fixed issues with localization not being applied
-    - Improved integration with console and remote control settings
-    - Better field validation for cloud storage providers
+  Notable bugfixes:
+    - Fixed index file corruption where index files could become incomplete over time
+    - Fixed restore flow to reduce temporary space usage
+    - Fixed dry-run to strictly not touch data
+    - Fixed purge operation size calculation
 
 
   Full release notes can be found at https://github.com/duplicati/duplicati/releases
