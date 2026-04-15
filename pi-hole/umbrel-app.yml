@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: pi-hole
 category: networking
 name: Pi-hole
-version: "2026.02.0"
+version: "2026.04.0"
 tagline: Block ads on your entire network
 description: >-
   Instead of browser plugins or other software on each computer,
@@ -36,18 +36,18 @@ releaseNotes: >-
   To avoid issues, temporarily set a backup DNS server (e.g., 1.1.1.1) on your router before updating— or configure a permanent fallback DNS to prevent future issues.
 
 
-  This release includes several improvements and bug fixes:
-    - Updated embedded SQLite to version 3.51.2
-    - Updated embedded dnsmasq to version 2.92rc1
-    - Improved gravity domain validation processing speed
-    - Enhanced query log loading performance
-    - Reduced startup delay and optimized low-memory hardware performance
-    - Fixed security vulnerabilities in the web interface
-    - Improved network overview with MAC and hostname information from DHCP leases
-    - Added option to hide network connection errors
-    - Hardened default Content Security Policy
+  This release includes several security fixes and improvements:
+    - 🚨 Fixed multiple security vulnerabilities including Remote Code Execution (RCE) via newline injection in configuration parameters
+    - 🚨 Fixed an authorization bypass that allowed CLI API sessions to import Teleporter archives and modify configuration
+    - 🚨 Fixed multiple stored HTML injection and XSS vulnerabilities in the web interface
+    - 🚨 Fixed a local privilege escalation vulnerability
+    - Fixed client count inflation for rate-limited queries
+    - Fixed overTime data when database import is disabled
+    - Added new option for controlling name resolution via MAC address
+    - Improved Content Security Policy with additional hardening
+    - Fixed an issue where FTL could restart while gravity update was still running
 
 
-  Full release notes can be found at https://github.com/pi-hole/docker-pi-hole/releases/tag/2026.02.0
+  Full release notes can be found at https://github.com/pi-hole/docker-pi-hole/releases/tag/2026.04.0
 submitter: Umbrel
 submission: https://github.com/getumbrel/umbrel/commit/9ca55a25e043dcd50d5cb92c6ec756d368bb4794
