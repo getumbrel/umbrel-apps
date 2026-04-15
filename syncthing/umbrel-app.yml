@@ -2,7 +2,7 @@ manifestVersion: 1
 id: syncthing
 category: files
 name: Syncthing
-version: "2.0.15"
+version: "2.0.16"
 tagline: Peer-to-peer file synchronization between your devices
 description: >-
   Syncthing is a peer-to-peer continuous file synchronization
@@ -27,12 +27,11 @@ path: ""
 defaultPassword: ""
 releaseNotes: >-
   This release includes several fixes and improvements:
-    - Fixed GUI to show restarting modal during upgrade restart
-    - Fixed language select item width limit in GUI
-    - Added id and name to Stay logged in checkbox for better password manager support
-    - Improved database maintenance with ability to wait for completion and query last run time
-    - Added comprehensive sandboxing
-    - Updated build to use Go 1.26
+    - Fixed protocol handling by verifying compressed message length before decompression
+    - Fixed systemd service to support overrides for sync ownership
+    - Fixed systemd sandboxing to restore missing chown-related syscalls
+    - Improved connection reliability by using the same reconnection interval for QUIC and TCP
+    - Improved SQLite performance by reducing max open connections and keeping them open permanently
 
 
   Full release notes can be found at https://github.com/syncthing/syncthing/releases
