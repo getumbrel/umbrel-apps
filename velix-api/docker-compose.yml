@@ -9,6 +9,7 @@ services:
   server:
     image: ghcr.io/paulolinder/velix-api:0.1.0@sha256:0c855dd6290918359ba2bbc008389844db8316fc3a882a50857a12caf8f54bcd
     restart: on-failure
+    user: "1000:1000"
     environment:
       DATABASE_URL: postgres://postgres:velix-umbrel@velix-api_db_1:5432/velix?sslmode=disable
       REDIS_URL: redis://velix-api_redis_1:6379
@@ -30,6 +31,7 @@ services:
   db:
     image: postgres:16-alpine@sha256:20edbde7749f822887a1a022ad526fde0a47d6b2be9a8364433605cf65099416
     restart: on-failure
+    user: "1000:1000"
     environment:
       POSTGRES_DB: velix
       POSTGRES_PASSWORD: velix-umbrel
@@ -39,5 +41,6 @@ services:
   redis:
     image: redis:7-alpine@sha256:8b81dd37ff027bec4e516d41acfbe9fe2460070dc6d4a4570a2ac5b9d59df065
     restart: on-failure
+    user: "1000:1000"
     volumes:
       - ${APP_DATA_DIR}/redis:/data
