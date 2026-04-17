@@ -6,14 +6,15 @@ services:
       APP_HOST: monetr_monetr_1
       APP_PORT: 4000
 
-  postgres:
-    image: postgres:17@sha256:f337b026cb1fb954a93f2e33a62bf9ea7fffc1dafc1586c53b93922a8d6ee018
+  db:
+    image: postgres:17.9@sha256:7ad98329d513dd497293b951c195ca354274a77f12ddbbbbf85e68a811823d72
+    user: "1000:1000"
     environment:
       POSTGRES_PASSWORD: m0netrPass123
       POSTGRES_USER: postgres
       POSTGRES_DB: monetr
     volumes:
-      - ${APP_DATA_DIR}/data/postgres:/var/lib/postgresql/data
+      - ${APP_DATA_DIR}/data/db:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres || exit 1"]
       interval: 10s
@@ -21,7 +22,8 @@ services:
       retries: 10
 
   valkey:
-    image: valkey/valkey:9@sha256:4503e204c900a00ad393bec83c8c7c4c76b0529cd629e23b34b52011aefd1d27
+    image: valkey/valkey:9@sha256:3b55fbaa0cd93cf0d9d961f405e4dfcc70efe325e2d84da207a0a8e6d8fde4f9
+    user: "1000:1000"
     volumes:
       - ${APP_DATA_DIR}/data/valkey:/data
     healthcheck:
@@ -31,14 +33,14 @@ services:
       retries: 10
 
   monetr:
-    image: ghcr.io/monetr/monetr:1.7.0@sha256:d219a28c86eb2af3a42a0c3b357accd25d44a48b03b4ba2cdaeb99715d40c4ca
+    image: ghcr.io/monetr/monetr:1.12.4@sha256:f99197e685e336855d4cbe3a9277b771ec4f4943755ac6a6633085964d6a4991
     user: "1000:1000"
     command:
       - serve
       - --migrate
       - --generate-certificates
     depends_on:
-      postgres:
+      db:
         condition: service_healthy
       valkey:
         condition: service_healthy
@@ -49,7 +51,7 @@ services:
       MONETR_PG_USERNAME: postgres
       MONETR_PG_PASSWORD: m0netrPass123
       MONETR_PG_DATABASE: monetr
-      MONETR_PG_ADDRESS: monetr_postgres_1
+      MONETR_PG_ADDRESS: monetr_db_1
       MONETR_PG_PORT: 5432
       MONETR_REDIS_ENABLED: "true"
       MONETR_REDIS_ADDRESS: monetr_valkey_1
