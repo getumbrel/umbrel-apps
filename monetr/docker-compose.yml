@@ -1,0 +1,61 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: monetr_monetr_1
+      APP_PORT: 4000
+
+  db:
+    image: postgres:17.9@sha256:7ad98329d513dd497293b951c195ca354274a77f12ddbbbbf85e68a811823d72
+    user: "1000:1000"
+    environment:
+      POSTGRES_PASSWORD: m0netrPass123
+      POSTGRES_USER: postgres
+      POSTGRES_DB: monetr
+    volumes:
+      - ${APP_DATA_DIR}/data/db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  valkey:
+    image: valkey/valkey:9@sha256:3b55fbaa0cd93cf0d9d961f405e4dfcc70efe325e2d84da207a0a8e6d8fde4f9
+    user: "1000:1000"
+    volumes:
+      - ${APP_DATA_DIR}/data/valkey:/data
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  monetr:
+    image: ghcr.io/monetr/monetr:1.12.4@sha256:f99197e685e336855d4cbe3a9277b771ec4f4943755ac6a6633085964d6a4991
+    user: "1000:1000"
+    command:
+      - serve
+      - --migrate
+      - --generate-certificates
+    depends_on:
+      db:
+        condition: service_healthy
+      valkey:
+        condition: service_healthy
+    volumes:
+      - ${APP_DATA_DIR}/data/app:/etc/monetr
+    environment:
+      MONETR_ALLOW_SIGN_UP: ${MONETR_ALLOW_SIGN_UP:-true}
+      MONETR_PG_USERNAME: postgres
+      MONETR_PG_PASSWORD: m0netrPass123
+      MONETR_PG_DATABASE: monetr
+      MONETR_PG_ADDRESS: monetr_db_1
+      MONETR_PG_PORT: 5432
+      MONETR_REDIS_ENABLED: "true"
+      MONETR_REDIS_ADDRESS: monetr_valkey_1
+      MONETR_REDIS_PORT: 6379
+      MONETR_STORAGE_ENABLED: ${MONETR_STORAGE_ENABLED:-true}
+      MONETR_STORAGE_PROVIDER: ${MONETR_STORAGE_PROVIDER:-filesystem}
+
