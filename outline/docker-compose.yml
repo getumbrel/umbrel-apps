@@ -8,7 +8,7 @@ services:
       PROXY_AUTH_ADD: "false"
 
   web:
-    image: outlinewiki/outline:1.1.0@sha256:51db3e893d3eabdbf9092712c9c8ed5362efb20e4c1d35b941ccacaed1c0f010
+    image: outlinewiki/outline:1.6.1@sha256:a750f764080ce28d4a7393176011c8e2e4170b41689a8f6d91327dadf4904eb6
     user: "1000:1000"
     restart: on-failure
     depends_on:
@@ -41,7 +41,7 @@ services:
       - ${APP_DATA_DIR}/data/app:/var/lib/outline/data
 
   db:
-    image: postgres:17.7-alpine@sha256:9a78577340f3d26384b6aebeb475c0d46d664fd4ffa68503b4be4e4462745f94
+    image: postgres:17.9-alpine@sha256:778d0b486d6daa02b77434d0358ec57a1b21fd8b6d22ac2eef56a33e816928f6
     user: "1000:1000"
     restart: on-failure
     environment:
@@ -57,7 +57,7 @@ services:
       retries: 3
 
   redis:
-    image: redis:8.4.0-alpine@sha256:6cbef353e480a8a6e7f10ec545f13d7d3fa85a212cdcc5ffaf5a1c818b9d3798
+    image: redis:8.4.2-alpine@sha256:812a2556fa70318d980d248a65f62a3bdb72c0882e90d96e50d5c8cf2bed438d
     user: "1000:1000"
     restart: on-failure
     volumes:
@@ -69,7 +69,7 @@ services:
       retries: 3
 
   dex:
-    image: dexidp/dex:v2.44.0@sha256:5d0656fce7d453c0e3b2706abf40c0d0ce5b371fb0b73b3cf714d05f35fa5f86
+    image: dexidp/dex:v2.45.1@sha256:8499afd690c437f52301efd2b05b2455da5bd2dfc20332cd697dc9937f808462
     user: "1000:1000"
     restart: on-failure
     ports:
