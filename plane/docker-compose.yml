@@ -52,7 +52,7 @@ services:
       PROXY_AUTH_ADD: "false"
   
   nginx:
-    image: nginx:alpine3.22@sha256:d67ea0d64d518b1bb04acde3b00f722ac3e9764b3209a9b0a98924ba35e4b779
+    image: nginx:alpine3.23@sha256:5616878291a2eed594aee8db4dade5878cf7edcb475e59193904b198d9b830de
     restart: on-failure
     volumes:
       - ${APP_DATA_DIR}/config/nginx.conf:/etc/nginx/conf.d/default.conf:ro
@@ -60,7 +60,7 @@ services:
       - web
 
   db:
-    image: postgres:17.7-alpine@sha256:9a78577340f3d26384b6aebeb475c0d46d664fd4ffa68503b4be4e4462745f94
+    image: postgres:17.9-alpine@sha256:778d0b486d6daa02b77434d0358ec57a1b21fd8b6d22ac2eef56a33e816928f6
     user: "1000:1000"
     restart: on-failure
     environment:
@@ -76,8 +76,7 @@ services:
       retries: 10
 
   redis:
-    image: valkey/valkey:7.2.11-alpine@sha256:7b2019b47ad58be661fa6eba5ea66106eadde03459387113aaed29a464a5876b
-    user: "1000:1000"
+    image: valkey/valkey:7.2.12-alpine@sha256:d0809f1d763f9fc3d77cd27e7c0393b1b0d69b6ad9269f932328b4793a620c78
     restart: on-failure
     volumes:
       - ${APP_DATA_DIR}/data/redis:/data
