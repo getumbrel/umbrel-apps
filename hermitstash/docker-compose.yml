@@ -1,0 +1,19 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: hermitstash_web_1
+      APP_PORT: 3000
+
+  web:
+    image: ghcr.io/dotcoocoo/hermitstash:1.6.1@sha256:6e9a0f874bebc9e45dac75dcf18e6dc3f5fc4e6f15d86baa3af7a0fb3bb05de7
+    restart: on-failure
+    stop_grace_period: 1m
+    shm_size: "256m"
+    volumes:
+      - ${APP_DATA_DIR}/data/db:/app/data
+      - ${APP_DATA_DIR}/data/uploads:/app/uploads
+    environment:
+      NODE_ENV: production
+      TRUST_PROXY: "true"
