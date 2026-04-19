@@ -7,13 +7,33 @@ services:
       APP_PORT: 3000
 
   web:
-    image: ghcr.io/dotcoocoo/hermitstash:1.6.1@sha256:6e9a0f874bebc9e45dac75dcf18e6dc3f5fc4e6f15d86baa3af7a0fb3bb05de7
+    image: ghcr.io/dotcoocoo/hermitstash:1.7.15@sha256:44238b69447ec2b25492b12a8da03eb7dff224a5e1e909b14dab22088d044355
+    init: true
     restart: on-failure
     stop_grace_period: 1m
     shm_size: "256m"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETUID
+      - SETGID
+      - DAC_OVERRIDE
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health',function(r){process.exit(r.statusCode===200?0:1)}).on('error',function(){process.exit(1)})"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
     volumes:
       - ${APP_DATA_DIR}/data/db:/app/data
       - ${APP_DATA_DIR}/data/uploads:/app/uploads
     environment:
+      PUID: "1000"
+      PGID: "1000"
+      UMASK: "022"
+      TZ: "Etc/UTC"
       NODE_ENV: production
       TRUST_PROXY: "true"
