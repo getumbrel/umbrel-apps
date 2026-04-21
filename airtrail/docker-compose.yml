@@ -1,0 +1,40 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: airtrail_app_1
+      APP_PORT: 3000
+      PROXY_AUTH_ADD: "false"
+
+  app:
+    image: johly/airtrail:v3.9.0@sha256:8e909ac815046b0eefa773c33e69fd0aeaad84398ed49dd34f926e7f5daa3fdf
+    user: "1000:1000"
+    restart: on-failure
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      UPLOAD_LOCATION: /app/uploads
+      DB_URL: postgres://airtrail:itworkslocally@airtrail_postgres_1:5432/airtrail
+    volumes:
+      - ${APP_DATA_DIR}/data/uploads:/app/uploads
+
+  postgres:
+    image: postgres:18.3-alpine@sha256:52098013b4b64a746626437d38afc03cabff6cdeb4d3d92e2342aa95f0ce56ea
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      POSTGRES_DB: airtrail
+      POSTGRES_USER: airtrail
+      POSTGRES_PASSWORD: itworkslocally
+      PGDATA: /data/pgdata
+    healthcheck:
+      test: "pg_isready -U airtrail -h localhost -d airtrail"
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    volumes:
+      - ${APP_DATA_DIR}/data/db:/data
