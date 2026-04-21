@@ -18,9 +18,9 @@ services:
       # User config (domain.txt) - writable by user
       - ${APP_DATA_DIR}/data/config:/app/config:ro
       # Frontend static files from frontend container
-      - frontend-dist:/usr/share/nginx/html/app:ro
+      - ${APP_DATA_DIR}/data/frontend:/usr/share/nginx/html/app:ro
       # Dynamic domain configs written by backend
-      - nginx-sites:/etc/nginx/sites-enabled
+      - ${APP_DATA_DIR}/data/nginx:/etc/nginx/sites-enabled
     depends_on:
       - backend
       - frontend
@@ -61,7 +61,7 @@ services:
         condition: service_healthy
     environment:
       # Use individual params instead of connection URI (more reliable)
-      POSTGRESQL_HOST: postgres
+      POSTGRESQL_HOST: bffless_postgres_1
       POSTGRESQL_PORT: '5432'
       POSTGRESQL_USER: postgres
       POSTGRESQL_PASSWORD: staticfilesgobrrrr
@@ -96,7 +96,7 @@ services:
       APP_SEED: ${APP_SEED:-}
       APP_DATA_DIR: ${APP_DATA_DIR:-/data}
       # Database
-      DATABASE_URL: postgresql://postgres:staticfilesgobrrrr@postgres:5432/assethost
+      DATABASE_URL: postgresql://postgres:staticfilesgobrrrr@bffless_postgres_1:5432/assethost
       # Storage - local filesystem (no MinIO)
       STORAGE_TYPE: local
       ENABLE_MINIO: 'false'
@@ -105,7 +105,7 @@ services:
       ENABLE_REDIS: 'false'
       # SuperTokens
       SUPERTOKENS_MODE: local
-      SUPERTOKENS_CONNECTION_URI: http://supertokens:3567
+      SUPERTOKENS_CONNECTION_URI: http://bffless_supertokens_1:3567
       SUPERTOKENS_API_KEY: ''
       # Default URLs - overridden by entrypoint if domain.txt exists
       PRIMARY_DOMAIN: localhost
@@ -132,7 +132,7 @@ services:
       # User config (domain.txt)
       - ${APP_DATA_DIR}/data/config:/app/config:ro
       # Dynamic nginx configs written by backend
-      - nginx-sites:/etc/nginx/sites-enabled
+      - ${APP_DATA_DIR}/data/nginx:/etc/nginx/sites-enabled
 
   # React frontend (serves static files)
   frontend:
@@ -143,7 +143,3 @@ services:
       - frontend-dist:/app/dist
     depends_on:
       - backend
-
-volumes:
-  frontend-dist:
-  nginx-sites:
