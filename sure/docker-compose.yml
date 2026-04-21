@@ -8,6 +8,7 @@ services:
 
   web:
     image: ghcr.io/we-promise/sure:0.6.9@sha256:3d899b3eced520d8d3166a3d53184cbb1356670fb52d050f94f8e62e59754d70
+    user: "1000:1000"
     volumes:
       - ${APP_DATA_DIR}/data/rails:/rails/storage
     restart: on-failure
@@ -30,6 +31,7 @@ services:
 
   worker:
     image: ghcr.io/we-promise/sure:0.6.9@sha256:3d899b3eced520d8d3166a3d53184cbb1356670fb52d050f94f8e62e59754d70
+    user: "1000:1000"
     command: bundle exec sidekiq
     volumes:
       - ${APP_DATA_DIR}/data/rails:/rails/storage
@@ -53,6 +55,7 @@ services:
 
   db:
     image: postgres:18.3-alpine@sha256:52098013b4b64a746626437d38afc03cabff6cdeb4d3d92e2342aa95f0ce56ea
+    user: "1000:1000"
     restart: on-failure
     volumes:
       - ${APP_DATA_DIR}/data/postgres:/data
@@ -70,6 +73,7 @@ services:
 
   redis:
     image: redis:8.4.2@sha256:4b0ab81cf4d84e610215d0159dcc218d4ec6180f869a9bc83c33a1945d6f3e42
+    user: "1000:1000"
     restart: on-failure
     volumes:
       - ${APP_DATA_DIR}/data/redis:/data
