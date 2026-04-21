@@ -1,0 +1,31 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: fizzy_server_1
+      APP_PORT: 80
+      PROXY_AUTH_ADD: 'false'
+
+  server:
+    image: ghcr.io/mauricewipf/fizzy-umbrel:754aaa5@sha256:3c74a27d749db915c76654bf7590b4d2eee5eeb9cb495e23a52ebe3c51b5e372
+    user: "1000:1000"
+    volumes:
+      - ${APP_DATA_DIR}/data/app:/rails/storage
+    environment:
+      RAILS_ENV: production
+      SECRET_KEY_BASE: ${APP_SEED}
+      DATABASE_ADAPTER: sqlite
+      ACTIVE_STORAGE_SERVICE: local
+      SOLID_QUEUE_IN_PUMA: 'true'
+      FORCE_SSL: 'false'
+      ASSUME_SSL: 'false'
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '2'
+        reservations:
+          memory: 512M
+          cpus: '0.5'
+    restart: on-failure
