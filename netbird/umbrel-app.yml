@@ -3,7 +3,7 @@ id: netbird
 name: NetBird
 tagline: An adaptive client for Zero Trust Networking
 category: networking
-version: "0.68.3"
+version: "0.69.0"
 port: 8479
 description: >-
   NetBird is a secure networking platform that creates private, peer-to-peer connections between devices using encrypted communication channels. It builds a trusted network layer that allows seamless and direct communication without exposing data to intermediaries. Every connection is protected with modern encryption standards and managed automatically through a zero trust security model that authenticates identities rather than networks.
@@ -29,7 +29,20 @@ gallery:
   - 1.jpg
   - 2.jpg
   - 3.jpg
-releaseNotes: ""
+releaseNotes: >-
+  Some of the key highlights in this release include:
+    - Added CrowdSec IP reputation integration for the reverse proxy to block malicious traffic based on IP reputation
+    - Added PCP protocol support to improve peer-to-peer connectivity rates
+    - Added a --disable-networks flag to block network selection for users
+    - Fixed clearing service environment variables with --service-env ""
+    - Fixed an SSH client config issue combining Host and Match directives incorrectly
+    - Fixed a deadlock in WGIface.Close when the DNS filter hook re-enters GetDevice
+    - Reconnected the conntrack netlink listener on error
+    - Enforced peer or peer group requirements for network routers
+    - Added direct redirect to SSO in the proxy
+
+
+  Full release notes can be found at https://github.com/netbirdio/netbird/releases
 dependencies: []
 path: ""
 defaultUsername: ""
