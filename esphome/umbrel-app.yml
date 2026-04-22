@@ -2,7 +2,7 @@ manifestVersion: 1
 id: esphome
 category: automation
 name: ESPHome
-version: "2026.4.0"
+version: "2026.4.1"
 tagline: Intelligently manage all your ESP8266/ESP32 devices
 description: >-
   ESPHome is a system to control your ESP8266/ESP32 by simple yet powerful configuration files and control them remotely through Home Automation systems.
@@ -21,19 +21,22 @@ defaultUsername: ""
 defaultPassword: ""
 torOnly: false
 releaseNotes: >-
-  This release focuses on performance, stability, and expanded hardware capabilities across ESPHome:
-    - Further performance improvements across core components and networking stack
-    - Improved WiFi reliability and connection handling for more stable devices
-    - Reduced memory usage across multiple components, enabling larger configurations
-    - Faster and more efficient event handling for sensors, BLE, and automations
-    - Expanded hardware support with new sensors and components
-    - Improvements to ESP32, RP2040, and nRF platforms for better feature parity
-    - Fixes for edge cases, crashes, and long-standing bugs across many components
-    - Enhanced logging, diagnostics, and error handling for easier debugging
-    - Continued optimizations to flash usage and build size
-    - ⚠️ Some components may require minor config updates due to internal changes
+  This is a patch release with bug fixes across multiple components:
+    - Fixed app state status bits being clobbered for non-looping components
+    - Fixed swapped offset width and height in st7789v display model presets
+    - Fixed frequency precision loss in sx126x and sx127x radio components
+    - Fixed RTC validity check incorrectly rejecting valid times
+    - Fixed substitutions include file regression
+    - Fixed LVGL crashes including snow effect on rotated displays and arc angle rendering
+    - Fixed image byte order handling and RGB order in runtime images
+    - Fixed display buffer null pointer crash when memory allocation fails
+    - Fixed DelayAction compile error with non-const reference arguments
+    - Fixed watchdog timer not being fed in empty configurations, preventing panics
+    - Fixed Ethernet SPI3 host default breaking compilation on some ESP32 variants
+    - Improved error messages for package includes with full include stack traces
+    - Added runtime stats tracking for main loop active time and overhead reporting
 
 
-  Full release notes can be found at https://esphome.io/changelog/2026.4.0/
+  Full release notes can be found at https://esphome.io/changelog/2026.4.1/
 submitter: ShonP40
 submission: https://github.com/getumbrel/umbrel-apps/pull/43
