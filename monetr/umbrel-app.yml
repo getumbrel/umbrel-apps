@@ -3,7 +3,7 @@ id: monetr
 name: Monetr
 tagline: A budgeting application focused on planning for recurring expenses
 category: finance
-version: "1.12.4"
+version: "1.12.5"
 port: 8379
 description: >-
   💸 Monetr is a personal finance application that helps users understand their spending and manage their money with clarity. It focuses on presenting a clear picture of available funds by showing how much remains after accounting for upcoming expenses and savings goals. The application allows users to organise their finances around real obligations and planned costs rather than relying on a simple monthly view. It supports recurring expenses of any interval and uses these to calculate what must be set aside so that future payments are always covered.
@@ -26,7 +26,22 @@ gallery:
   - 2.jpg
   - 3.jpg
   - 4.jpg
-releaseNotes: ""
+releaseNotes: >-
+  ⚠️ This release includes a security fix for a potential server-side request forgery (SSRF) vulnerability in the Lunch Flow onboarding process, which could have allowed GET requests to be made to arbitrary URLs. Updating is recommended.
+
+
+  Bug fixes in this release:
+    - Fixed a potential SSRF vulnerability during Lunch Flow setup where requests could be made to arbitrary URLs
+    - Fixed an issue where transactions could be held for too long
+    - Fixed TOTP recovery code generation
+    - Fixed filesystem storage permissions for stored files and generated certificates
+    - Fixed a Plaid webhook timestamp age check
+    - Fixed group membership of the monetr user inside the container
+    - Added hard timeouts at the listener level for improved reliability
+    - Moved security headers to be returned on all requests
+
+
+  Full release notes can be found at https://github.com/monetr/monetr/releases
 dependencies: []
 path: ""
 defaultUsername: ""
