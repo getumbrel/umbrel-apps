@@ -2,7 +2,7 @@ manifestVersion: 1
 id: jotty
 category: files
 name: Jotty
-version: "1.21.1"
+version: "1.22.0"
 tagline: A simple app, for your checklists and notes
 description: >-
   Tired of bloated, cloud-based to-do apps? Jotty is a lightweight alternative for managing your personal checklists and notes.
@@ -27,9 +27,24 @@ releaseNotes: >-
   ⚠️ Make sure to back up your data before upgrading to this release.
 
 
+  Kanban refactor:
+    - Tasks have been renamed and refactored into a full Kanban system with new fields including assignee, due date, priority, and reminders
+    - A new calendar view shows tasks that have a due date assigned
+    - Filter the Kanban board by task priority
+    - In-app notifications for events such as shared items, task status updates, and expired task reminders
+
+  New features:
+    - LDAP support - users can now log in via LDAP using their Jotty username
+
   Bug fixes:
-    - Fixed websocket looping connection when unauthenticated
-    - Fixed assets being blocked when unauthenticated causing redirect loops
+    - Fixed note API missing the ability to get a note by UUID
+    - Fixed Kanban columns not filling the full screen when fewer than 4 statuses are present
+    - Fixed subtasks getting unchecked when updating task progress
+    - Fixed zoom behavior in PWA mode
+
+  Security updates:
+    - Fixed a high severity security vulnerability - updating is strongly recommended if your instance is publicly accessible
+    - Updated multiple third-party dependencies to address various security vulnerabilities
 
 
   Full release notes are found at https://github.com/fccview/jotty/releases
