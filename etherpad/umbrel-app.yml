@@ -3,7 +3,7 @@ id: etherpad
 name: Etherpad
 tagline: An intuitive tool for real-time collaborative writing
 category: files
-version: "2.6.1"
+version: "2.7.0"
 port: 9002
 description: >-
   ⚙️ The admin panel for Etherpad is accessible at "http://umbrel.local:9002/admin/".
@@ -34,9 +34,21 @@ gallery:
   - 2.jpg
   - 3.jpg
 releaseNotes: >-
+  ⚠️ Abiword has been replaced with LibreOffice for document import/export. If you were using Abiword for DOCX/ODT/PDF conversion, you will need to update your settings to point to your LibreOffice binary.
+
+
   This release includes various enhancements and fixes:
-    - Minor fixes and improvements to the session transfer feature introduced in 2.6.0
-    - Dependencies upgrades
+    - Added line numbers to the timeslider so you can follow specific lines while replaying a pad's history
+    - Added a playback speed setting to the timeslider for faster or slower history scrubbing
+    - Pad creators now seed the default settings for new pads, giving them more control over initial configuration
+    - Cookie names are now configurable via a prefix setting, useful when running multiple Etherpads on the same domain
+    - Database drivers are now bundled again, so fresh installs can connect to Postgres and other databases out of the box
+    - Pending edits are now flushed immediately after reconnecting instead of being silently dropped
+    - Large pastes no longer get rejected — the maximum message size has been raised to 10 MB
+    - Numerous list-related fixes including correct indentation, preserved numbering, and proper formatting across bullet and numbered lists
+    - Bold and other text formatting is now retained after copy-paste
+    - Fixed an issue where dead-key or compose-key input would eat the preceding space
+    - Accessibility improvements including keyboard trap fixes and better screen reader support
 
 
   Full release notes can be found at https://github.com/ether/etherpad-lite/releases
