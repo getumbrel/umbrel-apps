@@ -7,12 +7,24 @@ DB_DATA_DIR="${APP_DATA_DIR}/data/db"
 REDIS_DATA_DIR="${APP_DATA_DIR}/data/redis"
 RUSTFS_DATA_DIR="${APP_DATA_DIR}/data/rustfs"
 RUSTFS_LOGS_DIR="${APP_DATA_DIR}/data/rustfs-logs"
+SEARXNG_DATA_DIR="${APP_DATA_DIR}/data/searxng"
 
 mkdir -p "${TMP_DIR}"
-mkdir -p "${DB_DATA_DIR}" "${REDIS_DATA_DIR}" "${RUSTFS_DATA_DIR}" "${RUSTFS_LOGS_DIR}"
+mkdir -p "${DB_DATA_DIR}" "${REDIS_DATA_DIR}" "${RUSTFS_DATA_DIR}" "${RUSTFS_LOGS_DIR}" "${SEARXNG_DATA_DIR}"
 touch "${ENV_FILE}"
 chown -R 1000:1000 "${DB_DATA_DIR}" "${REDIS_DATA_DIR}" 2>/dev/null || true
 chown -R 10001:10001 "${RUSTFS_DATA_DIR}" "${RUSTFS_LOGS_DIR}" 2>/dev/null || true
+
+if [[ ! -f "${SEARXNG_DATA_DIR}/settings.yml" ]]; then
+  cat > "${SEARXNG_DATA_DIR}/settings.yml" <<'EOF'
+use_default_settings: true
+
+search:
+  formats:
+    - html
+    - json
+EOF
+fi
 
 get_var() {
   local key="$1"

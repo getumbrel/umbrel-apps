@@ -8,12 +8,13 @@ services:
       PROXY_AUTH_ADD: "false"
 
   app:
-    image: lobehub/lobehub:2.1.47@sha256:e2298eceb912d9c5857700bde3bc03ae6c09c1e6c9020652ca3f01ed3d60af28
+    image: lobehub/lobehub:2.1.52@sha256:218df7ec92cc808a6a2b99e3ca4f789b430ad7db8d5ca307c90ba42ea7d0214a
     restart: on-failure
     env_file:
       - ${APP_DATA_DIR}/settings.env
     environment:
       APP_URL: http://${DEVICE_DOMAIN_NAME}:7455
+      INTERNAL_APP_URL: http://lobe-chat_app_1:3210
       AUTH_TRUSTED_ORIGINS: http://${DEVICE_DOMAIN_NAME}:7455
       DATABASE_URL: postgresql://postgres:lobehubsecret@lobe-chat_postgres_1:5432/lobehub
       REDIS_URL: redis://lobe-chat_redis_1:6379
@@ -110,7 +111,9 @@ services:
         mc anonymous set download rustfs/lobe
 
   searxng:
-    image: ghcr.io/searxng/searxng:2025.12.9-b719d559b@sha256:95e59f5ba7d48b4c7ee92f2705907e52c5b98715b0d8c4802863322a502a8c4a
+    image: ghcr.io/searxng/searxng:2026.4.22-74f1ca203@sha256:37c616a774b90fb5df9239eb143f1b11866ddf7b830cd1ebcca6ba11b38cc2bf
     restart: on-failure
     environment:
       SEARXNG_SECRET: ${APP_SEED}
+    volumes:
+    - ${APP_DATA_DIR}/data/searxng/settings.yml:/etc/searxng/settings.yml
