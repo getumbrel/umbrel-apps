@@ -3,7 +3,7 @@ id: opencode
 name: OpenCode
 tagline: The open source AI coding agent
 category: ai
-version: "1.4.7"
+version: "1.14.20"
 port: 4096
 description: >-
   OpenCode is an open source AI coding agent designed to enhance your development
@@ -32,7 +32,38 @@ gallery:
   - 2.jpg
   - 3.jpg
   - 4.jpg
-releaseNotes: ""
+releaseNotes: >-
+  Updates across several versions bringing new features, fixes, and improvements:
+
+
+  Core improvements:
+    - Added NVIDIA as a built-in AI provider option
+    - Added LLM Gateway as a new provider
+    - Improved session compaction to preserve recent conversation turns for better local context
+    - Fixed file search and file listing by restoring the native ripgrep backend
+    - Preserved concurrent edits to the same file to prevent parallel edits overwriting each other
+    - Improved workspace reconnection with exponential backoff and clearer failure handling
+    - Fixed workspace routing so requests reach the correct workspace instance
+    - Improved attachment type detection from file contents so images and PDFs work with missing or incorrect extensions
+    - Fixed GitHub Copilot Anthropic Haiku requests by disabling unsupported tool streaming
+    - Added `GET /config` to the experimental HTTP API
+    - Fixed permission replies using remote workspaces so they go to the correct workspace
+
+  TUI improvements:
+    - Added a full-session option when forking from the session dialog
+    - Fixed `--session-id` so it opens the requested session on startup
+    - Fixed light mode detection in Ghostty
+    - Fixed agent cycling when no agent is selected
+
+  Desktop improvements:
+    - Reduced loading flicker when opening projects
+    - Added a separate terminal font setting with bundled JetBrainsMono Nerd Font Mono
+    - Added a setting to hide the session progress bar while the agent is working
+    - Fixed synced project updates so desktop project state changes apply reliably
+    - Fixed sidebar project avatars to fall back correctly when no override is set
+
+
+  Full release notes can be found at https://github.com/anomalyco/opencode/releases
 dependencies: []
 submitter: besoeasy
 submission: https://github.com/getumbrel/umbrel-apps/pull/4718
