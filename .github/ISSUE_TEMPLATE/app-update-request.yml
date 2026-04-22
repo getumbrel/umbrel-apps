@@ -1,0 +1,51 @@
+name: 🔄 App Update Request
+description: Request to update an existing Umbrel App to a newer version
+title: "[App Update]: <App Name> → v<New Version>"
+labels: ["update-request", "awaiting triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 🔄 Request an update for an Umbrel App
+        Provide upstream release info and any notes for reviewers.
+
+  - type: input
+    id: app_name
+    attributes:
+      label: App Name
+      placeholder: e.g. Nextcloud
+    validations:
+      required: true
+
+  - type: input
+    id: current_version
+    attributes:
+      label: Current Umbrel version
+      placeholder: e.g. 1.5.0
+    validations:
+      required: true
+
+  - type: input
+    id: new_version
+    attributes:
+      label: New upstream version
+      placeholder: e.g. 1.6.0
+    validations:
+      required: true
+
+  - type: input
+    id: upstream_release_link
+    attributes:
+      label: Upstream release / changelog link
+      description: Link to the release notes or changelog
+      placeholder: e.g. https://github.com/example/release/tag/v1.6.0
+    validations:
+      required: true
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes / Breaking changes (optional)
+      placeholder: e.g. Requires env var X, DB migration, new port, etc.
+    validations:
+      required: false
