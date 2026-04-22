@@ -8,7 +8,7 @@ services:
 
   # Web terminal + dashboard proxy
   web:
-    image: ghcr.io/getumbrel/hermes-agent-umbrel:v2026.4.13@sha256:fb5fb72235da9ae71ca32b535501e1a78d751fcf16e38b5a9560a548ad9d0d8e
+    image: ghcr.io/getumbrel/hermes-agent-umbrel:v2026.4.16@sha256:f7c5e901c21bcac4559fca21529ec7bb9986de4324a9b0b61cf4f1c8314d126f
     # Shell prompt shows "umbrel@hermes" instead of "umbrel@<container-id>"
     hostname: hermes
     init: true
@@ -25,9 +25,7 @@ services:
 
   # Hermes messaging gateway
   gateway:
-    # Using latest tag because upstream version tags are amd64-only. Pinned by digest.
-    # Switch to a version tag when multiarch version tags are available.
-    image: nousresearch/hermes-agent:latest@sha256:b0f87728fb313f97c91d19178624a2a67375d6ceeb27800853c866f94c42dfed
+    image: nousresearch/hermes-agent:v2026.4.16@sha256:14ba9a26cf2d498ea773f1825326c404795ec4cb436a9479d22b7a345396c370
     command: gateway run
     stop_grace_period: 1m
     restart: on-failure
