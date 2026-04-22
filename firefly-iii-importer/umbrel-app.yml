@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: firefly-iii-importer
 category: finance
 name: Firefly III Importer
-version: "2.2.3"
+version: "2.3.2"
 tagline: Import your transactions into Firefly III
 description: >-
   Firefly III is a manager for your personal finances. The data importer is built to help you import transactions into Firefly III. It is separated from Firefly III for security and maintenance reasons.
@@ -33,10 +33,14 @@ releaseNotes: >-
   ⚠️ Some changes in this release may lead to duplicate transactions due to changes in data handling routines.
 
 
-  This release fixes various import issues:
-    - Fixed duplicate transactions not being ignored correctly
+  This release adds support for new UUID access tokens and fixes several issues:
+    - Added support for new UUID access tokens used by Firefly III v6.6.0 and later
     - Fixed Enable Banking duplicate detection failing due to session-scoped account IDs
-    - Clarified support for file-based environment variables in importer configuration
+    - Fixed GoCardless import not sending error notifications when EUA expires
+    - Fixed Enable Banking importer issues when specifying date ranges
+    - Fixed "Cannot modify header information" error in the autoupload endpoint
+    - Fixed SimpleFIN date range requests exceeding 90 days not being chunked correctly
+    - Fixed OAuth authentication issues in the importer
 
 
   Full release notes can be found at https://github.com/firefly-iii/data-importer/releases
