@@ -1,0 +1,47 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: onboardpi_web_1
+      APP_PORT: 8080
+
+  web:
+    image: microtexa/onboardpi-web:0.4.3@sha256:abb273913e0b9be6f481c79c28a7e58a13ed67fa324ada2dd3cba33861d7b060
+    restart: on-failure
+    stop_grace_period: 1m
+    volumes:
+      - ${APP_DATA_DIR}/data:/var/lib/onboardpi/data
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      POSTGRES_HOST: onboardpi_db_1
+      POSTGRES_DB: onboardpi
+      POSTGRES_PASSWORD: $APP_PASSWORD
+      SETTINGS_DIR: /var/lib/onboardpi/data
+    depends_on:
+      - db
+
+  db:
+    image: timescale/timescaledb:latest-pg14@sha256:0f5553d37abbe0f20bfe0a04dab5d1238955b5cda2711aba403090f95b6e51ff
+    restart: on-failure
+    stop_grace_period: 1m
+    volumes:
+      - ${APP_DATA_DIR}/db:/var/lib/postgresql/data
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      POSTGRES_PASSWORD: $APP_PASSWORD
+      POSTGRES_DB: onboardpi
+
+  obd:
+    image: microtexa/onboardpi-obd:0.4.3@sha256:c9258a33ed2b6bf7575d16b14fbe929ac514120ea4b0af9f85a6096e5cfa8cc9
+    restart: on-failure
+    stop_grace_period: 1m
+    privileged: true
+    volumes:
+      - ${APP_DATA_DIR}/data:/var/lib/onboardpi/data:ro
+      - /dev:/dev
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      SETTINGS_DIR: /var/lib/onboardpi/data
+    depends_on:
+      - web
