@@ -2,7 +2,7 @@ manifestVersion: 1
 id: btcpay-server
 category: bitcoin
 name: BTCPay Server
-version: "2.3.6"
+version: "2.3.7"
 tagline: Accept Bitcoin payments with 0 fees & no 3rd party
 description: >-
   BTCPay Server is a payment processor that allows you to receive
@@ -34,28 +34,26 @@ path: ""
 defaultUsername: ""
 defaultPassword: ""
 releaseNotes: >-
-  This release comes with new features, bug fixes, improvements, and reverts a regression.
+  This release is the first one using .NET 10, and comes with new features and bug fixes.
 
 
   New features:
-    - Wallets: Add filtering using search bar on the label filter dropdown when labels exceed more than 20
-    - API: Include a payment method in the Get invoices endpoint
-    - BTCPay Invoice Modal: Add a paymentMethodId parameter
-    - Security: Include API key permission analysis metadata
-    - A plugin can now create new permission policies
+    - Wallets: Add the ability to add comment to the transaction on the Send view.
+    - Subscriptions: Add manual subscription date editing for admins.
+    - Invoices: When the lightning provider supports it, top-up invoices now generate an amount-less BOLT11 instead of LNURL.
+    - Plugins: Add the Update button to the disabled plugins section.
+    - Subscriptions: SubscriberDisabled webhook now includes the reason why the subscriber has been disabled.
+    - Greenfield: Implement UpdateCrowdfundApp endpoint and client method.
+    - Subscriptions/API: Can delete subscribers via UI and API.
+    - Invoices: Add RTL Language support (Arabic, Hebrew, and Farsi) for invoice checkout.
+    - Invoices: Show payment method on receipt.
+    - Subscriptions: Allow upgrade/downgrade at the period end.
 
   Bug fixes:
-    - Dashboard layout issues on mobile, regression from 2.3.5
-    - Subscriber portal sessions can be created again via API
-    - Can't upgrade/downgrade a Lifetime subscription
-
-  Improvements:
-    - Update Wasabi wallet folder access instructions
-    - Security: Apply CSRF protection globally to UI controllers
-    - Update many missing translations from the language packs
-
-  Regression:
-    - Revert: Dashboard: Support multi-crypto wallet balance widgets
+    - Fix: If an admin was accessing a user's store from a user list, it was returning error 404.
+    - Emails: skip SMTP AUTH when Login and Password are empty.
+    - Fix: Wallet balance time period switch was broken.
+    - Exclude trial subscribers from monthly revenue.
 
   Full release notes can be found at https://github.com/btcpayserver/btcpayserver/releases
 submitter: Umbrel
