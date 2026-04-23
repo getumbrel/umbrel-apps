@@ -13,6 +13,11 @@ services:
     image: ghcr.io/gobrrrme/gobrrr-ckpool:latest
     restart: on-failure
     stop_grace_period: 1m
+    healthcheck:
+      test: ["CMD-SHELL", "test -f /var/log/ckpool/ckpool.log"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
     ports:
       - "21420:3333"
       - "21422:4444"
@@ -60,6 +65,9 @@ services:
   gobrrr-stats:
     image: rodb2008com/gobrrr-pool-api-etl:v1
     restart: unless-stopped
+    depends_on:
+      ckpool:
+        condition: service_healthy
     ports:
       - '23002:23002'
     volumes:
