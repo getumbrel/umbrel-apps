@@ -8,7 +8,7 @@ services:
       PROXY_AUTH_WHITELIST: "*"
       PROXY_AUTH_BLACKLIST: "/pay,/pay-login"
   web:
-    image: alex71btc/bolt12-pay:0.2.79@sha256:23c062c8f68bfa5ed1db1b9df3d9a588e8d64bdfc9470fbedd80e3ebb2988ac7
+    image: alex71btc/bolt12-pay:0.2.80:26be183f3dc9f590ce526c3dec8c1546d2d64268fac3b9dfdea602d3bf973b5a
     restart: on-failure
     depends_on:
       - lndk
@@ -46,7 +46,7 @@ services:
       - ${UMBREL_ROOT}/app-data/lightning/data/lnd:/lnd:ro
 
   lndk:
-    image: alex71btc/lndk:stable-good-20260401@sha256:ff16de59cacb5e5a9d53b76e879dcaaaa9b204537dc26697275b737c489f2939
+    image: alex71btc/lndk:stable-good-20260401:ff16de59cacb5e5a9d53b76e879dcaaaa9b204537dc26697275b737c489f2939
     restart: on-failure
     entrypoint:
       - /bin/sh
