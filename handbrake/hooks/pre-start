@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+APP_DATA_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")"
+UMBREL_ROOT="${APP_DATA_DIR}/../.."
+
+UMBREL_HOME_DIR="${UMBREL_ROOT}/home"
+UMBREL_HOME_DOWNLOADS_DIR="${UMBREL_HOME_DIR}/Downloads"
+LEGACY_DOWNLOADS_DIR="${UMBREL_ROOT}/data/storage/downloads"
+
+if [[ -d "${UMBREL_HOME_DOWNLOADS_DIR}" ]]; then
+	DOWNLOADS_DIR="${UMBREL_HOME_DOWNLOADS_DIR}"
+else
+	DOWNLOADS_DIR="${LEGACY_DOWNLOADS_DIR}"
+fi
+
+HANDBRAKE_DIR="${DOWNLOADS_DIR}/handbrake"
+HANDBRAKE_INPUT_DIR="${HANDBRAKE_DIR}/input"
+HANDBRAKE_WATCH_DIR="${HANDBRAKE_DIR}/watch"
+HANDBRAKE_OUTPUT_DIR="${HANDBRAKE_DIR}/output"
+DESIRED_OWNER="1000:1000"
+
+mkdir -p "${HANDBRAKE_INPUT_DIR}" "${HANDBRAKE_WATCH_DIR}" "${HANDBRAKE_OUTPUT_DIR}"
+
+handbrake_correct_permission() {
+	local -r path="${1}"
+
+	if [[ -e "${path}" ]]; then
+		owner=$(stat -c "%u:%g" "${path}")
+
+		if [[ "${owner}" != "${DESIRED_OWNER}" ]]; then
+			chown "${DESIRED_OWNER}" "${path}"
+		fi
+	fi
+}
+
+handbrake_correct_permission "${HANDBRAKE_DIR}"
+handbrake_correct_permission "${HANDBRAKE_INPUT_DIR}"
+handbrake_correct_permission "${HANDBRAKE_WATCH_DIR}"
+handbrake_correct_permission "${HANDBRAKE_OUTPUT_DIR}"
