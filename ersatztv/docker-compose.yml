@@ -1,0 +1,15 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: ersatztv_web_1
+      APP_PORT: 8409
+
+  web:
+    image: ghcr.io/ersatztv/ersatztv:v26.1.1@sha256:2a0a8faa0dd07041e7d862c448bd136a2d66df6d831b663205fa34572c6dc260
+    restart: on-failure
+    user: "1000:1000"
+    volumes:
+      - ${APP_DATA_DIR}/config:/config
+      - ${UMBREL_ROOT}/data/storage/downloads:/media:ro
