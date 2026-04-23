@@ -3,7 +3,7 @@ id: gitea-mirror
 name: Gitea Mirror
 tagline: Mirror your GitHub repositories to a Gitea instance automatically
 category: developer
-version: "3.15.4"
+version: "3.15.5"
 port: 4322
 description: >-
   Gitea Mirror automatically mirrors your GitHub repositories to a self-hosted Gitea instance. It supports mirroring public and private repositories, organizations, starred repos, issues, wikis, and pull requests.
@@ -43,12 +43,8 @@ defaultPassword: ""
 dependencies: []
 releaseNotes: >-
   🐛 Bug Fixes
-    - Fixed dashboard showing zeros and "no repositories" when the database had more than one config row for a user
-    - Fixed duplicate issue and pull request mirroring on every sync
-    - Fixed release retention limit when updating releases on Gitea
-    - Fixed public repository sync failures on Forgejo
-    - Fixed backup settings being reset across restarts
-    - Fixed GitHub Enterprise API URL being ignored by several sync and scheduler code paths, including the Test Connection button
+    - Fixed dashboard showing all zeros for users whose config had no username set, even though mirroring was working correctly
+    - Fixed dashboard being locked out for users who configured via environment variables without setting a GitHub or Gitea username
 
 
   Full release notes can be found at https://github.com/raylabshq/gitea-mirror
