@@ -3,7 +3,7 @@ id: opencode
 name: OpenCode
 tagline: The open source AI coding agent
 category: ai
-version: "1.14.20"
+version: "1.14.21"
 port: 4096
 description: >-
   OpenCode is an open source AI coding agent designed to enhance your development
@@ -33,34 +33,25 @@ gallery:
   - 3.jpg
   - 4.jpg
 releaseNotes: >-
-  Updates across several versions bringing new features, fixes, and improvements:
-
-
   Core improvements:
-    - Added NVIDIA as a built-in AI provider option
-    - Added LLM Gateway as a new provider
-    - Improved session compaction to preserve recent conversation turns for better local context
-    - Fixed file search and file listing by restoring the native ripgrep backend
-    - Preserved concurrent edits to the same file to prevent parallel edits overwriting each other
-    - Improved workspace reconnection with exponential backoff and clearer failure handling
-    - Fixed workspace routing so requests reach the correct workspace instance
-    - Improved attachment type detection from file contents so images and PDFs work with missing or incorrect extensions
-    - Fixed GitHub Copilot Anthropic Haiku requests by disabling unsupported tool streaming
-    - Added `GET /config` to the experimental HTTP API
-    - Fixed permission replies using remote workspaces so they go to the correct workspace
+    - Added support for pull diagnostics from LSP servers, including C# and Kotlin
+    - Improved session compaction so long threads keep more useful context when older history is summarized
+    - Preserved UTF-8 BOMs when files are edited, patched, or rewritten
+    - Switched to Roslyn Language Server for C# support
+    - Added high reasoning variant for supported Mistral Small models
+    - Fixed project detection and caching for bare Git repos and worktrees
+    - Hidden unsupported variants for Kimi models that do not expose them
+
 
   TUI improvements:
-    - Added a full-session option when forking from the session dialog
-    - Fixed `--session-id` so it opens the requested session on startup
-    - Fixed light mode detection in Ghostty
-    - Fixed agent cycling when no agent is selected
+    - Fail fast when opening an invalid or missing session instead of starting in a broken state
+    - Skip upgrade checks when auto-update is disabled
+
 
   Desktop improvements:
-    - Reduced loading flicker when opening projects
-    - Added a separate terminal font setting with bundled JetBrainsMono Nerd Font Mono
-    - Added a setting to hide the session progress bar while the agent is working
-    - Fixed synced project updates so desktop project state changes apply reliably
-    - Fixed sidebar project avatars to fall back correctly when no override is set
+    - Kept project avatar previews consistent between the sidebar and edit dialog
+    - Improved project icon overrides so uploaded icons and color fallbacks behave correctly
+    - Improved Linux desktop metadata for app listings and categorization
 
 
   Full release notes can be found at https://github.com/anomalyco/opencode/releases
