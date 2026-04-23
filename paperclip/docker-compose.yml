@@ -1,0 +1,31 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: paperclip_server_1
+      APP_PORT: 3100
+      PROXY_AUTH_ADD: "false"
+
+  server:
+    image: ghcr.io/paperclipai/paperclip:sha-a072377@sha256:adfd3795fb98c2599c9b14443a49df86b8f08fb98f5ab7810e777d04c1ff6709
+    user: "1000:1000"
+    restart: on-failure
+    entrypoint:
+      - node
+    command:
+      - --import
+      - ./server/node_modules/tsx/dist/loader.mjs
+      - server/dist/index.js
+    environment:
+      HOST: "0.0.0.0"
+      PAPERCLIP_HOME: "/paperclip"
+      PAPERCLIP_PUBLIC_URL: "http://${DEVICE_DOMAIN_NAME}:8860"
+      PAPERCLIP_ALLOWED_HOSTNAMES: "${DEVICE_DOMAIN_NAME},${DEVICE_DOMAIN_NAME}:8860,${DEVICE_HOSTNAME},${DEVICE_HOSTNAME}:8860,${APP_DOMAIN},${APP_DOMAIN}:8860,${APP_HIDDEN_SERVICE},${APP_PAPERCLIP_LOCAL_IPS},paperclip_server_1"
+      BETTER_AUTH_SECRET: "${APP_SEED}"
+      PAPERCLIP_DEPLOYMENT_MODE: "authenticated"
+      PAPERCLIP_DEPLOYMENT_EXPOSURE: "private"
+      PAPERCLIP_TELEMETRY_DISABLED: "1"
+      DO_NOT_TRACK: "1"
+    volumes:
+      - ${APP_DATA_DIR}/data:/paperclip

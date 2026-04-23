@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+APP_CONTAINER="paperclip_server_1"
+HEALTH_URL="http://127.0.0.1:3100/api/health"
+CONFIG_FILE="/paperclip/instances/default/config.json"
+PUBLIC_URL="http://${DEVICE_DOMAIN_NAME}:8860"
+INVITE_FILE="${APP_DATA_DIR}/data/bootstrap-invite-url.txt"
+
+for _ in $(seq 1 60); do
+  if health_json=$(docker exec "${APP_CONTAINER}" curl -fsS "${HEALTH_URL}" 2>/dev/null); then
+    break
+  fi
+  sleep 2
+done
+
+if [ -z "${health_json:-}" ]; then
+  echo "Paperclip post-start: server never became healthy"
+  exit 0
+fi
+
+bootstrap_status=$(python3 - <<'PY' "$health_json"
+import json, sys
+obj = json.loads(sys.argv[1])
+print(obj.get("bootstrapStatus", ""))
+PY
+)
+
+bootstrap_invite_active=$(python3 - <<'PY' "$health_json"
+import json, sys
+obj = json.loads(sys.argv[1])
+print("true" if obj.get("bootstrapInviteActive") else "false")
+PY
+)
+
+if [ "${bootstrap_status}" != "bootstrap_pending" ]; then
+  echo "Paperclip post-start: bootstrap not required"
+  exit 0
+fi
+
+if [ "${bootstrap_invite_active}" = "true" ]; then
+  echo "Paperclip post-start: bootstrap invite already active"
+  exit 0
+fi
+
+invite_output=$(docker exec "${APP_CONTAINER}" npx --yes paperclipai auth bootstrap-ceo --config "${CONFIG_FILE}" --base-url "${PUBLIC_URL}" 2>&1 || true)
+invite_url=$(printf '%s\n' "${invite_output}" | sed -n 's/.*Invite URL: //p' | tail -1)
+
+if [ -n "${invite_url}" ]; then
+  printf '%s\n' "${invite_url}" > "${INVITE_FILE}"
+  chown 1000:1000 "${INVITE_FILE}" || true
+  echo "Paperclip bootstrap invite: ${invite_url}"
+else
+  echo "Paperclip post-start: failed to generate bootstrap invite"
+  printf '%s\n' "${invite_output}"
+fi
