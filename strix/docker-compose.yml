@@ -1,0 +1,13 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: strix_web_1
+      APP_PORT: 4567
+
+  web:
+    image: eduard256/strix:2.1.0@sha256:d34883001c2acf812446863281fe17a411cb16696f070d3fe4ae24b0be177ee5
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 1m

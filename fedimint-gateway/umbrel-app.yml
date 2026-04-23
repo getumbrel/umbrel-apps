@@ -2,7 +2,7 @@ manifestVersion: 1
 id: fedimint-gateway
 category: bitcoin
 name: Fedimint Lightning Gateway
-version: "v0.10.0"
+version: "v0.11.1"
 tagline: Lightning routing for Fedimints
 description: >-
   The Fedimint Lightning Gateway is an ecash wallet that connects Fedimint users to the broader Lightning Network. Operators can earn fees by providing outbound
@@ -47,4 +47,20 @@ defaultUsername: ""
 defaultPassword: ""
 submitter: Fedimint Developers
 submission: https://github.com/getumbrel/umbrel-apps/pull/4554
-releaseNotes: ""
+releaseNotes: >-
+  ⚠️ Gateway first-boot behavior has changed: a mnemonic setup/recovery screen is now presented instead of auto-generating credentials. If automating setup, use the skip_setup flag.
+
+
+  Highlights in this release:
+    - Gateway recovery and mnemonic management — create or restore your gateway from a mnemonic on first boot, and export/import federation invite codes for recovery
+    - Guardian discovery via Pkarr — guardians now publish their identity and API addresses to the decentralized Pkarr DNS system for peer discovery without centralized coordination
+    - Gateway UI overhaul — BOLT12 send/receive, one-click channel opens to existing peers, balance display in sats/BTC, payment filtering, peer and notes tabs, and a modernized Material-style design
+    - Drastically lower memory usage — fixed a backtrace caching issue that reduced gatewayd memory from ~1.6GB to under 200MB, with tuned RocksDB defaults for constrained environments
+    - Comprehensive observability — Prometheus metrics for networking, iroh connections, HTLC handling, Bitcoin RPC calls, and gateway-to-LN-node latency
+    - Parallelized HTLC handling for better payment throughput
+    - Liquidity Manager role with restricted permissions
+    - Export/import federation invite codes for easier recovery
+    - DB migration fix included in this patch release
+
+
+  Full release notes can be found at https://github.com/fedimint/fedimint/releases

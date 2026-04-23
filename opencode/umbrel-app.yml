@@ -3,7 +3,7 @@ id: opencode
 name: OpenCode
 tagline: The open source AI coding agent
 category: ai
-version: "1.4.7"
+version: "1.14.21"
 port: 4096
 description: >-
   OpenCode is an open source AI coding agent designed to enhance your development
@@ -32,7 +32,29 @@ gallery:
   - 2.jpg
   - 3.jpg
   - 4.jpg
-releaseNotes: ""
+releaseNotes: >-
+  Core improvements:
+    - Added support for pull diagnostics from LSP servers, including C# and Kotlin
+    - Improved session compaction so long threads keep more useful context when older history is summarized
+    - Preserved UTF-8 BOMs when files are edited, patched, or rewritten
+    - Switched to Roslyn Language Server for C# support
+    - Added high reasoning variant for supported Mistral Small models
+    - Fixed project detection and caching for bare Git repos and worktrees
+    - Hidden unsupported variants for Kimi models that do not expose them
+
+
+  TUI improvements:
+    - Fail fast when opening an invalid or missing session instead of starting in a broken state
+    - Skip upgrade checks when auto-update is disabled
+
+
+  Desktop improvements:
+    - Kept project avatar previews consistent between the sidebar and edit dialog
+    - Improved project icon overrides so uploaded icons and color fallbacks behave correctly
+    - Improved Linux desktop metadata for app listings and categorization
+
+
+  Full release notes can be found at https://github.com/anomalyco/opencode/releases
 dependencies: []
 submitter: besoeasy
 submission: https://github.com/getumbrel/umbrel-apps/pull/4718

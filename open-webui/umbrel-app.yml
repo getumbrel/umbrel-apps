@@ -3,7 +3,7 @@ id: open-webui
 name: Open WebUI
 tagline: Chat with Ollama models like DeepSeek-R1 and LLama, or use an OpenAI API key
 category: ai
-version: "0.8.12"
+version: "0.9.1"
 port: 2876
 description: >-
   Open WebUI lets you chat with advanced AI models running locally on your own device or connect to online models using an API key.
@@ -37,15 +37,32 @@ defaultPassword: ""
 dependencies:
   - ollama
 releaseNotes: >-
+  ⚠️ This release (v0.9.0) includes database schema changes. Please back up your Open WebUI data before upgrading.
+
+
   Key highlights in this release include:
-    - Fixed terminal server connections now proxying through the backend, preventing API key exposure and CORS errors
-    - Fixed the /api/v1/files/ endpoint returning a 500 error that prevented file listing via the API
-    - Fixed administrators being unable to see models when no access control is configured
-    - Fixed rich UI embeds from tool calls now rendering outside collapsed groups and remaining visible
-    - Fixed exceptions in middleware caused by invalid return values from terminal tools
-    - Fixed missing beautifulsoup4 dependency that caused errors when starting Open WebUI
-    - Fixed license data not loading correctly in the interface
-    - Translation updates for Simplified Chinese, Catalan, Portuguese (Brazil), Finnish, and Lithuanian
+    - Added scheduled chat automations to run tasks automatically on a recurring basis
+    - Added a full Calendar workspace with event management, reminders, and browser notifications
+    - Added official Open WebUI Desktop App for Mac, Windows, and Linux
+    - Added support for attaching previously uploaded files directly from the chat input
+    - Added Mistral as a text-to-speech provider
+    - Added admin controls to delete Ollama models directly from the model selector
+    - Added emoji shortcode support and recently used emoji tracking in the chat input
+    - Added swipe-to-reply gesture on mobile devices
+    - Added unread chat indicators in the sidebar
+    - Added pinned notes in the sidebar for quick access
+    - Significantly improved backend performance with async database and request handling
+    - Improved streaming response performance and chat history memory management
+    - Fixed missing aiosqlite and asyncpg dependencies that caused startup crashes
+    - Fixed memory search returning unrelated results
+    - Fixed provider errors leaving chats stuck in a loading state
+    - Fixed knowledge file deletion allowing collaborators to delete files they do not own
+    - Fixed LDAP login accepting empty passwords on permissive server configurations
+    - Fixed interrupted MCP tool calls causing high CPU usage
+    - Fixed OAuth session and token handling across multiple providers
+    - Fixed display math rendering for multiline KaTeX expressions
+    - Fixed numerous security issues including XSS protection, access control enforcement, and permission checks across models, channels, knowledge bases, and tools
+    - Translation updates for Irish, Catalan, German, Simplified Chinese, Hindi, and Portuguese (Brazil)
 
 
   Full release notes are found at https://github.com/open-webui/open-webui/releases
