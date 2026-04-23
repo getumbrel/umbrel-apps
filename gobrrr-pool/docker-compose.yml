@@ -10,7 +10,7 @@ services:
     container_name: gobrrr-pool_app_proxy_1
 
   ckpool:
-    image: ghcr.io/gobrrrme/gobrrr-ckpool:latest@sha256:c04654cba4add35b132f5cb2218ed0f8429fdbf0648186ee59f31141f77677fd
+    image: ghcr.io/gobrrrme/gobrrr-ckpool:v1.1.0@sha256:9e831a5100039d9c8246dafabacf9101f60a4a7828bdc94ce0a14a389cc55188
     restart: on-failure
     stop_grace_period: 1m
     healthcheck:
@@ -40,7 +40,7 @@ services:
     container_name: gobrrr-pool_ckpool_1
 
   webui:
-      image: ghcr.io/gobrrrme/gobrrr-pool-webui:latest@sha256:d0264042eb78b6e2deee1462eb555df6ae4017079ae11a3276d41eeccee8f2e4
+      image: ghcr.io/gobrrrme/gobrrr-pool-webui:v1.1.0@sha256:957ef2cd646a56a9783d437728b0bb7c855d9e980a704bd9b16cca1f1f026828
       restart: on-failure
       stop_grace_period: 30s
       volumes:
@@ -64,7 +64,7 @@ services:
 
   gobrrr-stats:
     image: rodb2008com/gobrrr-pool-api-etl:v1@sha256:bc86f35c5cd526f0a2464574e764540fbe78173dcaaaa6bafdbdc9a818501948
-    restart: unless-stopped
+    restart: on-failure
     depends_on:
       ckpool:
         condition: service_healthy
