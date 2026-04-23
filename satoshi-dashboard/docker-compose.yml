@@ -1,0 +1,23 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: satoshi-dashboard_web_1
+      APP_PORT: 8410
+      PROXY_AUTH_ADD: "false"
+
+  web:
+    image: ghcr.io/satoshi-dashboard/main:v1.0.0@sha256:0afb11e6c6122e26402a8dd8b077eef2c277630269235f40b99ab492673f5878
+    restart: on-failure
+    stop_grace_period: 1m
+    user: "1000:1000"
+    environment:
+      SERVE_STATIC: "true"
+      API_PORT: 8410
+      API_HOST: 0.0.0.0
+    volumes:
+      - ${APP_DATA_DIR}/data:/app/server/.runtime-cache
+
+networks:
+  default:
+    name: ${APP_NAME}_network
+    driver: bridge
