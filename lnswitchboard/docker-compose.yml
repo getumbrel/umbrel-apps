@@ -8,15 +8,20 @@ services:
       PROXY_AUTH_WHITELIST: "/.well-known/*"
 
   app:
-    image: ghcr.io/ryleastark/lnswitchboard:0.1.2@sha256:016759004ebe8aeb3e31c9a6ca7e0c7e99417e12cadb51a25970ff1204ab464c
+    image: ghcr.io/ryleastark/lnswitchboard:0.2.0@sha256:b13eb32717a2c426003a4e2db07700885a9e8c9cd9e44d801fa54e8d88e769ce
     user: "1000:1000"
     restart: on-failure
     environment:
       SERVICE_PORT: 22121
       LND_HOST: "$APP_LIGHTNING_NODE_IP"
       LND_GRPC_PORT: "$APP_LIGHTNING_NODE_GRPC_PORT"
+      DATA_STORE_PATH: "/app/secrets/lnswitchboard.db"
       LND_TLS_PATH: "/lnd/tls.cert"
-      DATA_STORE_PATH: "secrets/lnswitchboard.db"
+      LND_MACAROON_PATH: "/lnd/invoice.macaroon"
+      LND_READONLY_MACAROON_PATH: "/lnd/readonly.macaroon"
+      DEP_ENV: "UMBREL"
     volumes:
+      - ${APP_LIGHTNING_NODE_DATA_DIR}/data/chain/bitcoin/${APP_BITCOIN_NETWORK}/invoice.macaroon:/lnd/invoice.macaroon:ro
+      - ${APP_LIGHTNING_NODE_DATA_DIR}/data/chain/bitcoin/${APP_BITCOIN_NETWORK}/readonly.macaroon:/lnd/readonly.macaroon:ro
+      - ${APP_LIGHTNING_NODE_DATA_DIR}/tls.cert:/lnd/tls.cert:ro
       - ${APP_DATA_DIR}/data/secrets:/app/secrets:rw
-      - ${UMBREL_ROOT}/app-data/lightning/data/lnd:/lnd:ro
