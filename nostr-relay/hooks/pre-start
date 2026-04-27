@@ -36,3 +36,11 @@ if [ -n "${CLNREST_URL:-}" ] && [ -f "${CONFIG}" ]; then
     sed -i "s|#node_url = \"https://your-clnrest-host:.*\"|#node_url = \"${CLNREST_URL}\"|" \
         "${CONFIG}"
 fi
+
+# ── RelayManager.js patch note ───────────────────────────────────────────────
+# relay-proxy v1.1.0 crashes 60 minutes after startup when a user is identified
+# by npub (not NIP-05).  getPublicKeyAndRelaysFromIdentifier() returns an array
+# of relay URLs for npub; removeOutdatedRelays() then calls JSON.parse(array)
+# which throws "SyntaxError: Unexpected token w in JSON at position 0".
+# Fix: data/relay-proxy/RelayManager.js (shipped in this app) is volume-mounted
+# over /app/RelayManager.js in docker-compose.yml, replacing the broken original.
