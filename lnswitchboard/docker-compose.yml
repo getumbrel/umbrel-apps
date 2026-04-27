@@ -15,7 +15,7 @@ services:
       SERVICE_PORT: 22121
       LND_HOST: "$APP_LIGHTNING_NODE_IP"
       LND_GRPC_PORT: "$APP_LIGHTNING_NODE_GRPC_PORT"
-      DATA_STORE_PATH: "/app/secrets/lnswitchboard.db"
+      DATA_STORE_PATH: "/app/data/lnswitchboard.db"
       LND_TLS_PATH: "/lnd/tls.cert"
       LND_MACAROON_PATH: "/lnd/invoice.macaroon"
       LND_READONLY_MACAROON_PATH: "/lnd/readonly.macaroon"
@@ -24,4 +24,4 @@ services:
       - ${APP_LIGHTNING_NODE_DATA_DIR}/data/chain/bitcoin/${APP_BITCOIN_NETWORK}/invoice.macaroon:/lnd/invoice.macaroon:ro
       - ${APP_LIGHTNING_NODE_DATA_DIR}/data/chain/bitcoin/${APP_BITCOIN_NETWORK}/readonly.macaroon:/lnd/readonly.macaroon:ro
       - ${APP_LIGHTNING_NODE_DATA_DIR}/tls.cert:/lnd/tls.cert:ro
-      - ${APP_DATA_DIR}/data/secrets:/app/secrets:rw
+      - ${APP_DATA_DIR}/data:/app/data:rw
