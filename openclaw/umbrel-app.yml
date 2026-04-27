@@ -3,7 +3,7 @@ id: openclaw
 name: OpenClaw
 tagline: The AI that actually does things
 category: ai
-version: "2026.4.24"
+version: "2026.4.25"
 port: 18789
 path: ""
 description: >-
@@ -39,32 +39,27 @@ gallery:
   - 2.jpg
   - 3.jpg
 releaseNotes: >-
-  What's new in OpenClaw (v2026.4.14 → v2026.4.24):
-    - Google Meet is now a bundled plugin with personal Google auth, Chrome/Twilio realtime sessions, and attendance/artifact exports
+  What's new in OpenClaw (v2026.4.14 → v2026.4.25):
+    - Voice replies upgraded with /tts latest, chat-scoped auto-TTS controls, TTS personas, and per-agent/per-account voice overrides
+    - New bundled TTS providers: Azure Speech, Xiaomi MiMo, Local CLI, Inworld, Volcengine, and ElevenLabs v3
+    - Google Meet added as a bundled participant plugin with personal Google auth, Chrome/Twilio realtime sessions, and attendance/artifact exports
+    - Control UI gains PWA install support and Web Push notifications for Gateway chat
+    - Browser automation improvements: coordinate clicks, longer action budgets, per-profile headless overrides, and safer tab handling
+    - New xAI provider support for image generation, text-to-speech, and speech-to-text
     - DeepSeek V4 Flash and V4 Pro added to the bundled catalog, with V4 Flash as the new onboarding default
-    - Browser automation gains coordinate clicks, a 60-second default action budget, and per-profile headless overrides
-    - Browser tab reuse and recovery are steadier, with better handling of stale sessions and concurrent launch races
-    - Live voice sessions in Talk, Voice Call, and Google Meet can now consult the full OpenClaw agent for tool-backed answers
-    - Gemini Live realtime voice provider added for Voice Call and Google Meet audio bridges
-    - xAI gains image generation, text-to-speech, and speech-to-text support
-    - OpenAI image generation now works via Codex OAuth without requiring an API key
-    - OpenRouter gains image generation and reference-image editing support
-    - Model listing is faster with static catalogs, manifest-backed model rows, and narrower registry enumeration
-    - Plugin startup is lighter with lazy provider dependencies and external runtime-dependency repair for packaged installs
-    - Dreaming now runs as an isolated agent turn, decoupled from heartbeat, so it works even when heartbeat is disabled
-    - Memory hybrid search now exposes raw vector and text scores alongside the combined score
-    - Local embeddings no longer install node-llama-cpp by default — it loads only when explicitly installed
-    - Gateway config recovery now rolls back only plugin-scoped invalidity instead of the entire config file
-    - Multiple security hardening fixes across browser SSRF, MCP tool access, webhook secrets, exec approvals, and channel allowlists
-    - Fixed heartbeat system prompt leaking into non-heartbeat runs and suppressing normal replies
-    - Fixed stale Chromium profile locks causing duplicate Chrome launches after crashes
-    - Fixed DeepSeek V4 thinking replay breaking follow-up tool-call turns
-    - Fixed Slack HTTP webhook handlers returning 404 after successful route registration
-    - Fixed Discord gateway startup getting stuck at awaiting readiness on reconnect races
-    - Fixed WhatsApp outbound queue duplicating cron sends after the inbound-silence watchdog fires
-    - Fixed Telegram polling replaying already-ingested updates after gateway restarts
-    - Fixed MCP one-shot runtimes accumulating as orphaned processes
-    - Fixed session costs being compounded multiple times on repeated persist paths
+    - OpenTelemetry telemetry coverage expanded across model calls, token usage, tool loops, and more
+    - Plugin startup significantly faster via cold persisted registry, reducing broad manifest scans
+    - Cron jobs interrupted by a gateway restart now record as failed instead of silently disappearing or duplicating work
+    - Fixed duplicate message delivery after WhatsApp reconnect watchdog fires mid-delivery
+    - Fixed browser SSRF policy blocking sandboxed browser navigation
+    - Fixed Telegram polling stall watchdog not recovering after transport rebuild
+    - Fixed session daily/idle resets being blocked by heartbeat and cron bookkeeping
+    - Fixed streamed TTS directives leaking as visible text before channel delivery
+    - Fixed Feishu streaming cards producing duplicate output on tool-heavy replies
+    - Fixed Codex thinking level mapping for modern GPT-5.x models
+    - Fixed WhatsApp linked-device watchdog disconnecting quiet but healthy sessions
+    - Fixed plugin runtime dependency installs writing to wrong directories on Linux
+    - Multiple additional security hardening, stability, and compatibility fixes across channels, agents, and providers
     - And much more. Full details at https://github.com/openclaw/openclaw/releases
 submitter: Umbrel
 submission: https://github.com/getumbrel/umbrel-apps/pull/4649
