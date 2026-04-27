@@ -1,0 +1,39 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: hermitstash_web_1
+      APP_PORT: 3000
+
+  web:
+    image: ghcr.io/dotcoocoo/hermitstash:1.9.11@sha256:e989f1edd59bf3616584662d833175727f15a2c22c9ff0f450e6e3f946542e86
+    init: true
+    restart: on-failure
+    stop_grace_period: 1m
+    shm_size: "256m"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETUID
+      - SETGID
+      - DAC_OVERRIDE
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health',function(r){process.exit(r.statusCode===200?0:1)}).on('error',function(){process.exit(1)})"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+    volumes:
+      - ${APP_DATA_DIR}/data/db:/app/data
+      - ${APP_DATA_DIR}/data/uploads:/app/uploads
+    environment:
+      PUID: "1000"
+      PGID: "1000"
+      UMASK: "022"
+      TZ: "Etc/UTC"
+      NODE_ENV: production
+      TRUST_PROXY: "true"
