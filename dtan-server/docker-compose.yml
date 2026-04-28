@@ -1,0 +1,15 @@
+version: '3.7'
+services:
+  app_proxy:
+    environment:
+      APP_HOST: dtan-server_web_1
+      APP_PORT: 8000
+
+  web:
+    image: voidic/dtan-server:v0.2.0@sha256:8ffce76cc82d00fbe8571bedfd6699fbd91e97d89ff5e6cbc32dbf03b9d58ad1
+    restart: on-failure
+    environment:
+      - RUST_LOG=info
+    volumes:
+      - ${APP_DATA_DIR}/data/app:/app/data
+      - ${APP_DATA_DIR}/config.yml:/app/config.yml
