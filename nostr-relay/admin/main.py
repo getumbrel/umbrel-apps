@@ -98,11 +98,28 @@ def get_stats():
     by_kind = db_query(
         "SELECT kind, COUNT(*) AS n FROM event GROUP BY kind ORDER BY n DESC LIMIT 20"
     )
-    latest = db_query(
+    latest_raw = db_query(
         "SELECT substr(id,1,8) AS id_short, kind, created_at, "
-        "substr(pub_key,1,12) AS pubkey_short, substr(content,1,140) AS content_preview "
-        "FROM event ORDER BY created_at DESC LIMIT 30"
+        "author AS author_raw, content AS content_raw "
+        "FROM event WHERE hidden=0 ORDER BY created_at DESC LIMIT 30"
     )
+
+    def to_str(v, maxlen=140):
+        if v is None:
+            return ""
+        if isinstance(v, bytes):
+            return v.decode("utf-8", errors="replace")[:maxlen]
+        return str(v)[:maxlen]
+
+    latest = []
+    for row in latest_raw:
+        latest.append({
+            "id_short": to_str(row["id_short"], 8),
+            "kind": row["kind"],
+            "created_at": row["created_at"],
+            "pubkey_short": to_str(row["author_raw"], 12),
+            "content_preview": to_str(row["content_raw"], 140),
+        })
     return {"total_events": total, "by_kind": by_kind, "latest": latest}
 
 
@@ -271,9 +288,10 @@ HTML = r"""<!DOCTYPE html>
   <div class="card" id="stats-card">
     <h2>&#9889; Relay Stats <span id="stats-age" style="font-size:11px;color:var(--muted);font-weight:400;margin-left:8px"></span></h2>
     <div class="stat-grid" id="stat-grid"></div>
-    <table id="kind-table"><thead><tr><th>Kind</th><th>NIP</th><th>Name</th><th style="text-align:right">Count</th></tr></thead><tbody></tbody></table>
     <h2 style="margin-top:24px;margin-bottom:12px">&#x1F4CB; Recent Events</h2>
     <table id="events-table"><thead><tr><th style="white-space:nowrap">Timestamp</th><th>Kind</th><th>Type</th><th>User</th><th>Message</th></tr></thead><tbody></tbody></table>
+    <h2 style="margin-top:24px;margin-bottom:12px">&#x1F4CA; Kind Breakdown</h2>
+    <table id="kind-table"><thead><tr><th>Kind</th><th>NIP</th><th>Name</th><th style="text-align:right">Count</th></tr></thead><tbody></tbody></table>
   </div>
 
   <!-- Relay Info -->
