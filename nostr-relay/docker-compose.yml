@@ -38,3 +38,15 @@ services:
       - ${APP_DATA_DIR}/data/relay-proxy/RelayManager.js:/app/RelayManager.js:ro
     depends_on:
       - relay
+
+  admin:
+    build: ./admin
+    user: "1000:1000"
+    restart: on-failure
+    container_name: nostr-relay_admin_1
+    environment:
+      RELAY_DATA_DIR: "/data"
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+    depends_on:
+      - relay
