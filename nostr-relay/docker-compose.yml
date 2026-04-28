@@ -3,8 +3,8 @@ version: "3.7"
 services:
   app_proxy:
     environment:
-      APP_HOST: nostr-relay_web_1
-      APP_PORT: 3000
+      APP_HOST: nostr-relay_admin_1
+      APP_PORT: 4000
       PROXY_AUTH_ADD: "false"
 
   web:
@@ -18,9 +18,10 @@ services:
       RELAY_PROXY_PORT: "80"
 
   relay:
-    image: getumbrel/nostr-rs-relay:0.8.1@sha256:a6c857aecd4964bf058ec5c3c0fea95e0d87ed0cc789f2140f96de108e5515ec
+    image: atanasna/nostr-rs-relay:0.9.0-no-jemalloc@sha256:286f8f3fb40116a5ec98888b263adcad72c35b828cd180ebf2e261f555d1811d
     user: "1000:1000"
     restart: on-failure
+    command: ["./nostr-rs-relay", "-c", "/app/config.toml", "-d", "/app/db"]
     volumes:
       - ${APP_DATA_DIR}/data/relay/config.toml:/app/config.toml
       - ${APP_DATA_DIR}/data/relay/db:/app/db
@@ -34,5 +35,19 @@ services:
       RELAY_PORT: "8080"
     volumes:
       - ${APP_DATA_DIR}/data/relay-proxy:/app/data
+      - ${APP_DATA_DIR}/data/relay-proxy/RelayManager.js:/app/RelayManager.js:ro
+    depends_on:
+      - relay
+
+  admin:
+    image: umbrel/nostr-relay-admin:latest
+    user: "1000:1000"
+    restart: on-failure
+    container_name: nostr-relay_admin_1
+    environment:
+      RELAY_DATA_DIR: "/data"
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+      - ${APP_DATA_DIR}/admin/main.py:/app/main.py:ro
     depends_on:
       - relay
