@@ -9,6 +9,7 @@ services:
 
   web:
     image: getumbrel/umbrel-nostr-relay:v1.1.0@sha256:21b67ab2e9d30b20e785497f19534e8e21b6da1bfe69e3ae5afe91b759f20488
+    container_name: nostr-relay_web_1
     user: "1000:1000"
     restart: on-failure
     environment:
@@ -19,6 +20,7 @@ services:
 
   relay:
     image: atanasna/nostr-rs-relay:0.9.0-no-jemalloc@sha256:286f8f3fb40116a5ec98888b263adcad72c35b828cd180ebf2e261f555d1811d
+    container_name: nostr-relay_relay_1
     user: "1000:1000"
     restart: on-failure
     command: ["./nostr-rs-relay", "-c", "/app/config.toml", "-d", "/app/db"]
@@ -28,6 +30,7 @@ services:
 
   relay-proxy:
     image: getumbrel/umbrel-nostr-relay-proxy:v1.1.0@sha256:6b335f4488f813475bb7c9d3bb6282fda081808e2d5447404fc8a1ffcc1279dc
+    container_name: nostr-relay_relay-proxy_1
     user: "1000:1000"
     restart: on-failure
     environment:
