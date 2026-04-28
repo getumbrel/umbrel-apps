@@ -99,7 +99,9 @@ def get_stats():
         "SELECT kind, COUNT(*) AS n FROM event GROUP BY kind ORDER BY n DESC LIMIT 20"
     )
     latest = db_query(
-        "SELECT substr(id,1,8) AS id_short, kind, created_at FROM event ORDER BY created_at DESC LIMIT 10"
+        "SELECT substr(id,1,8) AS id_short, kind, created_at, "
+        "substr(pub_key,1,12) AS pubkey_short, substr(content,1,140) AS content_preview "
+        "FROM event ORDER BY created_at DESC LIMIT 30"
     )
     return {"total_events": total, "by_kind": by_kind, "latest": latest}
 
@@ -270,6 +272,8 @@ HTML = r"""<!DOCTYPE html>
     <h2>&#9889; Relay Stats <span id="stats-age" style="font-size:11px;color:var(--muted);font-weight:400;margin-left:8px"></span></h2>
     <div class="stat-grid" id="stat-grid"></div>
     <table id="kind-table"><thead><tr><th>Kind</th><th>NIP</th><th>Name</th><th style="text-align:right">Count</th></tr></thead><tbody></tbody></table>
+    <h2 style="margin-top:24px;margin-bottom:12px">&#x1F4CB; Recent Events</h2>
+    <table id="events-table"><thead><tr><th style="white-space:nowrap">Timestamp</th><th>Kind</th><th>Type</th><th>User</th><th>Message</th></tr></thead><tbody></tbody></table>
   </div>
 
   <!-- Relay Info -->
@@ -499,6 +503,21 @@ async function loadStats(){
       const nipCell = info ? `<td class="nip-badge">NIP-${info.nip}</td>` : '<td class="kind-muted">—</td>';
       const nameCell = info ? `<td class="kind-name">${info.name}</td>` : '<td class="kind-muted">Unknown</td>';
       return `<tr><td>${r.kind}</td>${nipCell}${nameCell}<td style="text-align:right">${r.n.toLocaleString()}</td></tr>`;
+    }).join('');
+    const etbody = document.querySelector('#events-table tbody');
+    etbody.innerHTML = s.latest.map(r => {
+      const info = nipInfo(r.kind);
+      const ts = new Date(r.created_at*1000).toLocaleString(undefined,{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+      const typeName = info ? info.name : `Kind ${r.kind}`;
+      const raw = (r.content_preview||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      const msg = raw || `<span style="color:var(--muted);font-style:italic">—</span>`;
+      return `<tr>
+        <td style="white-space:nowrap;color:var(--muted);font-size:11px">${ts}</td>
+        <td style="color:var(--muted)">${r.kind}</td>
+        <td style="color:var(--accent);white-space:nowrap">${typeName}</td>
+        <td style="color:var(--muted);font-family:monospace;font-size:11px">${r.pubkey_short}…</td>
+        <td style="max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${msg}</td>
+      </tr>`;
     }).join('');
   } catch(e){ console.error(e); }
 }
