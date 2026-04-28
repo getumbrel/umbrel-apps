@@ -258,6 +258,10 @@ HTML = r"""<!DOCTYPE html>
   header{background:var(--card);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;gap:12px}
   header h1{font-size:18px;font-weight:600}
   .badge{background:var(--accent);color:#fff;font-size:11px;padding:2px 8px;border-radius:99px}
+  .nav-link{font-size:12px;color:var(--muted);text-decoration:none;font-weight:600;border:1px solid var(--border);padding:4px 12px;border-radius:99px;white-space:nowrap;transition:color .15s,border-color .15s}
+  .nav-link:hover{color:var(--text);border-color:var(--muted)}
+  .nav-link-accent{color:var(--accent);border-color:var(--accent)}
+  .nav-link-accent:hover{color:var(--text)}
   main{max-width:960px;margin:0 auto;padding:24px 16px;display:grid;gap:20px}
   .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px}
   .card h2{font-size:15px;font-weight:600;margin-bottom:16px;color:var(--accent)}
@@ -298,11 +302,11 @@ HTML = r"""<!DOCTYPE html>
 <header>
   <h1>&#x20BF;YO&#x20BF;-NOSTR-RELAY Admin</h1>
   <span class="badge">nostr-rs-relay</span>
-  <a href="https://nostrudel.ninja/relays/wss%3A%2F%2Fnostr.janx.com" target="_blank" rel="noopener"
-     style="margin-left:auto;font-size:12px;color:var(--accent);text-decoration:none;font-weight:600;
-            border:1px solid var(--accent);padding:4px 12px;border-radius:99px;white-space:nowrap;">
-    &#x1F310; Nostrudel
-  </a>
+  <nav style="margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+    <a href="https://janx.com" target="_blank" rel="noopener" class="nav-link">&#x20BF;YO&#x20BF;</a>
+    <a href="https://byob.janx.com" target="_blank" rel="noopener" class="nav-link">LNbits</a>
+    <a href="https://nostrudel.ninja/relays/wss%3A%2F%2Fnostr.janx.com" target="_blank" rel="noopener" class="nav-link nav-link-accent">&#x1F310; Nostrudel</a>
+  </nav>
 </header>
 <main>
 
