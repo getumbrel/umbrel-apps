@@ -246,10 +246,14 @@ HTML = r"""<!DOCTYPE html>
   td.nip-badge{font-size:11px;color:var(--accent);font-weight:600;white-space:nowrap}
   td.kind-name{color:var(--text)}
   td.kind-muted{color:var(--muted);font-style:italic}
-  .stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:16px}
+  .stat-grid{display:grid;grid-template-columns:auto repeat(3,1fr);gap:12px;margin-bottom:16px}
   .stat{background:#0f1117;border:1px solid var(--border);border-radius:8px;padding:14px}
   .stat .val{font-size:28px;font-weight:700;color:var(--accent)}
   .stat .lbl{font-size:11px;color:var(--muted);margin-top:4px}
+  .stat-icon{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;min-width:100px}
+  .stat-icon img{width:64px;height:64px;object-fit:contain;border-radius:8px}
+  .stat-icon .icon-fallback{font-size:40px;line-height:1}
+  .stat-icon .lbl{text-align:center}
   .restart-note{background:#1e1b2e;border:1px solid var(--accent);border-radius:8px;padding:12px;font-size:12px;color:var(--muted);margin-top:12px}
   .restart-note strong{color:var(--accent)}
 </style>
@@ -473,12 +477,21 @@ function notice(id, msg, ok){
 
 async function loadStats(){
   try {
-    const s = await api('/stats');
+    const [s, c] = await Promise.all([api('/stats'), api('/config')]);
+    const icon = c.info.relay_icon;
+    const relayName = c.info.name || 'Relay';
+    const iconHtml = icon
+      ? `<img src="${icon}" alt="${relayName}" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'icon-fallback',textContent:'\u26a1'}))">`
+      : `<span class="icon-fallback">&#9889;</span>`;
+    const latestTs = s.latest[0]
+      ? new Date(s.latest[0].created_at*1000).toLocaleString([],{month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'})
+      : '\u2014';
     const grid = document.getElementById('stat-grid');
     grid.innerHTML = `
+      <div class="stat stat-icon">${iconHtml}<div class="lbl">${relayName}</div></div>
       <div class="stat"><div class="val">${s.total_events.toLocaleString()}</div><div class="lbl">Total Events</div></div>
       <div class="stat"><div class="val">${s.by_kind.length}</div><div class="lbl">Distinct Kinds</div></div>
-      <div class="stat"><div class="val" style="font-size:16px">${s.latest[0] ? new Date(s.latest[0].created_at*1000).toLocaleString([],{month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '—'}</div><div class="lbl">Latest Event</div></div>
+      <div class="stat"><div class="val" style="font-size:16px">${latestTs}</div><div class="lbl">Latest Event</div></div>
     `;
     const tbody = document.querySelector('#kind-table tbody');
     tbody.innerHTML = s.by_kind.map(r => {
