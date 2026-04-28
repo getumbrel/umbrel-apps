@@ -3,7 +3,7 @@ id: lobe-chat
 name: Lobe Hub
 tagline: Your self-hosted AI workspace for chat, agents, and knowledge
 category: ai
-version: "2.1.52"
+version: "2.1.54"
 port: 7455
 description: >-
   💬 Lobe Hub is a self-hosted AI workspace for conversations, agent teams,
@@ -36,18 +36,14 @@ defaultUsername: ""
 defaultPassword: ""
 dependencies: []
 releaseNotes: >-
-  ⚠️ Before updating, open Lobe Chat in your browser and export your data via Settings > Data Storage > Export. After updating to Lobe Hub, you can re-import the file via Settings > Import Data. Your local chats and knowledge bases will not be automatically migrated due to the significant architectural changes in this update.
-
-
-  This big update renames the app to Lobe Hub and comes with a lot of new features and improvements.
+  This is a hotfix release addressing a navigation regression introduced in v2.1.53.
 
 
   Key changes:
-    - Updated to Lobe Hub v2.1.52
-    - Added PostgreSQL with pgvector and pg_search support
-    - Added Redis for caching and session-backed features
-    - Added S3-compatible object storage for uploads and knowledge bases
-    - Switched from the old single-container setup to the current upstream architecture
+    - Fixed stale chat state when switching between agents — the previous topic no longer carries over
+    - Fixed conversation context isolation so the correct agent/topic/thread state loads immediately on switch
+    - Fixed sidebar thread list staying expanded while viewing a subtopic
+    - Fixed the header showing the correct thread title for active subtopics
 
 
   Full release notes are available at https://github.com/lobehub/lobehub/releases
