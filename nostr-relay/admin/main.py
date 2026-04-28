@@ -104,21 +104,38 @@ def get_stats():
         "FROM event WHERE hidden=0 ORDER BY created_at DESC LIMIT 30"
     )
 
-    def to_str(v, maxlen=140):
-        if v is None:
-            return ""
+    def bytes_to_hex(v, maxlen=12):
         if isinstance(v, bytes):
-            return v.decode("utf-8", errors="replace")[:maxlen]
-        return str(v)[:maxlen]
+            return v.hex()[:maxlen]
+        return str(v or "")[:maxlen]
+
+    def content_preview(v):
+        if isinstance(v, bytes):
+            try:
+                v = v.decode("utf-8", errors="replace")
+            except Exception:
+                return "[binary]"
+        v = str(v or "")
+        # try to pull human-readable text out of JSON blobs
+        try:
+            obj = json.loads(v)
+            if isinstance(obj, dict):
+                for key in ("content", "text", "name", "about", "description"):
+                    if isinstance(obj.get(key), str) and obj[key].strip():
+                        return obj[key][:140]
+                return v[:140]
+        except Exception:
+            pass
+        return v[:140]
 
     latest = []
     for row in latest_raw:
         latest.append({
-            "id_short": to_str(row["id_short"], 8),
+            "id_short": bytes_to_hex(row["id_short"], 8),
             "kind": row["kind"],
             "created_at": row["created_at"],
-            "pubkey_short": to_str(row["author_raw"], 12),
-            "content_preview": to_str(row["content_raw"], 140),
+            "pubkey_short": bytes_to_hex(row["author_raw"], 12),
+            "content_preview": content_preview(row["content_raw"]),
         })
     return {"total_events": total, "by_kind": by_kind, "latest": latest}
 
@@ -281,6 +298,11 @@ HTML = r"""<!DOCTYPE html>
 <header>
   <h1>&#x20BF;YO&#x20BF;-NOSTR-RELAY Admin</h1>
   <span class="badge">nostr-rs-relay</span>
+  <a href="https://nostrudel.ninja/relays/wss%3A%2F%2Fnostr.janx.com" target="_blank" rel="noopener"
+     style="margin-left:auto;font-size:12px;color:var(--accent);text-decoration:none;font-weight:600;
+            border:1px solid var(--accent);padding:4px 12px;border-radius:99px;white-space:nowrap;">
+    &#x1F310; Nostrudel
+  </a>
 </header>
 <main>
 
