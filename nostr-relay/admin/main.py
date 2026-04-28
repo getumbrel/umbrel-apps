@@ -305,6 +305,7 @@ HTML = r"""<!DOCTYPE html>
   <nav style="margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
     <a href="https://janx.com" class="nav-link">Janx.com</a>
     <a href="https://byob.janx.com" class="nav-link">LNbits</a>
+    <a href="https://nostr.janx.com" class="nav-link">Nostr Relay</a>
     <a href="https://nostrudel.ninja/relays/wss%3A%2F%2Fnostr.janx.com" class="nav-link nav-link-accent">&#x1F310; Nostrudel</a>
   </nav>
 </header>
