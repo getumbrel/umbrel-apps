@@ -1,0 +1,70 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: bolt12-pay_web_1
+      APP_PORT: 8081
+      PROXY_AUTH_WHITELIST: "*"
+      PROXY_AUTH_BLACKLIST: "/pay,/pay-login"
+  web:
+    image: alex71btc/bolt12-pay:0.2.81@sha256:9daa4c83109c0599aab95d25f08603847a9942d031c9fe617f496ef2f2c0c295
+    restart: on-failure
+    depends_on:
+      - lndk
+    environment:
+      APP_DATA_DIR: /data
+      APP_CONFIG_PATH: /data/config.json
+      CONFIG_JSON_PATH: /data/config.json
+      SECRETS_JSON_PATH: /data/config/secrets.json
+      PAY_UI_SESSION_TTL: "1800"
+      CORS_ORIGINS: "*"
+
+      LNDK_CLI: /usr/local/bin/lndk-cli
+      LNDK_NETWORK: bitcoin
+      LNDK_GRPC_HOST: https://lndk
+      LNDK_GRPC_PORT: "7000"
+      LNDK_CERT_PATH: /data/lndk/tls-cert.pem
+      LNDK_MACAROON_PATH: /lnd/data/chain/bitcoin/mainnet/admin.macaroon
+      LNDK_TIMEOUT_SECONDS: "30"
+      ALLOW_PAY_OFFER: "true"
+
+      LND_REST_URL: https://lightning_lnd_1:8080
+      LND_TLS_CERT_PATH: /lnd/tls.cert
+      LND_MACAROON_PATH: /lnd/data/chain/bitcoin/mainnet/admin.macaroon
+      LND_REST_INSECURE: "true"
+
+      LNURL_MIN_SENDABLE_MSAT: "1000"
+      LNURL_MAX_SENDABLE_MSAT: "1000000000"
+      LNURL_COMMENT_ALLOWED: "120"
+      LNURL_ALIAS_MODE: "shared"
+      LNURL_SHARED_DESCRIPTION: "LNURL payment"
+      LNURL_DEFAULT_DESCRIPTION: "Lightning payment"
+      LNURL_ALIAS_MAP: ""
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+      - ${UMBREL_ROOT}/app-data/lightning/data/lnd:/lnd:ro
+
+  lndk:
+    image: alex71btc/lndk:stable-good-20260401@sha256:ff16de59cacb5e5a9d53b76e879dcaaaa9b204537dc26697275b737c489f2939
+    restart: on-failure
+    entrypoint:
+      - /bin/sh
+      - -c
+    command:
+      - |
+        echo "Waiting for LND TLS + macaroon..."
+        while [ ! -f /lnd/tls.cert ] || [ ! -f /lnd/data/chain/bitcoin/mainnet/admin.macaroon ]; do
+          echo "Waiting for cert/macaroon..."
+          sleep 5
+        done
+
+        echo "Starting LNDK with retry loop..."
+        while true; do
+          lndk --address=https://lightning_lnd_1:10009 --cert-path=/lnd/tls.cert --macaroon-path=/lnd/data/chain/bitcoin/mainnet/admin.macaroon --data-dir=/data/lndk --grpc-host=0.0.0.0 --grpc-port=7000
+          echo "LNDK exited or failed. Retrying in 10s..."
+          sleep 10
+        done
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+      - ${UMBREL_ROOT}/app-data/lightning/data/lnd:/lnd:ro
