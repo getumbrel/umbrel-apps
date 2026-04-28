@@ -3,7 +3,7 @@ id: open-webui
 name: Open WebUI
 tagline: Chat with Ollama models like DeepSeek-R1 and LLama, or use an OpenAI API key
 category: ai
-version: "0.9.1"
+version: "0.9.2"
 port: 2876
 description: >-
   Open WebUI lets you chat with advanced AI models running locally on your own device or connect to online models using an API key.
@@ -37,32 +37,23 @@ defaultPassword: ""
 dependencies:
   - ollama
 releaseNotes: >-
-  ⚠️ This release (v0.9.0) includes database schema changes. Please back up your Open WebUI data before upgrading.
-
-
   Key highlights in this release include:
-    - Added scheduled chat automations to run tasks automatically on a recurring basis
-    - Added a full Calendar workspace with event management, reminders, and browser notifications
-    - Added official Open WebUI Desktop App for Mac, Windows, and Linux
-    - Added support for attaching previously uploaded files directly from the chat input
-    - Added Mistral as a text-to-speech provider
-    - Added admin controls to delete Ollama models directly from the model selector
-    - Added emoji shortcode support and recently used emoji tracking in the chat input
-    - Added swipe-to-reply gesture on mobile devices
-    - Added unread chat indicators in the sidebar
-    - Added pinned notes in the sidebar for quick access
-    - Significantly improved backend performance with async database and request handling
-    - Improved streaming response performance and chat history memory management
-    - Fixed missing aiosqlite and asyncpg dependencies that caused startup crashes
-    - Fixed memory search returning unrelated results
-    - Fixed provider errors leaving chats stuck in a loading state
-    - Fixed knowledge file deletion allowing collaborators to delete files they do not own
-    - Fixed LDAP login accepting empty passwords on permissive server configurations
-    - Fixed interrupted MCP tool calls causing high CPU usage
-    - Fixed OAuth session and token handling across multiple providers
-    - Fixed display math rendering for multiline KaTeX expressions
-    - Fixed numerous security issues including XSS protection, access control enforcement, and permission checks across models, channels, knowledge bases, and tools
-    - Translation updates for Irish, Catalan, German, Simplified Chinese, Hindi, and Portuguese (Brazil)
+    - Added PaddleOCR-vl as a document content extraction engine option
+    - Added Firecrawl v2 API support with improved reliability and retry logic
+    - Added configurable reminder duration for calendar events
+    - Added custom API key header support via the CUSTOM_API_KEY_HEADER environment variable
+    - Added a +N badge on the Sources button when more than three sources are available
+    - Improved model list performance by stripping large image data from paginated responses
+    - Improved page load speed with earlier splash image preloading
+    - Fixed interrupted MCP tool calls no longer causing CPU spikes
+    - Fixed skills from persisted chats now injecting correctly into the system prompt
+    - Fixed Docker ARM64 images that previously produced corrupted Python dependencies
+    - Fixed rich text editor extension conflicts causing editor instability
+    - Fixed OAuth discovery fallback for better compatibility with more MCP servers
+    - Fixed cancelled chat generation now properly cleaning up upstream connections
+    - Fixed model profile image endpoints to prevent path traversal vulnerabilities
+    - Fixed browser-native message rendering to eliminate scroll jump artifacts in long conversations
+    - Translation updates for Finnish, Korean, Portuguese (Brazil), and Dutch
 
 
   Full release notes are found at https://github.com/open-webui/open-webui/releases
