@@ -3,7 +3,7 @@ id: etherpad
 name: Etherpad
 tagline: An intuitive tool for real-time collaborative writing
 category: files
-version: "2.7.0"
+version: "2.7.2"
 port: 9002
 description: >-
   ⚙️ The admin panel for Etherpad is accessible at "http://umbrel.local:9002/admin/".
@@ -38,17 +38,15 @@ releaseNotes: >-
 
 
   This release includes various enhancements and fixes:
-    - Added line numbers to the timeslider so you can follow specific lines while replaying a pad's history
-    - Added a playback speed setting to the timeslider for faster or slower history scrubbing
-    - Pad creators now seed the default settings for new pads, giving them more control over initial configuration
-    - Cookie names are now configurable via a prefix setting, useful when running multiple Etherpads on the same domain
-    - Database drivers are now bundled again, so fresh installs can connect to Postgres and other databases out of the box
-    - Pending edits are now flushed immediately after reconnecting instead of being silently dropped
-    - Large pastes no longer get rejected — the maximum message size has been raised to 10 MB
-    - Numerous list-related fixes including correct indentation, preserved numbering, and proper formatting across bullet and numbered lists
-    - Bold and other text formatting is now retained after copy-paste
-    - Fixed an issue where dead-key or compose-key input would eat the preceding space
-    - Accessibility improvements including keyboard trap fixes and better screen reader support
+    - Accessibility improvements including corrected dialog semantics, better focus management, missing icon labels, and correct language attribute on pages
+    - Chat icon now works correctly again, disabled toggles render properly, and username layout no longer overflows
+    - Revision-specific exports via `/export/etherpad` now return the correct revision instead of always returning the latest
+    - Undo and redo now scrolls the viewport to follow the caret so reverted edits stay in view
+    - Page Down and Page Up now scroll by viewport height instead of a fixed line count
+    - Typing continues in the document after changing a toolbar select instead of falling through to the toolbar
+    - Admin UI translations are restored on the `/admin` page
+    - Non-breaking spaces are now preserved correctly
+    - Browser locale is now auto-detected instead of being hardcoded to English
 
 
   Full release notes can be found at https://github.com/ether/etherpad-lite/releases
