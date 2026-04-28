@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: firefly-iii
 category: finance
 name: Firefly III
-version: "6.6.1"
+version: "6.6.2"
 tagline: Your personal finance manager
 description: >-
   Firefly III is a manager for your personal finances. It is self-hosted and open source. This means that it's free, it has no ads and no tracking.
@@ -47,18 +47,14 @@ path: ""
 deterministicPassword: false
 torOnly: false
 releaseNotes: >-
-  ⚠️ This release will invalidate ALL of your OAuth tokens and clients. Integrations with Home Assistant, AI agents, or the Firefly III Data Importer must be reconfigured with newly generated tokens.
+  🚨 Security fix: OAuth tokens could be generated before confirming your 2FA state, potentially allowing access to your data despite having MFA enabled. Please upgrade at your earliest convenience.
 
 
   Key improvements in this release:
-    - Fixed rule engine firing twice in some cases
-    - Fixed piggy bank accounts not displaying properly grouped in the record creation form
-    - Fixed foreign currency account value not updating after changing exchange rates on the dashboard
-    - Fixed inability to add money to piggy banks
-    - Fixed email notifications ignoring user language preferences
-    - Fixed inability to set budgets higher than 268435456
-    - Fixed very slow startup
-    - Fixed database upgrade error from v6.6.0
+    - Fixed running balance column not updating instantly for new records using rules
+    - Fixed year validator accepting invalid years when saving or editing a transaction
+    - Improved password validation
+    - Fixed shrunken sidebar expanding when navigating by clicking on icons
 
 
   Full release notes are found at https://github.com/firefly-iii/firefly-iii/releases
