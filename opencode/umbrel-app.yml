@@ -3,7 +3,7 @@ id: opencode
 name: OpenCode
 tagline: The open source AI coding agent
 category: ai
-version: "1.14.21"
+version: "1.14.28"
 port: 4096
 description: >-
   OpenCode is an open source AI coding agent designed to enhance your development
@@ -33,25 +33,33 @@ gallery:
   - 3.jpg
   - 4.jpg
 releaseNotes: >-
+  This release brings new features, fixes, and improvements.
+
+
   Core improvements:
-    - Added support for pull diagnostics from LSP servers, including C# and Kotlin
-    - Improved session compaction so long threads keep more useful context when older history is summarized
-    - Preserved UTF-8 BOMs when files are edited, patched, or rewritten
-    - Switched to Roslyn Language Server for C# support
-    - Added high reasoning variant for supported Mistral Small models
-    - Fixed project detection and caching for bare Git repos and worktrees
-    - Hidden unsupported variants for Kimi models that do not expose them
+    - Fixed issue with opencode upgrade failing for bun installs
+    - Added a configurable default shell for terminals and agent shell commands
+    - Fixed config parsing to preserve permission rule order
+    - Fixed OpenRouter DeepSeek reasoning output handling
+    - Added Zed editor selection support for editor context
+    - Fixed permission config preserving rule order with full IntelliSense for tool permission keys
+    - LSP permission prompts now include request details like the operation, file, and cursor position
+    - Added Roslyn LSP support for Razor, .cshtml, and C# script files
+    - Fixed DeepSeek assistant messages so reasoning is always included
+    - Added experimental HTTP API endpoints to list files, read file contents, and check project file status
+    - Respected custom .npmrc registry settings when checking package versions
 
 
   TUI improvements:
-    - Fail fast when opening an invalid or missing session instead of starting in a broken state
-    - Skip upgrade checks when auto-update is disabled
+    - Added Zed editor selection support for editor context
+    - Show a /connect tip when no models are configured
+    - Restored the default toast timeout when no custom duration is provided
+    - Hid provider connection checks until onboarding is complete
 
 
   Desktop improvements:
-    - Kept project avatar previews consistent between the sidebar and edit dialog
-    - Improved project icon overrides so uploaded icons and color fallbacks behave correctly
-    - Improved Linux desktop metadata for app listings and categorization
+    - Added a configurable default shell setting
+    - Fixed session views not getting stuck with stale state when switching between sessions
 
 
   Full release notes can be found at https://github.com/anomalyco/opencode/releases
