@@ -489,9 +489,9 @@ async function loadStats(){
     const grid = document.getElementById('stat-grid');
     grid.innerHTML = `
       <div class="stat stat-icon">${iconHtml}<div class="lbl">${relayName}</div></div>
-      <div class="stat"><div class="val">${s.total_events.toLocaleString()}</div><div class="lbl">Total Events</div></div>
-      <div class="stat"><div class="val">${s.by_kind.length}</div><div class="lbl">Distinct Kinds</div></div>
       <div class="stat"><div class="val" style="font-size:16px">${latestTs}</div><div class="lbl">Latest Event</div></div>
+      <div class="stat"><div class="val">${s.by_kind.length}</div><div class="lbl">Distinct Kinds</div></div>
+      <div class="stat"><div class="val">${s.total_events.toLocaleString()}</div><div class="lbl">Total Events</div></div>
     `;
     const tbody = document.querySelector('#kind-table tbody');
     tbody.innerHTML = s.by_kind.map(r => {
