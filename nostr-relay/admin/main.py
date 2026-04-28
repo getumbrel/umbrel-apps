@@ -478,7 +478,7 @@ async function loadStats(){
     grid.innerHTML = `
       <div class="stat"><div class="val">${s.total_events.toLocaleString()}</div><div class="lbl">Total Events</div></div>
       <div class="stat"><div class="val">${s.by_kind.length}</div><div class="lbl">Distinct Kinds</div></div>
-      <div class="stat"><div class="val">${new Date(s.latest[0]?.created_at*1000).toLocaleDateString()}</div><div class="lbl">Latest Event</div></div>
+      <div class="stat"><div class="val" style="font-size:16px">${s.latest[0] ? new Date(s.latest[0].created_at*1000).toLocaleString([],{month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '—'}</div><div class="lbl">Latest Event</div></div>
     `;
     const tbody = document.querySelector('#kind-table tbody');
     tbody.innerHTML = s.by_kind.map(r => {
