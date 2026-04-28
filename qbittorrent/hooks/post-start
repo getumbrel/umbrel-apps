@@ -12,10 +12,15 @@ echo "inside qbittorrent/hooks/post-start"
 APP_DATA_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")"
 QBITTORRENT_CONF_FILE="${APP_DATA_DIR}/data/config/config/qBittorrent.conf"
 UMBREL_QBITTORRENT_CONFIG_FLAG="${APP_DATA_DIR}/HAS_BEEN_CONFIGURED_BY_UMBREL"
+REVERSE_PROXY_CONFIG_FLAG="${APP_DATA_DIR}/REVERSE_PROXY_CONFIGURED_BY_UMBREL"
 
 if [[ -f "${UMBREL_QBITTORRENT_CONFIG_FLAG}" ]]; then
-  echo "qBittorrent has already been configured."
-  exit
+  if [[ -f "${REVERSE_PROXY_CONFIG_FLAG}" ]]; then
+    echo "qBittorrent has already been configured and migrated."
+    exit
+  fi
+  echo "qBittorrent has already been configured. Running reverse proxy migration."
+  RUN_REVERSE_PROXY_MIGRATION=true
 fi
 
 # Wait up to 30 seconds for the qBittorrent.conf file to exist
@@ -51,6 +56,34 @@ else
 fi
 
 ensure_preferences_section
+
+# Enable reverse proxy support so qBittorrent reads the real client IP from X-Forwarded-For
+# and checks that against AuthSubnetWhitelist instead of the direct connection IP.
+# This allows third-party apps (e.g. qRemote) to authenticate with qBittorrent natively
+# while still allowing internal apps (Radarr, Sonarr, etc.) to bypass auth via the subnet whitelist.
+
+# Ensure WebUI\ReverseProxySupportEnabled is set correctly
+echo "Setting WebUI\ReverseProxySupportEnabled=true in qBittorrent.conf"
+if grep -q '^WebUI\\ReverseProxySupportEnabled=' "${QBITTORRENT_CONF_FILE}"; then
+  sed -i 's/^WebUI\\ReverseProxySupportEnabled=.*/WebUI\\ReverseProxySupportEnabled=true/' "${QBITTORRENT_CONF_FILE}"
+else
+  sed -i '/^\[Preferences\]/a WebUI\\ReverseProxySupportEnabled=true' "${QBITTORRENT_CONF_FILE}"
+fi
+
+# Ensure WebUI\TrustedReverseProxiesList is set correctly
+echo "Setting WebUI\TrustedReverseProxiesList=10.21.0.0/16 in qBittorrent.conf"
+if grep -q '^WebUI\\TrustedReverseProxiesList=' "${QBITTORRENT_CONF_FILE}"; then
+  sed -i 's/^WebUI\\TrustedReverseProxiesList=.*/WebUI\\TrustedReverseProxiesList=10.21.0.0\/16/' "${QBITTORRENT_CONF_FILE}"
+else
+  sed -i '/^\[Preferences\]/a WebUI\\TrustedReverseProxiesList=10.21.0.0/16' "${QBITTORRENT_CONF_FILE}"
+fi
+
+if [[ "${RUN_REVERSE_PROXY_MIGRATION:-false}" == true ]]; then
+  touch "${REVERSE_PROXY_CONFIG_FLAG}"
+  echo "Starting qBittorrent..."
+  "${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" start server
+  exit
+fi
 
 # As of v4.6.1, qBittorrent no longer supports a default password and instead prints a temporary password to the logs, which is not ideal for users.
 # Users are meant to start qBittorrent, copy the temporary password from the container logs, log in with the temporary password, and then set a new password from the UI.
@@ -99,6 +132,7 @@ fi
 
 # Create the UMBREL_QBITTORRENT_CONFIG_FLAG file to indicate that we've configured qBittorrent
 touch "${UMBREL_QBITTORRENT_CONFIG_FLAG}"
+touch "${REVERSE_PROXY_CONFIG_FLAG}"
 
 # start the qBittorrent service
 echo "Starting qBittorrent..."
