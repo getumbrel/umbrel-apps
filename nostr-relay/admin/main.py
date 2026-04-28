@@ -243,6 +243,9 @@ HTML = r"""<!DOCTYPE html>
   table{width:100%;border-collapse:collapse}
   th,td{padding:7px 10px;text-align:left;border-bottom:1px solid var(--border);font-size:12px}
   th{color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+  td.nip-badge{font-size:11px;color:var(--accent);font-weight:600;white-space:nowrap}
+  td.kind-name{color:var(--text)}
+  td.kind-muted{color:var(--muted);font-style:italic}
   .stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:16px}
   .stat{background:#0f1117;border:1px solid var(--border);border-radius:8px;padding:14px}
   .stat .val{font-size:28px;font-weight:700;color:var(--accent)}
@@ -262,7 +265,7 @@ HTML = r"""<!DOCTYPE html>
   <div class="card" id="stats-card">
     <h2>&#9889; Relay Stats</h2>
     <div class="stat-grid" id="stat-grid"></div>
-    <table id="kind-table"><thead><tr><th>Kind</th><th>Count</th></tr></thead><tbody></tbody></table>
+    <table id="kind-table"><thead><tr><th>Kind</th><th>NIP</th><th>Name</th><th style="text-align:right">Count</th></tr></thead><tbody></tbody></table>
   </div>
 
   <!-- Relay Info -->
@@ -346,6 +349,115 @@ HTML = r"""<!DOCTYPE html>
 
 </main>
 <script>
+const NIP_KINDS = {
+  0:     {nip:'01',    name:'User Metadata'},
+  1:     {nip:'01',    name:'Short Text Note'},
+  2:     {nip:'01',    name:'Recommend Relay (deprecated)'},
+  3:     {nip:'02',    name:'Follows / Contact List'},
+  4:     {nip:'04',    name:'Encrypted DM (deprecated→NIP-17)'},
+  5:     {nip:'09',    name:'Event Deletion Request'},
+  6:     {nip:'18',    name:'Repost'},
+  7:     {nip:'25',    name:'Reaction'},
+  8:     {nip:'58',    name:'Badge Award'},
+  9:     {nip:'29',    name:'Group Chat Message'},
+  10:    {nip:'29',    name:'Group Chat Threaded Reply'},
+  11:    {nip:'29',    name:'Group Thread'},
+  12:    {nip:'29',    name:'Group Thread Reply'},
+  13:    {nip:'13',    name:'Proof of Work'},
+  14:    {nip:'17',    name:'Sealed DM'},
+  16:    {nip:'73',    name:'External Content IDs'},
+  17:    {nip:'25',    name:'Reaction to Website'},
+  40:    {nip:'28',    name:'Channel Creation'},
+  41:    {nip:'28',    name:'Channel Metadata'},
+  42:    {nip:'28',    name:'Channel Message'},
+  43:    {nip:'28',    name:'Channel Hide Message'},
+  44:    {nip:'44',    name:'Encrypted DM v2'},
+  1021:  {nip:'53',    name:'Bid'},
+  1022:  {nip:'53',    name:'Bid Confirmation'},
+  1040:  {nip:'03',    name:'OpenTimestamps Attestation'},
+  1059:  {nip:'59',    name:'Gift Wrap'},
+  1063:  {nip:'94',    name:'File Metadata'},
+  1311:  {nip:'53',    name:'Live Chat Message'},
+  1617:  {nip:'54',    name:'Wiki Article'},
+  1971:  {nip:'71',    name:'Video Event'},
+  4550:  {nip:'72',    name:'Moderated Community Post Approval'},
+  7000:  {nip:'90',    name:'Job Feedback (DVM)'},
+  9041:  {nip:'75',    name:'Zap Goal'},
+  9321:  {nip:'60',    name:'Nutzap (Cashu)'},
+  9467:  {nip:'60',    name:'Wallet Token'},
+  9734:  {nip:'57',    name:'Zap Request'},
+  9735:  {nip:'57',    name:'Zap Receipt'},
+  9802:  {nip:'84',    name:'Highlight'},
+  10000: {nip:'51',    name:'Mute List'},
+  10001: {nip:'51',    name:'Pin List'},
+  10002: {nip:'65',    name:'Relay List Metadata'},
+  10003: {nip:'51',    name:'Bookmark List'},
+  10004: {nip:'51',    name:'Communities List'},
+  10005: {nip:'51',    name:'Public Chats List'},
+  10006: {nip:'51',    name:'Blocked Relays List'},
+  10007: {nip:'51',    name:'Search Relays List'},
+  10009: {nip:'51',    name:'User Groups'},
+  10015: {nip:'51',    name:'Interests List'},
+  10019: {nip:'60',    name:'Nutzap Mint List'},
+  10030: {nip:'51',    name:'User Emoji List'},
+  10050: {nip:'17',    name:'DM Relay List'},
+  10063: {nip:'96',    name:'User Server List'},
+  10096: {nip:'96',    name:'File Storage Server List'},
+  13194: {nip:'47',    name:'Wallet Connect Info (NWC)'},
+  17375: {nip:'60',    name:'Cashu Wallet'},
+  22242: {nip:'42',    name:'Authentication'},
+  23194: {nip:'47',    name:'Wallet Connect Request (NWC)'},
+  23195: {nip:'47',    name:'Wallet Connect Response (NWC)'},
+  23196: {nip:'47',    name:'Wallet Connect Notification (NWC)'},
+  24133: {nip:'46',    name:'Nostr Connect / Remote Signing'},
+  24242: {nip:'BUD-01',name:'Blob Storage Auth'},
+  27235: {nip:'98',    name:'HTTP Auth'},
+  30000: {nip:'51',    name:'Follow Sets'},
+  30001: {nip:'51',    name:'Generic Lists'},
+  30002: {nip:'51',    name:'Relay Sets'},
+  30003: {nip:'51',    name:'Bookmark Sets'},
+  30004: {nip:'51',    name:'Curation Sets (articles)'},
+  30005: {nip:'51',    name:'Curation Sets (videos)'},
+  30007: {nip:'51',    name:'Kind Mute Sets'},
+  30008: {nip:'58',    name:'Profile Badges'},
+  30009: {nip:'58',    name:'Badge Definition'},
+  30017: {nip:'15',    name:'Stall'},
+  30018: {nip:'15',    name:'Product'},
+  30023: {nip:'23',    name:'Long-form Article'},
+  30024: {nip:'23',    name:'Long-form Draft'},
+  30030: {nip:'51',    name:'Emoji Sets'},
+  30040: {nip:'62',    name:'Request to Vanish'},
+  30041: {nip:'54',    name:'Wiki Article'},
+  30063: {nip:'96',    name:'Release Artifact Sets'},
+  30078: {nip:'78',    name:'App-specific Data'},
+  30311: {nip:'53',    name:'Live Event'},
+  30315: {nip:'38',    name:'User Statuses'},
+  30402: {nip:'99',    name:'Classified Listing'},
+  30403: {nip:'99',    name:'Draft Classified Listing'},
+  30617: {nip:'34',    name:'Git Repository Announcement'},
+  30618: {nip:'34',    name:'Git Repository State'},
+  30818: {nip:'54',    name:'Wiki Article'},
+  31922: {nip:'52',    name:'Date-Based Calendar Event'},
+  31923: {nip:'52',    name:'Time-Based Calendar Event'},
+  31924: {nip:'52',    name:'Calendar'},
+  31925: {nip:'52',    name:'Calendar Event RSVP'},
+  31989: {nip:'89',    name:'Handler Recommendation'},
+  31990: {nip:'89',    name:'Handler Information'},
+  34235: {nip:'71',    name:'Video Event'},
+  34236: {nip:'71',    name:'Short-form Portrait Video'},
+  34237: {nip:'71',    name:'Video View Event'},
+  34550: {nip:'72',    name:'Community Definition'},
+};
+
+function nipInfo(kind) {
+  // DVM job requests 5000-5999
+  if (kind >= 5000 && kind <= 5999) return {nip:'90', name:`DVM Job Request (${kind})`};
+  // DVM job results 6000-6999
+  if (kind >= 6000 && kind <= 6999) return {nip:'90', name:`DVM Job Result (${kind})`};
+  // Group control events 9000-9030
+  if (kind >= 9000 && kind <= 9030) return {nip:'29', name:`Group Control Event (${kind})`};
+  return NIP_KINDS[kind] || null;
+}
 async function api(path, opts){
   const r = await fetch('/api'+path, opts);
   if(!r.ok) throw new Error(await r.text());
@@ -369,7 +481,12 @@ async function loadStats(){
       <div class="stat"><div class="val">${new Date(s.latest[0]?.created_at*1000).toLocaleDateString()}</div><div class="lbl">Latest Event</div></div>
     `;
     const tbody = document.querySelector('#kind-table tbody');
-    tbody.innerHTML = s.by_kind.map(r=>`<tr><td>${r.kind}</td><td>${r.n.toLocaleString()}</td></tr>`).join('');
+    tbody.innerHTML = s.by_kind.map(r => {
+      const info = nipInfo(r.kind);
+      const nipCell = info ? `<td class="nip-badge">NIP-${info.nip}</td>` : '<td class="kind-muted">—</td>';
+      const nameCell = info ? `<td class="kind-name">${info.name}</td>` : '<td class="kind-muted">Unknown</td>';
+      return `<tr><td>${r.kind}</td>${nipCell}${nameCell}<td style="text-align:right">${r.n.toLocaleString()}</td></tr>`;
+    }).join('');
   } catch(e){ console.error(e); }
 }
 
