@@ -3,8 +3,8 @@ version: "3.7"
 services:
   app_proxy:
     environment:
-      APP_HOST: nostr-relay_web_1
-      APP_PORT: 3000
+      APP_HOST: nostr-relay_admin_1
+      APP_PORT: 4000
       PROXY_AUTH_ADD: "false"
 
   web:
@@ -40,7 +40,7 @@ services:
       - relay
 
   admin:
-    build: ./admin
+    image: umbrel/nostr-relay-admin:latest
     user: "1000:1000"
     restart: on-failure
     container_name: nostr-relay_admin_1
