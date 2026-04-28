@@ -2,7 +2,7 @@ manifestVersion: 1
 id: esphome
 category: automation
 name: ESPHome
-version: "2026.4.2"
+version: "2026.4.3"
 tagline: Intelligently manage all your ESP8266/ESP32 devices
 description: >-
   ESPHome is a system to control your ESP8266/ESP32 by simple yet powerful configuration files and control them remotely through Home Automation systems.
@@ -21,16 +21,18 @@ defaultUsername: ""
 defaultPassword: ""
 torOnly: false
 releaseNotes: >-
-  This is a patch release with bug fixes focused on LVGL, image handling, and core stability:
-    - Fixed multiple LVGL issues including hello world page formatting, image style overloads, and textarea/keyboard attachment
-    - Fixed rodata bloat for multi-frame RGB565+alpha animations
-    - Fixed Pvariable placement new losing subclass identity
-    - Fixed null dereference in ld2412 set_basic_config when entities are unconfigured
-    - Fixed interrupt-driven IO expanders to self-heal when INT stays asserted across a read
-    - Added Secure Boot V1 ECDSA signing scheme support for pre-rev-3.0 ESP32 devices
-    - Improved USB UART TX output chunk count derived from buffer_size config
+  This is a patch release with bug fixes across multiple components:
+    - Fixed LVGL triggers on tabview tabs
+    - Fixed Windows EINVAL error when validating POSIX timezone strings
+    - Fixed deep sleep duration code generation type
+    - Fixed stale WiFi connected state after state transitions
+    - Fixed templatable integer field types in rotary encoder and AT581x components
+    - Fixed bootloop and WiFi connection issues when NVS partition is missing or has a non-default label
+    - Fixed RGB565+alpha rendering for multi-frame animations
+    - Unified Nextion TFT upload acknowledgement timeout to 5000ms
+    - Added watchdog timer feeding in ESP32 touch component
 
 
-  Full release notes can be found at https://esphome.io/changelog/2026.4.2/
+  Full release notes can be found at https://esphome.io/changelog/2026.4.3/
 submitter: ShonP40
 submission: https://github.com/getumbrel/umbrel-apps/pull/43
