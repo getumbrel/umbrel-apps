@@ -15,7 +15,7 @@ CONFIG_PATH = DATA_DIR / "relay" / "config.toml"
 DB_PATH = DATA_DIR / "relay" / "db" / "nostr.db"
 STORE_PATH = DATA_DIR / "relay-proxy" / "store.json"
 
-app = FastAPI(title="Nostr Relay Admin", docs_url=None, redoc_url=None)
+app = FastAPI(title="\u20bfYO\u20bf-NOSTR-RELAY Admin", docs_url=None, redoc_url=None)
 
 
 # ---------------------------------------------------------------------------
@@ -214,7 +214,7 @@ HTML = r"""<!DOCTYPE html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Nostr Relay Admin</title>
+<title>&#x20BF;YO&#x20BF;-NOSTR-RELAY Admin</title>
 <style>
   :root{--bg:#0f1117;--card:#1a1d27;--border:#2a2d3a;--accent:#9b59f4;--text:#e2e8f0;--muted:#64748b;--green:#22c55e;--red:#ef4444}
   *{box-sizing:border-box;margin:0;padding:0}
@@ -260,7 +260,7 @@ HTML = r"""<!DOCTYPE html>
 </head>
 <body>
 <header>
-  <h1>Nostr Relay Admin</h1>
+  <h1>&#x20BF;YO&#x20BF;-NOSTR-RELAY Admin</h1>
   <span class="badge">nostr-rs-relay</span>
 </header>
 <main>
@@ -484,7 +484,7 @@ async function loadStats(){
       ? `<img src="${icon}" alt="${relayName}" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'icon-fallback',textContent:'\u26a1'}))">`
       : `<span class="icon-fallback">&#9889;</span>`;
     const latestTs = s.latest[0]
-      ? new Date(s.latest[0].created_at*1000).toLocaleString([],{month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'})
+      ? new Date(s.latest[0].created_at*1000).toLocaleString(undefined,{month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'})
       : '\u2014';
     const grid = document.getElementById('stat-grid');
     grid.innerHTML = `
