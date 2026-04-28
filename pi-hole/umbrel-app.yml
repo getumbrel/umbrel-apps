@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: pi-hole
 category: networking
 name: Pi-hole
-version: "2026.04.0"
+version: "2026.04.1"
 tagline: Block ads on your entire network
 description: >-
   Instead of browser plugins or other software on each computer,
@@ -36,18 +36,17 @@ releaseNotes: >-
   To avoid issues, temporarily set a backup DNS server (e.g., 1.1.1.1) on your router before updating— or configure a permanent fallback DNS to prevent future issues.
 
 
-  This release includes several security fixes and improvements:
-    - 🚨 Fixed multiple security vulnerabilities including Remote Code Execution (RCE) via newline injection in configuration parameters
-    - 🚨 Fixed an authorization bypass that allowed CLI API sessions to import Teleporter archives and modify configuration
-    - 🚨 Fixed multiple stored HTML injection and XSS vulnerabilities in the web interface
-    - 🚨 Fixed a local privilege escalation vulnerability
-    - Fixed client count inflation for rate-limited queries
-    - Fixed overTime data when database import is disabled
-    - Added new option for controlling name resolution via MAC address
-    - Improved Content Security Policy with additional hardening
-    - Fixed an issue where FTL could restart while gravity update was still running
+  This release includes bug fixes and stability improvements:
+    - 🚨 Fixed two security vulnerabilities in FTL (GHSA-6w8x-p785-6pm4 and GHSA-9cqv-839p-gpq2)
+    - Fixed thread-safety issues that could cause crashes under concurrent API load
+    - Fixed a rare race condition in API handlers
+    - Fixed a device lookup issue when MAC-based name resolution is disabled
+    - Improved support for punycode domains rejected by IDNA2008
+    - Improved shutdown diagnostics
+    - Fixed ownership permissions for directories
+    - Fixed permission handling for gravity-related files
 
 
-  Full release notes can be found at https://github.com/pi-hole/docker-pi-hole/releases/tag/2026.04.0
+  Full release notes can be found at https://github.com/pi-hole/docker-pi-hole/releases/tag/2026.04.1
 submitter: Umbrel
 submission: https://github.com/getumbrel/umbrel/commit/9ca55a25e043dcd50d5cb92c6ec756d368bb4794
