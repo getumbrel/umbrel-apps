@@ -8,7 +8,7 @@ services:
 
   # Web terminal + dashboard proxy
   web:
-    image: ghcr.io/getumbrel/hermes-agent-umbrel:v2026.4.16@sha256:f7c5e901c21bcac4559fca21529ec7bb9986de4324a9b0b61cf4f1c8314d126f
+    image: ghcr.io/getumbrel/hermes-agent-umbrel:v2026.4.23-1@sha256:1101da395b9d800a03fbdbe16b9753e872180507608c932e83d9e94e524f7b9a
     # Shell prompt shows "umbrel@hermes" instead of "umbrel@<container-id>"
     hostname: hermes
     init: true
@@ -25,7 +25,13 @@ services:
 
   # Hermes messaging gateway
   gateway:
-    image: nousresearch/hermes-agent:v2026.4.16@sha256:14ba9a26cf2d498ea773f1825326c404795ec4cb436a9479d22b7a345396c370
+    image: nousresearch/hermes-agent:v2026.4.23@sha256:d4ee57f254aabbe10e41c49533bbf3eb98e6b026463c42843a07588e45ddd338
+    # Upstream v2026.4.23 starts as UID 10000, which cannot access Umbrel's
+    # 1000:1000 app-data directory. Start as root so upstream's entrypoint can
+    # honor HERMES_UID/HERMES_GID, fix /opt/data ownership, then drop privileges.
+    # Remove once an upstream release includes a Docker UID/GID fix,
+    # e.g. NousResearch/hermes-agent#12696.
+    user: "0:0"
     command: gateway run
     stop_grace_period: 1m
     restart: on-failure
