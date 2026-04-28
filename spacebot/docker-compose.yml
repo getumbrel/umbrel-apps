@@ -1,0 +1,16 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: spacebot_server_1
+      APP_PORT: 19898
+
+  server:
+    image: ghcr.io/spacedriveapp/spacebot:v0.4.1@sha256:35eb01a47cd0bd9d76748ac63787babe53324ee1c20b93ae0e703e9a6c752abf
+    restart: on-failure
+    stop_grace_period: 1m
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+    environment:
+      - TZ=${TZ:-UTC}
