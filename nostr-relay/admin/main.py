@@ -267,7 +267,7 @@ HTML = r"""<!DOCTYPE html>
 
   <!-- Stats -->
   <div class="card" id="stats-card">
-    <h2>&#9889; Relay Stats</h2>
+    <h2>&#9889; Relay Stats <span id="stats-age" style="font-size:11px;color:var(--muted);font-weight:400;margin-left:8px"></span></h2>
     <div class="stat-grid" id="stat-grid"></div>
     <table id="kind-table"><thead><tr><th>Kind</th><th>NIP</th><th>Name</th><th style="text-align:right">Count</th></tr></thead><tbody></tbody></table>
   </div>
@@ -578,6 +578,17 @@ async function saveStore(){
 }
 
 loadAll();
+// auto-refresh stats every 60 seconds
+setInterval(loadStats, 60000);
+// tick the "refreshed X ago" label every 10 seconds
+let _lastRefresh = Date.now();
+const _origLoadStats = loadStats;
+loadStats = async function() { await _origLoadStats(); _lastRefresh = Date.now(); };
+setInterval(() => {
+  const secs = Math.round((Date.now() - _lastRefresh) / 1000);
+  const el = document.getElementById('stats-age');
+  if (el) el.textContent = secs < 5 ? 'just refreshed' : `refreshed ${secs}s ago`;
+}, 10000);
 </script>
 </body>
 </html>"""
