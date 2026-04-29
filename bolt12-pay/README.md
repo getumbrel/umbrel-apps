@@ -22,9 +22,9 @@ Add the following to your LND configuration:
 
 ```ini
 [protocol]
-custom-message=513
-custom-nodeann=39
-custom-init=39
+protocol.custom-message=513
+protocol.custom-nodeann=39
+protocol.custom-init=39
 ```
 
 Restart Lightning afterwards.
