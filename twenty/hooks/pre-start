@@ -1,0 +1,317 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+APP_ROOT_DIR="${APP_DATA_DIR:-$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")}"
+UMBREL_ROOT="${UMBREL_ROOT:-${APP_ROOT_DIR}/../..}"
+APP_ID="${APP_ID:-twenty}"
+APP_COMPOSE_FILE="${APP_ROOT_DIR}/docker-compose.yml"
+APP_COMPOSE_BACKUP_FILE="${APP_ROOT_DIR}/docker-compose.yml.bak"
+GENERATE_FRONT_CONFIG_FILE="${APP_ROOT_DIR}/data/generate-front-config.js"
+MIGRATION_IN_PROGRESS_FILE="${APP_ROOT_DIR}/data/.twenty-migration-in-progress"
+
+mkdir -p "$(dirname "${GENERATE_FRONT_CONFIG_FILE}")"
+
+if [[ -d "${GENERATE_FRONT_CONFIG_FILE}" && ! -L "${GENERATE_FRONT_CONFIG_FILE}" ]]; then
+  rm -rf "${GENERATE_FRONT_CONFIG_FILE}"
+fi
+
+if [[ ! -f "${GENERATE_FRONT_CONFIG_FILE}" ]]; then
+  cat >"${GENERATE_FRONT_CONFIG_FILE}" <<'EOF'
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.generateFrontConfig = generateFrontConfig;
+function generateFrontConfig() {}
+EOF
+fi
+
+chown 1000:1000 "${GENERATE_FRONT_CONFIG_FILE}" 2>/dev/null || true
+
+if [[ -f "${MIGRATION_IN_PROGRESS_FILE}" ]]; then
+  migration_pid="$(cat "${MIGRATION_IN_PROGRESS_FILE}" 2>/dev/null || true)"
+
+  if [[ "${migration_pid}" =~ ^[0-9]+$ ]] && kill -0 "${migration_pid}" 2>/dev/null; then
+    echo "Twenty sequential migration is already in progress. Skipping nested pre-start."
+    exit
+  fi
+
+  rm -f "${MIGRATION_IN_PROGRESS_FILE}"
+fi
+
+VERSIONS=()
+VERSIONS+=( "0.50.0" )
+VERSIONS+=( "0.51.0" )
+VERSIONS+=( "0.52.0" )
+VERSIONS+=( "0.53.0" )
+VERSIONS+=( "0.54.4" )
+VERSIONS+=( "0.55.9" )
+VERSIONS+=( "1.0.1" )
+VERSIONS+=( "1.1.1" )
+VERSIONS+=( "1.2.1" )
+VERSIONS+=( "1.3.1" )
+VERSIONS+=( "1.4.0" )
+VERSIONS+=( "1.5.3" )
+VERSIONS+=( "1.6.7" )
+VERSIONS+=( "1.7.7" )
+VERSIONS+=( "1.8.2" )
+VERSIONS+=( "1.10.2" )
+VERSIONS+=( "1.11.5" )
+VERSIONS+=( "1.12.0" )
+VERSIONS+=( "1.13.7" )
+VERSIONS+=( "1.14.0" )
+VERSIONS+=( "1.15.0" )
+VERSIONS+=( "1.16.6" )
+VERSIONS+=( "1.17.4" )
+VERSIONS+=( "1.18.1" )
+VERSIONS+=( "1.19.0" )
+VERSIONS+=( "1.20.0" )
+VERSIONS+=( "1.20.2" )
+VERSIONS+=( "1.21.2" )
+VERSIONS+=( "1.22.6" )
+VERSIONS+=( "2.1.0" )
+
+IMAGES=()
+IMAGES+=( "twentycrm/twenty:v0.50.0@sha256:39fb13a0b1f1e98ddf9795d9e98641b4e4a0cfc8abe0d30e18b013ec2bfadd9c" )
+IMAGES+=( "twentycrm/twenty:v0.51.0@sha256:4443b2ae32c406778ab0923dfa82d33d0ed1e175f947e9c500b083a94c49b4e5" )
+IMAGES+=( "twentycrm/twenty:v0.52.0@sha256:73ba12dd4a3fbcaf81758a2c898ca25ee3e21873ce32a75878ba8804468d4854" )
+IMAGES+=( "twentycrm/twenty:v0.53.0@sha256:9424ec817b0d75f747794f053c5a42df8ce1cb84961e05b154bf298c9f0932f7" )
+IMAGES+=( "twentycrm/twenty:v0.54.4@sha256:6a6e5a34426867e746f43ef000989cae3afc44f2e1cedf8bcefa447f6988187a" )
+IMAGES+=( "twentycrm/twenty:v0.55.9@sha256:74171374ae0e02b978575529ee7395d849780658f453e8668d4ebbecd9d90c49" )
+IMAGES+=( "twentycrm/twenty:v1.0.1@sha256:269868220e8b3c91ece4096561bac0e06bcbc3aba4f9d03c9267cf139e1c2850" )
+IMAGES+=( "twentycrm/twenty:v1.1.1@sha256:382551ee5c4f81e55cf4ad02d6d75fe434306d42178803b9f33ce8c491e825d1" )
+IMAGES+=( "twentycrm/twenty:v1.2.1@sha256:1795ebdff3841b3348e09eddb533b3b4a02e249177776953eb7d504cb652d670" )
+IMAGES+=( "twentycrm/twenty:v1.3.1@sha256:82ba3db4409e88ab19b5cf9b2ed840dbad6e88f893e60cb868bd64fe7396e5d2" )
+IMAGES+=( "twentycrm/twenty:v1.4.0@sha256:dfe4a0c69ddd800ca94bdcf8cf7b680d9df82a7a15ac0aece505b5c55b4f2392" )
+IMAGES+=( "twentycrm/twenty:v1.5.3@sha256:50863308b6ca07210db7cc5ac1d7561114516ae15d8e7886754bf5cf0b1747db" )
+IMAGES+=( "twentycrm/twenty:v1.6.7@sha256:36163abd3e59adaa6b492b03fa00ce4fc2f279e9a62767b4b6abc99ac20ecd6a" )
+IMAGES+=( "twentycrm/twenty:v1.7.7@sha256:b7bf614d0fcdc69558729d34de848d3353d85d91681f9e2ed00a055951c96149" )
+IMAGES+=( "twentycrm/twenty:v1.8.2@sha256:9994ece9eeabc22681fedf892175d93fe957a1a4e32c01eeb38fc7009dc0fade" )
+IMAGES+=( "twentycrm/twenty:v1.10.2@sha256:db31b5b2651b8756473490fe34d824f1a48cc266a97db1f57bdecee5b6ea8e51" )
+IMAGES+=( "twentycrm/twenty:v1.11.5@sha256:c566a63a400d9f849b54a8a8bef6a84a966d29c9e0c3685c69e4c4b082127ab3" )
+IMAGES+=( "twentycrm/twenty:v1.12.0@sha256:76de329d548e0bccdd9771b147fac867e579e428219806a5a20c3635a1d0f244" )
+IMAGES+=( "twentycrm/twenty:v1.13.7@sha256:4b6d067245e576e7d26f629e30f7952f24047a42848987519ec9e58258b16c27" )
+IMAGES+=( "twentycrm/twenty:v1.14.0@sha256:4e2bea80ec3f2570622c20340019bd3bf6fae9305e261738b4fc87bdfaee87b5" )
+IMAGES+=( "twentycrm/twenty:v1.15.0@sha256:d49e3161742e5b2f99792cd85fdf1366a814dc3d31d8b5dbec53bb951fe5eec6" )
+IMAGES+=( "twentycrm/twenty:v1.16.6@sha256:761c7aa7faf6eefa932ac63dc1c39e0c21c7960b5d67f12a128e7da0a4738192" )
+IMAGES+=( "twentycrm/twenty:v1.17.4@sha256:d6f5492b8c969b80bb5e91df123f1df4ecf6018ba8a41ae99fb9baefeed16fba" )
+IMAGES+=( "twentycrm/twenty:v1.18.1@sha256:09182f265cb9575b26ed10463d18d4fe8dc60af15a44fe4999fd196fe1f12a1d" )
+IMAGES+=( "twentycrm/twenty:v1.19.0@sha256:4320d0d073d02cf6cf23eae94a7044e238a481f2f35b7fdc960cc8c093c4e1e1" )
+IMAGES+=( "twentycrm/twenty:v1.20.0@sha256:b3120df567a73c849a7a1ae58fa4f3d7bdd5072939312be702375960ed601557" )
+IMAGES+=( "twentycrm/twenty:v1.20.2@sha256:7c943607fb9f4910740563a23f3149edc0076f1295023a460c261bb8ded99ffe" )
+IMAGES+=( "twentycrm/twenty:v1.21.2@sha256:943d304dd88b80d2560a9b8f497660e1beb51ea6cbbe81b21eb914e3ce0613cb" )
+IMAGES+=( "twentycrm/twenty:v1.22.6@sha256:63f5e89a1409816dba7fec7753747bf3d0fcfbef822f95048f029334e70f9116" )
+IMAGES+=( "twentycrm/twenty:v2.1.0@sha256:61b1438c18ebda1dd85370fed63e085dcc875443e95c5fd0a26327e7c21b5a21" )
+# newer versions support automatic updates, so they are not included in the migration path
+
+find_index() {
+  local -r value="${1}"
+  shift
+  local -r array=("$@")
+
+  for i in "${!array[@]}"; do
+    if [[ "${array[$i]}" == "${value}" ]]; then
+      echo "${i}"
+      exit
+    fi
+  done
+
+  echo -1
+}
+
+get_workspace_version() {
+  local workspace_versions raw_ver raw_prefix version version_prefix closest
+
+  workspace_versions=$(docker exec twenty_db_1 psql -U postgres -d default -tAc 'SELECT DISTINCT "version" FROM core.workspace WHERE "version" IS NOT NULL AND "version" <> '"'"''"'"';' 2>/dev/null || true)
+
+  for version in "${VERSIONS[@]}"; do
+    if echo "${workspace_versions}" | grep -Fxq "${version}"; then
+      echo "${version}"
+      return
+    fi
+  done
+
+  raw_ver=$(echo "${workspace_versions}" | head -n1 | tr -d '[:space:]')
+  [[ -z "${raw_ver}" ]] && return
+
+  raw_prefix="${raw_ver%.*}"
+  closest=""
+  for version in "${VERSIONS[@]}"; do
+    version_prefix="${version%.*}"
+    [[ "${version_prefix}" == "${raw_prefix}" ]] && closest="${version}"
+  done
+
+  echo "${closest:-${raw_ver}}"
+}
+
+check_compose_file() {
+  local -r image="${1}"
+
+  server_image=$(yq '.services.server.image' "${APP_COMPOSE_FILE}" 2>/dev/null || true)
+  worker_image=$(yq '.services.worker.image' "${APP_COMPOSE_FILE}" 2>/dev/null || true)
+
+  if [[ "${server_image}" != "${image}" ]] || [[ "${worker_image}" != "${image}" ]]; then
+    echo "The docker-compose.yml now looks bad. Restoring..."
+    mv "${APP_COMPOSE_BACKUP_FILE}" "${APP_COMPOSE_FILE}"
+    exit 1
+  fi
+}
+
+run_update_commands() {
+  echo "Clearing cache for twenty."
+  "${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" run --rm server yarn command:prod cache:flush
+  echo "Successfully cleared the twenty cache."
+
+  echo "Running database migrations for twenty."
+  "${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" run --rm server yarn database:migrate:prod
+  echo "Successfully run database migrations for twenty."
+}
+
+wait_for_server_healthy() {
+  local -r max_seconds=900
+
+  for _ in $(seq 1 "${max_seconds}"); do
+    status=$(docker inspect --format '{{.State.Health.Status}}' twenty_server_1 2>/dev/null || true)
+
+    if [[ "${status}" == "healthy" ]]; then
+      return
+    fi
+
+    sleep 1
+  done
+
+  echo "Timed out waiting for Twenty server to become healthy."
+  exit 1
+}
+
+wait_for_db_healthy() {
+  local -r max_seconds=120
+
+  for _ in $(seq 1 "${max_seconds}"); do
+    if docker exec twenty_db_1 pg_isready -U postgres -d default >/dev/null 2>&1; then
+      return
+    fi
+
+    sleep 1
+  done
+
+  echo "Timed out waiting for Twenty database to become healthy."
+  exit 1
+}
+
+version_matches() {
+  local -r workspace_version="${1}"
+  local -r expected_version="${2}"
+
+  [[ "${workspace_version}" == "${expected_version}" ]] && return 0
+  [[ "${workspace_version%.*}" == "${expected_version%.*}" ]] && return 0
+  return 1
+}
+
+wait_for_workspace_version() {
+  local -r expected_version="${1}"
+  local -r max_seconds=900
+  local workspace_version
+  local elapsed=0
+
+  echo "Waiting for Twenty workspace to reach version ${expected_version}..."
+
+  for _ in $(seq 1 "${max_seconds}"); do
+    workspace_version=$(get_workspace_version)
+
+    if version_matches "${workspace_version}" "${expected_version}"; then
+      echo "Twenty workspace reached version ${expected_version} (reported: ${workspace_version})."
+      return
+    fi
+
+    elapsed=$(( elapsed + 1 ))
+    if (( elapsed % 30 == 0 )); then
+      echo "Still waiting for workspace version ${expected_version} (current: ${workspace_version:-unknown}, elapsed: ${elapsed}s)..."
+    fi
+
+    sleep 1
+  done
+
+  workspace_version=$(get_workspace_version)
+  echo "Timed out waiting for Twenty workspace version to become ${expected_version}. Current version is ${workspace_version:-unknown}."
+  exit 1
+}
+
+if [[ "${#VERSIONS[@]}" -ne "${#IMAGES[@]}" ]]; then
+  echo "Migration configuration error: VERSIONS (${#VERSIONS[@]}) and IMAGES (${#IMAGES[@]}) length mismatch."
+  exit 1
+fi
+
+"${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" up -d db
+wait_for_db_healthy
+
+current_version=$(get_workspace_version)
+
+if [[ -z "${current_version}" ]]; then
+  echo "No Twenty workspace version found in the database. No migration needed."
+  exit
+fi
+
+echo "Current Twenty workspace version: ${current_version}"
+
+current_major_version="${current_version%%.*}"
+current_minor_version="${current_version#*.}"
+current_minor_version="${current_minor_version%%.*}"
+
+if [[ "${current_major_version}" =~ ^[0-9]+$ ]] && [[ "${current_major_version}" -ge 2 ]]; then
+  exit
+fi
+
+active_version_idx=$(find_index "${current_version}" "${VERSIONS[@]}")
+
+if [[ "${active_version_idx}" == "-1" ]]; then
+  echo "Active Twenty version '${current_version}' is not supported in the list of migrations."
+  exit 1
+fi
+
+if [[ "${VERSIONS[-1]}" == "${current_version}" ]]; then
+  echo "Twenty is already on the latest migration path version. No migration needed."
+  exit
+fi
+
+printf '%s\n' "$$" >"${MIGRATION_IN_PROGRESS_FILE}"
+cp --archive "${APP_COMPOSE_FILE}" "${APP_COMPOSE_BACKUP_FILE}"
+trap 'mv "${APP_COMPOSE_BACKUP_FILE}" "${APP_COMPOSE_FILE}" 2>/dev/null || true; rm -f "${MIGRATION_IN_PROGRESS_FILE}"' EXIT
+
+for i in "${!VERSIONS[@]}"; do
+  [[ "${i}" -le "${active_version_idx}" ]] && continue
+
+  version="${VERSIONS[$i]}"
+  image="${IMAGES[$i]}"
+
+  echo "Migrating Twenty to version: ${version} (${image})"
+
+  yq -i ".services.server.image = \"${image}\"" "${APP_COMPOSE_FILE}"
+  yq -i ".services.worker.image = \"${image}\"" "${APP_COMPOSE_FILE}"
+
+  check_compose_file "${image}"
+
+  run_update_commands
+
+  "${UMBREL_ROOT}/scripts/app" start "${APP_ID}"
+  wait_for_server_healthy
+
+  version_major="${version%%.*}"
+  version_minor="${version#*.}"; version_minor="${version_minor%%.*}"
+
+  if [[ "${version_major}" =~ ^[0-9]+$ ]] && { [[ "${version_major}" -ge 2 ]] || { [[ "${version_major}" -eq 1 ]] && [[ "${version_minor}" =~ ^[0-9]+$ ]] && [[ "${version_minor}" -ge 22 ]]; }; }; then
+    echo "Running workspace upgrade for twenty ${version}."
+    "${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" run --rm server yarn command:prod upgrade
+    echo "Successfully ran workspace upgrade for twenty."
+  else
+    wait_for_workspace_version "${version}"
+  fi
+
+  "${UMBREL_ROOT}/scripts/app" stop "${APP_ID}"
+
+  if [[ "${version}" != "${VERSIONS[-1]}" ]]; then
+    docker rmi "${image}" || true
+  fi
+done
+
+mv "${APP_COMPOSE_BACKUP_FILE}" "${APP_COMPOSE_FILE}"
+rm -f "${MIGRATION_IN_PROGRESS_FILE}"
+trap - EXIT
