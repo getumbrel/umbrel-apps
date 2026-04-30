@@ -8,17 +8,40 @@ services:
       # Moltis handles its own auth (password + WebAuthn passkeys)
       PROXY_AUTH_ADD: "false"
 
+  docker:
+    image: docker:28.0.4-dind@sha256:ddb0033088b4fab74881ade341a582e3c6c8021b82377703ba1a6106bd3ded44
+    privileged: true
+    network_mode: host
+    stop_grace_period: 1m
+    restart: on-failure
+    environment:
+      DOCKER_ENSURE_BRIDGE: "dind0:10.32.0.1/16"
+    entrypoint: /entrypoint.sh
+    command: >
+      dockerd
+        --bridge dind0
+        --data-root /data/data
+        --exec-root /data/exec
+        --host unix:///data/docker.sock
+        --pidfile /data/docker.pid
+    volumes:
+      - ${APP_DATA_DIR}/entrypoint.sh:/entrypoint.sh
+      - ${APP_DATA_DIR}/data/docker:/data
+
   server:
     image: ghcr.io/moltis-org/moltis:20260430.01@sha256:808afb01e6017b0a7b17588892e00c65e04fd9b34d8d3ca286eaa6880e916886
     user: "1000:1000"
     restart: on-failure
     stop_grace_period: 1m
+    depends_on:
+      - docker
     environment:
       MOLTIS_PASSWORD: ${APP_PASSWORD}
     command: ["--bind", "0.0.0.0", "--port", "13131", "--no-tls"]
     volumes:
-      - ${APP_DATA_DIR}/data:/home/moltis/.moltis
+      - ${APP_DATA_DIR}/data/moltis:/home/moltis/.moltis
       - ${APP_DATA_DIR}/config:/home/moltis/.config/moltis
+      - ${APP_DATA_DIR}/data/docker:/var/run:rw
     healthcheck:
       test: curl -Ssf http://localhost:13131/health || exit 1
       interval: 30s
