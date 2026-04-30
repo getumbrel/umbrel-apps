@@ -1,0 +1,21 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: handbrake_server_1
+      APP_PORT: 5850
+
+  server:
+    image: jlesage/handbrake:v26.01.1@sha256:b9da4f2be8c7c289ff0fd3f9e63110cc651c803fca2727c35c6f17047ad8765e
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/config:/config:rw
+      - ${UMBREL_ROOT}/data/storage/downloads/handbrake/input:/storage:ro
+      - ${UMBREL_ROOT}/data/storage/downloads/handbrake/watch:/watch:rw
+      - ${UMBREL_ROOT}/data/storage/downloads/handbrake/output:/output:rw
+    environment:
+      - USER_ID=1000
+      - GROUP_ID=1000
+      - TAKE_CONFIG_OWNERSHIP=1
+      - WEB_LISTENING_PORT=5850
