@@ -1,0 +1,26 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: moltis_server_1
+      APP_PORT: 13131
+      # Moltis handles its own auth (password + WebAuthn passkeys)
+      PROXY_AUTH_ADD: "false"
+
+  server:
+    image: ghcr.io/moltis-org/moltis:20260430.01@sha256:808afb01e6017b0a7b17588892e00c65e04fd9b34d8d3ca286eaa6880e916886
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      MOLTIS_PASSWORD: ${APP_PASSWORD}
+    command: ["--bind", "0.0.0.0", "--port", "13131", "--no-tls"]
+    volumes:
+      - ${APP_DATA_DIR}/data:/home/moltis/.moltis
+      - ${APP_DATA_DIR}/config:/home/moltis/.config/moltis
+    healthcheck:
+      test: curl -Ssf http://localhost:13131/health || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
