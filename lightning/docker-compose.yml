@@ -7,7 +7,7 @@ services:
       APP_PORT: 3006
 
   app:
-    image: getumbrel/umbrel-lightning:v1.2.1@sha256:41d5e7388a15443103ec0eae583a426dcf04bd371a1371fdeea8ccae99c01972
+    image: getumbrel/umbrel-lightning:v1.2.2@sha256:61694e8abe448f407af0596387ef964c2687376e5083b602616a123e2d88e32d
     restart: on-failure
     volumes:
       - "${APP_LIGHTNING_NODE_DATA_DIR}:/data/.lnd"
@@ -42,7 +42,7 @@ services:
 
   lnd:
     hostname: "${DEVICE_DOMAIN_NAME}" # Needed so LND can generate a valid cert
-    image: lightninglabs/lnd:v0.20.0-beta@sha256:4b33e89ce7d2db02bbf3c10649e567c36d175075921c97afc3bdfa36f2e7518a
+    image: lightninglabs/lnd:v0.20.1-beta@sha256:f0a2bdc4b8bc89cb3b31b6e12d6b16ac5145defd916d8152cf0c1c07d8697cff
     command: "${APP_LIGHTNING_COMMAND}"
     user: 1000:1000
     restart: unless-stopped
