@@ -14,12 +14,15 @@ export APP_CORE_LIGHTNING_DAEMON_HOST="core-lightning_lightningd_1"
 export CORE_LIGHTNING_REST_PORT="2107"
 
 # Canonical CLNREST exports for consumer apps (RTL, LNbits)
+# Use the daemon hostname so consumers survive IP drift across restarts and DR recovery.
 export APP_CORE_LIGHTNING_CLNREST_PORT="${CORE_LIGHTNING_REST_PORT}"
-export APP_CORE_LIGHTNING_CLNREST_HOST="${APP_CORE_LIGHTNING_DAEMON_IP}"
+export APP_CORE_LIGHTNING_CLNREST_HOST="${APP_CORE_LIGHTNING_DAEMON_HOST}"
 
-# Backward-compat aliases (consumed by RTL docker-compose and torrc.template)
+# Backward-compat aliases (consumed by RTL docker-compose and torrc.template).
+# These remain IP-derived to avoid regressions in existing in-tree consumers;
+# new consumers should adopt the canonical *_CLNREST_* vars above.
 export APP_CORE_LIGHTNING_REST_PORT="${APP_CORE_LIGHTNING_CLNREST_PORT}"
-export APP_CORE_LIGHTNING_REST_HOST="${APP_CORE_LIGHTNING_CLNREST_HOST}"
+export APP_CORE_LIGHTNING_REST_HOST="${APP_CORE_LIGHTNING_DAEMON_IP}"
 
 # ---------------------------------------------------------------------------
 # CLNRest bind address — 0.0.0.0 allows other containers (RTL, LNbits) to
@@ -27,7 +30,7 @@ export APP_CORE_LIGHTNING_REST_HOST="${APP_CORE_LIGHTNING_CLNREST_HOST}"
 # consumer containers can reach; binding too narrowly can break those apps.
 # ---------------------------------------------------------------------------
 export CLNREST_HOST="0.0.0.0"
-export CLNREST_URL="https://${APP_CORE_LIGHTNING_DAEMON_IP}:${CORE_LIGHTNING_REST_PORT}"
+export CLNREST_URL="https://${APP_CORE_LIGHTNING_DAEMON_HOST}:${CORE_LIGHTNING_REST_PORT}"
 
 export APP_CORE_LIGHTNING_BITCOIN_NETWORK="${APP_BITCOIN_NETWORK}"
 if [[ "${APP_BITCOIN_NETWORK}" == "mainnet" ]]; then
