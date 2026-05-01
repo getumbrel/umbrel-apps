@@ -6,25 +6,7 @@ UMBREL_ROOT="${UMBREL_ROOT:-${APP_ROOT_DIR}/../..}"
 APP_ID="${APP_ID:-twenty}"
 APP_COMPOSE_FILE="${APP_ROOT_DIR}/docker-compose.yml"
 APP_COMPOSE_BACKUP_FILE="${APP_ROOT_DIR}/docker-compose.yml.bak"
-GENERATE_FRONT_CONFIG_FILE="${APP_ROOT_DIR}/data/generate-front-config.js"
 MIGRATION_IN_PROGRESS_FILE="${APP_ROOT_DIR}/data/.twenty-migration-in-progress"
-
-mkdir -p "$(dirname "${GENERATE_FRONT_CONFIG_FILE}")"
-
-if [[ -d "${GENERATE_FRONT_CONFIG_FILE}" && ! -L "${GENERATE_FRONT_CONFIG_FILE}" ]]; then
-  rm -rf "${GENERATE_FRONT_CONFIG_FILE}"
-fi
-
-if [[ ! -f "${GENERATE_FRONT_CONFIG_FILE}" ]]; then
-  cat >"${GENERATE_FRONT_CONFIG_FILE}" <<'EOF'
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.generateFrontConfig = generateFrontConfig;
-function generateFrontConfig() {}
-EOF
-fi
-
-chown 1000:1000 "${GENERATE_FRONT_CONFIG_FILE}" 2>/dev/null || true
 
 if [[ -f "${MIGRATION_IN_PROGRESS_FILE}" ]]; then
   migration_pid="$(cat "${MIGRATION_IN_PROGRESS_FILE}" 2>/dev/null || true)"
