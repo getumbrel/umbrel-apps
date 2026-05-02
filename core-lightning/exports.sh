@@ -45,3 +45,8 @@ export APP_CONFIG_DIR="/data/app"
 export APP_MODE="production"
 export CORE_LIGHTNING_PATH="/root/.lightning"
 export COMMANDO_CONFIG="/root/.lightning/.commando-env"
+
+# Native CLNRest (V3) rune path — completes the {CLNREST_HOST, CLNREST_URL,
+# CLNREST_RUNE_PATH} contract expected by upstream CLNRest-native consumers
+# (LNbits, Boltz). Defined here because it depends on COMMANDO_CONFIG above.
+export CLNREST_RUNE_PATH="${COMMANDO_CONFIG}"
