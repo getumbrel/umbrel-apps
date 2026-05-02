@@ -1,0 +1,40 @@
+# Caddy HTTPS Proxy for Umbrel
+# Auto-generated Caddyfile - DO NOT EDIT MANUALLY
+# Changes will be overwritten on app restart
+
+{
+    http_port {$CADDY_HTTP_PORT}
+    https_port {$CADDY_HTTPS_PORT}
+    auto_https off
+    admin 0.0.0.0:2019
+}
+
+:{$CADDY_HTTPS_PORT} {
+    tls /certs/umbrel.crt /certs/umbrel.key
+    
+    # Security headers
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        X-XSS-Protection "1; mode=block"
+    }
+
+    # Welcome page
+    handle / {
+        respond "Welcome to Umbrel HTTPS Proxy!\n\nAccess your apps at:\nhttps://{$DEVICE_DOMAIN_NAME}:{$APP_HTTPS_PORT}/\n\nTo configure routing, edit the Caddyfile in your app data directory." 200
+    }
+
+    # Example app routes (uncomment and modify as needed)
+    # handle /mempool* {
+    #     reverse_proxy mempool_app_proxy:4000
+    # }
+    # 
+    # handle /nextcloud* {
+    #     reverse_proxy nextcloud_app_proxy:4001
+    # }
+}
+
+:{$CADDY_HTTP_PORT} {
+    redir https://{$DEVICE_DOMAIN_NAME}:{$APP_HTTPS_PORT}{uri} permanent
+}
