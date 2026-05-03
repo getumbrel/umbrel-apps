@@ -1,0 +1,18 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: alpi_server_1
+      APP_PORT: 8080
+
+  server:
+    image: satoshiltd/alpi-umbrel:0.5.0
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      HOME: /data
+      ALPI_PLATFORM: umbrel
+      ALPI_TTYD_PORT: 8080
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
