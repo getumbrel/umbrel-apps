@@ -29,6 +29,7 @@ const defaultConfig = {
     httpPort: 8080,
     forceHttps: true,
     hsts: true,
+    disableHttp: false,
     caddyfile: ''
 };
 
@@ -94,9 +95,13 @@ function generateCaddyfile(config) {
     
     caddyfile += `}\n\n`;
     
-    if (config.forceHttps) {
+    if (!config.disableHttp && config.forceHttps) {
         caddyfile += `:${config.httpPort} {\n`;
         caddyfile += `    redir https://${config.domain}:${config.httpsPort}{uri} permanent\n`;
+        caddyfile += `}\n`;
+    } else if (!config.disableHttp) {
+        caddyfile += `:${config.httpPort} {\n`;
+        caddyfile += `    respond "HTTP access enabled. Redirect to HTTPS is disabled."\n`;
         caddyfile += `}\n`;
     }
     
@@ -253,6 +258,90 @@ const server = http.createServer(async (req, res) => {
             const success = await regenerateCertificates();
             res.writeHead(success ? 200 : 500, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ success }));
+            return;
+        }
+        
+        if (pathname === '/api/certificate/info' && req.method === 'GET') {
+            try {
+                const certPath = path.join(CERTS_DIR, 'umbrel.crt');
+                const { stdout } = await execAsync(`openssl x509 -in ${certPath} -noout -enddate`);
+                const expiryDate = stdout.replace('notAfter=', '').trim();
+                
+                const expiry = new Date(expiryDate);
+                const now = new Date();
+                const daysUntilExpiry = Math.floor((expiry - now) / (1000 * 60 * 60 * 24));
+                
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({
+                    expiry: expiryDate,
+                    daysUntilExpiry: daysUntilExpiry,
+                    warning: daysUntilExpiry < 30
+                }));
+            } catch (error) {
+                res.writeHead(500);
+                res.end('Failed to read certificate');
+            }
+            return;
+        }
+        
+        if (pathname === '/api/certificate/upload' && req.method === 'POST') {
+            const contentType = req.headers['content-type'] || '';
+            const boundaryMatch = contentType.match(/boundary=(?:"([^"]+)"|([^;]+))/i);
+            
+            if (!boundaryMatch) {
+                res.writeHead(400, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: 'Invalid content type' }));
+                return;
+            }
+            
+            const boundary = '--' + (boundaryMatch[1] || boundaryMatch[2]);
+            let body = '';
+            
+            req.on('data', chunk => { body += chunk; });
+            req.on('end', async () => {
+                try {
+                    const parts = body.split(boundary);
+                    let certBuffer = null;
+                    let keyBuffer = null;
+                    
+                    for (const part of parts) {
+                        if (!part.trim() || part === '--') continue;
+                        
+                        const lines = part.split('\r\n');
+                        const headerMatch = lines[1]?.match(/name="([^"]+)"/);
+                        if (!headerMatch) continue;
+                        
+                        const fieldName = headerMatch[1];
+                        const fileData = part.split('\r\n\r\n')[1];
+                        
+                        if (fileData) {
+                            const buffer = Buffer.from(fileData, 'binary');
+                            if (fieldName === 'cert') certBuffer = buffer;
+                            if (fieldName === 'key') keyBuffer = buffer;
+                        }
+                    }
+                    
+                    if (!certBuffer || !keyBuffer) {
+                        res.writeHead(400, { 'Content-Type': 'application/json' });
+                        res.end(JSON.stringify({ error: 'Missing cert or key file' }));
+                        return;
+                    }
+                    
+                    const certPath = path.join(CERTS_DIR, 'umbrel.crt');
+                    const keyPath = path.join(CERTS_DIR, 'umbrel.key');
+                    
+                    fs.writeFileSync(certPath, certBuffer);
+                    fs.writeFileSync(keyPath, keyBuffer);
+                    await execAsync(`chmod 600 ${keyPath}`);
+                    
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ success: true }));
+                } catch (error) {
+                    console.error('Upload error:', error);
+                    res.writeHead(500, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ error: 'Failed to save files' }));
+                }
+            });
             return;
         }
         

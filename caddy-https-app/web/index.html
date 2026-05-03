@@ -393,6 +393,38 @@
             margin-top: 6px;
         }
 
+        input[type="file"] {
+            display: block;
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px dashed #e2e8f0;
+            border-radius: 10px;
+            background: #f8fafc;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        input[type="file"]:hover {
+            border-color: #a5b4fc;
+            background: white;
+        }
+
+        .cert-warning {
+            background: linear-gradient(135deg, #fed7aa 0%, #fdba74 100%);
+            color: #9a3412;
+            padding: 16px;
+            border-radius: 12px;
+            margin-top: 15px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .cert-expired {
+            background: linear-gradient(135deg, #fca5a5 0%, #f87171 100%);
+            color: #991b1b;
+        }
+
         @media (max-width: 640px) {
             body {
                 padding: 20px 12px;
@@ -538,6 +570,17 @@
                     </select>
                     <div class="helper-text">Tell browsers to always use HTTPS</div>
                 </div>
+                <div class="form-group">
+                    <label for="disable-http-select">Disable HTTP Port</label>
+                    <select id="disable-http-select">
+                        <option value="false" selected>Keep HTTP Port (Recommended)</option>
+                        <option value="true">Disable HTTP (HTTPS Only)</option>
+                    </select>
+                    <div class="helper-text">
+                        When disabled, only HTTPS port will be accessible. 
+                        HTTP redirect will be disabled.
+                    </div>
+                </div>
                 <div class="alert alert-warning">
                     <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -590,7 +633,36 @@
                     <div class="info-label">Validity</div>
                     <div class="info-value">10 years</div>
                 </div>
+                <div class="info-item">
+                    <div class="info-label">Expires On</div>
+                    <div class="info-value" id="cert-expiry">Loading...</div>
+                </div>
             </div>
+            
+            <div id="cert-warning" class="cert-warning" style="display: none;">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <span id="cert-warning-text">Certificate expires in 30 days!</span>
+            </div>
+            
+            <div class="form-group" style="margin-top: 20px;">
+                <label>Upload Custom Certificate</label>
+                <input type="file" id="cert-upload" accept=".crt,.pem" style="margin-bottom: 10px;">
+                <div class="helper-text">Upload your own certificate (e.g., from mkcert)</div>
+                
+                <label style="margin-top: 10px;">Upload Custom Private Key</label>
+                <input type="file" id="key-upload" accept=".key" style="margin-bottom: 10px;">
+                <div class="helper-text">Upload the corresponding private key</div>
+                
+                <button class="btn btn-primary" onclick="uploadCertificate()" style="margin-top: 15px;">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                    </svg>
+                    Upload Certificate
+                </button>
+            </div>
+            
             <div class="button-group">
                 <button class="btn btn-secondary" onclick="regenerateCertificate()">
                     <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -634,12 +706,77 @@
                     document.getElementById('caddyfile-input').value = config.caddyfile || '';
                     document.getElementById('force-https-select').value = config.forceHttps !== false;
                     document.getElementById('hsts-select').value = config.hsts !== false;
+                    document.getElementById('disable-http-select').value = config.disableHttp || false;
                     document.getElementById('domain').textContent = config.domain || 'umbrel.local';
                     document.getElementById('https-port').textContent = config.httpsPort || 8443;
                     document.getElementById('http-port').textContent = config.httpPort || 8080;
                 }
+                await loadCertificateInfo();
             } catch (error) {
                 console.error('Failed to load configuration:', error);
+            }
+        }
+
+        // Load certificate expiry info
+        async function loadCertificateInfo() {
+            try {
+                const response = await fetch('/api/certificate/info');
+                if (response.ok) {
+                    const info = await response.json();
+                    document.getElementById('cert-expiry').textContent = info.expiry;
+                    
+                    if (info.warning) {
+                        const warningEl = document.getElementById('cert-warning');
+                        const textEl = document.getElementById('cert-warning-text');
+                        textEl.textContent = `Certificate expires in ${info.daysUntilExpiry} days!`;
+                        warningEl.style.display = 'flex';
+                        
+                        if (info.daysUntilExpiry <= 0) {
+                            warningEl.classList.add('cert-expired');
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to load certificate info:', error);
+                document.getElementById('cert-expiry').textContent = 'Unable to load';
+            }
+        }
+
+        // Upload certificate
+        async function uploadCertificate() {
+            const certFile = document.getElementById('cert-upload').files[0];
+            const keyFile = document.getElementById('key-upload').files[0];
+            
+            if (!certFile || !keyFile) {
+                showNotification('Please select both certificate and key files', 'error');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('cert', certFile);
+            formData.append('key', keyFile);
+            
+            showModal('Uploading Certificate', 'Please wait while uploading your certificate...');
+            
+            try {
+                const response = await fetch('/api/certificate/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (response.ok) {
+                    hideModal();
+                    showNotification('Certificate uploaded successfully!', 'success');
+                    document.getElementById('cert-upload').value = '';
+                    document.getElementById('key-upload').value = '';
+                    loadCertificateInfo();
+                } else {
+                    hideModal();
+                    showNotification('Failed to upload certificate', 'error');
+                }
+            } catch (error) {
+                hideModal();
+                showNotification('Failed to upload certificate: ' + error.message, 'error');
             }
         }
 
@@ -651,7 +788,8 @@
                 httpPort: parseInt(document.getElementById('http-port-input').value),
                 caddyfile: document.getElementById('caddyfile-input').value,
                 forceHttps: document.getElementById('force-https-select').value === 'true',
-                hsts: document.getElementById('hsts-select').value === 'true'
+                hsts: document.getElementById('hsts-select').value === 'true',
+                disableHttp: document.getElementById('disable-http-select').value === 'true'
             };
 
             try {
