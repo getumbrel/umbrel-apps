@@ -127,11 +127,33 @@ reject_future_seconds = 1800
 #  "887645fef0ce0c3c1218d2f5d8e6132a19304cdc57cd20281d082f38cfea0072",
 #]
 
-# Enable NIP-42 authentication (clients must AUTH before publishing)
+# Enable NIP-42 authentication (clients must AUTH before publishing).
+#
+# IMPORTANT — two-step gate before enabling:
+#   1. lnbits/nwcprovider does not yet respond to AUTH challenges from the relay.
+#      Enabling this will silently break NWC connections until upstream ships
+#      NIP-42 client auth support.  Track: https://github.com/lnbits/nwcprovider/issues
+#   2. lnbits/nostrrelay (if used as the NWC relay) has a known bug where the
+#      client's signed AUTH response (kind 22242) is not processed — the relay
+#      re-issues a challenge instead.  Track: https://github.com/lnbits/nostrrelay/issues/27
+#
+# Leave false until both upstreams are patched.
 #nip42_auth = false
 
-# Send DMs (kind 4 and 44) and gift wraps (kind 1059) only to authenticated recipients
+# Send DMs (kind 4 and 44) and gift wraps (kind 1059) only to authenticated recipients.
+# Only meaningful once nip42_auth = true.
 #nip42_dms = false
+
+# ── NIP-50 (full-text search) ──────────────────────────────────────────────────
+# NIP-50 search is NOT implemented in nostr-rs-relay 0.9.0.
+# When upstream support lands the expected config will live here, e.g.:
+#
+# [search]
+# #enabled = false
+# #max_terms = 10
+#
+# Track upstream: https://github.com/scsibug/nostr-rs-relay/issues
+# ──────────────────────────────────────────────────────────────────────────────
 
 [verified_users]
 # NIP-05 verification of users.  Can be "enabled" to require NIP-05
