@@ -31,7 +31,10 @@ DUMP_DONE_FILE="${APP_DATA_DIR}/.v016_dumped"
 APPLY_DONE_FILE="${APP_DATA_DIR}/.v016_applied"
 
 OLD_IMAGE="stalwartlabs/stalwart:v0.15.5@sha256:dcf575db2d53d9ef86d6ced8abe4ba491984659a0f8862cc6079ee7b41c3c568"
-FINAL_IMAGE="stalwartlabs/stalwart:v0.16.0@sha256:4b40e0efd1eaa10f04a955b35283b19d4cc9a1dec3ebcfcfab8f6f70f9e3c74d"
+FINAL_IMAGE="stalwartlabs/stalwart:v0.16.3@sha256:5d75cff4e9c6d75e64636e9ef9674b1d877f8f6fb2e11ee8176fbad3faaa5289"
+OLD_PROXY_PORT="8745"
+OLD_HTTP_PORT="18080"
+OLD_HTTP_URL=""
 RECOVERY_CONTAINER="stalwart-v016-recovery"
 RECOVERY_PORT="38080"
 OLD_APP_STARTED=0
@@ -111,11 +114,19 @@ wait_for_v015_api() {
   local max_wait="${1}"
   local elapsed=0
   local interval=5
+  local url
+  local urls=(
+    "http://127.0.0.1:${OLD_PROXY_PORT}"
+    "http://127.0.0.1:${OLD_HTTP_PORT}"
+  )
 
   while [[ ${elapsed} -lt ${max_wait} ]]; do
-    if curl -fsSk -u "admin:${APP_PASSWORD}" "https://127.0.0.1:10443/api/settings/list?prefix=&page=1&limit=1" >/dev/null 2>&1; then
-      return 0
-    fi
+    for url in "${urls[@]}"; do
+      if curl -fsS -u "admin:${APP_PASSWORD}" "${url}/api/settings/list?prefix=&page=1&limit=1" >/dev/null 2>&1; then
+        OLD_HTTP_URL="${url}"
+        return 0
+      fi
+    done
 
     sleep "${interval}"
     elapsed=$((elapsed + interval))
@@ -125,11 +136,28 @@ wait_for_v015_api() {
   return 1
 }
 
+prepare_v015_fallback_admin() {
+  local new_secret
+
+  if [[ ! -f "${LEGACY_CONFIG_TOML}" ]]; then
+    return 0
+  fi
+
+  if ! grep -q "^\[authentication\.fallback-admin\]" "${LEGACY_CONFIG_TOML}"; then
+    return 0
+  fi
+
+  new_secret="$(openssl passwd -6 -salt 8woP51TKJO.JKOp9 "${APP_PASSWORD}")"
+  sed -i.bak "/^\[authentication\.fallback-admin\]/,/^\[/s|^secret = .*|secret = \"${new_secret}\"|" "${LEGACY_CONFIG_TOML}"
+  rm -f "${LEGACY_CONFIG_TOML}.bak"
+}
+
 switch_compose_to_v015() {
   cp "${APP_COMPOSE_FILE}" "${APP_COMPOSE_BACKUP_FILE}"
   yq -i ".services.server.image = \"${OLD_IMAGE}\"" "${APP_COMPOSE_FILE}"
   yq -i '.services.server.user = "1000:1000"' "${APP_COMPOSE_FILE}"
   yq -i '.services.server.volumes = ["${APP_DATA_DIR}/data:/opt/stalwart"]' "${APP_COMPOSE_FILE}"
+  yq -i ".services.server.ports += [\"127.0.0.1:${OLD_HTTP_PORT}:8080\"]" "${APP_COMPOSE_FILE}"
 }
 
 download_migration_script() {
@@ -224,7 +252,7 @@ run_dump_and_convert() {
   download_migration_script
 
   run_migration_script dump \
-    --url "https://127.0.0.1:10443" \
+    --url "${OLD_HTTP_URL:-http://127.0.0.1:${OLD_HTTP_PORT}}" \
     --username admin \
     --password "${APP_PASSWORD}" \
     --settings /migration/settings.json \
@@ -254,7 +282,7 @@ prepare_v016_layout() {
   fi
 
   cp "${GENERATED_CONFIG_JSON}" "${FINAL_CONFIG_JSON}"
-  chown -R 2000:2000 "${FINAL_ETC_DIR}" "${FINAL_SERVER_DIR}" 2>/dev/null || true
+  chown -R 1000:1000 "${FINAL_ETC_DIR}" "${FINAL_SERVER_DIR}" 2>/dev/null || true
 }
 
 start_recovery_container() {
@@ -262,6 +290,7 @@ start_recovery_container() {
 
   docker run -d \
     --name "${RECOVERY_CONTAINER}" \
+    --user "1000:1000" \
     -e STALWART_RECOVERY_MODE=1 \
     -e "STALWART_RECOVERY_ADMIN=admin:${APP_PASSWORD}" \
     -p "127.0.0.1:${RECOVERY_PORT}:8080" \
@@ -309,6 +338,7 @@ stop_recovery_container() {
 
 require_command curl
 require_command docker
+require_command openssl
 require_command yq
 
 if [[ -z "${APP_PASSWORD:-}" ]]; then
@@ -320,6 +350,7 @@ touch "${LOCK_FILE}"
 
 echo "Starting Stalwart v0.15 to v0.16 migration..."
 
+prepare_v015_fallback_admin
 switch_compose_to_v015
 "${UMBREL_ROOT}/scripts/app" start "${APP_ID}"
 OLD_APP_STARTED=1
