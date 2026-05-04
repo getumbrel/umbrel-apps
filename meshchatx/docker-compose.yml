@@ -1,0 +1,16 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: meshchatx_web_1
+      APP_PORT: 8000
+
+  web:
+    image: ghcr.io/quad4-software/meshchatx:4.6.1@sha256:eceb2ca5a9c6b6feb47f0fc46ed8ffb0d6a03620d798ec56b35617fa7db00ce9
+    restart: on-failure
+    user: "1000:1000"
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+    environment:
+      MESHCHAT_NO_HTTPS: "true" # disable https
