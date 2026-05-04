@@ -1,0 +1,29 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: pyblock_web_1
+      APP_PORT: 6969
+
+  web:
+    image: galtranch/pyblock:v4.0.0@sha256:3b9ed2849732755277d626a39da1df01eb76d7449f5e4a5dd05c846e6f57f6c0
+    restart: on-failure
+    stop_grace_period: 1m
+    user: "1000:1000"
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+    environment:
+      # Bitcoin Core RPC (injected by Umbrel)
+      BITCOIN_RPC_HOST: $APP_BITCOIN_NODE_IP
+      BITCOIN_RPC_PORT: $APP_BITCOIN_RPC_PORT
+      BITCOIN_RPC_USER: $APP_BITCOIN_RPC_USER
+      BITCOIN_RPC_PASS: $APP_BITCOIN_RPC_PASS
+      # LND (injected by Umbrel)
+      LND_HOST: $APP_LIGHTNING_NODE_IP
+      LND_GRPC_PORT: $APP_LIGHTNING_NODE_GRPC_PORT
+      LND_TLS_CERT_PATH: /lnd/tls.cert
+      LND_MACAROON_PATH: /lnd/data/chain/bitcoin/${APP_BITCOIN_NETWORK}/readonly.macaroon
+      # PyBLOCK auto-config
+      PYBLOCK_MODE: "A"
+      PYBLOCK_PORT: "6969"
