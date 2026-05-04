@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: synapse
 category: social
 name: Synapse
-version: "1.151.0"
+version: "1.152.0"
 tagline: Matrix homeserver
 description: >-
   Synapse is an open source Matrix homeserver implementation, written and maintained by Element. Matrix is the open standard for secure and interoperable real time communications.
@@ -43,12 +43,13 @@ submitter: Umbrel
 submission: https://github.com/getumbrel/umbrel/commit/c9f0975e766e79d4bd6adf4255cd081f54d654cb
 releaseNotes: >-
   Key highlights in this release:
-    - Added stable support for Policy Servers (MSC4284)
-    - Added stable support for getting rooms in common with another user
-    - Added option to use HTTP/2 over plaintext when connecting to Matrix Authentication Service
-    - Fixed sync failures that could occur for rooms with a missing room version in the database
-    - Fixed quarantine media admin APIs sometimes returning inaccurate counts for remote media
-    - Fixed Synapse failing to start when OpenID Connect provider discovery fails
+    - Added a new Admin API for listing quarantined media changes with pagination
+    - Added support for re-signing local events with a new signing key
+    - Added Admin API endpoints to list, fetch, and delete user reports
+    - Reduced database disk space usage by pruning old rows from device list changes
+    - Fixed a bug where a non-admin could bypass admin checks for downloading remote quarantined media
+    - Fixed database migrations failing on macOS due to SQLite defensive configuration
+    - Fixed rejection of null device keys in key upload requests to match the spec
 
 
   Full release notes are found at https://github.com/element-hq/synapse/releases
