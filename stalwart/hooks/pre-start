@@ -15,7 +15,7 @@ FINAL_CONFIG_JSON="${FINAL_ETC_DIR}/config.json"
 
 MIGRATION_DIR="${APP_DATA_DIR}/migration-v016"
 MIGRATION_SCRIPT="${MIGRATION_DIR}/migrate_v016.py"
-MIGRATION_SCRIPT_URL="https://raw.githubusercontent.com/stalwartlabs/stalwart/8b7f7b091a1fcd3a0ce9bd058fb9228203109aa9/resources/scripts/migrate_v016.py"
+MIGRATION_SCRIPT_URL="https://raw.githubusercontent.com/stalwartlabs/stalwart/b1c76b3a9f0508c21638c3507fbd3aa00fb34a7f/resources/scripts/migrate_v016.py"
 MIGRATION_PYTHON_IMAGE="python:3.13-alpine"
 STALWART_CLI_INSTALLER_URL="https://github.com/stalwartlabs/cli/releases/download/v1.0.4/stalwart-cli-installer.sh"
 SETTINGS_JSON="${MIGRATION_DIR}/settings.json"
@@ -23,6 +23,7 @@ PRINCIPALS_JSON="${MIGRATION_DIR}/principals.json"
 GENERATED_CONFIG_JSON="${MIGRATION_DIR}/config.json"
 EXPORT_JSON="${MIGRATION_DIR}/export.json"
 UNMIGRATED_TXT="${MIGRATION_DIR}/unmigrated.txt"
+FALLBACK_DEFAULT_HOSTNAME="stalwart.example.com"
 
 LOCK_FILE="${APP_DATA_DIR}/.v016_migrating"
 DONE_FILE="${APP_DATA_DIR}/.v016_migrated"
@@ -148,11 +149,13 @@ run_migration_script() {
 
 sanitize_export_snapshot() {
   docker run --rm -i \
+    -e "FALLBACK_DEFAULT_HOSTNAME=${FALLBACK_DEFAULT_HOSTNAME}" \
     -v "${MIGRATION_DIR}:/migration" \
     -w /migration \
     "${MIGRATION_PYTHON_IMAGE}" \
     python - <<'PY'
 import json
+import os
 import re
 from pathlib import Path
 
@@ -170,8 +173,10 @@ def valid_hostname(value):
     value = value.strip().rstrip(".")
     if not value or len(value) > 253 or "." not in value:
         return False
+    reserved_tlds = {"test", "local", "localhost", "invalid", "example"}
     label_re = re.compile(r"^[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?$")
-    return all(label_re.match(label) for label in value.split("."))
+    labels = value.split(".")
+    return labels[-1].lower() not in reserved_tlds and all(label_re.match(label) for label in labels)
 
 domains = {}
 for op in ops:
@@ -195,11 +200,9 @@ for op in ops:
     if replacement is None and domains:
         replacement = sorted(domains.values())[0]
     if replacement is None:
-        value.pop("defaultHostname", None)
-        print(f"removed invalid SystemSettings.defaultHostname: {current!r}")
-    else:
-        value["defaultHostname"] = replacement
-        print(f"replaced invalid SystemSettings.defaultHostname {current!r} with {replacement!r}")
+        replacement = os.environ["FALLBACK_DEFAULT_HOSTNAME"]
+    value["defaultHostname"] = replacement
+    print(f"replaced invalid SystemSettings.defaultHostname {current!r} with {replacement!r}")
     changed = True
 
 if changed:
