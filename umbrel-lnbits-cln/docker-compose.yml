@@ -1,0 +1,136 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      # Use exported app IP instead of container hostname to avoid project-name drift
+      # between app-id variants (e.g. lnbits-cln vs umbrel-lnbits-cln).
+      APP_HOST: ${APP_LNBITS_CLN_IP}
+      APP_PORT: 3009
+      PROXY_AUTH_ADD: "false"
+
+  web:
+    container_name: lnbits-cln_web_1
+    image: lnbits/lnbits:v1.5.0@sha256:47567b98e19e38639824b40de0a6029d31ccdf5d323ffb4995f0a8b4b560b59f
+    init: true
+    restart: on-failure
+    stop_grace_period: 1m
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+      # CLN data dir for CLNRestWallet backend (certs + rune file)
+      - ${APP_CORE_LIGHTNING_DATA_DIR}:/cln:ro
+    environment:
+      # Global
+      LNBITS_HOST: "0.0.0.0"
+      LNBITS_PORT: 3009
+      LNBITS_DATA_FOLDER: "/data"
+
+      # ---------------------------------------------------------------
+      # Backend selection — choose ONE wallet class:
+      #
+      # Option A: CoreLightningWallet (JSON-RPC unix socket)
+      #   Full admin access via pyln-client. Simple, no TLS/runes.
+      #   Requires: CORELIGHTNING_RPC volume mount above.
+      #
+      # Option B: CLNRestWallet (HTTPS + fine-grained runes)
+      #   Principle of least privilege. Each rune is method-restricted.
+      #   Requires: CLNREST_* vars + certs volume mount above.
+      #   Runes are created by hooks/pre-start on first boot.
+      # ---------------------------------------------------------------
+      # Constrain allowed wallet classes for LNbits operations to CLN-focused
+      # backends plus VoidWallet. Note: LNbits admin UI may still display the
+      # full upstream backend list; this allowlist is still enforced at runtime.
+      LNBITS_ALLOWED_FUNDING_SOURCES: "CLNRestWallet,CoreLightningWallet,VoidWallet"
+
+      # --- Option A: CoreLightningWallet (JSON-RPC) ---
+      CORELIGHTNING_RPC: "/cln/${APP_CORE_LIGHTNING_BITCOIN_NETWORK:-bitcoin}/lightning-rpc"
+
+      # --- Option B: CLNRestWallet (HTTPS + runes) ---
+      CLNREST_URL: "${CLNREST_URL}"
+      CLNREST_CA: "/cln/${APP_CORE_LIGHTNING_BITCOIN_NETWORK:-bitcoin}/ca.pem"
+      CLNREST_CLIENT_CERT: "/cln/${APP_CORE_LIGHTNING_BITCOIN_NETWORK:-bitcoin}/client.pem"
+      CLNREST_CLIENT_KEY: "/cln/${APP_CORE_LIGHTNING_BITCOIN_NETWORK:-bitcoin}/client-key.pem"
+      CLNREST_READONLY_RUNE: "${APP_LNBITS_CLN_READONLY_RUNE}"
+      CLNREST_INVOICE_RUNE: "${APP_LNBITS_CLN_INVOICE_RUNE}"
+      CLNREST_PAY_RUNE: "${APP_LNBITS_CLN_PAY_RUNE}"
+
+      # Public URL overrides — required for LNURL, LNDHub, and NIP-05 to emit
+      # the operator's public domain instead of http://umbrel.local:PORT.
+      # Set APP_LNBITS_CLN_BASEURL in exports.sh (or the .env file in app-data)
+      # to control the public-facing URL used in LNURL callbacks and Lightning
+      # Addresses. Example: APP_LNBITS_CLN_BASEURL=https://yourdomain.com
+      LNBITS_BASEURL: "${APP_LNBITS_CLN_BASEURL:-}"
+
+      # Exchange rate providers (comma-separated; no API key required for kraken)
+      LNBITS_EXCHANGE_PROVIDERS: "kraken,yadio"
+
+      # App
+      LNBITS_SITE_TITLE: "LNbits - CLN - Umbrel"
+      LNBITS_DEFAULT_WALLET_NAME: "Core Lightning Wallet"
+      LNBITS_DISABLED_EXTENSIONS: "amilk"
+      LNBITS_ADMIN_EXTENSIONS: "ngrok"
+      LNBITS_ADMIN_UI: "true"
+    command:
+      - sh
+      - -c
+      - |
+        BACKEND_CLASS="$$LNBITS_BACKEND_WALLET_CLASS"
+        if [ -z "$$BACKEND_CLASS" ] && [ -s /data/database.sqlite3 ]; then
+          BACKEND_CLASS="$$(python3 -c "import sqlite3; row=sqlite3.connect('/data/database.sqlite3').execute(\"SELECT value FROM system_settings WHERE id='lnbits_backend_wallet_class'\").fetchone(); v=(row[0] if row and row[0] else ''); print(v.strip('\\\"'))")" || {
+            echo "Failed to read lnbits_backend_wallet_class from DB; retrying container startup."
+            exit 1
+          }
+        fi
+        if [ -z "$$BACKEND_CLASS" ]; then
+          # First boot default when no persisted backend exists yet.
+          BACKEND_CLASS="CLNRestWallet"
+          python3 -c "import sqlite3; c=sqlite3.connect('/data/database.sqlite3'); c.execute(\"INSERT OR REPLACE INTO system_settings(id,value,tag) VALUES('lnbits_backend_wallet_class','\\\"CLNRestWallet\\\"','core')\"); c.commit(); c.close()" >/dev/null 2>&1 || true
+        fi
+
+        # Make runtime backend explicit so LNbits startup matches persisted selection.
+        export LNBITS_BACKEND_WALLET_CLASS="$$BACKEND_CLASS"
+
+        if [ "$$BACKEND_CLASS" = "CLNRestWallet" ]; then
+          echo "Waiting for CLNRest readiness before starting LNbits..."
+          for i in $$(seq 1 90); do
+            if curl -s --fail --max-time 5 \
+              --cacert "$$CLNREST_CA" \
+              --cert "$$CLNREST_CLIENT_CERT" \
+              --key "$$CLNREST_CLIENT_KEY" \
+              -H "rune: $$CLNREST_READONLY_RUNE" \
+              -X POST "$$CLNREST_URL/v1/listfunds" | grep -q '"channels"'; then
+              echo "CLNRest ready. Starting LNbits."
+              break
+            fi
+            if [ "$$i" -eq 90 ]; then
+              echo "CLNRest not ready after timeout; failing startup to retry."
+              exit 1
+            fi
+            sleep 2
+          done
+        elif [ "$$BACKEND_CLASS" = "CoreLightningWallet" ]; then
+          SOCKET_PATH="/cln/${APP_CORE_LIGHTNING_BITCOIN_NETWORK:-bitcoin}/lightning-rpc"
+          # Keep persisted LNbits setting aligned with this app's mounted socket path.
+          python3 -c "import os,sqlite3; p=os.environ.get('CORELIGHTNING_RPC',''); c=sqlite3.connect('/data/database.sqlite3'); v='\"'+p+'\"'; cur=c.cursor(); cur.execute(\"UPDATE system_settings SET value=? WHERE id='corelightning_rpc' AND tag='core'\", (v,)); cur.execute(\"INSERT INTO system_settings(id,value,tag) SELECT 'corelightning_rpc', ?, 'core' WHERE NOT EXISTS (SELECT 1 FROM system_settings WHERE id='corelightning_rpc' AND tag='core')\", (v,)); c.commit(); c.close()" >/dev/null 2>&1 || true
+          echo "Waiting for CoreLightning socket readiness before starting LNbits..."
+          for i in $$(seq 1 90); do
+            if [ -S "$$SOCKET_PATH" ] && python3 -c "import socket,sys; s=socket.socket(socket.AF_UNIX); s.settimeout(2); s.connect(sys.argv[1]); s.close()" "$$SOCKET_PATH" >/dev/null 2>&1; then
+              echo "CoreLightning socket ready. Starting LNbits."
+              break
+            fi
+            if [ "$$i" -eq 90 ]; then
+              echo "CoreLightning socket not ready after timeout; failing startup to retry."
+              exit 1
+            fi
+            sleep 2
+          done
+        fi
+        exec uv run lnbits --port "$$LNBITS_PORT" --host "$$LNBITS_HOST" --forwarded-allow-ips='*'
+    networks:
+      default:
+        ipv4_address: ${APP_LNBITS_CLN_IP}
+
+networks:
+  default:
+    name: umbrel_main_network
+    external: true
