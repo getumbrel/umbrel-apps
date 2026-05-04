@@ -3,7 +3,7 @@ id: opencode
 name: OpenCode
 tagline: The open source AI coding agent
 category: ai
-version: "1.14.28"
+version: "1.14.33"
 port: 4096
 description: >-
   OpenCode is an open source AI coding agent designed to enhance your development
@@ -37,29 +37,29 @@ releaseNotes: >-
 
 
   Core improvements:
-    - Fixed issue with opencode upgrade failing for bun installs
-    - Added a configurable default shell for terminals and agent shell commands
-    - Fixed config parsing to preserve permission rule order
-    - Fixed OpenRouter DeepSeek reasoning output handling
-    - Added Zed editor selection support for editor context
-    - Fixed permission config preserving rule order with full IntelliSense for tool permission keys
-    - LSP permission prompts now include request details like the operation, file, and cursor position
-    - Added Roslyn LSP support for Razor, .cshtml, and C# script files
-    - Fixed DeepSeek assistant messages so reasoning is always included
-    - Added experimental HTTP API endpoints to list files, read file contents, and check project file status
-    - Respected custom .npmrc registry settings when checking package versions
+    - Fixed custom agents in plugins not loading
+    - Sessions now keep a relative workspace path
+    - Shell cancellations now finish cleanly instead of leaving commands in a bad state
+    - Added Mistral Medium 3.5 with reasoning support
+    - Made instruction precedence more predictable by applying global instructions first
+    - Fixed forked sessions so compacted history stays intact
+    - Unsupported image formats now fall back to text reads instead of being sent as image attachments
+    - Fixed Bedrock sessions that include reasoning content when switching models
+    - Azure setup now prompts for the resource name when needed and saves it with the API key
+    - Fixed HTTP API workspace adapters losing instance context
 
 
   TUI improvements:
-    - Added Zed editor selection support for editor context
-    - Show a /connect tip when no models are configured
-    - Restored the default toast timeout when no custom duration is provided
-    - Hid provider connection checks until onboarding is complete
+    - Added a quick toggle for paste summaries
+    - Invalid custom themes no longer crash the TUI on startup
+    - Pressing Enter in dialogs now triggers the dialog instead of leaking through
+    - File context is clearer, can be turned off, and clears after sending
 
 
   Desktop improvements:
-    - Added a configurable default shell setting
-    - Fixed session views not getting stuck with stale state when switching between sessions
+    - Per-workspace icon overrides now stay applied for subdirectories in the same repo
+    - Sync state loading is more reliable for MCP, LSP, and workspace refreshes
+    - Restoring saved messages no longer crashes the app when a model is missing
 
 
   Full release notes can be found at https://github.com/anomalyco/opencode/releases
