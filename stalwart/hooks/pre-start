@@ -14,9 +14,9 @@ FINAL_SERVER_DIR="${LEGACY_ROOT}/server"
 FINAL_CONFIG_JSON="${FINAL_ETC_DIR}/config.json"
 
 MIGRATION_DIR="${APP_DATA_DIR}/migration-v016"
-MIGRATION_VENV="${MIGRATION_DIR}/venv"
 MIGRATION_SCRIPT="${MIGRATION_DIR}/migrate_v016.py"
 MIGRATION_SCRIPT_URL="https://raw.githubusercontent.com/stalwartlabs/stalwart/8b7f7b091a1fcd3a0ce9bd058fb9228203109aa9/resources/scripts/migrate_v016.py"
+MIGRATION_PYTHON_IMAGE="python:3.13-alpine"
 SETTINGS_JSON="${MIGRATION_DIR}/settings.json"
 PRINCIPALS_JSON="${MIGRATION_DIR}/principals.json"
 GENERATED_CONFIG_JSON="${MIGRATION_DIR}/config.json"
@@ -136,12 +136,13 @@ download_migration_script() {
   chmod 0755 "${MIGRATION_SCRIPT}"
 }
 
-ensure_python_environment() {
-  if [[ ! -x "${MIGRATION_VENV}/bin/python" ]]; then
-    python3 -m venv "${MIGRATION_VENV}"
-  fi
-
-  "${MIGRATION_VENV}/bin/python" -m pip install requests urllib3
+run_migration_script() {
+  docker run --rm \
+    --network host \
+    -v "${MIGRATION_DIR}:/migration" \
+    -w /migration \
+    "${MIGRATION_PYTHON_IMAGE}" \
+    sh -c 'python -m pip install --quiet --no-cache-dir requests urllib3 && python /migration/migrate_v016.py "$@"' migrate_v016 "$@"
 }
 
 run_dump_and_convert() {
@@ -151,22 +152,20 @@ run_dump_and_convert() {
 
   download_migration_script
 
-  ensure_python_environment
-
-  "${MIGRATION_VENV}/bin/python" "${MIGRATION_SCRIPT}" dump \
+  run_migration_script dump \
     --url "https://127.0.0.1:10443" \
     --username admin \
     --password "${APP_PASSWORD}" \
-    --settings "${SETTINGS_JSON}" \
-    --principals "${PRINCIPALS_JSON}"
+    --settings /migration/settings.json \
+    --principals /migration/principals.json
 
-  "${MIGRATION_VENV}/bin/python" "${MIGRATION_SCRIPT}" convert \
-    --settings "${SETTINGS_JSON}" \
-    --principals "${PRINCIPALS_JSON}" \
-    --config "${GENERATED_CONFIG_JSON}" \
-    --output "${EXPORT_JSON}" \
+  run_migration_script convert \
+    --settings /migration/settings.json \
+    --principals /migration/principals.json \
+    --config /migration/config.json \
+    --output /migration/export.json \
     --patch-paths /opt/stalwart=/var/lib/stalwart \
-    --unmigrated-output "${UNMIGRATED_TXT}"
+    --unmigrated-output /migration/unmigrated.txt
 
   touch "${DUMP_DONE_FILE}"
 }
@@ -228,7 +227,6 @@ stop_recovery_container() {
 
 require_command curl
 require_command docker
-require_command python3
 require_command yq
 
 if [[ -z "${APP_PASSWORD:-}" ]]; then
