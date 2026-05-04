@@ -3,7 +3,7 @@ id: lobe-chat
 name: Lobe Hub
 tagline: Your self-hosted AI workspace for chat, agents, and knowledge
 category: ai
-version: "2.1.54"
+version: "2.1.56"
 port: 7455
 description: >-
   💬 Lobe Hub is a self-hosted AI workspace for conversations, agent teams,
@@ -36,14 +36,14 @@ defaultUsername: ""
 defaultPassword: ""
 dependencies: []
 releaseNotes: >-
-  This is a hotfix release addressing a navigation regression introduced in v2.1.53.
+  This release includes fixes from v2.1.55 and a database schema update in v2.1.56. The migration runs automatically on startup — no manual steps are required.
 
 
   Key changes:
-    - Fixed stale chat state when switching between agents — the previous topic no longer carries over
-    - Fixed conversation context isolation so the correct agent/topic/thread state loads immediately on switch
-    - Fixed sidebar thread list staying expanded while viewing a subtopic
-    - Fixed the header showing the correct thread title for active subtopics
+    - Fixed an issue where sending the first message in an empty Page Agent panel would clear the newly created topic
+    - Fixed sending from the Home chat input not routing to the correct new topic when the route had no warm cache
+    - Fixed stale topics being carried over when switching between agents or scoped pages
+    - Added two new nullable columns (`trigger`, `metadata`) and an index to the `briefs` table — existing data is unaffected
 
 
   Full release notes are available at https://github.com/lobehub/lobehub/releases
