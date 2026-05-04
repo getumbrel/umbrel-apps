@@ -146,8 +146,75 @@ run_migration_script() {
     sh -c 'python -m pip install --quiet --no-cache-dir requests urllib3 && python /migration/migrate_v016.py "$@"' migrate_v016 "$@"
 }
 
+sanitize_export_snapshot() {
+  docker run --rm -i \
+    -v "${MIGRATION_DIR}:/migration" \
+    -w /migration \
+    "${MIGRATION_PYTHON_IMAGE}" \
+    python - <<'PY'
+import json
+import re
+from pathlib import Path
+
+path = Path("/migration/export.json")
+ops = []
+with path.open("r", encoding="utf-8") as handle:
+    for line in handle:
+        line = line.strip()
+        if line:
+            ops.append(json.loads(line))
+
+def valid_hostname(value):
+    if not isinstance(value, str):
+        return False
+    value = value.strip().rstrip(".")
+    if not value or len(value) > 253 or "." not in value:
+        return False
+    label_re = re.compile(r"^[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?$")
+    return all(label_re.match(label) for label in value.split("."))
+
+domains = {}
+for op in ops:
+    if op.get("@type") == "create" and op.get("object") == "Domain":
+        for create_id, value in op.get("value", {}).items():
+            name = value.get("name")
+            if valid_hostname(name):
+                domains[create_id] = name.strip().rstrip(".").lower()
+
+changed = False
+for op in ops:
+    if op.get("@type") != "update" or op.get("object") != "SystemSettings":
+        continue
+    value = op.get("value", {})
+    current = value.get("defaultHostname")
+    if valid_hostname(current):
+        value["defaultHostname"] = current.strip().rstrip(".").lower()
+        continue
+    default_domain_id = str(value.get("defaultDomainId", "")).removeprefix("#")
+    replacement = domains.get(default_domain_id)
+    if replacement is None and domains:
+        replacement = sorted(domains.values())[0]
+    if replacement is None:
+        value.pop("defaultHostname", None)
+        print(f"removed invalid SystemSettings.defaultHostname: {current!r}")
+    else:
+        value["defaultHostname"] = replacement
+        print(f"replaced invalid SystemSettings.defaultHostname {current!r} with {replacement!r}")
+    changed = True
+
+if changed:
+    tmp = path.with_suffix(".json.tmp")
+    with tmp.open("w", encoding="utf-8") as handle:
+        for op in ops:
+            handle.write(json.dumps(op, ensure_ascii=False))
+            handle.write("\n")
+    tmp.replace(path)
+PY
+}
+
 run_dump_and_convert() {
   if [[ -f "${DUMP_DONE_FILE}" && -f "${GENERATED_CONFIG_JSON}" && -f "${EXPORT_JSON}" ]]; then
+    sanitize_export_snapshot
     return 0
   fi
 
@@ -168,10 +235,15 @@ run_dump_and_convert() {
     --patch-paths /opt/stalwart=/var/lib/stalwart \
     --unmigrated-output /migration/unmigrated.txt
 
+  sanitize_export_snapshot
   touch "${DUMP_DONE_FILE}"
 }
 
 prepare_v016_layout() {
+  if [[ ! -f "${APPLY_DONE_FILE}" ]]; then
+    rm -rf "${FINAL_SERVER_DIR}"
+  fi
+
   mkdir -p "${FINAL_ETC_DIR}" "${FINAL_SERVER_DIR}"
 
   if [[ -d "${LEGACY_DATA_DIR}" ]]; then
