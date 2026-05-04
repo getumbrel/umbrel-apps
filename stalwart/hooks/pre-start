@@ -17,6 +17,7 @@ MIGRATION_DIR="${APP_DATA_DIR}/migration-v016"
 MIGRATION_SCRIPT="${MIGRATION_DIR}/migrate_v016.py"
 MIGRATION_SCRIPT_URL="https://raw.githubusercontent.com/stalwartlabs/stalwart/8b7f7b091a1fcd3a0ce9bd058fb9228203109aa9/resources/scripts/migrate_v016.py"
 MIGRATION_PYTHON_IMAGE="python:3.13-alpine"
+STALWART_CLI_INSTALLER_URL="https://github.com/stalwartlabs/cli/releases/download/v1.0.4/stalwart-cli-installer.sh"
 SETTINGS_JSON="${MIGRATION_DIR}/settings.json"
 PRINCIPALS_JSON="${MIGRATION_DIR}/principals.json"
 GENERATED_CONFIG_JSON="${MIGRATION_DIR}/config.json"
@@ -201,21 +202,27 @@ apply_export() {
     return 0
   fi
 
-  if ! docker run --rm --entrypoint sh "${FINAL_IMAGE}" -c 'command -v stalwart-cli >/dev/null 2>&1'; then
-    echo "Error: stalwart-cli was not found in ${FINAL_IMAGE}."
-    echo "The migration snapshot at ${EXPORT_JSON} was generated, but applying it requires stalwart-cli."
-    exit 1
-  fi
-
   docker run --rm \
-    --entrypoint stalwart-cli \
     --network host \
     -e STALWART_URL="http://127.0.0.1:${RECOVERY_PORT}" \
     -e STALWART_USER=admin \
     -e "STALWART_PASSWORD=${APP_PASSWORD}" \
-    -v "${MIGRATION_DIR}:/migration:ro" \
-    "${FINAL_IMAGE}" \
-    apply --file /migration/export.json
+    -e "STALWART_CLI_INSTALLER_URL=${STALWART_CLI_INSTALLER_URL}" \
+    -e STALWART_CLI_UNMANAGED_INSTALL=/migration/stalwart-cli \
+    -e STALWART_CLI_NO_MODIFY_PATH=1 \
+    -e STALWART_CLI_PRINT_QUIET=1 \
+    -v "${MIGRATION_DIR}:/migration" \
+    -w /migration \
+    "${MIGRATION_PYTHON_IMAGE}" \
+    sh -ec '
+      if [ ! -x /migration/stalwart-cli/stalwart-cli ]; then
+        rm -rf /migration/stalwart-cli
+        mkdir -p /migration/stalwart-cli
+        wget -qO- "$STALWART_CLI_INSTALLER_URL" | sh
+      fi
+
+      /migration/stalwart-cli/stalwart-cli apply --file /migration/export.json
+    '
 
   touch "${APPLY_DONE_FILE}"
 }
