@@ -3,7 +3,7 @@ id: gitea-mirror
 name: Gitea Mirror
 tagline: Mirror your GitHub repositories to a Gitea instance automatically
 category: developer
-version: "3.15.9"
+version: "3.15.10"
 port: 4322
 description: >-
   Gitea Mirror automatically mirrors your GitHub repositories to a self-hosted Gitea instance. It supports mirroring public and private repositories, organizations, starred repos, issues, wikis, and pull requests.
@@ -42,13 +42,10 @@ defaultUsername: ""
 defaultPassword: ""
 dependencies: []
 releaseNotes: >-
-  🐛 Bug Fixes
-    - Fixed repositories getting permanently stuck in the "mirroring" state when a transient error occurred during mirroring — they now correctly move to "failed" and can be retried
-    - Fixed the "Auto-mirror new starred repositories" checkbox not actually triggering mirroring for starred repos from other owners
-
-
   ✨ New Features
-    - Added a UI toggle for "Auto-mirror new repositories" in the Automation settings, so auto-mirroring owned repos no longer requires setting an environment variable
+    - Added an "Include collaborator repositories" toggle in the GitHub configuration panel — uncheck it to only mirror repositories you own, excluding repos you're a collaborator on
+    - New environment variable `INCLUDE_COLLABORATOR_REPOS` (default `true`) allows controlling this setting without touching the UI
+    - When the collaborator toggle is off, previously-mirrored collaborator repos are still protected from orphan cleanup and will not be archived or deleted
 
 
   Full release notes can be found at https://github.com/raylabshq/gitea-mirror
