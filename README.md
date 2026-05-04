@@ -1,5 +1,14 @@
 # Umbrel App Framework
 
+## Satwise Architecture Runbooks
+
+This fork maintains architecture runbooks for the Nostr stack:
+
+- Umbrel packaging runbook: [`nostr-relay/ARCHITECTURE-RUNBOOK.md`](nostr-relay/ARCHITECTURE-RUNBOOK.md)
+- Core relay source runbook: <https://github.com/satwise/nostr-rs-relay/blob/master/ARCHITECTURE-RUNBOOK.md>
+- Non-Umbrel deployment/app runbook: <https://github.com/satwise/nostrrelay/blob/main/ARCHITECTURE-RUNBOOK.md>
+- Organization: <https://github.com/satwise>
+
 If you can code in any language, you already know how to develop an app for Umbrel. There is no restriction on the kinds of programming languages, frameworks, or databases that you can use. Apps run inside isolated [Docker](https://docs.docker.com/) containers, and the only requirement is that they should serve a web-based UI.
 
 > Some server apps might not have a UI at all. In that case, the app should serve a simple web page listing the connection details, QR codes, setup instructions, and anything else needed for the user to connect. The user is never expected to have CLI access on Umbrel.
