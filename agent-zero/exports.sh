@@ -1,4 +1,4 @@
-export APP_AGENTZERO_PORT="3005"
+export APP_AGENTZERO_PORT="3015"
 
 local_ips=$(hostname --all-ip-addresses 2> /dev/null) || local_ips=""
 export APP_AGENTZERO_LOCAL_IPS="${local_ips}"

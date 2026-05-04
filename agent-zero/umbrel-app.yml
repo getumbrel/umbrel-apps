@@ -3,8 +3,8 @@ id: agent-zero
 name: Agent Zero
 tagline: A personal, organic agentic framework that grows and learns with you
 category: ai
-version: "v1.9"
-port: 3005
+version: "v1.12"
+port: 3015
 description: >-
   Agent Zero is a personal, organic agentic framework that grows and learns with you.
   It is fully Dockerized and includes features like Speech-to-Text and TTS.
@@ -36,5 +36,19 @@ gallery:
 defaultUsername: ""
 defaultPassword: ""
 dependencies: []
-releaseNotes: ""
+releaseNotes: >-
+  This release contains various bug fixes and improvements:
+    - Fixed PTY file descriptor leaks in code execution, preventing descriptor exhaustion under sustained use
+    - Browser runtime now recovers cleanly from stale Playwright contexts instead of failing
+    - Clicking URLs in the Desktop environment now opens them in the Agent Zero Browser
+    - Self-update no longer fails when broken symlinks exist in the workspace
+    - Desktop environment now starts on-demand instead of eagerly at startup, improving load times
+    - ARM64 users no longer see spurious startup warnings about missing Xpra codec packages
+
+
+  umbrelOS specific changes:
+    - Updated port from 3005 to 3015 to avoid conflicts with other apps
+
+
+  Full release notes can be found at https://github.com/agent0ai/agent-zero
 path: ""
