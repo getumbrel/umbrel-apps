@@ -3,8 +3,8 @@ version: "3.7"
 services:
   app_proxy:
     environment:
-      APP_HOST: nostr-relay_web_1
-      APP_PORT: 3000
+      APP_HOST: nostr-relay_admin_1
+      APP_PORT: 4000
       PROXY_AUTH_ADD: "false"
 
   web:
@@ -40,3 +40,30 @@ services:
       - ${APP_DATA_DIR}/data/relay-proxy:/app/data
     depends_on:
       - relay
+
+  admin:
+    build:
+      context: ./admin
+      dockerfile: Dockerfile
+    container_name: nostr-relay_admin_1
+    restart: on-failure
+    environment:
+      RELAY_DATA_DIR: "/data"
+      DOCKER_SOCKET_PATH: "/var/run/docker.sock"
+      ADMIN_RESTART_CONTAINERS: >-
+        nostr-relay_relay_1,
+        nostr-relay_relay-proxy_1,
+        nostr-relay_web_1,
+        nostr-relay_app_proxy_1
+      ADMIN_RESTART_PROFILE_FIX_ICON: "nostr-relay_web_1"
+      ADMIN_RESTART_PROFILE_FULL_STACK: >-
+        nostr-relay_relay_1,
+        nostr-relay_relay-proxy_1,
+        nostr-relay_web_1
+      ADMIN_BACKUP_SCHEDULE_DEFAULT: "4h"
+      ADMIN_RESTART_TIMEOUT_SECONDS: "15"
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      - relay-proxy
