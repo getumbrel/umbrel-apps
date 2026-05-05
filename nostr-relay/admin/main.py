@@ -1138,10 +1138,15 @@ function groupByNip(rows) {
     g.events.push({ kind:r.kind, name:info ? info.name : `Kind ${r.kind}`, n:r.n });
     g.total += r.n;
   }
-  return [...map.entries()].sort(([ak,,],[bk,bv]) => {
+  return [...map.entries()].sort(([ak], [bk]) => {
     if (ak === '__unknown__') return 1;
     if (bk === '__unknown__') return -1;
-    return map.get(bk).total - map.get(ak).total;
+    const an = parseInt(ak, 10), bn = parseInt(bk, 10);
+    const aNum = !isNaN(an), bNum = !isNaN(bn);
+    if (aNum && bNum) return an - bn;
+    if (aNum) return -1;
+    if (bNum) return 1;
+    return ak.localeCompare(bk);
   });
 }
 
