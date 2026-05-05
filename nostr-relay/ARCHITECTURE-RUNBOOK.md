@@ -109,6 +109,68 @@ Implemented in `admin/main.py`:
 - Child rows list concrete event kinds and counts.
 - NIP badges show popup hover descriptions and link to source definitions.
 
+## Admin UI End State Snapshot (May 4, 2026)
+
+Verified live behavior on Osias:
+
+- `:4848` is served by `nostr-relay_app_proxy_1`.
+- `nostr-relay-admin` runs with `/app/main.py` overridden by persistent bind mount from host `/home/umbrel/umbrel/app-data/nostr-relay/admin/main.py`.
+- Runtime code now includes:
+  - `EVENT_MESSAGE_PREVIEW_CHARS`
+  - `EVENT_MESSAGE_POPUP_CHARS`
+  - `content_full` and `content_truncated` fields in events payload
+  - `openEventMessageModal` and `event-message-modal` UI handlers
+  - Recent Events table without a `User` column
+
+Backups created for this known-good state:
+
+- Local source snapshot:
+  - `C:/Users/edjan/umbrel-apps/nostr-relay/admin/backups/main.py.20260504-225501`
+- Remote live override snapshot:
+  - `/tmp/main.py.20260504-225501.bak`
+- Remote persistent snapshot:
+  - `/home/umbrel/umbrel/app-data/nostr-relay/admin/main.py.20260505-030000.bak`
+
+Hash verification:
+
+- SHA256 of source and local backup matched:
+  - `6D92EA657A72AEA39209034458D0FD75E438640C52CEE69F864CA3D7639E4434`
+
+### Promote local source to live override
+
+```bash
+scp C:/Users/edjan/umbrel-apps/nostr-relay/admin/main.py \
+  umbrel@osias:/home/umbrel/umbrel/app-data/nostr-relay/admin/main.py
+ssh umbrel@osias 'docker rm -f nostr-relay-admin 2>/dev/null || true; \
+  docker run -d --name nostr-relay-admin --restart unless-stopped \
+  --network umbrel_main_network -p 4000:4000 -e RELAY_DATA_DIR=/data \
+  -v /home/umbrel/umbrel/app-data/nostr-relay/data:/data \
+  -v /home/umbrel/umbrel/app-data/nostr-relay/admin/main.py:/app/main.py \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  umbrel/nostr-relay-admin:latest'
+```
+
+### Verify live runtime code markers
+
+```bash
+ssh umbrel@osias 'docker exec nostr-relay-admin sh -lc "grep -n -E \"EVENT_MESSAGE_PREVIEW_CHARS|EVENT_MESSAGE_POPUP_CHARS|openEventMessageModal|content_full|content_truncated\" /app/main.py"'
+ssh umbrel@osias 'docker exec nostr-relay-admin sh -lc "grep -n -E \"<th>User</th>|event-message-modal|openEventMessageModal\" /app/main.py"'
+ssh umbrel@osias 'curl -sSI http://127.0.0.1:4848/ | head -n 1'
+```
+
+Interpretation:
+
+- No `<th>User</th>` match means the User column is removed.
+- `event-message-modal` and `openEventMessageModal` should exist.
+- `HTTP/1.1 200 OK` on `127.0.0.1:4848` confirms app proxy is serving.
+
+### Rollback to saved live override
+
+```bash
+ssh umbrel@osias 'cp /home/umbrel/umbrel/app-data/nostr-relay/admin/main.py.20260505-030000.bak \
+  /home/umbrel/umbrel/app-data/nostr-relay/admin/main.py && docker restart nostr-relay-admin'
+```
+
 ## HTTP Shim Pattern (Browser UX + Relay Protocol)
 
 Goal:
@@ -191,6 +253,33 @@ extra_hosts:
 ```
 
 If cloudflared app-level restart fails from ad-hoc compose commands due missing Umbrel env vars, restart the app using Umbrel app lifecycle tooling or dashboard.
+
+### Connector fallback recreate (known good)
+
+If Umbrel-managed compose recreation fails because required env vars are missing in a direct shell session, recreate only the connector container with explicit settings:
+
+```bash
+ssh umbrel@osias 'docker rm -f cloudflared_connector_1; \
+  docker run -d \
+    --name cloudflared_connector_1 \
+    --hostname cloudflared-connector \
+    --restart on-failure \
+    --stop-timeout 3 \
+    --network umbrel_main_network \
+    --add-host nostr-relay_relay_1:host-gateway \
+    -e CLOUDFLARED_TOKEN_FILE=/data/token \
+    -e CLOUDFLARED_METRICS_PORT=40901 \
+    -v /home/umbrel/umbrel/app-data/cloudflared/data:/data \
+    ghcr.io/radiokot/umbrel-cloudflared-connector:latest'
+```
+
+Then verify:
+
+```bash
+ssh umbrel@osias 'docker exec cloudflared_connector_1 grep nostr-relay_relay_1 /etc/hosts'
+ssh umbrel@osias 'curl -sSI -H "Accept: text/html" https://nostr.janx.com/ | head -8'
+ssh umbrel@osias 'curl -sS -H "Accept: application/nostr+json" https://nostr.janx.com/ | head -20'
+```
 
 ## Validation Checklist
 
