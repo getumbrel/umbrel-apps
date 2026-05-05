@@ -1,0 +1,75 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: gobrrr-pool_webui_1
+      APP_PORT: 21421
+      PROXY_APP_EXTRAS: gobrrr-stats:23002
+      PROXY_AUTH_WHITELIST: /api/*,/widget-api/*
+    container_name: gobrrr-pool_app_proxy_1
+
+  ckpool:
+    image: ghcr.io/gobrrrme/gobrrr-ckpool:v1.1.0@sha256:9e831a5100039d9c8246dafabacf9101f60a4a7828bdc94ce0a14a389cc55188
+    restart: on-failure
+    stop_grace_period: 1m
+    healthcheck:
+      test: ["CMD-SHELL", "test -f /var/log/ckpool/ckpool.log"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+    ports:
+      - "21420:3333"
+      - "21422:4444"
+    volumes:
+      - ${APP_DATA_DIR}/data/ckpool-socket:/tmp/ckpool
+      - ${APP_DATA_DIR}/data/ckpool-logs:/var/log/ckpool
+    environment:
+      - BITCOIN_RPC_HOST=${APP_BITCOIN_NODE_IP}
+      - BITCOIN_RPC_PORT=${APP_BITCOIN_RPC_PORT}
+      - BITCOIN_RPC_USER=${APP_BITCOIN_RPC_USER}
+      - BITCOIN_RPC_PASS=${APP_BITCOIN_RPC_PASS}
+      - BITCOIN_ZMQ_HASHBLOCK=tcp://${APP_BITCOIN_NODE_IP}:${APP_BITCOIN_ZMQ_HASHBLOCK_PORT}
+      - POOL_SIGNATURE=GoBrrrPool_Umbrel
+      - START_DIFFICULTY=10000
+      - MIN_DIFFICULTY=1
+      - BLOCKPOLL=50
+      - UPDATE_INTERVAL=20
+      - STRATUM_HIGHDIFF_PORT=4444
+      - HIGHDIFF=1000000
+    container_name: gobrrr-pool_ckpool_1
+
+  webui:
+      image: ghcr.io/gobrrrme/gobrrr-pool-webui:v1.1.0@sha256:957ef2cd646a56a9783d437728b0bb7c855d9e980a704bd9b16cca1f1f026828
+      restart: on-failure
+      stop_grace_period: 30s
+      volumes:
+        - ${APP_DATA_DIR}/data/ckpool-socket:/tmp/ckpool:ro
+        - ${APP_DATA_DIR}/data/ckpool-logs:/var/log/ckpool:ro
+        - ${APP_DATA_DIR}/data/webui:/app/data
+      environment:
+        - NODE_ENV=production
+        - PORT=21421
+        - CKPOOL_SOCKET_DIR=/tmp/ckpool
+        - CKPOOL_LOGS_DIR=/var/log/ckpool
+        - MEMPOOL_API_URL=http://mempool_app_proxy_1:3006/api
+        - STRATUM_PORT=21420
+        - BITCOIN_RPC_HOST=${APP_BITCOIN_NODE_IP}
+        - BITCOIN_RPC_PORT=${APP_BITCOIN_RPC_PORT}
+        - BITCOIN_RPC_USER=${APP_BITCOIN_RPC_USER}
+        - BITCOIN_RPC_PASS=${APP_BITCOIN_RPC_PASS}
+      depends_on:
+        - ckpool
+      container_name: gobrrr-pool_webui_1
+
+  gobrrr-stats:
+    image: rodb2008com/gobrrr-pool-api-etl:v1@sha256:bc86f35c5cd526f0a2464574e764540fbe78173dcaaaa6bafdbdc9a818501948
+    restart: on-failure
+    depends_on:
+      ckpool:
+        condition: service_healthy
+    ports:
+      - '23002:23002'
+    volumes:
+      - ${APP_DATA_DIR}/data/ckpool-logs/ckpool.log:/data/ckpool.log:ro
+    container_name: gobrrr-pool_etl_1   
