@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+CONFIG_DIR="${APP_DATA_DIR}/data/instances/default"
+CONFIG_FILE="${CONFIG_DIR}/config.json"
+PUBLIC_URL="http://${DEVICE_DOMAIN_NAME}:8860"
+
+mkdir -p "${CONFIG_DIR}"
+
+if [ ! -f "${CONFIG_FILE}" ]; then
+  cat > "${CONFIG_FILE}" <<EOF
+{
+  "\$meta": { "version": 1, "updatedAt": "2026-04-06T00:00:00.000Z", "source": "onboard" },
+  "database": { "mode": "embedded-postgres" },
+  "logging": { "mode": "file" },
+  "server": { "deploymentMode": "authenticated", "exposure": "private", "host": "0.0.0.0", "port": 3100 },
+  "auth": { "baseUrlMode": "explicit", "publicBaseUrl": "${PUBLIC_URL}" },
+  "storage": { "provider": "local_disk" },
+  "secrets": { "provider": "local_encrypted", "strictMode": false }
+}
+EOF
+fi
+
+chown -R 1000:1000 "${APP_DATA_DIR}/data"
