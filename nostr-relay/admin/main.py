@@ -44,6 +44,8 @@ BACKUP_DIR = DATA_DIR / "admin-backups"
 BACKUP_META_PATH = BACKUP_DIR / "snapshots.json"
 BACKUP_SETTINGS_PATH = BACKUP_DIR / "settings.json"
 NAV_LINKS_PATH = DATA_DIR / "admin-nav-links.json"
+ADMIN_DASHBOARD_VERSION = os.environ.get("ADMIN_DASHBOARD_VERSION", "0.9.1-beta").strip() or "0.9.1-beta"
+ADMIN_REPO_URL = os.environ.get("ADMIN_REPO_URL", "https://github.com/satwise/nostrrelay").strip() or "https://github.com/satwise/nostrrelay"
 BACKUP_RETENTION = 3
 DEFAULT_NAV_LINKS = [
     {"label": "My Site",         "url": "https://mysite.com",                                               "accent": False},
@@ -72,7 +74,7 @@ BACKUP_LOCK = threading.Lock()
 BACKUP_THREAD_LOCK = threading.Lock()
 BACKUP_THREAD_STARTED = False
 
-app = FastAPI(title="\u20bfYO\u20bf-NOSTR-RELAY Admin", docs_url=None, redoc_url=None)
+app = FastAPI(title="\u20bfYO\u20bf-NOSTR-RELAY Admin Dashboard", docs_url=None, redoc_url=None)
 
 
 # ---------------------------------------------------------------------------
@@ -816,10 +818,11 @@ HTML = r"""<!DOCTYPE html>
 </head>
 <body>
 <header>
-  <h1>&#x20BF;YO&#x20BF;-NOSTR-RELAY Admin</h1>
-  <span class="badge">nostr-rs-relay</span>
+  <h1>&#x20BF;YO&#x20BF;-NOSTR-RELAY Admin Dashboard</h1>
+  <span class="badge">nostr-rs-relay v__ADMIN_VERSION__</span>
   <nav style="margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
     <button id="open-icon-modal" class="secondary" style="padding:4px 12px;border-radius:99px">Edit Profile Image</button>
+    <a href="__ADMIN_REPO_URL__" class="nav-link" target="_blank" rel="noopener noreferrer">GitHub</a>
     <span id="site-nav" style="display:contents"></span>
   </nav>
 </header>
@@ -1935,4 +1938,8 @@ setInterval(() => {
 
 @app.get("/", response_class=HTMLResponse)
 def ui():
-    return HTML
+  return (
+    HTML
+    .replace("__ADMIN_VERSION__", ADMIN_DASHBOARD_VERSION)
+    .replace("__ADMIN_REPO_URL__", ADMIN_REPO_URL)
+  )
