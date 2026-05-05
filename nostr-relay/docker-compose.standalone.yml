@@ -1,0 +1,89 @@
+# SatWise Nostr Relay — standalone (non-Umbrel) stack
+#
+# Usage:
+#   export RELAY_DATA_DIR=/opt/nostr-relay/data   # or any persistent path
+#   mkdir -p ${RELAY_DATA_DIR}/relay/db ${RELAY_DATA_DIR}/relay-proxy ${RELAY_DATA_DIR}/admin-backups
+#   cp data/relay/config.toml ${RELAY_DATA_DIR}/relay/config.toml    # seed default config
+#   docker compose -f docker-compose.standalone.yml up -d
+#
+# Ports (host):
+#   4848  — relay WebSocket + relay-proxy REST/widgets
+#   4000  — admin dashboard UI
+#
+# RELAY_DATA_DIR defaults to ./relay-data (relative to this file) if not set.
+
+version: "3.9"
+
+x-data-dir: &data-dir ${RELAY_DATA_DIR:-./relay-data}
+
+services:
+
+  # ── Core relay runtime ────────────────────────────────────────────────────
+  relay:
+    image: ghcr.io/satwise/nostr-rs-relay:0.9.1-beta@sha256:3ab815568452b9b80510b8dbd65c42d0cfcb852c8fc57e517358524e3ef74585
+    container_name: nostr-relay_relay_1
+    restart: unless-stopped
+    command: ["./nostr-rs-relay", "-c", "/app/config.toml", "-d", "/app/db"]
+    volumes:
+      - ${RELAY_DATA_DIR:-./relay-data}/relay/config.toml:/app/config.toml:ro
+      - ${RELAY_DATA_DIR:-./relay-data}/relay/db:/app/db
+    healthcheck:
+      test: ["CMD-SHELL", "echo > /dev/tcp/localhost/8080 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  # ── Relay proxy (REST/widget API layer + public WebSocket endpoint) ────────
+  relay-proxy:
+    image: getumbrel/umbrel-nostr-relay-proxy:v1.1.0@sha256:6b335f4488f813475bb7c9d3bb6282fda081808e2d5447404fc8a1ffcc1279dc
+    container_name: nostr-relay_relay-proxy_1
+    restart: unless-stopped
+    environment:
+      RELAY_HOST: "nostr-relay_relay_1"
+      RELAY_PORT: "8080"
+    ports:
+      - "4848:3000"
+    volumes:
+      - ${RELAY_DATA_DIR:-./relay-data}/relay-proxy:/app/data
+    depends_on:
+      relay:
+        condition: service_healthy
+
+  # ── Web / admin dashboard UI ──────────────────────────────────────────────
+  web:
+    image: getumbrel/umbrel-nostr-relay:v1.1.0@sha256:21b67ab2e9d30b20e785497f19534e8e21b6da1bfe69e3ae5afe91b759f20488
+    container_name: nostr-relay_web_1
+    restart: unless-stopped
+    environment:
+      RELAY_HOST: "nostr-relay_relay_1"
+      RELAY_PORT: "8080"
+      RELAY_PROXY_HOST: "nostr-relay_relay-proxy_1"
+      RELAY_PROXY_PORT: "80"
+    depends_on:
+      - relay-proxy
+
+  # ── SatWise admin sidecar (config editor / backup / analytics) ────────────
+  admin:
+    build:
+      context: ./admin
+      dockerfile: Dockerfile
+    container_name: nostr-relay_admin_1
+    restart: unless-stopped
+    environment:
+      RELAY_DATA_DIR: "/data"
+      DOCKER_SOCKET_PATH: "/var/run/docker.sock"
+      # Container names that admin may restart (comma-separated)
+      ADMIN_RESTART_CONTAINERS: >-
+        nostr-relay_relay_1,
+        nostr-relay_relay-proxy_1,
+        nostr-relay_web_1,
+        nostr-relay_admin_1
+      ADMIN_BACKUP_SCHEDULE_DEFAULT: "4h"
+      ADMIN_RESTART_TIMEOUT_SECONDS: "15"
+    ports:
+      - "4000:4000"
+    volumes:
+      - ${RELAY_DATA_DIR:-./relay-data}:/data
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      - relay
