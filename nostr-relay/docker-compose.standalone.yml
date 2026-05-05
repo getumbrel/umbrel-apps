@@ -35,7 +35,7 @@ services:
   # ── Relay proxy (REST/widget API layer — internal only, listens on :80) ────
   relay-proxy:
     image: getumbrel/umbrel-nostr-relay-proxy:v1.1.0@sha256:6b335f4488f813475bb7c9d3bb6282fda081808e2d5447404fc8a1ffcc1279dc
-    container_name: nostr-relay_relay-proxy_1
+    container_name: nostr-relay_relay_proxy_1
     restart: unless-stopped
     environment:
       RELAY_HOST: "nostr-relay_relay_1"
@@ -55,7 +55,7 @@ services:
     environment:
       RELAY_HOST: "nostr-relay_relay_1"
       RELAY_PORT: "8080"
-      RELAY_PROXY_HOST: "nostr-relay_relay-proxy_1"
+      RELAY_PROXY_HOST: "nostr-relay_relay_proxy_1"
       RELAY_PROXY_PORT: "80"
     ports:
       - "4848:3000"
@@ -75,7 +75,7 @@ services:
       # Container names that admin may restart (comma-separated)
       ADMIN_RESTART_CONTAINERS: >-
         nostr-relay_relay_1,
-        nostr-relay_relay-proxy_1,
+        nostr-relay_relay_proxy_1,
         nostr-relay_web_1,
         nostr-relay_admin_1
       ADMIN_BACKUP_SCHEDULE_DEFAULT: "4h"

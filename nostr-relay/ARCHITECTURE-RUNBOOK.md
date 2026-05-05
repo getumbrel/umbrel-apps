@@ -30,7 +30,7 @@ Primary host: Osias
 Runtime components:
 
 - `nostr-relay_relay_1` (relay backend, port 8080 inside Docker network)
-- `nostr-relay_relay-proxy_1` (Umbrel relay proxy)
+- `nostr-relay_relay_proxy_1` (Umbrel relay proxy)
 - `nostr-relay_web_1` (Umbrel relay web app)
 - `nostr-relay_app_proxy_1` (Umbrel app proxy, host port 4848)
 - `nostr-relay-admin` (custom FastAPI admin, host port 4000)

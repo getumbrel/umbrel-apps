@@ -30,14 +30,14 @@ DEFAULT_RESTART_CONTAINERS = [
   "nostr-relay_web_1",
   "nostr-relay_app_proxy_1",
   "nostr-relay_relay_1",
-  "nostr-relay_relay-proxy_1",
+  "nostr-relay_relay_proxy_1",
 ]
 DEFAULT_FIX_ICON_CONTAINERS = [
   "nostr-relay_web_1",
 ]
 DEFAULT_FULL_STACK_CONTAINERS = [
   "nostr-relay_relay_1",
-  "nostr-relay_relay-proxy_1",
+  "nostr-relay_relay_proxy_1",
   "nostr-relay_web_1",
 ]
 BACKUP_DIR = DATA_DIR / "admin-backups"
