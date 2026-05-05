@@ -1,44 +1,40 @@
-manifestVersion: 1
+manifestVersion: 1.1
 id: overseerr
 category: media
-name: Overseerr
-version: "1.35.0"
-tagline: Beautiful media discovery
+name: Seerr
+version: "3.2.0"
+tagline: Beautiful media discovery and request management
 description: >-
-  Overseerr is a request management and media discovery tool built to work with your existing Plex ecosystem.
+  Seerr is a free and open source software application for managing requests for your media library.
 
 
-  Overseerr scans your Plex libraries at regular intervals, so it knows which items are already available on your server.
-  It also integrates with the popular DVR applications Radarr and Sonarr, and supports activity monitoring within Overseerr itself.
+  It integrates with the media server of your choice: Jellyfin, Plex, and Emby. In addition, it integrates with your existing services, such as Sonarr, Radarr.
+
+
+  Seerr scans your libraries at regular intervals, so it knows which items are already available on your server.
+
+  It also integrates with the popular DVR applications Radarr and Sonarr, and supports activity monitoring within Seerr itself.
 
 
   🛠️ SET-UP INSTRUCTIONS
 
-  During initial set-up, you will need to input your Umbrel device's IP address to connect to Plex (and optional services such as Radarr and Sonarr).
-  You can find your device's IP address by visiting your router's admin dashboard or by using an IP scanning tool like Angry IP Scanner.
-releaseNotes: >-
-  This release includes several bug fixes and improvements:
-    - Better handling for active webpush subscriptions and notification management
-    - Corrected edge cases with deletion not updating requests properly
-    - Fixed availability sync for currently available non-completed media
-    - Improved handling of partial seasons and specials
-    - Updated Plex Watchlist URL
-    - Fixed notification sending for wrong status scenarios
-    - Corrected series setting to partially available status
+
+  During initial set-up, you will need to input your Umbrel device's IP address to connect to Jellyfin / Plex / Emby (and optional services such as Radarr and Sonarr).
+
+  You can find your device's IP address in the Umbrel Settings.
 
 
-  New features:
-    - Updated to Node 20 for improved performance and security
-    - Prepared migration path for future Seerr transition
-    - Enhanced PWA app badge functionality
-
-
-  Full release notes can be found at https://github.com/sct/overseerr/releases
-developer: Ryan Cohen
-website: https://overseerr.dev/
+  You can also use the following addresses:
+    - **Jellyfin:** jellyfin_server_1:8096
+    - **Emby:** emby_server_1:8086
+    - **Radarr:** radarr_server_1:7878
+    - **Sonarr:** sonarr_server_1:8989
+    - **Plex:** No address needed
+developer: Seerr Team
+website: https://docs.seerr.dev/
 dependencies: []
-repo: https://github.com/sct/overseerr
-support: https://github.com/sct/overseerr/issues
+repo: https://github.com/seerr-team/seerr
+support: https://github.com/seerr-team/seerr/issues
 port: 5055
 gallery:
   - 1.jpg
@@ -47,6 +43,23 @@ gallery:
 path: ""
 defaultUsername: ""
 defaultPassword: ""
+releaseNotes: >-
+  This release migrates the Overseerr app to **Seerr**, the new unified project that merges the Overseerr and Jellyseerr teams and codebases into a single platform for managing media discovery and requests.
+
+
+  Your existing Overseerr configuration and database will be migrated automatically on first start (see https://docs.seerr.dev/migration-guide).
+
+
+  Key highlights and improvements:
+    - Overseerr and Jellyseerr projects merged into a single unified platform called Seerr
+    - One shared codebase and team moving forward for faster development and maintenance
+    - Continued support for Plex, Jellyfin, and Emby media server ecosystems
+    - Container now runs as non-root (UID 1000); existing data ownership is fixed automatically by a pre-start hook
+    - Rebranding and infrastructure updates as part of the new project foundation
+    - Various improvements and bug fixes
+
+
+  Full release notes are available at https://github.com/seerr-team/seerr/releases
 torOnly: false
 submitter: Umbrel
 submission: https://github.com/getumbrel/umbrel-apps/pull/607
