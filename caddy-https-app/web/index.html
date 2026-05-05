@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Caddy HTTPS Proxy</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #fdf2f8 0%, #f0f9ff 50%, #f5f3ff 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+            color: #475569;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .logo {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            box-shadow: 0 4px 14px rgba(251, 191, 36, 0.3);
+        }
+
+        .logo svg {
+            width: 40px;
+            height: 40px;
+            color: white;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            font-size: 14px;
+            color: #94a3b8;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+            border: 1px solid rgba(0, 0, 0, 0.04);
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .card-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .icon-blue { background: linear-gradient(135deg, #bae6fd 0%, #7dd3fc 100%); }
+        .icon-green { background: linear-gradient(135deg, #bbf7d0 0%, #86efac 100%); }
+        .icon-purple { background: linear-gradient(135deg, #e9d5ff 0%, #d8b4fe 100%); }
+        .icon-pink { background: linear-gradient(135deg, #fbcfe8 0%, #f9a8d4 100%); }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: #64748b;
+            margin-bottom: 8px;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 14px;
+            color: #1e293b;
+            background: #f8fafc;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        input:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: #a5b4fc;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(165, 180, 252, 0.1);
+        }
+
+        textarea {
+            min-height: 200px;
+            resize: vertical;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        .btn {
+            padding: 14px 28px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #a5b4fc 0%, #818cf8 100%);
+            color: white;
+            box-shadow: 0 4px 14px rgba(165, 180, 252, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(165, 180, 252, 0.5);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #fde68a 0%, #fcd34d 100%);
+            color: #92400e;
+            box-shadow: 0 4px 14px rgba(253, 214, 138, 0.4);
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(253, 214, 138, 0.5);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #fda4af 0%, #fb7185 100%);
+            color: white;
+            box-shadow: 0 4px 14px rgba(253, 164, 175, 0.4);
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(253, 164, 175, 0.5);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-running {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-stopped {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: currentColor;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .info-item {
+            background: #f8fafc;
+            padding: 16px;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .info-label {
+            font-size: 11px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+
+        .info-value {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .alert {
+            padding: 16px 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .alert-info {
+            background: #eff6ff;
+            color: #1e40af;
+            border: 1px solid #dbeafe;
+        }
+
+        .alert-warning {
+            background: #fffbeb;
+            color: #92400e;
+            border: 1px solid #fef3c7;
+        }
+
+        .alert-success {
+            background: #f0fdf4;
+            color: #166534;
+            border: 1px solid #dcfce7;
+        }
+
+        .route-item {
+            background: #f8fafc;
+            padding: 16px;
+            border-radius: 10px;
+            margin-bottom: 12px;
+            border: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .route-path {
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 13px;
+            color: #475569;
+        }
+
+        .route-target {
+            font-size: 13px;
+            color: #64748b;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+        }
+
+        .modal-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #e2e8f0;
+            border-top-color: #a5b4fc;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 8px;
+        }
+
+        .modal-text {
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 12px;
+        }
+
+        .tab {
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #64748b;
+        }
+
+        .tab:hover {
+            background: #f1f5f9;
+        }
+
+        .tab.active {
+            background: linear-gradient(135deg, #a5b4fc 0%, #818cf8 100%);
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .helper-text {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-top: 6px;
+        }
+
+        input[type="file"] {
+            display: block;
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px dashed #e2e8f0;
+            border-radius: 10px;
+            background: #f8fafc;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        input[type="file"]:hover {
+            border-color: #a5b4fc;
+            background: white;
+        }
+
+        .cert-warning {
+            background: linear-gradient(135deg, #fed7aa 0%, #fdba74 100%);
+            color: #9a3412;
+            padding: 16px;
+            border-radius: 12px;
+            margin-top: 15px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .cert-expired {
+            background: linear-gradient(135deg, #fca5a5 0%, #f87171 100%);
+            color: #991b1b;
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding: 20px 12px;
+            }
+
+            .card {
+                padding: 24px 20px;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+            </div>
+            <h1>Caddy HTTPS Proxy</h1>
+            <div class="subtitle">Secure your Umbrel apps with HTTPS</div>
+        </div>
+
+        <!-- Status Card -->
+        <div class="card">
+            <div class="card-title">
+                <div class="card-icon icon-green">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                Status
+            </div>
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">Proxy Status</div>
+                    <div class="info-value">
+                        <span class="status-badge status-running" id="status-badge">
+                            <span class="status-dot"></span>
+                            <span id="status-text">Running</span>
+                        </span>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">HTTPS Port</div>
+                    <div class="info-value" id="https-port">8443</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">HTTP Port</div>
+                    <div class="info-value" id="http-port">8080</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Domain</div>
+                    <div class="info-value" id="domain">umbrel.local</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Configuration Card -->
+        <div class="card">
+            <div class="card-title">
+                <div class="card-icon icon-blue">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                </div>
+                Configuration
+            </div>
+
+            <div class="tabs">
+                <div class="tab active" data-tab="basic">Basic</div>
+                <div class="tab" data-tab="routes">App Routes</div>
+                <div class="tab" data-tab="advanced">Advanced</div>
+            </div>
+
+            <!-- Basic Settings Tab -->
+            <div class="tab-content active" id="basic-tab">
+                <div class="form-group">
+                    <label for="domain-input">Domain</label>
+                    <input type="text" id="domain-input" value="umbrel.local" placeholder="umbrel.local">
+                    <div class="helper-text">Your Umbrel server domain</div>
+                </div>
+                <div class="form-group">
+                    <label for="https-port-input">HTTPS Port</label>
+                    <input type="number" id="https-port-input" value="8443" min="1024" max="65535">
+                    <div class="helper-text">Port for secure HTTPS access</div>
+                </div>
+                <div class="form-group">
+                    <label for="http-port-input">HTTP Port</label>
+                    <input type="number" id="http-port-input" value="8080" min="1024" max="65535">
+                    <div class="helper-text">Port for HTTP redirects (will redirect to HTTPS)</div>
+                </div>
+            </div>
+
+            <!-- App Routes Tab -->
+            <div class="tab-content" id="routes-tab">
+                <div class="alert alert-info">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>Configure which apps are accessible through the HTTPS proxy</span>
+                </div>
+                <div class="form-group">
+                    <label for="caddyfile-input">Caddyfile Configuration</label>
+                    <textarea id="caddyfile-input" placeholder="Handle directives will be auto-generated..."></textarea>
+                    <div class="helper-text">Advanced configuration in Caddyfile format</div>
+                </div>
+                <div class="button-group">
+                    <button class="btn btn-secondary" onclick="loadExampleRoutes()">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                        Load Example Routes
+                    </button>
+                </div>
+            </div>
+
+            <!-- Advanced Settings Tab -->
+            <div class="tab-content" id="advanced-tab">
+                <div class="form-group">
+                    <label for="force-https-select">Force HTTPS Redirect</label>
+                    <select id="force-https-select">
+                        <option value="true" selected>Enabled (Recommended)</option>
+                        <option value="false">Disabled</option>
+                    </select>
+                    <div class="helper-text">Automatically redirect HTTP to HTTPS</div>
+                </div>
+                <div class="form-group">
+                    <label for="hsts-select">HSTS (Strict-Transport-Security)</label>
+                    <select id="hsts-select">
+                        <option value="true" selected>Enabled (Recommended)</option>
+                        <option value="false">Disabled</option>
+                    </select>
+                    <div class="helper-text">Tell browsers to always use HTTPS</div>
+                </div>
+                <div class="form-group">
+                    <label for="disable-http-select">Disable HTTP Port</label>
+                    <select id="disable-http-select">
+                        <option value="false" selected>Keep HTTP Port (Recommended)</option>
+                        <option value="true">Disable HTTP (HTTPS Only)</option>
+                    </select>
+                    <div class="helper-text">
+                        When disabled, only HTTPS port will be accessible. 
+                        HTTP redirect will be disabled.
+                    </div>
+                </div>
+                <div class="alert alert-warning">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <span>Advanced settings require app restart to take effect</span>
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button class="btn btn-primary" onclick="saveConfiguration()">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                    </svg>
+                    Save Configuration
+                </button>
+                <button class="btn btn-danger" onclick="restartApp()">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    Restart App
+                </button>
+            </div>
+        </div>
+
+        <!-- Certificate Info Card -->
+        <div class="card">
+            <div class="card-title">
+                <div class="card-icon icon-purple">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    </svg>
+                </div>
+                SSL Certificate
+            </div>
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">Status</div>
+                    <div class="info-value">
+                        <span class="status-badge status-running">
+                            <span class="status-dot"></span>
+                            Active
+                        </span>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Type</div>
+                    <div class="info-value">Self-signed</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Validity</div>
+                    <div class="info-value">10 years</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Expires On</div>
+                    <div class="info-value" id="cert-expiry">Loading...</div>
+                </div>
+            </div>
+            
+            <div id="cert-warning" class="cert-warning" style="display: none;">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <span id="cert-warning-text">Certificate expires in 30 days!</span>
+            </div>
+            
+            <div class="form-group" style="margin-top: 20px;">
+                <label>Upload Custom Certificate</label>
+                <input type="file" id="cert-upload" accept=".crt,.pem" style="margin-bottom: 10px;">
+                <div class="helper-text">Upload your own certificate (e.g., from mkcert)</div>
+                
+                <label style="margin-top: 10px;">Upload Custom Private Key</label>
+                <input type="file" id="key-upload" accept=".key" style="margin-bottom: 10px;">
+                <div class="helper-text">Upload the corresponding private key</div>
+                
+                <button class="btn btn-primary" onclick="uploadCertificate()" style="margin-top: 15px;">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                    </svg>
+                    Upload Certificate
+                </button>
+            </div>
+            
+            <div class="button-group">
+                <button class="btn btn-secondary" onclick="regenerateCertificate()">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    Regenerate Certificate
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Modal -->
+    <div class="modal-overlay" id="loading-modal">
+        <div class="modal">
+            <div class="modal-spinner"></div>
+            <div class="modal-title" id="modal-title">Restarting App</div>
+            <div class="modal-text" id="modal-text">Please wait while the Caddy proxy restarts...</div>
+        </div>
+    </div>
+
+    <script>
+        // Tab switching
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById(`${tab.dataset.tab}-tab`).classList.add('active');
+            });
+        });
+
+        // Load current configuration
+        async function loadConfiguration() {
+            try {
+                const response = await fetch('/api/config');
+                if (response.ok) {
+                    const config = await response.json();
+                    document.getElementById('domain-input').value = config.domain || 'umbrel.local';
+                    document.getElementById('https-port-input').value = config.httpsPort || 8443;
+                    document.getElementById('http-port-input').value = config.httpPort || 8080;
+                    document.getElementById('caddyfile-input').value = config.caddyfile || '';
+                    document.getElementById('force-https-select').value = config.forceHttps !== false;
+                    document.getElementById('hsts-select').value = config.hsts !== false;
+                    document.getElementById('disable-http-select').value = config.disableHttp || false;
+                    document.getElementById('domain').textContent = config.domain || 'umbrel.local';
+                    document.getElementById('https-port').textContent = config.httpsPort || 8443;
+                    document.getElementById('http-port').textContent = config.httpPort || 8080;
+                }
+                await loadCertificateInfo();
+            } catch (error) {
+                console.error('Failed to load configuration:', error);
+            }
+        }
+
+        // Load certificate expiry info
+        async function loadCertificateInfo() {
+            try {
+                const response = await fetch('/api/certificate/info');
+                if (response.ok) {
+                    const info = await response.json();
+                    document.getElementById('cert-expiry').textContent = info.expiry;
+                    
+                    if (info.warning) {
+                        const warningEl = document.getElementById('cert-warning');
+                        const textEl = document.getElementById('cert-warning-text');
+                        textEl.textContent = `Certificate expires in ${info.daysUntilExpiry} days!`;
+                        warningEl.style.display = 'flex';
+                        
+                        if (info.daysUntilExpiry <= 0) {
+                            warningEl.classList.add('cert-expired');
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to load certificate info:', error);
+                document.getElementById('cert-expiry').textContent = 'Unable to load';
+            }
+        }
+
+        // Upload certificate
+        async function uploadCertificate() {
+            const certFile = document.getElementById('cert-upload').files[0];
+            const keyFile = document.getElementById('key-upload').files[0];
+            
+            if (!certFile || !keyFile) {
+                showNotification('Please select both certificate and key files', 'error');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('cert', certFile);
+            formData.append('key', keyFile);
+            
+            showModal('Uploading Certificate', 'Please wait while uploading your certificate...');
+            
+            try {
+                const response = await fetch('/api/certificate/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (response.ok) {
+                    hideModal();
+                    showNotification('Certificate uploaded successfully!', 'success');
+                    document.getElementById('cert-upload').value = '';
+                    document.getElementById('key-upload').value = '';
+                    loadCertificateInfo();
+                } else {
+                    hideModal();
+                    showNotification('Failed to upload certificate', 'error');
+                }
+            } catch (error) {
+                hideModal();
+                showNotification('Failed to upload certificate: ' + error.message, 'error');
+            }
+        }
+
+        // Save configuration
+        async function saveConfiguration() {
+            const config = {
+                domain: document.getElementById('domain-input').value,
+                httpsPort: parseInt(document.getElementById('https-port-input').value),
+                httpPort: parseInt(document.getElementById('http-port-input').value),
+                caddyfile: document.getElementById('caddyfile-input').value,
+                forceHttps: document.getElementById('force-https-select').value === 'true',
+                hsts: document.getElementById('hsts-select').value === 'true',
+                disableHttp: document.getElementById('disable-http-select').value === 'true'
+            };
+
+            try {
+                const response = await fetch('/api/config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(config)
+                });
+
+                if (response.ok) {
+                    showNotification('Configuration saved successfully!', 'success');
+                    document.getElementById('domain').textContent = config.domain;
+                    document.getElementById('https-port').textContent = config.httpsPort;
+                    document.getElementById('http-port').textContent = config.httpPort;
+                } else {
+                    showNotification('Failed to save configuration', 'error');
+                }
+            } catch (error) {
+                showNotification('Failed to save configuration: ' + error.message, 'error');
+            }
+        }
+
+        // Restart app
+        async function restartApp() {
+            if (!confirm('Are you sure you want to restart the Caddy HTTPS Proxy? This will temporarily interrupt HTTPS access.')) {
+                return;
+            }
+
+            showModal('Restarting App', 'Please wait while the Caddy proxy restarts...');
+
+            try {
+                const response = await fetch('/api/restart', { method: 'POST' });
+                
+                if (response.ok) {
+                    // Wait for restart to complete
+                    await new Promise(resolve => setTimeout(resolve, 5000));
+                    
+                    // Check status
+                    const statusResponse = await fetch('/api/status');
+                    if (statusResponse.ok) {
+                        hideModal();
+                        showNotification('App restarted successfully!', 'success');
+                        loadConfiguration();
+                    } else {
+                        hideModal();
+                        showNotification('App restarted, but status check failed', 'warning');
+                    }
+                } else {
+                    hideModal();
+                    showNotification('Failed to restart app', 'error');
+                }
+            } catch (error) {
+                hideModal();
+                showNotification('Failed to restart app: ' + error.message, 'error');
+            }
+        }
+
+        // Regenerate certificate
+        async function regenerateCertificate() {
+            if (!confirm('Are you sure you want to regenerate the SSL certificate? This will create a new self-signed certificate.')) {
+                return;
+            }
+
+            showModal('Regenerating Certificate', 'Please wait while a new certificate is generated...');
+
+            try {
+                const response = await fetch('/api/certificate', { method: 'POST' });
+                
+                if (response.ok) {
+                    await new Promise(resolve => setTimeout(resolve, 3000));
+                    hideModal();
+                    showNotification('Certificate regenerated successfully!', 'success');
+                } else {
+                    hideModal();
+                    showNotification('Failed to regenerate certificate', 'error');
+                }
+            } catch (error) {
+                hideModal();
+                showNotification('Failed to regenerate certificate: ' + error.message, 'error');
+            }
+        }
+
+        // Load example routes
+        function loadExampleRoutes() {
+            const example = `# Example app routes
+# Uncomment and modify as needed
+
+# handle /mempool* {
+#     reverse_proxy mempool_app_proxy:4000
+# }
+
+# handle /nextcloud* {
+#     reverse_proxy nextcloud_app_proxy:4001
+# }
+
+# handle /bitcoin* {
+#     reverse_proxy btc-rpc-explorer_web_1:3002
+# }`;
+            document.getElementById('caddyfile-input').value = example;
+        }
+
+        // Show notification
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `alert alert-${type}`;
+            notification.style.cssText = 'position: fixed; top: 20px; right: 20px; z-index: 1001; min-width: 300px;';
+            notification.innerHTML = `
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${type === 'success' ? 'M5 13l4 4L19 7' : type === 'error' ? 'M6 18L18 6M6 6l12 12' : 'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'}" />
+                </svg>
+                <span>${message}</span>
+            `;
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 5000);
+        }
+
+        // Show modal
+        function showModal(title, text) {
+            document.getElementById('modal-title').textContent = title;
+            document.getElementById('modal-text').textContent = text;
+            document.getElementById('loading-modal').style.display = 'flex';
+        }
+
+        // Hide modal
+        function hideModal() {
+            document.getElementById('loading-modal').style.display = 'none';
+        }
+
+        // Load configuration on page load
+        loadConfiguration();
+
+        // Auto-refresh status every 30 seconds
+        setInterval(loadConfiguration, 30000);
+    </script>
+</body>
+</html>

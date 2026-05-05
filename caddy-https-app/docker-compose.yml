@@ -1,0 +1,70 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: caddy-https-app_web_1
+      APP_PORT: 8080
+      # Disable authentication for the proxy itself
+      PROXY_AUTH_ADD: "false"
+      # Whitelist all paths since this is the proxy UI
+      PROXY_AUTH_WHITELIST: "*"
+
+  caddy:
+    image: caddy:2.11-alpine@sha256:834468128c7696cec0ceea6172f7d692daf645ae51983ca76e39da54a97c570d
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 1m
+    ports:
+      # HTTP port for redirects
+      - "${APP_HTTP_PORT:-8081}:80"
+      # HTTPS port for secure access
+      - "${APP_HTTPS_PORT:-8444}:443"
+    volumes:
+      # Caddy configuration
+      - ${APP_DATA_DIR}/caddy:/config
+      # Certificate storage
+      - ${APP_DATA_DIR}/certs:ro
+      # Caddyfile template
+      - ./Caddyfile.template:/etc/caddy/Caddyfile.template:ro
+      # Scripts
+      - ./scripts:/scripts:ro
+    environment:
+      # Caddy domain configuration
+      CADDY_DOMAIN: ${DEVICE_DOMAIN_NAME:-umbrel.local}
+      CADDY_HTTP_PORT: ${APP_HTTP_PORT:-8081}
+      CADDY_HTTPS_PORT: ${APP_HTTPS_PORT:-8444}
+      # Device information
+      DEVICE_HOSTNAME: ${DEVICE_HOSTNAME:-umbrel}
+      DEVICE_DOMAIN_NAME: ${DEVICE_DOMAIN_NAME:-umbrel.local}
+    command: >
+      sh -c "
+      /scripts/pre-start.sh &&
+      caddy run --config /config/Caddyfile --adapter caddyfile
+      "
+    networks:
+      - umbrel_main_network
+
+  web:
+    image: node:24-alpine@sha256:d1b3b4da11eefd5941e7f0b9cf17783fc99d9c6fc34884a665f40a06dbdfc94f
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 1m
+    working_dir: /app
+    volumes:
+      - ${APP_DATA_DIR}/web:/app
+      - ${APP_DATA_DIR}/caddy:/data/caddy
+      - ${APP_DATA_DIR}/certs:/data/certs
+    environment:
+      WEB_PORT: "8080"
+      APP_DATA_DIR: /data
+      DEVICE_DOMAIN_NAME: ${DEVICE_DOMAIN_NAME:-umbrel.local}
+    command: /app/start.sh
+    networks:
+      - umbrel_main_network
+    depends_on:
+      - caddy
+
+networks:
+  umbrel_main_network:
+    external: true
