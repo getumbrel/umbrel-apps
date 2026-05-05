@@ -785,7 +785,7 @@ HTML = r"""<!DOCTYPE html>
   .nip-total{color:var(--accent)}
   .kind-row.hidden{display:none}
   .kind-indent{color:var(--muted);padding-left:28px!important;font-family:monospace;font-size:12px}
-  .stat-grid{display:grid;grid-template-columns:auto repeat(3,1fr);gap:12px;margin-bottom:16px}
+  .stat-grid{display:grid;grid-template-columns:auto 1fr;gap:12px;margin-bottom:16px}
   .stat{background:#0f1117;border:1px solid var(--border);border-radius:8px;padding:14px}
   .stat .val{font-size:28px;font-weight:700;color:var(--accent)}
   .stat .lbl{font-size:11px;color:var(--muted);margin-top:4px}
@@ -793,14 +793,28 @@ HTML = r"""<!DOCTYPE html>
   .stat-icon img{width:64px;height:64px;object-fit:contain;border-radius:8px}
   .stat-icon .icon-fallback{font-size:40px;line-height:1}
   .stat-icon .lbl{text-align:center}
-  .portal-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:24px}
+  .edit-icon-btn{font-size:11px;padding:2px 8px;border-radius:99px;cursor:pointer;background:transparent;border:1px solid var(--border);color:var(--muted)}
+  .edit-icon-btn:hover{border-color:var(--accent);color:var(--accent)}
+  .stat-combined{display:grid;grid-template-columns:1fr 1fr;gap:12px;background:transparent;border:none}
+  .stat-combined .sc-col{background:#0f1117;border:1px solid var(--border);border-radius:8px;overflow:hidden;display:flex;flex-direction:column;gap:0}
+  .stat-combined .sc-item{flex:1;padding:14px;border-bottom:1px solid var(--border)}
+  .stat-combined .sc-item:last-child{border-bottom:none}
+  .portal-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:24px;align-items:stretch}
   .portal-col{min-width:0}
   .portal-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;flex-wrap:wrap}
   .portal-head h2{margin:0}
   .table-wrap{overflow:auto;border:1px solid var(--border);border-radius:10px}
   .table-wrap table th,.table-wrap table td{white-space:nowrap}
+  .quick-view{display:flex;flex-direction:column;gap:10px;background:#0f1117;border:1px solid var(--border);border-radius:10px;padding:14px;height:100%}
+  .quick-row{display:flex;flex-direction:column;gap:3px}
+  .quick-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:600}
+  .quick-val{font-size:13px;color:var(--text);word-break:break-all}
+  .quick-val.code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px;color:var(--accent)}
+  .quick-val.muted{color:var(--muted);font-size:12px}
+  .events-footnote{font-size:11px;color:var(--muted);margin-top:8px}
   @media (max-width: 900px){
     .portal-grid{grid-template-columns:1fr}
+    .quick-view{height:auto}
   }
   .restart-note{background:#1e1b2e;border:1px solid var(--accent);border-radius:8px;padding:12px;font-size:12px;color:var(--muted);margin-top:12px}
   .restart-note strong{color:var(--accent)}
@@ -821,7 +835,6 @@ HTML = r"""<!DOCTYPE html>
   <h1>&#x20BF;YO&#x20BF;-NOSTR-RELAY Admin Dashboard</h1>
   <span class="badge">nostr-rs-relay v__ADMIN_VERSION__</span>
   <nav style="margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-    <button id="open-icon-modal" class="secondary" style="padding:4px 12px;border-radius:99px">Edit Profile Image</button>
     <a href="__ADMIN_REPO_URL__" class="nav-link" target="_blank" rel="noopener noreferrer">GitHub</a>
     <span id="site-nav" style="display:contents"></span>
   </nav>
@@ -862,57 +875,64 @@ HTML = r"""<!DOCTYPE html>
   <!-- Stats -->
   <div class="card" id="stats-card">
     <h2>&#9889; Relay Stats <span id="stats-age" style="font-size:11px;color:var(--muted);font-weight:400;margin-left:8px"></span></h2>
-    <div class="stat-grid" id="stat-grid"></div>
     <div class="portal-grid">
-      <div class="portal-col">
-        <div class="portal-head">
+      <div class="portal-col" id="events-col">
+        <div class="stat-grid" id="stat-grid"></div>
+        <div class="portal-head" id="events-head">
           <h2>&#x1F4CB; Recent Events</h2>
         </div>
         <div class="table-wrap">
           <table id="events-table"><thead><tr><th style="white-space:nowrap">Timestamp</th><th>Kind</th><th>Type</th><th>Message</th></tr></thead><tbody></tbody></table>
         </div>
+        <div class="events-footnote" id="events-footnote"></div>
       </div>
 
-      <div class="portal-col">
+      <div class="portal-col" id="relay-quick-col" style="overflow-y:auto">
         <div class="portal-head">
-          <h2>&#x1F4CA; Kind Breakdown</h2>
-          <button id="kind-tree-toggle-all" class="secondary" style="padding:6px 12px;font-size:12px">Close All</button>
+          <h2>&#x1F4E1; Relay Info</h2>
         </div>
-        <div class="table-wrap">
-          <table id="kind-tree"><thead><tr><th class="nip-toggle-cell"></th><th>NIP</th><th>Name</th><th style="text-align:right">Count</th></tr></thead><tbody></tbody></table>
+        <div class="grid2">
+          <div class="field"><label>Relay URL</label><input type="text" id="relay_url"></div>
+          <div class="field"><label>Name</label><input type="text" id="name"></div>
+          <div class="field"><label>Pubkey (hex)</label><input type="text" id="pubkey"></div>
+          <div class="field"><label>Contact</label><input type="text" id="contact"></div>
+          <div class="field" style="grid-column:span 2"><label>Description</label><textarea id="description" rows="2"></textarea></div>
+          <div class="field" style="grid-column:span 2"><label>Relay Icon URL <span style="font-size:11px;color:var(--muted);font-weight:400">(same as profile image)</span></label><input type="text" id="relay_icon"></div>
+        </div>
+        <div id="restart-controls" style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border)">
+          <div class="actions" style="margin-top:0;margin-bottom:10px">
+            <button onclick="saveAllVariables()">Save Config (All Variables)</button>
+            <button class="secondary" onclick="saveAndRestartWeb()">Save + Restart Web Runtime</button>
+            <span class="notice" id="saveall-notice"></span>
+          </div>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+            <label for="restart-container" style="font-size:12px;color:var(--muted);font-weight:500;text-transform:uppercase;letter-spacing:.04em">Container</label>
+            <select id="restart-container" style="max-width:260px"></select>
+            <button class="secondary" onclick="restartSelectedContainer()">Restart Container</button>
+          </div>
+          <div id="restart-profile-buttons" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"></div>
+          <div class="notice" id="restart-hint">Save Config writes settings. Restart Web Runtime (Fix Icon) only restarts the web runtime and does not save variables.</div>
+          <span class="notice" id="restart-notice"></span>
         </div>
       </div>
     </div>
 
-  </div>
-
-  <!-- Relay Info -->
-  <div class="card">
-    <h2>&#x1F4E1; Relay Info</h2>
-    <div class="grid2">
-      <div class="field"><label>Relay URL</label><input type="text" id="relay_url"></div>
-      <div class="field"><label>Name</label><input type="text" id="name"></div>
-      <div class="field"><label>Pubkey (hex)</label><input type="text" id="pubkey"></div>
-      <div class="field"><label>Contact</label><input type="text" id="contact"></div>
-      <div class="field" style="grid-column:span 2"><label>Description</label><textarea id="description" rows="2"></textarea></div>
-      <div class="field" style="grid-column:span 2"><label>Relay Icon URL</label><input type="text" id="relay_icon"></div>
+    <div style="margin-top:24px">
+      <div class="portal-head">
+        <h2>&#x1F4CA; NIP-KIND MAP</h2>
+        <button id="kind-tree-toggle-all" class="secondary" style="padding:6px 12px;font-size:12px">Close All</button>
+      </div>
+      <div class="table-wrap">
+        <table id="kind-tree"><thead><tr><th class="nip-toggle-cell"></th><th>NIP</th><th>Name</th><th style="text-align:right">Count</th></tr></thead><tbody></tbody></table>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-top:16px;padding:12px;border-top:1px solid var(--border);line-height:1.6">
+        <div style="margin-bottom:8px"><strong>Legend:</strong></div>
+        <div>* = External protocol mapping (Marmot, Tidal, NKBIP-01, BUD-01)</div>
+        <div>→ Related = NIPs with shared functionality or dependencies</div>
+        <div style="margin-top:8px"><a href="https://github.com/nostr-protocol/nips" target="_blank" rel="noopener" style="color:var(--accent)">View canonical NIP repository →</a></div>
+      </div>
     </div>
 
-    <div id="restart-controls" style="margin-top:16px;padding-top:12px;border-top:1px solid var(--border)">
-      <div class="actions" style="margin-top:0;margin-bottom:10px">
-        <button onclick="saveAllVariables()">Save Config (All Variables)</button>
-        <button class="secondary" onclick="saveAndRestartWeb()">Save + Restart Web Runtime</button>
-        <span class="notice" id="saveall-notice"></span>
-      </div>
-      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-        <label for="restart-container" style="font-size:12px;color:var(--muted);font-weight:500;text-transform:uppercase;letter-spacing:.04em">Container</label>
-        <select id="restart-container" style="max-width:320px"></select>
-        <button class="secondary" onclick="restartSelectedContainer()">Restart Container</button>
-      </div>
-      <div id="restart-profile-buttons" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"></div>
-      <div class="notice" id="restart-hint">Save Config writes settings. Restart Web Runtime (Fix Icon) only restarts the web runtime and does not save variables.</div>
-      <span class="notice" id="restart-notice"></span>
-    </div>
   </div>
 
   <!-- Limits -->
@@ -949,7 +969,7 @@ HTML = r"""<!DOCTYPE html>
     </div>
     <div class="restart-note">
       <strong>Note:</strong> NIP-42 auth breaks LNbits NWC provider (nwcprovider 1.1.1 doesn't implement NIP-42).
-      Keep disabled if using Zeus / Amethyst zaps via LNbits.
+      Keep disabled if using Zeus / Nostr clients (Primal, Amethyst, etc.) zaps via LNbits.
     </div>
   </div>
 
@@ -1023,103 +1043,160 @@ HTML = r"""<!DOCTYPE html>
 </main>
 <script>
 const NIP_KINDS = {
-  0:     {nip:'01',    name:'User Metadata'},
-  1:     {nip:'01',    name:'Short Text Note'},
-  2:     {nip:'01',    name:'Recommend Relay (deprecated)'},
-  3:     {nip:'02',    name:'Follows / Contact List'},
-  4:     {nip:'04',    name:'Encrypted DM (deprecated→NIP-17)'},
-  5:     {nip:'09',    name:'Event Deletion Request'},
-  6:     {nip:'18',    name:'Repost'},
-  7:     {nip:'25',    name:'Reaction'},
-  8:     {nip:'58',    name:'Badge Award'},
-  9:     {nip:'29',    name:'Group Chat Message'},
-  10:    {nip:'29',    name:'Group Chat Threaded Reply'},
-  11:    {nip:'29',    name:'Group Thread'},
-  12:    {nip:'29',    name:'Group Thread Reply'},
-  13:    {nip:'13',    name:'Proof of Work'},
-  14:    {nip:'17',    name:'Sealed DM'},
-  16:    {nip:'73',    name:'External Content IDs'},
-  17:    {nip:'25',    name:'Reaction to Website'},
-  40:    {nip:'28',    name:'Channel Creation'},
-  41:    {nip:'28',    name:'Channel Metadata'},
-  42:    {nip:'28',    name:'Channel Message'},
-  43:    {nip:'28',    name:'Channel Hide Message'},
-  44:    {nip:'44',    name:'Encrypted DM v2'},
-  1021:  {nip:'53',    name:'Bid'},
-  1022:  {nip:'53',    name:'Bid Confirmation'},
-  1040:  {nip:'03',    name:'OpenTimestamps Attestation'},
-  1059:  {nip:'59',    name:'Gift Wrap'},
-  1063:  {nip:'94',    name:'File Metadata'},
-  1311:  {nip:'53',    name:'Live Chat Message'},
-  1617:  {nip:'54',    name:'Wiki Article'},
-  1971:  {nip:'71',    name:'Video Event'},
-  4550:  {nip:'72',    name:'Moderated Community Post Approval'},
-  7000:  {nip:'90',    name:'Job Feedback (DVM)'},
-  9041:  {nip:'75',    name:'Zap Goal'},
-  9321:  {nip:'60',    name:'Nutzap (Cashu)'},
-  9467:  {nip:'60',    name:'Wallet Token'},
-  9734:  {nip:'57',    name:'Zap Request'},
-  9735:  {nip:'57',    name:'Zap Receipt'},
-  9802:  {nip:'84',    name:'Highlight'},
-  10000: {nip:'51',    name:'Mute List'},
-  10001: {nip:'51',    name:'Pin List'},
-  10002: {nip:'65',    name:'Relay List Metadata'},
-  10003: {nip:'51',    name:'Bookmark List'},
-  10004: {nip:'51',    name:'Communities List'},
-  10005: {nip:'51',    name:'Public Chats List'},
-  10006: {nip:'51',    name:'Blocked Relays List'},
-  10007: {nip:'51',    name:'Search Relays List'},
-  10009: {nip:'51',    name:'User Groups'},
-  10015: {nip:'51',    name:'Interests List'},
-  10019: {nip:'60',    name:'Nutzap Mint List'},
-  10030: {nip:'51',    name:'User Emoji List'},
-  10050: {nip:'17',    name:'DM Relay List'},
-  10063: {nip:'96',    name:'User Server List'},
-  10096: {nip:'96',    name:'File Storage Server List'},
-  13194: {nip:'47',    name:'Wallet Connect Info (NWC)'},
-  17375: {nip:'60',    name:'Cashu Wallet'},
-  22242: {nip:'42',    name:'Authentication'},
-  23194: {nip:'47',    name:'Wallet Connect Request (NWC)'},
-  23195: {nip:'47',    name:'Wallet Connect Response (NWC)'},
-  23196: {nip:'47',    name:'Wallet Connect Notification (NWC)'},
-  24133: {nip:'46',    name:'Nostr Connect / Remote Signing'},
-  24242: {nip:'BUD-01',name:'Blob Storage Auth'},
-  27235: {nip:'98',    name:'HTTP Auth'},
-  30000: {nip:'51',    name:'Follow Sets'},
-  30001: {nip:'51',    name:'Generic Lists'},
-  30002: {nip:'51',    name:'Relay Sets'},
-  30003: {nip:'51',    name:'Bookmark Sets'},
-  30004: {nip:'51',    name:'Curation Sets (articles)'},
-  30005: {nip:'51',    name:'Curation Sets (videos)'},
-  30007: {nip:'51',    name:'Kind Mute Sets'},
-  30008: {nip:'58',    name:'Profile Badges'},
-  30009: {nip:'58',    name:'Badge Definition'},
-  30017: {nip:'15',    name:'Stall'},
-  30018: {nip:'15',    name:'Product'},
-  30023: {nip:'23',    name:'Long-form Article'},
-  30024: {nip:'23',    name:'Long-form Draft'},
-  30030: {nip:'51',    name:'Emoji Sets'},
-  30040: {nip:'62',    name:'Request to Vanish'},
-  30041: {nip:'54',    name:'Wiki Article'},
-  30063: {nip:'96',    name:'Release Artifact Sets'},
-  30078: {nip:'78',    name:'App-specific Data'},
-  30311: {nip:'53',    name:'Live Event'},
-  30315: {nip:'38',    name:'User Statuses'},
-  30402: {nip:'99',    name:'Classified Listing'},
-  30403: {nip:'99',    name:'Draft Classified Listing'},
-  30617: {nip:'34',    name:'Git Repository Announcement'},
-  30618: {nip:'34',    name:'Git Repository State'},
-  30818: {nip:'54',    name:'Wiki Article'},
-  31922: {nip:'52',    name:'Date-Based Calendar Event'},
-  31923: {nip:'52',    name:'Time-Based Calendar Event'},
-  31924: {nip:'52',    name:'Calendar'},
-  31925: {nip:'52',    name:'Calendar Event RSVP'},
-  31989: {nip:'89',    name:'Handler Recommendation'},
-  31990: {nip:'89',    name:'Handler Information'},
-  34235: {nip:'71',    name:'Video Event'},
-  34236: {nip:'71',    name:'Short-form Portrait Video'},
-  34237: {nip:'71',    name:'Video View Event'},
-  34550: {nip:'72',    name:'Community Definition'},
+  0:     {nip:'01',      name:'User Metadata'},
+  1:     {nip:'01',      name:'Short Text Note'},
+  2:     {nip:'01',      name:'Recommend Relay (deprecated)'},
+  3:     {nip:'02',      name:'Follows / Contact List'},
+  4:     {nip:'04',      name:'Encrypted DM (deprecated→NIP-17)'},
+  5:     {nip:'09',      name:'Event Deletion Request'},
+  6:     {nip:'18',      name:'Repost'},
+  7:     {nip:'25',      name:'Reaction'},
+  8:     {nip:'58',      name:'Badge Award'},
+  9:     {nip:'C7',      name:'Chat Message'},
+  10:    {nip:'29',      name:'Group Chat Threaded Reply'},
+  11:    {nip:'7D',      name:'Thread'},
+  12:    {nip:'29',      name:'Group Thread Reply'},
+  13:    {nip:'59',      name:'Seal'},
+  14:    {nip:'17',      name:'Sealed DM'},
+  15:    {nip:'17',      name:'File Message'},
+  16:    {nip:'18',      name:'Generic Repost'},
+  17:    {nip:'25',      name:'Reaction to Website'},
+  20:    {nip:'68',      name:'Picture'},
+  21:    {nip:'71',      name:'Video Event'},
+  22:    {nip:'71',      name:'Short-form Portrait Video Event'},
+  24:    {nip:'A4',      name:'Public Message'},
+  40:    {nip:'28',      name:'Channel Creation'},
+  41:    {nip:'28',      name:'Channel Metadata'},
+  42:    {nip:'28',      name:'Channel Message'},
+  43:    {nip:'28',      name:'Channel Hide Message'},
+  44:    {nip:'28',      name:'Channel Mute User'},
+  62:    {nip:'62',      name:'Request to Vanish'},
+  64:    {nip:'64',      name:'Chess (PGN)'},
+  443:   {nip:'Marmot',  name:'KeyPackage *'},
+  444:   {nip:'Marmot',  name:'Welcome Message *'},
+  445:   {nip:'Marmot',  name:'Group Event *'},
+  818:   {nip:'54',      name:'Merge Request'},
+  1018:  {nip:'88',      name:'Poll Response'},
+  1021:  {nip:'53',      name:'Bid'},
+  1022:  {nip:'53',      name:'Bid Confirmation'},
+  1040:  {nip:'03',      name:'OpenTimestamps Attestation'},
+  1059:  {nip:'59',      name:'Gift Wrap'},
+  1063:  {nip:'94',      name:'File Metadata'},
+  1068:  {nip:'88',      name:'Poll'},
+  1111:  {nip:'22',      name:'Comment'},
+  1222:  {nip:'A0',      name:'Voice Message'},
+  1244:  {nip:'A0',      name:'Voice Message Comment'},
+  1311:  {nip:'53',      name:'Live Chat Message'},
+  1337:  {nip:'C0',      name:'Code Snippet'},
+  1617:  {nip:'34',      name:'Patches'},
+  1618:  {nip:'34',      name:'Pull Request'},
+  1619:  {nip:'34',      name:'Pull Request Update'},
+  1621:  {nip:'34',      name:'Issue'},
+  1971:  {nip:'nostrocket', name:'Problem Tracker *'},
+  1984:  {nip:'56',      name:'Reporting'},
+  1985:  {nip:'32',      name:'Label'},
+  2003:  {nip:'35',      name:'Torrent'},
+  2004:  {nip:'35',      name:'Torrent Comment'},
+  4550:  {nip:'72',      name:'Moderated Community Post Approval'},
+  7000:  {nip:'90',      name:'Job Feedback (DVM)'},
+  7374:  {nip:'60',      name:'Reserved Cashu Wallet Tokens'},
+  7375:  {nip:'60',      name:'Cashu Wallet Tokens'},
+  7376:  {nip:'60',      name:'Cashu Wallet History'},
+  9041:  {nip:'75',      name:'Zap Goal'},
+  9321:  {nip:'61',      name:'Nutzap'},
+  9467:  {nip:'Tidal',   name:'Tidal Login *'},
+  9734:  {nip:'57',      name:'Zap Request'},
+  9735:  {nip:'57',      name:'Zap Receipt'},
+  9802:  {nip:'84',      name:'Highlight'},
+  10000: {nip:'51',      name:'Mute List'},
+  10001: {nip:'51',      name:'Pin List'},
+  10002: {nip:'65',      name:'Relay List Metadata'},
+  10003: {nip:'51',      name:'Bookmark List'},
+  10004: {nip:'51',      name:'Communities List'},
+  10005: {nip:'51',      name:'Public Chats List'},
+  10006: {nip:'51',      name:'Blocked Relays List'},
+  10007: {nip:'51',      name:'Search Relays List'},
+  10008: {nip:'51',      name:'Profile Badges'},
+  10009: {nip:'51',      name:'User Groups'},
+  10011: {nip:'39',      name:'External Identities'},
+  10012: {nip:'51',      name:'Favorite Relays List'},
+  10013: {nip:'37',      name:'Private Event Relay List'},
+  10015: {nip:'51',      name:'Interest Sets'},
+  10019: {nip:'61',      name:'Nutzap Mint Recommendation'},
+  10020: {nip:'51',      name:'Media Follows'},
+  10030: {nip:'51',      name:'User Emoji List'},
+  10050: {nip:'17',      name:'DM Relay List'},
+  10051: {nip:'Marmot',  name:'KeyPackage Relays List *'},
+  10063: {nip:'96',      name:'User Server List'},
+  10096: {nip:'96',      name:'File Storage Server List'},
+  10166: {nip:'66',      name:'Relay Monitor Announcement'},
+  10312: {nip:'53',      name:'Room Presence'},
+  13194: {nip:'47',      name:'Wallet Connect Info (NWC)'},
+  13534: {nip:'43',      name:'Membership Lists'},
+  17375: {nip:'60',      name:'Cashu Wallet Event'},
+  22242: {nip:'42',      name:'Authentication'},
+  23194: {nip:'47',      name:'Wallet Connect Request (NWC)'},
+  23195: {nip:'47',      name:'Wallet Connect Response (NWC)'},
+  23196: {nip:'47',      name:'Wallet Connect Notification (NWC)'},
+  24133: {nip:'46',      name:'Nostr Connect / Remote Signing'},
+  24242: {nip:'BUD-01',  name:'Blob Storage Auth'},
+  27235: {nip:'98',      name:'HTTP Auth'},
+  28934: {nip:'43',      name:'Join Request'},
+  28935: {nip:'43',      name:'Invite Request'},
+  28936: {nip:'43',      name:'Leave Request'},
+  30000: {nip:'51',      name:'Follow Sets'},
+  30001: {nip:'51',      name:'Generic Lists'},
+  30002: {nip:'51',      name:'Relay Sets'},
+  30003: {nip:'51',      name:'Bookmark Sets'},
+  30004: {nip:'51',      name:'Curation Sets'},
+  30005: {nip:'51',      name:'Video Sets'},
+  30006: {nip:'51',      name:'Picture Sets'},
+  30007: {nip:'51',      name:'Kind Mute Sets'},
+  30008: {nip:'58',      name:'Profile Badges'},
+  30009: {nip:'58',      name:'Badge Definition'},
+  30015: {nip:'51',      name:'Interest Sets'},
+  30017: {nip:'15',      name:'Stall'},
+  30018: {nip:'15',      name:'Product'},
+  30019: {nip:'15',      name:'Marketplace UI/UX'},
+  30020: {nip:'15',      name:'Product (Auction)'},
+  30023: {nip:'23',      name:'Long-form Article'},
+  30024: {nip:'23',      name:'Long-form Draft'},
+  30030: {nip:'51',      name:'Emoji Sets'},
+  30040: {nip:'NKBIP-01',name:'Curated Publication Index *'},
+  30041: {nip:'NKBIP-01',name:'Curated Publication Content *'},
+  30063: {nip:'51',      name:'Release Artifact Sets'},
+  30078: {nip:'78',      name:'App-specific Data'},
+  30166: {nip:'66',      name:'Relay Discovery'},
+  30267: {nip:'51',      name:'App Curation Sets'},
+  30311: {nip:'53',      name:'Live Event'},
+  30312: {nip:'53',      name:'Interactive Room'},
+  30313: {nip:'53',      name:'Conference Event'},
+  30315: {nip:'38',      name:'User Statuses'},
+  30402: {nip:'99',      name:'Classified Listing'},
+  30403: {nip:'99',      name:'Draft Classified Listing'},
+  30617: {nip:'34',      name:'Git Repository Announcement'},
+  30618: {nip:'34',      name:'Repository State Announcement'},
+  30818: {nip:'54',      name:'Wiki Article'},
+  30819: {nip:'54',      name:'Redirects'},
+  31234: {nip:'37',      name:'Draft Event'},
+  31922: {nip:'52',      name:'Date-Based Calendar Event'},
+  31923: {nip:'52',      name:'Time-Based Calendar Event'},
+  31924: {nip:'52',      name:'Calendar'},
+  31925: {nip:'52',      name:'Calendar Event RSVP'},
+  31989: {nip:'89',      name:'Handler Recommendation'},
+  31990: {nip:'89',      name:'Handler Information'},
+  34128: {nip:'5A',      name:'Legacy nsite Manifest (deprecated)'},
+  34235: {nip:'71',      name:'Addressable Video Event'},
+  34236: {nip:'71',      name:'Addressable Short Video Event'},
+  34237: {nip:'71',      name:'Video View Event'},
+  34550: {nip:'72',      name:'Community Definition'},
+  35128: {nip:'5A',      name:'Named nsite Manifest'},
+  38172: {nip:'87',      name:'Cashu Mint Announcement'},
+  38173: {nip:'87',      name:'Fedimint Announcement'},
+  38383: {nip:'69',      name:'Peer-to-peer Order Events'},
+  39089: {nip:'51',      name:'Starter Packs'},
+  39092: {nip:'51',      name:'Media Starter Packs'},
+  39701: {nip:'B0',      name:'Web Bookmarks'},
 };
 
 function nipInfo(kind) {
@@ -1129,52 +1206,85 @@ function nipInfo(kind) {
   if (kind >= 6000 && kind <= 6999) return {nip:'90', name:`DVM Job Result (${kind})`};
   // Group control events 9000-9030
   if (kind >= 9000 && kind <= 9030) return {nip:'29', name:`Group Control Event (${kind})`};
+  // Git status events
+  if (kind >= 1630 && kind <= 1633) return {nip:'34', name:`Git Status Event (${kind})`};
+  // Group metadata events
+  if (kind >= 39000 && kind <= 39009) return {nip:'29', name:`Group Metadata Event (${kind})`};
   return NIP_KINDS[kind] || null;
 }
 
 const NIP_META = {
-  '01':    { title:'Basic Protocol',         desc:'Defines the event format, kind 0 (profile metadata) and kind 1 (short notes), and relay communication protocol.',                          url:'https://nips.nostr.com/1'  },
-  '02':    { title:'Follow List',             desc:'Kind 3 contact/follow list. Clients use it to store the accounts a user follows and which relays they use.',                                  url:'https://nips.nostr.com/2'  },
-  '03':    { title:'OpenTimestamps',          desc:'Kind 1040. Timestamps Nostr event IDs against the Bitcoin blockchain using OpenTimestamps attestations.',                                     url:'https://nips.nostr.com/3'  },
-  '04':    { title:'Encrypted DM (legacy)',   desc:'Kind 4 encrypted direct messages using secp256k1 ECDH + AES-256-CBC. Deprecated — NIP-17 sealed notes are the modern replacement.',         url:'https://nips.nostr.com/4'  },
-  '09':    { title:'Event Deletion',          desc:'Kind 5 deletion request. Authors ask relays and clients to stop serving specific events identified by their IDs.',                             url:'https://nips.nostr.com/9'  },
-  '13':    { title:'Proof of Work',           desc:'Kind 13. Convention for mining a leading-zero hash on Nostr events as a spam-prevention signal of computational commitment.',                  url:'https://nips.nostr.com/13' },
-  '15':    { title:'Marketplace',             desc:'Kinds 30017 (Stall) and 30018 (Product) define a decentralised peer-to-peer marketplace with listings, variants, and shipping info.',        url:'https://nips.nostr.com/15' },
-  '17':    { title:'Private DMs',             desc:'Kinds 14 (Sealed DM) and 10050 (DM Relay List). Modern private messaging using gift-wraps so relays see no sender, recipient, or content.',  url:'https://nips.nostr.com/17' },
-  '18':    { title:'Reposts',                 desc:'Kind 6 reposts a kind-1 note. Kind 16 is a generic repost for any other event kind.',                                                         url:'https://nips.nostr.com/18' },
-  '23':    { title:'Long-form Content',       desc:'Kind 30023 (published article) and 30024 (draft) for Markdown long-form posts with title, summary, image, and published-at metadata.',      url:'https://nips.nostr.com/23' },
-  '25':    { title:'Reactions',               desc:'Kind 7 reactions (like/dislike/emoji) to any event. Kind 17 extends reactions to arbitrary external web content via URL tags.',             url:'https://nips.nostr.com/25' },
-  '28':    { title:'Public Chat',             desc:'Kinds 40–44 define public IRC-style channels: creation, metadata updates, messages, hiding messages, and kicking users.',                    url:'https://nips.nostr.com/28' },
-  '29':    { title:'Relay-based Groups',      desc:'Kinds 9–12 for group chat threads; kinds 9000–9030 for group admin events (add/remove member, edit group metadata, delete event).',          url:'https://nips.nostr.com/29' },
-  '34':    { title:'Git Repositories',        desc:'Kinds 30617 (repo announcement) and 30618 (repo state) publish git repositories and their HEAD commit state over Nostr.',                   url:'https://nips.nostr.com/34' },
-  '38':    { title:'User Statuses',           desc:'Kind 30315 — ephemeral status updates attached to a profile (e.g. "listening to…", "working on…") with optional expiry.',              url:'https://nips.nostr.com/38' },
-  '42':    { title:'Client Authentication',   desc:'Kind 22242. Relays can challenge clients to prove pubkey ownership via a signed event before accepting writes or serving restricted content.',url:'https://nips.nostr.com/42' },
-  '44':    { title:'Encrypted Payloads v2',   desc:'Versioned encryption standard (XChaCha20-Poly1305 + secp256k1 ECDH) used by NIP-17 DMs and other private content payloads.',               url:'https://nips.nostr.com/44' },
-  '46':    { title:'Nostr Connect',           desc:'Kind 24133 remote signing. Separates the key-holder (signer app) from the client app; client requests signatures over Nostr messages.',     url:'https://nips.nostr.com/46' },
-  '47':    { title:'Wallet Connect (NWC)',    desc:'Kinds 13194/23194/23195/23196. Nostr Wallet Connect lets clients trigger lightning payments through a wallet pubkey without holding keys.',   url:'https://nips.nostr.com/47' },
-  '51':    { title:'Lists',                   desc:'Kinds 10000–10030 and 30000–30030 — mute lists, bookmark lists, follow sets, relay sets, emoji sets, pin lists, and more named lists.',       url:'https://nips.nostr.com/51' },
-  '52':    { title:'Calendar Events',         desc:'Kinds 31922 (date-based) and 31923 (time-based) calendar events, 31924 (calendar collections), and 31925 (RSVP responses).',               url:'https://nips.nostr.com/52' },
-  '53':    { title:'Live Activities',         desc:'Kind 30311 (live event), 1311 (live chat message), 1021 (bid), 1022 (bid confirmation) for live streams, podcasts, and auctions.',          url:'https://nips.nostr.com/53' },
-  '54':    { title:'Wiki',                    desc:'Kinds 1617, 30041, 30818 — collaborative wiki articles with versioning, forking, and merge-by-reference semantics.',                         url:'https://nips.nostr.com/54' },
-  '57':    { title:'Lightning Zaps',          desc:'Kind 9734 (zap request from client) and 9735 (zap receipt from LNURL server) — links lightning payments to specific Nostr events or profiles.',url:'https://nips.nostr.com/57' },
-  '58':    { title:'Badges',                  desc:'Kind 8 (badge award), 30008 (profile badges display), 30009 (badge definition) — issue, award, and showcase verifiable achievement badges.',  url:'https://nips.nostr.com/58' },
-  '59':    { title:'Gift Wrap',               desc:'Kind 1059 wraps a sealed event in an anonymous outer envelope with a random keypair, hiding sender, recipient, and timestamp metadata.',      url:'https://nips.nostr.com/59' },
-  '60':    { title:'Nutzap (Cashu)',          desc:'Kind 9321 (nutzap), 9467 (wallet token), 10019 (mint list), 17375 (Cashu wallet) — e-cash tipping using Cashu tokens over Nostr.',          url:'https://nips.nostr.com/60' },
-  '62':    { title:'Request to Vanish',       desc:'Kind 30040 — a signed request for relays and clients to permanently delete all events associated with a given pubkey.',                       url:'https://nips.nostr.com/62' },
-  '65':    { title:'Relay List Metadata',     desc:'Kind 10002 — publishes which relays a user reads from and writes to, enabling relay discovery and inbox/outbox model routing.',               url:'https://nips.nostr.com/65' },
-  '71':    { title:'Video Events',            desc:'Kinds 1971/34235 (video), 34236 (portrait video), 34237 (video view) — publish and track video content with title, thumb, and duration.',   url:'https://nips.nostr.com/71' },
-  '72':    { title:'Moderated Communities',   desc:'Kind 34550 (community definition) and 4550 (post approval) — Reddit-style communities with moderator-controlled post approval.',            url:'https://nips.nostr.com/72' },
-  '73':    { title:'External Content IDs',    desc:'Kind 16 — attaches external identifiers (ISBN, podcast GUID, movie IMDB ID, etc.) to Nostr events for cross-platform content linking.',     url:'https://nips.nostr.com/73' },
-  '75':    { title:'Zap Goals',               desc:'Kind 9041 — crowdfunding-style fundraising goals that aggregate incoming zaps toward a stated target amount with a deadline.',               url:'https://nips.nostr.com/75' },
-  '78':    { title:'App-specific Data',       desc:'Kind 30078 — arbitrary namespaced storage on Nostr relays. Apps use it to persist and sync settings or state across devices.',              url:'https://nips.nostr.com/78' },
-  '84':    { title:'Highlights',              desc:'Kind 9802 — quoted excerpts from articles or web pages, optionally with commentary and source URL, like a social bookmarking layer.',       url:'https://nips.nostr.com/84' },
-  '89':    { title:'Recommended Handlers',    desc:'Kind 31989 (handler recommendation) and 31990 (handler info) — suggest which application should open or render a given event kind.',      url:'https://nips.nostr.com/89' },
-  '90':    { title:'Data Vending Machines',   desc:'Kinds 5000–5999 (job requests), 6000–6999 (results), 7000 (feedback) — AI/compute task marketplace where users pay sats for processing.',  url:'https://nips.nostr.com/90' },
-  '94':    { title:'File Metadata',           desc:'Kind 1063 — describes a file upload with content hash, size, MIME type, dimensions, and one or more CDN/IPFS URL pointers.',               url:'https://nips.nostr.com/94' },
-  '96':    { title:'HTTP File Storage',       desc:'Kinds 10063/10096/30063 — server discovery and NIP-98 auth flow for uploading, retrieving, and managing files on HTTP media servers.',       url:'https://nips.nostr.com/96' },
-  '98':    { title:'HTTP Authentication',     desc:'Kind 27235 — signs an HTTP request payload with a Nostr keypair to authenticate with web services without passwords or OAuth.',             url:'https://nips.nostr.com/98' },
-  '99':    { title:'Classified Listings',     desc:'Kind 30402 (listing) and 30403 (draft) — buy/sell classified ads with title, price, location, condition, images, and shipping info.',      url:'https://nips.nostr.com/99' },
-  'BUD-01':{ title:'Blossom Blob Auth',       desc:'BUD-01 kind 24242 — authorises upload, download, and deletion of binary blobs on Blossom HTTP media servers using a time-limited NIP-98 auth event.',url:'https://github.com/hzrd149/blossom/blob/master/buds/01.md' },
+  '01':      { title:'Basic Protocol',                 desc:'Core event format and relay protocol used by all Nostr clients and relays.', url:'https://nips.nostr.com/1' },
+  '02':      { title:'Follow List',                    desc:'Kind 3 contact/follow list for social graph and preferred relays.', url:'https://nips.nostr.com/2', related:['51'] },
+  '03':      { title:'OpenTimestamps',                 desc:'Kind 1040 attestations anchoring event IDs to Bitcoin via OpenTimestamps.', url:'https://nips.nostr.com/3' },
+  '04':      { title:'Encrypted DM (legacy)',          desc:'Legacy kind 4 encrypted direct messages; superseded by modern NIP-17 flows.', url:'https://nips.nostr.com/4', related:['17','59'] },
+  '09':      { title:'Event Deletion',                 desc:'Kind 5 deletion requests asking relays/clients to stop serving events.', url:'https://nips.nostr.com/9' },
+  '13':      { title:'Proof of Work',                  desc:'Nonce tag conventions for proving computational work on events.', url:'https://nips.nostr.com/13' },
+  '15':      { title:'Marketplace',                    desc:'Marketplace events for stalls, products, and auction metadata.', url:'https://nips.nostr.com/15' },
+  '17':      { title:'Private DMs',                    desc:'Sealed direct messages and relay-list semantics for private messaging.', url:'https://nips.nostr.com/17', related:['04','59','44'] },
+  '18':      { title:'Reposts',                        desc:'Repost conventions including generic repost events.', url:'https://nips.nostr.com/18' },
+  '22':      { title:'Comment',                        desc:'Comment event model for replies and threaded commentary.', url:'https://nips.nostr.com/22' },
+  '23':      { title:'Long-form Content',              desc:'Long-form article and draft publication formats.', url:'https://nips.nostr.com/23' },
+  '25':      { title:'Reactions',                      desc:'Reactions for events and website-linked content.', url:'https://nips.nostr.com/25', related:['57'] },
+  '28':      { title:'Public Chat',                    desc:'Channel creation, metadata, message, hide, and mute user events.', url:'https://nips.nostr.com/28' },
+  '29':      { title:'Relay-based Groups',             desc:'Group threads plus control and metadata events for managed groups.', url:'https://nips.nostr.com/29' },
+  '32':      { title:'Labeling',                       desc:'Label and namespace conventions for classified or moderation use-cases.', url:'https://nips.nostr.com/32' },
+  '34':      { title:'Git Repositories',               desc:'Repository announcements, state, patches, PRs, issues, and status events.', url:'https://nips.nostr.com/34' },
+  '35':      { title:'Torrents',                       desc:'Torrent and torrent-comment event definitions.', url:'https://nips.nostr.com/35' },
+  '37':      { title:'Draft Events',                   desc:'Private and addressable draft event support.', url:'https://nips.nostr.com/37' },
+  '38':      { title:'User Statuses',                  desc:'Ephemeral profile status updates with optional expiry.', url:'https://nips.nostr.com/38' },
+  '39':      { title:'External Identities',            desc:'Identity verification links between Nostr profiles and external services.', url:'https://nips.nostr.com/39' },
+  '42':      { title:'Client Authentication',          desc:'Relay challenge-response auth to prove pubkey control.', url:'https://nips.nostr.com/42' },
+  '43':      { title:'Relay Access',                   desc:'Membership, join/invite/leave, and access metadata for controlled relays.', url:'https://nips.nostr.com/43' },
+  '44':      { title:'Encrypted Payloads v2',          desc:'Versioned encrypted payload format used by modern private messaging specs.', url:'https://nips.nostr.com/44', related:['04','17','59'] },
+  '46':      { title:'Nostr Connect',                  desc:'Remote signing via signer/client separation.', url:'https://nips.nostr.com/46' },
+  '47':      { title:'Wallet Connect (NWC)',           desc:'Wallet info/request/response/notification flows over Nostr.', url:'https://nips.nostr.com/47' },
+  '50':      { title:'Search Capability',              desc:'Search capability conventions used by clients and relays.', url:'https://nips.nostr.com/50' },
+  '51':      { title:'Lists',                          desc:'Standard and addressable list/set kinds for mutes, follows, relays, bookmarks, and curation.', url:'https://nips.nostr.com/51', related:['02'] },
+  '52':      { title:'Calendar Events',                desc:'Date/time calendar events, calendars, and RSVP responses.', url:'https://nips.nostr.com/52' },
+  '53':      { title:'Live Activities',                desc:'Live events, room presence, conference events, and related activity messages.', url:'https://nips.nostr.com/53' },
+  '54':      { title:'Wiki',                           desc:'Wiki articles, merge requests, and redirects. Curated publication kinds 30040/30041 are handled via NKBIP-01.', url:'https://nips.nostr.com/54' },
+  '56':      { title:'Reporting',                      desc:'Reporting events for abuse and moderation reporting channels.', url:'https://nips.nostr.com/56' },
+  '57':      { title:'Lightning Zaps',                 desc:'Zap request and zap receipt conventions tied to events/profiles.', url:'https://nips.nostr.com/57', related:['25','65'] },
+  '58':      { title:'Badges',                         desc:'Badge awards, profile badges, and badge definitions.', url:'https://nips.nostr.com/58' },
+  '59':      { title:'Gift Wrap',                      desc:'Sealed content envelopes that obfuscate sender/recipient metadata.', url:'https://nips.nostr.com/59', related:['04','17','44'] },
+  '60':      { title:'Cashu Wallet',                   desc:'Cashu wallet token/history and wallet event conventions.', url:'https://nips.nostr.com/60' },
+  '61':      { title:'Nutzaps',                        desc:'Nutzap event and mint recommendation conventions.', url:'https://nips.nostr.com/61' },
+  '62':      { title:'Request to Vanish',              desc:'Kind 62 signed request for deleting all content associated with a pubkey.', url:'https://nips.nostr.com/62' },
+  '64':      { title:'Chess (PGN)',                    desc:'Chess game event conventions based on PGN.', url:'https://nips.nostr.com/64' },
+  '65':      { title:'Relay List Metadata',            desc:'User read/write relay list metadata.', url:'https://nips.nostr.com/65', related:['57'] },
+  '66':      { title:'Relay Discovery and Monitoring', desc:'Relay monitor announcements and discovery metadata.', url:'https://nips.nostr.com/66' },
+  '68':      { title:'Picture-first Feeds',            desc:'Picture event formats for image-first social feeds.', url:'https://nips.nostr.com/68' },
+  '69':      { title:'Peer-to-peer Orders',            desc:'Order event conventions for peer-to-peer marketplace flows.', url:'https://nips.nostr.com/69' },
+  '70':      { title:'Protected Events',               desc:'Protected-event marker conventions for policy-sensitive content.', url:'https://nips.nostr.com/70' },
+  '71':      { title:'Video Events',                   desc:'Video and short-form portrait video event formats plus view tracking.', url:'https://nips.nostr.com/71' },
+  '72':      { title:'Moderated Communities',          desc:'Community definitions and post-approval workflows.', url:'https://nips.nostr.com/72' },
+  '75':      { title:'Zap Goals',                      desc:'Crowdfunding goal events aggregating zaps toward a target.', url:'https://nips.nostr.com/75' },
+  '77':      { title:'Negentropy Syncing',             desc:'Set reconciliation protocol for efficient relay/client syncing.', url:'https://nips.nostr.com/77' },
+  '78':      { title:'App-specific Data',              desc:'Application-scoped state and settings persisted via relay storage.', url:'https://nips.nostr.com/78' },
+  '84':      { title:'Highlights',                     desc:'Highlight/annotation event format for quoted web content.', url:'https://nips.nostr.com/84' },
+  '85':      { title:'Trusted Assertions',             desc:'Trusted assertion kinds for users/events/addressable entities.', url:'https://nips.nostr.com/85' },
+  '87':      { title:'Ecash Mint Discoverability',     desc:'Cashu/Fedimint mint discovery and announcements.', url:'https://nips.nostr.com/87' },
+  '88':      { title:'Polls',                          desc:'Poll and poll-response event formats.', url:'https://nips.nostr.com/88' },
+  '89':      { title:'Recommended Handlers',           desc:'Handler recommendation and handler info events.', url:'https://nips.nostr.com/89' },
+  '90':      { title:'Data Vending Machines',          desc:'Job request/result/feedback ranges for compute services.', url:'https://nips.nostr.com/90' },
+  '92':      { title:'Media Attachments',              desc:'Inline media metadata attachment conventions.', url:'https://nips.nostr.com/92' },
+  '94':      { title:'File Metadata',                  desc:'Metadata envelope for uploaded files and media pointers.', url:'https://nips.nostr.com/94' },
+  '96':      { title:'HTTP File Storage',              desc:'HTTP file storage integration and server list conventions.', url:'https://nips.nostr.com/96' },
+  '98':      { title:'HTTP Authentication',            desc:'Signed HTTP auth events for web API authentication.', url:'https://nips.nostr.com/98' },
+  '99':      { title:'Classified Listings',            desc:'Classified listing and draft listing formats.', url:'https://nips.nostr.com/99' },
+  '5A':      { title:'Static Websites (nsites)',       desc:'Static website manifest and publication conventions.', url:'https://nips.nostr.com/5A' },
+  '7D':      { title:'Threads',                        desc:'Thread root/reply relationships for text-like content.', url:'https://nips.nostr.com/7D' },
+  'A0':      { title:'Voice Messages',                 desc:'Voice message and voice-comment event formats.', url:'https://nips.nostr.com/A0' },
+  'A4':      { title:'Public Messages',                desc:'Public message kind conventions.', url:'https://nips.nostr.com/A4' },
+  'B0':      { title:'Web Bookmarks',                  desc:'Web bookmark event conventions.', url:'https://nips.nostr.com/B0' },
+  'C0':      { title:'Code Snippets',                  desc:'Code snippet events with dependency and runtime tagging.', url:'https://nips.nostr.com/C0' },
+  'C7':      { title:'Chats',                          desc:'Chat message event conventions.', url:'https://nips.nostr.com/C7' },
+  'Marmot':  { title:'Marmot Protocol *',              desc:'MLS-based E2EE protocol mapping used by kinds 443/444/445 and related list kinds. * External protocol mapping.', url:'https://github.com/marmot-protocol/marmot' },
+  'NKBIP-01':{ title:'Curated Publications *',         desc:'NKBIP curated publication index/content mapping for kinds 30040/30041. * External protocol mapping.', url:'https://wikistr.com/nkbip-01' },
+  'Tidal':   { title:'Tidal-nostr *',                  desc:'Tidal login mapping used for kind 9467. * External protocol mapping.', url:'https://wikistr.com/tidal-nostr' },
+  'nostrocket': { title:'Nostrocket Problems *',       desc:'Problem tracker mapping for kind 1971. * Client-specific protocol mapping.', url:'https://github.com/nostrocket/NIPS/blob/main/Problems.md' },
+  'BUD-01':  { title:'Blossom Blob Auth',              desc:'BUD-01 kind 24242 authorises blob upload/download/delete on Blossom media servers.', url:'https://github.com/hzrd149/blossom/blob/master/buds/01.md' },
 };
 
 function groupByNip(rows) {
@@ -1185,7 +1295,7 @@ function groupByNip(rows) {
     const key = nipCode || '__unknown__';
     if (!map.has(key)) {
       const meta = nipCode
-        ? (NIP_META[nipCode] || { title:`NIP-${nipCode}`, desc:'', url:`https://nips.nostr.com/${parseInt(nipCode,10)}` })
+        ? (NIP_META[nipCode] || { title:`NIP-${nipCode}`, desc:'', url:`https://nips.nostr.com/${nipCode}` })
         : null;
       map.set(key, { nipCode, meta, events:[], total:0 });
     }
@@ -1217,6 +1327,7 @@ function renderKindTree(groups) {
       : `<a class="nip-link" href="${meta.url}" target="_blank" rel="noopener"${titleAttr}>NIP-${g.nipCode}</a>`;
     const rowTitle = isUnknown ? 'Unknown' : (meta ? meta.title : `NIP-${g.nipCode}`);
     const kindCount = g.events.length;
+    const hasRelated = meta && meta.related && meta.related.length > 0;
     html += `<tr class="nip-row" data-nip="${key}">
       <td class="nip-toggle-cell"><span class="nip-toggle">&#9654;</span></td>
       <td>${nipBadge}</td>
@@ -1230,6 +1341,18 @@ function renderKindTree(groups) {
         <td class="kind-indent">${ev.kind}</td>
         <td class="kind-name">${safeName}</td>
         <td style="text-align:right;color:var(--muted)">${ev.n.toLocaleString()}</td>
+      </tr>`;
+    }
+    if (hasRelated) {
+      const relatedLinks = meta.related.map(r => {
+        const rMeta = NIP_META[r];
+        return `<a href="${rMeta?.url||'#'}" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none">NIP-${r}</a>`;
+      }).join(', ');
+      html += `<tr class="kind-row hidden" data-nip="${key}" style="font-size:11px;color:var(--muted)">
+        <td></td>
+        <td></td>
+        <td style="padding-left:20px;font-style:italic">→ Related: ${relatedLinks}</td>
+        <td></td>
       </tr>`;
     }
   }
@@ -1258,7 +1381,7 @@ function _escapeHtml(s){
 }
 
 function _setRestartControlsEnabled(enabled){
-  document.querySelectorAll('#restart-controls button, #restart-controls select').forEach(el => {
+  document.querySelectorAll('#restart-controls button, #restart-controls select, #relay-quick-col button, #relay-quick-col select').forEach(el => {
     if (enabled) el.removeAttribute('disabled');
     else el.setAttribute('disabled', 'disabled');
   });
@@ -1346,6 +1469,11 @@ function closeEventMessageModal(){
 const _restartProfiles = new Map();
 const _backupSnapshots = new Map();
 let _latestEvents = [];
+let _latestEventsAll = [];
+const EVENT_ROW_HEIGHT_PX = 36;
+const EVENT_VERTICAL_PADDING_PX = 20;
+const EVENT_DESKTOP_DEFAULT_ROWS = 8;
+let _eventsResizeTimer = null;
 const BACKUP_SCHEDULE_LABELS = {
   '4h': 'Every 4 hours (default)',
   '12h': 'Every 12 hours',
@@ -1470,6 +1598,82 @@ async function restoreBackup(backupId){
   }
 }
 
+function _eventsRowBounds() {
+  const w = window.innerWidth || 0;
+  if (w < 900) return null;
+  if (w >= 1280) return {minRows:8, maxRows:20};
+  if (w >= 1024) return {minRows:7, maxRows:16};
+  return {minRows:6, maxRows:12};
+}
+
+function _computeRecentEventsRowBudget() {
+  const bounds = _eventsRowBounds();
+  if (!bounds) return null;
+
+  const rightCol = document.getElementById('relay-quick-col');
+  const eventsHead = document.getElementById('events-head');
+  const eventsFootnote = document.getElementById('events-footnote');
+  const eventsThead = document.querySelector('#events-table thead');
+  if (!rightCol || !eventsHead || !eventsFootnote || !eventsThead) return EVENT_DESKTOP_DEFAULT_ROWS;
+
+  const rightColHeight = rightCol.getBoundingClientRect().height;
+  const availableHeight = rightColHeight
+    - eventsHead.getBoundingClientRect().height
+    - eventsFootnote.getBoundingClientRect().height
+    - eventsThead.getBoundingClientRect().height
+    - EVENT_VERTICAL_PADDING_PX;
+
+  if (!Number.isFinite(availableHeight) || availableHeight <= 0) {
+    return EVENT_DESKTOP_DEFAULT_ROWS;
+  }
+
+  const rawRows = Math.floor(availableHeight / EVENT_ROW_HEIGHT_PX);
+  return Math.max(bounds.minRows, Math.min(bounds.maxRows, rawRows));
+}
+
+function _renderRecentEvents() {
+  const etbody = document.querySelector('#events-table tbody');
+  const footnote = document.getElementById('events-footnote');
+  if (!etbody) return;
+
+  const total = Array.isArray(_latestEventsAll) ? _latestEventsAll.length : 0;
+  const rowBudget = _computeRecentEventsRowBudget();
+  const visibleEvents = rowBudget === null
+    ? _latestEventsAll
+    : _latestEventsAll.slice(0, rowBudget);
+
+  _latestEvents = visibleEvents;
+  etbody.innerHTML = visibleEvents.map((r, idx) => {
+    const info = nipInfo(r.kind);
+    const ts = new Date(r.created_at * 1000).toLocaleString(undefined, {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+    const typeName = info ? info.name : `Kind ${r.kind}`;
+    const raw = (r.content_preview || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const msg = raw || `<span style="color:var(--muted);font-style:italic">—</span>`;
+    return `<tr>
+      <td style="white-space:nowrap;color:var(--muted);font-size:11px">${ts}</td>
+      <td style="color:var(--muted)">${r.kind}</td>
+      <td style="color:var(--accent);white-space:nowrap">${typeName}</td>
+      <td class="message-cell" data-event-index="${idx}" title="Click to view full message" style="max-width:620px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${msg}</td>
+    </tr>`;
+  }).join('');
+
+  if (footnote) {
+    footnote.textContent = `Showing ${visibleEvents.length} of ${total} latest events`;
+  }
+
+  etbody.querySelectorAll('.message-cell[data-event-index]').forEach(cell => {
+    cell.addEventListener('click', () => openEventMessageModal(Number(cell.dataset.eventIndex)));
+  });
+}
+
+function _scheduleRecentEventsRelayout() {
+  if (_eventsResizeTimer) clearTimeout(_eventsResizeTimer);
+  _eventsResizeTimer = setTimeout(() => {
+    _renderRecentEvents();
+    _eventsResizeTimer = null;
+  }, 120);
+}
+
 async function loadStats(){
   try {
     const [s, c] = await Promise.all([api('/stats'), api('/config')]);
@@ -1479,14 +1683,27 @@ async function loadStats(){
       ? `<img src="${icon}" alt="${relayName}" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'icon-fallback',textContent:'\u26a1'}))">`
       : `<span class="icon-fallback">&#9889;</span>`;
     const latestTs = s.latest[0]
-      ? new Date(s.latest[0].created_at*1000).toLocaleString(undefined,{month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'})
+      ? new Date(s.latest[0].created_at*1000).toLocaleDateString(undefined,{month:'2-digit',day:'2-digit',year:'2-digit'}) + ' ' + new Date(s.latest[0].created_at*1000).toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'})
       : '\u2014';
+    const uniqueNips = new Set();
+    (s.by_kind || []).forEach(k => {
+      const info = nipInfo(k.kind);
+      if (info && info.nip) uniqueNips.add(info.nip);
+    });
+    const supportedNipsCount = uniqueNips.size || (s.by_kind || []).length;
     const grid = document.getElementById('stat-grid');
     grid.innerHTML = `
-      <div class="stat stat-icon">${iconHtml}<div class="lbl">${relayName}</div></div>
-      <div class="stat"><div class="val" style="font-size:16px">${latestTs}</div><div class="lbl">Latest Event</div></div>
-      <div class="stat"><div class="val">${s.by_kind.length}</div><div class="lbl">Distinct Kinds</div></div>
-      <div class="stat"><div class="val">${s.total_events.toLocaleString()}</div><div class="lbl">Total Events</div></div>
+      <div class="stat stat-icon">${iconHtml}<div class="lbl">${relayName}</div><button class="edit-icon-btn" id="open-icon-modal" onclick="document.getElementById('icon-modal').classList.add('open')">&#9998; Edit Image</button></div>
+      <div class="stat-combined">
+        <div class="sc-col">
+          <div class="sc-item"><div class="val" style="font-size:28px;font-weight:700;color:var(--accent)">${supportedNipsCount}</div><div class="lbl" style="font-size:11px;color:var(--muted);margin-top:4px">Supported NIPs</div></div>
+          <div class="sc-item"><div class="val" style="font-size:28px;font-weight:700;color:var(--accent)">${s.by_kind.length}</div><div class="lbl" style="font-size:11px;color:var(--muted);margin-top:4px">Supported Kinds</div></div>
+        </div>
+        <div class="sc-col">
+          <div class="sc-item"><div class="val" style="font-size:16px;font-weight:700;color:var(--accent)">${latestTs}</div><div class="lbl" style="font-size:11px;color:var(--muted);margin-top:4px">Latest Event</div></div>
+          <div class="sc-item"><div class="val" style="font-size:28px;font-weight:700;color:var(--accent)">${s.total_events.toLocaleString()}</div><div class="lbl" style="font-size:11px;color:var(--muted);margin-top:4px">Total Events</div></div>
+        </div>
+      </div>
     `;
     document.querySelector('#kind-tree tbody').innerHTML = renderKindTree(groupByNip(s.by_kind));
     if (!_kindTreeInitialized) {
@@ -1497,24 +1714,8 @@ async function loadStats(){
       [..._openNips].forEach(nip => { if (!valid.has(nip)) _openNips.delete(nip); });
     }
     _applyKindTreeState();
-    const etbody = document.querySelector('#events-table tbody');
-    _latestEvents = Array.isArray(s.latest) ? s.latest : [];
-    etbody.innerHTML = _latestEvents.map((r, idx) => {
-      const info = nipInfo(r.kind);
-      const ts = new Date(r.created_at*1000).toLocaleString(undefined,{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
-      const typeName = info ? info.name : `Kind ${r.kind}`;
-      const raw = (r.content_preview||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-      const msg = raw || `<span style="color:var(--muted);font-style:italic">—</span>`;
-      return `<tr>
-        <td style="white-space:nowrap;color:var(--muted);font-size:11px">${ts}</td>
-        <td style="color:var(--muted)">${r.kind}</td>
-        <td style="color:var(--accent);white-space:nowrap">${typeName}</td>
-        <td class="message-cell" data-event-index="${idx}" title="Click to view full message" style="max-width:620px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${msg}</td>
-      </tr>`;
-    }).join('');
-    etbody.querySelectorAll('.message-cell[data-event-index]').forEach(cell => {
-      cell.addEventListener('click', () => openEventMessageModal(Number(cell.dataset.eventIndex)));
-    });
+    _latestEventsAll = Array.isArray(s.latest) ? s.latest : [];
+    _renderRecentEvents();
   } catch(e){ console.error(e); }
 }
 
@@ -1527,12 +1728,16 @@ async function loadConfig(){
   document.getElementById('pubkey').value = c.info.pubkey;
   document.getElementById('contact').value = c.info.contact;
   document.getElementById('relay_icon').value = c.info.relay_icon;
+
   const modalInput = document.getElementById('profile-icon-url');
   const modal = document.getElementById('icon-modal');
   if (modalInput && modal && !modal.classList.contains('open')) {
     modalInput.value = c.info.relay_icon || '';
     _setProfileIconPreview(modalInput.value);
   }
+
+  _scheduleRecentEventsRelayout();
+
   // limits
   document.getElementById('messages_per_sec').value = c.limits.messages_per_sec;
   document.getElementById('subscriptions_per_min').value = c.limits.subscriptions_per_min;
@@ -1741,6 +1946,7 @@ async function loadAll(){
   await Promise.all([loadStats(), loadConfig(), loadStore(), loadBackups()]);
   await loadRestartTargets();
   await loadNavLinks();
+  _scheduleRecentEventsRelayout();
 }
 
 function buildConfigPayload(){
@@ -1919,6 +2125,8 @@ document.addEventListener('keydown', e => {
     closeEventMessageModal();
   }
 });
+
+window.addEventListener('resize', _scheduleRecentEventsRelayout);
 
 loadAll();
 // auto-refresh stats every 60 seconds
