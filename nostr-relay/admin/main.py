@@ -43,7 +43,14 @@ DEFAULT_FULL_STACK_CONTAINERS = [
 BACKUP_DIR = DATA_DIR / "admin-backups"
 BACKUP_META_PATH = BACKUP_DIR / "snapshots.json"
 BACKUP_SETTINGS_PATH = BACKUP_DIR / "settings.json"
+NAV_LINKS_PATH = DATA_DIR / "admin-nav-links.json"
 BACKUP_RETENTION = 3
+DEFAULT_NAV_LINKS = [
+    {"label": "My Site",         "url": "https://mysite.com",                                               "accent": False},
+    {"label": "LNbits",          "url": "https://lnbits.mysite.com",                                         "accent": False},
+    {"label": "Nostr Relay",     "url": "https://nostr.mysite.com",                                          "accent": False},
+    {"label": "\U0001f310 Nostrudel", "url": "https://nostrudel.ninja/relays/wss%3A%2F%2Fnostr.mysite.com", "accent": True},
+]
 BACKUP_SCHEDULES = {
   "4h": 4 * 60 * 60,
   "12h": 12 * 60 * 60,
@@ -200,6 +207,18 @@ def _write_json_file(path: Path, data: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2)
+
+
+def read_nav_links() -> list[dict]:
+    raw = _read_json_file(NAV_LINKS_PATH, {})
+    links = raw.get("links")
+    if isinstance(links, list) and links:
+        return links
+    return list(DEFAULT_NAV_LINKS)
+
+
+def write_nav_links(links: list[dict]) -> None:
+    _write_json_file(NAV_LINKS_PATH, {"links": links})
 
 
 def _normalize_backup_schedule(schedule: str) -> str:
@@ -435,6 +454,16 @@ class BackupRestorePayload(BaseModel):
   backup_id: str
 
 
+class NavLink(BaseModel):
+    label: str
+    url: str
+    accent: bool = False
+
+
+class NavLinksPayload(BaseModel):
+    links: list[NavLink]
+
+
 # ---------------------------------------------------------------------------
 # Stats endpoint
 # ---------------------------------------------------------------------------
@@ -631,6 +660,20 @@ def restore_backup_endpoint(payload: BackupRestorePayload):
   }
 
 
+@app.get("/api/nav-links")
+def get_nav_links_endpoint():
+    return read_nav_links()
+
+
+@app.post("/api/nav-links")
+def post_nav_links_endpoint(payload: NavLinksPayload):
+    for lnk in payload.links:
+        if lnk.url.strip() and not lnk.url.strip().startswith(("http://", "https://")):
+            raise HTTPException(status_code=400, detail="Only http/https URLs are allowed")
+    write_nav_links([{"label": lnk.label, "url": lnk.url, "accent": lnk.accent} for lnk in payload.links])
+    return {"ok": True, "count": len(payload.links)}
+
+
 @app.get("/api/restart-targets")
 def restart_targets():
     allowed = get_allowed_restart_containers()
@@ -777,10 +820,7 @@ HTML = r"""<!DOCTYPE html>
   <span class="badge">nostr-rs-relay</span>
   <nav style="margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
     <button id="open-icon-modal" class="secondary" style="padding:4px 12px;border-radius:99px">Edit Profile Image</button>
-    <a href="https://janx.com" class="nav-link">Janx.com</a>
-    <a href="https://byob.janx.com" class="nav-link">LNbits</a>
-    <a href="https://nostr.janx.com" class="nav-link">Nostr Relay</a>
-    <a href="https://nostrudel.ninja/relays/wss%3A%2F%2Fnostr.janx.com" class="nav-link nav-link-accent">&#x1F310; Nostrudel</a>
+    <span id="site-nav" style="display:contents"></span>
   </nav>
 </header>
 
@@ -952,6 +992,18 @@ HTML = r"""<!DOCTYPE html>
       </table>
     </div>
     <div class="notice">Automatic backups keep the latest 3 snapshots of relay config and relay-proxy identity.</div>
+  </div>
+
+  <!-- Site Links -->
+  <div class="card">
+    <h2>&#x1F517; Site Links</h2>
+    <p style="font-size:13px;color:var(--muted);margin:0 0 12px">Customize the quick-links shown in the header navigation bar. Changes take effect immediately after saving.</p>
+    <div id="nav-links-editor"></div>
+    <div class="actions" style="margin-top:12px">
+      <button onclick="addNavLink()">+ Add Link</button>
+      <button onclick="saveNavLinks()">Save Links</button>
+      <span class="notice" id="nav-links-notice"></span>
+    </div>
   </div>
 
   <!-- Save config -->
@@ -1576,9 +1628,116 @@ async function restartProfile(profileKey){
   }
 }
 
+// ---------------------------------------------------------------------------
+// Site Nav Links
+// ---------------------------------------------------------------------------
+let _navLinks = [];
+
+function _safeHref(url) {
+  const s = (url || '').trim();
+  return (s.startsWith('http://') || s.startsWith('https://')) ? s : '#';
+}
+
+function _renderHeaderNav(links) {
+  const nav = document.getElementById('site-nav');
+  if (!nav) return;
+  nav.innerHTML = links.map(link => {
+    const cls = 'nav-link' + (link.accent ? ' nav-link-accent' : '');
+    return `<a href="${_safeHref(link.url)}" class="${cls}" target="_blank" rel="noopener noreferrer">${_escapeHtml(link.label)}</a>`;
+  }).join('');
+}
+
+function _renderNavLinksEditor(links) {
+  const editor = document.getElementById('nav-links-editor');
+  if (!editor) return;
+  if (!links.length) {
+    editor.innerHTML = '<div style="color:var(--muted);font-size:13px;font-style:italic">No links defined. Click &ldquo;+ Add Link&rdquo; to add one.</div>';
+    return;
+  }
+  editor.innerHTML = `<table style="width:100%;border-collapse:collapse">
+    <thead><tr style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em">
+      <th style="text-align:left;padding:4px 8px 6px 0">Label</th>
+      <th style="text-align:left;padding:4px 8px 6px">URL</th>
+      <th style="text-align:center;padding:4px 8px 6px">Accent</th>
+      <th style="padding:4px 0 6px"></th>
+    </tr></thead>
+    <tbody id="nav-links-rows"></tbody>
+  </table>`;
+  const tbody = document.getElementById('nav-links-rows');
+  links.forEach((link, idx) => {
+    const tr = document.createElement('tr');
+    tr.dataset.idx = idx;
+    tr.innerHTML = `
+      <td style="padding:4px 8px 4px 0"><input class="nav-link-label" type="text" value="${_escapeHtml(link.label)}" style="width:100%;min-width:100px" placeholder="Label"></td>
+      <td style="padding:4px 8px"><input class="nav-link-url" type="url" value="${_escapeHtml(link.url)}" style="width:100%;min-width:180px" placeholder="https://"></td>
+      <td style="text-align:center;padding:4px 8px"><input class="nav-link-accent" type="checkbox" ${link.accent ? 'checked' : ''}></td>
+      <td style="padding:4px 0"><button class="secondary nav-link-del" data-idx="${idx}" style="padding:4px 10px;font-size:12px;color:var(--red)">&#x2715;</button></td>`;
+    tbody.appendChild(tr);
+  });
+  tbody.querySelectorAll('.nav-link-del').forEach(btn => {
+    btn.addEventListener('click', () => removeNavLink(Number(btn.dataset.idx)));
+  });
+}
+
+function _collectNavLinksFromEditor() {
+  const rows = document.querySelectorAll('#nav-links-rows tr');
+  return [...rows].map(tr => ({
+    label: (tr.querySelector('.nav-link-label') || {}).value || '',
+    url:   (tr.querySelector('.nav-link-url')   || {}).value || '',
+    accent: !!(tr.querySelector('.nav-link-accent') || {}).checked,
+  }));
+}
+
+function addNavLink() {
+  _navLinks = _collectNavLinksFromEditor();
+  _navLinks.push({label: '', url: '', accent: false});
+  _renderNavLinksEditor(_navLinks);
+  // focus the new label input
+  const rows = document.querySelectorAll('#nav-links-rows tr');
+  const last = rows[rows.length - 1];
+  if (last) { const inp = last.querySelector('.nav-link-label'); if (inp) inp.focus(); }
+}
+
+function removeNavLink(idx) {
+  _navLinks = _collectNavLinksFromEditor();
+  _navLinks.splice(idx, 1);
+  _renderNavLinksEditor(_navLinks);
+}
+
+async function loadNavLinks() {
+  try {
+    const links = await api('/nav-links');
+    _navLinks = Array.isArray(links) ? links : [];
+    _renderHeaderNav(_navLinks);
+    _renderNavLinksEditor(_navLinks);
+  } catch(e) { console.error('loadNavLinks failed', e); }
+}
+
+async function saveNavLinks() {
+  _navLinks = _collectNavLinksFromEditor();
+  // basic client-side URL check
+  for (const lnk of _navLinks) {
+    if (lnk.url.trim() && !lnk.url.trim().startsWith('http://') && !lnk.url.trim().startsWith('https://')) {
+      notice('nav-links-notice', '\u2717 URLs must start with http:// or https://', false);
+      return;
+    }
+  }
+  try {
+    const res = await api('/nav-links', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({links: _navLinks}),
+    });
+    notice('nav-links-notice', `\u2713 Saved ${res.count} link${res.count === 1 ? '' : 's'}`, true);
+    _renderHeaderNav(_navLinks);
+    _renderNavLinksEditor(_navLinks);
+  } catch(e) { notice('nav-links-notice', '\u2717 ' + e.message, false); }
+}
+
 async function loadAll(){
   await Promise.all([loadStats(), loadConfig(), loadStore(), loadBackups()]);
   await loadRestartTargets();
+  await loadNavLinks();
 }
 
 function buildConfigPayload(){
