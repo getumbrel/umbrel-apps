@@ -1,0 +1,26 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: readeck_web_1
+      APP_PORT: 8000
+      PROXY_AUTH_ADD: "true"
+  
+  web:
+    image: codeberg.org/readeck/readeck:0.22.3@sha256:ed1c513f8e1d59b1d38fda324ac279eeb65afd0327907e498061ec9fd2f31c15
+    restart: on-failure
+    stop_grace_period: 1m
+    volumes:
+      - ${APP_DATA_DIR}/data:/readeck
+    environment:
+      READECK_LOG_LEVEL: info
+      READECK_SERVER_HOST: "0.0.0.0"
+      READECK_SERVER_PORT: 8000
+      READECK_LOG_FORMAT: text
+      READECK_SECRET_KEY: ${APP_SEED}
+    healthcheck:
+      test: ["CMD", "/bin/readeck", "healthcheck", "-config", "config.toml"]
+      interval: 30s
+      timeout: 2s
+      retries: 3
