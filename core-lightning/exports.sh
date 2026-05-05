@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 export APP_CORE_LIGHTNING_IP="10.21.21.94"
 export APP_CORE_LIGHTNING_PORT="2103"
 export APP_CORE_LIGHTNING_DAEMON_IP="10.21.21.96"
@@ -5,7 +6,31 @@ export APP_CORE_LIGHTNING_DAEMON_PORT="9736"
 export APP_CORE_LIGHTNING_DAEMON_GRPC_PORT="2110"
 export APP_CORE_LIGHTNING_WEBSOCKET_PORT="2106"
 export APP_CORE_LIGHTNING_DATA_DIR="${EXPORTS_APP_DIR}/data/lightningd"
+
+# DNS-stable container hostnames (resilient to IP drift across restarts / DR recovery)
+export APP_CORE_LIGHTNING_APP_HOST="core-lightning_app_1"
+export APP_CORE_LIGHTNING_DAEMON_HOST="core-lightning_lightningd_1"
+
 export CORE_LIGHTNING_REST_PORT="2107"
+
+# Canonical CLNREST exports for consumer apps (RTL, LNbits)
+# Use the daemon hostname so consumers survive IP drift across restarts and DR recovery.
+export APP_CORE_LIGHTNING_CLNREST_PORT="${CORE_LIGHTNING_REST_PORT}"
+export APP_CORE_LIGHTNING_CLNREST_HOST="${APP_CORE_LIGHTNING_DAEMON_HOST}"
+
+# Backward-compat aliases (consumed by RTL docker-compose and torrc.template).
+# These remain IP-derived to avoid regressions in existing in-tree consumers;
+# new consumers should adopt the canonical *_CLNREST_* vars above.
+export APP_CORE_LIGHTNING_REST_PORT="${APP_CORE_LIGHTNING_CLNREST_PORT}"
+export APP_CORE_LIGHTNING_REST_HOST="${APP_CORE_LIGHTNING_DAEMON_IP}"
+
+# ---------------------------------------------------------------------------
+# CLNRest bind address — 0.0.0.0 allows other containers (RTL, LNbits) to
+# reach CLNRest. The key requirement is binding on an address/interface that
+# consumer containers can reach; binding too narrowly can break those apps.
+# ---------------------------------------------------------------------------
+export CLNREST_HOST="0.0.0.0"
+export CLNREST_URL="https://${APP_CORE_LIGHTNING_DAEMON_HOST}:${CORE_LIGHTNING_REST_PORT}"
 
 export APP_CORE_LIGHTNING_BITCOIN_NETWORK="${APP_BITCOIN_NETWORK}"
 if [[ "${APP_BITCOIN_NETWORK}" == "mainnet" ]]; then
@@ -13,9 +38,15 @@ if [[ "${APP_BITCOIN_NETWORK}" == "mainnet" ]]; then
 fi
 
 lightning_hidden_service_file="${EXPORTS_TOR_DATA_DIR}/app-${EXPORTS_APP_ID}-rest/hostname"
-export APP_CORE_LIGHTNING_HIDDEN_SERVICE="$(cat "${lightning_hidden_service_file}" 2>/dev/null || echo "notyetset.onion")"
+APP_CORE_LIGHTNING_HIDDEN_SERVICE="$(cat "${lightning_hidden_service_file}" 2>/dev/null || echo "notyetset.onion")"
+export APP_CORE_LIGHTNING_HIDDEN_SERVICE
 
 export APP_CONFIG_DIR="/data/app"
 export APP_MODE="production"
 export CORE_LIGHTNING_PATH="/root/.lightning"
 export COMMANDO_CONFIG="/root/.lightning/.commando-env"
+
+# Native CLNRest (V3) rune path — completes the {CLNREST_HOST, CLNREST_URL,
+# CLNREST_RUNE_PATH} contract expected by upstream CLNRest-native consumers
+# (LNbits, Boltz). Defined here because it depends on COMMANDO_CONFIG above.
+export CLNREST_RUNE_PATH="${COMMANDO_CONFIG}"
