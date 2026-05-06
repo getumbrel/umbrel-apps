@@ -1,0 +1,60 @@
+manifestVersion: 1.1
+id: openthread-border-router
+category: automation
+name: OpenThread Border Router
+version: "0.3.0"
+tagline: Thread border router for Home Assistant and Matter
+description: >-
+  OpenThread Border Router (OTBR) lets you bridge a Thread mesh network to your
+  local Wi-Fi/Ethernet network using a supported Thread radio dongle (e.g.
+  Nordic nRF52840, Silicon Labs, Texas Instruments CC1352/CC2652). It enables
+  Home Assistant and Matter-over-Thread devices (locks, sensors, plugs,
+  thermostats) to communicate with your smart home stack without relying on a
+  vendor-specific hub like Apple HomePod, Google Nest Hub, or Amazon eero.
+
+
+  This app packages the community-maintained
+  [hass-otbr-docker](https://github.com/ownbee/hass-otbr-docker) image, which
+  is a slim wrapper around the official OpenThread Border Router project,
+  tailored for use alongside Home Assistant.
+
+
+  ** Setup **
+
+
+  1. Plug your Thread radio dongle into your Umbrel device before installing.
+
+  2. On first start the app creates a settings file at
+     `app-data/openthread-border-router/data/settings.env`. Defaults assume
+     a dongle at `/dev/ttyUSB0` and a backbone interface of `eth0`. Edit
+     this file (e.g. set `DEVICE=/dev/ttyACM0` or `BACKBONE_IF=enp1s0` for
+     Umbrel Home) and restart the app to apply changes. The file is
+     preserved across app updates.
+
+  3. Open Home Assistant and add the "OpenThread Border Router"
+     integration, pointing it at `http://<umbrel-ip>:8083` (or whichever
+     `OTBR_REST_PORT` you set).
+
+
+  ** Notes **
+
+
+  - The container runs in `host` networking mode and `privileged` mode because
+    the Thread Border Router needs raw access to the network interface for IPv6
+    multicast/mDNS and to manage the `wpan0` interface.
+
+  - Persistent Thread network credentials are stored in the app data directory
+    so they survive restarts.
+developer: ownbee
+website: https://github.com/ownbee/hass-otbr-docker
+dependencies: []
+repo: https://github.com/ownbee/hass-otbr-docker
+support: https://github.com/ownbee/hass-otbr-docker/issues
+port: 7586
+gallery: []
+releaseNotes: ""
+path: ""
+defaultUsername: ""
+defaultPassword: ""
+submitter: vnc0
+submission: ""

@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Seed a user-editable settings file on first run. The file lives in the
+# persistent data directory so it survives app updates. Edit it from the
+# Umbrel file browser (or via SSH) and restart the app to apply changes.
+
+APP_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")"
+SETTINGS_FILE="${APP_DIR}/data/settings.env"
+
+mkdir -p "$(dirname "${SETTINGS_FILE}")"
+
+if [[ ! -f "${SETTINGS_FILE}" ]]; then
+    cat > "${SETTINGS_FILE}" <<'EOF'
+# OpenThread Border Router settings — edit and restart the app to apply.
+
+# Serial device for the Thread radio dongle.
+# Common values: /dev/ttyUSB0, /dev/ttyACM0
+DEVICE=/dev/ttyUSB0
+
+# Baud rate for the radio. Most modern dongles use 460800.
+BAUDRATE=460800
+
+# Hardware flow control (0 = off, 1 = on).
+FLOW_CONTROL=0
+
+# Network interface OTBR should bridge Thread traffic to.
+# Raspberry Pi / generic: eth0
+# Umbrel Home (x86): often enp1s0 — check with `ip link` on your Umbrel.
+BACKBONE_IF=enp1s0
+
+# REST API port (used by Home Assistant's OTBR integration).
+OTBR_REST_PORT=8083
+
+# Web UI port (must match `port:` in umbrel-app.yml).
+OTBR_WEB_PORT=7586
+
+# Enable IPv6 firewall for the Thread network (recommended).
+FIREWALL=1
+
+# Enable NAT64 so Thread devices can reach IPv4 services.
+NAT64=1
+
+# Auto-flash RCP firmware on the dongle (leave 0 unless you know you need it).
+AUTOFLASH_FIRMWARE=0
+EOF
+fi
+
+exit 0
