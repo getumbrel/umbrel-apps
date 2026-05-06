@@ -15,7 +15,7 @@ services:
     environment:
       RELAY_HOST: "nostr-relay_relay_1"
       RELAY_PORT: "8080"
-      RELAY_PROXY_HOST: "nostr-relay_relay_proxy_1"
+      RELAY_PROXY_HOST: "nostr-relay_relay-proxy_1"
       RELAY_PROXY_PORT: "80"
 
   relay:
@@ -30,7 +30,7 @@ services:
 
   relay-proxy:
     image: getumbrel/umbrel-nostr-relay-proxy:v1.1.0@sha256:6b335f4488f813475bb7c9d3bb6282fda081808e2d5447404fc8a1ffcc1279dc
-    container_name: nostr-relay_relay_proxy_1
+    container_name: nostr-relay_relay-proxy_1
     user: "1000:1000"
     restart: on-failure
     environment:
@@ -42,9 +42,7 @@ services:
       - relay
 
   admin:
-    build:
-      context: ./admin
-      dockerfile: Dockerfile
+    image: umbrel/nostr-relay-admin:latest
     container_name: nostr-relay_admin_1
     restart: on-failure
     environment:
@@ -64,6 +62,7 @@ services:
       ADMIN_RESTART_TIMEOUT_SECONDS: "15"
     volumes:
       - ${APP_DATA_DIR}/data:/data
+      - ${APP_DATA_DIR}/admin/main.py:/app/main.py:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
     depends_on:
       - relay-proxy

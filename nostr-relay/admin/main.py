@@ -30,14 +30,14 @@ DEFAULT_RESTART_CONTAINERS = [
   "nostr-relay_web_1",
   "nostr-relay_app_proxy_1",
   "nostr-relay_relay_1",
-  "nostr-relay_relay_proxy_1",
+  "nostr-relay_relay-proxy_1",
 ]
 DEFAULT_FIX_ICON_CONTAINERS = [
   "nostr-relay_web_1",
 ]
 DEFAULT_FULL_STACK_CONTAINERS = [
   "nostr-relay_relay_1",
-  "nostr-relay_relay_proxy_1",
+  "nostr-relay_relay-proxy_1",
   "nostr-relay_web_1",
 ]
 BACKUP_DIR = DATA_DIR / "admin-backups"
@@ -173,7 +173,7 @@ def docker_post(path: str) -> tuple[int, str]:
         conn.close()
 
 
-def restart_allowed_container(container: str, allowed: set[str]) -> None:
+def restart_allowed_container(container: str, allowed: set[str]) -> str:
     if container not in allowed:
         raise HTTPException(status_code=400, detail=f"Container not allowed: {container}")
 
@@ -186,6 +186,27 @@ def restart_allowed_container(container: str, allowed: set[str]) -> None:
     if status not in (204, 304):
         detail = body.strip() or f"HTTP {status}"
         raise HTTPException(status_code=502, detail=f"Restart failed for {container}: {detail}")
+
+    return container
+
+
+def _restart_allowed_container_background(container: str, allowed: set[str], delay_seconds: float = 0.35) -> None:
+    if container not in allowed:
+        raise HTTPException(status_code=400, detail=f"Container not allowed: {container}")
+
+    def _runner() -> None:
+        try:
+            restart_allowed_container(container, allowed)
+        except Exception:
+            return
+
+    timer = threading.Timer(delay_seconds, _runner)
+    timer.daemon = True
+    timer.start()
+
+
+def _is_connection_sensitive_restart_target(container: str) -> bool:
+    return any(tok in container for tok in ("_app_proxy_", "_relay_proxy_", "_relay-proxy_"))
 
 
 def _ensure_backup_dir() -> None:
@@ -233,20 +254,23 @@ def _normalize_backup_schedule(schedule: str) -> str:
 def read_backup_settings() -> dict:
     _ensure_backup_dir()
     raw = _read_json_file(BACKUP_SETTINGS_PATH, {})
+    retention_raw = int(raw.get("retention", BACKUP_RETENTION))
+    retention = max(1, min(12, retention_raw))
     settings = {
         "schedule": _normalize_backup_schedule(str(raw.get("schedule", DEFAULT_BACKUP_SCHEDULE))),
-        "retention": BACKUP_RETENTION,
+        "retention": retention,
     }
     if raw != settings:
         _write_json_file(BACKUP_SETTINGS_PATH, settings)
     return settings
 
 
-def write_backup_settings(schedule: str) -> dict:
+def write_backup_settings(schedule: str, retention: int = BACKUP_RETENTION) -> dict:
     normalized = _normalize_backup_schedule(schedule)
+    retention = max(1, min(12, int(retention)))
     settings = {
         "schedule": normalized,
-        "retention": BACKUP_RETENTION,
+        "retention": retention,
     }
     _write_json_file(BACKUP_SETTINGS_PATH, settings)
     return settings
@@ -306,7 +330,9 @@ def _create_backup_locked(trigger: str) -> dict:
     snapshots.append(entry)
     snapshots.sort(key=lambda s: s.get("created_at", ""), reverse=True)
 
-    stale = snapshots[BACKUP_RETENTION:]
+    settings = read_backup_settings()
+    effective_retention = settings.get("retention", BACKUP_RETENTION)
+    stale = snapshots[effective_retention:]
     for old in stale:
         old_id = str(old.get("id", "")).strip()
         if not old_id:
@@ -315,7 +341,7 @@ def _create_backup_locked(trigger: str) -> dict:
         if old_path.exists():
             shutil.rmtree(old_path, ignore_errors=True)
 
-    meta["snapshots"] = snapshots[:BACKUP_RETENTION]
+    meta["snapshots"] = snapshots[:effective_retention]
     _write_backup_meta(meta)
     return entry
 
@@ -450,6 +476,7 @@ class RestartProfilePayload(BaseModel):
 
 class BackupSettingsPayload(BaseModel):
   schedule: str = DEFAULT_BACKUP_SCHEDULE
+  retention: int = BACKUP_RETENTION
 
 
 class BackupRestorePayload(BaseModel):
@@ -469,6 +496,19 @@ class NavLinksPayload(BaseModel):
 # ---------------------------------------------------------------------------
 # Stats endpoint
 # ---------------------------------------------------------------------------
+
+@app.get("/api/healthz")
+def healthz():
+  return {
+    "ok": True,
+    "status": "healthy",
+    "dashboard_version": ADMIN_DASHBOARD_VERSION,
+    "started_at_utc": ADMIN_STARTED_AT_UTC,
+    "docker_socket_mounted": Path(DOCKER_SOCKET_PATH).exists(),
+    "db_exists": DB_PATH.exists(),
+    "config_exists": CONFIG_PATH.exists(),
+    "store_exists": STORE_PATH.exists(),
+  }
 
 @app.get("/api/stats")
 def get_stats():
@@ -627,7 +667,7 @@ def get_backups():
   settings = read_backup_settings()
   return {
     "schedule": settings["schedule"],
-    "retention": BACKUP_RETENTION,
+    "retention": settings["retention"],
     "options": list(BACKUP_SCHEDULES.keys()),
     "snapshots": list_backups(),
   }
@@ -635,21 +675,22 @@ def get_backups():
 
 @app.post("/api/backups/settings")
 def save_backup_settings_endpoint(payload: BackupSettingsPayload):
-  settings = write_backup_settings(payload.schedule)
+  settings = write_backup_settings(payload.schedule, payload.retention)
   return {
     "ok": True,
     "schedule": settings["schedule"],
-    "retention": BACKUP_RETENTION,
+    "retention": settings["retention"],
   }
 
 
 @app.post("/api/backups/create")
 def create_backup_endpoint():
   snapshot = create_backup("manual")
+  settings = read_backup_settings()
   return {
     "ok": True,
     "snapshot": snapshot,
-    "retention": BACKUP_RETENTION,
+    "retention": settings["retention"],
   }
 
 
@@ -694,9 +735,21 @@ def restart_container(payload: RestartContainerPayload):
     if not Path(DOCKER_SOCKET_PATH).exists():
         raise HTTPException(status_code=503, detail="Docker socket is not mounted in this admin container")
 
-    restart_allowed_container(container, allowed)
+    # Restarting the app proxy can drop the current HTTP connection (the UI is served through it).
+    # Queue it in the background and acknowledge immediately to avoid false "NetworkError" in UI.
+    if _is_connection_sensitive_restart_target(container):
+      _restart_allowed_container_background(container, allowed)
+      return {
+        "ok": True,
+        "container": container,
+        "restarted": container,
+        "queued": True,
+        "message": "Restart queued. Brief reconnect expected while app proxy restarts.",
+      }
 
-    return {"ok": True, "container": container}
+    restarted = restart_allowed_container(container, allowed)
+
+    return {"ok": True, "container": container, "restarted": restarted}
 
 
 @app.post("/api/restart-profile")
@@ -714,11 +767,15 @@ def restart_profile(payload: RestartProfilePayload):
     restarted = []
     seen = set()
     for container in profile.get("containers", []):
-        if container in seen:
-            continue
-        restart_allowed_container(container, allowed)
-        seen.add(container)
-        restarted.append(container)
+      if container in seen:
+        continue
+      if _is_connection_sensitive_restart_target(container):
+        _restart_allowed_container_background(container, allowed)
+        restarted_name = container
+      else:
+        restarted_name = restart_allowed_container(container, allowed)
+      seen.add(container)
+      restarted.append(restarted_name)
 
     return {
         "ok": True,
@@ -741,7 +798,7 @@ HTML = r"""<!DOCTYPE html>
   :root{--bg:#0f1117;--card:#1a1d27;--border:#2a2d3a;--accent:#9b59f4;--text:#e2e8f0;--muted:#64748b;--green:#22c55e;--red:#ef4444}
   *{box-sizing:border-box;margin:0;padding:0}
   body{background:var(--bg);color:var(--text);font-family:system-ui,sans-serif;font-size:14px;min-height:100vh}
-  header{background:var(--card);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;gap:12px}
+  header{background:var(--card);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
   header h1{font-size:18px;font-weight:600}
   .badge{background:var(--accent);color:#fff;font-size:11px;padding:2px 8px;border-radius:99px}
   .nav-link{font-size:12px;color:var(--muted);text-decoration:none;font-weight:600;border:1px solid var(--border);padding:4px 12px;border-radius:99px;white-space:nowrap;transition:color .15s,border-color .15s}
@@ -799,7 +856,7 @@ HTML = r"""<!DOCTYPE html>
   .stat-combined .sc-col{background:#0f1117;border:1px solid var(--border);border-radius:8px;overflow:hidden;display:flex;flex-direction:column;gap:0}
   .stat-combined .sc-item{flex:1;padding:14px;border-bottom:1px solid var(--border)}
   .stat-combined .sc-item:last-child{border-bottom:none}
-  .portal-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:24px;align-items:stretch}
+  .portal-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:10px;align-items:stretch}
   .portal-col{min-width:0}
   .portal-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;flex-wrap:wrap}
   .portal-head h2{margin:0}
@@ -812,12 +869,40 @@ HTML = r"""<!DOCTYPE html>
   .quick-val.code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px;color:var(--accent)}
   .quick-val.muted{color:var(--muted);font-size:12px}
   .events-footnote{font-size:11px;color:var(--muted);margin-top:8px}
+  @media (max-width: 1200px){
+    .stat-combined{grid-template-columns:1fr !important}
+    .sc-col{flex-direction:row;gap:16px}
+    .sc-item{flex:1}
+  }
   @media (max-width: 900px){
     .portal-grid{grid-template-columns:1fr}
     .quick-view{height:auto}
   }
+  @media (max-width: 600px){
+    #relay-icon-preview{flex-direction:row !important;width:100%}
+    #relay-icon-preview > div:first-child{width:70px;height:70px}
+    .edit-icon-btn{font-size:11px;padding:4px 8px}
+    .stat-combined{flex-direction:column}
+    .sc-col{flex-direction:column}
+  }
   .restart-note{background:#1e1b2e;border:1px solid var(--accent);border-radius:8px;padding:12px;font-size:12px;color:var(--muted);margin-top:12px}
   .restart-note strong{color:var(--accent)}
+  details.nip-section{margin-bottom:12px;border-radius:6px;overflow:hidden}
+  details.nip-section > summary{list-style:none;cursor:pointer;font-size:12px;color:var(--muted);font-weight:600;padding:6px 4px;display:flex;align-items:center;gap:6px;user-select:none}
+  details.nip-section > summary::-webkit-details-marker{display:none}
+  details.nip-section > summary::before{content:'\25B6';font-size:9px;color:var(--accent);transition:transform .2s;display:inline-block}
+  details.nip-section[open] > summary::before{transform:rotate(90deg)}
+  details.nip-section > summary:hover{color:var(--text)}
+  details.nip-section > .nip-section-body{padding-top:6px}
+  .accordion-container{display:flex;flex-direction:column}
+  details.accordion-section{border-bottom:1px solid var(--border)}
+  details.accordion-section:last-child{border-bottom:none}
+  details.accordion-section > summary{list-style:none;cursor:pointer;padding:14px 8px;display:flex;align-items:center;gap:8px;user-select:none;font-size:15px;font-weight:600;color:var(--text)}
+  details.accordion-section > summary::-webkit-details-marker{display:none}
+  details.accordion-section > summary::before{content:'\25B6';font-size:10px;color:var(--accent);transition:transform .2s;display:inline-block;flex-shrink:0}
+  details.accordion-section[open] > summary::before{transform:rotate(90deg)}
+  details.accordion-section > summary:hover{color:var(--accent)}
+  details.accordion-section > .accordion-body{padding:0 8px 20px}
   .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.66);display:none;align-items:center;justify-content:center;padding:16px;z-index:50}
   .modal-overlay.open{display:flex}
   .modal-panel{width:min(620px,100%);background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px}
@@ -836,20 +921,20 @@ HTML = r"""<!DOCTYPE html>
   <span class="badge">nostr-rs-relay v__ADMIN_VERSION__</span>
   <nav style="margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
     <a href="__ADMIN_REPO_URL__" class="nav-link" target="_blank" rel="noopener noreferrer">GitHub</a>
-    <span id="site-nav" style="display:contents"></span>
+    <span id="site-nav" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"></span>
   </nav>
 </header>
 
 <div id="icon-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="icon-modal-title">
   <div class="modal-panel">
-    <h2 id="icon-modal-title">Edit Profile Image</h2>
+    <h2 id="icon-modal-title">Edit Relay Icon (NIP-11)</h2>
     <div class="field">
-      <label>Profile Image URL</label>
-      <input type="text" id="profile-icon-url" placeholder="https://example.com/profile.png">
+      <label>Relay Icon URL</label>
+      <input type="text" id="profile-icon-url" placeholder="https://example.com/relay-icon.png or data: URI">
     </div>
     <div class="icon-preview-wrap">
-      <img id="profile-icon-preview" class="icon-preview" alt="Profile icon preview">
-      <div class="icon-preview-note">Save + refresh will update the stats image immediately so you can verify it worked.</div>
+      <img id="profile-icon-preview" class="icon-preview" alt="Relay icon preview">
+      <div class="icon-preview-note">Tip: Paste an image URL or use the file upload button in the left column. Changes take effect after clicking Save + Refresh.</div>
     </div>
     <div class="actions">
       <button id="save-profile-icon-btn">Save + Refresh</button>
@@ -872,172 +957,186 @@ HTML = r"""<!DOCTYPE html>
 
 <main>
 
-  <!-- Stats -->
-  <div class="card" id="stats-card">
-    <h2>&#9889; Relay Stats <span id="stats-age" style="font-size:11px;color:var(--muted);font-weight:400;margin-left:8px"></span></h2>
-    <div class="portal-grid">
-      <div class="portal-col" id="events-col">
-        <div class="stat-grid" id="stat-grid"></div>
-        <div class="portal-head" id="events-head">
-          <h2>&#x1F4CB; Recent Events</h2>
+  <div style="font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);margin-bottom:8px">&#128209; Relay Configuration & Live Status</div>
+
+  <div class="card accordion-container" id="stats-card">
+
+    <details class="accordion-section" open>
+      <summary>&#9881; config.toml</summary>
+      <div class="accordion-body" id="relay-quick-col">
+        <details class="nip-section" open>
+          <summary><strong>NIP-11 Section</strong></summary>
+          <div class="nip-section-body">
+            <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:12px;padding:12px;background:var(--bg-secondary);border-radius:6px">
+              <div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)">Relay Icon (NIP-11 Metadata)</div>
+              <div style="display:flex;gap:12px;align-items:center">
+                <div id="relay-icon-preview" style="display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0">
+                  <div style="width:120px;height:120px;border-radius:8px;background:var(--bg);display:flex;align-items:center;justify-content:center;border:2px solid var(--border);overflow:hidden">
+                    <span class="icon-preview-img" style="font-size:56px;width:100%;height:100%;display:flex;align-items:center;justify-content:center"></span>
+                  </div>
+                  <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center">
+                    <button class="edit-icon-btn" style="padding:6px 10px;font-size:12px" id="open-icon-modal" onclick="document.getElementById('icon-modal').classList.add('open')">&#9998; Edit</button>
+                    <button class="edit-icon-btn" style="padding:6px 10px;font-size:12px" onclick="restartProfile('fix_icon')" title="Restart web runtime to refresh icon cache.">&#8635; Refresh</button>
+                  </div>
+                </div>
+                <div style="flex:1;font-size:11px;color:var(--muted);line-height:1.6">
+                  Displayed in Nostr clients as your relay&rsquo;s profile image.<br>
+                  Paste an HTTPS URL below or click <em>Edit</em> to enter a URL in the dialog.
+                </div>
+              </div>
+              <div class="field" style="margin:0"><label>Relay Icon URL <span style="font-size:11px;color:var(--muted);font-weight:400">(https://... or data: URI)</span></label><input type="text" id="relay_icon" style="width:100%"></div>
+            </div>
+            <div class="grid2" style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--border)">
+              <div class="field"><label>Relay URL</label><input type="text" id="relay_url"></div>
+              <div class="field"><label>Name</label><input type="text" id="name"></div>
+              <div class="field"><label>Pubkey (hex)</label><input type="text" id="pubkey"></div>
+              <div class="field"><label>Contact</label><input type="text" id="contact"></div>
+              <div class="field" style="grid-column:span 2"><label>Description</label><textarea id="description" rows="2"></textarea></div>
+            </div>
+          </div>
+        </details>
+
+        <details class="nip-section" open>
+          <summary><strong>NIP-42 (and related)</strong></summary>
+          <div class="nip-section-body" style="display:flex;flex-direction:column;gap:10px;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--border)">
+            <label class="toggle">
+              <input type="checkbox" id="nip42_auth">
+              <span>Enable NIP-42 authentication</span>
+            </label>
+            <label class="toggle">
+              <input type="checkbox" id="nip42_dms">
+              <span>Restrict DMs to authenticated recipients (kind 4, 44, 1059)</span>
+            </label>
+            <div class="restart-note" style="margin-top:0">
+              <strong>Note:</strong> NIP-42 auth breaks LNbits NWC provider (nwcprovider 1.1.1 doesn't implement NIP-42).
+              Keep disabled if using Zeus / Nostr clients (Primal, Amethyst, etc.) zaps via LNbits.
+            </div>
+          </div>
+        </details>
+
+        <details class="nip-section" open>
+          <summary><strong>NIP-50 / Limits</strong></summary>
+          <div class="nip-section-body">
+            <div class="grid2">
+              <div class="field"><label>Messages / sec</label><input type="number" id="messages_per_sec"></div>
+              <div class="field"><label>Subscriptions / min</label><input type="number" id="subscriptions_per_min"></div>
+              <div class="field"><label>Max event bytes</label><input type="number" id="max_event_bytes"></div>
+              <div class="field"><label>Reject future events (sec)</label><input type="number" id="reject_future_seconds"></div>
+              <div class="field" style="grid-column:span 2">
+                <label>Event kind allowlist (comma-separated, empty = allow all)</label>
+                <input type="text" id="event_kind_allowlist" placeholder="0, 1, 3, 7, 23194, 23195">
+              </div>
+              <label class="toggle" style="grid-column:span 2;margin-top:0">
+                <input type="checkbox" id="limit_scrapers">
+                <span>Limit scrapers</span>
+              </label>
+            </div>
+          </div>
+        </details>
+      </div>
+    </details>
+
+    <details class="accordion-section" open>
+      <summary>NIP-11 Relay Operator Identity</summary>
+      <div class="accordion-body">
+        <div class="field" style="margin-bottom:8px"><label>npub / NIP-05 backup address</label><input type="text" id="store_identifier" placeholder="satwise@janx.com"></div>
+        <div class="field" style="margin-bottom:8px">
+          <label>Relay list override <span style="font-size:11px;color:var(--muted);font-weight:400">(one WSS URL per line)</span></label>
+          <textarea id="store_relays" rows="3" placeholder="wss://nostr.janx.com&#10;wss://nos.lol&#10;wss://relay.damus.io"></textarea>
         </div>
+        <div class="notice" style="margin-top:2px">Defaults: Relay URL + <code>wss://nos.lol</code> + <code>wss://relay.damus.io</code>. If NIP-05 publishes relay hints, those are merged too.</div>
+        <div id="store-relay-status" style="margin-top:10px;display:grid;gap:6px"></div>
+        <div class="actions" style="margin-top:6px">
+          <button class="secondary" onclick="restoreStoreRelayDefaults()">Restore Defaults</button>
+          <button onclick="saveStore()">Save Backup Address &amp; Relays</button>
+          <span class="notice" id="store-notice"></span>
+        </div>
+      </div>
+    </details>
+
+    <details class="accordion-section" open>
+      <summary>&#9889; Live Relay Stats <span id="stats-age" style="font-size:11px;color:var(--muted);font-weight:400;margin-left:8px"></span></summary>
+      <div class="accordion-body">
+        <div class="stat-grid" id="stat-grid"></div>
+      </div>
+    </details>
+
+    <details class="accordion-section" open>
+      <summary id="events-head">&#x1F4CB; Recent Events</summary>
+      <div class="accordion-body">
         <div class="table-wrap">
           <table id="events-table"><thead><tr><th style="white-space:nowrap">Timestamp</th><th>Kind</th><th>Type</th><th>Message</th></tr></thead><tbody></tbody></table>
         </div>
         <div class="events-footnote" id="events-footnote"></div>
       </div>
+    </details>
 
-      <div class="portal-col" id="relay-quick-col" style="overflow-y:auto">
-        <div class="portal-head">
-          <h2>&#x1F4E1; Relay Info</h2>
+    <details class="accordion-section">
+      <summary>&#x1F4CA; NIP-KIND MAP</summary>
+      <div class="accordion-body">
+        <div style="display:flex;justify-content:flex-end;margin-bottom:8px">
+          <button id="kind-tree-toggle-all" class="secondary" style="padding:6px 12px;font-size:12px">Open All</button>
+        </div>
+        <div class="table-wrap">
+          <table id="kind-tree"><thead><tr><th class="nip-toggle-cell"></th><th>NIP</th><th>Name</th><th style="text-align:right">Count</th></tr></thead><tbody></tbody></table>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-top:16px;padding:12px;border-top:1px solid var(--border);line-height:1.6">
+          <div style="margin-bottom:8px"><strong>Legend:</strong></div>
+          <div>* = External protocol mapping (Marmot, Tidal, NKBIP-01, BUD-01)</div>
+          <div>→ Related = NIPs with shared functionality or dependencies</div>
+          <div>(reference) = valid mapped kind with 0 observed events</div>
+          <div style="margin-top:8px"><a href="https://github.com/nostr-protocol/nips" target="_blank" rel="noopener" style="color:var(--accent)">View canonical NIP repository →</a></div>
+        </div>
+      </div>
+    </details>
+
+    <details class="accordion-section" open>
+      <summary>&#x1F4BE; Nostr-Relay DR APP Backup</summary>
+      <div class="accordion-body">
+        <div style="font-size:13px;color:var(--muted);margin:0 0 14px;line-height:1.6;border-left:3px solid var(--accent);padding-left:10px">
+          <strong>What is backed up per snapshot:</strong><br>
+          &bull; <code>config.toml</code> &mdash; all relay policy, NIP toggles, rate limits, NIP-11 metadata (name, description, icon, contact)<br>
+          &bull; <code>store.json</code> &mdash; relay-proxy TLS identity (npub / NIP-05 identifier + relay list); loss of this changes the relay&rsquo;s cryptographic fingerprint for connecting clients<br>
+          <span style="font-size:12px;color:var(--muted)">&#9888;&#xFE0F; SQLite event data is <em>not</em> included &mdash; snapshots cover config &amp; identity only.</span>
         </div>
         <div class="grid2">
-          <div class="field"><label>Relay URL</label><input type="text" id="relay_url"></div>
-          <div class="field"><label>Name</label><input type="text" id="name"></div>
-          <div class="field"><label>Pubkey (hex)</label><input type="text" id="pubkey"></div>
-          <div class="field"><label>Contact</label><input type="text" id="contact"></div>
-          <div class="field" style="grid-column:span 2"><label>Description</label><textarea id="description" rows="2"></textarea></div>
-          <div class="field" style="grid-column:span 2"><label>Relay Icon URL <span style="font-size:11px;color:var(--muted);font-weight:400">(same as profile image)</span></label><input type="text" id="relay_icon"></div>
-        </div>
-        <div id="restart-controls" style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border)">
-          <div class="actions" style="margin-top:0;margin-bottom:10px">
-            <button onclick="saveAllVariables()">Save Config (All Variables)</button>
-            <button class="secondary" onclick="saveAndRestartWeb()">Save + Restart Web Runtime</button>
-            <span class="notice" id="saveall-notice"></span>
+          <div class="field">
+            <label>Periodic Backup Schedule</label>
+            <select id="backup-schedule"></select>
           </div>
-          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-            <label for="restart-container" style="font-size:12px;color:var(--muted);font-weight:500;text-transform:uppercase;letter-spacing:.04em">Container</label>
-            <select id="restart-container" style="max-width:260px"></select>
-            <button class="secondary" onclick="restartSelectedContainer()">Restart Container</button>
+          <div class="field">
+            <label>Retention (rolling snapshots to keep)</label>
+            <select id="backup-retention"></select>
           </div>
-          <div id="restart-profile-buttons" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"></div>
-          <div class="notice" id="restart-hint">Save Config writes settings. Restart Web Runtime (Fix Icon) only restarts the web runtime and does not save variables.</div>
-          <span class="notice" id="restart-notice"></span>
+        </div>
+        <div class="actions">
+          <button onclick="saveBackupSchedule()">Save Backup Schedule</button>
+          <button class="secondary" onclick="createBackupNow()">Create Backup Now</button>
+          <span class="notice" id="backup-notice"></span>
+        </div>
+        <div class="table-wrap" style="margin-top:12px">
+          <table id="backups-table">
+            <thead><tr><th>Snapshot</th><th>Created</th><th>Trigger</th><th>Restore</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="notice">Snapshots are stored on the relay host. Restore rolls back config.toml and store.json and restarts the relay. Backup schedule changes activate when you save this section.</div>
+      </div>
+    </details>
+
+    <details class="accordion-section" open>
+      <summary>&#x1F517; Admin Site Customizable Header Link Configuration</summary>
+      <div class="accordion-body">
+        <p style="font-size:13px;color:var(--muted);margin:0 0 12px">Customize the quick-links shown in the header navigation bar. Changes take effect immediately after saving.</p>
+        <div id="nav-links-editor"></div>
+        <div class="actions" style="margin-top:12px">
+          <button onclick="addNavLink()">+ Add Link</button>
+          <button onclick="saveNavLinks()">Save Links</button>
+          <span class="notice" id="nav-links-notice"></span>
         </div>
       </div>
-    </div>
+    </details>
 
-    <div style="margin-top:24px">
-      <div class="portal-head">
-        <h2>&#x1F4CA; NIP-KIND MAP</h2>
-        <button id="kind-tree-toggle-all" class="secondary" style="padding:6px 12px;font-size:12px">Close All</button>
-      </div>
-      <div class="table-wrap">
-        <table id="kind-tree"><thead><tr><th class="nip-toggle-cell"></th><th>NIP</th><th>Name</th><th style="text-align:right">Count</th></tr></thead><tbody></tbody></table>
-      </div>
-      <div style="font-size:11px;color:var(--muted);margin-top:16px;padding:12px;border-top:1px solid var(--border);line-height:1.6">
-        <div style="margin-bottom:8px"><strong>Legend:</strong></div>
-        <div>* = External protocol mapping (Marmot, Tidal, NKBIP-01, BUD-01)</div>
-        <div>→ Related = NIPs with shared functionality or dependencies</div>
-        <div style="margin-top:8px"><a href="https://github.com/nostr-protocol/nips" target="_blank" rel="noopener" style="color:var(--accent)">View canonical NIP repository →</a></div>
-      </div>
-    </div>
-
-  </div>
-
-  <!-- Limits -->
-  <div class="card">
-    <h2>&#x23F1; Rate Limits</h2>
-    <div class="grid2">
-      <div class="field"><label>Messages / sec</label><input type="number" id="messages_per_sec"></div>
-      <div class="field"><label>Subscriptions / min</label><input type="number" id="subscriptions_per_min"></div>
-      <div class="field"><label>Max event bytes</label><input type="number" id="max_event_bytes"></div>
-      <div class="field"><label>Reject future events (sec)</label><input type="number" id="reject_future_seconds"></div>
-    </div>
-    <div class="field" style="margin-top:12px">
-      <label>Event kind allowlist (comma-separated, empty = allow all)</label>
-      <input type="text" id="event_kind_allowlist" placeholder="0, 1, 3, 7, 23194, 23195">
-    </div>
-    <label class="toggle" style="margin-top:12px">
-      <input type="checkbox" id="limit_scrapers">
-      <span>Limit scrapers</span>
-    </label>
-  </div>
-
-  <!-- Authorization -->
-  <div class="card">
-    <h2>&#x1F512; Authorization (NIP-42)</h2>
-    <div style="display:flex;flex-direction:column;gap:10px">
-      <label class="toggle">
-        <input type="checkbox" id="nip42_auth">
-        <span>Enable NIP-42 authentication</span>
-      </label>
-      <label class="toggle">
-        <input type="checkbox" id="nip42_dms">
-        <span>Restrict DMs to authenticated recipients (kind 4, 44, 1059)</span>
-      </label>
-    </div>
-    <div class="restart-note">
-      <strong>Note:</strong> NIP-42 auth breaks LNbits NWC provider (nwcprovider 1.1.1 doesn't implement NIP-42).
-      Keep disabled if using Zeus / Nostr clients (Primal, Amethyst, etc.) zaps via LNbits.
-    </div>
-  </div>
-
-  <!-- Relay-proxy store -->
-  <div class="card">
-    <h2>&#x1F310; Relay-Proxy Identity</h2>
-    <div class="field"><label>NIP-05 or npub identifier</label><input type="text" id="store_identifier"></div>
-    <div class="field" style="margin-top:12px">
-      <label>Relay list (one WSS URL per line — overrides NIP-05 relay discovery)</label>
-      <textarea id="store_relays" rows="4" placeholder="wss://relay.damus.io&#10;wss://nos.lol"></textarea>
-    </div>
-    <div class="actions">
-      <button onclick="saveStore()">Save proxy identity</button>
-      <span class="notice" id="store-notice"></span>
-    </div>
-    <div class="restart-note">
-      <strong>Note:</strong> Changes take effect after the Nostr Relay app is restarted from the Umbrel dashboard.
-    </div>
-  </div>
-
-  <!-- Backup & Restore -->
-  <div class="card">
-    <h2>&#x1F4BE; Backup & Restore</h2>
-    <div class="grid2">
-      <div class="field">
-        <label>Periodic Backup Schedule</label>
-        <select id="backup-schedule"></select>
-      </div>
-      <div class="field">
-        <label>Retention</label>
-        <input type="text" id="backup-retention" value="Last 3 snapshots" readonly>
-      </div>
-    </div>
-    <div class="actions">
-      <button onclick="saveBackupSchedule()">Save Backup Schedule</button>
-      <button class="secondary" onclick="createBackupNow()">Create Backup Now</button>
-      <span class="notice" id="backup-notice"></span>
-    </div>
-    <div class="table-wrap" style="margin-top:12px">
-      <table id="backups-table">
-        <thead><tr><th>Snapshot</th><th>Created</th><th>Trigger</th><th>Restore</th></tr></thead>
-        <tbody></tbody>
-      </table>
-    </div>
-    <div class="notice">Automatic backups keep the latest 3 snapshots of relay config and relay-proxy identity.</div>
-  </div>
-
-  <!-- Site Links -->
-  <div class="card">
-    <h2>&#x1F517; Site Links</h2>
-    <p style="font-size:13px;color:var(--muted);margin:0 0 12px">Customize the quick-links shown in the header navigation bar. Changes take effect immediately after saving.</p>
-    <div id="nav-links-editor"></div>
-    <div class="actions" style="margin-top:12px">
-      <button onclick="addNavLink()">+ Add Link</button>
-      <button onclick="saveNavLinks()">Save Links</button>
-      <span class="notice" id="nav-links-notice"></span>
-    </div>
-  </div>
-
-  <!-- Save config -->
-  <div class="actions">
-    <button onclick="saveConfig()">Save relay config</button>
-    <button class="secondary" onclick="loadAll()">&#x21BB; Reload</button>
-    <span class="notice" id="config-notice"></span>
-  </div>
-  <div class="restart-note">
-    <strong>Note:</strong> Relay config changes require a relay container restart to take effect.
-    Restart via Umbrel dashboard &#8594; Nostr Relay &#8594; &#8942; &#8594; Restart.
   </div>
 
 </main>
@@ -1219,17 +1318,38 @@ const NIP_META = {
   '03':      { title:'OpenTimestamps',                 desc:'Kind 1040 attestations anchoring event IDs to Bitcoin via OpenTimestamps.', url:'https://nips.nostr.com/3' },
   '04':      { title:'Encrypted DM (legacy)',          desc:'Legacy kind 4 encrypted direct messages; superseded by modern NIP-17 flows.', url:'https://nips.nostr.com/4', related:['17','59'] },
   '09':      { title:'Event Deletion',                 desc:'Kind 5 deletion requests asking relays/clients to stop serving events.', url:'https://nips.nostr.com/9' },
+  '11':      { title:'Relay Information Document',     desc:'NIP-11 relay metadata document describing software, limits, and supported features.', url:'https://nips.nostr.com/11' },
+  '12':      { title:'Generic Tag Queries',            desc:'Generic tag query behavior and indexing conventions for relay/client filters.', url:'https://nips.nostr.com/12' },
   '13':      { title:'Proof of Work',                  desc:'Nonce tag conventions for proving computational work on events.', url:'https://nips.nostr.com/13' },
   '15':      { title:'Marketplace',                    desc:'Marketplace events for stalls, products, and auction metadata.', url:'https://nips.nostr.com/15' },
+  '16':      { title:'Event Treatment',                desc:'Event replacement semantics and handling rules for regular, replaceable, and ephemeral kinds.', url:'https://nips.nostr.com/16' },
   '17':      { title:'Private DMs',                    desc:'Sealed direct messages and relay-list semantics for private messaging.', url:'https://nips.nostr.com/17', related:['04','59','44'] },
   '18':      { title:'Reposts',                        desc:'Repost conventions including generic repost events.', url:'https://nips.nostr.com/18' },
+  '20':      { title:'Command Results',                desc:'Result event conventions for command-style interactions and response payloads.', url:'https://nips.nostr.com/20' },
   '22':      { title:'Comment',                        desc:'Comment event model for replies and threaded commentary.', url:'https://nips.nostr.com/22' },
   '23':      { title:'Long-form Content',              desc:'Long-form article and draft publication formats.', url:'https://nips.nostr.com/23' },
   '25':      { title:'Reactions',                      desc:'Reactions for events and website-linked content.', url:'https://nips.nostr.com/25', related:['57'] },
   '28':      { title:'Public Chat',                    desc:'Channel creation, metadata, message, hide, and mute user events.', url:'https://nips.nostr.com/28' },
-  '29':      { title:'Relay-based Groups',             desc:'Group threads plus control and metadata events for managed groups.', url:'https://nips.nostr.com/29' },
+  '29':      {
+    title:'Relay-based Groups',
+    desc:'Group threads plus control and metadata events for managed groups.',
+    url:'https://nips.nostr.com/29',
+    ranges:[
+      { start:9000, end:9030, label:'Group Control Events' },
+      { start:39000, end:39009, label:'Group Metadata Events' },
+    ],
+  },
   '32':      { title:'Labeling',                       desc:'Label and namespace conventions for classified or moderation use-cases.', url:'https://nips.nostr.com/32' },
-  '34':      { title:'Git Repositories',               desc:'Repository announcements, state, patches, PRs, issues, and status events.', url:'https://nips.nostr.com/34' },
+  '33':      { title:'Parameterized Replaceable Events', desc:'Addressable event model (kind+pubkey+identifier) for stable mutable resources.', url:'https://nips.nostr.com/33' },
+  '40':      { title:'Expiration Timestamp',           desc:'Expiration tag semantics allowing events to become invalid after a timestamp.', url:'https://nips.nostr.com/40' },
+  '34':      {
+    title:'Git Repositories',
+    desc:'Repository announcements, state, patches, PRs, issues, and status events.',
+    url:'https://nips.nostr.com/34',
+    ranges:[
+      { start:1630, end:1633, label:'Git Status Events' },
+    ],
+  },
   '35':      { title:'Torrents',                       desc:'Torrent and torrent-comment event definitions.', url:'https://nips.nostr.com/35' },
   '37':      { title:'Draft Events',                   desc:'Private and addressable draft event support.', url:'https://nips.nostr.com/37' },
   '38':      { title:'User Statuses',                  desc:'Ephemeral profile status updates with optional expiry.', url:'https://nips.nostr.com/38' },
@@ -1267,7 +1387,16 @@ const NIP_META = {
   '87':      { title:'Ecash Mint Discoverability',     desc:'Cashu/Fedimint mint discovery and announcements.', url:'https://nips.nostr.com/87' },
   '88':      { title:'Polls',                          desc:'Poll and poll-response event formats.', url:'https://nips.nostr.com/88' },
   '89':      { title:'Recommended Handlers',           desc:'Handler recommendation and handler info events.', url:'https://nips.nostr.com/89' },
-  '90':      { title:'Data Vending Machines',          desc:'Job request/result/feedback ranges for compute services.', url:'https://nips.nostr.com/90' },
+  '90':      {
+    title:'Data Vending Machines',
+    desc:'Job request/result/feedback ranges for compute services.',
+    url:'https://nips.nostr.com/90',
+    ranges:[
+      { start:5000, end:5999, label:'DVM Job Request Events' },
+      { start:6000, end:6999, label:'DVM Job Result Events' },
+      { start:7000, end:7000, label:'DVM Job Feedback Event' },
+    ],
+  },
   '92':      { title:'Media Attachments',              desc:'Inline media metadata attachment conventions.', url:'https://nips.nostr.com/92' },
   '94':      { title:'File Metadata',                  desc:'Metadata envelope for uploaded files and media pointers.', url:'https://nips.nostr.com/94' },
   '96':      { title:'HTTP File Storage',              desc:'HTTP file storage integration and server list conventions.', url:'https://nips.nostr.com/96' },
@@ -1287,8 +1416,24 @@ const NIP_META = {
   'BUD-01':  { title:'Blossom Blob Auth',              desc:'BUD-01 kind 24242 authorises blob upload/download/delete on Blossom media servers.', url:'https://github.com/hzrd149/blossom/blob/master/buds/01.md' },
 };
 
+const SUPPORTED_NIPS_REFERENCE = [
+  '01', '02', '03', '04', '09', '11', '12', '13', '15', '16',
+  '17', '18', '20', '22', '23', '25', '28', '29', '32', '33',
+  '34', '35', '37', '38', '39', '40', '42', '43', '44', '46',
+  '47', '50', '51', '52', '53', '54', '56', '57', '58', '59',
+  '60', '61', '62', '64', '65', '66', '68', '69', '71', '72',
+  '75', '77', '78', '84', '87', '88', '89', '90', '94', '96',
+  '98', '99',
+];
+
 function groupByNip(rows) {
   const map = new Map();
+
+  for (const nipCode of SUPPORTED_NIPS_REFERENCE) {
+    const meta = NIP_META[nipCode] || { title:`NIP-${nipCode}`, desc:'Supported by relay profile (no observed events yet).', url:`https://nips.nostr.com/${nipCode}` };
+    map.set(nipCode, { nipCode, meta, events:[], total:0 });
+  }
+
   for (const r of rows) {
     const info = nipInfo(r.kind);
     const nipCode = info ? info.nip : null;
@@ -1315,11 +1460,28 @@ function groupByNip(rows) {
   });
 }
 
+function mappedKindsForNip(nipCode) {
+  const out = [];
+  for (const [kindStr, info] of Object.entries(NIP_KINDS)) {
+    if (!info || info.nip !== nipCode) continue;
+    const kind = Number(kindStr);
+    if (!Number.isFinite(kind)) continue;
+    out.push({ kind, name: info.name || `Kind ${kind}` });
+  }
+  out.sort((a, b) => a.kind - b.kind);
+  return out;
+}
+
 function renderKindTree(groups) {
   let html = '';
   for (const [key, g] of groups) {
     const isUnknown = key === '__unknown__';
     const meta = g.meta;
+    const hasRanges = meta && Array.isArray(meta.ranges) && meta.ranges.length > 0;
+    const rangeCoversKind = k => hasRanges && meta.ranges.some(r => k >= Number(r.start) && k <= Number(r.end));
+    const mapped = !isUnknown && g.nipCode ? mappedKindsForNip(g.nipCode) : [];
+    const potentialFixedKinds = mapped.filter(m => !rangeCoversKind(m.kind));
+    const observedFixedCount = potentialFixedKinds.filter(m => g.events.some(ev => ev.kind === m.kind)).length;
     const nipDesc = meta ? meta.desc : '';
     const titleAttr = nipDesc ? ` title="${nipDesc.replace(/"/g,'&quot;')}"` : '';
     const nipBadge = isUnknown
@@ -1327,14 +1489,22 @@ function renderKindTree(groups) {
       : `<a class="nip-link" href="${meta.url}" target="_blank" rel="noopener"${titleAttr}>NIP-${g.nipCode}</a>`;
     const rowTitle = isUnknown ? 'Unknown' : (meta ? meta.title : `NIP-${g.nipCode}`);
     const kindCount = g.events.length;
+    let kindSummary = `${kindCount} observed event kind${kindCount===1?'':'s'}`;
+    if (potentialFixedKinds.length > 0) {
+      kindSummary = `${observedFixedCount} of ${potentialFixedKinds.length} event Kinds currently populated`;
+    } else if (hasRanges) {
+      kindSummary = `${kindCount} observed event kind${kindCount===1?'':'s'} + ${meta.ranges.length} defined range${meta.ranges.length===1?'':'s'}`;
+    }
     const hasRelated = meta && meta.related && meta.related.length > 0;
     html += `<tr class="nip-row" data-nip="${key}">
       <td class="nip-toggle-cell"><span class="nip-toggle">&#9654;</span></td>
       <td>${nipBadge}</td>
-      <td class="nip-row-title"${titleAttr}>${rowTitle}<span class="nip-kind-count"> &middot; ${kindCount} kind${kindCount===1?'':'s'}</span></td>
+      <td class="nip-row-title"${titleAttr}>${rowTitle}<span class="nip-kind-count"> &middot; ${kindSummary}</span></td>
       <td style="text-align:right" class="nip-total">${g.total.toLocaleString()}</td>
     </tr>`;
+    const observed = new Map();
     for (const ev of g.events) {
+      observed.set(ev.kind, ev);
       const safeName = ev.name.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
       html += `<tr class="kind-row hidden" data-nip="${key}">
         <td></td>
@@ -1343,10 +1513,46 @@ function renderKindTree(groups) {
         <td style="text-align:right;color:var(--muted)">${ev.n.toLocaleString()}</td>
       </tr>`;
     }
+
+    if (!isUnknown && g.nipCode) {
+      const missingMapped = mapped.filter(m => !observed.has(m.kind) && !rangeCoversKind(m.kind));
+      for (const m of missingMapped) {
+        const safeName = _escapeHtml(m.name);
+        html += `<tr class="kind-row hidden" data-nip="${key}" style="font-size:11px;color:var(--muted)">
+          <td></td>
+          <td class="kind-indent">${m.kind}</td>
+          <td class="kind-name">${safeName} <span style="color:var(--muted)">(reference)</span></td>
+          <td style="text-align:right;color:var(--muted)">0</td>
+        </tr>`;
+      }
+    }
+    if (hasRanges) {
+      for (const range of meta.ranges) {
+        const start = Number(range.start);
+        const end = Number(range.end);
+        if (!Number.isFinite(start) || !Number.isFinite(end)) continue;
+        const rangeEvents = g.events.filter(ev => ev.kind >= start && ev.kind <= end);
+        const observedKinds = rangeEvents.length;
+        const observedEvents = rangeEvents.reduce((sum, ev) => sum + ev.n, 0);
+        const rangeText = start === end ? `${start}` : `${start}-${end}`;
+        const desc = _escapeHtml(range.label || 'Valid Kind Range');
+        html += `<tr class="kind-row hidden" data-nip="${key}" style="font-size:11px;color:var(--muted)">
+          <td></td>
+          <td class="kind-indent">${rangeText}</td>
+          <td style="padding-left:20px">
+            ↳ Valid range: ${desc}
+            <span style="color:var(--muted)">(${observedKinds} observed kind${observedKinds===1?'':'s'}, ${observedEvents.toLocaleString()} event${observedEvents===1?'':'s'})</span>
+          </td>
+          <td style="text-align:right;color:var(--muted)">${observedEvents.toLocaleString()}</td>
+        </tr>`;
+      }
+    }
     if (hasRelated) {
       const relatedLinks = meta.related.map(r => {
         const rMeta = NIP_META[r];
-        return `<a href="${rMeta?.url||'#'}" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none">NIP-${r}</a>`;
+        const desc = _escapeHtml(rMeta?.desc || '');
+        const title = _escapeHtml(rMeta?.title || `NIP-${r}`);
+        return `<a href="${rMeta?.url||'#'}" target="_blank" rel="noopener" title="${desc}" style="color:var(--accent);text-decoration:none">NIP-${r}</a><span style="color:var(--muted)"> (${title})</span>`;
       }).join(', ');
       html += `<tr class="kind-row hidden" data-nip="${key}" style="font-size:11px;color:var(--muted)">
         <td></td>
@@ -1481,6 +1687,154 @@ const BACKUP_SCHEDULE_LABELS = {
   'weekly': 'Weekly',
   'monthly': 'Monthly',
 };
+const DEFAULT_PUBLIC_RELAYS = ['wss://nos.lol', 'wss://relay.damus.io'];
+const RELAY_PROBE_TIMEOUT_MS = 3500;
+let _relayProbeToken = 0;
+
+function _normalizeRelayUrl(url) {
+  return String(url || '').trim().replace(/\/+$/, '');
+}
+
+function _dedupeRelays(relays) {
+  const out = [];
+  const seen = new Set();
+  for (const raw of (Array.isArray(relays) ? relays : [])) {
+    const relay = _normalizeRelayUrl(raw);
+    if (!relay || !relay.startsWith('wss://')) continue;
+    const key = relay.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(relay);
+  }
+  return out;
+}
+
+function _defaultRelayUrl() {
+  const relayUrl = _normalizeRelayUrl(document.getElementById('relay_url')?.value || '');
+  return relayUrl.startsWith('wss://') ? relayUrl : 'wss://nostr.janx.com';
+}
+
+function _totalSupportedKindsCount() {
+  return Object.keys(NIP_KINDS || {}).length;
+}
+
+function _totalSupportedNipsCount() {
+  const nips = new Set();
+  for (const meta of Object.values(NIP_KINDS || {})) {
+    const nip = (meta && meta.nip) ? String(meta.nip).trim() : '';
+    if (nip) nips.add(nip);
+  }
+  return nips.size;
+}
+
+async function _fetchNip05Relays(identifier) {
+  const value = String(identifier || '').trim();
+  if (!value.includes('@')) return [];
+
+  const [rawName, rawDomain] = value.split('@');
+  const name = (rawName || '').trim();
+  const domain = (rawDomain || '').trim();
+  if (!name || !domain) return [];
+
+  try {
+    const res = await fetch(`https://${domain}/.well-known/nostr.json?name=${encodeURIComponent(name)}`);
+    if (!res.ok) return [];
+    const data = await res.json();
+    const pubkey = data?.names?.[name];
+    if (!pubkey) return [];
+    const relays = data?.relays?.[pubkey];
+    return _dedupeRelays(Array.isArray(relays) ? relays : []);
+  } catch (_) {
+    return [];
+  }
+}
+
+async function _buildEffectiveRelayList(identifier, currentRelays) {
+  const baseDefaults = [_defaultRelayUrl(), ...DEFAULT_PUBLIC_RELAYS];
+  const nip05Relays = await _fetchNip05Relays(identifier);
+  return _dedupeRelays([...(Array.isArray(currentRelays) ? currentRelays : []), ...baseDefaults, ...nip05Relays]);
+}
+
+function _relayStatusPill(state) {
+  if (state === 'connected') return {label: 'Connected', color: 'var(--green)'};
+  if (state === 'connecting') return {label: 'Checking...', color: 'var(--muted)'};
+  return {label: 'Not Connected', color: 'var(--red)'};
+}
+
+function _renderRelayStatusRows(rows) {
+  const el = document.getElementById('store-relay-status');
+  if (!el) return;
+
+  if (!rows.length) {
+    el.innerHTML = '<div class="notice">No WSS relays configured yet.</div>';
+    return;
+  }
+
+  el.innerHTML = rows.map(row => {
+    const pill = _relayStatusPill(row.state);
+    const extra = row.detail ? `<span style="color:var(--muted);font-size:11px">${_escapeHtml(row.detail)}</span>` : '';
+    return `<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:#0f1117">
+      <span style="font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px;word-break:break-all">${_escapeHtml(row.url)}</span>
+      <span style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+        ${extra}
+        <span style="font-size:11px;font-weight:600;color:${pill.color}">${pill.label}</span>
+      </span>
+    </div>`;
+  }).join('');
+}
+
+function _probeRelayConnection(url, token) {
+  return new Promise(resolve => {
+    let done = false;
+    const finish = (state, detail='') => {
+      if (done || token !== _relayProbeToken) return;
+      done = true;
+      resolve({url, state, detail});
+    };
+
+    let ws = null;
+    const timeoutId = setTimeout(() => {
+      try { if (ws) ws.close(); } catch (_) {}
+      finish('failed', 'timeout');
+    }, RELAY_PROBE_TIMEOUT_MS);
+
+    try {
+      ws = new WebSocket(url);
+      ws.onopen = () => {
+        clearTimeout(timeoutId);
+        try { ws.close(); } catch (_) {}
+        finish('connected');
+      };
+      ws.onerror = () => {
+        clearTimeout(timeoutId);
+        finish('failed', 'error');
+      };
+      ws.onclose = () => {
+        clearTimeout(timeoutId);
+        if (!done) finish('failed', 'closed');
+      };
+    } catch (_) {
+      clearTimeout(timeoutId);
+      finish('failed', 'invalid URL');
+    }
+  });
+}
+
+async function refreshRelayConnectionStatus(relays) {
+  const uniqueRelays = _dedupeRelays(relays);
+  _relayProbeToken += 1;
+  const token = _relayProbeToken;
+
+  if (!uniqueRelays.length) {
+    _renderRelayStatusRows([]);
+    return;
+  }
+
+  _renderRelayStatusRows(uniqueRelays.map(url => ({url, state:'connecting', detail:''})));
+  const results = await Promise.all(uniqueRelays.map(url => _probeRelayConnection(url, token)));
+  if (token !== _relayProbeToken) return;
+  _renderRelayStatusRows(results);
+}
 
 function _backupScheduleLabel(value) {
   return BACKUP_SCHEDULE_LABELS[value] || value;
@@ -1512,7 +1866,10 @@ async function loadBackups(){
       .map(v => `<option value="${_escapeHtml(v)}">${_escapeHtml(_backupScheduleLabel(v))}</option>`)
       .join('');
     scheduleEl.value = options.includes(data.schedule) ? data.schedule : options[0];
-    retentionEl.value = `Last ${data.retention || 3} snapshots`;
+    const currentRetention = parseInt(data.retention) || 3;
+    retentionEl.innerHTML = Array.from({length:12},(_,i)=>i+1)
+      .map(n=>`<option value="${n}"${n===currentRetention?' selected':''}>Keep last ${n} snapshot${n>1?'s':''}</option>`)
+      .join('');
 
     const snapshots = (data.snapshots || []);
     _backupSnapshots.clear();
@@ -1548,13 +1905,15 @@ async function loadBackups(){
 async function saveBackupSchedule(){
   const scheduleEl = document.getElementById('backup-schedule');
   const schedule = (scheduleEl && scheduleEl.value) ? scheduleEl.value : '4h';
+  const retentionEl2 = document.getElementById('backup-retention');
+  const retention = retentionEl2 ? parseInt(retentionEl2.value) || 3 : 3;
   try {
     const res = await api('/backups/settings', {
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({schedule})
+      body:JSON.stringify({schedule, retention})
     });
-    notice('backup-notice', `\u2713 Backup schedule set to ${_backupScheduleLabel(res.schedule)}`, true);
+    notice('backup-notice', `\u2713 Backup schedule set to ${_backupScheduleLabel(res.schedule)}, keeping last ${res.retention} snapshot${res.retention>1?'s':''}`, true);
     await loadBackups();
   } catch (e) {
     notice('backup-notice', '\u2717 ' + e.message, false);
@@ -1685,19 +2044,22 @@ async function loadStats(){
     const latestTs = s.latest[0]
       ? new Date(s.latest[0].created_at*1000).toLocaleDateString(undefined,{month:'2-digit',day:'2-digit',year:'2-digit'}) + ' ' + new Date(s.latest[0].created_at*1000).toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'})
       : '\u2014';
-    const uniqueNips = new Set();
-    (s.by_kind || []).forEach(k => {
-      const info = nipInfo(k.kind);
-      if (info && info.nip) uniqueNips.add(info.nip);
-    });
-    const supportedNipsCount = uniqueNips.size || (s.by_kind || []).length;
+    const groupedNips = groupByNip(s.by_kind || []);
+    const supportedNipsCount = groupedNips.filter(([nip]) => nip !== '__unknown__').length;
+    const totalNipsCount = _totalSupportedNipsCount();
+    const totalKindsCount = _totalSupportedKindsCount();
+    const iconPreviewEl = document.querySelector('.icon-preview-img');
+    if (iconPreviewEl) {
+      iconPreviewEl.innerHTML = icon
+        ? `<img src="${_escapeHtml(icon)}" alt="${_escapeHtml(relayName)}" style="width:100%;height:100%;object-fit:contain" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'icon-fallback',textContent:'\u26a1',style:'font-size:40px'}))">`
+        : `<span class="icon-fallback" style="font-size:40px">&#9889;</span>`;
+    }
     const grid = document.getElementById('stat-grid');
     grid.innerHTML = `
-      <div class="stat stat-icon">${iconHtml}<div class="lbl">${relayName}</div><button class="edit-icon-btn" id="open-icon-modal" onclick="document.getElementById('icon-modal').classList.add('open')">&#9998; Edit Image</button></div>
       <div class="stat-combined">
         <div class="sc-col">
-          <div class="sc-item"><div class="val" style="font-size:28px;font-weight:700;color:var(--accent)">${supportedNipsCount}</div><div class="lbl" style="font-size:11px;color:var(--muted);margin-top:4px">Supported NIPs</div></div>
-          <div class="sc-item"><div class="val" style="font-size:28px;font-weight:700;color:var(--accent)">${s.by_kind.length}</div><div class="lbl" style="font-size:11px;color:var(--muted);margin-top:4px">Supported Kinds</div></div>
+          <div class="sc-item"><div class="val" style="font-size:28px;font-weight:700;color:var(--accent)">${supportedNipsCount} / ${totalNipsCount}</div><div class="lbl" style="font-size:11px;color:var(--muted);margin-top:4px">Actively Supported NIPs</div></div>
+          <div class="sc-item"><div class="val" style="font-size:28px;font-weight:700;color:var(--accent)">${s.by_kind.length} / ${totalKindsCount}</div><div class="lbl" style="font-size:11px;color:var(--muted);margin-top:4px">Actively Supported Kinds</div></div>
         </div>
         <div class="sc-col">
           <div class="sc-item"><div class="val" style="font-size:16px;font-weight:700;color:var(--accent)">${latestTs}</div><div class="lbl" style="font-size:11px;color:var(--muted);margin-top:4px">Latest Event</div></div>
@@ -1705,9 +2067,8 @@ async function loadStats(){
         </div>
       </div>
     `;
-    document.querySelector('#kind-tree tbody').innerHTML = renderKindTree(groupByNip(s.by_kind));
+    document.querySelector('#kind-tree tbody').innerHTML = renderKindTree(groupedNips);
     if (!_kindTreeInitialized) {
-      _kindRows().forEach(r => _openNips.add(r.dataset.nip));
       _kindTreeInitialized = true;
     } else {
       const valid = new Set(_kindRows().map(r => r.dataset.nip));
@@ -1728,6 +2089,16 @@ async function loadConfig(){
   document.getElementById('pubkey').value = c.info.pubkey;
   document.getElementById('contact').value = c.info.contact;
   document.getElementById('relay_icon').value = c.info.relay_icon;
+
+  // Update icon preview in left column
+  const iconPreviewEl = document.querySelector('.icon-preview-img');
+  const relayName = c.info.name || 'Relay';
+  if (iconPreviewEl) {
+    const icon = c.info.relay_icon || '';
+    iconPreviewEl.innerHTML = icon
+      ? `<img src="${_escapeHtml(icon)}" alt="${_escapeHtml(relayName)}" style="width:100%;height:100%;object-fit:contain" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'icon-fallback',textContent:'\\u26a1',style:'font-size:40px'}))">`
+      : `<span class="icon-fallback" style="font-size:40px">&#9889;</span>`;
+  }
 
   const modalInput = document.getElementById('profile-icon-url');
   const modal = document.getElementById('icon-modal');
@@ -1752,8 +2123,11 @@ async function loadConfig(){
 
 async function loadStore(){
   const s = await api('/store');
-  document.getElementById('store_identifier').value = s.identifier || '';
-  document.getElementById('store_relays').value = (s.relays || []).join('\n');
+  const identifier = s.identifier || '';
+  const relays = await _buildEffectiveRelayList(identifier, s.relays || []);
+  document.getElementById('store_identifier').value = identifier;
+  document.getElementById('store_relays').value = relays.join('\n');
+  await refreshRelayConnectionStatus(relays);
 }
 
 async function loadRestartTargets(){
@@ -1773,6 +2147,7 @@ async function loadRestartTargets(){
     for (const p of (data.profiles || [])) {
       if (!p || !p.key || !p.label) continue;
       _restartProfiles.set(p.key, p);
+      if (p.key === 'fix_icon') continue;
       const btn = document.createElement('button');
       btn.className = 'secondary';
       btn.textContent = p.label;
@@ -1789,7 +2164,7 @@ async function loadRestartTargets(){
     }
 
     controls.style.opacity = '1';
-    hint.textContent = 'Save Config writes settings. Restart Web Runtime (Fix Icon) only restarts the web runtime and does not save variables.';
+    hint.textContent = 'Save Config persists values. Restart actions do not save values unless explicitly labeled Save + Restart.';
     _setRestartControlsEnabled(true);
   } catch (e) {
     controls.style.opacity = '.7';
@@ -1887,6 +2262,20 @@ function _renderNavLinksEditor(links) {
   });
 }
 
+function _ensureNostrudelLink(links) {
+  const items = Array.isArray(links) ? [...links] : [];
+  const hasNostrudel = items.some(link => (link?.label || '').toLowerCase().includes('nostrudel'));
+  if (hasNostrudel) return items;
+  const relayUrl = (document.getElementById('relay_url')?.value || '').trim();
+  const wsUrl = relayUrl || 'wss://nostr.janx.com';
+  items.push({
+    label: '🌐 Nostrudel',
+    url: `https://nostrudel.ninja/relays/${encodeURIComponent(wsUrl)}`,
+    accent: true,
+  });
+  return items;
+}
+
 function _collectNavLinksFromEditor() {
   const rows = document.querySelectorAll('#nav-links-rows tr');
   return [...rows].map(tr => ({
@@ -1915,7 +2304,7 @@ function removeNavLink(idx) {
 async function loadNavLinks() {
   try {
     const links = await api('/nav-links');
-    _navLinks = Array.isArray(links) ? links : [];
+    _navLinks = _ensureNostrudelLink(Array.isArray(links) ? links : []);
     _renderHeaderNav(_navLinks);
     _renderNavLinksEditor(_navLinks);
   } catch(e) { console.error('loadNavLinks failed', e); }
@@ -1976,20 +2365,25 @@ function buildConfigPayload(){
   };
 }
 
-function buildStorePayload(){
-  const relays = document.getElementById('store_relays').value.split('\n').map(s=>s.trim()).filter(Boolean);
+async function buildStorePayload(){
+  const identifier = document.getElementById('store_identifier').value;
+  const relaysInput = document.getElementById('store_relays').value.split('\n').map(s=>s.trim()).filter(Boolean);
+  const relays = await _buildEffectiveRelayList(identifier, relaysInput);
+  document.getElementById('store_relays').value = relays.join('\n');
   return {
-    identifier: document.getElementById('store_identifier').value,
+    identifier,
     relays
   };
 }
 
 async function saveAllVariables(){
   try {
+    const storePayload = await buildStorePayload();
     await Promise.all([
       api('/config', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(buildConfigPayload())}),
-      api('/store', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(buildStorePayload())})
+      api('/store', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(storePayload)})
     ]);
+    await refreshRelayConnectionStatus(storePayload.relays);
     notice('saveall-notice', '✓ Saved all variables — restart runtime only if UI/process state is stale', true);
   } catch (e) {
     notice('saveall-notice', '✗ ' + e.message, false);
@@ -2003,9 +2397,10 @@ async function saveAndRestartWeb(){
     return;
   }
   try {
+    const storePayload = await buildStorePayload();
     await Promise.all([
       api('/config', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(buildConfigPayload())}),
-      api('/store', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(buildStorePayload())})
+      api('/store', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(storePayload)})
     ]);
     const res = await api('/restart-profile', {
       method:'POST',
@@ -2013,6 +2408,7 @@ async function saveAndRestartWeb(){
       body:JSON.stringify({profile: 'fix_icon'})
     });
     const n = (res.containers || []).length;
+    await refreshRelayConnectionStatus(storePayload.relays);
     notice('saveall-notice', '\u2713 Saved all variables', true);
     notice('restart-notice', `\u2713 Saved variables and restarted ${n} container${n===1?'':'s'} (${profile.label})`, true);
   } catch (e) {
@@ -2029,11 +2425,25 @@ async function saveConfig(){
 }
 
 async function saveStore(){
-  const payload = buildStorePayload();
+  const payload = await buildStorePayload();
   try {
     await api('/store', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
+    await refreshRelayConnectionStatus(payload.relays);
     notice('store-notice', '✓ Saved', true);
   } catch(e){ notice('store-notice', '✗ ' + e.message, false); }
+}
+
+async function restoreStoreRelayDefaults(){
+  try {
+    const identifier = (document.getElementById('store_identifier')?.value || '').trim();
+    const relays = await _buildEffectiveRelayList(identifier, []);
+    const relaysEl = document.getElementById('store_relays');
+    if (relaysEl) relaysEl.value = relays.join('\n');
+    await refreshRelayConnectionStatus(relays);
+    notice('store-notice', '✓ Restored defaults — click Save to persist', true);
+  } catch (e) {
+    notice('store-notice', '✗ ' + e.message, false);
+  }
 }
 
 // Kind tree expand/collapse
@@ -2118,6 +2528,24 @@ if (_eventMessageModal) {
 const _closeEventMessageModalBtn = document.getElementById('close-event-message-modal');
 if (_closeEventMessageModalBtn) {
   _closeEventMessageModalBtn.addEventListener('click', closeEventMessageModal);
+}
+const _storeRelaysInput = document.getElementById('store_relays');
+if (_storeRelaysInput) {
+  _storeRelaysInput.addEventListener('input', () => {
+    const relays = _storeRelaysInput.value.split('\n').map(s => s.trim()).filter(Boolean);
+    refreshRelayConnectionStatus(relays);
+  });
+}
+const _storeIdentifierInput = document.getElementById('store_identifier');
+if (_storeIdentifierInput) {
+  _storeIdentifierInput.addEventListener('change', async () => {
+    const relays = _storeRelaysInput
+      ? _storeRelaysInput.value.split('\n').map(s => s.trim()).filter(Boolean)
+      : [];
+    const merged = await _buildEffectiveRelayList(_storeIdentifierInput.value, relays);
+    if (_storeRelaysInput) _storeRelaysInput.value = merged.join('\n');
+    await refreshRelayConnectionStatus(merged);
+  });
 }
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
