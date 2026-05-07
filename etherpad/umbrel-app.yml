@@ -3,7 +3,7 @@ id: etherpad
 name: Etherpad
 tagline: An intuitive tool for real-time collaborative writing
 category: files
-version: "2.7.2"
+version: "2.7.3"
 port: 9002
 description: >-
   ⚙️ The admin panel for Etherpad is accessible at "http://umbrel.local:9002/admin/".
@@ -27,29 +27,28 @@ developer: The Etherpad Foundation
 website: https://etherpad.org/
 submitter: dennysubke
 submission: https://github.com/getumbrel/umbrel-apps/pull/2132
-repo: https://github.com/ether/etherpad-lite
-support: https://github.com/ether/etherpad-lite/issues
+repo: https://github.com/ether/etherpad
+support: https://github.com/ether/etherpad/issues
 gallery:
   - 1.jpg
   - 2.jpg
   - 3.jpg
 releaseNotes: >-
-  ⚠️ Abiword has been replaced with LibreOffice for document import/export. If you were using Abiword for DOCX/ODT/PDF conversion, you will need to update your settings to point to your LibreOffice binary.
+  This release adds new privacy controls including pad deletion, author erasure, HttpOnly author-token cookies, and an optional privacy banner.
 
 
-  This release includes various enhancements and fixes:
-    - Accessibility improvements including corrected dialog semantics, better focus management, missing icon labels, and correct language attribute on pages
-    - Chat icon now works correctly again, disabled toggles render properly, and username layout no longer overflows
-    - Revision-specific exports via `/export/etherpad` now return the correct revision instead of always returning the latest
-    - Undo and redo now scrolls the viewport to follow the caret so reverted edits stay in view
-    - Page Down and Page Up now scroll by viewport height instead of a fixed line count
-    - Typing continues in the document after changing a toolbar select instead of falling through to the toolbar
-    - Admin UI translations are restored on the `/admin` page
-    - Non-breaking spaces are now preserved correctly
-    - Browser locale is now auto-detected instead of being hardcoded to English
+  Other improvements and fixes include:
+    - New Etherpad update notifications in the admin UI
+    - New pad compaction tools for reclaiming database space on pads with long edit histories
+    - Editor enhancements including duplicate/delete current-line shortcuts, better embed toolbar controls, easier chat mentions, and faded inactive author colors
+    - Better color contrast and mobile/social metadata on pads
+    - The admin plugin browser now shows plugin `disables` declarations before installation
+    - Fixed duplicate authenticated author sessions incorrectly disconnecting each other
+    - Fixed plugin update tooling and cache behavior across restarts of the same version
+    - The official Docker image no longer includes curl, npm, or npx; use wget or pnpm inside the container for ad-hoc maintenance
 
 
-  Full release notes can be found at https://github.com/ether/etherpad-lite/releases
+  Full release notes can be found at https://github.com/ether/etherpad/releases
 dependencies: []
 path: ""
 defaultUsername: "admin"
