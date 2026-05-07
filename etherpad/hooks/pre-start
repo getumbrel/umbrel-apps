@@ -1,0 +1,16 @@
+#!/usr/bin/env sh
+set -eu
+
+# Etherpad 2.7.3's upstream Docker image runs as uid 5001, gid 0.
+# Migrate only the Etherpad app container's bind-mounted writable dirs
+# from the previous Umbrel uid 1000 ownership. Do not touch Postgres data.
+app_uid=5001
+app_gid=0
+
+mkdir -p \
+  "${APP_DATA_DIR}/data/plugins" \
+  "${APP_DATA_DIR}/data/etherpad-var"
+
+chown -R "${app_uid}:${app_gid}" \
+  "${APP_DATA_DIR}/data/plugins" \
+  "${APP_DATA_DIR}/data/etherpad-var"
