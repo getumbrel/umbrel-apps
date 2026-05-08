@@ -3,7 +3,7 @@ id: openclaw
 name: OpenClaw
 tagline: The AI that actually does things
 category: ai
-version: "2026.5.6"
+version: "2026.5.7"
 port: 18789
 path: ""
 description: >-
@@ -39,16 +39,21 @@ gallery:
   - 2.jpg
   - 3.jpg
 releaseNotes: >-
-  What's new in OpenClaw (v2026.5.3 → v2026.5.6):
-    - Fixed plugin requests failing due to symbol metadata being passed into native fetch headers
-    - Fixed timed-out web fetch requests leaving Gateway tool lanes active instead of returning errors
-    - Fixed debug proxy fetch replays failing due to symbol metadata in header objects
-    - Improved Google Meet voice calls with Twilio dial-in, paced audio streaming, and snappier agent responses
-    - Improved gateway startup performance by deferring non-essential sidecars until after readiness
-    - Improved plugin install, update, and repair reliability for official external plugins
-    - Improved Slack, Discord, Telegram, Feishu, Matrix, and Mattermost delivery and streaming
-    - Improved Control UI responsiveness, session management, and chat history display
-    - Fixed many gateway, plugin, provider, memory, channel, and security issues across all versions
+  What's new in OpenClaw (v2026.5.6 → v2026.5.7):
+    - Fixed OpenAI Codex OAuth routing that was incorrectly rewritten in a previous update — if affected, run `openclaw models set openai-codex/gpt-5.5` to restore your setup
+    - Fixed plugin requests being rejected due to symbol metadata in fetch headers
+    - Fixed timed-out web fetch requests leaving Gateway tool lanes stuck active
+    - Fixed stale chat history being reused after session resets
+    - Fixed WhatsApp proactive messages to LID-addressed contacts creating ghost chats instead of delivering
+    - Fixed Telegram sender allowlists not being honored for DMs, groups, and native commands
+    - Fixed cron jobs with invalid stored model values causing errors
+    - Fixed Discord cross-channel agent messages misrouting channel IDs as DM targets
+    - Fixed long-lived channel sessions not rebuilding the skill list after skills change
+    - Added `openai/chat-latest` as an explicit model alias for the moving ChatGPT Instant API
+    - Added computed status field to cron CLI JSON output for easier external tooling
+    - Improved Discord voice capture with reduced choppiness and a configurable silence grace period
+    - Improved plugin publishing reliability with retries and post-publish version verification
+    - Improved Codex approval flow so safe commands can be reviewed before OpenClaw surfaces an approval prompt
     - And much more. Full details at https://github.com/openclaw/openclaw/releases
 submitter: Umbrel
 submission: https://github.com/getumbrel/umbrel-apps/pull/4649
