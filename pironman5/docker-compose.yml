@@ -1,0 +1,13 @@
+version: "3.7"
+
+services:
+  server:
+    image: sunfounder/pironman5:base
+    restart: on-failure
+    network_mode: host
+    privileged: true
+    environment:
+      CONFIG_PATH: /data/config.json
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+      - /dev:/dev
