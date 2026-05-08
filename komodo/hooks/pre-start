@@ -4,7 +4,11 @@ set -euo pipefail
 # This scripts checks the environment file for placeholder values and replaces them with generated keys or system variables.
 
 APP_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")"
+KEYS_DIR="$APP_DIR/data/keys"
 ENV_FILE="$APP_DIR/settings.env"
+
+mkdir -p "$KEYS_DIR"
+chown -R 1000:1000 "$KEYS_DIR"
 
 # Check if the file exists
 if [ ! -f "$ENV_FILE" ]; then

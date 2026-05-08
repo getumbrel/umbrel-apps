@@ -1,0 +1,49 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: hermes-agent_web_1
+      APP_PORT: 18789
+
+  # Web terminal + dashboard proxy
+  web:
+    image: ghcr.io/getumbrel/hermes-agent-umbrel:v2026.4.30@sha256:39174a55b864700fccb63a9cf7140efe7e4fc4e2e77c9bf76e8954f2f2cc6298
+    # Shell prompt shows "umbrel@hermes" instead of "umbrel@<container-id>"
+    hostname: hermes
+    init: true
+    user: "1000:1000"
+    restart: on-failure
+    depends_on:
+      - gateway
+    volumes:
+      - ${APP_DATA_DIR}/data/hermes:/opt/data
+    environment:
+      APP_SEED: ${APP_SEED}
+      # Tells the dashboard to probe the gateway via HTTP instead of local PID detection
+      GATEWAY_HEALTH_URL: http://hermes-agent_gateway_1:8642
+
+  # Hermes messaging gateway
+  gateway:
+    image: nousresearch/hermes-agent:v2026.4.30@sha256:900e1f8076662a20a685142321808085cc0b2935bb904b234c6828b4d7fb0f77
+    # Upstream v2026.4.23 starts as UID 10000, which cannot access Umbrel's
+    # 1000:1000 app-data directory. Start as root so upstream's entrypoint can
+    # honor HERMES_UID/HERMES_GID, fix /opt/data ownership, then drop privileges.
+    # Remove once an upstream release includes a Docker UID/GID fix,
+    # e.g. NousResearch/hermes-agent#12696.
+    user: "0:0"
+    command: gateway run
+    stop_grace_period: 1m
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data/hermes:/opt/data
+    environment:
+      HERMES_UID: "1000"
+      HERMES_GID: "1000"
+      # API server exposes the health endpoint the dashboard probes via GATEWAY_HEALTH_URL.
+      # Must bind to 0.0.0.0 (not default 127.0.0.1) to be reachable from the web container.
+      # Binding to 0.0.0.0 requires an API key — we reuse APP_SEED since the port is
+      # internal only (not exposed to host).
+      API_SERVER_ENABLED: "true"
+      API_SERVER_HOST: "0.0.0.0"
+      API_SERVER_KEY: ${APP_SEED}

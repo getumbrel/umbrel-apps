@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: navidrome
 category: media
 name: Navidrome
-version: "0.60.3"
+version: "0.61.2"
 tagline: Your personal streaming service
 description: >-
   Navidrome is an open source web-based music collection server and streamer.
@@ -51,16 +51,17 @@ path: ""
 permissions:
   - STORAGE_DOWNLOADS
 releaseNotes: >-
-  This update adds explicit status support in smart playlists and includes several bug fixes for the scanner, API, and UI.
+  ⚠️ Breaking change: The built-in Spotify integration has been removed. The Spotify.ID and Spotify.Secret configuration options are no longer supported. Use the Last.fm or Deezer agents instead.
 
 
-  Key improvements include:
-    - Added explicit status support in smart playlists
-    - Fixed metadata extraction warnings in scanner
-    - Improved format detection by passing filename hints
-    - Fixed JSONP callback parameter validation
-    - Added missing keys in Danish translation
-    - Fixed service restart behavior when upgrading
+  This patch release includes transcoding fixes, scanner improvements, and cover art updates. Key improvements include:
+    - Transcoding now properly clamps target channels to codec limits, fixing issues with high channel count codecs
+    - WAV files now play directly in browsers without unnecessary transcoding
+    - Scanner now picks up ORIGYEAR tags for VorbisComment and MP4 formats
+    - Max image upload size is now configurable via MaxImageUploadSize (default 10MB)
+    - Fixed disc cover art being affected by theme CSS filters
+    - Plugin developers now receive file path in TrackInfo for Scrobbler and Lyrics plugins
+    - Various server stability and error handling improvements
 
 
   Full release notes are found at https://github.com/navidrome/navidrome/releases

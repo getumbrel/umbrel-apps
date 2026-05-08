@@ -1,0 +1,17 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: opencode_app_1
+      APP_PORT: 4096
+
+  app:
+    image: ghcr.io/anomalyco/opencode:1.14.33@sha256:07bcadd0702536c8aebd01850bc3918cea7f3ebbd17eb8ca92cc25d94d942af9
+    command: ["web", "--hostname", "0.0.0.0", "--port", "4096"]
+    restart: on-failure
+    user: "1000:1000"
+    environment:
+      HOME: /home/opencode
+    volumes:
+      - ${APP_DATA_DIR}/data/opencode:/home/opencode/

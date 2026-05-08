@@ -2,7 +2,7 @@ manifestVersion: 1
 id: urbit
 category: networking
 name: Urbit
-version: "v4.2"
+version: "v4.3"
 tagline: Run Urbit on your Umbrel
 description: >-
   Urbit is a personal server for self-sovereign personal & networked
@@ -35,18 +35,10 @@ torOnly: false
 submitter: ~mopfel-winrux
 submission: https://github.com/getumbrel/umbrel/pull/1246
 releaseNotes: >-
-  vere-v4.2 is a runtime release with the following highlighted changes:
-    - Fix rare loom corruption caused by allocator bugs and longstanding signal handling issues.
-    - Fix a regression in the vere 4 sort jet that caused it to behave as an unstable sort in some scenarios.
-    - Fix a buffer overflow when adding bodies to eyre HTTP responses that should not have any (e.g. 204 responses).
-    - Fix various bugs in scry-over-HTTP.
-    - Introduce the %jinx hint to enable event computation timeouts.
-    - Introduce the %loop hint to crash on obvious non-terminating loops, extending the use cases of the %memo hint.
-    - Restore the Windows build.
-    - Fix a regression where shutting down a ship would unmount all desks from the host system.
+  vere-v4.3 is a minor release with the following highlighted fixes and features:
+    - The runtime now supports gzip compression of http responses, causing significant speedups for the tlon app.
+    - The windows build would immediately crash when receiving a directed messaging packet because of an improperly vendored libblake3 dependency.
+    - The lmdb version used by vere-v4.2 and below did not support sparse files on windows, causing the event log to balloon to 63 GB immediately on boot.
 
 
-  Note: After upgrading, users will need to unmount and mount any desks they want mounted once.
-
-
-  Full release notes here: https://github.com/urbit/vere/releases
+  Full release notes here: https://github.com/urbit/vere/releases/tag/vere-v4.3

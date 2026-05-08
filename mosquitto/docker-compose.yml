@@ -2,11 +2,11 @@ services:
 
   app_proxy:
     environment:
-      APP_HOST: mosquitto_broker_1
-      APP_PORT: 9001
+      APP_HOST: mosquitto_web_1
+      APP_PORT: 80
 
   broker:
-    image: eclipse-mosquitto:2.0.22@sha256:75042dd2dd262dff9eb29c47da26d8ee57211a7bc6fc51bae55badc5fc9f6724
+    image: eclipse-mosquitto:2.1.2-alpine@sha256:9cfdd46ad59f3e3e5f592f6baf57ab23e1ad00605509d0f5c1e9b179c5314d87
     restart: on-failure
     ports:
       - '1883:1883'
@@ -14,5 +14,13 @@ services:
       - ${APP_DATA_DIR}/data/config:/mosquitto/config:rw
       - ${APP_DATA_DIR}/data/mosquitto:/mosquitto/data:rw
       - ${APP_DATA_DIR}/data/log:/mosquitto/log:rw
-      - ${APP_DATA_DIR}/data/www:/mosquitto/www:r
     user: "1000:1000"
+
+  web:
+    image: nginx:1.27@sha256:124b44bfc9ccd1f3cedf4b592d4d1e8bddb78b51ec2ed5056c52d3692baebc19
+    restart: on-failure
+    depends_on:
+      - broker
+    volumes:
+      - ${APP_DATA_DIR}/data/www:/usr/share/nginx/html:ro
+      - ${APP_DATA_DIR}/data/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro

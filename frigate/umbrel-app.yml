@@ -2,7 +2,7 @@ manifestVersion: 1
 id: frigate
 category: automation
 name: Frigate
-version: "0.16.4"
+version: "0.17.1"
 tagline: A complete and local NVR
 description: >-
   A complete and local NVR designed for Home Assistant with AI object detection. 
@@ -20,14 +20,22 @@ releaseNotes: >-
   ⚠️ As usual, Frigate will attempt to update its configuration automatically. It is still recommended to back up your current config and database before upgrading.
 
 
-  🚨 This release includes a critical security fix for authenticated users:
-    - Fixed a vulnerability that could allow authenticated remote command execution and container escape
+  🚨 This is a maintenance release with security fixes and bugfixes:
+    - Restricted raw config endpoint to admin role only
+    - Fixed cross-camera authentication in timeline and media endpoints
+    - Fixed RKNN ArcFace input format
+    - Fixed storage cleanup being attempted when Frigate is in safe mode
 
 
   Other improvements in this update include:
-    - Updated documentation for Reolink, Wyze, Hikvision, and other camera models
-    - Fixed OpenVINO D-FINE configuration defaults
-    - Improved go2rtc port checking
+    - Improved playback of videos in Tracking Details
+    - Fixed preview retrieval to handle missing previews gracefully
+    - Fixed thumbnail encoding logic
+    - Fixed go2rtc config handling
+    - Fixed GenAI issues
+    - Fixed audio event maintainer
+    - Push notifications now filtered by user role camera access
+    - Various UI fixes and improvements
 
 
   Full release notes are available at https://github.com/blakeblackshear/frigate/releases

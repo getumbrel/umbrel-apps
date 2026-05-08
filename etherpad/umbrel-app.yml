@@ -1,9 +1,9 @@
-manifestVersion: 1
+manifestVersion: 1.1
 id: etherpad  
 name: Etherpad
 tagline: An intuitive tool for real-time collaborative writing
 category: files
-version: "2.6.1"
+version: "2.7.3"
 port: 9002
 description: >-
   ⚙️ The admin panel for Etherpad is accessible at "http://umbrel.local:9002/admin/".
@@ -27,19 +27,28 @@ developer: The Etherpad Foundation
 website: https://etherpad.org/
 submitter: dennysubke
 submission: https://github.com/getumbrel/umbrel-apps/pull/2132
-repo: https://github.com/ether/etherpad-lite
-support: https://github.com/ether/etherpad-lite/issues
+repo: https://github.com/ether/etherpad
+support: https://github.com/ether/etherpad/issues
 gallery:
   - 1.jpg
   - 2.jpg
   - 3.jpg
 releaseNotes: >-
-  This release includes various enhancements and fixes:
-    - Minor fixes and improvements to the session transfer feature introduced in 2.6.0
-    - Dependencies upgrades
+  This release adds new privacy controls including pad deletion, author erasure, HttpOnly author-token cookies, and an optional privacy banner.
 
 
-  Full release notes can be found at https://github.com/ether/etherpad-lite/releases
+  Other improvements and fixes include:
+    - New Etherpad update notifications in the admin UI
+    - New pad compaction tools for reclaiming database space on pads with long edit histories
+    - Editor enhancements including duplicate/delete current-line shortcuts, better embed toolbar controls, easier chat mentions, and faded inactive author colors
+    - Better color contrast and mobile/social metadata on pads
+    - The admin plugin browser now shows plugin `disables` declarations before installation
+    - Fixed duplicate authenticated author sessions incorrectly disconnecting each other
+    - Fixed plugin update tooling and cache behavior across restarts of the same version
+    - The official Docker image no longer includes curl, npm, or npx; use wget or pnpm inside the container for ad-hoc maintenance
+
+
+  Full release notes can be found at https://github.com/ether/etherpad/releases
 dependencies: []
 path: ""
 defaultUsername: "admin"

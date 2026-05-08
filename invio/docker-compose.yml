@@ -7,7 +7,7 @@ services:
       PROXY_AUTH_ADD: "false"
 
   backend:
-    image: ghcr.io/kittendevv/invio-backend:v1.11.1@sha256:639dfe7926ea4ae48a058a2a01d62c1ad1c9b173a4eaee9931e09ba910f719cc
+    image: ghcr.io/kittendevv/invio-backend:v2.0.0@sha256:bc1aa1d27cf0b12b7e1a1eac2e55f9fb8274375502b6b93fb12cc16670ce0f74
     environment:
       ADMIN_USER: "admin"
       ADMIN_PASS: ${APP_PASSWORD}
@@ -21,13 +21,14 @@ services:
     restart: on-failure
 
   frontend:
-    image: ghcr.io/kittendevv/invio-frontend:v1.11.1@sha256:8692569f9742add5fa33f0d7a7c993d637c2ae0242d1e9878ea434d9e9187b46
+    image: ghcr.io/kittendevv/invio-frontend:v2.0.0@sha256:54cbfc6ff2a585cf7299468a7b160a98d84f197cdbcb6bdf2bda82a7a0210099
     environment:
       PORT: 8000
       BACKEND_URL: http://invio_backend_1:3000
       COOKIE_SECURE: "false"
       FRONTEND_SECURE_HEADERS_DISABLED: "false"
       ENABLE_HSTS: "false"
+      ORIGIN: "http://${DEVICE_DOMAIN_NAME}:8003"
     depends_on:
       - backend
     restart: on-failure

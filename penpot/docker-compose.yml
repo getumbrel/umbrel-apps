@@ -9,7 +9,7 @@ services:
       PROXY_AUTH_WHITELIST: "/api/*"
 
   penpot-frontend:
-    image: penpotapp/frontend:2.13.2@sha256:d98e7c9ddb55617f7628845653aa20efe4646b62b1727e192bfb61013b56206a
+    image: penpotapp/frontend:2.14.4@sha256:aecf5131c59a4cd25cebd97af1c8835eef6e25eb74cb2bf349b481a0afae4428
     volumes:
       - ${APP_DATA_DIR}/data/assets:/opt/data/assets
     environment:
@@ -20,7 +20,7 @@ services:
     restart: on-failure
 
   penpot-backend:
-    image: penpotapp/backend:2.13.2@sha256:d2fd58465adc02e90db6f220ed012e3e77135b551baa1b2b5a6a155060849ea3
+    image: penpotapp/backend:2.14.4@sha256:6e2798b2c3ccd6730415db5f28030460d05fa8c01301b3b72ba3dc66af9e3c58
     # user 1000:1000 to avoid permission issues when importing libraries and templates
     user: "1000:1000"
     volumes:
@@ -42,7 +42,7 @@ services:
     restart: on-failure
 
   penpot-exporter:
-    image: penpotapp/exporter:2.13.2@sha256:91dace40fd829bfeeb550680da7ece22203c215e57e558398d87c589422c5574
+    image: penpotapp/exporter:2.14.4@sha256:c5112cf3b54edf8911945042562d6f0be99ca047f1bc22573315e676a65030b5
     user: "1000:1000"
     environment:
       - PENPOT_PUBLIC_URI=http://penpot-frontend

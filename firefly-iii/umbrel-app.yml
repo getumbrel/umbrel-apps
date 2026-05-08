@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: firefly-iii
 category: finance
 name: Firefly III
-version: "6.4.22"
+version: "6.6.2"
 tagline: Your personal finance manager
 description: >-
   Firefly III is a manager for your personal finances. It is self-hosted and open source. This means that it's free, it has no ads and no tracking.
@@ -47,17 +47,14 @@ path: ""
 deterministicPassword: false
 torOnly: false
 releaseNotes: >-
+  🚨 Security fix: OAuth tokens could be generated before confirming your 2FA state, potentially allowing access to your data despite having MFA enabled. Please upgrade at your earliest convenience.
+
+
   Key improvements in this release:
-    - Fixed authentication problems and edge cases
-    - Removed unused Laravel Sanctum library
-    - Fixed remote user guard for console and unauthenticated routes
-    - Resolved health endpoint blocking issues
-    - Fixed token endpoint authorization errors
-    - Corrected foreign currency amounts in transfers
-    - Fixed transaction summary duplication
-    - Resolved database migration issues
-    - Added ability to undo database migrations
-    - Fixed subscription view range and renaming in rules
+    - Fixed running balance column not updating instantly for new records using rules
+    - Fixed year validator accepting invalid years when saving or editing a transaction
+    - Improved password validation
+    - Fixed shrunken sidebar expanding when navigating by clicking on icons
 
 
   Full release notes are found at https://github.com/firefly-iii/firefly-iii/releases

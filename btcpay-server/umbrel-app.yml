@@ -2,7 +2,7 @@ manifestVersion: 1
 id: btcpay-server
 category: bitcoin
 name: BTCPay Server
-version: "2.3.4"
+version: "2.3.8"
 tagline: Accept Bitcoin payments with 0 fees & no 3rd party
 description: >-
   BTCPay Server is a payment processor that allows you to receive
@@ -34,24 +34,26 @@ path: ""
 defaultUsername: ""
 defaultPassword: ""
 releaseNotes: >-
-  This release comes with new features and several bug fixes.
+  This release comes with new features and bug fixes.
 
 
   New features:
-    - Set LUNO as the default exchange for ZAR currency
-    - Add a deliveryTime property to webhook deliveries in the API and UI
-    - Add subscriber's metadata to email placeholders
+    - API/Subscriptions: Add update offering route
+    - API/Subscriptions: Add update offering plan
+    - PoS: View-only store users can browse login links and invoices from the Update PoS page
+    - PoS: Store users can now generate a login QR code for any other store user
+    - Add LUD-21 (LNURL-pay Verify) support
+    - Add reporting for subscriptions
 
   Bug fixes:
-    - Fix: Deleting webhooks could time out
-    - Fix: Offering and Customer metadata email placeholders couldn't be used
-    - Subscribers with enough credits were receiving payment reminder emails and not being automatically renewed
-    - Fix scan-qrcode icon alignment
-    - Public node info page no longer lists local network IPs
-    - Forms with an optional empty email field can now be submitted
-    - Keypad POS now displays “Any amount” items correctly
-    - CanModifyInvoices permission now includes viewing Lightning invoices for the store
-    - Certain HTTP status codes no longer cause webhooks to be retried
+    - Reserved addresses page should not show addresses from old wallets
+    - QR code logins should not expire after only a few hours
+    - Avoid double translation of already localized view content
+    - Phoenixd incorrectly marks payment as partial
+    - Top-Up invoices paid by BOLT11 should become settled
+
+  Miscellaneous
+    - Remove support for importing keys to Bitcoin wallet via RPC
 
   Full release notes can be found at https://github.com/btcpayserver/btcpayserver/releases
 submitter: Umbrel

@@ -3,7 +3,7 @@ id: open-webui
 name: Open WebUI
 tagline: Chat with Ollama models like DeepSeek-R1 and LLama, or use an OpenAI API key
 category: ai
-version: "0.8.2"
+version: "0.9.2"
 port: 2876
 description: >-
   Open WebUI lets you chat with advanced AI models running locally on your own device or connect to online models using an API key.
@@ -37,20 +37,23 @@ defaultPassword: ""
 dependencies:
   - ollama
 releaseNotes: >-
-  ⚠️ This release includes database changes that require adequate downtime for migration, especially for larger deployments with extensive chat histories. Make sure you have a backup before updating.
-
-
   Key highlights in this release include:
-    - Skills now inject full content when user-selected, while model-attached skills show only name and description for flexibility
-    - Chat toggles now control built-in tools, allowing users to disable web search, image generation, and code execution per conversation
-    - Image preview in file management modal makes it easier to identify and manage uploaded images
-    - Batch tag operations and faster group list loading significantly improve performance
-    - Skills sharing permissions now available for administrators to control per-group access
-    - Fixed OAuth session error handling to gracefully clean up corrupted sessions
-    - Fixed tool call message preservation to prevent models from hallucinating tool outputs
-    - Fixed external tool servers to initialize automatically on startup for proper containerized deployments
-    - Fixed resource handle cleanup to prevent file handle leaks during audio transcription
-    - Fixed keyboard shortcut conflict where Ctrl+Shift+S would strike through text instead of toggling sidebar
+    - Added PaddleOCR-vl as a document content extraction engine option
+    - Added Firecrawl v2 API support with improved reliability and retry logic
+    - Added configurable reminder duration for calendar events
+    - Added custom API key header support via the CUSTOM_API_KEY_HEADER environment variable
+    - Added a +N badge on the Sources button when more than three sources are available
+    - Improved model list performance by stripping large image data from paginated responses
+    - Improved page load speed with earlier splash image preloading
+    - Fixed interrupted MCP tool calls no longer causing CPU spikes
+    - Fixed skills from persisted chats now injecting correctly into the system prompt
+    - Fixed Docker ARM64 images that previously produced corrupted Python dependencies
+    - Fixed rich text editor extension conflicts causing editor instability
+    - Fixed OAuth discovery fallback for better compatibility with more MCP servers
+    - Fixed cancelled chat generation now properly cleaning up upstream connections
+    - Fixed model profile image endpoints to prevent path traversal vulnerabilities
+    - Fixed browser-native message rendering to eliminate scroll jump artifacts in long conversations
+    - Translation updates for Finnish, Korean, Portuguese (Brazil), and Dutch
 
 
   Full release notes are found at https://github.com/open-webui/open-webui/releases

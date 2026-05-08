@@ -3,7 +3,7 @@ id: homebox
 name: HomeBox
 tagline: An inventory and organization system built for the home user
 category: files
-version: "0.23.1"
+version: "0.25.0"
 port: 7745
 description: >-
   Homebox is an inventory and organization system built for the home user! With a focus on simplicity and ease of use, Homebox is the perfect solution for your home inventory, organization, and management needs. 
@@ -27,27 +27,15 @@ releaseNotes: >-
   ⚠️ It is highly recommended to keep backups of your database and stored attachments before updating.
 
 
-  ⚠️ You cannot revert back to a previous version of Homebox after upgrading to this release due to database schema changes. Always ensure that you have functioning backups before upgrading.
+  🚨 This release fixes a security vulnerability (CVE-2026-40196) that allowed a removed user to still access their default group via the API.
 
 
-  Major new features in this release:
-    - Collections: Users can now be part of multiple collections, each entirely separate and unique
-    - User Management: Basic user management capabilities added for collections
-    - Authentication Rate Limiting: New rate limiting middleware to help secure against brute force attacks
-    - Better Memory Management: Improved attachment upload handling and CSV import optimization
-    - MQTT Client: Now available in regular and rootless Docker containers
-    - Label Generator: Option to hide "Homebox" text on labels
-    - Wipe Inventory: New action to clear inventory data with demo mode protection
-    - Tags: Labels have been converted to tags for better organization
-
-
-  Bug fixes in this release:
-    - Fixed attachments not appearing
-    - Fixed QR codes missing URL portion
-    - Fixed tag dropdown not closing
-    - Fixed version link in bottom of page
-    - Fixed password change modal issue
-    - Fixed search query from navbar search
+  Key highlights in this release:
+    - Tag relationships: tags can now have parent/child relationships and icons
+    - Fractional/decimal quantities are now supported (e.g. 1.2, 3.45)
+    - User settings are now stored in the database and persist across devices and browsers
+    - Added OpenTelemetry support for tracing, logging, and error tracking
+    - Added OpenFoodFacts, OpenBeautyFacts, and OpenProductsFacts as barcode lookup providers
 
 
   Full release notes can be found at https://github.com/sysadminsmedia/homebox/releases
