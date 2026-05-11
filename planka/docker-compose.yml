@@ -5,7 +5,8 @@ services:
       APP_PORT: 1337
 
   app:
-    image: ghcr.io/plankanban/planka:2.0.0-rc.4@sha256:818323130a584abd4461ad42ee3c06933171e983a7cae2e8fa903c368952ebe1
+    image: ghcr.io/plankanban/planka:2.1.1@sha256:19b507ae3ab5cb1855c3f6984249e4a4881ed0b912febdfd492139c29bf10f39
+    user: "1000:1000"
     restart: on-failure
     depends_on:
       db:
@@ -14,19 +15,15 @@ services:
       BASE_URL: http://${DEVICE_DOMAIN_NAME}:8546
       DATABASE_URL: 'postgresql://postgres@planka_db_1/planka'
       DEFAULT_ADMIN_PASSWORD: ${APP_PASSWORD}
-      DEFAULT_ADMIN_NAME: Demo Demo
+      DEFAULT_ADMIN_NAME: Umbrel
       DEFAULT_ADMIN_USERNAME: umbrel
-      DEFAULT_ADMIN_EMAIL: demo@demo.com
+      DEFAULT_ADMIN_EMAIL: umbrel@umbrel.local
       SECRET_KEY: ${APP_SEED}
       TRUST_PROXY: 0
-    volumes:
-      - ${APP_DATA_DIR}/data/favicons:/app/public/favicons
-      - ${APP_DATA_DIR}/data/avatars:/app/public/user-avatars
-      - ${APP_DATA_DIR}/data/backgrounds:/app/public/background-images
-      - ${APP_DATA_DIR}/data/attachments:/app/private/attachments
 
   db:
-    image: postgres:16.6-alpine3.21@sha256:589f3b24f30e60a2b33f79543ed51c8f897589bcde5c59f4dc0e814551eeeb0f
+    image: postgres:16.13-alpine3.23@sha256:4e6e670bb069649261c9c18031f0aded7bb249a5b6664ddec29c013a89310d50
+    user: "1000:1000"
     restart: unless-stopped
     environment:
       POSTGRES_DB: planka
