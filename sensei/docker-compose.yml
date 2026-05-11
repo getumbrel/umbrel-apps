@@ -1,0 +1,29 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: sensei_server_1
+      APP_PORT: 5401
+
+  server:
+    image: louneskmt/sensei:v0.2.2-beta2@sha256:7dd160b52baa0c528f58ea8c3be77a73d257004e6c5d25d6c6bbd166d4055688
+    restart: on-failure
+    stop_grace_period: 1m
+    user: "1000:1000"
+    ports:
+      - 15401-15420:15401-15420
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+    environment:
+      API_HOST: 0.0.0.0
+      API_PORT: "5401"
+      BITCOIND_RPC_HOST: ${APP_BITCOIN_NODE_IP}
+      BITCOIND_RPC_PASSWORD: ${APP_BITCOIN_RPC_PASS}
+      BITCOIND_RPC_PORT: ${APP_BITCOIN_RPC_PORT}
+      BITCOIND_RPC_USERNAME: ${APP_BITCOIN_RPC_USER}
+      DATA_DIR: /data/.sensei
+      DATABASE_URL: sensei.db
+      NETWORK: ${APP_BITCOIN_NETWORK}
+      PORT_RANGE_MIN: "15401"
+      PORT_RANGE_MAX: "15420"
