@@ -3,6 +3,7 @@ set -euo pipefail
 
 APP_DATA_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")"
 ENV_FILE="${APP_DATA_DIR}/data/mastodon.env"
+TMP_ENV_FILE="${ENV_FILE}.tmp"
 INIT_SENTINEL="${APP_DATA_DIR}/data/.mastodon_initialized"
 
 mkdir -p "${APP_DATA_DIR}/data/public/system" "${APP_DATA_DIR}/data/db" "${APP_DATA_DIR}/data/redis"
@@ -17,7 +18,8 @@ secret_b64() {
 }
 
 if [[ ! -f "${ENV_FILE}" ]]; then
-  cat > "${ENV_FILE}" <<EOF
+  rm -f "${TMP_ENV_FILE}"
+  cat > "${TMP_ENV_FILE}" <<EOF
 SECRET_KEY_BASE=$(secret_hex secret-key-base)$(secret_hex secret-key-base-extra)
 OTP_SECRET=$(secret_hex otp-secret)$(secret_hex otp-secret-extra)
 ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY=$(secret_b64 active-record-deterministic-key)
@@ -27,7 +29,9 @@ EOF
 
   echo "mastodon: generating VAPID keys..."
   "${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" run --rm --no-deps web \
-    ruby -rwebpush -e 'v=Webpush.generate_key; puts "VAPID_PRIVATE_KEY=#{v.private_key}"; puts "VAPID_PUBLIC_KEY=#{v.public_key}"' >> "${ENV_FILE}"
+    ruby -rwebpush -e 'v=Webpush.generate_key; puts "VAPID_PRIVATE_KEY=#{v.private_key}"; puts "VAPID_PUBLIC_KEY=#{v.public_key}"' >> "${TMP_ENV_FILE}"
+  chmod 600 "${TMP_ENV_FILE}"
+  mv "${TMP_ENV_FILE}" "${ENV_FILE}"
 fi
 
 if [[ -f "${INIT_SENTINEL}" ]]; then

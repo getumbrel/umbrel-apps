@@ -25,9 +25,18 @@ x-mastodon-env: &mastodon-env
 services:
   app_proxy:
     environment:
-      APP_HOST: mastodon_web_1
-      APP_PORT: 3000
+      APP_HOST: mastodon_nginx_1
+      APP_PORT: 80
       PROXY_AUTH_ADD: "false"
+
+  nginx:
+    image: nginx:1.27@sha256:124b44bfc9ccd1f3cedf4b592d4d1e8bddb78b51ec2ed5056c52d3692baebc19
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - web
+      - streaming
 
   web:
     image: ghcr.io/mastodon/mastodon:v4.4.1@sha256:c803d839e5a65e84d848308bbf9ae75de6096b57f385082b5bdea3355975f192
@@ -45,11 +54,11 @@ services:
         condition: service_healthy
 
   streaming:
-    image: ghcr.io/mastodon/mastodon:v4.4.1@sha256:c803d839e5a65e84d848308bbf9ae75de6096b57f385082b5bdea3355975f192
+    image: ghcr.io/mastodon/mastodon-streaming:v4.4.1@sha256:e4b0565e05cf95e6fc1f3b1dd9fba3cd9fa6d1257c3cc362645da2f14a154cc0
     user: "991:991"
     restart: on-failure
     stop_grace_period: 1m
-    command: node ./streaming
+    command: node ./streaming/index.js
     <<: *mastodon-env
     depends_on:
       db:
