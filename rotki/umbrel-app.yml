@@ -2,7 +2,7 @@ manifestVersion: 1
 id: rotki
 category: finance
 name: rotki
-version: "1.42.1"
+version: "1.43.0"
 tagline: Portfolio tracking, analytics, accounting and tax reporting
 description: >-
   rotki is an open source portfolio tracking, analytics, accounting and tax reporting tool that protects your privacy. 
@@ -27,23 +27,19 @@ repo: https://github.com/rotki/rotki
 support: https://github.com/rotki/rotki/issues
 port: 8084
 releaseNotes: >-
-  This is a patch release fixing issues reported over the past 5 weeks.
+  This major release adds support for HyperEVM, Hyperliquid Core, and Monad.
 
 
   Key highlights include:
-    - Detection and resolution of inconsistencies in internal EVM transaction data via repulling or redecoding
-    - Added cost basis transfer rules to reduce errors when moving funds (e.g. wrapping ETH, DeFi deposits)
-    - Sushiswap swaps now decoded on all EVM chains
-    - Yearn Finance support extended to all EVM chains
-    - ERC-4337 fee detection now works on all EVM chains
-    - Added spam subtype event for manually tagging spam, phishing, or address poisoning transactions
-    - Fixed asset icons failing to load in Docker deployments
-    - Improved Curve, Pendle, Beefy, and Gearbox transaction decoding
-    - ETH staking validator limits now checked before submission with user-friendly messages
-    - Numerous bug fixes around transaction decoding, balances, and UI behavior
+    - Added a dedicated page for managing cached oracle price entries
+    - Added timezone-aware CSV imports for timestamps without timezone data
+    - Added a recommended settings prompt after upgrading
+    - Improved history and pricing workflows, including updating historical prices from event rows
+    - Expanded protocol decoding for Morpho, Quickswap, Balancer, Sky, CCTP v2, and more
+    - Fixed large Docker imports and uploads that could be blocked by nginx
 
 
-  ⚠️ As always when upgrading, all your EVM history events will need to be redecoded. This takes time depending on the amount of events but is required to apply all changes.
+  ⚠️ After upgrading, EVM history events may need to be redecoded so the latest decoder changes can be applied. Edited events are left untouched.
 
 
   Full release notes are found at https://github.com/rotki/rotki/releases
