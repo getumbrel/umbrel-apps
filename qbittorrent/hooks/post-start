@@ -15,21 +15,26 @@ UMBREL_QBITTORRENT_CONFIG_FLAG="${APP_DATA_DIR}/HAS_BEEN_CONFIGURED_BY_UMBREL"
 REVERSE_PROXY_CONFIG_FLAG="${APP_DATA_DIR}/REVERSE_PROXY_CONFIGURED_BY_UMBREL"
 QBITTORRENT_DOWNLOADS_PATH_MIGRATION_FLAG="${APP_DATA_DIR}/DOWNLOADS_PATH_CONFIGURED_BY_UMBREL"
 RUN_EXISTING_INSTALL_MIGRATION=false
+RUN_REVERSE_PROXY_MIGRATION=false
+RUN_INITIAL_CONFIGURATION=true
 
 if [[ -f "${UMBREL_QBITTORRENT_CONFIG_FLAG}" ]]; then
-  if [[ -f "${QBITTORRENT_DOWNLOADS_PATH_MIGRATION_FLAG}" ]]; then
-    echo "qBittorrent has already been configured and migrated."
-    exit
-  fi
-  echo "qBittorrent has already been configured. Running existing install migration."
-  RUN_EXISTING_INSTALL_MIGRATION=true
+  RUN_INITIAL_CONFIGURATION=false
 
-  if [[ -f "${REVERSE_PROXY_CONFIG_FLAG}" ]]; then
+  if [[ -f "${QBITTORRENT_DOWNLOADS_PATH_MIGRATION_FLAG}" ]] && [[ -f "${REVERSE_PROXY_CONFIG_FLAG}" ]]; then
     echo "qBittorrent has already been configured and migrated."
     exit
   fi
-  echo "qBittorrent has already been configured. Running reverse proxy migration."
-  RUN_REVERSE_PROXY_MIGRATION=true
+
+  if [[ ! -f "${QBITTORRENT_DOWNLOADS_PATH_MIGRATION_FLAG}" ]]; then
+    echo "qBittorrent has already been configured. Running existing install migration."
+    RUN_EXISTING_INSTALL_MIGRATION=true
+  fi
+
+  if [[ ! -f "${REVERSE_PROXY_CONFIG_FLAG}" ]]; then
+    echo "qBittorrent has already been configured. Running reverse proxy migration."
+    RUN_REVERSE_PROXY_MIGRATION=true
+  fi
 fi
 
 # Wait up to 30 seconds for the qBittorrent.conf file to exist
@@ -81,13 +86,18 @@ else
 fi
 
 ensure_bittorrent_section
-set_default_save_path
+
+if [[ "${RUN_INITIAL_CONFIGURATION}" == true ]] || [[ "${RUN_EXISTING_INSTALL_MIGRATION}" == true ]]; then
+  set_default_save_path
+fi
 
 if [[ "${RUN_EXISTING_INSTALL_MIGRATION}" == true ]]; then
   touch "${QBITTORRENT_DOWNLOADS_PATH_MIGRATION_FLAG}"
-  echo "Starting qBittorrent..."
-  "${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" start server
-  exit
+  if [[ "${RUN_REVERSE_PROXY_MIGRATION}" != true ]]; then
+    echo "Starting qBittorrent..."
+    "${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" start server
+    exit
+  fi
 fi
 
 ensure_preferences_section
@@ -113,7 +123,7 @@ else
   sed -i '/^\[Preferences\]/a WebUI\\TrustedReverseProxiesList=10.21.0.0/16' "${QBITTORRENT_CONF_FILE}"
 fi
 
-if [[ "${RUN_REVERSE_PROXY_MIGRATION:-false}" == true ]]; then
+if [[ "${RUN_REVERSE_PROXY_MIGRATION}" == true ]]; then
   touch "${REVERSE_PROXY_CONFIG_FLAG}"
   echo "Starting qBittorrent..."
   "${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" start server
