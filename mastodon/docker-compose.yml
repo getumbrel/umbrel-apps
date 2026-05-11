@@ -1,0 +1,103 @@
+version: "3.7"
+
+x-mastodon-env: &mastodon-env
+  env_file:
+    - ${APP_DATA_DIR}/data/mastodon.env
+  environment:
+    LOCAL_DOMAIN: ${DEVICE_DOMAIN_NAME}
+    WEB_DOMAIN: ${DEVICE_DOMAIN_NAME}:${APP_MASTODON_PORT}
+    REDIS_HOST: mastodon_redis_1
+    REDIS_PORT: 6379
+    DB_HOST: mastodon_db_1
+    DB_PORT: 5432
+    DB_NAME: mastodon
+    DB_USER: mastodon
+    DB_PASS: mastodon
+    ES_ENABLED: "false"
+    SMTP_SERVER: ""
+    SMTP_PORT: 587
+    SMTP_FROM_ADDRESS: notifications@${DEVICE_DOMAIN_NAME}
+    RAILS_ENV: production
+    NODE_ENV: production
+    RAILS_SERVE_STATIC_FILES: "true"
+    BIND: 0.0.0.0
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: mastodon_web_1
+      APP_PORT: 3000
+      PROXY_AUTH_ADD: "false"
+
+  web:
+    image: ghcr.io/mastodon/mastodon:v4.4.1@sha256:c803d839e5a65e84d848308bbf9ae75de6096b57f385082b5bdea3355975f192
+    user: "991:991"
+    restart: on-failure
+    stop_grace_period: 1m
+    command: bundle exec puma -C config/puma.rb
+    <<: *mastodon-env
+    volumes:
+      - ${APP_DATA_DIR}/data/public/system:/mastodon/public/system
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  streaming:
+    image: ghcr.io/mastodon/mastodon:v4.4.1@sha256:c803d839e5a65e84d848308bbf9ae75de6096b57f385082b5bdea3355975f192
+    user: "991:991"
+    restart: on-failure
+    stop_grace_period: 1m
+    command: node ./streaming
+    <<: *mastodon-env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  sidekiq:
+    image: ghcr.io/mastodon/mastodon:v4.4.1@sha256:c803d839e5a65e84d848308bbf9ae75de6096b57f385082b5bdea3355975f192
+    user: "991:991"
+    restart: on-failure
+    stop_grace_period: 1m
+    command: bundle exec sidekiq
+    <<: *mastodon-env
+    volumes:
+      - ${APP_DATA_DIR}/data/public/system:/mastodon/public/system
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  db:
+    image: postgres:17.9-alpine@sha256:c7526c0f6c3f30260a563d7bcf8ad778effac59a44f8ffa86678c35418338609
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      POSTGRES_USER: mastodon
+      POSTGRES_PASSWORD: mastodon
+      POSTGRES_DB: mastodon
+    volumes:
+      - ${APP_DATA_DIR}/data/db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-d", "mastodon", "-U", "mastodon"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:8.4.2-alpine@sha256:e1b6db24cb4fdd89f4bc9be09f671ea3bec92fbd7042554f76c34aa2be9b59ad
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 1m
+    volumes:
+      - ${APP_DATA_DIR}/data/redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5

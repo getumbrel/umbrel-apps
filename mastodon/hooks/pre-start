@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+APP_DATA_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")"
+ENV_FILE="${APP_DATA_DIR}/data/mastodon.env"
+INIT_SENTINEL="${APP_DATA_DIR}/data/.mastodon_initialized"
+
+mkdir -p "${APP_DATA_DIR}/data/public/system" "${APP_DATA_DIR}/data/db" "${APP_DATA_DIR}/data/redis"
+chown -R 991:991 "${APP_DATA_DIR}/data/public" || chmod -R 777 "${APP_DATA_DIR}/data/public"
+
+secret_hex() {
+  printf "%s:%s" "${APP_SEED}" "$1" | sha256sum | awk '{print $1}'
+}
+
+secret_b64() {
+  printf "%s:%s" "${APP_SEED}" "$1" | sha256sum -b | awk '{print $1}' | xxd -r -p | base64 | tr -d '\n'
+}
+
+if [[ ! -f "${ENV_FILE}" ]]; then
+  cat > "${ENV_FILE}" <<EOF
+SECRET_KEY_BASE=$(secret_hex secret-key-base)$(secret_hex secret-key-base-extra)
+OTP_SECRET=$(secret_hex otp-secret)$(secret_hex otp-secret-extra)
+ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY=$(secret_b64 active-record-deterministic-key)
+ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT=$(secret_b64 active-record-key-derivation-salt)
+ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY=$(secret_b64 active-record-primary-key)
+EOF
+
+  echo "mastodon: generating VAPID keys..."
+  "${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" run --rm --no-deps web \
+    ruby -rwebpush -e 'v=Webpush.generate_key; puts "VAPID_PRIVATE_KEY=#{v.private_key}"; puts "VAPID_PUBLIC_KEY=#{v.public_key}"' >> "${ENV_FILE}"
+fi
+
+if [[ -f "${INIT_SENTINEL}" ]]; then
+  echo "mastodon: already initialized - skipping bootstrap."
+  exit 0
+fi
+
+echo "mastodon: starting database and redis..."
+"${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" up -d --wait --wait-timeout 180 db redis
+
+echo "mastodon: preparing database..."
+"${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" run --rm web bundle exec rails db:prepare
+
+echo "mastodon: creating admin user..."
+"${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" run --rm web \
+  bin/tootctl accounts create umbrel \
+    --email umbrel@umbrel.local \
+    --confirmed \
+    --role Owner || true
+
+"${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" run --rm -e ADMIN_PASSWORD="${APP_PASSWORD}" web \
+  bin/rails runner "user = User.find_by!(email: 'umbrel@umbrel.local'); user.password = ENV.fetch('ADMIN_PASSWORD'); user.password_confirmation = ENV.fetch('ADMIN_PASSWORD'); user.save!"
+
+touch "${INIT_SENTINEL}"
+
+echo "mastodon: bootstrap finished - stopping stack for clean start..."
+"${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" stop
