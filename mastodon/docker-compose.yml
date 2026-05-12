@@ -70,7 +70,7 @@ services:
 
   migrate:
     image: *mastodon_image
-    restart: "no"
+    restart: on-failure
     command: ["bundle", "exec", "rails", "db:migrate"]
     env_file:
       - ${APP_DATA_DIR}/mastodon.env
