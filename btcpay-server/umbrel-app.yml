@@ -2,7 +2,7 @@ manifestVersion: 1
 id: btcpay-server
 category: bitcoin
 name: BTCPay Server
-version: "2.3.6"
+version: "2.3.8"
 tagline: Accept Bitcoin payments with 0 fees & no 3rd party
 description: >-
   BTCPay Server is a payment processor that allows you to receive
@@ -34,28 +34,26 @@ path: ""
 defaultUsername: ""
 defaultPassword: ""
 releaseNotes: >-
-  This release comes with new features, bug fixes, improvements, and reverts a regression.
+  This release comes with new features and bug fixes.
 
 
   New features:
-    - Wallets: Add filtering using search bar on the label filter dropdown when labels exceed more than 20
-    - API: Include a payment method in the Get invoices endpoint
-    - BTCPay Invoice Modal: Add a paymentMethodId parameter
-    - Security: Include API key permission analysis metadata
-    - A plugin can now create new permission policies
+    - API/Subscriptions: Add update offering route
+    - API/Subscriptions: Add update offering plan
+    - PoS: View-only store users can browse login links and invoices from the Update PoS page
+    - PoS: Store users can now generate a login QR code for any other store user
+    - Add LUD-21 (LNURL-pay Verify) support
+    - Add reporting for subscriptions
 
   Bug fixes:
-    - Dashboard layout issues on mobile, regression from 2.3.5
-    - Subscriber portal sessions can be created again via API
-    - Can't upgrade/downgrade a Lifetime subscription
+    - Reserved addresses page should not show addresses from old wallets
+    - QR code logins should not expire after only a few hours
+    - Avoid double translation of already localized view content
+    - Phoenixd incorrectly marks payment as partial
+    - Top-Up invoices paid by BOLT11 should become settled
 
-  Improvements:
-    - Update Wasabi wallet folder access instructions
-    - Security: Apply CSRF protection globally to UI controllers
-    - Update many missing translations from the language packs
-
-  Regression:
-    - Revert: Dashboard: Support multi-crypto wallet balance widgets
+  Miscellaneous
+    - Remove support for importing keys to Bitcoin wallet via RPC
 
   Full release notes can be found at https://github.com/btcpayserver/btcpayserver/releases
 submitter: Umbrel

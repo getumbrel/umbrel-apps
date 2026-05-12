@@ -3,7 +3,7 @@ id: termix
 name: Termix
 tagline: Manage your servers with built-in SSH, tunnels, and file access
 category: developer
-version: "1.11.1"
+version: "2.1.0"
 port: 6444
 description: >-
   💻 Termix is designed to simplify server administration by bringing powerful management tools into a single, unified interface. At its core, it provides direct access to SSH terminals inside the browser, eliminating the need for external clients. Sessions can be opened in tabs or arranged in split screens, allowing administrators to multitask and manage different systems simultaneously with ease. The terminal experience is responsive and reliable, ensuring that routine tasks such as configuration, updates, and troubleshooting can be performed quickly.
@@ -36,32 +36,39 @@ gallery:
   - 5.jpg
 releaseNotes: >-
   New features and improvements in this release:
-    - Updated OPKSSH support for improved SSH key authentication
-    - Improved web-based mobile terminal experience
-    - Enhanced backend logging with more detailed logging points
-    - Moved add credential and add host buttons to a new location in the UI
-    - SSH key validation added
-    - Username in credentials is now optional and can be set when adding a host
-    - User profile toggle for snippet confirmations
-    - Configurable base path for reverse proxy sub-path deployment
-    - Copy deploy command for SSH keys without password authentication
-    - Manage OIDC configuration via environment variables (overrides database)
-    - Added modern DH group key exchange algorithms
-    - IP address fields now indicate FQDN is supported
-    - Added Ctrl+V / Cmd+V shortcut for clipboard paste
-    - HTTP proxy support for GitHub API requests
+    - Tmux integration for terminals
+    - Many new UI themes including Dracula and midnight espresso
+    - Reconnect button for disconnected SSH sessions
+    - Right-click menu in terminal for copy, paste, and open in file manager
+    - Command history toggle in user profile
+    - Snippet sharing with users and roles
+    - Export all hosts as JSON
+    - Wake on LAN support
+    - Port knocking for SSH connections
+    - Session timeout configuration in admin settings
+    - Configurable log level in admin settings
+    - Inline OPKSSH provider selection in dialog
+    - Switch to adjacent tab when closing current tab
+    - Add select all and deselect all buttons for snippet terminal selection
 
 
   Bug fixes:
-    - Fixed file manager disconnecting after a few navigations
-    - Fixed Docker permission error when running as non-root
-    - Fixed data loss caused by encrypted database format mismatch
-    - Disabled browser caching for file manager API
-    - Fixed special character input issues on macOS
-    - File manager entries now sorted alphabetically with directories first
-    - Added timeout for SFTP readlink to prevent request hangs
-    - All SSH data fields are now preserved during database export and import
-    - Fixed dashboard cards taking up full width on smaller displays
+    - Many security-related patches applied
+    - Massively reduced Docker image size
+    - Fixed cookie-based authentication for WebSocket connections
+    - SSH sessions now bound to user and verified on access
+    - Sensitive data removed from log output
+    - Plaintext credentials removed from internal host API responses
+    - Sessions revoked when password is changed or reset
+    - Fixed file manager showing stale directory contents
+    - Fixed RDP audio output and dynamic session resize
+    - Fixed admin page incorrectly showing admin status
+    - Fixed snippets failing to reorder
+    - Fixed Windows client failing to connect to SSH servers after restart
+    - Fixed file upload crash on permission denied
+    - Fixed tunnel cleanup to prevent new connections from being killed
+    - Fixed clipboard paste from host to RDP session
+    - Preserved remote file mode after SFTP write
 
 
   Full release notes can be found at https://github.com/Termix-SSH/Termix/releases

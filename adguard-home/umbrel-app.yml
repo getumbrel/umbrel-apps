@@ -2,7 +2,7 @@ manifestVersion: 1
 id: adguard-home
 category: networking
 name: AdGuard Home
-version: "0.107.73"
+version: "0.107.74"
 tagline: Network-wide software for blocking ads and tracking
 description: >-
   ⚠️ See below for important set-up instructions.
@@ -19,11 +19,18 @@ description: >-
   This ensures that the app will not conflict with other apps from the Umbrel App Store, and that the app will be accessible
   when clicking on the app icon in the umbrelOS homescreen.
 releaseNotes: >-
-  🚨 Critical Security Update: This hotfix addresses a critical vulnerability that could allow users to bypass authentication and gain full access to AdGuard Home without valid credentials. Updating immediately is strongly recommended.
+  This release focuses on bug fixes and security updates.
 
 
-  Security Fix:
-    - Authentication is now enforced for requests upgraded from HTTP/2 Cleartext (H2C) to public resources
+  Security Fixes:
+    - Frontend libraries updated to address a known vulnerability (CVE-2026-40175)
+    - Underlying Go version updated to address recent Go security vulnerabilities
+
+
+  Bug Fixes:
+    - Fixed incorrect forwarding of root domain requests when domain-specific upstreams are configured
+    - Fixed TLS strict SNI check setting not being saved when TLS configuration is changed
+    - Fixed clients block/unblock behavior when moving clients between allowed and disallowed lists
 
 
   Full release notes can be found at https://github.com/AdguardTeam/AdGuardHome/releases

@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: gitea
 category: developer
 name: Gitea
-version: "1.25.5"
+version: "1.26.1"
 tagline: A painless self-hosted Git service
 description: >-
   Gitea is a painless self-hosted Git service. It is similar to
@@ -34,17 +34,18 @@ path: ""
 defaultUsername: ""
 defaultPassword: ""
 releaseNotes: >-
-  This update includes important security fixes and several improvements:
-    - Fixed redirect bypass vulnerability via backslash-encoded paths
-    - Fixed release draft permission check and OAuth2 authorization code handling
-    - Fixed a bug where a user could change another user's primary email
-    - Fixed permission checks for pull request branch updates, track time, and org visibility
-    - Added validation constraints for repository creation fields
-    - Fixed forwarded proto handling for public URL detection
-    - Fixed non-admins being unable to auto-merge PRs from forks
-    - Fixed bugs with push mirror wiki, LFS GC, and protected branch rule conflicts
-    - Fixed artifacts upload issues and CRAN package version validation
-    - Various bug fixes and stability improvements
+  This is a bug fix release addressing issues found in v1.26.0:
+    - Fixed actions concurrency groups leaking across branches
+    - Fixed container auth for public instances
+    - Fixed URL-related escaping for OAuth2
+    - Fixed an issue where changing an organization's visibility caused problems when users had forked its repositories
+    - Fixed accessing user badges
+    - Fixed RPM package fallback to noarch when requested arch is missing
+    - Fixed Mermaid diagrams failing when node labels contain line breaks
+    - Fixed button layout shift when collapsing file tree in editor
+    - Fixed org team assignee and reviewer lookups for team member permissions
+    - Fixed dump with default zip type producing uncompressed zip
+    - Various additional bug fixes and stability improvements
 
 
   Full release notes: https://github.com/go-gitea/gitea/releases

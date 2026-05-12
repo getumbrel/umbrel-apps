@@ -3,7 +3,7 @@ id: open-webui
 name: Open WebUI
 tagline: Chat with Ollama models like DeepSeek-R1 and LLama, or use an OpenAI API key
 category: ai
-version: "0.8.12"
+version: "0.9.5"
 port: 2876
 description: >-
   Open WebUI lets you chat with advanced AI models running locally on your own device or connect to online models using an API key.
@@ -37,16 +37,16 @@ defaultPassword: ""
 dependencies:
   - ollama
 releaseNotes: >-
-  Key highlights in this release include:
-    - Fixed terminal server connections now proxying through the backend, preventing API key exposure and CORS errors
-    - Fixed the /api/v1/files/ endpoint returning a 500 error that prevented file listing via the API
-    - Fixed administrators being unable to see models when no access control is configured
-    - Fixed rich UI embeds from tool calls now rendering outside collapsed groups and remaining visible
-    - Fixed exceptions in middleware caused by invalid return values from terminal tools
-    - Fixed missing beautifulsoup4 dependency that caused errors when starting Open WebUI
-    - Fixed license data not loading correctly in the interface
-    - Translation updates for Simplified Chinese, Catalan, Portuguese (Brazil), Finnish, and Lithuanian
+  This update includes several security and reliability improvements:
+    - Adds redirect-based SSRF protection for outbound HTTP requests used by web fetch, image loading, OAuth discovery, tools, and code interpreter flows
+    - Adds configurable Content-Security-Policy support for iframe previews and custom terminal proxy response headers
+    - Adds separate Markdown rendering controls for user and assistant messages
+    - Improves Channels with streamed responses and full chat-completion tool support
+    - Fixes note creation/opening, legacy chat history recovery, and model filter selector reactivity
+    - Tightens access checks for public skills, public calendars, feedback attribution, tool source updates, channel messages, file processing, and shared chats
+    - Hardens image URL, profile image, and URL parser validation
+    - Updates Portuguese (Brazil) translations
 
 
-  Full release notes are found at https://github.com/open-webui/open-webui/releases
+  Full release notes are found at https://github.com/open-webui/open-webui/releases/tag/v0.9.5
 path: ""

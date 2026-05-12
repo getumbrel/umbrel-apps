@@ -1,0 +1,72 @@
+manifestVersion: 1
+id: hermes-agent
+category: ai
+name: Hermes Agent
+version: "2026.5.7"
+tagline: The AI agent that grows with you
+description: >-
+  Hermes Agent is an AI agent that gets better the more you use it by creating its own skills, storing user preferences, and updating its memory.
+
+
+  On Umbrel, it opens in a browser-based terminal where you can chat with Hermes directly, run setup, and manage your agent. The built-in management dashboard is also available for configuring settings, reviewing sessions, and monitoring the gateway.
+
+
+  Use Hermes Agent to browse the web, edit files, run shell commands, connect services like Telegram, Signal, WhatsApp, and Discord, save reusable skills, and remember important details across sessions.
+
+
+  Hermes Agent runs inside the Umbrel app sandbox, so it can work freely inside its own environment while your other apps and data stay separate.
+
+
+  ## What It Does
+
+    - **Chat and act** - Ask questions, automate tasks, and let Hermes use tools for you.
+
+    - **Works across channels** - Connect chat apps and keep talking to the same agent wherever you want.
+
+    - **Remembers your workflow** - Save preferences, context, and reusable skills that carry across sessions.
+
+    - **Manage it from the dashboard** - Configure settings, review activity, and monitor the agent from your browser.
+developer: Nous Research
+website: https://hermes-agent.nousresearch.com
+dependencies: []
+repo: https://github.com/NousResearch/hermes-agent
+support: https://github.com/NousResearch/hermes-agent/issues
+port: 18790
+gallery:
+  - 1.jpg
+  - 2.jpg
+  - 3.jpg
+  - 4.jpg
+path: "/terminal"
+defaultUsername: ""
+defaultPassword: ""
+releaseNotes: >-
+  ⚠️ Secret redaction is now ON by default — this closes a security issue where fake secret-shaped strings could corrupt tool outputs. If you previously relied on redaction being off, you can opt out via `redaction.enabled: false` in your config
+
+
+  What's new in Hermes Agent (2026.5.7):
+    - Adds multi-agent Kanban boards with heartbeats, zombie detection, per-task retries, and a hallucination gate so AI workers actually complete tasks
+    - Adds `/goal` to keep the agent locked on a target across turns without losing focus
+    - Adds a `video_analyze` tool for native video understanding on Gemini and compatible models
+    - Adds voice cloning support via xAI Custom Voices as a new TTS provider
+    - Adds Google Chat as the 20th supported messaging platform
+    - Sessions now auto-resume after a gateway restart or update — interrupted conversations pick up where they left off
+    - Closes 8 high-priority security issues including Discord role-allowlists now scoped to the originating guild, WhatsApp rejecting strangers by default, and TOCTOU windows closed in credential writers
+    - Adds Checkpoints v2 with real pruning and disk guardrails replacing the old orphan-prone system
+    - Adds post-write lint on `write_file` and `patch` for Python, JSON, YAML, and TOML so syntax errors surface immediately
+    - Adds a `no_agent` cron mode for script-only watchdog jobs that skip the AI entirely
+    - Adds platform allowlists across Slack, Telegram, Mattermost, Matrix, and DingTalk
+    - Adds SearXNG as a native search backend with per-capability backend selection
+    - Adds MCP SSE transport support with OAuth forwarding and stale-pipe retries
+    - Adds a Plugins management page and a Profiles management page to the dashboard
+    - Adds 7 new i18n locales: Chinese, Japanese, German, Spanish, French, Ukrainian, and Turkish
+    - Adds 6 new optional skills: Shopify, here.now, shop-app, Anthropic financial-services bundle, kanban-video-orchestrator, and searxng-search
+    - Adds new models including deepseek-v4-pro, grok-4.3, and tencent/hy3-preview
+    - Adds 100 new CLI startup tips covering cron, kanban, curator, plugins, and lesser-known flags
+    - Improves the TUI with a revamped `/model` picker, collapsible startup banner sections, and a context compression counter in the status bar
+    - Includes many more fixes across the agent core, gateway, MCP, cron, dashboard, and messaging platforms
+
+
+  Full details at https://github.com/NousResearch/hermes-agent/releases
+submitter: Umbrel
+submission: https://github.com/getumbrel/umbrel-apps/pull/5376

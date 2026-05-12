@@ -1,0 +1,50 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: campfire_server_1
+      APP_PORT: 80
+      PROXY_AUTH_ADD: 'false'
+
+  server:
+    image: ghcr.io/basecamp/once-campfire:1.4.3@sha256:21a419dd93b10b3598a25634e5eed2305bec1c75347b260ed1665dbc70864dd8
+    user: "1000:1000"
+    volumes:
+      - ${APP_DATA_DIR}/data/app:/rails/storage
+    environment:
+      RAILS_ENV: production
+      SECRET_KEY_BASE: ${APP_SEED}
+      REDIS_URL: redis://campfire_redis_1:6379
+      DISABLE_SSL: 'true'
+      VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
+      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
+      SENTRY_DSN: ${SENTRY_DSN:-}
+    depends_on:
+      - redis
+    deploy:
+      # https://once.com/campfire#requirements
+      resources:
+        limits:
+          memory: 8G # 64G for up to 10,000 users
+          cpus: '4' # 32 for up to 10,000 users
+        reservations:
+          memory: 2G
+          cpus: '1'
+    restart: on-failure
+
+  redis:
+    image: redis:7-alpine@sha256:ee64a64eaab618d88051c3ade8f6352d11531fcf79d9a4818b9b183d8c1d18ba
+    user: "1000:1000"
+    command: redis-server --save 60 1 --save 300 10 --save 900 100 --appendonly yes --loglevel warning
+    volumes:
+      - ${APP_DATA_DIR}/data/redis:/data
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+    restart: on-failure
