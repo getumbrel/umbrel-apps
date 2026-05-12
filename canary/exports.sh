@@ -8,3 +8,7 @@ installed_apps=$("${UMBREL_ROOT}/scripts/app" ls-installed)
 if echo "$installed_apps" | grep --quiet '^mempool$'; then
   export APP_CANARY_MEMPOOL_PORT="3006"
 fi
+
+if echo "$installed_apps" | grep --quiet '^ntfy$'; then
+  export APP_CANARY_UMBREL_NTFY_URL="http://ntfy_app_1"
+fi
