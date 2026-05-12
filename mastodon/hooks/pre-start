@@ -1,0 +1,129 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+APP_DATA_DIR="${APP_DATA_DIR:?}"
+DEVICE_DOMAIN_NAME="${DEVICE_DOMAIN_NAME:-umbrel.local}"
+LOCAL_DOMAIN="${DEVICE_DOMAIN_NAME}"
+WEB_DOMAIN="${DEVICE_DOMAIN_NAME}:8388"
+
+ENV_FILE="${APP_DATA_DIR}/mastodon.env"
+NGINX_CONFIG_FILE="${APP_DATA_DIR}/nginx.conf"
+FORCE_HTTP_FILE="${APP_DATA_DIR}/force-http.rb"
+MASTODON_IMAGE="ghcr.io/mastodon/mastodon:v4.5.9@sha256:2f4930e3f84a2f6b90b49c4e58329e9abc8bd354344cbd0607484514decff99f"
+
+mkdir -p \
+  "${APP_DATA_DIR}/data/system" \
+  "${APP_DATA_DIR}/data/db" \
+  "${APP_DATA_DIR}/data/redis"
+
+if [[ "$(id -u)" -eq 0 ]]; then
+  chown -R 1000:1000 \
+    "${APP_DATA_DIR}/data/system" \
+    "${APP_DATA_DIR}/data/db" \
+    "${APP_DATA_DIR}/data/redis"
+fi
+
+copy_unless_same_file() {
+  local source="${1}"
+  local destination="${2}"
+
+  if [[ -e "${destination}" ]] && [[ "$(readlink -f "${source}")" == "$(readlink -f "${destination}")" ]]; then
+    return
+  fi
+
+  cp "${source}" "${destination}"
+}
+
+copy_unless_same_file "$(dirname "${BASH_SOURCE[0]}")/../nginx.conf" "${NGINX_CONFIG_FILE}"
+copy_unless_same_file "$(dirname "${BASH_SOURCE[0]}")/../force-http.rb" "${FORCE_HTTP_FILE}"
+
+get_existing_var() {
+  local name="${1}"
+
+  if [[ -f "${ENV_FILE}" ]]; then
+    sed -n "s/^${name}=//p" "${ENV_FILE}" | head -n 1
+  fi
+}
+
+rails_secret() {
+  docker run --rm --entrypoint bundle "${MASTODON_IMAGE}" exec rails secret
+}
+
+generate_vapid_keys() {
+  docker run --rm --entrypoint bundle "${MASTODON_IMAGE}" exec rake mastodon:webpush:generate_vapid_key
+}
+
+SECRET_KEY_BASE="$(get_existing_var "SECRET_KEY_BASE")"
+OTP_SECRET="$(get_existing_var "OTP_SECRET")"
+VAPID_PRIVATE_KEY="$(get_existing_var "VAPID_PRIVATE_KEY")"
+VAPID_PUBLIC_KEY="$(get_existing_var "VAPID_PUBLIC_KEY")"
+ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY="$(get_existing_var "ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY")"
+ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT="$(get_existing_var "ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT")"
+ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY="$(get_existing_var "ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY")"
+
+if [[ -z "${SECRET_KEY_BASE}" ]]; then
+  SECRET_KEY_BASE="$(rails_secret)"
+fi
+
+if [[ -z "${OTP_SECRET}" ]]; then
+  OTP_SECRET="$(rails_secret)"
+fi
+
+if [[ -z "${VAPID_PRIVATE_KEY}" || -z "${VAPID_PUBLIC_KEY}" ]]; then
+  VAPID_KEYS="$(generate_vapid_keys)"
+  VAPID_PRIVATE_KEY="$(printf "%s\n" "${VAPID_KEYS}" | sed -n 's/^VAPID_PRIVATE_KEY=//p' | head -n 1)"
+  VAPID_PUBLIC_KEY="$(printf "%s\n" "${VAPID_KEYS}" | sed -n 's/^VAPID_PUBLIC_KEY=//p' | head -n 1)"
+
+  if [[ -z "${VAPID_PRIVATE_KEY}" || -z "${VAPID_PUBLIC_KEY}" ]]; then
+    VAPID_PRIVATE_KEY="$(printf "%s\n" "${VAPID_KEYS}" | sed -n '1p')"
+    VAPID_PUBLIC_KEY="$(printf "%s\n" "${VAPID_KEYS}" | sed -n '2p')"
+  fi
+fi
+
+if [[ -z "${ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY}" ]]; then
+  ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY="$(rails_secret)"
+fi
+
+if [[ -z "${ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT}" ]]; then
+  ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT="$(rails_secret)"
+fi
+
+if [[ -z "${ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY}" ]]; then
+  ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY="$(rails_secret)"
+fi
+
+cat > "${ENV_FILE}" <<EOF
+RAILS_ENV=production
+NODE_ENV=production
+RAILS_SERVE_STATIC_FILES=true
+BIND=0.0.0.0
+
+LOCAL_DOMAIN=${LOCAL_DOMAIN}
+WEB_DOMAIN=${WEB_DOMAIN}
+LOCAL_HTTPS=false
+TRUSTED_PROXY_IP=127.0.0.1/8,::1/128,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,fc00::/7
+
+DB_HOST=db
+DB_PORT=5432
+DB_NAME=mastodon_production
+DB_USER=mastodon
+DB_PASS=mastodon
+
+REDIS_HOST=redis
+REDIS_PORT=6379
+
+SECRET_KEY_BASE=${SECRET_KEY_BASE}
+OTP_SECRET=${OTP_SECRET}
+VAPID_PRIVATE_KEY=${VAPID_PRIVATE_KEY}
+VAPID_PUBLIC_KEY=${VAPID_PUBLIC_KEY}
+ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY=${ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY}
+ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT=${ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT}
+ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY=${ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY}
+
+ES_ENABLED=false
+SINGLE_USER_MODE=false
+
+SMTP_SERVER=
+SMTP_PORT=587
+SMTP_FROM_ADDRESS=notifications@${LOCAL_DOMAIN}
+EOF
