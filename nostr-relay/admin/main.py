@@ -1047,15 +1047,22 @@ HTML = r"""<!DOCTYPE html>
   .header-stats{background:var(--card);border-bottom:1px solid var(--border);padding:10px 24px;display:flex;align-items:center;gap:14px;flex-wrap:nowrap}
   .header-stats .header-stats-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);display:flex;align-items:center;gap:6px;white-space:nowrap;flex-shrink:0}
   .header-stats .header-stats-age{font-size:10px;color:var(--muted);font-weight:400;margin-left:4px}
-  .header-stats #stat-grid{flex:1;display:grid;grid-template-columns:repeat(4, 1fr);gap:10px;margin:0;min-width:0}
+  .header-stats #stat-grid{flex:1;display:grid;grid-template-columns:repeat(4, minmax(0, 1fr));gap:10px;margin:0;min-width:0}
   .header-stats .sc-item{background:#0f1117;border:1px solid var(--border);border-radius:6px;padding:8px 12px;min-width:0}
   .header-stats .sc-item .val{font-size:18px !important;font-weight:700;color:var(--accent);line-height:1.1}
   .header-stats .sc-item .lbl{font-size:10px !important;color:var(--muted);margin-top:2px;line-height:1.2}
-  .header-stats .header-relay-icon{width:56px;height:56px;border-radius:8px;object-fit:cover;border:1px solid var(--border);background:#0f1117;flex-shrink:0;margin-left:auto}
+  .header-stats .header-relay-icon{width:56px;height:56px;border-radius:8px;object-fit:cover;border:1px solid var(--border);background:#0f1117;flex-shrink:0}
   .header-stats .header-relay-icon[src=''],.header-stats .header-relay-icon:not([src]){display:none}
-  @media (max-width: 700px){
+  @media (max-width: 1050px){
     .header-stats{flex-wrap:wrap}
-    .header-stats #stat-grid{grid-template-columns:repeat(2, 1fr);flex-basis:100%}
+    .header-stats #stat-grid{grid-template-columns:repeat(2, minmax(0, 1fr));flex-basis:100%}
+  }
+  @media (max-width: 560px){
+    .header-stats{align-items:flex-start}
+    .header-stats .header-relay-icon{order:1}
+    .header-stats #stat-grid{order:2}
+    .header-stats .header-stats-label{order:3;flex-basis:100%}
+    .header-stats #stat-grid{grid-template-columns:1fr}
   }
   .nav-link{font-size:12px;color:var(--muted);text-decoration:none;font-weight:600;border:1px solid var(--border);padding:4px 12px;border-radius:99px;white-space:nowrap;transition:color .15s,border-color .15s}
   .nav-link:hover{color:var(--text);border-color:var(--muted)}
@@ -1244,7 +1251,7 @@ HTML = r"""<!DOCTYPE html>
                     </div>
                     <div style="flex:1;font-size:11px;color:var(--muted);line-height:1.6">
                       Displayed in Nostr clients as your relay&rsquo;s profile image.<br>
-                      Paste an HTTPS URL below or click <em>Edit</em> to enter a URL in the dialog.
+                      Paste an HTTPS URL below, then save and restart relay stack to apply changes.
                     </div>
                   </div>
                   <div class="field" style="margin:0"><label>Relay Icon URL <span style="font-size:11px;color:var(--muted);font-weight:400">(https://... or data: URI)</span></label><input type="text" id="relay_icon" style="width:100%"></div>
