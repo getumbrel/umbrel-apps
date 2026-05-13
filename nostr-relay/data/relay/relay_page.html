@@ -354,7 +354,7 @@
 
       .events-row {
         display: grid;
-        grid-template-columns: minmax(130px, 170px) 70px minmax(0, 1fr);
+        grid-template-columns: minmax(130px, 170px) 70px 70px minmax(0, 1fr);
         gap: 10px;
         align-items: center;
         padding: 8px 10px;
@@ -436,7 +436,7 @@
 
       @media (max-width: 760px) {
         .events-row {
-          grid-template-columns: minmax(110px, 130px) 55px minmax(0, 1fr);
+          grid-template-columns: minmax(110px, 130px) 55px 55px minmax(0, 1fr);
           gap: 8px;
           padding: 8px;
         }
@@ -599,6 +599,7 @@
             <div class="events-row events-head-row">
               <div>Timestamp</div>
               <div>Kind</div>
+              <div>NIP</div>
               <div>Message</div>
             </div>
             <div class="events-empty">Loading events...</div>
@@ -720,6 +721,37 @@
         }
       }
 
+      async function fetchJsonWithRetry(url, timeoutMs, maxRetries) {
+        let lastErr;
+        for (let attempt = 0; attempt <= maxRetries; attempt += 1) {
+          try {
+            return await fetchJsonWithTimeout(url, timeoutMs);
+          } catch (err) {
+            lastErr = err;
+            if (attempt === maxRetries) {
+              throw lastErr;
+            }
+          }
+        }
+        throw lastErr || new Error("request failed");
+      }
+
+      function kindToNip(kind) {
+        const n = Number(kind);
+        if (!Number.isFinite(n)) return "n/a";
+        if (n === 0 || n === 1 || n === 2 || n === 3 || n === 7)
+          return "NIP-01";
+        if (n === 4) return "NIP-04";
+        if (n === 5) return "NIP-09";
+        if (n >= 10000 && n < 20000) return "NIP-16";
+        if (n >= 20000 && n < 30000) return "NIP-16";
+        if (n >= 30000 && n < 40000) return "NIP-33";
+        if (n >= 50000 && n < 60000) return "NIP-51";
+        if (n >= 6000 && n < 7000) return "NIP-72";
+        if (n >= 9000 && n < 10000) return "NIP-57";
+        return "n/a";
+      }
+
       function setStatsUnavailable(message) {
         if (statsFooterNoteEl) {
           statsFooterNoteEl.textContent = message;
@@ -744,7 +776,7 @@
         }
         if (eventsGridEl) {
           eventsGridEl.innerHTML =
-            '<div class="events-row events-head-row"><div>Timestamp</div><div>Kind</div><div>Message</div></div>' +
+            '<div class="events-row events-head-row"><div>Timestamp</div><div>Kind</div><div>NIP</div><div>Message</div></div>' +
             '<div class="events-empty">Events unavailable.</div>';
         }
       }
@@ -767,6 +799,9 @@
               '<div class="event-kind">' +
               escapeHtml(String(eventRow.kind ?? "-")) +
               "</div>" +
+              '<div class="event-kind">' +
+              escapeHtml(kindToNip(eventRow.kind)) +
+              "</div>" +
               '<div class="event-msg" title="' +
               escapeHtml(message) +
               '">' +
@@ -778,7 +813,7 @@
           .join("");
 
         eventsGridEl.innerHTML =
-          '<div class="events-row events-head-row"><div>Timestamp</div><div>Kind</div><div>Message</div></div>' +
+          '<div class="events-row events-head-row"><div>Timestamp</div><div>Kind</div><div>NIP</div><div>Message</div></div>' +
           (rows || '<div class="events-empty">No events yet.</div>');
 
         if (eventsNoteEl) {
@@ -790,6 +825,8 @@
       }
 
       let latestEvents = [];
+      let hasLoadedStatsSnapshot = false;
+      let hasLoadedEventsSnapshot = false;
 
       async function loadConfiguredRelays() {
         try {
@@ -813,37 +850,32 @@
         }
       }
 
-      async function loadRelayHeaderStats() {
-        try {
-          const stats = await fetchJsonWithTimeout("/api/public-stats", 8000);
-          if (statsActiveNipsEl) {
-            statsActiveNipsEl.textContent =
-              String(stats.active_supported_nips ?? 0) +
-              " / " +
-              String(stats.total_supported_nips ?? 0);
-          }
-          if (statsLatestEventEl) {
-            statsLatestEventEl.textContent = formatFooterDate(
-              Number(stats.latest_event_at),
-            );
-          }
-          if (statsActiveKindsEl) {
-            statsActiveKindsEl.textContent =
-              String(stats.active_supported_kinds ?? 0) +
-              " / " +
-              String(stats.total_supported_kinds ?? 0);
-          }
-          if (statsTotalEventsEl) {
-            const totalEvents = Number(stats.total_events ?? 0);
-            statsTotalEventsEl.textContent = Number.isFinite(totalEvents)
-              ? totalEvents.toLocaleString()
-              : "0";
-          }
-          if (statsFooterNoteEl) {
-            statsFooterNoteEl.textContent = "Live dashboard snapshot";
-          }
-        } catch (err) {
-          setStatsUnavailable("Dashboard stats unavailable: " + err.message);
+      function applyStatsFromPayload(stats) {
+        if (statsActiveNipsEl) {
+          statsActiveNipsEl.textContent =
+            String(stats.active_supported_nips ?? 0) +
+            " / " +
+            String(stats.total_supported_nips ?? 0);
+        }
+        if (statsLatestEventEl) {
+          statsLatestEventEl.textContent = formatFooterDate(
+            Number(stats.latest_event_at),
+          );
+        }
+        if (statsActiveKindsEl) {
+          statsActiveKindsEl.textContent =
+            String(stats.active_supported_kinds ?? 0) +
+            " / " +
+            String(stats.total_supported_kinds ?? 0);
+        }
+        if (statsTotalEventsEl) {
+          const totalEvents = Number(stats.total_events ?? 0);
+          statsTotalEventsEl.textContent = Number.isFinite(totalEvents)
+            ? totalEvents.toLocaleString()
+            : "0";
+        }
+        if (statsFooterNoteEl) {
+          statsFooterNoteEl.textContent = "Live dashboard snapshot";
         }
       }
 
@@ -950,18 +982,40 @@
           "Connected Relays " + onlineCount + "/" + rows.length;
       }
 
-      async function loadRecentEvents() {
+      async function loadDashboardAndEvents() {
         try {
-          const payload = await fetchJsonWithTimeout(
+          const payload = await fetchJsonWithRetry(
             "/api/public-stats?include_latest=true&limit=" + recentEventsLimit,
-            8000,
+            20000,
+            2,
           );
+
+          applyStatsFromPayload(payload);
+          hasLoadedStatsSnapshot = true;
+
           latestEvents = Array.isArray(payload.latest)
             ? payload.latest.slice(0, recentEventsLimit)
             : [];
           renderRecentEventsRows();
+          hasLoadedEventsSnapshot = true;
         } catch (err) {
-          setEventsUnavailable("Event feed unavailable: " + err.message);
+          if (hasLoadedStatsSnapshot) {
+            if (statsFooterNoteEl) {
+              statsFooterNoteEl.textContent =
+                "Live data delayed; showing last snapshot";
+            }
+          } else {
+            setStatsUnavailable("Dashboard stats unavailable: " + err.message);
+          }
+
+          if (hasLoadedEventsSnapshot) {
+            if (eventsNoteEl) {
+              eventsNoteEl.textContent =
+                "Event feed delayed; showing last snapshot";
+            }
+          } else {
+            setEventsUnavailable("Event feed unavailable: " + err.message);
+          }
         }
       }
 
@@ -1049,14 +1103,9 @@
       async function boot() {
         await loadConfiguredRelays();
         await renderRelayStatus();
-        await Promise.all([
-          loadNip11(),
-          loadRelayHeaderStats(),
-          loadRecentEvents(),
-        ]);
+        await Promise.all([loadNip11(), loadDashboardAndEvents()]);
 
-        setInterval(loadRelayHeaderStats, 15000);
-        setInterval(loadRecentEvents, 15000);
+        setInterval(loadDashboardAndEvents, 15000);
         setInterval(renderRelayStatus, 20000);
       }
 
