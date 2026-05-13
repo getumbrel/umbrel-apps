@@ -1139,18 +1139,19 @@ HTML = r"""<!DOCTYPE html>
     .sc-col{flex-direction:row;gap:16px}
     .sc-item{flex:1}
   }
-    @media (max-width: 700px){
-    @media (max-width: 950px){
+  @media (max-width: 950px){
     .portal-grid{grid-template-columns:1fr}
     .quick-view{height:auto}
   }
-  @media (max-width: 600px){
-    @media (max-width: 500px){
+  @media (max-width: 700px){
+    .grid2{grid-template-columns:1fr}
+  }
+  @media (max-width: 500px){
     #relay-icon-preview > div:first-child{width:70px;height:70px}
     .edit-icon-btn{font-size:11px;padding:4px 8px}
     .stat-grid{grid-template-columns:1fr}
-    .stat-combined{flex-direction:column}
-    .sc-col{flex-direction:column}
+    .stat-combined{grid-template-columns:1fr}
+    .stat-combined .sc-col{flex-direction:column}
   }
   .restart-note{background:#1e1b2e;border:1px solid var(--accent);border-radius:8px;padding:12px;font-size:12px;color:var(--muted);margin-top:12px}
   .restart-note strong{color:var(--accent)}
@@ -1161,15 +1162,15 @@ HTML = r"""<!DOCTYPE html>
   details.nip-section[open] > summary::before{transform:rotate(90deg)}
   details.nip-section > summary:hover{color:var(--text)}
   details.nip-section > .nip-section-body{padding-top:6px}
-  .accordion-container{display:flex;flex-direction:column}
-  details.accordion-section{border-bottom:1px solid var(--border)}
-  details.accordion-section:last-child{border-bottom:none}
-  details.accordion-section > summary{list-style:none;cursor:pointer;padding:14px 8px;display:flex;align-items:center;gap:8px;user-select:none;font-size:15px;font-weight:600;color:var(--text)}
+  .accordion-container{display:flex;flex-direction:column;gap:8px}
+  details.accordion-section{border:1px solid var(--border);border-radius:10px;background:rgba(15,17,23,.35);overflow:hidden}
+  details.accordion-section > summary{list-style:none;cursor:pointer;padding:12px 12px;display:flex;align-items:center;gap:8px;user-select:none;font-size:15px;font-weight:600;color:var(--text)}
   details.accordion-section > summary::-webkit-details-marker{display:none}
   details.accordion-section > summary::before{content:'\25B6';font-size:10px;color:var(--accent);transition:transform .2s;display:inline-block;flex-shrink:0}
   details.accordion-section[open] > summary::before{transform:rotate(90deg)}
-  details.accordion-section > summary:hover{color:var(--accent)}
-  details.accordion-section > .accordion-body{padding:0 8px 20px}
+  details.accordion-section > summary:hover{color:var(--accent);background:rgba(155,89,244,.08)}
+  details.accordion-section[open] > .accordion-body{border-top:1px solid var(--border)}
+  details.accordion-section > .accordion-body{padding:10px 12px 16px}
   .static-section{border-bottom:1px solid var(--border)}
   .static-section:last-child{border-bottom:none}
   .static-section .static-head{padding:14px 8px;display:flex;align-items:center;gap:8px;user-select:none;font-size:15px;font-weight:600;color:var(--text)}
@@ -1181,8 +1182,6 @@ HTML = r"""<!DOCTYPE html>
   .icon-preview-wrap{display:flex;gap:12px;align-items:center;margin-top:10px}
   .icon-preview{width:72px;height:72px;border-radius:10px;object-fit:cover;border:1px solid var(--border);background:#0f1117}
   .icon-preview-note{font-size:12px;color:var(--muted)}
-  .message-cell{cursor:pointer}
-  .message-cell:hover{color:var(--text)}
   .message-modal-body{margin-top:10px;max-height:60vh;overflow:auto;white-space:pre-wrap;word-break:break-word;background:#0f1117;border:1px solid var(--border);padding:12px;border-radius:8px;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px;line-height:1.45}
 </style>
 </head>
@@ -1202,17 +1201,6 @@ HTML = r"""<!DOCTYPE html>
   <img id="profile-icon-preview" class="header-relay-icon" alt="Relay icon (NIP-11)">
 </div>
 
-<div id="event-message-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="event-message-modal-title">
-  <div class="modal-panel" style="width:min(760px,100%)">
-    <h2 id="event-message-modal-title">Event Message</h2>
-    <div class="notice" id="event-message-meta"></div>
-    <div id="event-message-body" class="message-modal-body"></div>
-    <div class="actions">
-      <button class="secondary" id="close-event-message-modal">Close</button>
-    </div>
-  </div>
-</div>
-
 <main>
 
   <div style="font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);margin-bottom:8px">&#128209; Relay Configuration & Live Status</div>
@@ -1226,6 +1214,25 @@ HTML = r"""<!DOCTYPE html>
           <table id="events-table"><thead><tr><th style="white-space:nowrap">Timestamp</th><th>Kind</th><th>Type</th><th>Message</th></tr></thead><tbody></tbody></table>
         </div>
         <div class="events-footnote" id="events-footnote"></div>
+      </div>
+    </details>
+
+    <details class="accordion-section">
+      <summary>&#x1F4CA; NIP-KIND MAP</summary>
+      <div class="accordion-body">
+        <div style="display:flex;justify-content:flex-end;margin-bottom:8px">
+          <button id="kind-tree-toggle-all" class="secondary" style="padding:6px 12px;font-size:12px">Open All</button>
+        </div>
+        <div class="table-wrap">
+          <table id="kind-tree"><thead><tr><th class="nip-toggle-cell"></th><th>NIP</th><th>Name</th><th style="text-align:right">Count</th></tr></thead><tbody></tbody></table>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-top:16px;padding:12px;border-top:1px solid var(--border);line-height:1.6">
+          <div style="margin-bottom:8px"><strong>Legend:</strong></div>
+          <div>* = External protocol mapping (Marmot, Tidal, NKBIP-01, BUD-01)</div>
+          <div>→ Related = NIPs with shared functionality or dependencies</div>
+          <div>(reference) = valid mapped kind with 0 observed events</div>
+          <div style="margin-top:8px"><a href="https://github.com/nostr-protocol/nips" target="_blank" rel="noopener" style="color:var(--accent)">View canonical NIP repository →</a></div>
+        </div>
       </div>
     </details>
 
@@ -1351,25 +1358,6 @@ HTML = r"""<!DOCTYPE html>
         </details>
       </div>
     </div>
-
-    <details class="accordion-section">
-      <summary>&#x1F4CA; NIP-KIND MAP</summary>
-      <div class="accordion-body">
-        <div style="display:flex;justify-content:flex-end;margin-bottom:8px">
-          <button id="kind-tree-toggle-all" class="secondary" style="padding:6px 12px;font-size:12px">Open All</button>
-        </div>
-        <div class="table-wrap">
-          <table id="kind-tree"><thead><tr><th class="nip-toggle-cell"></th><th>NIP</th><th>Name</th><th style="text-align:right">Count</th></tr></thead><tbody></tbody></table>
-        </div>
-        <div style="font-size:11px;color:var(--muted);margin-top:16px;padding:12px;border-top:1px solid var(--border);line-height:1.6">
-          <div style="margin-bottom:8px"><strong>Legend:</strong></div>
-          <div>* = External protocol mapping (Marmot, Tidal, NKBIP-01, BUD-01)</div>
-          <div>→ Related = NIPs with shared functionality or dependencies</div>
-          <div>(reference) = valid mapped kind with 0 observed events</div>
-          <div style="margin-top:8px"><a href="https://github.com/nostr-protocol/nips" target="_blank" rel="noopener" style="color:var(--accent)">View canonical NIP repository →</a></div>
-        </div>
-      </div>
-    </details>
 
     <details class="accordion-section" open>
       <summary>&#x1F4BE; Nostr-Relay DR APP Backup</summary>
@@ -2103,29 +2091,6 @@ async function saveProfileIconFromModal(){
   }
 }
 
-function openEventMessageModal(idx){
-  const event = _latestEvents[idx];
-  if (!event) return;
-  const modal = document.getElementById('event-message-modal');
-  const body = document.getElementById('event-message-body');
-  const meta = document.getElementById('event-message-meta');
-  if (!modal || !body || !meta) return;
-
-  const ts = event.created_at
-    ? new Date(event.created_at * 1000).toLocaleString(undefined, {month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'})
-    : 'Unknown time';
-  const trunc = event.content_truncated ? ' (truncated at safety limit)' : '';
-  meta.textContent = `Kind ${event.kind} • ${ts}${trunc}`;
-  body.textContent = (event.content_full || event.content_preview || '').trim() || '(empty message)';
-  modal.classList.add('open');
-}
-
-function closeEventMessageModal(){
-  const modal = document.getElementById('event-message-modal');
-  if (!modal) return;
-  modal.classList.remove('open');
-}
-
 const _restartProfiles = new Map();
 const _backupSnapshots = new Map();
 let _latestEvents = [];
@@ -2482,17 +2447,13 @@ function _renderRecentEvents() {
       <td style="white-space:nowrap;color:var(--muted);font-size:11px">${_escapeHtml(ts)}</td>
       <td style="color:var(--muted)">${r.kind}</td>
       <td style="color:var(--accent);white-space:nowrap">${_escapeHtml(typeName)}</td>
-      <td class="message-cell" data-event-index="${idx}" title="Click to view full message" style="max-width:620px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${msg}</td>
+      <td style="max-width:620px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${msg}</td>
     </tr>`;
   }).join('');
 
   if (footnote) {
     footnote.textContent = `Showing ${visibleEvents.length} of ${total} latest events`;
   }
-
-  etbody.querySelectorAll('.message-cell[data-event-index]').forEach(cell => {
-    cell.addEventListener('click', () => openEventMessageModal(Number(cell.dataset.eventIndex)));
-  });
 }
 
 function _scheduleRecentEventsRelayout() {
@@ -3020,16 +2981,6 @@ if (_iconModal) {
     if (e.target === _iconModal) closeIconModal();
   });
 }
-const _eventMessageModal = document.getElementById('event-message-modal');
-if (_eventMessageModal) {
-  _eventMessageModal.addEventListener('click', e => {
-    if (e.target === _eventMessageModal) closeEventMessageModal();
-  });
-}
-const _closeEventMessageModalBtn = document.getElementById('close-event-message-modal');
-if (_closeEventMessageModalBtn) {
-  _closeEventMessageModalBtn.addEventListener('click', closeEventMessageModal);
-}
 const _storeRelaysInput = document.getElementById('store_relays');
 if (_storeRelaysInput) {
   _storeRelaysInput.addEventListener('input', () => {
@@ -3051,7 +3002,6 @@ if (_storeIdentifierInput) {
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
     closeIconModal();
-    closeEventMessageModal();
   }
 });
 
