@@ -1426,7 +1426,6 @@ HTML = r"""<!DOCTYPE html>
   </div>
 
 </main>
-<script src="/shared-events-component.js"></script>
 <script>
 const NIP_KINDS = {
   0:     {nip:'01',      name:'User Metadata'},
@@ -1996,6 +1995,46 @@ function _escapeHtml(s){
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
+}
+
+// Shared component helper functions (from shared-events-component.js)
+function formatTimestamp(timestamp) {
+  if (!timestamp || typeof timestamp !== 'number') return 'Unknown';
+  try {
+    const date = new Date(timestamp * 1000);
+    return date.toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    });
+  } catch {
+    return 'Invalid';
+  }
+}
+
+function createStatsCardHtml(options) {
+  if (!options || typeof options !== 'object') return '';
+  const {
+    label = 'Metric',
+    value = '--',
+    sublabel = '',
+    variant = 'default',
+  } = options;
+  const formattedValue = typeof value === 'number' ? value.toLocaleString('en-US') : String(value);
+  const fontSizeClass = variant === 'small' ? 'font-size:16px' : 'font-size:28px';
+  return (
+    '<div class="sc-item">' +
+    '<div class="val" style="' + fontSizeClass + ';font-weight:700;color:var(--accent)">' +
+    _escapeHtml(formattedValue) +
+    '</div>' +
+    '<div class="lbl" style="font-size:11px;color:var(--muted);margin-top:4px">' +
+    _escapeHtml(label) +
+    (sublabel ? ' <span style="opacity:0.7">(' + _escapeHtml(sublabel) + ')</span>' : '') +
+    '</div>' +
+    '</div>'
+  );
 }
 
 function _setRestartControlsEnabled(enabled){
