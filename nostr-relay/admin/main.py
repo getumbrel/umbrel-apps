@@ -1085,7 +1085,7 @@ HTML = r"""<!DOCTYPE html>
   .nip-total{color:var(--accent)}
   .kind-row.hidden{display:none}
   .kind-indent{color:var(--muted);padding-left:28px!important;font-family:monospace;font-size:12px}
-  .stat-grid{display:grid;grid-template-columns:auto 1fr;gap:12px;margin-bottom:16px}
+  .stat-grid{display:grid;grid-template-columns:repeat(4, 1fr);gap:12px;margin-bottom:16px}
   .stat{background:#0f1117;border:1px solid var(--border);border-radius:8px;padding:14px}
   .stat .val{font-size:28px;font-weight:700;color:var(--accent)}
   .stat .lbl{font-size:11px;color:var(--muted);margin-top:4px}
@@ -1099,8 +1099,9 @@ HTML = r"""<!DOCTYPE html>
   .stat-combined .sc-col{background:#0f1117;border:1px solid var(--border);border-radius:8px;overflow:hidden;display:flex;flex-direction:column;gap:0}
   .stat-combined .sc-item{flex:1;padding:14px;border-bottom:1px solid var(--border)}
   .stat-combined .sc-item:last-child{border-bottom:none}
-  .portal-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:10px;align-items:stretch}
+  .portal-grid{display:grid;grid-template-columns:1fr;gap:16px;margin-top:10px;align-items:stretch}
   .portal-col{min-width:0}
+  .config-section-col{display:flex;flex-direction:column;gap:0}
   .portal-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;flex-wrap:wrap}
   .portal-head h2{margin:0}
   .table-wrap{overflow:auto;border:1px solid var(--border);border-radius:10px}
@@ -1113,11 +1114,13 @@ HTML = r"""<!DOCTYPE html>
   .quick-val.muted{color:var(--muted);font-size:12px}
   .events-footnote{font-size:11px;color:var(--muted);margin-top:8px}
   @media (max-width: 1200px){
+    .stat-grid{grid-template-columns:repeat(2, 1fr)}
     .stat-combined{grid-template-columns:1fr !important}
     .sc-col{flex-direction:row;gap:16px}
     .sc-item{flex:1}
   }
   @media (max-width: 900px){
+    .stat-grid{grid-template-columns:repeat(2, 1fr)}
     .portal-grid{grid-template-columns:1fr}
     .quick-view{height:auto}
   }
@@ -1125,6 +1128,7 @@ HTML = r"""<!DOCTYPE html>
     #relay-icon-preview{flex-direction:row !important;width:100%}
     #relay-icon-preview > div:first-child{width:70px;height:70px}
     .edit-icon-btn{font-size:11px;padding:4px 8px}
+    .stat-grid{grid-template-columns:1fr}
     .stat-combined{flex-direction:column}
     .sc-col{flex-direction:column}
   }
@@ -1207,6 +1211,26 @@ HTML = r"""<!DOCTYPE html>
   <div style="font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);margin-bottom:8px">&#128209; Relay Configuration & Live Status</div>
 
   <div class="card accordion-container" id="stats-card">
+    <!-- Live Relay Stats at Top -->
+    <div class="static-section">
+      <div class="static-head">📡 Live Relay Stats <span id="stats-age" style="font-size:11px;color:var(--muted);font-weight:400;margin-left:8px"></span></div>
+      <div class="static-body">
+        <div class="stat-grid" id="stat-grid"></div>
+      </div>
+    </div>
+
+    <!-- Recent Events -->
+    <details class="accordion-section" open>
+      <summary id="events-head">&#x1F4CB; Recent Events</summary>
+      <div class="accordion-body">
+        <div class="table-wrap">
+          <table id="events-table"><thead><tr><th style="white-space:nowrap">Timestamp</th><th>Kind</th><th>Type</th><th>Message</th></tr></thead><tbody></tbody></table>
+        </div>
+        <div class="events-footnote" id="events-footnote"></div>
+      </div>
+    </details>
+
+    <!-- Configuration Sections Below -->
     <div class="portal-grid" style="margin-bottom:16px">
       <div class="portal-col">
         <details class="accordion-section" open>
@@ -1325,25 +1349,6 @@ HTML = r"""<!DOCTYPE html>
                 <div class="notice" id="restart-notice" style="margin-top:8px"></div>
               </div>
             </details>
-          </div>
-        </details>
-      </div>
-
-      <div class="portal-col">
-        <div class="static-section">
-          <div class="static-head">📡 Live Relay Stats <span id="stats-age" style="font-size:11px;color:var(--muted);font-weight:400;margin-left:8px"></span></div>
-          <div class="static-body">
-            <div class="stat-grid" id="stat-grid"></div>
-          </div>
-        </div>
-
-        <details class="accordion-section" open>
-          <summary id="events-head">&#x1F4CB; Recent Events</summary>
-          <div class="accordion-body">
-            <div class="table-wrap">
-              <table id="events-table"><thead><tr><th style="white-space:nowrap">Timestamp</th><th>Kind</th><th>Type</th><th>Message</th></tr></thead><tbody></tbody></table>
-            </div>
-            <div class="events-footnote" id="events-footnote"></div>
           </div>
         </details>
       </div>
