@@ -299,15 +299,192 @@ const EVENTS_COMPONENT_CSS = `
   }
 `;
 
+/**
+ * Format a number for display with commas
+ * @param {number} num - Number to format
+ * @returns {string} Formatted number
+ */
+function formatStatsValue(num) {
+  if (typeof num !== "number" || !Number.isFinite(num)) return "--";
+  return num.toLocaleString("en-US");
+}
+
+/**
+ * Create stats card HTML for the Live Relay Stats section
+ * @param {Object} options - Card options { label, value, sublabel, variant }
+ * @returns {string} HTML for the stat card
+ */
+function createStatsCardHtml(options) {
+  if (!options || typeof options !== "object") return "";
+  
+  const {
+    label = "Metric",
+    value = "--",
+    sublabel = "",
+    variant = "default", // "default" | "small" | "large"
+  } = options;
+
+  const formattedValue = typeof value === "number" ? formatStatsValue(value) : String(value);
+  const fontSizeClass = variant === "small" ? "font-size:16px" : "font-size:28px";
+
+  return (
+    '<div class="stats-card">' +
+    '<div class="stats-value" style="' + fontSizeClass + ';font-weight:700;color:var(--accent,#9b59f4)">' +
+    escapeHtml(formattedValue) +
+    "</div>" +
+    '<div class="stats-label" style="font-size:11px;color:var(--muted,#aab8d6);margin-top:4px">' +
+    escapeHtml(label) +
+    (sublabel ? " <span style=\"opacity:0.7\">(" + escapeHtml(sublabel) + ")</span>" : "") +
+    "</div>" +
+    "</div>"
+  );
+}
+
+/**
+ * Render all 4 stats cards from a stats summary object
+ * @param {Object} stats - Stats object from /api/public-stats with { total_events, active_supported_nips, total_nips, active_kinds, total_kinds, latest_timestamp }
+ * @returns {string} HTML for all stats cards
+ */
+function renderStatsCards(stats) {
+  if (!stats || typeof stats !== "object") return "";
+
+  const totalEvents = stats.total_events || 0;
+  const activeNips = stats.active_supported_nips || 0;
+  const totalNips = stats.total_nips || 0;
+  const activeKinds = stats.active_kinds || 0;
+  const totalKinds = stats.total_kinds || 0;
+  const latestTs = stats.latest_timestamp || 0;
+
+  const nipRatio = activeNips + " / " + totalNips;
+  const kindRatio = activeKinds + " / " + totalKinds;
+  const latestTime = latestTs
+    ? new Date(latestTs * 1000).toLocaleString("en-US", {
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : "--";
+
+  return (
+    createStatsCardHtml({
+      label: "Active vs. Available NIPs Processing",
+      value: nipRatio,
+      variant: "default",
+    }) +
+    createStatsCardHtml({
+      label: "Latest Event Seen",
+      value: latestTime,
+      variant: "small",
+    }) +
+    createStatsCardHtml({
+      label: "Active vs. Available Kinds Processing",
+      value: kindRatio,
+      variant: "default",
+    }) +
+    createStatsCardHtml({
+      label: "Total Events",
+      value: totalEvents,
+      variant: "default",
+    })
+  );
+}
+
+/**
+ * CSS styles for the shared stats component
+ * Complements EVENTS_COMPONENT_CSS
+ */
+const STATS_COMPONENT_CSS = `
+  .stats-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 16px;
+    background: var(--card, rgba(17, 25, 48, 0.78));
+    border: 1px solid var(--line, rgba(255, 255, 255, 0.14));
+    border-radius: 6px;
+  }
+
+  .stats-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .stats-title {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text, #edf3ff);
+  }
+
+  .stats-note {
+    font-size: 11px;
+    color: var(--muted, #aab8d6);
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+  }
+
+  .stats-card {
+    display: flex;
+    flex-direction: column;
+    padding: 12px;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--line, rgba(255, 255, 255, 0.1));
+    border-radius: 4px;
+    text-align: center;
+  }
+
+  .stats-value {
+    font-weight: 700;
+    color: var(--accent, #9b59f4);
+    font-size: 28px;
+  }
+
+  .stats-value-small {
+    font-size: 16px;
+  }
+
+  .stats-label {
+    margin-top: 4px;
+    font-size: 11px;
+    color: var(--muted, #aab8d6);
+    line-height: 1.3;
+  }
+
+  @media (max-width: 768px) {
+    .stats-grid {
+      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    }
+
+    .stats-value {
+      font-size: 20px;
+    }
+
+    .stats-label {
+      font-size: 10px;
+    }
+  }
+`;
+
 // Export functions for use in both pages
 if (typeof module !== "undefined" && module.exports) {
   module.exports = {
     kindToNip,
     escapeHtml,
     formatTimestamp,
+    formatStatsValue,
     createEventRowHtml,
     renderEventRows,
+    createStatsCardHtml,
+    renderStatsCards,
     KIND_TO_NIP_MAP,
     EVENTS_COMPONENT_CSS,
+    STATS_COMPONENT_CSS,
   };
 }
