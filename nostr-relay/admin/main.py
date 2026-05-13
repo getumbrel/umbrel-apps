@@ -2540,18 +2540,7 @@ async function loadStats(){
       value: s.total_events,
       variant: 'default'
     });
-    grid.innerHTML = `
-      <div class="stat-combined">
-        <div class="sc-col">
-          ${nipsCard}
-          ${kindsCard}
-        </div>
-        <div class="sc-col">
-          ${latestCard}
-          ${totalCard}
-        </div>
-      </div>
-    `;
+    grid.innerHTML = nipsCard + kindsCard + latestCard + totalCard;
     document.querySelector('#kind-tree tbody').innerHTML = renderKindTree(groupedNips);
     if (!_kindTreeInitialized) {
       _kindTreeInitialized = true;
