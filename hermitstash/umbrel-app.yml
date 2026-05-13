@@ -5,13 +5,16 @@ name: HermitStash
 version: "1.10.2"
 tagline: Post-quantum encrypted self-hosted file sharing
 description: >-
-  HermitStash is a self-hosted file upload server with post-quantum encryption.
-  Files are sealed with ML-KEM-1024, XChaCha20-Poly1305, and Argon2id before
-  touching disk. Supports shareable download links with expiry and download
-  limits, WebAuthn passkey authentication, S3-compatible storage backends, and
-  an admin panel for managing users, uploads, and server settings. The TLS
-  layer negotiates X25519MLKEM768 for quantum-resistant key exchange on
-  supported browsers.
+  HermitStash is a self-hosted file upload server with post-quantum encryption. Every file and database field is sealed with an ML-KEM-1024 + ECDH P-384 hybrid envelope and XChaCha20-Poly1305 before touching disk; passwords use Argon2id. Nothing is stored in plaintext, including database fields the operator never thinks of as sensitive.
+
+
+  Generate shareable download links with optional expiry, download limits, and per-bundle passwords. Sign in with WebAuthn passkeys, mTLS browser certificates issued by the built-in CA, or password + TOTP. A separately-installable desktop sync client watches a local folder and mirrors changes back to the server over a post-quantum WebSocket channel.
+
+
+  The admin panel covers users, uploads, webhooks, API keys, branding, and storage backends — local disk by default, or any S3-compatible bucket (MinIO, Cloudflare R2, Backblaze B2) for off-device archives. Retry-safe writes via the standard Idempotency-Key header. RFC 9457 problem-details on every API error response.
+
+
+  On supported browsers the TLS handshake negotiates X25519MLKEM768 or SecP384r1MLKEM1024 for quantum-resistant key exchange — the wire is end-to-end post-quantum, not just the data at rest.
 developer: dotCooCoo
 website: https://hermitstash.com
 repo: https://github.com/dotCooCoo/hermitstash
@@ -23,8 +26,5 @@ defaultUsername: ""
 defaultPassword: ""
 submitter: dotCooCoo
 submission: https://github.com/getumbrel/umbrel-apps/pull/5378
-releaseNotes: >-
-  Initial Umbrel submission. Ships HermitStash v1.10.2 with email
-  verification off (single-operator deployment) and share URLs anchored
-  to the device's ${DEVICE_DOMAIN_NAME}:3080.
+releaseNotes: ""
 dependencies: []
