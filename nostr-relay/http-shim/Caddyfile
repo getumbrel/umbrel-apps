@@ -1,0 +1,41 @@
+:8080 {
+    @websocket {
+        header Connection *Upgrade*
+        header Upgrade    websocket
+    }
+
+    @publicStats {
+        path /api/public-stats
+    }
+
+    @html {
+        header Accept *text/html*
+    }
+
+    @assets {
+        path /relay_page.html /satwise.jpg /favicon.ico
+    }
+
+    handle @websocket {
+        reverse_proxy nostr-relay_relay_1:8080
+    }
+
+    handle @publicStats {
+        reverse_proxy nostr-relay_admin_1:4000
+    }
+
+    handle @assets {
+        root * /srv/relay
+        file_server
+    }
+
+    handle @html {
+        root * /srv/relay
+        rewrite * /relay_page.html
+        file_server
+    }
+
+    handle {
+        reverse_proxy nostr-relay_relay_1:8080
+    }
+}
