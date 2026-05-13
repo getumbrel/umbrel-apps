@@ -62,7 +62,7 @@ services:
 
         echo "Starting LNDK with retry loop..."
         while true; do
-          lndk --address=https://lightning_lnd_1:10009 --cert-path=/lnd/tls.cert --macaroon-path=/lnd/data/chain/bitcoin/mainnet/admin.macaroon --data-dir=/data/lndk --grpc-host=0.0.0.0 --grpc-port=7000
+          lndk --address=https://lightning_lnd_1:10009 --cert-path=/lnd/tls.cert --macaroon-path=/lnd/data/chain/bitcoin/${APP_BITCOIN_NETWORK}/admin.macaroon --data-dir=/data/lndk --grpc-host=0.0.0.0 --grpc-port=7000
           echo "LNDK exited or failed. Retrying in 10s..."
           sleep 10
         done
