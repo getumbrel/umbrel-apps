@@ -55,7 +55,7 @@ services:
     command:
       - |
         echo "Waiting for LND TLS + macaroon..."
-        while [ ! -f /lnd/tls.cert ] || [ ! -f /lnd/data/chain/bitcoin/mainnet/admin.macaroon ]; do
+        while [ ! -f /lnd/tls.cert ] || [ ! -f /lnd/data/chain/bitcoin/${APP_BITCOIN_NETWORK}/admin.macaroon ]; do
           echo "Waiting for cert/macaroon..."
           sleep 5
         done
