@@ -749,7 +749,7 @@ def get_stats():
 
 
 @app.get("/api/public-stats")
-def get_public_stats(include_latest: bool = False, limit: int = 25):
+def get_public_stats(include_latest: bool = False, limit: int = 20):
   now = time.monotonic()
   cached_stats = None
   expires_at = 0.0
@@ -775,7 +775,7 @@ def get_public_stats(include_latest: bool = False, limit: int = 25):
   if not include_latest:
     return summary
 
-  safe_limit = max(1, min(int(limit), 25))
+  safe_limit = max(1, min(int(limit), 20))
   latest = stats.get("latest", [])[:safe_limit]
   summary["latest"] = [
     {

@@ -615,7 +615,8 @@
         "wss://relay.damus.io",
       ];
       let configuredRelays = [...fallbackRelays];
-      const recentEventsLimit = 25;
+
+      const recentEventsLimit = 20;
 
       const relayListEl = document.getElementById("relay-list");
       const relaySummaryEl = document.getElementById("relay-summary");
@@ -737,19 +738,59 @@
       }
 
       function kindToNip(kind) {
+        const kindToNipMap = {
+          0: "NIP-05",
+          1: "NIP-01",
+          2: "NIP-01",
+          3: "NIP-02",
+          4: "NIP-04",
+          5: "NIP-09",
+          6: "NIP-18",
+          7: "NIP-25",
+          8: "NIP-58",
+          10: "NIP-51",
+          11: "NIP-51",
+          12: "NIP-72",
+          13: "NIP-23",
+          14: "NIP-51",
+          15: "NIP-50",
+          16: "NIP-42",
+          19: "NIP-72",
+          20: "NIP-72",
+          21: "NIP-72",
+          22: "NIP-72",
+          23: "NIP-23",
+          24: "NIP-23",
+          40: "NIP-28",
+          41: "NIP-28",
+          42: "NIP-28",
+          43: "NIP-28",
+          44: "NIP-28",
+          50: "NIP-24",
+          51: "NIP-51",
+          57: "NIP-57",
+          58: "NIP-58",
+          59: "NIP-58",
+          60: "NIP-56",
+          61: "NIP-75",
+          65: "NIP-56",
+          1000: "NIP-33",
+          1059: "NIP-59",
+          1063: "NIP-94",
+          10002: "NIP-65",
+          23: "NIP-23",
+          30023: "NIP-23",
+        };
         const n = Number(kind);
-        if (!Number.isFinite(n)) return "n/a";
-        if (n === 0 || n === 1 || n === 2 || n === 3 || n === 7)
-          return "NIP-01";
-        if (n === 4) return "NIP-04";
-        if (n === 5) return "NIP-09";
-        if (n >= 10000 && n < 20000) return "NIP-16";
+        if (!Number.isFinite(n) || n < 0) return "Unknown";
+        if (kindToNipMap[n]) return kindToNipMap[n];
+        if (n >= 10000 && n < 20000) return "NIP-33";
         if (n >= 20000 && n < 30000) return "NIP-16";
         if (n >= 30000 && n < 40000) return "NIP-33";
+        if (n >= 40000 && n < 50000) return "NIP-72";
         if (n >= 50000 && n < 60000) return "NIP-51";
-        if (n >= 6000 && n < 7000) return "NIP-72";
-        if (n >= 9000 && n < 10000) return "NIP-57";
-        return "n/a";
+        if (n >= 60000 && n < 70000) return "NIP-XX";
+        return "NIP-XX";
       }
 
       function setStatsUnavailable(message) {
