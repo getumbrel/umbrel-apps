@@ -1426,6 +1426,7 @@ HTML = r"""<!DOCTYPE html>
   </div>
 
 </main>
+<script src="/shared-events-component.js"></script>
 <script>
 const NIP_KINDS = {
   0:     {nip:'01',      name:'User Metadata'},
@@ -2431,14 +2432,14 @@ function _renderRecentEvents() {
   etbody.innerHTML = visibleEvents.map((r, idx) => {
     const info = nipInfo(r.kind);
     const tsSource = Number.isFinite(Number(r.first_seen)) ? Number(r.first_seen) : Number(r.created_at);
-    const ts = new Date(tsSource * 1000).toLocaleString(undefined, {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+    const ts = typeof formatTimestamp === 'function' ? formatTimestamp(tsSource) : new Date(tsSource * 1000).toLocaleString(undefined, {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
     const typeName = info ? info.name : `Kind ${r.kind}`;
-    const raw = (r.content_preview || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const raw = _escapeHtml(r.content_preview || '');
     const msg = raw || `<span style="color:var(--muted);font-style:italic">—</span>`;
     return `<tr>
-      <td style="white-space:nowrap;color:var(--muted);font-size:11px">${ts}</td>
+      <td style="white-space:nowrap;color:var(--muted);font-size:11px">${_escapeHtml(ts)}</td>
       <td style="color:var(--muted)">${r.kind}</td>
-      <td style="color:var(--accent);white-space:nowrap">${typeName}</td>
+      <td style="color:var(--accent);white-space:nowrap">${_escapeHtml(typeName)}</td>
       <td class="message-cell" data-event-index="${idx}" title="Click to view full message" style="max-width:620px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${msg}</td>
     </tr>`;
   }).join('');
@@ -2484,15 +2485,35 @@ async function loadStats(){
         : `<span class="icon-fallback" style="font-size:40px">&#9889;</span>`;
     }
     const grid = document.getElementById('stat-grid');
+    const nipsCard = createStatsCardHtml({
+      label: 'Active vs. Available NIPs Processing',
+      value: supportedNipsCount + ' / ' + totalNipsCount,
+      variant: 'default'
+    });
+    const kindsCard = createStatsCardHtml({
+      label: 'Active vs. Available Kinds Processing',
+      value: activeKindsCount + ' / ' + totalKindsCount,
+      variant: 'default'
+    });
+    const latestCard = createStatsCardHtml({
+      label: 'Latest Event Seen',
+      value: latestTs,
+      variant: 'small'
+    });
+    const totalCard = createStatsCardHtml({
+      label: 'Total Events',
+      value: s.total_events,
+      variant: 'default'
+    });
     grid.innerHTML = `
       <div class="stat-combined">
         <div class="sc-col">
-          <div class="sc-item"><div class="val" style="font-size:28px;font-weight:700;color:var(--accent)">${supportedNipsCount} / ${totalNipsCount}</div><div class="lbl" style="font-size:11px;color:var(--muted);margin-top:4px">Active vs. Available NIPs Processing</div></div>
-          <div class="sc-item"><div class="val" style="font-size:28px;font-weight:700;color:var(--accent)">${activeKindsCount} / ${totalKindsCount}</div><div class="lbl" style="font-size:11px;color:var(--muted);margin-top:4px">Active vs. Available Kinds Processing</div></div>
+          ${nipsCard}
+          ${kindsCard}
         </div>
         <div class="sc-col">
-          <div class="sc-item"><div class="val" style="font-size:16px;font-weight:700;color:var(--accent)">${latestTs}</div><div class="lbl" style="font-size:11px;color:var(--muted);margin-top:4px">Latest Event Seen</div></div>
-          <div class="sc-item"><div class="val" style="font-size:28px;font-weight:700;color:var(--accent)">${s.total_events.toLocaleString()}</div><div class="lbl" style="font-size:11px;color:var(--muted);margin-top:4px">Total Events</div></div>
+          ${latestCard}
+          ${totalCard}
         </div>
       </div>
     `;

@@ -316,7 +316,7 @@ function formatStatsValue(num) {
  */
 function createStatsCardHtml(options) {
   if (!options || typeof options !== "object") return "";
-  
+
   const {
     label = "Metric",
     value = "--",
@@ -324,17 +324,23 @@ function createStatsCardHtml(options) {
     variant = "default", // "default" | "small" | "large"
   } = options;
 
-  const formattedValue = typeof value === "number" ? formatStatsValue(value) : String(value);
-  const fontSizeClass = variant === "small" ? "font-size:16px" : "font-size:28px";
+  const formattedValue =
+    typeof value === "number" ? formatStatsValue(value) : String(value);
+  const fontSizeClass =
+    variant === "small" ? "font-size:16px" : "font-size:28px";
 
   return (
     '<div class="stats-card">' +
-    '<div class="stats-value" style="' + fontSizeClass + ';font-weight:700;color:var(--accent,#9b59f4)">' +
+    '<div class="stats-value" style="' +
+    fontSizeClass +
+    ';font-weight:700;color:var(--accent,#9b59f4)">' +
     escapeHtml(formattedValue) +
     "</div>" +
     '<div class="stats-label" style="font-size:11px;color:var(--muted,#aab8d6);margin-top:4px">' +
     escapeHtml(label) +
-    (sublabel ? " <span style=\"opacity:0.7\">(" + escapeHtml(sublabel) + ")</span>" : "") +
+    (sublabel
+      ? ' <span style="opacity:0.7">(' + escapeHtml(sublabel) + ")</span>"
+      : "") +
     "</div>" +
     "</div>"
   );
