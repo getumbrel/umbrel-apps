@@ -827,6 +827,8 @@
       let latestEvents = [];
       let hasLoadedStatsSnapshot = false;
       let hasLoadedEventsSnapshot = false;
+      let statsFailureCount = 0;
+      let eventsFailureCount = 0;
 
       async function loadConfiguredRelays() {
         try {
@@ -992,17 +994,26 @@
 
           applyStatsFromPayload(payload);
           hasLoadedStatsSnapshot = true;
+          statsFailureCount = 0;
 
           latestEvents = Array.isArray(payload.latest)
             ? payload.latest.slice(0, recentEventsLimit)
             : [];
           renderRecentEventsRows();
           hasLoadedEventsSnapshot = true;
+          eventsFailureCount = 0;
         } catch (err) {
+          statsFailureCount += 1;
+          eventsFailureCount += 1;
+
           if (hasLoadedStatsSnapshot) {
             if (statsFooterNoteEl) {
               statsFooterNoteEl.textContent =
                 "Live data delayed; showing last snapshot";
+            }
+          } else if (statsFailureCount < 3) {
+            if (statsFooterNoteEl) {
+              statsFooterNoteEl.textContent = "Connecting to live dashboard...";
             }
           } else {
             setStatsUnavailable("Dashboard stats unavailable: " + err.message);
@@ -1012,6 +1023,10 @@
             if (eventsNoteEl) {
               eventsNoteEl.textContent =
                 "Event feed delayed; showing last snapshot";
+            }
+          } else if (eventsFailureCount < 3) {
+            if (eventsNoteEl) {
+              eventsNoteEl.textContent = "Connecting to event feed...";
             }
           } else {
             setEventsUnavailable("Event feed unavailable: " + err.message);

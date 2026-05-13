@@ -116,6 +116,48 @@ def _load_dashboard_kind_meta() -> tuple[dict[int, str], int, int]:
 
 DASHBOARD_KIND_TO_NIP, DASHBOARD_TOTAL_KINDS, DASHBOARD_TOTAL_NIPS = _load_dashboard_kind_meta()
 
+PUBLIC_STATS_CACHE_TTL_SECONDS = int(
+  os.environ.get("PUBLIC_STATS_CACHE_TTL_SECONDS", "15")
+)
+_public_stats_cache_lock = threading.Lock()
+_public_stats_cache = {
+  "expires_at": 0.0,
+  "stats": None,
+  "refreshing": False,
+}
+
+
+def _refresh_public_stats_cache_sync() -> None:
+  stats = get_stats()
+  with _public_stats_cache_lock:
+    _public_stats_cache["stats"] = stats
+    _public_stats_cache["expires_at"] = (
+      time.monotonic() + PUBLIC_STATS_CACHE_TTL_SECONDS
+    )
+    _public_stats_cache["refreshing"] = False
+
+
+def _refresh_public_stats_cache_background() -> None:
+  try:
+    _refresh_public_stats_cache_sync()
+  except Exception:
+    with _public_stats_cache_lock:
+      _public_stats_cache["refreshing"] = False
+
+
+def _schedule_public_stats_refresh() -> None:
+  with _public_stats_cache_lock:
+    if _public_stats_cache.get("refreshing"):
+      return
+    _public_stats_cache["refreshing"] = True
+
+  thread = threading.Thread(
+    target=_refresh_public_stats_cache_background,
+    name="public-stats-refresh",
+    daemon=True,
+  )
+  thread.start()
+
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -708,8 +750,28 @@ def get_stats():
 
 @app.get("/api/public-stats")
 def get_public_stats(include_latest: bool = False, limit: int = 25):
-  stats = get_stats()
-  summary = stats.get("summary", {})
+  now = time.monotonic()
+  cached_stats = None
+  expires_at = 0.0
+  with _public_stats_cache_lock:
+    cached_stats = _public_stats_cache.get("stats")
+    expires_at = float(_public_stats_cache.get("expires_at") or 0)
+
+  if cached_stats is None:
+    # Cold start path: compute synchronously once.
+    _refresh_public_stats_cache_sync()
+    with _public_stats_cache_lock:
+      cached_stats = _public_stats_cache.get("stats")
+    if cached_stats is None:
+      raise RuntimeError("public stats unavailable")
+    stats = cached_stats
+  else:
+    stats = cached_stats
+    if now >= expires_at:
+      # Stale-while-revalidate: serve stale immediately, refresh in background.
+      _schedule_public_stats_refresh()
+
+  summary = dict(stats.get("summary", {}))
   if not include_latest:
     return summary
 
