@@ -647,18 +647,60 @@
         }
       }
 
+      function renderRecentEventsRows() {
+        if (!eventsGridEl) {
+          return;
+        }
+
+        const rows = latestEvents
+          .slice(0, recentEventsLimit)
+          .map((eventRow) => {
+            const when = Number(eventRow.first_seen ?? eventRow.created_at);
+            const message = eventRow.content_preview || "[no preview]";
+            return (
+              '<div class="events-row">' +
+              '<div class="event-time">' +
+              escapeHtml(formatFooterDate(when)) +
+              "</div>" +
+              '<div class="event-kind">' +
+              escapeHtml(String(eventRow.kind ?? "-")) +
+              "</div>" +
+              '<div class="event-msg" title="' +
+              escapeHtml(message) +
+              '">' +
+              escapeHtml(message) +
+              "</div>" +
+              "</div>"
+            );
+          })
+          .join("");
+
+        eventsGridEl.innerHTML =
+          '<div class="events-row events-head-row"><div>Timestamp</div><div>Kind</div><div>Message</div></div>' +
+          (rows || '<div class="events-empty">No events yet.</div>');
+
+        if (eventsNoteEl) {
+          eventsNoteEl.textContent =
+            "Rolling latest " +
+            Math.min(latestEvents.length, recentEventsLimit) +
+            " events";
+        }
+      }
+
+      let latestEvents = [];
+
       async function loadConfiguredRelays() {
         try {
-          const res = await fetch("/api/store", {
-            headers: { Accept: "application/json" },
+          const res = await fetch("/", {
+            headers: { Accept: "application/nostr+json" },
             cache: "no-store",
           });
 
-          if (!res.ok) throw new Error("Store HTTP " + res.status);
+          if (!res.ok) throw new Error("NIP-11 HTTP " + res.status);
 
-          const store = await res.json();
-          const relays = Array.isArray(store.relays)
-            ? store.relays
+          const nip11 = await res.json();
+          const relays = Array.isArray(nip11.relays)
+            ? nip11.relays
                 .map((relay) => (relay || "").trim())
                 .filter((relay) => relay.length > 0)
             : [];
@@ -814,49 +856,20 @@
 
       async function loadRecentEvents() {
         try {
-          const res = await fetch("/api/stats", {
-            headers: { Accept: "application/json" },
-            cache: "no-store",
-          });
+          const res = await fetch(
+            "/api/public-stats?include_latest=true&limit=" + recentEventsLimit,
+            {
+              headers: { Accept: "application/json" },
+              cache: "no-store",
+            },
+          );
           if (!res.ok) throw new Error("Events HTTP " + res.status);
 
           const payload = await res.json();
-          const latest = Array.isArray(payload.latest)
+          latestEvents = Array.isArray(payload.latest)
             ? payload.latest.slice(0, recentEventsLimit)
             : [];
-
-          if (eventsGridEl) {
-            const rows = latest
-              .map((eventRow) => {
-                const when = Number(eventRow.first_seen ?? eventRow.created_at);
-                const message = eventRow.content_preview || "[no preview]";
-                return (
-                  '<div class="events-row">' +
-                  '<div class="event-time">' +
-                  escapeHtml(formatFooterDate(when)) +
-                  "</div>" +
-                  '<div class="event-kind">' +
-                  escapeHtml(String(eventRow.kind ?? "-")) +
-                  "</div>" +
-                  '<div class="event-msg" title="' +
-                  escapeHtml(message) +
-                  '">' +
-                  escapeHtml(message) +
-                  "</div>" +
-                  "</div>"
-                );
-              })
-              .join("");
-
-            eventsGridEl.innerHTML =
-              '<div class="events-row events-head-row"><div>Timestamp</div><div>Kind</div><div>Message</div></div>' +
-              (rows || '<div class="events-empty">No events yet.</div>');
-          }
-
-          if (eventsNoteEl) {
-            eventsNoteEl.textContent =
-              "Rolling latest " + latest.length + " events";
-          }
+          renderRecentEventsRows();
         } catch (err) {
           setEventsUnavailable("Event feed unavailable: " + err.message);
         }

@@ -1,8 +1,10 @@
 import json
 import os
+import re
 import shutil
 import socket
 import sqlite3
+import tarfile
 import threading
 import time
 from datetime import datetime, timezone
@@ -63,6 +65,13 @@ BACKUP_SCHEDULES = {
 DEFAULT_BACKUP_SCHEDULE = os.environ.get("ADMIN_BACKUP_SCHEDULE_DEFAULT", "4h").strip().lower() or "4h"
 if DEFAULT_BACKUP_SCHEDULE not in BACKUP_SCHEDULES:
   DEFAULT_BACKUP_SCHEDULE = "4h"
+DEFAULT_BACKUP_EXPORT_ENABLED = os.environ.get("ADMIN_BACKUP_EXPORT_ENABLED_DEFAULT", "false").strip().lower() in {
+  "1",
+  "true",
+  "yes",
+  "on",
+}
+DEFAULT_BACKUP_EXPORT_DIR = os.environ.get("ADMIN_BACKUP_EXPORT_DIR_DEFAULT", "").strip()
 BACKUP_LOOP_SECONDS = max(int(os.environ.get("ADMIN_BACKUP_LOOP_SECONDS", "60")), 30)
 EVENT_MESSAGE_PREVIEW_CHARS = max(int(os.environ.get("ADMIN_EVENT_MESSAGE_PREVIEW_CHARS", "180")), 80)
 EVENT_MESSAGE_POPUP_CHARS = max(
@@ -75,6 +84,37 @@ BACKUP_THREAD_LOCK = threading.Lock()
 BACKUP_THREAD_STARTED = False
 
 app = FastAPI(title="\u20bfYO\u20bf-NOSTR-RELAY Admin Dashboard", docs_url=None, redoc_url=None)
+
+
+def _load_dashboard_kind_meta() -> tuple[dict[int, str], int, int]:
+  try:
+    source = Path(__file__).read_text(encoding="utf-8")
+    match = re.search(r"const NIP_KINDS = \{([\s\S]*?)\n\};", source)
+    if match is None:
+      return {}, 0, 0
+
+    body = match.group(1)
+    kind_matches = re.findall(r"^\s*(\d+)\s*:", body, flags=re.MULTILINE)
+    total_kinds = len({int(kind) for kind in kind_matches})
+
+    kind_to_nip: dict[int, str] = {}
+    current_kind: int | None = None
+    for line in body.splitlines():
+      kind_match = re.match(r"^\s*(\d+)\s*:\s*\{", line)
+      if kind_match:
+        current_kind = int(kind_match.group(1))
+
+      nip_match = re.search(r"nip:\s*'([^']+)'", line)
+      if current_kind is not None and nip_match:
+        kind_to_nip[current_kind] = nip_match.group(1)
+
+    total_nips = len(set(kind_to_nip.values()))
+    return kind_to_nip, total_kinds, total_nips
+  except Exception:
+    return {}, 0, 0
+
+
+DASHBOARD_KIND_TO_NIP, DASHBOARD_TOTAL_KINDS, DASHBOARD_TOTAL_NIPS = _load_dashboard_kind_meta()
 
 
 # ---------------------------------------------------------------------------
@@ -251,26 +291,101 @@ def _normalize_backup_schedule(schedule: str) -> str:
     return value
 
 
+def _normalize_backup_export_dir(path_value: str) -> str:
+    return (path_value or "").strip()
+
+
+def _backup_archive_name(backup_id: str) -> str:
+    safe_id = str(backup_id or "").replace("/", "_").replace("\\", "_").replace(":", "-")
+    return f"sites-{safe_id}.tar.gz"
+
+
+def _cleanup_external_backup_archive(backup_id: str, settings: dict) -> None:
+    if not settings.get("export_enabled"):
+        return
+    export_dir = _normalize_backup_export_dir(str(settings.get("export_dir", "")))
+    if not export_dir:
+        return
+    archive_path = Path(export_dir) / _backup_archive_name(backup_id)
+    try:
+        if archive_path.exists():
+            archive_path.unlink()
+    except Exception:
+        pass
+
+
+def _export_backup_snapshot(snapshot_dir: Path, backup_id: str, settings: dict) -> dict:
+    if not settings.get("export_enabled"):
+        return {
+            "enabled": False,
+        }
+
+    export_dir_raw = _normalize_backup_export_dir(str(settings.get("export_dir", "")))
+    if not export_dir_raw:
+        return {
+            "enabled": True,
+            "ok": False,
+            "error": "External export is enabled but no export directory is configured.",
+        }
+
+    export_dir = Path(export_dir_raw)
+    archive_name = _backup_archive_name(backup_id)
+    archive_path = export_dir / archive_name
+    try:
+        if export_dir.exists():
+            if not export_dir.is_dir():
+                raise RuntimeError(f"Export path is not a directory: {export_dir}")
+        else:
+            export_dir.mkdir(parents=True, exist_ok=True)
+        with tarfile.open(archive_path, "w:gz") as archive:
+            archive.add(snapshot_dir / "config.toml", arcname="config.toml")
+            archive.add(snapshot_dir / "store.json", arcname="store.json")
+        return {
+            "enabled": True,
+            "ok": True,
+            "path": str(archive_path),
+        }
+    except Exception as e:
+        return {
+            "enabled": True,
+            "ok": False,
+            "path": str(archive_path),
+            "error": str(e),
+        }
+
+
 def read_backup_settings() -> dict:
     _ensure_backup_dir()
     raw = _read_json_file(BACKUP_SETTINGS_PATH, {})
-    retention_raw = int(raw.get("retention", BACKUP_RETENTION))
+    try:
+        retention_raw = int(raw.get("retention", BACKUP_RETENTION))
+    except Exception:
+        retention_raw = BACKUP_RETENTION
     retention = max(1, min(12, retention_raw))
     settings = {
         "schedule": _normalize_backup_schedule(str(raw.get("schedule", DEFAULT_BACKUP_SCHEDULE))),
         "retention": retention,
+        "export_enabled": bool(raw.get("export_enabled", DEFAULT_BACKUP_EXPORT_ENABLED)),
+        "export_dir": _normalize_backup_export_dir(str(raw.get("export_dir", DEFAULT_BACKUP_EXPORT_DIR))),
     }
     if raw != settings:
         _write_json_file(BACKUP_SETTINGS_PATH, settings)
     return settings
 
 
-def write_backup_settings(schedule: str, retention: int = BACKUP_RETENTION) -> dict:
+def write_backup_settings(
+  schedule: str,
+  retention: int = BACKUP_RETENTION,
+  export_enabled: bool = DEFAULT_BACKUP_EXPORT_ENABLED,
+  export_dir: str = DEFAULT_BACKUP_EXPORT_DIR,
+) -> dict:
     normalized = _normalize_backup_schedule(schedule)
     retention = max(1, min(12, int(retention)))
     settings = {
         "schedule": normalized,
         "retention": retention,
+    "export_enabled": bool(export_enabled),
+    "export_dir": _normalize_backup_export_dir(str(export_dir)),
     }
     _write_json_file(BACKUP_SETTINGS_PATH, settings)
     return settings
@@ -325,12 +440,14 @@ def _create_backup_locked(trigger: str) -> dict:
         "trigger": trigger,
     }
 
+    settings = read_backup_settings()
+    entry["external_export"] = _export_backup_snapshot(snapshot_dir, backup_id, settings)
+
     meta = _read_backup_meta()
     snapshots = [s for s in meta.get("snapshots", []) if isinstance(s, dict) and s.get("id")]
     snapshots.append(entry)
     snapshots.sort(key=lambda s: s.get("created_at", ""), reverse=True)
 
-    settings = read_backup_settings()
     effective_retention = settings.get("retention", BACKUP_RETENTION)
     stale = snapshots[effective_retention:]
     for old in stale:
@@ -340,6 +457,7 @@ def _create_backup_locked(trigger: str) -> dict:
         old_path = BACKUP_DIR / old_id
         if old_path.exists():
             shutil.rmtree(old_path, ignore_errors=True)
+        _cleanup_external_backup_archive(old_id, settings)
 
     meta["snapshots"] = snapshots[:effective_retention]
     _write_backup_meta(meta)
@@ -477,6 +595,8 @@ class RestartProfilePayload(BaseModel):
 class BackupSettingsPayload(BaseModel):
   schedule: str = DEFAULT_BACKUP_SCHEDULE
   retention: int = BACKUP_RETENTION
+  export_enabled: bool = DEFAULT_BACKUP_EXPORT_ENABLED
+  export_dir: str = DEFAULT_BACKUP_EXPORT_DIR
 
 
 class BackupRestorePayload(BaseModel):
@@ -513,13 +633,17 @@ def healthz():
 @app.get("/api/stats")
 def get_stats():
     total = db_query("SELECT COUNT(*) AS n FROM event")[0]["n"]
-    by_kind = db_query(
-        "SELECT kind, COUNT(*) AS n FROM event GROUP BY kind ORDER BY n DESC LIMIT 20"
+    all_by_kind = db_query(
+        "SELECT kind, COUNT(*) AS n FROM event GROUP BY kind ORDER BY n DESC"
     )
+    by_kind = all_by_kind[:20]
+    latest_event_at = db_query(
+        "SELECT MAX(first_seen) AS n FROM event WHERE hidden=0"
+    )[0]["n"]
     latest_raw = db_query(
-        "SELECT substr(id,1,8) AS id_short, kind, created_at, "
-        "author AS author_raw, content AS content_raw "
-        "FROM event WHERE hidden=0 ORDER BY created_at DESC LIMIT 30"
+      "SELECT substr(id,1,8) AS id_short, kind, created_at, first_seen, "
+      "author AS author_raw, content AS content_raw "
+      "FROM event WHERE hidden=0 ORDER BY first_seen DESC, created_at DESC LIMIT 30"
     )
 
     def bytes_to_hex(v, maxlen=12):
@@ -553,12 +677,57 @@ def get_stats():
             "id_short": bytes_to_hex(row["id_short"], 8),
             "kind": row["kind"],
             "created_at": row["created_at"],
+          "first_seen": row["first_seen"],
             "pubkey_short": bytes_to_hex(row["author_raw"], 12),
             "content_preview": msg[:EVENT_MESSAGE_PREVIEW_CHARS],
             "content_full": msg[:EVENT_MESSAGE_POPUP_CHARS],
             "content_truncated": len(msg) > EVENT_MESSAGE_POPUP_CHARS,
         })
-    return {"total_events": total, "by_kind": by_kind, "latest": latest}
+
+    active_nips = {
+        DASHBOARD_KIND_TO_NIP.get(int(row.get("kind", -1)))
+      for row in all_by_kind
+        if DASHBOARD_KIND_TO_NIP.get(int(row.get("kind", -1)))
+    }
+    summary = {
+        "active_supported_nips": len(active_nips),
+        "total_supported_nips": DASHBOARD_TOTAL_NIPS,
+      "active_supported_kinds": len(all_by_kind),
+        "total_supported_kinds": DASHBOARD_TOTAL_KINDS,
+      "latest_event_at": latest_event_at,
+        "total_events": total,
+    }
+
+    return {
+        "total_events": total,
+        "by_kind": by_kind,
+        "latest": latest,
+        "summary": summary,
+    }
+
+
+@app.get("/api/public-stats")
+def get_public_stats(include_latest: bool = False, limit: int = 25):
+  stats = get_stats()
+  summary = stats.get("summary", {})
+  if not include_latest:
+    return summary
+
+  safe_limit = max(1, min(int(limit), 25))
+  latest = stats.get("latest", [])[:safe_limit]
+  summary["latest"] = [
+    {
+      "id_short": row.get("id_short", ""),
+      "kind": row.get("kind", 0),
+      "created_at": row.get("created_at", 0),
+      "first_seen": row.get("first_seen", 0),
+      "pubkey_short": row.get("pubkey_short", ""),
+      "content_preview": row.get("content_preview", ""),
+    }
+    for row in latest
+  ]
+  summary["latest_count"] = len(summary["latest"])
+  return summary
 
 
 # ---------------------------------------------------------------------------
@@ -625,9 +794,12 @@ def save_config(payload: ConfigPayload):
         "messages_per_sec": payload.limits.messages_per_sec,
         "subscriptions_per_min": payload.limits.subscriptions_per_min,
         "max_event_bytes": payload.limits.max_event_bytes,
-        "event_kind_allowlist": payload.limits.event_kind_allowlist,
         "limit_scrapers": payload.limits.limit_scrapers,
     })
+    if payload.limits.event_kind_allowlist:
+      cfg["limits"]["event_kind_allowlist"] = payload.limits.event_kind_allowlist
+    else:
+      cfg["limits"].pop("event_kind_allowlist", None)
 
     if "authorization" not in cfg:
         cfg["authorization"] = {}
@@ -668,6 +840,8 @@ def get_backups():
   return {
     "schedule": settings["schedule"],
     "retention": settings["retention"],
+    "export_enabled": settings["export_enabled"],
+    "export_dir": settings["export_dir"],
     "options": list(BACKUP_SCHEDULES.keys()),
     "snapshots": list_backups(),
   }
@@ -675,11 +849,18 @@ def get_backups():
 
 @app.post("/api/backups/settings")
 def save_backup_settings_endpoint(payload: BackupSettingsPayload):
-  settings = write_backup_settings(payload.schedule, payload.retention)
+  settings = write_backup_settings(
+    payload.schedule,
+    payload.retention,
+    payload.export_enabled,
+    payload.export_dir,
+  )
   return {
     "ok": True,
     "schedule": settings["schedule"],
     "retention": settings["retention"],
+    "export_enabled": settings["export_enabled"],
+    "export_dir": settings["export_dir"],
   }
 
 
@@ -903,6 +1084,10 @@ HTML = r"""<!DOCTYPE html>
   details.accordion-section[open] > summary::before{transform:rotate(90deg)}
   details.accordion-section > summary:hover{color:var(--accent)}
   details.accordion-section > .accordion-body{padding:0 8px 20px}
+  .static-section{border-bottom:1px solid var(--border)}
+  .static-section:last-child{border-bottom:none}
+  .static-section .static-head{padding:14px 8px;display:flex;align-items:center;gap:8px;user-select:none;font-size:15px;font-weight:600;color:var(--text)}
+  .static-section .static-body{padding:0 8px 20px}
   .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.66);display:none;align-items:center;justify-content:center;padding:16px;z-index:50}
   .modal-overlay.open{display:flex}
   .modal-panel{width:min(620px,100%);background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px}
@@ -934,10 +1119,10 @@ HTML = r"""<!DOCTYPE html>
     </div>
     <div class="icon-preview-wrap">
       <img id="profile-icon-preview" class="icon-preview" alt="Relay icon preview">
-      <div class="icon-preview-note">Tip: Paste an image URL or use the file upload button in the left column. Changes take effect after clicking Save + Refresh.</div>
+      <div class="icon-preview-note">Tip: Paste an image URL or use the file upload button in the left column. Save writes config; restart relay stack to apply NIP-11 changes everywhere.</div>
     </div>
     <div class="actions">
-      <button id="save-profile-icon-btn">Save + Refresh</button>
+      <button id="save-profile-icon-btn">Save Icon</button>
       <button class="secondary" id="close-icon-modal">Cancel</button>
       <span class="notice" id="profile-icon-notice"></span>
     </div>
@@ -960,116 +1145,147 @@ HTML = r"""<!DOCTYPE html>
   <div style="font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);margin-bottom:8px">&#128209; Relay Configuration & Live Status</div>
 
   <div class="card accordion-container" id="stats-card">
-
-    <details class="accordion-section" open>
-      <summary>&#9881; config.toml</summary>
-      <div class="accordion-body" id="relay-quick-col">
-        <details class="nip-section" open>
-          <summary><strong>NIP-11 Section</strong></summary>
-          <div class="nip-section-body">
-            <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:12px;padding:12px;background:var(--bg-secondary);border-radius:6px">
-              <div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)">Relay Icon (NIP-11 Metadata)</div>
-              <div style="display:flex;gap:12px;align-items:center">
-                <div id="relay-icon-preview" style="display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0">
-                  <div style="width:120px;height:120px;border-radius:8px;background:var(--bg);display:flex;align-items:center;justify-content:center;border:2px solid var(--border);overflow:hidden">
-                    <span class="icon-preview-img" style="font-size:56px;width:100%;height:100%;display:flex;align-items:center;justify-content:center"></span>
+    <div class="portal-grid" style="margin-bottom:16px">
+      <div class="portal-col">
+        <details class="accordion-section" open>
+          <summary>&#9881; config.toml</summary>
+          <div class="accordion-body" id="relay-quick-col">
+            <details class="nip-section" open>
+              <summary><strong>NIP-11 Section</strong></summary>
+              <div class="nip-section-body">
+                <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:12px;padding:12px;background:var(--bg-secondary);border-radius:6px">
+                  <div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)">Relay Icon (NIP-11 Metadata)</div>
+                  <div style="display:flex;gap:12px;align-items:center">
+                    <div id="relay-icon-preview" style="display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0">
+                      <div style="width:120px;height:120px;border-radius:8px;background:var(--bg);display:flex;align-items:center;justify-content:center;border:2px solid var(--border);overflow:hidden">
+                        <span class="icon-preview-img" style="font-size:56px;width:100%;height:100%;display:flex;align-items:center;justify-content:center"></span>
+                      </div>
+                      <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center">
+                        <button class="edit-icon-btn" style="padding:6px 10px;font-size:12px" id="open-icon-modal" onclick="document.getElementById('icon-modal').classList.add('open')">&#9998; Edit</button>
+                        <button class="edit-icon-btn" style="padding:6px 10px;font-size:12px" onclick="restartProfile('fix_icon')" title="Restart web runtime to refresh icon cache.">&#8635; Refresh</button>
+                      </div>
+                    </div>
+                    <div style="flex:1;font-size:11px;color:var(--muted);line-height:1.6">
+                      Displayed in Nostr clients as your relay&rsquo;s profile image.<br>
+                      Paste an HTTPS URL below or click <em>Edit</em> to enter a URL in the dialog.
+                    </div>
                   </div>
-                  <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center">
-                    <button class="edit-icon-btn" style="padding:6px 10px;font-size:12px" id="open-icon-modal" onclick="document.getElementById('icon-modal').classList.add('open')">&#9998; Edit</button>
-                    <button class="edit-icon-btn" style="padding:6px 10px;font-size:12px" onclick="restartProfile('fix_icon')" title="Restart web runtime to refresh icon cache.">&#8635; Refresh</button>
-                  </div>
+                  <div class="field" style="margin:0"><label>Relay Icon URL <span style="font-size:11px;color:var(--muted);font-weight:400">(https://... or data: URI)</span></label><input type="text" id="relay_icon" style="width:100%"></div>
                 </div>
-                <div style="flex:1;font-size:11px;color:var(--muted);line-height:1.6">
-                  Displayed in Nostr clients as your relay&rsquo;s profile image.<br>
-                  Paste an HTTPS URL below or click <em>Edit</em> to enter a URL in the dialog.
+                <div class="grid2" style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--border)">
+                  <div class="field"><label>Relay URL</label><input type="text" id="relay_url"></div>
+                  <div class="field"><label>Name</label><input type="text" id="name"></div>
+                  <div class="field"><label>Pubkey (hex)</label><input type="text" id="pubkey"></div>
+                  <div class="field"><label>Contact</label><input type="text" id="contact"></div>
+                  <div class="field" style="grid-column:span 2"><label>Description</label><textarea id="description" rows="2"></textarea></div>
+                </div>
+
+                <details class="nip-section" open>
+                  <summary><strong>NIP-11 Relay Operator Identity</strong></summary>
+                  <div class="nip-section-body" style="padding-bottom:12px;border-bottom:1px solid var(--border)">
+                    <div class="field" style="margin-bottom:8px"><label>npub / NIP-05 backup address</label><input type="text" id="store_identifier" placeholder="satwise@janx.com"></div>
+                    <div class="field" style="margin-bottom:8px">
+                      <label>Relay list override <span style="font-size:11px;color:var(--muted);font-weight:400">(one WSS URL per line)</span></label>
+                      <textarea id="store_relays" rows="3" placeholder="wss://nostr.janx.com&#10;wss://nos.lol&#10;wss://relay.damus.io"></textarea>
+                    </div>
+                    <div class="notice" style="margin-top:2px">Defaults: Relay URL + <code>wss://nos.lol</code> + <code>wss://relay.damus.io</code>. If NIP-05 publishes relay hints, those are merged too.</div>
+                    <div id="store-relay-status" style="margin-top:10px;display:grid;gap:6px"></div>
+                    <div class="actions" style="margin-top:6px">
+                      <button class="secondary" onclick="restoreStoreRelayDefaults()">Restore Defaults</button>
+                      <button onclick="saveStore()">Save Backup Address &amp; Relays</button>
+                      <span class="notice" id="store-notice"></span>
+                    </div>
+                  </div>
+                </details>
+              </div>
+            </details>
+
+            <details class="nip-section" open>
+              <summary><strong>NIP-42 (and related)</strong></summary>
+              <div class="nip-section-body" style="display:flex;flex-direction:column;gap:10px;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--border)">
+                <label class="toggle">
+                  <input type="checkbox" id="nip42_auth">
+                  <span>Enable NIP-42 authentication</span>
+                </label>
+                <label class="toggle">
+                  <input type="checkbox" id="nip42_dms">
+                  <span>Restrict DMs to authenticated recipients (kind 4, 44, 1059)</span>
+                </label>
+                <div class="restart-note" style="margin-top:0">
+                  <strong>Note:</strong> NIP-42 auth breaks LNbits NWC provider (nwcprovider 1.1.1 doesn't implement NIP-42).
+                  Keep disabled if using Zeus / Nostr clients (Primal, Amethyst, etc.) zaps via LNbits.
                 </div>
               </div>
-              <div class="field" style="margin:0"><label>Relay Icon URL <span style="font-size:11px;color:var(--muted);font-weight:400">(https://... or data: URI)</span></label><input type="text" id="relay_icon" style="width:100%"></div>
-            </div>
-            <div class="grid2" style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--border)">
-              <div class="field"><label>Relay URL</label><input type="text" id="relay_url"></div>
-              <div class="field"><label>Name</label><input type="text" id="name"></div>
-              <div class="field"><label>Pubkey (hex)</label><input type="text" id="pubkey"></div>
-              <div class="field"><label>Contact</label><input type="text" id="contact"></div>
-              <div class="field" style="grid-column:span 2"><label>Description</label><textarea id="description" rows="2"></textarea></div>
-            </div>
-          </div>
-        </details>
+            </details>
 
-        <details class="nip-section" open>
-          <summary><strong>NIP-42 (and related)</strong></summary>
-          <div class="nip-section-body" style="display:flex;flex-direction:column;gap:10px;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--border)">
-            <label class="toggle">
-              <input type="checkbox" id="nip42_auth">
-              <span>Enable NIP-42 authentication</span>
-            </label>
-            <label class="toggle">
-              <input type="checkbox" id="nip42_dms">
-              <span>Restrict DMs to authenticated recipients (kind 4, 44, 1059)</span>
-            </label>
-            <div class="restart-note" style="margin-top:0">
-              <strong>Note:</strong> NIP-42 auth breaks LNbits NWC provider (nwcprovider 1.1.1 doesn't implement NIP-42).
-              Keep disabled if using Zeus / Nostr clients (Primal, Amethyst, etc.) zaps via LNbits.
-            </div>
-          </div>
-        </details>
-
-        <details class="nip-section" open>
-          <summary><strong>NIP-50 / Limits</strong></summary>
-          <div class="nip-section-body">
-            <div class="grid2">
-              <div class="field"><label>Messages / sec</label><input type="number" id="messages_per_sec"></div>
-              <div class="field"><label>Subscriptions / min</label><input type="number" id="subscriptions_per_min"></div>
-              <div class="field"><label>Max event bytes</label><input type="number" id="max_event_bytes"></div>
-              <div class="field"><label>Reject future events (sec)</label><input type="number" id="reject_future_seconds"></div>
-              <div class="field" style="grid-column:span 2">
-                <label>Event kind allowlist (comma-separated, empty = allow all)</label>
-                <input type="text" id="event_kind_allowlist" placeholder="0, 1, 3, 7, 23194, 23195">
+            <details class="nip-section" open>
+              <summary><strong>NIP-50 / Limits</strong></summary>
+              <div class="nip-section-body">
+                <div class="grid2">
+                  <div class="field"><label>Messages / sec</label><input type="number" id="messages_per_sec"></div>
+                  <div class="field"><label>Subscriptions / min</label><input type="number" id="subscriptions_per_min"></div>
+                  <div class="field"><label>Max event bytes</label><input type="number" id="max_event_bytes"></div>
+                  <div class="field"><label>Reject future events (sec)</label><input type="number" id="reject_future_seconds"></div>
+                  <div class="field" style="grid-column:span 2">
+                    <label>Event kind allowlist (comma-separated, empty = allow all)</label>
+                    <input type="text" id="event_kind_allowlist" placeholder="0, 1, 3, 7, 23194, 23195">
+                  </div>
+                  <label class="toggle" style="grid-column:span 2;margin-top:0">
+                    <input type="checkbox" id="limit_scrapers">
+                    <span>Limit scrapers</span>
+                  </label>
+                </div>
               </div>
-              <label class="toggle" style="grid-column:span 2;margin-top:0">
-                <input type="checkbox" id="limit_scrapers">
-                <span>Limit scrapers</span>
-              </label>
-            </div>
+            </details>
+
+            <details class="nip-section" open>
+              <summary><strong>Container Management</strong></summary>
+              <div class="nip-section-body">
+                <div id="restart-controls" style="display:grid;gap:10px">
+                  <div class="field">
+                    <label>Restart Profiles</label>
+                    <div id="restart-profile-buttons" class="actions" style="margin-top:6px;flex-wrap:wrap"></div>
+                  </div>
+                  <div class="field">
+                    <label>Manual Container Restart</label>
+                    <div class="actions" style="margin-top:6px;flex-wrap:wrap">
+                      <select id="restart-container" style="min-width:280px"></select>
+                      <button class="secondary" onclick="restartSelectedContainer()">Restart Selected Container</button>
+                    </div>
+                  </div>
+                </div>
+                <div class="notice" id="restart-hint" style="margin-top:2px"></div>
+                <div class="actions" style="margin-top:10px;flex-wrap:wrap">
+                  <button onclick="saveAllVariables()">Save All Variables</button>
+                  <button class="secondary" onclick="saveAndRestartWeb()">Save + Restart Relay Stack</button>
+                  <span class="notice" id="saveall-notice"></span>
+                </div>
+                <div class="notice" id="restart-notice" style="margin-top:8px"></div>
+              </div>
+            </details>
           </div>
         </details>
       </div>
-    </details>
 
-    <details class="accordion-section" open>
-      <summary>NIP-11 Relay Operator Identity</summary>
-      <div class="accordion-body">
-        <div class="field" style="margin-bottom:8px"><label>npub / NIP-05 backup address</label><input type="text" id="store_identifier" placeholder="satwise@janx.com"></div>
-        <div class="field" style="margin-bottom:8px">
-          <label>Relay list override <span style="font-size:11px;color:var(--muted);font-weight:400">(one WSS URL per line)</span></label>
-          <textarea id="store_relays" rows="3" placeholder="wss://nostr.janx.com&#10;wss://nos.lol&#10;wss://relay.damus.io"></textarea>
+      <div class="portal-col">
+        <div class="static-section">
+          <div class="static-head">📡 Live Relay Stats <span id="stats-age" style="font-size:11px;color:var(--muted);font-weight:400;margin-left:8px"></span></div>
+          <div class="static-body">
+            <div class="stat-grid" id="stat-grid"></div>
+          </div>
         </div>
-        <div class="notice" style="margin-top:2px">Defaults: Relay URL + <code>wss://nos.lol</code> + <code>wss://relay.damus.io</code>. If NIP-05 publishes relay hints, those are merged too.</div>
-        <div id="store-relay-status" style="margin-top:10px;display:grid;gap:6px"></div>
-        <div class="actions" style="margin-top:6px">
-          <button class="secondary" onclick="restoreStoreRelayDefaults()">Restore Defaults</button>
-          <button onclick="saveStore()">Save Backup Address &amp; Relays</button>
-          <span class="notice" id="store-notice"></span>
-        </div>
-      </div>
-    </details>
 
-    <details class="accordion-section" open>
-      <summary>&#9889; Live Relay Stats <span id="stats-age" style="font-size:11px;color:var(--muted);font-weight:400;margin-left:8px"></span></summary>
-      <div class="accordion-body">
-        <div class="stat-grid" id="stat-grid"></div>
+        <details class="accordion-section" open>
+          <summary id="events-head">&#x1F4CB; Recent Events</summary>
+          <div class="accordion-body">
+            <div class="table-wrap">
+              <table id="events-table"><thead><tr><th style="white-space:nowrap">Timestamp</th><th>Kind</th><th>Type</th><th>Message</th></tr></thead><tbody></tbody></table>
+            </div>
+            <div class="events-footnote" id="events-footnote"></div>
+          </div>
+        </details>
       </div>
-    </details>
-
-    <details class="accordion-section" open>
-      <summary id="events-head">&#x1F4CB; Recent Events</summary>
-      <div class="accordion-body">
-        <div class="table-wrap">
-          <table id="events-table"><thead><tr><th style="white-space:nowrap">Timestamp</th><th>Kind</th><th>Type</th><th>Message</th></tr></thead><tbody></tbody></table>
-        </div>
-        <div class="events-footnote" id="events-footnote"></div>
-      </div>
-    </details>
+    </div>
 
     <details class="accordion-section">
       <summary>&#x1F4CA; NIP-KIND MAP</summary>
@@ -1108,6 +1324,14 @@ HTML = r"""<!DOCTYPE html>
             <label>Retention (rolling snapshots to keep)</label>
             <select id="backup-retention"></select>
           </div>
+          <div class="field">
+            <label>External Snapshot Export</label>
+            <label class="toggle"><input id="backup-export-enabled" type="checkbox"><span>Also export each snapshot as <code>.tar.gz</code></span></label>
+          </div>
+          <div class="field">
+            <label>External Export Directory (mounted container path)</label>
+            <input id="backup-export-dir" type="text" placeholder="/data/admin-backups-export">
+          </div>
         </div>
         <div class="actions">
           <button onclick="saveBackupSchedule()">Save Backup Schedule</button>
@@ -1120,7 +1344,7 @@ HTML = r"""<!DOCTYPE html>
             <tbody></tbody>
           </table>
         </div>
-        <div class="notice">Snapshots are stored on the relay host. Restore rolls back config.toml and store.json and restarts the relay. Backup schedule changes activate when you save this section.</div>
+        <div class="notice">Snapshots are always stored on the relay host. If external export is enabled, each snapshot is also written as a <code>.tar.gz</code> file to the configured mounted path. Restore rolls back config.toml and store.json and restarts the relay. Backup schedule changes activate when you save this section.</div>
       </div>
     </details>
 
@@ -1143,20 +1367,20 @@ HTML = r"""<!DOCTYPE html>
 <script>
 const NIP_KINDS = {
   0:     {nip:'01',      name:'User Metadata'},
-  1:     {nip:'01',      name:'Short Text Note'},
+  1:     {nip:'10',      name:'Short Text Note'},
   2:     {nip:'01',      name:'Recommend Relay (deprecated)'},
-  3:     {nip:'02',      name:'Follows / Contact List'},
-  4:     {nip:'04',      name:'Encrypted DM (deprecated→NIP-17)'},
+  3:     {nip:'02',      name:'Follows'},
+  4:     {nip:'04',      name:'Encrypted Direct Messages'},
   5:     {nip:'09',      name:'Event Deletion Request'},
   6:     {nip:'18',      name:'Repost'},
   7:     {nip:'25',      name:'Reaction'},
   8:     {nip:'58',      name:'Badge Award'},
   9:     {nip:'C7',      name:'Chat Message'},
-  10:    {nip:'29',      name:'Group Chat Threaded Reply'},
+  10:    {nip:'29',      name:'Group Chat Threaded Reply (deprecated)'},
   11:    {nip:'7D',      name:'Thread'},
-  12:    {nip:'29',      name:'Group Thread Reply'},
+  12:    {nip:'29',      name:'Group Thread Reply (deprecated)'},
   13:    {nip:'59',      name:'Seal'},
-  14:    {nip:'17',      name:'Sealed DM'},
+  14:    {nip:'17',      name:'Direct Message'},
   15:    {nip:'17',      name:'File Message'},
   16:    {nip:'18',      name:'Generic Repost'},
   17:    {nip:'25',      name:'Reaction to Website'},
@@ -1164,6 +1388,10 @@ const NIP_KINDS = {
   21:    {nip:'71',      name:'Video Event'},
   22:    {nip:'71',      name:'Short-form Portrait Video Event'},
   24:    {nip:'A4',      name:'Public Message'},
+  30:    {nip:'NKBIP-03', name:'Internal Reference *'},
+  31:    {nip:'NKBIP-03', name:'External Web Reference *'},
+  32:    {nip:'NKBIP-03', name:'Hardcopy Reference *'},
+  33:    {nip:'NKBIP-03', name:'Prompt Reference *'},
   40:    {nip:'28',      name:'Channel Creation'},
   41:    {nip:'28',      name:'Channel Metadata'},
   42:    {nip:'28',      name:'Channel Message'},
@@ -1174,11 +1402,11 @@ const NIP_KINDS = {
   443:   {nip:'Marmot',  name:'KeyPackage *'},
   444:   {nip:'Marmot',  name:'Welcome Message *'},
   445:   {nip:'Marmot',  name:'Group Event *'},
-  818:   {nip:'54',      name:'Merge Request'},
+  818:   {nip:'54',      name:'Merge Requests'},
   1018:  {nip:'88',      name:'Poll Response'},
-  1021:  {nip:'53',      name:'Bid'},
-  1022:  {nip:'53',      name:'Bid Confirmation'},
-  1040:  {nip:'03',      name:'OpenTimestamps Attestation'},
+  1021:  {nip:'15',      name:'Bid'},
+  1022:  {nip:'15',      name:'Bid Confirmation'},
+  1040:  {nip:'03',      name:'OpenTimestamps'},
   1059:  {nip:'59',      name:'Gift Wrap'},
   1063:  {nip:'94',      name:'File Metadata'},
   1068:  {nip:'88',      name:'Poll'},
@@ -1188,25 +1416,33 @@ const NIP_KINDS = {
   1311:  {nip:'53',      name:'Live Chat Message'},
   1337:  {nip:'C0',      name:'Code Snippet'},
   1617:  {nip:'34',      name:'Patches'},
-  1618:  {nip:'34',      name:'Pull Request'},
-  1619:  {nip:'34',      name:'Pull Request Update'},
-  1621:  {nip:'34',      name:'Issue'},
+  1618:  {nip:'34',      name:'Pull Requests'},
+  1619:  {nip:'34',      name:'Pull Request Updates'},
+  1621:  {nip:'34',      name:'Issues'},
+  1622:  {nip:'34',      name:'Git Replies (deprecated)'},
   1971:  {nip:'nostrocket', name:'Problem Tracker *'},
   1984:  {nip:'56',      name:'Reporting'},
   1985:  {nip:'32',      name:'Label'},
+  1986:  {nip:'unknown', name:'Relay Reviews'},
+  1987:  {nip:'NKBIP-02', name:'AI Embeddings / Vector Lists *'},
   2003:  {nip:'35',      name:'Torrent'},
   2004:  {nip:'35',      name:'Torrent Comment'},
+  2022:  {nip:'joinstr', name:'Coinjoin Pool *'},
   4550:  {nip:'72',      name:'Moderated Community Post Approval'},
   7000:  {nip:'90',      name:'Job Feedback (DVM)'},
   7374:  {nip:'60',      name:'Reserved Cashu Wallet Tokens'},
   7375:  {nip:'60',      name:'Cashu Wallet Tokens'},
   7376:  {nip:'60',      name:'Cashu Wallet History'},
+  7516:  {nip:'geocaching', name:'Geocache Log *'},
+  7517:  {nip:'geocaching', name:'Geocache Proof of Find *'},
+  8000:  {nip:'43',      name:'Add User'},
+  8001:  {nip:'43',      name:'Remove User'},
   9041:  {nip:'75',      name:'Zap Goal'},
   9321:  {nip:'61',      name:'Nutzap'},
   9467:  {nip:'Tidal',   name:'Tidal Login *'},
   9734:  {nip:'57',      name:'Zap Request'},
-  9735:  {nip:'57',      name:'Zap Receipt'},
-  9802:  {nip:'84',      name:'Highlight'},
+  9735:  {nip:'57',      name:'Zap'},
+  9802:  {nip:'84',      name:'Highlights'},
   10000: {nip:'51',      name:'Mute List'},
   10001: {nip:'51',      name:'Pin List'},
   10002: {nip:'65',      name:'Relay List Metadata'},
@@ -1215,7 +1451,7 @@ const NIP_KINDS = {
   10005: {nip:'51',      name:'Public Chats List'},
   10006: {nip:'51',      name:'Blocked Relays List'},
   10007: {nip:'51',      name:'Search Relays List'},
-  10008: {nip:'51',      name:'Profile Badges'},
+  10008: {nip:'58',      name:'Profile Badges'},
   10009: {nip:'51',      name:'User Groups'},
   10011: {nip:'39',      name:'External Identities'},
   10012: {nip:'51',      name:'Favorite Relays List'},
@@ -1224,42 +1460,47 @@ const NIP_KINDS = {
   10019: {nip:'61',      name:'Nutzap Mint Recommendation'},
   10020: {nip:'51',      name:'Media Follows'},
   10030: {nip:'51',      name:'User Emoji List'},
-  10050: {nip:'17',      name:'DM Relay List'},
+  10050: {nip:'17',      name:'Relay List to Receive DMs'},
   10051: {nip:'Marmot',  name:'KeyPackage Relays List *'},
-  10063: {nip:'96',      name:'User Server List'},
-  10096: {nip:'96',      name:'File Storage Server List'},
+  10063: {nip:'B7',      name:'User Server List'},
+  10096: {nip:'96',      name:'File Storage Server List (deprecated)'},
   10166: {nip:'66',      name:'Relay Monitor Announcement'},
   10312: {nip:'53',      name:'Room Presence'},
+  10377: {nip:'Nostr Epoxy', name:'Proxy Announcement *'},
+  11111: {nip:'Nostr Epoxy', name:'Transport Method Announcement *'},
   13194: {nip:'47',      name:'Wallet Connect Info (NWC)'},
   13534: {nip:'43',      name:'Membership Lists'},
+  14388: {nip:'Corny Chat', name:'User Sound Effect Lists *'},
+  15128: {nip:'5A',      name:'Root nsite Manifest'},
   17375: {nip:'60',      name:'Cashu Wallet Event'},
+  21000: {nip:'Lightning.Pub', name:'Lightning Pub RPC *'},
   22242: {nip:'42',      name:'Authentication'},
-  23194: {nip:'47',      name:'Wallet Connect Request (NWC)'},
-  23195: {nip:'47',      name:'Wallet Connect Response (NWC)'},
+  23194: {nip:'47',      name:'Wallet Request'},
+  23195: {nip:'47',      name:'Wallet Response'},
   23196: {nip:'47',      name:'Wallet Connect Notification (NWC)'},
   24133: {nip:'46',      name:'Nostr Connect / Remote Signing'},
-  24242: {nip:'BUD-01',  name:'Blob Storage Auth'},
+  24242: {nip:'B7',      name:'Blobs Stored on Mediaservers'},
   27235: {nip:'98',      name:'HTTP Auth'},
   28934: {nip:'43',      name:'Join Request'},
   28935: {nip:'43',      name:'Invite Request'},
   28936: {nip:'43',      name:'Leave Request'},
   30000: {nip:'51',      name:'Follow Sets'},
-  30001: {nip:'51',      name:'Generic Lists'},
+  30001: {nip:'51',      name:'Generic Lists (deprecated)'},
   30002: {nip:'51',      name:'Relay Sets'},
   30003: {nip:'51',      name:'Bookmark Sets'},
   30004: {nip:'51',      name:'Curation Sets'},
   30005: {nip:'51',      name:'Video Sets'},
   30006: {nip:'51',      name:'Picture Sets'},
   30007: {nip:'51',      name:'Kind Mute Sets'},
-  30008: {nip:'58',      name:'Profile Badges'},
+  30008: {nip:'58',      name:'Badge Sets'},
   30009: {nip:'58',      name:'Badge Definition'},
   30015: {nip:'51',      name:'Interest Sets'},
-  30017: {nip:'15',      name:'Stall'},
-  30018: {nip:'15',      name:'Product'},
+  30017: {nip:'15',      name:'Create or Update a Stall'},
+  30018: {nip:'15',      name:'Create or Update a Product'},
   30019: {nip:'15',      name:'Marketplace UI/UX'},
-  30020: {nip:'15',      name:'Product (Auction)'},
-  30023: {nip:'23',      name:'Long-form Article'},
-  30024: {nip:'23',      name:'Long-form Draft'},
+  30020: {nip:'15',      name:'Product Sold as an Auction'},
+  30023: {nip:'23',      name:'Long-form Content'},
+  30024: {nip:'23',      name:'Draft Long-form Content'},
   30030: {nip:'51',      name:'Emoji Sets'},
   30040: {nip:'NKBIP-01',name:'Curated Publication Index *'},
   30041: {nip:'NKBIP-01',name:'Curated Publication Content *'},
@@ -1271,25 +1512,36 @@ const NIP_KINDS = {
   30312: {nip:'53',      name:'Interactive Room'},
   30313: {nip:'53',      name:'Conference Event'},
   30315: {nip:'38',      name:'User Statuses'},
+  30382: {nip:'85',      name:'User Trusted Assertion'},
+  30383: {nip:'85',      name:'Event Trusted Assertion'},
+  30384: {nip:'85',      name:'Addressable Trusted Assertion'},
+  30388: {nip:'Corny Chat', name:'Slide Set *'},
   30402: {nip:'99',      name:'Classified Listing'},
   30403: {nip:'99',      name:'Draft Classified Listing'},
-  30617: {nip:'34',      name:'Git Repository Announcement'},
-  30618: {nip:'34',      name:'Repository State Announcement'},
+  30617: {nip:'34',      name:'Repository Announcements'},
+  30618: {nip:'34',      name:'Repository State Announcements'},
   30818: {nip:'54',      name:'Wiki Article'},
   30819: {nip:'54',      name:'Redirects'},
   31234: {nip:'37',      name:'Draft Event'},
+  31388: {nip:'Corny Chat', name:'Link Set *'},
+  31890: {nip:'NUD: Custom Feeds', name:'Feed *'},
   31922: {nip:'52',      name:'Date-Based Calendar Event'},
   31923: {nip:'52',      name:'Time-Based Calendar Event'},
   31924: {nip:'52',      name:'Calendar'},
   31925: {nip:'52',      name:'Calendar Event RSVP'},
   31989: {nip:'89',      name:'Handler Recommendation'},
   31990: {nip:'89',      name:'Handler Information'},
+  32267: {nip:'unknown', name:'Software Application'},
   34128: {nip:'5A',      name:'Legacy nsite Manifest (deprecated)'},
   34235: {nip:'71',      name:'Addressable Video Event'},
   34236: {nip:'71',      name:'Addressable Short Video Event'},
   34237: {nip:'71',      name:'Video View Event'},
+  32388: {nip:'Corny Chat', name:'User Room Favorites *'},
+  33388: {nip:'Corny Chat', name:'High Scores *'},
+  34388: {nip:'Corny Chat', name:'Sound Effects *'},
   34550: {nip:'72',      name:'Community Definition'},
   35128: {nip:'5A',      name:'Named nsite Manifest'},
+  37516: {nip:'geocaching', name:'Geocache Listing *'},
   38172: {nip:'87',      name:'Cashu Mint Announcement'},
   38173: {nip:'87',      name:'Fedimint Announcement'},
   38383: {nip:'69',      name:'Peer-to-peer Order Events'},
@@ -1317,18 +1569,24 @@ const NIP_META = {
   '02':      { title:'Follow List',                    desc:'Kind 3 contact/follow list for social graph and preferred relays.', url:'https://nips.nostr.com/2', related:['51'] },
   '03':      { title:'OpenTimestamps',                 desc:'Kind 1040 attestations anchoring event IDs to Bitcoin via OpenTimestamps.', url:'https://nips.nostr.com/3' },
   '04':      { title:'Encrypted DM (legacy)',          desc:'Legacy kind 4 encrypted direct messages; superseded by modern NIP-17 flows.', url:'https://nips.nostr.com/4', related:['17','59'] },
+  '05':      { title:'Mapping Nostr Keys to DNS-based Internet Identifiers', desc:'NIP-05 discovery of Nostr identities through DNS-hosted internet identifiers.', url:'https://nips.nostr.com/5', related:['11','65'] },
+  '06':      { title:'Basic Key Derivation from Mnemonic Seed Phrase', desc:'Mnemonic seed derivation conventions for Nostr private keys.', url:'https://nips.nostr.com/6' },
+  '07':      { title:'window.nostr Capability for Web Browsers', desc:'Browser extension capability API exposed through window.nostr.', url:'https://nips.nostr.com/7', related:['46'] },
   '09':      { title:'Event Deletion',                 desc:'Kind 5 deletion requests asking relays/clients to stop serving events.', url:'https://nips.nostr.com/9' },
+  '10':      { title:'Text Notes and Threads',         desc:'Threading, reply markers, and text-note relationship semantics.', url:'https://nips.nostr.com/10', related:['7D','27'] },
   '11':      { title:'Relay Information Document',     desc:'NIP-11 relay metadata document describing software, limits, and supported features.', url:'https://nips.nostr.com/11' },
-  '12':      { title:'Generic Tag Queries',            desc:'Generic tag query behavior and indexing conventions for relay/client filters.', url:'https://nips.nostr.com/12' },
   '13':      { title:'Proof of Work',                  desc:'Nonce tag conventions for proving computational work on events.', url:'https://nips.nostr.com/13' },
+  '14':      { title:'Subject Tag in Text Events',     desc:'Subject tag conventions for text-like events.', url:'https://nips.nostr.com/14' },
   '15':      { title:'Marketplace',                    desc:'Marketplace events for stalls, products, and auction metadata.', url:'https://nips.nostr.com/15' },
-  '16':      { title:'Event Treatment',                desc:'Event replacement semantics and handling rules for regular, replaceable, and ephemeral kinds.', url:'https://nips.nostr.com/16' },
   '17':      { title:'Private DMs',                    desc:'Sealed direct messages and relay-list semantics for private messaging.', url:'https://nips.nostr.com/17', related:['04','59','44'] },
   '18':      { title:'Reposts',                        desc:'Repost conventions including generic repost events.', url:'https://nips.nostr.com/18' },
-  '20':      { title:'Command Results',                desc:'Result event conventions for command-style interactions and response payloads.', url:'https://nips.nostr.com/20' },
+  '19':      { title:'bech32-encoded Entities',        desc:'Bech32 encoding for keys, notes, profiles, relays, and addressable entities.', url:'https://nips.nostr.com/19', related:['21'] },
+  '21':      { title:'nostr: URI Scheme',              desc:'URI scheme for linking and opening bech32-encoded Nostr entities.', url:'https://nips.nostr.com/21', related:['19'] },
   '22':      { title:'Comment',                        desc:'Comment event model for replies and threaded commentary.', url:'https://nips.nostr.com/22' },
   '23':      { title:'Long-form Content',              desc:'Long-form article and draft publication formats.', url:'https://nips.nostr.com/23' },
+  '24':      { title:'Extra Metadata Fields and Tags', desc:'Additional profile metadata fields and tag conventions.', url:'https://nips.nostr.com/24' },
   '25':      { title:'Reactions',                      desc:'Reactions for events and website-linked content.', url:'https://nips.nostr.com/25', related:['57'] },
+  '27':      { title:'Text Note References',           desc:'Inline references and interpretation rules for text note mentions.', url:'https://nips.nostr.com/27', related:['10','21'] },
   '28':      { title:'Public Chat',                    desc:'Channel creation, metadata, message, hide, and mute user events.', url:'https://nips.nostr.com/28' },
   '29':      {
     title:'Relay-based Groups',
@@ -1339,6 +1597,8 @@ const NIP_META = {
       { start:39000, end:39009, label:'Group Metadata Events' },
     ],
   },
+  '30':      { title:'Custom Emoji',                   desc:'Custom emoji tag conventions for user-defined emoji packs and references.', url:'https://nips.nostr.com/30' },
+  '31':      { title:'Dealing with Unknown Events',    desc:'Client and relay guidance for handling unknown or unsupported event kinds.', url:'https://nips.nostr.com/31' },
   '32':      { title:'Labeling',                       desc:'Label and namespace conventions for classified or moderation use-cases.', url:'https://nips.nostr.com/32' },
   '33':      { title:'Parameterized Replaceable Events', desc:'Addressable event model (kind+pubkey+identifier) for stable mutable resources.', url:'https://nips.nostr.com/33' },
   '40':      { title:'Expiration Timestamp',           desc:'Expiration tag semantics allowing events to become invalid after a timestamp.', url:'https://nips.nostr.com/40' },
@@ -1350,6 +1610,7 @@ const NIP_META = {
       { start:1630, end:1633, label:'Git Status Events' },
     ],
   },
+  '36':      { title:'Sensitive Content',              desc:'Sensitive-content marker conventions for client filtering and warnings.', url:'https://nips.nostr.com/36' },
   '35':      { title:'Torrents',                       desc:'Torrent and torrent-comment event definitions.', url:'https://nips.nostr.com/35' },
   '37':      { title:'Draft Events',                   desc:'Private and addressable draft event support.', url:'https://nips.nostr.com/37' },
   '38':      { title:'User Statuses',                  desc:'Ephemeral profile status updates with optional expiry.', url:'https://nips.nostr.com/38' },
@@ -1357,13 +1618,17 @@ const NIP_META = {
   '42':      { title:'Client Authentication',          desc:'Relay challenge-response auth to prove pubkey control.', url:'https://nips.nostr.com/42' },
   '43':      { title:'Relay Access',                   desc:'Membership, join/invite/leave, and access metadata for controlled relays.', url:'https://nips.nostr.com/43' },
   '44':      { title:'Encrypted Payloads v2',          desc:'Versioned encrypted payload format used by modern private messaging specs.', url:'https://nips.nostr.com/44', related:['04','17','59'] },
+  '45':      { title:'Counting Results',               desc:'Counting query result conventions for relays and clients.', url:'https://nips.nostr.com/45' },
   '46':      { title:'Nostr Connect',                  desc:'Remote signing via signer/client separation.', url:'https://nips.nostr.com/46' },
   '47':      { title:'Wallet Connect (NWC)',           desc:'Wallet info/request/response/notification flows over Nostr.', url:'https://nips.nostr.com/47' },
+  '48':      { title:'Proxy Tags',                     desc:'Proxy tag conventions for delegated routing and service metadata.', url:'https://nips.nostr.com/48' },
+  '49':      { title:'Private Key Encryption',         desc:'Portable private key encryption and wrapping conventions.', url:'https://nips.nostr.com/49' },
   '50':      { title:'Search Capability',              desc:'Search capability conventions used by clients and relays.', url:'https://nips.nostr.com/50' },
   '51':      { title:'Lists',                          desc:'Standard and addressable list/set kinds for mutes, follows, relays, bookmarks, and curation.', url:'https://nips.nostr.com/51', related:['02'] },
   '52':      { title:'Calendar Events',                desc:'Date/time calendar events, calendars, and RSVP responses.', url:'https://nips.nostr.com/52' },
   '53':      { title:'Live Activities',                desc:'Live events, room presence, conference events, and related activity messages.', url:'https://nips.nostr.com/53' },
   '54':      { title:'Wiki',                           desc:'Wiki articles, merge requests, and redirects. Curated publication kinds 30040/30041 are handled via NKBIP-01.', url:'https://nips.nostr.com/54' },
+  '55':      { title:'Android Signer Application',     desc:'Android signer integration conventions for remote signing workflows.', url:'https://nips.nostr.com/55', related:['46'] },
   '56':      { title:'Reporting',                      desc:'Reporting events for abuse and moderation reporting channels.', url:'https://nips.nostr.com/56' },
   '57':      { title:'Lightning Zaps',                 desc:'Zap request and zap receipt conventions tied to events/profiles.', url:'https://nips.nostr.com/57', related:['25','65'] },
   '58':      { title:'Badges',                         desc:'Badge awards, profile badges, and badge definitions.', url:'https://nips.nostr.com/58' },
@@ -1379,11 +1644,13 @@ const NIP_META = {
   '70':      { title:'Protected Events',               desc:'Protected-event marker conventions for policy-sensitive content.', url:'https://nips.nostr.com/70' },
   '71':      { title:'Video Events',                   desc:'Video and short-form portrait video event formats plus view tracking.', url:'https://nips.nostr.com/71' },
   '72':      { title:'Moderated Communities',          desc:'Community definitions and post-approval workflows.', url:'https://nips.nostr.com/72' },
+  '73':      { title:'External Content IDs',           desc:'External content identifier conventions for cross-system references.', url:'https://nips.nostr.com/73' },
   '75':      { title:'Zap Goals',                      desc:'Crowdfunding goal events aggregating zaps toward a target.', url:'https://nips.nostr.com/75' },
   '77':      { title:'Negentropy Syncing',             desc:'Set reconciliation protocol for efficient relay/client syncing.', url:'https://nips.nostr.com/77' },
   '78':      { title:'App-specific Data',              desc:'Application-scoped state and settings persisted via relay storage.', url:'https://nips.nostr.com/78' },
   '84':      { title:'Highlights',                     desc:'Highlight/annotation event format for quoted web content.', url:'https://nips.nostr.com/84' },
   '85':      { title:'Trusted Assertions',             desc:'Trusted assertion kinds for users/events/addressable entities.', url:'https://nips.nostr.com/85' },
+  '86':      { title:'Relay Management API',           desc:'Administrative relay management API conventions.', url:'https://nips.nostr.com/86' },
   '87':      { title:'Ecash Mint Discoverability',     desc:'Cashu/Fedimint mint discovery and announcements.', url:'https://nips.nostr.com/87' },
   '88':      { title:'Polls',                          desc:'Poll and poll-response event formats.', url:'https://nips.nostr.com/88' },
   '89':      { title:'Recommended Handlers',           desc:'Handler recommendation and handler info events.', url:'https://nips.nostr.com/89' },
@@ -1407,24 +1674,107 @@ const NIP_META = {
   'A0':      { title:'Voice Messages',                 desc:'Voice message and voice-comment event formats.', url:'https://nips.nostr.com/A0' },
   'A4':      { title:'Public Messages',                desc:'Public message kind conventions.', url:'https://nips.nostr.com/A4' },
   'B0':      { title:'Web Bookmarks',                  desc:'Web bookmark event conventions.', url:'https://nips.nostr.com/B0' },
+  'B7':      { title:'Blossom',                        desc:'Blossom protocol conventions for media/blob interoperability.', url:'https://nips.nostr.com/B7' },
+  'BE':      { title:'Nostr BLE Communications Protocol', desc:'Bluetooth Low Energy transport conventions for Nostr communication.', url:'https://nips.nostr.com/BE' },
   'C0':      { title:'Code Snippets',                  desc:'Code snippet events with dependency and runtime tagging.', url:'https://nips.nostr.com/C0' },
   'C7':      { title:'Chats',                          desc:'Chat message event conventions.', url:'https://nips.nostr.com/C7' },
   'Marmot':  { title:'Marmot Protocol *',              desc:'MLS-based E2EE protocol mapping used by kinds 443/444/445 and related list kinds. * External protocol mapping.', url:'https://github.com/marmot-protocol/marmot' },
   'NKBIP-01':{ title:'Curated Publications *',         desc:'NKBIP curated publication index/content mapping for kinds 30040/30041. * External protocol mapping.', url:'https://wikistr.com/nkbip-01' },
+  'NKBIP-02':{ title:'AI Embeddings / Vector Lists *', desc:'NKBIP vector-list and embedding mapping for kind 1987. * External protocol mapping.', url:'https://wikistr.com/' },
+  'NKBIP-03':{ title:'Reference Events *',             desc:'NKBIP reference-event mapping for internal, external, hardcopy, and prompt references. * External protocol mapping.', url:'https://wikistr.com/' },
   'Tidal':   { title:'Tidal-nostr *',                  desc:'Tidal login mapping used for kind 9467. * External protocol mapping.', url:'https://wikistr.com/tidal-nostr' },
   'nostrocket': { title:'Nostrocket Problems *',       desc:'Problem tracker mapping for kind 1971. * Client-specific protocol mapping.', url:'https://github.com/nostrocket/NIPS/blob/main/Problems.md' },
+  'joinstr': { title:'Joinstr *',                      desc:'Joinstr coinjoin coordination mapping for pool events. * External protocol mapping.', url:'https://github.com/1440000bytes/joinstr' },
+  'geocaching': { title:'Geocaching *',                desc:'Geocaching event mappings for listings, logs, and proofs of find. * External protocol mapping.', url:'https://github.com/nostr-protocol/nips' },
+  'Nostr Epoxy': { title:'Nostr Epoxy *',              desc:'Proxy and transport method announcement mappings used by Nostr Epoxy. * External protocol mapping.', url:'https://github.com/erskingardner/nostr-epoxy' },
+  'Corny Chat': { title:'Corny Chat *',                desc:'Corny Chat event mappings for rooms, slides, links, sound effects, and scoreboards. * External protocol mapping.', url:'https://cornychat.com' },
+  'Lightning.Pub': { title:'Lightning.Pub *',          desc:'Lightning.Pub RPC mapping for kind 21000. * External protocol mapping.', url:'https://lightning.pub' },
+  'NUD: Custom Feeds': { title:'NUD Custom Feeds *',   desc:'NUD custom feed mapping for feed event kind 31890. * External protocol mapping.', url:'https://github.com/nostr-protocol/nips' },
+  'unknown': { title:'Unassigned / External Draft *',  desc:'Kind mapping observed in community drafts or external specs without a canonical NIP assignment in this table.', url:'https://nips.nostr.com/' },
   'BUD-01':  { title:'Blossom Blob Auth',              desc:'BUD-01 kind 24242 authorises blob upload/download/delete on Blossom media servers.', url:'https://github.com/hzrd149/blossom/blob/master/buds/01.md' },
 };
 
+const NIP_RELATION_HINTS = {
+  '04': ['17', '44', '59'],
+  '05': ['11', '65'],
+  '07': ['46', '55'],
+  '10': ['14', '27', '7D'],
+  '11': ['05', '50', '65', '86'],
+  '14': ['10', '22'],
+  '17': ['04', '44', '59'],
+  '19': ['21', '27'],
+  '21': ['19', '27'],
+  '22': ['10', '14', '7D'],
+  '24': ['05', '11'],
+  '25': ['57'],
+  '27': ['10', '19', '21'],
+  '30': ['38', '51'],
+  '31': ['70'],
+  '42': ['17', '47', '86'],
+  '44': ['04', '17', '59'],
+  '45': ['50'],
+  '46': ['07', '55'],
+  '47': ['42', '57'],
+  '48': ['47', '73'],
+  '49': ['06', '19'],
+  '50': ['11', '45'],
+  '51': ['02', '30', '65'],
+  '55': ['07', '46'],
+  '57': ['25', '47', '65'],
+  '59': ['04', '17', '44'],
+  '65': ['05', '11', '51', '57'],
+  '70': ['31', '36'],
+  '73': ['48', '92'],
+  '77': ['50'],
+  '85': ['05', '39'],
+  '86': ['11', '42'],
+  '92': ['73', '94'],
+  '94': ['92', '96', 'B7'],
+  '96': ['94', 'B7'],
+  '5A': ['21'],
+  '7D': ['10', '22'],
+  'A0': ['17', '44'],
+  'A4': ['10', '22'],
+  'B0': ['51', '5A'],
+  'B7': ['94', '96', 'BUD-01'],
+  'BE': ['07'],
+  'C0': ['19', '21'],
+  'C7': ['17', '44'],
+  'BUD-01': ['B7', '94', '96'],
+};
+
+for (const [nipCode, related] of Object.entries(NIP_RELATION_HINTS)) {
+  if (!NIP_META[nipCode]) continue;
+  const merged = new Set([...(NIP_META[nipCode].related || []), ...related]);
+  NIP_META[nipCode].related = [...merged].filter(code => code !== nipCode && NIP_META[code]);
+}
+
+for (const [nipCode, meta] of Object.entries(NIP_META)) {
+  for (const relatedCode of meta.related || []) {
+    if (!NIP_META[relatedCode]) continue;
+    const merged = new Set([...(NIP_META[relatedCode].related || []), nipCode]);
+    NIP_META[relatedCode].related = [...merged].filter(code => code !== relatedCode && NIP_META[code]);
+  }
+}
+
 const SUPPORTED_NIPS_REFERENCE = [
-  '01', '02', '03', '04', '09', '11', '12', '13', '15', '16',
-  '17', '18', '20', '22', '23', '25', '28', '29', '32', '33',
-  '34', '35', '37', '38', '39', '40', '42', '43', '44', '46',
-  '47', '50', '51', '52', '53', '54', '56', '57', '58', '59',
-  '60', '61', '62', '64', '65', '66', '68', '69', '71', '72',
-  '75', '77', '78', '84', '87', '88', '89', '90', '94', '96',
-  '98', '99',
+  '01', '02', '03', '04', '05', '06', '07', '09', '10', '11',
+  '13', '14', '15', '17', '18', '19', '21', '22', '23', '24',
+  '25', '27', '28', '29', '30', '31', '32', '33', '34', '35',
+  '36', '37', '38', '39', '40', '42', '43', '44', '45', '46',
+  '47', '48', '49', '50', '51', '52', '53', '54', '55', '56',
+  '57', '58', '59', '60', '61', '62', '64', '65', '66', '68',
+  '69', '70', '71', '72', '73', '75', '77', '78', '84', '85',
+  '86', '87', '88', '89', '90', '92', '94', '96', '98', '99',
+  '5A', '7D', 'A0', 'A4', 'B0', 'B7', 'BE', 'C0', 'C7',
 ];
+
+function nipCodeSortValue(code) {
+  const clean = String(code || '').trim().toUpperCase();
+  if (/^[0-9]+$/.test(clean)) return { group: 0, value: parseInt(clean, 10), text: clean };
+  if (/^[0-9A-F]+$/.test(clean)) return { group: 1, value: parseInt(clean, 16), text: clean };
+  return { group: 2, value: 0, text: clean };
+}
 
 function groupByNip(rows) {
   const map = new Map();
@@ -1451,12 +1801,11 @@ function groupByNip(rows) {
   return [...map.entries()].sort(([ak], [bk]) => {
     if (ak === '__unknown__') return 1;
     if (bk === '__unknown__') return -1;
-    const an = parseInt(ak, 10), bn = parseInt(bk, 10);
-    const aNum = !isNaN(an), bNum = !isNaN(bn);
-    if (aNum && bNum) return an - bn;
-    if (aNum) return -1;
-    if (bNum) return 1;
-    return ak.localeCompare(bk);
+    const a = nipCodeSortValue(ak);
+    const b = nipCodeSortValue(bk);
+    if (a.group !== b.group) return a.group - b.group;
+    if (a.value !== b.value) return a.value - b.value;
+    return a.text.localeCompare(b.text);
   });
 }
 
@@ -1643,7 +1992,7 @@ async function saveProfileIconFromModal(){
     _setProfileIconPreview(relayIconUrl);
     closeIconModal();
     await loadStats();
-    notice('config-notice', '\u2713 Profile image updated and refreshed', true);
+    notice('config-notice', '\u2713 Profile image saved. Use Save + Restart Relay Stack to apply NIP-11 updates.', true);
   } catch (e) {
     notice('profile-icon-notice', '\u2717 ' + e.message, false);
   }
@@ -1856,8 +2205,10 @@ function _formatBackupDate(raw) {
 async function loadBackups(){
   const scheduleEl = document.getElementById('backup-schedule');
   const retentionEl = document.getElementById('backup-retention');
+  const exportEnabledEl = document.getElementById('backup-export-enabled');
+  const exportDirEl = document.getElementById('backup-export-dir');
   const tbody = document.querySelector('#backups-table tbody');
-  if (!scheduleEl || !retentionEl || !tbody) return;
+  if (!scheduleEl || !retentionEl || !exportEnabledEl || !exportDirEl || !tbody) return;
 
   try {
     const data = await api('/backups');
@@ -1870,6 +2221,8 @@ async function loadBackups(){
     retentionEl.innerHTML = Array.from({length:12},(_,i)=>i+1)
       .map(n=>`<option value="${n}"${n===currentRetention?' selected':''}>Keep last ${n} snapshot${n>1?'s':''}</option>`)
       .join('');
+    exportEnabledEl.checked = Boolean(data.export_enabled);
+    exportDirEl.value = String(data.export_dir || '');
 
     const snapshots = (data.snapshots || []);
     _backupSnapshots.clear();
@@ -1907,13 +2260,20 @@ async function saveBackupSchedule(){
   const schedule = (scheduleEl && scheduleEl.value) ? scheduleEl.value : '4h';
   const retentionEl2 = document.getElementById('backup-retention');
   const retention = retentionEl2 ? parseInt(retentionEl2.value) || 3 : 3;
+  const exportEnabledEl = document.getElementById('backup-export-enabled');
+  const exportDirEl = document.getElementById('backup-export-dir');
+  const export_enabled = exportEnabledEl ? Boolean(exportEnabledEl.checked) : false;
+  const export_dir = exportDirEl ? String(exportDirEl.value || '').trim() : '';
   try {
     const res = await api('/backups/settings', {
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({schedule, retention})
+      body:JSON.stringify({schedule, retention, export_enabled, export_dir})
     });
-    notice('backup-notice', `\u2713 Backup schedule set to ${_backupScheduleLabel(res.schedule)}, keeping last ${res.retention} snapshot${res.retention>1?'s':''}`, true);
+    const exportMsg = res.export_enabled
+      ? (res.export_dir ? `, external export enabled (${res.export_dir})` : ', external export enabled (directory not set)')
+      : ', external export disabled';
+    notice('backup-notice', `\u2713 Backup schedule set to ${_backupScheduleLabel(res.schedule)}, keeping last ${res.retention} snapshot${res.retention>1?'s':''}${exportMsg}`, true);
     await loadBackups();
   } catch (e) {
     notice('backup-notice', '\u2717 ' + e.message, false);
@@ -1924,7 +2284,11 @@ async function createBackupNow(){
   try {
     const res = await api('/backups/create', { method:'POST' });
     const id = (res.snapshot && res.snapshot.id) ? res.snapshot.id : 'new snapshot';
-    notice('backup-notice', `\u2713 Created backup ${id}`, true);
+    const exp = res.snapshot && res.snapshot.external_export ? res.snapshot.external_export : null;
+    const exportMsg = !exp || !exp.enabled
+      ? ''
+      : (exp.ok ? ` and exported to ${exp.path}` : ` but external export failed${exp.error ? `: ${exp.error}` : ''}`);
+    notice('backup-notice', `\u2713 Created backup ${id}${exportMsg}`, true);
     await loadBackups();
   } catch (e) {
     notice('backup-notice', '\u2717 ' + e.message, false);
@@ -2004,7 +2368,8 @@ function _renderRecentEvents() {
   _latestEvents = visibleEvents;
   etbody.innerHTML = visibleEvents.map((r, idx) => {
     const info = nipInfo(r.kind);
-    const ts = new Date(r.created_at * 1000).toLocaleString(undefined, {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+    const tsSource = Number.isFinite(Number(r.first_seen)) ? Number(r.first_seen) : Number(r.created_at);
+    const ts = new Date(tsSource * 1000).toLocaleString(undefined, {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
     const typeName = info ? info.name : `Kind ${r.kind}`;
     const raw = (r.content_preview || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     const msg = raw || `<span style="color:var(--muted);font-style:italic">—</span>`;
@@ -2041,12 +2406,14 @@ async function loadStats(){
     const iconHtml = icon
       ? `<img src="${icon}" alt="${relayName}" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'icon-fallback',textContent:'\u26a1'}))">`
       : `<span class="icon-fallback">&#9889;</span>`;
-    const latestTs = s.latest[0]
-      ? new Date(s.latest[0].created_at*1000).toLocaleDateString(undefined,{month:'2-digit',day:'2-digit',year:'2-digit'}) + ' ' + new Date(s.latest[0].created_at*1000).toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'})
+    const latestEventAt = Number(s.summary?.latest_event_at);
+    const latestTs = Number.isFinite(latestEventAt)
+      ? new Date(latestEventAt*1000).toLocaleDateString(undefined,{month:'2-digit',day:'2-digit',year:'2-digit'}) + ' ' + new Date(latestEventAt*1000).toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'})
       : '\u2014';
     const groupedNips = groupByNip(s.by_kind || []);
-    const supportedNipsCount = groupedNips.filter(([nip]) => nip !== '__unknown__').length;
+    const supportedNipsCount = Number(s.summary?.active_supported_nips ?? 0);
     const totalNipsCount = _totalSupportedNipsCount();
+    const activeKindsCount = Number(s.summary?.active_supported_kinds ?? (s.by_kind || []).length);
     const totalKindsCount = _totalSupportedKindsCount();
     const iconPreviewEl = document.querySelector('.icon-preview-img');
     if (iconPreviewEl) {
@@ -2058,11 +2425,11 @@ async function loadStats(){
     grid.innerHTML = `
       <div class="stat-combined">
         <div class="sc-col">
-          <div class="sc-item"><div class="val" style="font-size:28px;font-weight:700;color:var(--accent)">${supportedNipsCount} / ${totalNipsCount}</div><div class="lbl" style="font-size:11px;color:var(--muted);margin-top:4px">Actively Supported NIPs</div></div>
-          <div class="sc-item"><div class="val" style="font-size:28px;font-weight:700;color:var(--accent)">${s.by_kind.length} / ${totalKindsCount}</div><div class="lbl" style="font-size:11px;color:var(--muted);margin-top:4px">Actively Supported Kinds</div></div>
+          <div class="sc-item"><div class="val" style="font-size:28px;font-weight:700;color:var(--accent)">${supportedNipsCount} / ${totalNipsCount}</div><div class="lbl" style="font-size:11px;color:var(--muted);margin-top:4px">Active vs. Available NIPs Processing</div></div>
+          <div class="sc-item"><div class="val" style="font-size:28px;font-weight:700;color:var(--accent)">${activeKindsCount} / ${totalKindsCount}</div><div class="lbl" style="font-size:11px;color:var(--muted);margin-top:4px">Active vs. Available Kinds Processing</div></div>
         </div>
         <div class="sc-col">
-          <div class="sc-item"><div class="val" style="font-size:16px;font-weight:700;color:var(--accent)">${latestTs}</div><div class="lbl" style="font-size:11px;color:var(--muted);margin-top:4px">Latest Event</div></div>
+          <div class="sc-item"><div class="val" style="font-size:16px;font-weight:700;color:var(--accent)">${latestTs}</div><div class="lbl" style="font-size:11px;color:var(--muted);margin-top:4px">Latest Event Seen</div></div>
           <div class="sc-item"><div class="val" style="font-size:28px;font-weight:700;color:var(--accent)">${s.total_events.toLocaleString()}</div><div class="lbl" style="font-size:11px;color:var(--muted);margin-top:4px">Total Events</div></div>
         </div>
       </div>
@@ -2124,7 +2491,14 @@ async function loadConfig(){
 async function loadStore(){
   const s = await api('/store');
   const identifier = s.identifier || '';
-  const relays = await _buildEffectiveRelayList(identifier, s.relays || []);
+  let relays = [];
+  try {
+    relays = await _buildEffectiveRelayList(identifier, s.relays || []);
+  } catch (e) {
+    // Keep the admin UI usable even when remote NIP-05 relay discovery fails.
+    relays = (s.relays || []).filter(Boolean);
+    console.error('loadStore relay resolution failed', e);
+  }
   document.getElementById('store_identifier').value = identifier;
   document.getElementById('store_relays').value = relays.join('\n');
   await refreshRelayConnectionStatus(relays);
@@ -2164,7 +2538,7 @@ async function loadRestartTargets(){
     }
 
     controls.style.opacity = '1';
-    hint.textContent = 'Save Config persists values. Restart actions do not save values unless explicitly labeled Save + Restart.';
+    hint.textContent = 'Save writes values to config.toml/store.json. NIP-11 changes apply after Restart Full Relay Stack (or Save + Restart Relay Stack).';
     _setRestartControlsEnabled(true);
   } catch (e) {
     controls.style.opacity = '.7';
@@ -2332,9 +2706,20 @@ async function saveNavLinks() {
 }
 
 async function loadAll(){
-  await Promise.all([loadStats(), loadConfig(), loadStore(), loadBackups()]);
-  await loadRestartTargets();
-  await loadNavLinks();
+  const tasks = [
+    loadStats(),
+    loadConfig(),
+    loadStore(),
+    loadBackups(),
+    loadRestartTargets(),
+    loadNavLinks(),
+  ];
+  const results = await Promise.allSettled(tasks);
+  results.forEach((r, i) => {
+    if (r.status === 'rejected') {
+      console.error(`loadAll task ${i} failed`, r.reason);
+    }
+  });
   _scheduleRecentEventsRelayout();
 }
 
@@ -2384,16 +2769,16 @@ async function saveAllVariables(){
       api('/store', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(storePayload)})
     ]);
     await refreshRelayConnectionStatus(storePayload.relays);
-    notice('saveall-notice', '✓ Saved all variables — restart runtime only if UI/process state is stale', true);
+    notice('saveall-notice', '✓ Saved all variables — use Restart Full Relay Stack to apply NIP-11/runtime changes', true);
   } catch (e) {
     notice('saveall-notice', '✗ ' + e.message, false);
   }
 }
 
 async function saveAndRestartWeb(){
-  const profile = _restartProfiles.get('fix_icon');
+  const profile = _restartProfiles.get('full_stack') || _restartProfiles.get('fix_icon');
   if (!profile) {
-    notice('restart-notice', '\u2717 Restart Web Runtime profile unavailable', false);
+    notice('restart-notice', '\u2717 Restart profile unavailable', false);
     return;
   }
   try {
@@ -2405,7 +2790,7 @@ async function saveAndRestartWeb(){
     const res = await api('/restart-profile', {
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({profile: 'fix_icon'})
+      body:JSON.stringify({profile: profile.key})
     });
     const n = (res.containers || []).length;
     await refreshRelayConnectionStatus(storePayload.relays);
