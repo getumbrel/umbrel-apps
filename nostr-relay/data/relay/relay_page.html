@@ -571,23 +571,6 @@
           </div>
         </section>
 
-        <section class="events-section" aria-label="Recent events">
-          <div class="events-head">
-            <h2 class="events-title">Recent Events</h2>
-            <span class="events-note" id="events-note"
-              >Loading latest 25 events...</span
-            >
-          </div>
-          <div class="events-grid" id="events-grid">
-            <div class="events-row events-head-row">
-              <div>Timestamp</div>
-              <div>Kind</div>
-              <div>Message</div>
-            </div>
-            <div class="events-empty">Loading events...</div>
-          </div>
-        </section>
-
         <section class="connected-section" aria-label="Connected relays">
           <div class="connected-head">
             <h2 class="connected-title">Connected Relays</h2>
@@ -602,6 +585,23 @@
                 Connected Relays 0/0
               </div>
             </div>
+          </div>
+        </section>
+
+        <section class="events-section" aria-label="Recent events">
+          <div class="events-head">
+            <h2 class="events-title">Recent Events</h2>
+            <span class="events-note" id="events-note"
+              >Loading latest 25 events...</span
+            >
+          </div>
+          <div class="events-grid" id="events-grid">
+            <div class="events-row events-head-row">
+              <div>Timestamp</div>
+              <div>Kind</div>
+              <div>Message</div>
+            </div>
+            <div class="events-empty">Loading events...</div>
           </div>
         </section>
       </main>
@@ -692,6 +692,32 @@
           .replaceAll(">", "&gt;")
           .replaceAll('"', "&quot;")
           .replaceAll("'", "&#039;");
+      }
+
+      async function fetchJsonWithTimeout(url, timeoutMs) {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+        try {
+          const res = await fetch(url, {
+            headers: { Accept: "application/json" },
+            cache: "no-store",
+            signal: controller.signal,
+          });
+
+          if (!res.ok) {
+            throw new Error("HTTP " + res.status);
+          }
+
+          return await res.json();
+        } catch (err) {
+          if (err && err.name === "AbortError") {
+            throw new Error("request timeout");
+          }
+          throw err;
+        } finally {
+          clearTimeout(timer);
+        }
       }
 
       function setStatsUnavailable(message) {
@@ -789,13 +815,7 @@
 
       async function loadRelayHeaderStats() {
         try {
-          const res = await fetch("/api/public-stats", {
-            headers: { Accept: "application/json" },
-            cache: "no-store",
-          });
-          if (!res.ok) throw new Error("Stats HTTP " + res.status);
-
-          const stats = await res.json();
+          const stats = await fetchJsonWithTimeout("/api/public-stats", 8000);
           if (statsActiveNipsEl) {
             statsActiveNipsEl.textContent =
               String(stats.active_supported_nips ?? 0) +
@@ -932,16 +952,10 @@
 
       async function loadRecentEvents() {
         try {
-          const res = await fetch(
+          const payload = await fetchJsonWithTimeout(
             "/api/public-stats?include_latest=true&limit=" + recentEventsLimit,
-            {
-              headers: { Accept: "application/json" },
-              cache: "no-store",
-            },
+            8000,
           );
-          if (!res.ok) throw new Error("Events HTTP " + res.status);
-
-          const payload = await res.json();
           latestEvents = Array.isArray(payload.latest)
             ? payload.latest.slice(0, recentEventsLimit)
             : [];
