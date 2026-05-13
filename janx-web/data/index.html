@@ -1,0 +1,548 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>janx.com portal</title>
+    <style>
+      :root {
+        --bg-0: #090f1e;
+        --bg-1: #111c34;
+        --card: rgba(15, 25, 50, 0.82);
+        --line: rgba(255, 255, 255, 0.14);
+        --text: #ecf2ff;
+        --muted: #a6b8de;
+        --accent: #ff9d2e;
+        --ok: #2ac56d;
+        --warn: #ffcc53;
+        --bad: #ff6666;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Segoe UI", "Trebuchet MS", sans-serif;
+        color: var(--text);
+        background:
+          radial-gradient(900px 500px at 95% -5%, #344f9a 0%, transparent 60%),
+          radial-gradient(900px 450px at -10% 95%, #4b3434 0%, transparent 64%),
+          linear-gradient(145deg, var(--bg-0), var(--bg-1));
+        min-height: 100vh;
+      }
+
+      .shell {
+        width: min(1200px, 100%);
+        margin: 0 auto;
+        padding: 20px;
+      }
+
+      .tabs {
+        display: flex;
+        gap: 8px;
+        border-bottom: 1px solid var(--line);
+        padding-bottom: 10px;
+        margin-bottom: 16px;
+        flex-wrap: wrap;
+      }
+
+      .tab-btn {
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.03);
+        color: var(--text);
+        border-radius: 999px;
+        padding: 8px 14px;
+        cursor: pointer;
+        font-weight: 600;
+      }
+
+      .tab-btn.active {
+        background: rgba(255, 157, 46, 0.18);
+        border-color: rgba(255, 157, 46, 0.7);
+        color: #ffd4a0;
+      }
+
+      .panel {
+        display: none;
+      }
+      .panel.active {
+        display: block;
+      }
+
+      .card {
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 14px;
+        background: var(--card);
+      }
+
+      .hero {
+        display: grid;
+        gap: 10px;
+        margin-bottom: 16px;
+      }
+
+      .badge {
+        display: inline-block;
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .grid {
+        display: grid;
+        gap: 10px;
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      }
+
+      #systems.grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      @media (max-width: 980px) {
+        #systems.grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .status-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        padding: 3px 8px;
+        font-size: 12px;
+      }
+
+      .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+      }
+      .ok .dot {
+        background: var(--ok);
+      }
+      .degraded .dot {
+        background: var(--warn);
+      }
+      .down .dot {
+        background: var(--bad);
+      }
+      .unknown .dot {
+        background: #b2bedf;
+      }
+
+      .muted {
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .accent {
+        color: var(--accent);
+      }
+
+      .inline {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        align-items: center;
+      }
+
+      pre {
+        margin: 8px 0 0;
+        padding: 8px;
+        border-radius: 8px;
+        border: 1px solid var(--line);
+        background: rgba(0, 0, 0, 0.2);
+        color: #dbe6ff;
+        max-height: 180px;
+        overflow-y: auto;
+        overflow-x: hidden;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+        font-size: 12px;
+      }
+
+      textarea {
+        width: 100%;
+        min-height: 120px;
+        border-radius: 10px;
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.03);
+        color: var(--text);
+        padding: 10px;
+      }
+
+      .alert {
+        border: 1px solid rgba(255, 102, 102, 0.6);
+        background: rgba(255, 102, 102, 0.12);
+        color: #ffd1d1;
+        border-radius: 10px;
+        padding: 10px;
+        margin-bottom: 12px;
+      }
+
+      .legacy-frame {
+        width: 100%;
+        height: min(1600px, 78vh);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: #fff;
+      }
+
+      .portal-frame {
+        width: 100%;
+        height: min(1600px, 78vh);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: #fff;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="home">₿YO₿</button>
+        <button class="tab-btn" data-tab="lsp" hidden>⚡₿YO₿-LSP🧅</button>
+        <button class="tab-btn" data-tab="nost">₿YOB-NOSTR-RELAY</button>
+      </div>
+
+      <section id="home" class="panel active">
+        <iframe
+          id="home-frame"
+          class="legacy-frame"
+          src="/home-dev.html"
+          title="Home view"
+          loading="lazy"
+          referrerpolicy="no-referrer"
+        ></iframe>
+      </section>
+
+      <section id="lsp" class="panel" hidden>
+        <div class="card" style="margin-bottom: 12px">
+          <div class="inline">
+            <h2 style="margin: 0">⚡₿YO₿-LSP🧅 status</h2>
+            <button id="refresh" class="tab-btn">Refresh</button>
+          </div>
+          <p class="muted" id="meta">Loading status...</p>
+          <p class="muted" id="counts"></p>
+        </div>
+
+        <div class="grid" id="systems"></div>
+
+        <div class="card" style="margin-top: 12px">
+          <h3 class="accent" style="margin-top: 0; margin-bottom: 12px">
+            📡 ₿YO₿-NOSTR-RELAY NIP-ZAP-mSat⚡ — Operator Notes
+          </h3>
+          <p class="muted" style="margin-top: 0">
+            Space for relay operations context, zap policy notes, and
+            NIP-specific runbook snippets. This textarea persists in local
+            browser storage so operators can add evolving notes without editing
+            source files.
+          </p>
+          <textarea
+            id="notes"
+            placeholder="Add operational notes, links, and relay context..."
+          ></textarea>
+        </div>
+      </section>
+
+      <section id="nost" class="panel">
+        <iframe
+          id="nost-frame"
+          class="portal-frame"
+          src="https://nostr.janx.com"
+          title="nostr.janx.com page"
+          loading="lazy"
+          referrerpolicy="no-referrer"
+        ></iframe>
+      </section>
+
+      <footer id="ops-footer" class="card" style="margin-top: 16px" hidden>
+        <div class="inline">
+          <h3 class="accent" style="margin: 0">⚙️ Operational Status</h3>
+          <span id="ops-summary" class="muted">Loading...</span>
+          <button id="ops-toggle" class="tab-btn" type="button">
+            Show details
+          </button>
+          <button id="ops-refresh" class="tab-btn" type="button">
+            Refresh
+          </button>
+        </div>
+        <p class="muted" id="ops-meta" style="margin: 6px 0 0"></p>
+        <div
+          class="grid"
+          id="ops-systems"
+          style="margin-top: 12px"
+          hidden
+        ></div>
+      </footer>
+    </div>
+
+    <script>
+      const tabs = document.querySelectorAll(".tab-btn[data-tab]");
+      const panels = document.querySelectorAll(".panel");
+
+      tabs.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          tabs.forEach((b) => b.classList.remove("active"));
+          panels.forEach((p) => p.classList.remove("active"));
+          btn.classList.add("active");
+          document.getElementById(btn.dataset.tab).classList.add("active");
+          syncOpsFooterVisibility();
+        });
+      });
+
+      const systemsEl = document.getElementById("systems");
+      const metaEl = document.getElementById("meta");
+      const countsEl = document.getElementById("counts");
+      const homeFrameEl = document.getElementById("home-frame");
+      const homeOpenLinkEl = document.getElementById("home-open-link");
+      const nostFrameEl = document.getElementById("nost-frame");
+      const nostTabButton = document.querySelector('.tab-btn[data-tab="nost"]');
+      const lspTabButton = document.querySelector('.tab-btn[data-tab="lsp"]');
+      const lspPanelEl = document.getElementById("lsp");
+      const homePanelEl = document.getElementById("home");
+      const homeTabButton = document.querySelector('.tab-btn[data-tab="home"]');
+      const host = (window.location.hostname || "").toLowerCase();
+      const isInternalPortalHost =
+        host === "portal.janx.local" || host === "janx.local";
+
+      if (nostFrameEl) {
+        nostFrameEl.src = isInternalPortalHost
+          ? "http://janx.local:4848/?v=" + Date.now()
+          : "https://nostr.janx.com/?v=" + Date.now();
+      }
+
+      async function loadNostrTabLabel() {
+        if (!nostTabButton) return;
+
+        try {
+          const res = await fetch("https://nostr.janx.com/", {
+            headers: { Accept: "application/nostr+json" },
+            cache: "no-store",
+          });
+
+          if (!res.ok) throw new Error("NIP-11 HTTP " + res.status);
+          const nip11 = await res.json();
+          const name =
+            typeof nip11.name === "string" && nip11.name.trim()
+              ? nip11.name.trim()
+              : "₿YO₿-NOSTR-RELAY";
+          nostTabButton.textContent = name;
+        } catch (_) {
+          // Keep fallback label if NIP-11 cannot be loaded.
+        }
+      }
+
+      async function applyPortalConfig() {
+        let cfg = null;
+
+        try {
+          const res = await fetch("/api/portal-config?v=" + Date.now(), {
+            cache: "no-store",
+          });
+          if (res.ok) cfg = await res.json();
+        } catch (_) {
+          // Keep defaults on config fetch failures.
+        }
+
+        const homeSourceUrl = cfg?.home?.sourceUrl || "/home-dev.html";
+
+        if (homeFrameEl) {
+          homeFrameEl.src =
+            homeSourceUrl +
+            (homeSourceUrl.includes("?") ? "&v=" : "?v=") +
+            Date.now();
+        }
+        if (homeOpenLinkEl) {
+          homeOpenLinkEl.href = homeSourceUrl;
+        }
+
+        // Keep BYOB-LSP private to the internal portal host.
+        if (!isInternalPortalHost) {
+          if (lspTabButton) lspTabButton.hidden = true;
+          if (lspPanelEl) lspPanelEl.hidden = true;
+          if (lspTabButton) lspTabButton.style.display = "none";
+          if (lspPanelEl) lspPanelEl.classList.remove("active");
+          if (homePanelEl && homeTabButton) {
+            panels.forEach((p) => p.classList.remove("active"));
+            tabs.forEach((b) => b.classList.remove("active"));
+            homePanelEl.classList.add("active");
+            homeTabButton.classList.add("active");
+          }
+          return;
+        }
+
+        const enabled = isInternalPortalHost
+          ? true
+          : !!cfg?.public?.lspTabEnabled;
+        if (enabled) {
+          if (lspTabButton) {
+            lspTabButton.hidden = false;
+            lspTabButton.style.display = "";
+          }
+          if (lspPanelEl) lspPanelEl.hidden = false;
+          return;
+        }
+
+        if (lspTabButton) lspTabButton.hidden = true;
+        if (lspPanelEl) lspPanelEl.hidden = true;
+        if (lspTabButton) lspTabButton.style.display = "none";
+        if (lspPanelEl) lspPanelEl.classList.remove("active");
+
+        const activePanel = document.querySelector(".panel.active");
+        if (!activePanel && homePanelEl && homeTabButton) {
+          homePanelEl.classList.add("active");
+          homeTabButton.classList.add("active");
+        }
+      }
+
+      function evidenceText(lines) {
+        if (!lines || !lines.length) return "";
+        return lines.join("\n");
+      }
+
+      function renderSystem(sys) {
+        const card = document.createElement("article");
+        card.className = "card";
+
+        card.innerHTML =
+          '<div class="inline"><strong>' +
+          sys.name +
+          "</strong>" +
+          '<span class="status-chip ' +
+          sys.status +
+          '">' +
+          '<span class="dot"></span><span>' +
+          sys.status +
+          "</span></span></div>" +
+          '<div class="muted" style="margin-top: 6px">' +
+          sys.group +
+          " | " +
+          sys.type +
+          "</div>" +
+          '<div style="margin-top: 6px">' +
+          sys.summary +
+          "</div>" +
+          '<div class="muted" style="margin-top: 6px">Latency: ' +
+          sys.latencyMs +
+          " ms</div>" +
+          (sys.evidence && sys.evidence.length
+            ? "<pre>" + evidenceText(sys.evidence) + "</pre>"
+            : "");
+
+        return card;
+      }
+
+      async function loadStatus() {
+        metaEl.textContent = "Loading status data...";
+        systemsEl.innerHTML = "";
+
+        try {
+          const statusUrl = "/api/status?v=" + Date.now();
+          const res = await fetch(statusUrl, {
+            cache: "no-store",
+            headers: {
+              "Cache-Control": "no-cache",
+              Pragma: "no-cache",
+            },
+          });
+          const data = await res.json();
+
+          metaEl.textContent =
+            "Generated at " +
+            data.generatedAt +
+            (data.commandProbesEnabled
+              ? " | command probes enabled"
+              : " | command probes disabled");
+
+          countsEl.textContent =
+            "ok: " +
+            data.counts.ok +
+            " | degraded: " +
+            data.counts.degraded +
+            " | down: " +
+            data.counts.down +
+            " | unknown: " +
+            data.counts.unknown;
+
+          data.systems.forEach((sys) =>
+            systemsEl.appendChild(renderSystem(sys)),
+          );
+        } catch (err) {
+          metaEl.textContent = "Status API failed: " + err.message;
+        }
+      }
+
+      document.getElementById("refresh").addEventListener("click", loadStatus);
+      setInterval(loadStatus, 90000);
+      applyPortalConfig();
+      loadStatus();
+      loadNostrTabLabel();
+      syncOpsFooterVisibility();
+
+      // Operational Status footer (hidden on the Nostr tab)
+      const opsFooter = document.getElementById("ops-footer");
+      const opsSummary = document.getElementById("ops-summary");
+      const opsMeta = document.getElementById("ops-meta");
+      const opsSystems = document.getElementById("ops-systems");
+      const opsToggle = document.getElementById("ops-toggle");
+      const opsRefresh = document.getElementById("ops-refresh");
+
+      function syncOpsFooterVisibility() {
+        if (!opsFooter) return;
+        const activePanel = document.querySelector(".panel.active");
+        opsFooter.hidden = activePanel && activePanel.id === "nost";
+      }
+
+      async function loadOpsFooter() {
+        if (!opsFooter) return;
+        syncOpsFooterVisibility();
+        try {
+          const res = await fetch("/api/status?v=" + Date.now(), {
+            cache: "no-store",
+          });
+          const data = await res.json();
+          const c = data.counts || {};
+          opsSummary.textContent =
+            "ok: " +
+            (c.ok || 0) +
+            " | degraded: " +
+            (c.degraded || 0) +
+            " | down: " +
+            (c.down || 0) +
+            " | unknown: " +
+            (c.unknown || 0);
+          opsMeta.textContent = "Generated at " + data.generatedAt;
+          opsSystems.innerHTML = "";
+          (data.systems || []).forEach((sys) =>
+            opsSystems.appendChild(renderSystem(sys)),
+          );
+        } catch (err) {
+          opsSummary.textContent = "Status API failed: " + err.message;
+        }
+      }
+
+      if (opsToggle && opsSystems) {
+        opsToggle.addEventListener("click", () => {
+          const showing = !opsSystems.hidden;
+          opsSystems.hidden = showing;
+          opsToggle.textContent = showing ? "Show details" : "Hide details";
+        });
+      }
+      if (opsRefresh) opsRefresh.addEventListener("click", loadOpsFooter);
+      loadOpsFooter();
+      setInterval(loadOpsFooter, 90000);
+
+      const notes = document.getElementById("notes");
+      const key = "janx-lsp-notes";
+      notes.value = localStorage.getItem(key) || "";
+      notes.addEventListener("input", () =>
+        localStorage.setItem(key, notes.value),
+      );
+    </script>
+  </body>
+</html>
