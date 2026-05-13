@@ -1044,6 +1044,20 @@ HTML = r"""<!DOCTYPE html>
   header{background:var(--card);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
   header h1{font-size:18px;font-weight:600}
   .badge{background:var(--accent);color:#fff;font-size:11px;padding:2px 8px;border-radius:99px}
+  .header-stats{background:var(--card);border-bottom:1px solid var(--border);padding:10px 24px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .header-stats .header-stats-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);display:flex;align-items:center;gap:6px;white-space:nowrap}
+  .header-stats .header-stats-age{font-size:10px;color:var(--muted);font-weight:400;margin-left:4px}
+  .header-stats #stat-grid{flex:1;display:grid;grid-template-columns:repeat(4, 1fr);gap:10px;margin:0;min-width:0}
+  .header-stats .sc-item{background:#0f1117;border:1px solid var(--border);border-radius:6px;padding:8px 12px}
+  .header-stats .sc-item .val{font-size:18px !important;font-weight:700;color:var(--accent);line-height:1.1}
+  .header-stats .sc-item .lbl{font-size:10px !important;color:var(--muted);margin-top:2px;line-height:1.2}
+  @media (max-width: 1100px){
+    .header-stats{flex-direction:column;align-items:stretch}
+    .header-stats #stat-grid{grid-template-columns:repeat(2, 1fr)}
+  }
+  @media (max-width: 600px){
+    .header-stats #stat-grid{grid-template-columns:1fr}
+  }
   .nav-link{font-size:12px;color:var(--muted);text-decoration:none;font-weight:600;border:1px solid var(--border);padding:4px 12px;border-radius:99px;white-space:nowrap;transition:color .15s,border-color .15s}
   .nav-link:hover{color:var(--text);border-color:var(--muted)}
   .nav-link-accent{color:var(--accent);border-color:var(--accent)}
@@ -1176,6 +1190,11 @@ HTML = r"""<!DOCTYPE html>
   </nav>
 </header>
 
+<div class="header-stats">
+  <div class="header-stats-label">&#128225; Live Relay Stats <span id="stats-age" class="header-stats-age"></span></div>
+  <div class="stat-grid" id="stat-grid"></div>
+</div>
+
 <div id="icon-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="icon-modal-title">
   <div class="modal-panel">
     <h2 id="icon-modal-title">Edit Relay Icon (NIP-11)</h2>
@@ -1211,14 +1230,6 @@ HTML = r"""<!DOCTYPE html>
   <div style="font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);margin-bottom:8px">&#128209; Relay Configuration & Live Status</div>
 
   <div class="card accordion-container" id="stats-card">
-    <!-- Live Relay Stats at Top -->
-    <div class="static-section">
-      <div class="static-head">📡 Live Relay Stats <span id="stats-age" style="font-size:11px;color:var(--muted);font-weight:400;margin-left:8px"></span></div>
-      <div class="static-body">
-        <div class="stat-grid" id="stat-grid"></div>
-      </div>
-    </div>
-
     <!-- Recent Events -->
     <details class="accordion-section" open>
       <summary id="events-head">&#x1F4CB; Recent Events</summary>
