@@ -3,127 +3,961 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>₿YO₿-NOSTR-RELAY</title>
+    <title>BYOB-NOSTR-RELAY</title>
     <style>
+      :root {
+        --bg0: #0a0f1f;
+        --bg1: #121a33;
+        --card: rgba(17, 25, 48, 0.78);
+        --line: rgba(255, 255, 255, 0.14);
+        --text: #edf3ff;
+        --muted: #aab8d6;
+        --accent: #ff9d2e;
+        --ok: #27c46a;
+        --bad: #ff5f5f;
+        --pending: #ffcc4d;
+      }
+
       * {
         box-sizing: border-box;
-        margin: 0;
-        padding: 0;
       }
+
       body {
-        background: #0d0d0d;
-        color: #e0e0e0;
-        font-family: "Segoe UI", system-ui, sans-serif;
+        margin: 0;
+        min-height: 100vh;
+        font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+        color: var(--text);
+        background:
+          radial-gradient(1200px 600px at 85% -5%, #2a3f86 0%, transparent 62%),
+          radial-gradient(
+            900px 500px at -10% 100%,
+            #4a2f2f 0%,
+            transparent 65%
+          ),
+          linear-gradient(145deg, var(--bg0), var(--bg1));
+        padding: 14px;
+      }
+
+      .layout {
+        width: 100%;
+        max-width: 1520px;
+        margin: 0 auto;
+      }
+
+      .center {
+        width: 100%;
+        min-width: 0;
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        padding: 22px;
+        background: var(--card);
+        backdrop-filter: blur(10px);
+        box-shadow: 0 14px 45px rgba(0, 0, 0, 0.35);
+      }
+
+      .live-header {
+        margin-bottom: 18px;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: rgba(9, 14, 28, 0.65);
+        padding: 12px;
+        display: block;
+      }
+
+      .connected-panel {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: rgba(7, 10, 21, 0.5);
+        padding: 12px;
+      }
+
+      .relay-summary {
+        font-size: 0.8rem;
+        color: var(--muted);
+        font-weight: 400;
+        text-align: right;
+      }
+
+      .relay-meta-row {
+        margin-top: 8px;
         display: flex;
         align-items: center;
-        justify-content: center;
-        min-height: 100vh;
-        padding: 2rem;
+        justify-content: space-between;
+        gap: 10px;
       }
-      .card {
-        background: #1a1a1a;
-        border: 1px solid #2a2a2a;
-        border-radius: 1rem;
-        max-width: 480px;
-        width: 100%;
-        padding: 2.5rem 2rem;
-        text-align: center;
+
+      .relay-list {
+        margin-top: 10px;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+        gap: 8px;
+        max-height: 140px;
+        overflow: auto;
+        padding-right: 2px;
       }
-      .icon {
-        width: 80px;
-        height: 80px;
-        border-radius: 50%;
-        object-fit: cover;
-        margin-bottom: 1.25rem;
-        border: 2px solid #f7931a44;
+
+      .relay-item {
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 8px 9px;
+        background: rgba(255, 255, 255, 0.03);
+        display: grid;
+        gap: 4px;
       }
-      h1 {
-        font-size: 1.4rem;
-        font-weight: 700;
-        color: #f7931a;
-        letter-spacing: 0.05em;
-        margin-bottom: 0.5rem;
-      }
-      p {
-        font-size: 0.9rem;
-        color: #888;
-        line-height: 1.6;
-        margin-bottom: 1.75rem;
-      }
-      .links {
+
+      .relay-top {
         display: flex;
-        flex-direction: column;
-        gap: 0.75rem;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
       }
-      a.btn {
-        display: block;
-        padding: 0.6rem 1rem;
-        border-radius: 0.5rem;
-        text-decoration: none;
-        font-size: 0.88rem;
-        font-weight: 600;
-        transition: opacity 0.15s;
+
+      .relay-url {
+        font-size: 0.76rem;
+        color: var(--text);
+        line-height: 1.3;
+        margin: 0;
+        word-break: break-all;
       }
-      a.btn:hover {
-        opacity: 0.8;
+
+      .status-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 2px 8px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        font-size: 0.74rem;
+        white-space: nowrap;
       }
-      a.btn.primary {
-        background: #f7931a;
-        color: #0d0d0d;
+
+      .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--pending);
       }
-      a.btn.secondary {
-        background: #252525;
-        color: #c0c0c0;
-        border: 1px solid #333;
+
+      .online .dot {
+        background: var(--ok);
       }
-      .ws-hint {
-        margin-top: 1.75rem;
+
+      .offline .dot {
+        background: var(--bad);
+      }
+
+      .refresh-note {
+        margin-top: 0;
+        font-size: 0.74rem;
+        color: var(--muted);
+        opacity: 0.9;
+        text-align: left;
+      }
+
+      .stats-panel {
+        margin-top: 18px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: rgba(7, 10, 21, 0.5);
+        padding: 12px;
+      }
+
+      .stats-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 10px;
+      }
+
+      .stats-title {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--text);
+      }
+
+      .stats-note {
         font-size: 0.78rem;
-        color: #444;
+        color: var(--muted);
       }
+
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .stats-card {
+        min-width: 0;
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: rgba(7, 10, 21, 0.65);
+      }
+
+      .stats-value {
+        color: var(--accent);
+        font-size: clamp(1.1rem, 2.5vw, 1.8rem);
+        font-weight: 700;
+        line-height: 1.2;
+      }
+
+      .stats-value-small {
+        font-size: clamp(0.92rem, 1.8vw, 1.05rem);
+      }
+
+      .stats-label {
+        margin-top: 6px;
+        color: var(--muted);
+        font-size: 0.76rem;
+      }
+
+      h1 {
+        margin: 0 0 8px;
+        font-size: clamp(1.9rem, 4vw, 2.5rem);
+        color: var(--accent);
+        letter-spacing: 0.02em;
+      }
+
+      .title-row {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .title-logo {
+        width: 46px;
+        height: 46px;
+        border-radius: 10px;
+        border: 1px solid var(--line);
+        background: rgba(7, 10, 21, 0.65);
+      }
+
+      p {
+        margin: 8px 0;
+        color: var(--muted);
+        line-height: 1.5;
+      }
+
       code {
-        background: #222;
-        padding: 0.15em 0.4em;
-        border-radius: 0.3em;
-        font-family: monospace;
-        color: #aaa;
+        display: inline-block;
+        margin-top: 12px;
+        padding: 10px 12px;
+        border-radius: 10px;
+        border: 1px solid var(--line);
+        background: rgba(7, 10, 21, 0.65);
+        color: var(--text);
+        font-size: 0.95rem;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 18px;
+      }
+
+      .btn {
+        text-decoration: none;
+        color: #fff;
+        border-radius: 999px;
+        padding: 9px 14px;
+        border: 1px solid transparent;
+        font-weight: 600;
+        font-size: 0.92rem;
+      }
+
+      .btn-primary {
+        background: #e6871f;
+      }
+
+      .btn-secondary {
+        background: transparent;
+        border-color: var(--line);
+        color: var(--text);
+      }
+
+      .nip11 {
+        margin-top: 18px;
+        padding-top: 16px;
+        border-top: 1px dashed var(--line);
+        font-size: 0.93rem;
+        color: var(--muted);
+      }
+
+      #relay-supported-nips a {
+        color: var(--accent);
+      }
+
+      .events-section {
+        margin-top: 18px;
+        border-top: 1px dashed var(--line);
+        padding-top: 16px;
+      }
+
+      .events-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 10px;
+      }
+
+      .events-title {
+        margin: 0;
+        font-size: 1rem;
+        color: var(--text);
+      }
+
+      .events-note {
+        font-size: 0.78rem;
+        color: var(--muted);
+      }
+
+      .events-grid {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        overflow: hidden;
+      }
+
+      .events-row {
+        display: grid;
+        grid-template-columns: minmax(130px, 170px) 70px minmax(0, 1fr);
+        gap: 10px;
+        align-items: center;
+        padding: 8px 10px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        background: rgba(7, 10, 21, 0.5);
+      }
+
+      .events-row:last-child {
+        border-bottom: 0;
+      }
+
+      .events-row.events-head-row {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        color: var(--muted);
+        letter-spacing: 0.04em;
+        font-weight: 600;
+        background: rgba(255, 255, 255, 0.04);
+      }
+
+      .event-time {
+        font-size: 0.8rem;
+        color: var(--muted);
+      }
+
+      .event-kind {
+        font-size: 0.85rem;
+        color: #c88dff;
+        font-weight: 700;
+      }
+
+      .event-msg {
+        font-size: 0.83rem;
+        color: var(--text);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .events-empty {
+        padding: 14px;
+        color: var(--muted);
+        font-size: 0.85rem;
+        background: rgba(7, 10, 21, 0.5);
+      }
+
+      @media (max-width: 1180px) {
+        .stats-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+
+      @media (max-width: 760px) {
+        .events-row {
+          grid-template-columns: minmax(110px, 130px) 55px minmax(0, 1fr);
+          gap: 8px;
+          padding: 8px;
+        }
+      }
+
+      @media (max-width: 520px) {
+        .stats-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .stats-head,
+        .events-head {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .relay-list {
+          grid-template-columns: 1fr;
+        }
+
+        .relay-meta-row {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+
+        .relay-summary {
+          text-align: left;
+        }
+
+        .events-row {
+          grid-template-columns: 1fr;
+          gap: 4px;
+        }
+
+        .events-row.events-head-row {
+          display: none;
+        }
+
+        .event-time,
+        .event-kind,
+        .event-msg {
+          white-space: normal;
+        }
       }
     </style>
   </head>
   <body>
-    <div class="card">
-      <img
-        class="icon"
-        src="https://mlrfbrwtol0a.i.optimole.com/w:264/h:300/q:mauto/f:best/https://janx.com/wp-content/uploads/2025/08/study-bitcoin.jpg"
-        alt="₿YO₿ icon"
-      />
-      <h1>₿YO₿-NOSTR-RELAY</h1>
-      <p>
-        WSS:NIP+ZAP ⚡ ₿E-YOUR-OWN-₿ANK Private Relay<br />
-        Contact:
-        <a href="mailto:satwise@janx.com" style="color: #f7931a"
-          >satwise@janx.com</a
-        >
-      </p>
-      <div class="links">
-        <a
-          class="btn primary"
-          href="https://janx.com"
-          target="_blank"
-          rel="noopener"
-          >₿YO₿ — janx.com</a
-        >
-        <a
-          class="btn secondary"
-          href="https://nostrudel.ninja/relays/wss%3A%2F%2Fnostr.janx.com"
-          target="_blank"
-          rel="noopener"
-          >View on Nostrudel</a
-        >
-      </div>
-      <div class="ws-hint">
-        Connect via Nostr client: <code>wss://nostr.janx.com</code>
-      </div>
+    <div class="layout">
+      <main class="center">
+        <section class="live-header" aria-label="Live relay header">
+          <div class="connected-panel">
+            <div class="relay-list" id="relay-list"></div>
+            <div class="relay-meta-row">
+              <div class="refresh-note">
+                Live checks update automatically in this browser session.
+              </div>
+              <div class="relay-summary" id="relay-summary">
+                Connected Relays 0/0
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <h1>
+          <span class="title-row">
+            <img
+              class="title-logo"
+              alt="BYOB-NOSTR-RELAY logo"
+              src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='84' height='84' viewBox='0 0 84 84'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%235936c6'/%3E%3Cstop offset='1' stop-color='%238a5cff'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect x='2' y='2' width='80' height='80' rx='18' fill='url(%23g)'/%3E%3Ccircle cx='42' cy='42' r='18' fill='none' stroke='%23fff' stroke-width='5'/%3E%3Ccircle cx='30' cy='32' r='4' fill='%23fff'/%3E%3Ccircle cx='54' cy='32' r='4' fill='%23fff'/%3E%3Cpath d='M30 54c4-4 20-4 24 0' fill='none' stroke='%23fff' stroke-linecap='round' stroke-width='5'/%3E%3C/svg%3E"
+            />
+            <span id="relay-name">BYOB-NOSTR-RELAY</span>
+          </span>
+        </h1>
+        <p id="relay-description">Loading NIP-11 description...</p>
+        <code>wss://nostr.janx.com</code>
+        <p id="relay-contact">Contact: Loading NIP-11 contact...</p>
+        <p id="relay-supported-nips">
+          Supported NIPs: Loading NIP-11 supported_nips...
+        </p>
+
+        <div class="actions">
+          <a
+            class="btn btn-primary"
+            href="https://nostrudel.ninja/relays/wss%3A%2F%2Fnostr.janx.com%2F"
+            >Open in Nostrudel</a
+          >
+          <a
+            class="btn btn-secondary"
+            href="https://janx.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            >Open Janx.com</a
+          >
+        </div>
+
+        <div class="nip11" id="nip11">Loading software metadata...</div>
+
+        <section class="stats-panel" aria-label="Live relay stats">
+          <div class="stats-head">
+            <h2 class="stats-title">Live Relay Stats</h2>
+            <span class="stats-note" id="stats-footer-note"
+              >Loading dashboard stats...</span
+            >
+          </div>
+          <div class="stats-grid">
+            <div class="stats-card">
+              <div class="stats-value" id="stats-active-nips">--</div>
+              <div class="stats-label">
+                Active vs. Available NIPs Processing
+              </div>
+            </div>
+            <div class="stats-card">
+              <div
+                class="stats-value stats-value-small"
+                id="stats-latest-event"
+              >
+                --
+              </div>
+              <div class="stats-label">Latest Event Seen</div>
+            </div>
+            <div class="stats-card">
+              <div class="stats-value" id="stats-active-kinds">--</div>
+              <div class="stats-label">
+                Active vs. Available Kinds Processing
+              </div>
+            </div>
+            <div class="stats-card">
+              <div class="stats-value" id="stats-total-events">--</div>
+              <div class="stats-label">Total Events</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="events-section" aria-label="Recent events">
+          <div class="events-head">
+            <h2 class="events-title">Recent Events</h2>
+            <span class="events-note" id="events-note"
+              >Loading latest 25 events...</span
+            >
+          </div>
+          <div class="events-grid" id="events-grid">
+            <div class="events-row events-head-row">
+              <div>Timestamp</div>
+              <div>Kind</div>
+              <div>Message</div>
+            </div>
+            <div class="events-empty">Loading events...</div>
+          </div>
+        </section>
+      </main>
     </div>
+
+    <script>
+      const fallbackRelays = [
+        "wss://nostr.janx.com",
+        "wss://nos.lol",
+        "wss://relay.damus.io",
+      ];
+      let configuredRelays = [...fallbackRelays];
+      const recentEventsLimit = 25;
+
+      const relayListEl = document.getElementById("relay-list");
+      const relaySummaryEl = document.getElementById("relay-summary");
+      const nip11El = document.getElementById("nip11");
+      const relayNameEl = document.getElementById("relay-name");
+      const relayDescriptionEl = document.getElementById("relay-description");
+      const relayContactEl = document.getElementById("relay-contact");
+      const relaySupportedNipsEl = document.getElementById(
+        "relay-supported-nips",
+      );
+      const statsFooterNoteEl = document.getElementById("stats-footer-note");
+      const statsActiveNipsEl = document.getElementById("stats-active-nips");
+      const statsLatestEventEl = document.getElementById("stats-latest-event");
+      const statsActiveKindsEl = document.getElementById("stats-active-kinds");
+      const statsTotalEventsEl = document.getElementById("stats-total-events");
+      const eventsGridEl = document.getElementById("events-grid");
+      const eventsNoteEl = document.getElementById("events-note");
+      const titleLogoEl = document.querySelector(".title-logo");
+      const fallbackLogo = titleLogoEl ? titleLogoEl.src : "";
+
+      function renderSupportedNips(supportedNips) {
+        const validNips = Array.isArray(supportedNips)
+          ? supportedNips.filter((nip) => Number.isInteger(nip) && nip >= 0)
+          : [];
+
+        if (!validNips.length) {
+          return "Supported NIPs: n/a";
+        }
+
+        return (
+          "Supported NIPs: " +
+          validNips
+            .map((nip) => {
+              const fileName = String(nip).padStart(2, "0") + ".md";
+              return (
+                '<a href="https://github.com/nostr-protocol/nips/blob/master/' +
+                fileName +
+                '" target="_blank" rel="noopener noreferrer">NIP-' +
+                fileName.slice(0, 2) +
+                "</a>"
+              );
+            })
+            .join(", ")
+        );
+      }
+
+      function formatFooterDate(unixSeconds) {
+        if (!Number.isFinite(unixSeconds)) {
+          return "--";
+        }
+
+        const dt = new Date(unixSeconds * 1000);
+        if (Number.isNaN(dt.getTime())) {
+          return "--";
+        }
+
+        return (
+          dt.toLocaleDateString(undefined, {
+            month: "2-digit",
+            day: "2-digit",
+            year: "2-digit",
+          }) +
+          " " +
+          dt.toLocaleTimeString(undefined, {
+            hour: "2-digit",
+            minute: "2-digit",
+          })
+        );
+      }
+
+      function escapeHtml(raw) {
+        return String(raw ?? "")
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#039;");
+      }
+
+      function setStatsUnavailable(message) {
+        if (statsFooterNoteEl) {
+          statsFooterNoteEl.textContent = message;
+        }
+        if (statsActiveNipsEl) {
+          statsActiveNipsEl.textContent = "--";
+        }
+        if (statsLatestEventEl) {
+          statsLatestEventEl.textContent = "--";
+        }
+        if (statsActiveKindsEl) {
+          statsActiveKindsEl.textContent = "--";
+        }
+        if (statsTotalEventsEl) {
+          statsTotalEventsEl.textContent = "--";
+        }
+      }
+
+      function setEventsUnavailable(message) {
+        if (eventsNoteEl) {
+          eventsNoteEl.textContent = message;
+        }
+        if (eventsGridEl) {
+          eventsGridEl.innerHTML =
+            '<div class="events-row events-head-row"><div>Timestamp</div><div>Kind</div><div>Message</div></div>' +
+            '<div class="events-empty">Events unavailable.</div>';
+        }
+      }
+
+      async function loadConfiguredRelays() {
+        try {
+          const res = await fetch("/api/store", {
+            headers: { Accept: "application/json" },
+            cache: "no-store",
+          });
+
+          if (!res.ok) throw new Error("Store HTTP " + res.status);
+
+          const store = await res.json();
+          const relays = Array.isArray(store.relays)
+            ? store.relays
+                .map((relay) => (relay || "").trim())
+                .filter((relay) => relay.length > 0)
+            : [];
+
+          configuredRelays = relays.length ? relays : [...fallbackRelays];
+        } catch (_) {
+          configuredRelays = [...fallbackRelays];
+        }
+      }
+
+      async function loadRelayHeaderStats() {
+        try {
+          const res = await fetch("/api/public-stats", {
+            headers: { Accept: "application/json" },
+            cache: "no-store",
+          });
+          if (!res.ok) throw new Error("Stats HTTP " + res.status);
+
+          const stats = await res.json();
+          if (statsActiveNipsEl) {
+            statsActiveNipsEl.textContent =
+              String(stats.active_supported_nips ?? 0) +
+              " / " +
+              String(stats.total_supported_nips ?? 0);
+          }
+          if (statsLatestEventEl) {
+            statsLatestEventEl.textContent = formatFooterDate(
+              Number(stats.latest_event_at),
+            );
+          }
+          if (statsActiveKindsEl) {
+            statsActiveKindsEl.textContent =
+              String(stats.active_supported_kinds ?? 0) +
+              " / " +
+              String(stats.total_supported_kinds ?? 0);
+          }
+          if (statsTotalEventsEl) {
+            const totalEvents = Number(stats.total_events ?? 0);
+            statsTotalEventsEl.textContent = Number.isFinite(totalEvents)
+              ? totalEvents.toLocaleString()
+              : "0";
+          }
+          if (statsFooterNoteEl) {
+            statsFooterNoteEl.textContent = "Live dashboard snapshot";
+          }
+        } catch (err) {
+          setStatsUnavailable("Dashboard stats unavailable: " + err.message);
+        }
+      }
+
+      function createRelayRow(url) {
+        const row = document.createElement("div");
+        row.className = "relay-item";
+        row.innerHTML =
+          '<div class="relay-top">' +
+          '<span class="status-chip pending"><span class="dot"></span><span>checking</span></span>' +
+          "</div>" +
+          '<p class="relay-url"></p>';
+        row.querySelector(".relay-url").textContent = url;
+        return row;
+      }
+
+      function setChip(chip, state, label) {
+        chip.className = "status-chip " + state;
+        const labelEl = chip.querySelector("span:last-child");
+        labelEl.textContent = label;
+      }
+
+      function probeRelay(url, timeoutMs) {
+        return new Promise((resolve) => {
+          let done = false;
+          let ws;
+          const timer = setTimeout(() => {
+            if (done) return;
+            done = true;
+            try {
+              if (ws) ws.close();
+            } catch (_) {}
+            resolve(false);
+          }, timeoutMs);
+
+          try {
+            ws = new WebSocket(url);
+          } catch (_) {
+            clearTimeout(timer);
+            resolve(false);
+            return;
+          }
+
+          ws.onopen = () => {
+            if (done) return;
+            done = true;
+            clearTimeout(timer);
+            try {
+              ws.close();
+            } catch (_) {}
+            resolve(true);
+          };
+
+          ws.onerror = () => {
+            if (done) return;
+            done = true;
+            clearTimeout(timer);
+            resolve(false);
+          };
+        });
+      }
+
+      async function renderRelayStatus() {
+        if (!relayListEl || !relaySummaryEl) {
+          return;
+        }
+
+        relayListEl.innerHTML = "";
+        const unique = Array.from(
+          new Set(
+            configuredRelays
+              .map((relay) => (relay || "").trim())
+              .filter(Boolean),
+          ),
+        );
+
+        if (!unique.length) {
+          relaySummaryEl.textContent = "Connected Relays 0/0";
+          return;
+        }
+
+        relaySummaryEl.textContent =
+          "Connected Relays checking " + unique.length + "...";
+
+        const rows = unique.map((url) => {
+          const row = createRelayRow(url);
+          relayListEl.appendChild(row);
+          return { url, row, chip: row.querySelector(".status-chip") };
+        });
+
+        let onlineCount = 0;
+        await Promise.all(
+          rows.map(async ({ url, chip }) => {
+            const ok = await probeRelay(url, 4500);
+            if (ok) {
+              onlineCount += 1;
+              setChip(chip, "online", "connected");
+            } else {
+              setChip(chip, "offline", "offline");
+            }
+          }),
+        );
+
+        relaySummaryEl.textContent =
+          "Connected Relays " + onlineCount + "/" + rows.length;
+      }
+
+      async function loadRecentEvents() {
+        try {
+          const res = await fetch("/api/stats", {
+            headers: { Accept: "application/json" },
+            cache: "no-store",
+          });
+          if (!res.ok) throw new Error("Events HTTP " + res.status);
+
+          const payload = await res.json();
+          const latest = Array.isArray(payload.latest)
+            ? payload.latest.slice(0, recentEventsLimit)
+            : [];
+
+          if (eventsGridEl) {
+            const rows = latest
+              .map((eventRow) => {
+                const when = Number(eventRow.first_seen ?? eventRow.created_at);
+                const message = eventRow.content_preview || "[no preview]";
+                return (
+                  '<div class="events-row">' +
+                  '<div class="event-time">' +
+                  escapeHtml(formatFooterDate(when)) +
+                  "</div>" +
+                  '<div class="event-kind">' +
+                  escapeHtml(String(eventRow.kind ?? "-")) +
+                  "</div>" +
+                  '<div class="event-msg" title="' +
+                  escapeHtml(message) +
+                  '">' +
+                  escapeHtml(message) +
+                  "</div>" +
+                  "</div>"
+                );
+              })
+              .join("");
+
+            eventsGridEl.innerHTML =
+              '<div class="events-row events-head-row"><div>Timestamp</div><div>Kind</div><div>Message</div></div>' +
+              (rows || '<div class="events-empty">No events yet.</div>');
+          }
+
+          if (eventsNoteEl) {
+            eventsNoteEl.textContent =
+              "Rolling latest " + latest.length + " events";
+          }
+        } catch (err) {
+          setEventsUnavailable("Event feed unavailable: " + err.message);
+        }
+      }
+
+      async function loadNip11() {
+        try {
+          const res = await fetch("/", {
+            headers: { Accept: "application/nostr+json" },
+            cache: "no-store",
+          });
+          if (!res.ok) throw new Error("NIP-11 HTTP " + res.status);
+          const j = await res.json();
+          const nip11Icon =
+            typeof j.icon === "string" && j.icon.trim() ? j.icon.trim() : "";
+          const nip11Name =
+            typeof j.name === "string" && j.name.trim()
+              ? j.name.trim()
+              : "BYOB-NOSTR-RELAY";
+          const nip11Description =
+            typeof j.description === "string" && j.description.trim()
+              ? j.description.trim()
+              : "NIP-11 description unavailable.";
+          const nip11Contact =
+            typeof j.contact === "string" && j.contact.trim()
+              ? j.contact.trim()
+              : "n/a";
+          const nip11SupportedNips = Array.isArray(j.supported_nips)
+            ? j.supported_nips
+            : [];
+          const nip11Software =
+            typeof j.software === "string" && j.software.trim()
+              ? j.software.trim()
+              : "n/a";
+          const nip11Version =
+            typeof j.version === "string" && j.version.trim()
+              ? j.version.trim()
+              : "n/a";
+
+          if (relayNameEl) {
+            relayNameEl.textContent = nip11Name;
+          }
+
+          if (relayDescriptionEl) {
+            relayDescriptionEl.textContent = nip11Description;
+          }
+
+          if (relayContactEl) {
+            relayContactEl.textContent = "Contact: " + nip11Contact;
+          }
+
+          if (relaySupportedNipsEl) {
+            relaySupportedNipsEl.innerHTML =
+              renderSupportedNips(nip11SupportedNips);
+          }
+
+          document.title = nip11Name;
+
+          if (titleLogoEl) {
+            titleLogoEl.onerror = () => {
+              titleLogoEl.src = fallbackLogo;
+            };
+            titleLogoEl.src = nip11Icon || fallbackLogo;
+          }
+
+          nip11El.textContent =
+            "SOFTWARE: https://github.com/satwise/nostr-rs-relay | version: 0.9.1-beta fork of " +
+            nip11Software +
+            " | version: " +
+            nip11Version;
+        } catch (err) {
+          if (relayDescriptionEl) {
+            relayDescriptionEl.textContent =
+              "NIP-11 description unavailable: " + err.message;
+          }
+          if (relayContactEl) {
+            relayContactEl.textContent = "Contact unavailable: " + err.message;
+          }
+          if (relaySupportedNipsEl) {
+            relaySupportedNipsEl.textContent =
+              "Supported NIPs unavailable: " + err.message;
+          }
+          nip11El.textContent = "Software metadata unavailable: " + err.message;
+        }
+      }
+
+      async function boot() {
+        await loadConfiguredRelays();
+        await renderRelayStatus();
+        await Promise.all([
+          loadNip11(),
+          loadRelayHeaderStats(),
+          loadRecentEvents(),
+        ]);
+
+        setInterval(loadRelayHeaderStats, 15000);
+        setInterval(loadRecentEvents, 15000);
+        setInterval(renderRelayStatus, 20000);
+      }
+
+      boot();
+    </script>
   </body>
 </html>
