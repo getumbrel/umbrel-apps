@@ -1044,19 +1044,18 @@ HTML = r"""<!DOCTYPE html>
   header{background:var(--card);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
   header h1{font-size:18px;font-weight:600}
   .badge{background:var(--accent);color:#fff;font-size:11px;padding:2px 8px;border-radius:99px}
-  .header-stats{background:var(--card);border-bottom:1px solid var(--border);padding:10px 24px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
-  .header-stats .header-stats-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);display:flex;align-items:center;gap:6px;white-space:nowrap}
+  .header-stats{background:var(--card);border-bottom:1px solid var(--border);padding:10px 24px;display:flex;align-items:center;gap:14px;flex-wrap:nowrap}
+  .header-stats .header-stats-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);display:flex;align-items:center;gap:6px;white-space:nowrap;flex-shrink:0}
   .header-stats .header-stats-age{font-size:10px;color:var(--muted);font-weight:400;margin-left:4px}
   .header-stats #stat-grid{flex:1;display:grid;grid-template-columns:repeat(4, 1fr);gap:10px;margin:0;min-width:0}
-  .header-stats .sc-item{background:#0f1117;border:1px solid var(--border);border-radius:6px;padding:8px 12px}
+  .header-stats .sc-item{background:#0f1117;border:1px solid var(--border);border-radius:6px;padding:8px 12px;min-width:0}
   .header-stats .sc-item .val{font-size:18px !important;font-weight:700;color:var(--accent);line-height:1.1}
   .header-stats .sc-item .lbl{font-size:10px !important;color:var(--muted);margin-top:2px;line-height:1.2}
-  @media (max-width: 1100px){
-    .header-stats{flex-direction:column;align-items:stretch}
-    .header-stats #stat-grid{grid-template-columns:repeat(2, 1fr)}
-  }
-  @media (max-width: 600px){
-    .header-stats #stat-grid{grid-template-columns:1fr}
+  .header-stats .header-relay-icon{width:56px;height:56px;border-radius:8px;object-fit:cover;border:1px solid var(--border);background:#0f1117;flex-shrink:0;margin-left:auto}
+  .header-stats .header-relay-icon[src=''],.header-stats .header-relay-icon:not([src]){display:none}
+  @media (max-width: 700px){
+    .header-stats{flex-wrap:wrap}
+    .header-stats #stat-grid{grid-template-columns:repeat(2, 1fr);flex-basis:100%}
   }
   .nav-link{font-size:12px;color:var(--muted);text-decoration:none;font-weight:600;border:1px solid var(--border);padding:4px 12px;border-radius:99px;white-space:nowrap;transition:color .15s,border-color .15s}
   .nav-link:hover{color:var(--text);border-color:var(--muted)}
@@ -1193,25 +1192,7 @@ HTML = r"""<!DOCTYPE html>
 <div class="header-stats">
   <div class="header-stats-label">&#128225; Live Relay Stats <span id="stats-age" class="header-stats-age"></span></div>
   <div class="stat-grid" id="stat-grid"></div>
-</div>
-
-<div id="icon-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="icon-modal-title">
-  <div class="modal-panel">
-    <h2 id="icon-modal-title">Edit Relay Icon (NIP-11)</h2>
-    <div class="field">
-      <label>Relay Icon URL</label>
-      <input type="text" id="profile-icon-url" placeholder="https://example.com/relay-icon.png or data: URI">
-    </div>
-    <div class="icon-preview-wrap">
-      <img id="profile-icon-preview" class="icon-preview" alt="Relay icon preview">
-      <div class="icon-preview-note">Tip: Paste an image URL or use the file upload button in the left column. Save writes config; restart relay stack to apply NIP-11 changes everywhere.</div>
-    </div>
-    <div class="actions">
-      <button id="save-profile-icon-btn">Save Icon</button>
-      <button class="secondary" id="close-icon-modal">Cancel</button>
-      <span class="notice" id="profile-icon-notice"></span>
-    </div>
-  </div>
+  <img id="profile-icon-preview" class="header-relay-icon" alt="Relay icon (NIP-11)">
 </div>
 
 <div id="event-message-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="event-message-modal-title">
@@ -1258,7 +1239,6 @@ HTML = r"""<!DOCTYPE html>
                         <span class="icon-preview-img" style="font-size:56px;width:100%;height:100%;display:flex;align-items:center;justify-content:center"></span>
                       </div>
                       <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center">
-                        <button class="edit-icon-btn" style="padding:6px 10px;font-size:12px" id="open-icon-modal" onclick="document.getElementById('icon-modal').classList.add('open')">&#9998; Edit</button>
                         <button class="edit-icon-btn" style="padding:6px 10px;font-size:12px" onclick="restartProfile('fix_icon')" title="Restart web runtime to refresh icon cache.">&#8635; Refresh</button>
                       </div>
                     </div>
@@ -2604,6 +2584,8 @@ async function loadConfig(){
       ? `<img src="${_escapeHtml(icon)}" alt="${_escapeHtml(relayName)}" style="width:100%;height:100%;object-fit:contain" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'icon-fallback',textContent:'\\u26a1',style:'font-size:40px'}))">`
       : `<span class="icon-fallback" style="font-size:40px">&#9889;</span>`;
   }
+
+  _setProfileIconPreview(c.info.relay_icon || '');
 
   const modalInput = document.getElementById('profile-icon-url');
   const modal = document.getElementById('icon-modal');
