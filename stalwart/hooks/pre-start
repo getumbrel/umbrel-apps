@@ -1,0 +1,369 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+APP_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")"
+APP_DATA_DIR="${APP_DIR}/data"
+APP_COMPOSE_FILE="${APP_DIR}/docker-compose.yml"
+APP_COMPOSE_BACKUP_FILE="${APP_DIR}/docker-compose.yml.v016-migration.bak"
+
+LEGACY_ROOT="${APP_DATA_DIR}"
+LEGACY_CONFIG_TOML="${LEGACY_ROOT}/etc/config.toml"
+LEGACY_DATA_DIR="${LEGACY_ROOT}/data"
+FINAL_ETC_DIR="${LEGACY_ROOT}/etc"
+FINAL_SERVER_DIR="${LEGACY_ROOT}/server"
+FINAL_CONFIG_JSON="${FINAL_ETC_DIR}/config.json"
+
+MIGRATION_DIR="${APP_DATA_DIR}/migration-v016"
+MIGRATION_SCRIPT="${MIGRATION_DIR}/migrate_v016.py"
+MIGRATION_SCRIPT_URL="https://raw.githubusercontent.com/stalwartlabs/stalwart/b1c76b3a9f0508c21638c3507fbd3aa00fb34a7f/resources/scripts/migrate_v016.py"
+MIGRATION_PYTHON_IMAGE="python:3.13-alpine"
+STALWART_CLI_INSTALLER_URL="https://github.com/stalwartlabs/cli/releases/download/v1.0.4/stalwart-cli-installer.sh"
+SETTINGS_JSON="${MIGRATION_DIR}/settings.json"
+PRINCIPALS_JSON="${MIGRATION_DIR}/principals.json"
+GENERATED_CONFIG_JSON="${MIGRATION_DIR}/config.json"
+EXPORT_JSON="${MIGRATION_DIR}/export.json"
+UNMIGRATED_TXT="${MIGRATION_DIR}/unmigrated.txt"
+FALLBACK_DEFAULT_HOSTNAME="stalwart.example.com"
+
+LOCK_FILE="${APP_DATA_DIR}/.v016_migrating"
+DONE_FILE="${APP_DATA_DIR}/.v016_migrated"
+DUMP_DONE_FILE="${APP_DATA_DIR}/.v016_dumped"
+APPLY_DONE_FILE="${APP_DATA_DIR}/.v016_applied"
+
+OLD_IMAGE="stalwartlabs/stalwart:v0.15.5@sha256:dcf575db2d53d9ef86d6ced8abe4ba491984659a0f8862cc6079ee7b41c3c568"
+FINAL_IMAGE="stalwartlabs/stalwart:v0.16.3@sha256:5d75cff4e9c6d75e64636e9ef9674b1d877f8f6fb2e11ee8176fbad3faaa5289"
+OLD_PROXY_PORT="8745"
+OLD_HTTP_PORT="18080"
+OLD_HTTP_URL=""
+RECOVERY_CONTAINER="stalwart-v016-recovery"
+RECOVERY_PORT="38080"
+OLD_APP_STARTED=0
+
+restore_compose() {
+  if [[ -f "${APP_COMPOSE_BACKUP_FILE}" ]]; then
+    mv "${APP_COMPOSE_BACKUP_FILE}" "${APP_COMPOSE_FILE}"
+  fi
+}
+
+cleanup() {
+  local exit_code=$?
+
+  if [[ ${exit_code} -ne 0 ]]; then
+    echo "Stalwart v0.16 migration failed. Cleaning up temporary state..."
+    if [[ "${OLD_APP_STARTED}" == "1" ]]; then
+      "${UMBREL_ROOT}/scripts/app" stop "${APP_ID}" >/dev/null 2>&1 || true
+    fi
+    docker rm -f "${RECOVERY_CONTAINER}" >/dev/null 2>&1 || true
+    restore_compose
+  fi
+
+  rm -f "${LOCK_FILE}"
+}
+trap cleanup EXIT
+
+if [[ -f "${DONE_FILE}" ]]; then
+  touch "${DONE_FILE}"
+  exit 0
+fi
+
+if [[ -f "${FINAL_CONFIG_JSON}" && ! -f "${LEGACY_CONFIG_TOML}" && ! -d "${LEGACY_DATA_DIR}" ]]; then
+  touch "${DONE_FILE}"
+  exit 0
+fi
+
+if [[ -f "${LOCK_FILE}" ]]; then
+  echo "Stalwart v0.16 migration already in progress. Allowing nested app start to continue."
+  exit 0
+fi
+
+if [[ ! -f "${LEGACY_CONFIG_TOML}" && ! -d "${LEGACY_DATA_DIR}" ]]; then
+  mkdir -p "${FINAL_ETC_DIR}" "${FINAL_SERVER_DIR}"
+  touch "${DONE_FILE}"
+  exit 0
+fi
+
+require_command() {
+  local command_name="${1}"
+
+  if ! command -v "${command_name}" >/dev/null 2>&1; then
+    echo "Error: ${command_name} is required for the Stalwart v0.16 migration."
+    exit 1
+  fi
+}
+
+wait_for_url() {
+  local url="${1}"
+  local max_wait="${2}"
+  local elapsed=0
+  local interval=5
+
+  while [[ ${elapsed} -lt ${max_wait} ]]; do
+    if curl -fsSk "${url}" >/dev/null 2>&1; then
+      return 0
+    fi
+
+    sleep "${interval}"
+    elapsed=$((elapsed + interval))
+  done
+
+  echo "Timed out waiting for ${url}"
+  return 1
+}
+
+wait_for_v015_api() {
+  local max_wait="${1}"
+  local elapsed=0
+  local interval=5
+  local url
+  local urls=(
+    "http://127.0.0.1:${OLD_PROXY_PORT}"
+    "http://127.0.0.1:${OLD_HTTP_PORT}"
+  )
+
+  while [[ ${elapsed} -lt ${max_wait} ]]; do
+    for url in "${urls[@]}"; do
+      if curl -fsS -u "admin:${APP_PASSWORD}" "${url}/api/settings/list?prefix=&page=1&limit=1" >/dev/null 2>&1; then
+        OLD_HTTP_URL="${url}"
+        return 0
+      fi
+    done
+
+    sleep "${interval}"
+    elapsed=$((elapsed + interval))
+  done
+
+  echo "Timed out waiting for the Stalwart v0.15 management API"
+  return 1
+}
+
+prepare_v015_fallback_admin() {
+  local new_secret
+
+  if [[ ! -f "${LEGACY_CONFIG_TOML}" ]]; then
+    return 0
+  fi
+
+  if ! grep -q "^\[authentication\.fallback-admin\]" "${LEGACY_CONFIG_TOML}"; then
+    return 0
+  fi
+
+  new_secret="$(openssl passwd -6 -salt 8woP51TKJO.JKOp9 "${APP_PASSWORD}")"
+  sed -i.bak "/^\[authentication\.fallback-admin\]/,/^\[/s|^secret = .*|secret = \"${new_secret}\"|" "${LEGACY_CONFIG_TOML}"
+  rm -f "${LEGACY_CONFIG_TOML}.bak"
+}
+
+switch_compose_to_v015() {
+  cp "${APP_COMPOSE_FILE}" "${APP_COMPOSE_BACKUP_FILE}"
+  yq -i ".services.server.image = \"${OLD_IMAGE}\"" "${APP_COMPOSE_FILE}"
+  yq -i '.services.server.user = "1000:1000"' "${APP_COMPOSE_FILE}"
+  yq -i '.services.server.volumes = ["${APP_DATA_DIR}/data:/opt/stalwart"]' "${APP_COMPOSE_FILE}"
+  yq -i ".services.server.ports += [\"127.0.0.1:${OLD_HTTP_PORT}:8080\"]" "${APP_COMPOSE_FILE}"
+}
+
+download_migration_script() {
+  mkdir -p "${MIGRATION_DIR}"
+  curl -fsSL "${MIGRATION_SCRIPT_URL}" -o "${MIGRATION_SCRIPT}"
+  chmod 0755 "${MIGRATION_SCRIPT}"
+}
+
+run_migration_script() {
+  docker run --rm \
+    --network host \
+    -v "${MIGRATION_DIR}:/migration" \
+    -w /migration \
+    "${MIGRATION_PYTHON_IMAGE}" \
+    sh -c 'python -m pip install --quiet --no-cache-dir requests urllib3 && python /migration/migrate_v016.py "$@"' migrate_v016 "$@"
+}
+
+sanitize_export_snapshot() {
+  docker run --rm -i \
+    -e "FALLBACK_DEFAULT_HOSTNAME=${FALLBACK_DEFAULT_HOSTNAME}" \
+    -v "${MIGRATION_DIR}:/migration" \
+    -w /migration \
+    "${MIGRATION_PYTHON_IMAGE}" \
+    python - <<'PY'
+import json
+import os
+import re
+from pathlib import Path
+
+path = Path("/migration/export.json")
+ops = []
+with path.open("r", encoding="utf-8") as handle:
+    for line in handle:
+        line = line.strip()
+        if line:
+            ops.append(json.loads(line))
+
+def valid_hostname(value):
+    if not isinstance(value, str):
+        return False
+    value = value.strip().rstrip(".")
+    if not value or len(value) > 253 or "." not in value:
+        return False
+    reserved_tlds = {"test", "local", "localhost", "invalid", "example"}
+    label_re = re.compile(r"^[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?$")
+    labels = value.split(".")
+    return labels[-1].lower() not in reserved_tlds and all(label_re.match(label) for label in labels)
+
+domains = {}
+for op in ops:
+    if op.get("@type") == "create" and op.get("object") == "Domain":
+        for create_id, value in op.get("value", {}).items():
+            name = value.get("name")
+            if valid_hostname(name):
+                domains[create_id] = name.strip().rstrip(".").lower()
+
+changed = False
+for op in ops:
+    if op.get("@type") != "update" or op.get("object") != "SystemSettings":
+        continue
+    value = op.get("value", {})
+    current = value.get("defaultHostname")
+    if valid_hostname(current):
+        value["defaultHostname"] = current.strip().rstrip(".").lower()
+        continue
+    default_domain_id = str(value.get("defaultDomainId", "")).removeprefix("#")
+    replacement = domains.get(default_domain_id)
+    if replacement is None and domains:
+        replacement = sorted(domains.values())[0]
+    if replacement is None:
+        replacement = os.environ["FALLBACK_DEFAULT_HOSTNAME"]
+    value["defaultHostname"] = replacement
+    print(f"replaced invalid SystemSettings.defaultHostname {current!r} with {replacement!r}")
+    changed = True
+
+if changed:
+    tmp = path.with_suffix(".json.tmp")
+    with tmp.open("w", encoding="utf-8") as handle:
+        for op in ops:
+            handle.write(json.dumps(op, ensure_ascii=False))
+            handle.write("\n")
+    tmp.replace(path)
+PY
+}
+
+run_dump_and_convert() {
+  if [[ -f "${DUMP_DONE_FILE}" && -f "${GENERATED_CONFIG_JSON}" && -f "${EXPORT_JSON}" ]]; then
+    sanitize_export_snapshot
+    return 0
+  fi
+
+  download_migration_script
+
+  run_migration_script dump \
+    --url "${OLD_HTTP_URL:-http://127.0.0.1:${OLD_HTTP_PORT}}" \
+    --username admin \
+    --password "${APP_PASSWORD}" \
+    --settings /migration/settings.json \
+    --principals /migration/principals.json
+
+  run_migration_script convert \
+    --settings /migration/settings.json \
+    --principals /migration/principals.json \
+    --config /migration/config.json \
+    --output /migration/export.json \
+    --patch-paths /opt/stalwart=/var/lib/stalwart \
+    --unmigrated-output /migration/unmigrated.txt
+
+  sanitize_export_snapshot
+  touch "${DUMP_DONE_FILE}"
+}
+
+prepare_v016_layout() {
+  if [[ ! -f "${APPLY_DONE_FILE}" ]]; then
+    rm -rf "${FINAL_SERVER_DIR}"
+  fi
+
+  mkdir -p "${FINAL_ETC_DIR}" "${FINAL_SERVER_DIR}"
+
+  if [[ -d "${LEGACY_DATA_DIR}" ]]; then
+    cp -a "${LEGACY_DATA_DIR}/." "${FINAL_SERVER_DIR}/"
+  fi
+
+  cp "${GENERATED_CONFIG_JSON}" "${FINAL_CONFIG_JSON}"
+  chown -R 1000:1000 "${FINAL_ETC_DIR}" "${FINAL_SERVER_DIR}" 2>/dev/null || true
+}
+
+start_recovery_container() {
+  docker rm -f "${RECOVERY_CONTAINER}" >/dev/null 2>&1 || true
+
+  docker run -d \
+    --name "${RECOVERY_CONTAINER}" \
+    --user "1000:1000" \
+    -e STALWART_RECOVERY_MODE=1 \
+    -e "STALWART_RECOVERY_ADMIN=admin:${APP_PASSWORD}" \
+    -p "127.0.0.1:${RECOVERY_PORT}:8080" \
+    -v "${FINAL_ETC_DIR}:/etc/stalwart" \
+    -v "${FINAL_SERVER_DIR}:/var/lib/stalwart" \
+    "${FINAL_IMAGE}"
+
+  wait_for_url "http://127.0.0.1:${RECOVERY_PORT}/healthz/live" 300
+}
+
+apply_export() {
+  if [[ -f "${APPLY_DONE_FILE}" ]]; then
+    return 0
+  fi
+
+  docker run --rm \
+    --network host \
+    -e STALWART_URL="http://127.0.0.1:${RECOVERY_PORT}" \
+    -e STALWART_USER=admin \
+    -e "STALWART_PASSWORD=${APP_PASSWORD}" \
+    -e "STALWART_CLI_INSTALLER_URL=${STALWART_CLI_INSTALLER_URL}" \
+    -e STALWART_CLI_UNMANAGED_INSTALL=/migration/stalwart-cli \
+    -e STALWART_CLI_NO_MODIFY_PATH=1 \
+    -e STALWART_CLI_PRINT_QUIET=1 \
+    -v "${MIGRATION_DIR}:/migration" \
+    -w /migration \
+    "${MIGRATION_PYTHON_IMAGE}" \
+    sh -ec '
+      if [ ! -x /migration/stalwart-cli/stalwart-cli ]; then
+        rm -rf /migration/stalwart-cli
+        mkdir -p /migration/stalwart-cli
+        wget -qO- "$STALWART_CLI_INSTALLER_URL" | sh
+      fi
+
+      /migration/stalwart-cli/stalwart-cli apply --file /migration/export.json
+    '
+
+  touch "${APPLY_DONE_FILE}"
+}
+
+stop_recovery_container() {
+  docker stop "${RECOVERY_CONTAINER}" >/dev/null 2>&1 || true
+  docker rm "${RECOVERY_CONTAINER}" >/dev/null 2>&1 || true
+}
+
+require_command curl
+require_command docker
+require_command openssl
+require_command yq
+
+if [[ -z "${APP_PASSWORD:-}" ]]; then
+  echo "Error: APP_PASSWORD is required for the Stalwart v0.16 migration."
+  exit 1
+fi
+
+touch "${LOCK_FILE}"
+
+echo "Starting Stalwart v0.15 to v0.16 migration..."
+
+prepare_v015_fallback_admin
+switch_compose_to_v015
+"${UMBREL_ROOT}/scripts/app" start "${APP_ID}"
+OLD_APP_STARTED=1
+wait_for_v015_api 300
+run_dump_and_convert
+"${UMBREL_ROOT}/scripts/app" stop "${APP_ID}"
+OLD_APP_STARTED=0
+restore_compose
+prepare_v016_layout
+start_recovery_container
+apply_export
+stop_recovery_container
+
+touch "${DONE_FILE}"
+
+echo "Stalwart v0.16 migration completed."
