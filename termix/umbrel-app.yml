@@ -3,7 +3,7 @@ id: termix
 name: Termix
 tagline: Manage your servers with built-in SSH, tunnels, and file access
 category: developer
-version: "2.1.0"
+version: "2.2.1"
 port: 6444
 description: >-
   💻 Termix is designed to simplify server administration by bringing powerful management tools into a single, unified interface. At its core, it provides direct access to SSH terminals inside the browser, eliminating the need for external clients. Sessions can be opened in tabs or arranged in split screens, allowing administrators to multitask and manage different systems simultaneously with ease. The terminal experience is responsive and reliable, ensuring that routine tasks such as configuration, updates, and troubleshooting can be performed quickly.
@@ -35,43 +35,31 @@ gallery:
   - 4.jpg
   - 5.jpg
 releaseNotes: >-
-  New features and improvements in this release:
-    - Tmux integration for terminals
-    - Many new UI themes including Dracula and midnight espresso
-    - Reconnect button for disconnected SSH sessions
-    - Right-click menu in terminal for copy, paste, and open in file manager
-    - Command history toggle in user profile
-    - Snippet sharing with users and roles
-    - Export all hosts as JSON
-    - Wake on LAN support
-    - Port knocking for SSH connections
-    - Session timeout configuration in admin settings
-    - Configurable log level in admin settings
-    - Inline OPKSSH provider selection in dialog
-    - Switch to adjacent tab when closing current tab
-    - Add select all and deselect all buttons for snippet terminal selection
+  This update adds API key management, client tunnels, SSH tunnel session improvements, and many stability fixes.
+
+
+  New features and improvements:
+    - API key management from admin settings
+    - Client tunnel support with remote tunnels, bridge tunnels, and presets
+    - Folder tree view in the file manager
+    - SSH key passphrase prompts when a passphrase is not saved
+    - Option to open the file manager at a terminal's current working directory
+    - Sessions are preserved across restarts
+    - Runtime upgraded to Node 24
 
 
   Bug fixes:
-    - Many security-related patches applied
-    - Massively reduced Docker image size
-    - Fixed cookie-based authentication for WebSocket connections
-    - SSH sessions now bound to user and verified on access
-    - Sensitive data removed from log output
-    - Plaintext credentials removed from internal host API responses
-    - Sessions revoked when password is changed or reset
-    - Fixed file manager showing stale directory contents
-    - Fixed RDP audio output and dynamic session resize
-    - Fixed admin page incorrectly showing admin status
-    - Fixed snippets failing to reorder
-    - Fixed Windows client failing to connect to SSH servers after restart
-    - Fixed file upload crash on permission denied
-    - Fixed tunnel cleanup to prevent new connections from being killed
-    - Fixed clipboard paste from host to RDP session
-    - Preserved remote file mode after SFTP write
+    - Fixed SSH multi-factor authentication with public key and password
+    - Fixed large file upload browser crashes
+    - Improved WebSocket reconnects for SSH sessions
+    - Fixed stale frontend cache handling after upgrades
+    - Fixed OIDC auth cookie readiness on startup
+    - Fixed login issues in desktop and mobile clients
+    - Fixed right-click copy and paste, file manager menu, imported host data, TOTP autofill, and host-list loading issues
+    - Several security-related patches
 
 
-  Full release notes can be found at https://github.com/Termix-SSH/Termix/releases
+  Full release notes can be found at https://github.com/Termix-SSH/Termix/releases/tag/release-2.2.1-tag
 dependencies: []
 path: ""
 defaultUsername: ""
