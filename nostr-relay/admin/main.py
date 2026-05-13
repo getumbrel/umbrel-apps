@@ -1119,13 +1119,13 @@ HTML = r"""<!DOCTYPE html>
     .sc-col{flex-direction:row;gap:16px}
     .sc-item{flex:1}
   }
-  @media (max-width: 900px){
-    .stat-grid{grid-template-columns:repeat(2, 1fr)}
+    @media (max-width: 700px){
+    @media (max-width: 950px){
     .portal-grid{grid-template-columns:1fr}
     .quick-view{height:auto}
   }
   @media (max-width: 600px){
-    #relay-icon-preview{flex-direction:row !important;width:100%}
+    @media (max-width: 500px){
     #relay-icon-preview > div:first-child{width:70px;height:70px}
     .edit-icon-btn{font-size:11px;padding:4px 8px}
     .stat-grid{grid-template-columns:1fr}
