@@ -9,7 +9,7 @@ services:
       PROXY_AUTH_WHITELIST: "/api/*"
 
   penpot-frontend:
-    image: penpotapp/frontend:2.14.4@sha256:aecf5131c59a4cd25cebd97af1c8835eef6e25eb74cb2bf349b481a0afae4428
+    image: penpotapp/frontend:2.15.2@sha256:571b8406c1f8bf2f501b69f73c7451f2d34b37adf98a5d80641b2897e0d20ac7
     volumes:
       - ${APP_DATA_DIR}/data/assets:/opt/data/assets
     environment:
@@ -17,16 +17,18 @@ services:
     depends_on:
       - penpot-backend
       - penpot-exporter
+      - penpot-mcp
     restart: on-failure
 
   penpot-backend:
-    image: penpotapp/backend:2.14.4@sha256:6e2798b2c3ccd6730415db5f28030460d05fa8c01301b3b72ba3dc66af9e3c58
+    image: penpotapp/backend:2.15.2@sha256:c2fa05d7ae3a95dba9fb861f6a54ed572619b726ef78294d55523fad81f97fa9
     # user 1000:1000 to avoid permission issues when importing libraries and templates
     user: "1000:1000"
     volumes:
       - ${APP_DATA_DIR}/data/assets:/opt/data/assets
     environment:
       - PENPOT_FLAGS=enable-registration enable-login-with-password disable-email-verification disable-smtp enable-prepl-server disable-secure-session-cookies
+      - PENPOT_SECRET_KEY=${APP_SEED}
       - PENPOT_DATABASE_URI=postgresql://penpot-postgres/penpot
       - PENPOT_DATABASE_USERNAME=penpot
       - PENPOT_DATABASE_PASSWORD=penpot
@@ -42,11 +44,17 @@ services:
     restart: on-failure
 
   penpot-exporter:
-    image: penpotapp/exporter:2.14.4@sha256:c5112cf3b54edf8911945042562d6f0be99ca047f1bc22573315e676a65030b5
+    image: penpotapp/exporter:2.15.2@sha256:c2ba7f83084d2ed001a84b7a3df8e740f32943fa0e6312b121ad339f10fc4921
     user: "1000:1000"
     environment:
+      - PENPOT_SECRET_KEY=${APP_SEED}
       - PENPOT_PUBLIC_URI=http://penpot-frontend
       - PENPOT_REDIS_URI=redis://penpot_penpot-valkey_1/0
+    restart: on-failure
+
+  penpot-mcp:
+    image: penpotapp/mcp:2.15.2@sha256:af1b2a8435a2a7ffa91dde4e3fd01033f032f66e2fb3ad161354d151b646eb01
+    user: "1000:1000"
     restart: on-failure
 
   penpot-postgres:
