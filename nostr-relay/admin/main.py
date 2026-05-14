@@ -1057,11 +1057,14 @@ HTML = r"""<!DOCTYPE html>
     .header-stats{flex-wrap:wrap}
     .header-stats #stat-grid{grid-template-columns:repeat(2, minmax(0, 1fr));flex-basis:100%}
   }
-  @media (max-width: 560px){
+  @media (max-width: 700px){
     .header-stats{align-items:flex-start}
     .header-stats .header-relay-icon{order:1}
     .header-stats #stat-grid{order:2}
     .header-stats .header-stats-label{order:3;flex-basis:100%}
+    .header-stats #stat-grid{grid-template-columns:repeat(2, minmax(0, 1fr))}
+  }
+  @media (max-width: 500px){
     .header-stats #stat-grid{grid-template-columns:1fr}
   }
   .nav-link{font-size:12px;color:var(--muted);text-decoration:none;font-weight:600;border:1px solid var(--border);padding:4px 12px;border-radius:99px;white-space:nowrap;transition:color .15s,border-color .15s}
@@ -1197,7 +1200,12 @@ HTML = r"""<!DOCTYPE html>
 
 <div class="header-stats">
   <div class="header-stats-label">&#128225; Live Relay Stats <span id="stats-age" class="header-stats-age"></span></div>
-  <div class="stat-grid" id="stat-grid"></div>
+  <div class="stat-grid" id="stat-grid">
+    <div class="sc-item"><div class="val" style="font-size:28px;font-weight:700;color:var(--accent)">-- / --</div><div class="lbl" style="font-size:11px;color:var(--muted);margin-top:4px">Active vs. Available NIPs Processing</div></div>
+    <div class="sc-item"><div class="val" style="font-size:28px;font-weight:700;color:var(--accent)">-- / --</div><div class="lbl" style="font-size:11px;color:var(--muted);margin-top:4px">Active vs. Available Kinds Processing</div></div>
+    <div class="sc-item"><div class="val" style="font-size:16px;font-weight:700;color:var(--accent)">--</div><div class="lbl" style="font-size:11px;color:var(--muted);margin-top:4px">Latest Event Seen</div></div>
+    <div class="sc-item"><div class="val" style="font-size:28px;font-weight:700;color:var(--accent)">--</div><div class="lbl" style="font-size:11px;color:var(--muted);margin-top:4px">Total Events</div></div>
+  </div>
   <img id="profile-icon-preview" class="header-relay-icon" alt="Relay icon (NIP-11)">
 </div>
 
