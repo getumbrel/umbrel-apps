@@ -1219,7 +1219,7 @@ HTML = r"""<!DOCTYPE html>
       <summary id="events-head">&#x1F4CB; Recent Events</summary>
       <div class="accordion-body">
         <div class="table-wrap">
-          <table id="events-table"><thead><tr><th style="white-space:nowrap">Timestamp</th><th>Kind</th><th>Type</th><th>Message</th></tr></thead><tbody></tbody></table>
+          <table id="events-table"><thead><tr><th style="white-space:nowrap">Timestamp</th><th>Kind</th><th>NIP</th><th>Type</th><th>Message</th></tr></thead><tbody></tbody></table>
         </div>
         <div class="events-footnote" id="events-footnote"></div>
       </div>
@@ -2448,12 +2448,19 @@ function _renderRecentEvents() {
     const info = nipInfo(r.kind);
     const tsSource = Number.isFinite(Number(r.first_seen)) ? Number(r.first_seen) : Number(r.created_at);
     const ts = typeof formatTimestamp === 'function' ? formatTimestamp(tsSource) : new Date(tsSource * 1000).toLocaleString(undefined, {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+    const rawNip = info && info.nip ? String(info.nip).trim() : '';
+    const nip = !rawNip
+      ? 'Unknown'
+      : (rawNip.toLowerCase() === 'unknown'
+        ? 'Unknown'
+        : (/^[0-9a-fA-F]+$/.test(rawNip) ? `NIP-${rawNip.toUpperCase()}` : rawNip));
     const typeName = info ? info.name : `Kind ${r.kind}`;
     const raw = _escapeHtml(r.content_preview || '');
     const msg = raw || `<span style="color:var(--muted);font-style:italic">—</span>`;
     return `<tr>
       <td style="white-space:nowrap;color:var(--muted);font-size:11px">${_escapeHtml(ts)}</td>
       <td style="color:var(--muted)">${r.kind}</td>
+      <td style="color:var(--muted);white-space:nowrap">${_escapeHtml(nip)}</td>
       <td style="color:var(--accent);white-space:nowrap">${_escapeHtml(typeName)}</td>
       <td style="max-width:620px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${msg}</td>
     </tr>`;

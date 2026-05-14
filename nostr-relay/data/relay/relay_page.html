@@ -354,7 +354,10 @@
 
       .events-row {
         display: grid;
-        grid-template-columns: minmax(130px, 170px) 70px 70px minmax(0, 1fr);
+        grid-template-columns: minmax(130px, 170px) 62px 86px minmax(
+            150px,
+            220px
+          ) minmax(0, 1fr);
         gap: 10px;
         align-items: center;
         padding: 8px 10px;
@@ -384,6 +387,14 @@
         font-size: 0.85rem;
         color: #c88dff;
         font-weight: 700;
+      }
+
+      .event-type {
+        font-size: 0.82rem;
+        color: var(--text);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
 
       .event-msg {
@@ -436,7 +447,10 @@
 
       @media (max-width: 760px) {
         .events-row {
-          grid-template-columns: minmax(110px, 130px) 55px 55px minmax(0, 1fr);
+          grid-template-columns: minmax(100px, 120px) 48px 60px minmax(
+              100px,
+              150px
+            ) minmax(0, 1fr);
           gap: 8px;
           padding: 8px;
         }
@@ -486,6 +500,7 @@
 
         .event-time,
         .event-kind,
+        .event-type,
         .event-msg {
           white-space: normal;
         }
@@ -600,6 +615,7 @@
               <div>Timestamp</div>
               <div>Kind</div>
               <div>NIP</div>
+              <div>Type</div>
               <div>Message</div>
             </div>
             <div class="events-empty">Loading events...</div>
@@ -793,6 +809,40 @@
         return "NIP-XX";
       }
 
+      function kindToType(kind) {
+        const kindToTypeMap = {
+          0: "User Metadata",
+          1: "Short Text Note",
+          2: "Recommend Relay (deprecated)",
+          3: "Follows",
+          4: "Encrypted Direct Messages",
+          5: "Event Deletion Request",
+          6: "Repost",
+          7: "Reaction",
+          8: "Badge Award",
+          40: "Channel Creation",
+          41: "Channel Metadata",
+          42: "Channel Message",
+          43: "Channel Hide Message",
+          44: "Channel Mute User",
+          1059: "Gift Wrap",
+          1063: "File Metadata",
+          10002: "Relay List Metadata",
+          22242: "Authentication",
+          30023: "Long-form Content",
+        };
+
+        const n = Number(kind);
+        if (!Number.isFinite(n) || n < 0) return "Unknown";
+        if (kindToTypeMap[n]) return kindToTypeMap[n];
+        if (n >= 5000 && n <= 5999) return `DVM Job Request (${n})`;
+        if (n >= 6000 && n <= 6999) return `DVM Job Result (${n})`;
+        if (n >= 9000 && n <= 9030) return `Group Control Event (${n})`;
+        if (n >= 1630 && n <= 1633) return `Git Status Event (${n})`;
+        if (n >= 39000 && n <= 39009) return `Group Metadata Event (${n})`;
+        return `Kind ${n}`;
+      }
+
       function setStatsUnavailable(message) {
         if (statsFooterNoteEl) {
           statsFooterNoteEl.textContent = message;
@@ -817,7 +867,7 @@
         }
         if (eventsGridEl) {
           eventsGridEl.innerHTML =
-            '<div class="events-row events-head-row"><div>Timestamp</div><div>Kind</div><div>NIP</div><div>Message</div></div>' +
+            '<div class="events-row events-head-row"><div>Timestamp</div><div>Kind</div><div>NIP</div><div>Type</div><div>Message</div></div>' +
             '<div class="events-empty">Events unavailable.</div>';
         }
       }
@@ -832,6 +882,7 @@
           .map((eventRow) => {
             const when = Number(eventRow.first_seen ?? eventRow.created_at);
             const message = eventRow.content_preview || "[no preview]";
+            const typeName = kindToType(eventRow.kind);
             return (
               '<div class="events-row">' +
               '<div class="event-time">' +
@@ -842,6 +893,9 @@
               "</div>" +
               '<div class="event-kind">' +
               escapeHtml(kindToNip(eventRow.kind)) +
+              "</div>" +
+              '<div class="event-type">' +
+              escapeHtml(typeName) +
               "</div>" +
               '<div class="event-msg" title="' +
               escapeHtml(message) +
@@ -854,7 +908,7 @@
           .join("");
 
         eventsGridEl.innerHTML =
-          '<div class="events-row events-head-row"><div>Timestamp</div><div>Kind</div><div>NIP</div><div>Message</div></div>' +
+          '<div class="events-row events-head-row"><div>Timestamp</div><div>Kind</div><div>NIP</div><div>Type</div><div>Message</div></div>' +
           (rows || '<div class="events-empty">No events yet.</div>');
 
         if (eventsNoteEl) {
