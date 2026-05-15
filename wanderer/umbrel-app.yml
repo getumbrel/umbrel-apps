@@ -3,7 +3,7 @@ id: wanderer
 name: Wanderer
 tagline: A self-hosted trail database
 category: files
-version: "0.19.0"
+version: "0.19.1"
 port: 3111
 description: >-
   🗺️ Wanderer is a self-hosted, open-source platform designed for outdoor enthusiasts who want to manage, explore, and share hiking and biking routes on their own terms. It provides a clean and modern interface for uploading GPX files, drawing new routes on an interactive map, and organizing them with detailed metadata such as difficulty, duration, and elevation gain. Wanderer supports full-text search and powerful filtering to help users find exactly the route they are looking for based on various criteria like region, length, or type of activity.
@@ -28,18 +28,15 @@ gallery:
   - 6.jpg
   - 7.jpg
 releaseNotes: >-
-  ⚠️ Breaking change: Bulk imports now require an API token. Files must be placed in a subfolder of the upload directory named after the token, and files added while Wanderer is stopped will not be processed automatically.
+  This release includes security, performance, and federation fixes:
+    - Remote lists, trails, and trail comments now correctly respect visibility and sharing settings
+    - Improved speed for several database queries
+    - Federated remote trails now sync tags and create missing local tags when needed
+    - Private profiles no longer block access to your own trails, and inaccessible private profiles now return a proper 404
+    - Comment access checks now correctly use the linked comment author
 
 
-  This release includes security fixes, new features, and bug fixes:
-    - Server-side HTML sanitization reduces XSS risk in descriptions, comments, waypoints, profile bios, and summit logs
-    - Added API tokens for external tools and automations
-    - Added Hammerhead integration and expanded federation support
-    - Trails can now be marked as completed, copied more easily, and shown in improved overview modes
-    - Fixed WebFinger, theme detection, hillshading, Komoot sync, avatar updates, GPX upload, and email-change authentication issues
-
-
-  Full release notes: https://github.com/open-wanderer/wanderer/releases/tag/v0.19.0
+  Full release notes: https://github.com/open-wanderer/wanderer/releases/tag/v0.19.1
 dependencies: []
 path: ""
 defaultUsername: ""
