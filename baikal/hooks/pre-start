@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# ghcr.io/aalmenar/baikal:0.11.1-nginx runs nginx/php-fpm as uid/gid 101.
+# The previous ckulka/baikal image wrote these persisted directories as uid/gid 33.
+mkdir -p "${APP_DATA_DIR}/data/config" "${APP_DATA_DIR}/data/Specific"
+chown -R 101:101 "${APP_DATA_DIR}/data/config" "${APP_DATA_DIR}/data/Specific"

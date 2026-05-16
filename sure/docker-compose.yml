@@ -7,7 +7,7 @@ services:
       APP_PORT: 3000
 
   web:
-    image: ghcr.io/we-promise/sure:0.6.9@sha256:3d899b3eced520d8d3166a3d53184cbb1356670fb52d050f94f8e62e59754d70
+    image: ghcr.io/we-promise/sure:0.7.0-hotfix.2@sha256:10ee972ce59ef6c409e973641ece639be419cb533ed74b388937922bfaa7e1ee
     user: "1000:1000"
     volumes:
       - ${APP_DATA_DIR}/data/rails:/rails/storage
@@ -30,7 +30,7 @@ services:
         condition: service_healthy
 
   worker:
-    image: ghcr.io/we-promise/sure:0.6.9@sha256:3d899b3eced520d8d3166a3d53184cbb1356670fb52d050f94f8e62e59754d70
+    image: ghcr.io/we-promise/sure:0.7.0-hotfix.2@sha256:10ee972ce59ef6c409e973641ece639be419cb533ed74b388937922bfaa7e1ee
     user: "1000:1000"
     command: bundle exec sidekiq
     volumes:

@@ -3,7 +3,7 @@ id: copyparty
 name: copyparty
 tagline: A versatile all-in-one file server for everything
 category: files
-version: "1.20.13"
+version: "1.20.14"
 port: 3923
 description: >-
   📼 copyparty is a lightweight yet incredibly powerful file sharing platform designed to give you complete control over your data. It transforms any environment into a personal and fully featured file hub where you can upload, download, edit, and organize files directly through an intuitive web interface. Everything happens in the browser without the need for additional software, making it fast, convenient, and accessible from virtually anywhere.
@@ -33,16 +33,20 @@ gallery:
   - 5.jpg
 releaseNotes: >-
   New features in this release:
-    - Added support for `.hidden` files to exclude specific files from directory listings without affecting their availability
-    - Added thumbnail pregeneration option
-    - Shares can now grant permission to view dotfiles
+    - Added option to auto-select the UI language based on the browser's language setting
+    - Added option to automatically switch between list view and grid view depending on folder contents
+    - The audio player can now play Nintendo 3DS and Wii background music files (bcstm, bfstm, brstm)
+    - Added 1000-based file size units alongside the existing 1024-based units
+    - Config files can now use OS environment variables in the global config section
+    - Added option to specify TLS certificate and key as separate files
 
 
   Bugfixes in this release:
-    - Fixed missing thumbnails when the server OS lacked JXL support and the browser requested JXL images
-    - Fixed the new-version alert only appearing for admins with permissions on the webroot specifically
-    - Fixed mkdir not being blocked in cases where it should have been
-    - Fixed the nohtml and noscript volume flags breaking the web UI when set on the webroot
+    - Fixed WebDAV clients being unable to use PROPFIND on a file with depth infinite
+    - Fixed audio player crashing when a folder contains an m3u file and the sort order is changed during playback
+    - Fixed nameless text file uploads incorrectly getting the .ssa extension instead of .txt when magic mode was enabled
+    - Fixed the tail/follow function spamming the log with repeated reopen messages on some filesystems
+    - Fixed audio files embedded in video files not thumbnailing correctly
 
 
   Full release notes can be found at https://github.com/9001/copyparty/releases
