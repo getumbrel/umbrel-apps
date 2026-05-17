@@ -3,7 +3,7 @@ id: openclaw
 name: OpenClaw
 tagline: The AI that actually does things
 category: ai
-version: "2026.5.7"
+version: "2026.5.12"
 port: 18789
 path: ""
 description: >-
@@ -39,21 +39,13 @@ gallery:
   - 2.jpg
   - 3.jpg
 releaseNotes: >-
-  What's new in OpenClaw (v2026.5.6 → v2026.5.7):
-    - Fixed OpenAI Codex OAuth routing that was incorrectly rewritten in a previous update — if affected, run `openclaw models set openai-codex/gpt-5.5` to restore your setup
-    - Fixed plugin requests being rejected due to symbol metadata in fetch headers
-    - Fixed timed-out web fetch requests leaving Gateway tool lanes stuck active
-    - Fixed stale chat history being reused after session resets
-    - Fixed WhatsApp proactive messages to LID-addressed contacts creating ghost chats instead of delivering
-    - Fixed Telegram sender allowlists not being honored for DMs, groups, and native commands
-    - Fixed cron jobs with invalid stored model values causing errors
-    - Fixed Discord cross-channel agent messages misrouting channel IDs as DM targets
-    - Fixed long-lived channel sessions not rebuilding the skill list after skills change
-    - Added `openai/chat-latest` as an explicit model alias for the moving ChatGPT Instant API
-    - Added computed status field to cron CLI JSON output for easier external tooling
-    - Improved Discord voice capture with reduced choppiness and a configurable silence grace period
-    - Improved plugin publishing reliability with retries and post-publish version verification
-    - Improved Codex approval flow so safe commands can be reviewed before OpenClaw surfaces an approval prompt
+  What's new in OpenClaw (v2026.5.7 → v2026.5.12):
+    - Leaner installs by moving WhatsApp, Slack, Bedrock, Anthropic Vertex, and related dependency cones out of the core runtime
+    - More resilient Telegram polling, local spooling, group-media handling, and formatted reply delivery
+    - Smoother Codex/OpenAI paths with auth-profile-backed media tools, MCP projection, context rotation, and runtime fallback improvements
+    - More reliable plugin installs and updates with pnpm 11 support, peer-dependency preservation, safer runtime scans, and source/git install fixes
+    - Security and provenance hardening across Gateway, browser, Slack, node pairing, sandbox, and transcript handling
+    - Improved Control UI/WebChat/TUI behavior, rich-only replies, session history, and streaming auto-scroll
     - And much more. Full details at https://github.com/openclaw/openclaw/releases
 submitter: Umbrel
 submission: https://github.com/getumbrel/umbrel-apps/pull/4649
