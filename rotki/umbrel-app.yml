@@ -2,7 +2,7 @@ manifestVersion: 1
 id: rotki
 category: finance
 name: rotki
-version: "1.43.0"
+version: "1.43.1"
 tagline: Portfolio tracking, analytics, accounting and tax reporting
 description: >-
   rotki is an open source portfolio tracking, analytics, accounting and tax reporting tool that protects your privacy. 
@@ -27,22 +27,18 @@ repo: https://github.com/rotki/rotki
 support: https://github.com/rotki/rotki/issues
 port: 8084
 releaseNotes: >-
-  This major release adds support for HyperEVM, Hyperliquid Core, and Monad.
+  This patch release improves rotki's resilience for ETH staking and pricing data.
 
 
   Key highlights include:
-    - Added a dedicated page for managing cached oracle price entries
-    - Added timezone-aware CSV imports for timestamps without timezone data
-    - Added a recommended settings prompt after upgrading
-    - Improved history and pricing workflows, including updating historical prices from event rows
-    - Expanded protocol decoding for Morpho, Quickswap, Balancer, Sky, CCTP v2, and more
-    - Fixed large Docker imports and uploads that could be blocked by nginx
+    - Beaconcha.in data is handled more gracefully when the service is unavailable or no API key is configured
+    - CryptoCompare is no longer used as a default free price source when no API key is set, while existing cached prices are preserved
+    - Custom CSV imports now report unsupported exchange assets as row errors instead of crashing the whole import
+    - Fixed Hyperliquid history pagination and several Monad, Hyperliquid, 1inch, Giveth, and Zerox decoding/display issues
+    - Improved endpoint editing, date/time keyboard entry, and CSV export reliability
 
 
-  ⚠️ After upgrading, EVM history events may need to be redecoded so the latest decoder changes can be applied. Edited events are left untouched.
-
-
-  Full release notes are found at https://github.com/rotki/rotki/releases
+  Full release notes are found at https://github.com/rotki/rotki/releases/tag/v1.43.1
 gallery:
   - 1.jpg
   - 2.jpg
