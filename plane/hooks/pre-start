@@ -50,16 +50,15 @@ else
     echo "APP_DOMAIN is already set. No changes made."
 fi
 
-# Check if ALLOWED_HOSTS value is set to "changeme"
-if grep -Eq '^ALLOWED_HOSTS= *changeme$' "$ENV_FILE"; then
-    echo "Placeholder value for ALLOWED_HOSTS detected. Setting from DEVICE_DOMAIN_NAME..."
-    
-    # Replace the placeholder with the domain
-    sed -i -E 's|^ALLOWED_HOSTS= *changeme$|ALLOWED_HOSTS="'"${DEVICE_DOMAIN_NAME}"'"|' "$ENV_FILE"
-    
+# Plane defaults ALLOWED_HOSTS to "*" when the env var is absent. Keep that behavior so
+# Umbrel access through alternate device hostnames (for example Tailscale hostnames) does
+# not trigger Django 400 responses while the browser is still same-origin to the app route.
+if grep -Eq '^ALLOWED_HOSTS= *(changeme|"?'"${DEVICE_DOMAIN_NAME}"'"?)$' "$ENV_FILE"; then
+    echo "Setting ALLOWED_HOSTS to Plane's default wildcard for Umbrel host compatibility..."
+    sed -i -E 's|^ALLOWED_HOSTS=.*$|ALLOWED_HOSTS="*"|' "$ENV_FILE"
     echo "Updated ALLOWED_HOSTS in $ENV_FILE"
 else
-    echo "ALLOWED_HOSTS is already set. No changes made."
+    echo "ALLOWED_HOSTS is already set to a custom value. No changes made."
 fi
 
 # Check if CORS_ALLOWED_ORIGINS value is set to "changeme"

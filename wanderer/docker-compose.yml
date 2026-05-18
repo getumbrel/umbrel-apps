@@ -7,7 +7,7 @@ services:
       APP_PORT: 3000
       
   web:
-    image: flomp/wanderer-web:v0.18.5@sha256:49eefcf02155639bf3b750cef96cef9c0f3260ece03348aec316aeb29d713c10
+    image: flomp/wanderer-web:v0.19.1@sha256:ff730d29c5f6a08c22401323fd4759bf704b581e97d676922ebba8129a37333d
     user: "1000:1000"
     depends_on:
       search:
@@ -22,8 +22,9 @@ services:
       UPLOAD_FOLDER: /app/uploads
       UPLOAD_USER: admin
       UPLOAD_PASSWORD: ${APP_PASSWORD}
-      PUBLIC_VALHALLA_URL: https://valhalla1.openstreetmap.de
-      PUBLIC_NOMINATIM_URL: https://nominatim.openstreetmap.org
+      VALHALLA_URL: https://valhalla1.openstreetmap.de
+      NOMINATIM_URL: https://nominatim.openstreetmap.org
+      OVERPASS_API_URL: https://overpass-api.de
       MEILI_URL: http://wanderer_search_1:7700
       MEILI_MASTER_KEY: ${APP_SEED}
     volumes:
@@ -47,7 +48,7 @@ services:
       timeout: 10s
 
   db:
-    image: flomp/wanderer-db:v0.18.5@sha256:c1798be5822e5b802b0e235dba108a5cc0dca7609e1bc52b417c5cafb3981d89
+    image: flomp/wanderer-db:v0.19.1@sha256:05df5c90a2fdd5ea38b873dc521b0fac2ff2e5a478bf6a4b25123f83431cb71d
     user: "1000:1000"
     depends_on:
       search:

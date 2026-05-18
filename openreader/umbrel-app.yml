@@ -3,7 +3,7 @@ id: openreader
 name: OpenReader
 tagline: A document reader with Text-to-Speech capabilities
 category: ai
-version: "2.2.0"
+version: "3.0.0"
 port: 3391
 description: >-
   OpenReader WebUI is a web-based document reader that integrates text-to-speech (TTS) functionality, allowing users to listen to text from various document formats, including PDF and EPUB. Designed to enhance accessibility and improve the reading experience, it features synchronized text highlighting, ensuring that the currently read portion of the document is visually emphasized as the speech engine narrates the content. This makes it particularly useful for individuals with visual impairments, reading difficulties, or those who simply prefer an auditory learning style.
@@ -31,14 +31,18 @@ gallery:
   - 3.jpg
   - 4.jpg
 releaseNotes: >-
-  Some of the key highlights in this release include:
-    - Added Replicate TTS provider with support for custom Replicate models
-    - Improved TTS generation internals with better voice resolution and settings validation
-    - Improved TTS playback controls with more reliable pause and resume handling
-    - Updated document library wording from "Local Documents" to "Your Documents" for clearer navigation
+  ⚠️ Major update: OpenReader 3.0.0 adds server-side document storage and persistent TTS audio segments. Existing Umbrel installs continue using the bundled Kokoro TTS provider after upgrading.
 
 
-  Full release notes can be found at https://github.com/richardr1126/openreader/releases
+  Key highlights:
+    - Added an Admin panel for shared TTS providers and site feature settings
+    - Added persistent per-segment TTS audio storage so documents can resume without re-synthesizing audio
+    - Added per-document controls for TTS segment preloading, lookahead, and maximum block length
+    - Added a changelog panel in Settings that can show release notes after an upgrade
+    - Fixed stale TTS playback after pausing and resuming, plus other playback and document-reader polish
+
+
+  Full release notes can be found at https://github.com/richardr1126/openreader/releases/tag/v3.0.0
 dependencies:
   - kokoro
 path: ""

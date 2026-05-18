@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: forgejo
 category: developer
 name: Forgejo
-version: "11.0.11"
+version: "15.0.2"
 tagline: A self-hosted lightweight software forge
 description: >-
   Forgejo is a self-hosted lightweight software forge, designed to be a fully self-hosted, privacy-respecting alternative to GitHub, GitLab, and Bitbucket. It is a fork of Gitea with additional features and community-driven enhancements. Forgejo is written in Go and can run on low-resource hardware like a Raspberry Pi. 
@@ -48,16 +48,14 @@ gallery:
   - 2.jpg
   - 3.jpg
 releaseNotes: >-
-  🚨 This release includes important security fixes:
-    - Fixed PKCE challenge validation for OAuth identity provider when using the S256 algorithm
-    - Fixed improper scope enforcement when using OAuth Bearer tokens with HTTP basic authentication
-    - Fixed missing permission checks in attachment endpoints that allowed modifying attachments a user did not own
-    - Fixed email notifications for new releases being sent to users who lost repository access or are inactive
-    - Fixed missing permission checks in user/org-owned projects that allowed unauthorized changes to project state
-    - Fixed missing permission check that allowed unauthorized cancellation of pull request automerge
-    - Fixed path-traversal vulnerability in post-login redirect parameters that could allow arbitrary redirects
+  This release includes security and bug fixes for Forgejo 15:
+    - Prevents unauthorized Git HTTP writes to wiki repositories
+    - Tightens LFS, scoped API token, and OAuth access checks
+    - Strengthens Forgejo Actions artifact signature validation
+    - Fixes stuck Actions approval state after denying pull request workflow trust
+    - Fixes team member pagination, package cleanup, migration retry cleanup, and pending review request cleanup
 
 
-  Full release notes are available at https://forgejo.org/releases/
+  Full release notes are available at https://codeberg.org/forgejo/forgejo/releases/tag/v15.0.2
 submitter: John Wilddip
 submission: https://github.com/getumbrel/umbrel-apps/pull/2221

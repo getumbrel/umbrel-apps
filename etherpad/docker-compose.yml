@@ -7,7 +7,7 @@ services:
       APP_PORT: 9001
       
   app:
-    image: etherpad/etherpad:2.7.2@sha256:b723fe5f2594d5cf61f960a203a4eeb554a5d0435c3689722f575f91aa6ace50
+    image: etherpad/etherpad:3.1.0@sha256:7bae8bdb87559debbbb17a45eb72f8ae776af4088b1dba5620face5085f14b99
     volumes:
       - ${APP_DATA_DIR}/data/plugins:/opt/etherpad-lite/src/plugin_packages
       - ${APP_DATA_DIR}/data/etherpad-var:/opt/etherpad-lite/var:rw
@@ -15,6 +15,7 @@ services:
       - postgres
     environment:
       NODE_ENV: production
+      CI: "true"
       ADMIN_PASSWORD: ${APP_PASSWORD}
       DB_CHARSET: utf8mb4
       DB_HOST: etherpad_postgres_1
@@ -25,7 +26,7 @@ services:
       DB_USER: admin
       DEFAULT_PAD_TEXT: 
       DISABLE_IP_LOGGING: "false"
-      LOGLEVEL: DEBUG
+      LOGLEVEL: INFO
       SOFFICE: null
       ALLOW_UNKNOWN_FILE_ENDS: "true"
       TRUST_PROXY: "true"
@@ -34,7 +35,7 @@ services:
       SHOW_SETTINGS_IN_ADMIN_PAGE: "true"
       SUPPRESS_ERRORS_IN_PAD_TEXT: "false"   
     restart: on-failure
-    user: "1000:1000"
+    user: "5001:0"
 
   postgres:
     image: postgres:15-alpine@sha256:93a6166360be8f1d116b7ea97ebb8dea9e2c9c746349e952738bbba72a961d7c

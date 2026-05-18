@@ -3,7 +3,7 @@ id: open-webui
 name: Open WebUI
 tagline: Chat with Ollama models like DeepSeek-R1 and LLama, or use an OpenAI API key
 category: ai
-version: "0.9.2"
+version: "0.9.5"
 port: 2876
 description: >-
   Open WebUI lets you chat with advanced AI models running locally on your own device or connect to online models using an API key.
@@ -37,24 +37,16 @@ defaultPassword: ""
 dependencies:
   - ollama
 releaseNotes: >-
-  Key highlights in this release include:
-    - Added PaddleOCR-vl as a document content extraction engine option
-    - Added Firecrawl v2 API support with improved reliability and retry logic
-    - Added configurable reminder duration for calendar events
-    - Added custom API key header support via the CUSTOM_API_KEY_HEADER environment variable
-    - Added a +N badge on the Sources button when more than three sources are available
-    - Improved model list performance by stripping large image data from paginated responses
-    - Improved page load speed with earlier splash image preloading
-    - Fixed interrupted MCP tool calls no longer causing CPU spikes
-    - Fixed skills from persisted chats now injecting correctly into the system prompt
-    - Fixed Docker ARM64 images that previously produced corrupted Python dependencies
-    - Fixed rich text editor extension conflicts causing editor instability
-    - Fixed OAuth discovery fallback for better compatibility with more MCP servers
-    - Fixed cancelled chat generation now properly cleaning up upstream connections
-    - Fixed model profile image endpoints to prevent path traversal vulnerabilities
-    - Fixed browser-native message rendering to eliminate scroll jump artifacts in long conversations
-    - Translation updates for Finnish, Korean, Portuguese (Brazil), and Dutch
+  This update includes several security and reliability improvements:
+    - Adds redirect-based SSRF protection for outbound HTTP requests used by web fetch, image loading, OAuth discovery, tools, and code interpreter flows
+    - Adds configurable Content-Security-Policy support for iframe previews and custom terminal proxy response headers
+    - Adds separate Markdown rendering controls for user and assistant messages
+    - Improves Channels with streamed responses and full chat-completion tool support
+    - Fixes note creation/opening, legacy chat history recovery, and model filter selector reactivity
+    - Tightens access checks for public skills, public calendars, feedback attribution, tool source updates, channel messages, file processing, and shared chats
+    - Hardens image URL, profile image, and URL parser validation
+    - Updates Portuguese (Brazil) translations
 
 
-  Full release notes are found at https://github.com/open-webui/open-webui/releases
+  Full release notes are found at https://github.com/open-webui/open-webui/releases/tag/v0.9.5
 path: ""

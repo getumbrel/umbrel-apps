@@ -7,8 +7,9 @@ services:
       APP_PORT: 3003
 
   web:
-    image: ghcr.io/richardr1126/openreader-webui:2.2.0@sha256:245e6b8914cff79cc4c1cea5251446b18199fcabb6e865f543f186a44f071baa
+    image: ghcr.io/richardr1126/openreader-webui:3.0.0@sha256:446d95e0494198c1996ce4f1c41203d3f7461046d93b803576103e20b5a148ad
     user: "1000:1000"
+    command: ["node_modules/.bin/next", "start", "-p", "3003"]
     environment:
       - API_BASE=http://kokoro_web_1:8880/v1 #Set the TTS API_BASE URL and/or API_KEY as the default for all devices. These values can also be overridden in the UI.
     restart: on-failure
