@@ -8,9 +8,9 @@ services:
 
   # Web terminal + dashboard proxy
   web:
-    image: ghcr.io/getumbrel/hermes-agent-umbrel:v2026.5.16@sha256:280f7b4eaa76afb754a8eccc328b0c235c78c9ac483b0f874afc35f280a6fd84
-    # Shell prompt shows "umbrel@hermes" instead of "umbrel@<container-id>"
-    hostname: hermes
+    image: ghcr.io/getumbrel/hermes-agent-umbrel:v2026.5.16-1@sha256:992c23092e743efa465b6fe17c4e2bfeb0a13ca57b91be2eb606a88463a9b38c
+    # Keeps the terminal prompt readable as "hermes@hermes-agent"
+    hostname: hermes-agent
     init: true
     user: "1000:1000"
     restart: on-failure
@@ -25,13 +25,8 @@ services:
 
   # Hermes messaging gateway
   gateway:
-    image: nousresearch/hermes-agent:v2026.5.16@sha256:b6e41c155d6bfce5ad83c5d0fec670086db8a43250e4511c9474134be5482d33
-    # Upstream v2026.4.23 starts as UID 10000, which cannot access Umbrel's
-    # 1000:1000 app-data directory. Start as root so upstream's entrypoint can
-    # honor HERMES_UID/HERMES_GID, fix /opt/data ownership, then drop privileges.
-    # Remove once an upstream release includes a Docker UID/GID fix,
-    # e.g. NousResearch/hermes-agent#12696.
-    user: "0:0"
+    image: ghcr.io/getumbrel/hermes-agent-umbrel:v2026.5.16-1@sha256:992c23092e743efa465b6fe17c4e2bfeb0a13ca57b91be2eb606a88463a9b38c
+    entrypoint: ["/usr/bin/tini", "-g", "--", "/opt/hermes/docker/entrypoint.sh"]
     command: gateway run
     stop_grace_period: 1m
     restart: on-failure
