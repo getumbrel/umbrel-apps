@@ -8,6 +8,10 @@ APP_COMPOSE_FILE="${APP_ROOT_DIR}/docker-compose.yml"
 APP_COMPOSE_BACKUP_FILE="${APP_ROOT_DIR}/docker-compose.yml.bak"
 MIGRATION_IN_PROGRESS_FILE="${APP_ROOT_DIR}/data/.twenty-migration-in-progress"
 
+# Remove retired Twenty post-update hook from existing installs.
+# Twenty now runs required upgrade work automatically on startup.
+rm -f "${APP_ROOT_DIR}/hooks/post-update"
+
 if [[ -f "${MIGRATION_IN_PROGRESS_FILE}" ]]; then
   migration_pid="$(cat "${MIGRATION_IN_PROGRESS_FILE}" 2>/dev/null || true)"
 
