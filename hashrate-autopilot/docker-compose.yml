@@ -1,0 +1,28 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: hashrate-autopilot_web_1
+      APP_PORT: 3010
+      PROXY_AUTH_ADD: "false"
+
+  web:
+    image: ghcr.io/rdouma/hashrate-autopilot:1.8.5@sha256:a468497c2ea9615823aeb29028daa02022c3f5ef2e01a4292001b96c2fd3b7cd
+    restart: on-failure
+    stop_grace_period: 1m
+    volumes:
+      - ${APP_DATA_DIR}/data:/app/data
+    environment:
+      HTTP_PORT: 3010
+      HTTP_HOST: 0.0.0.0
+      DB_PATH: /app/data/state.db
+      DASHBOARD_STATIC: packages/dashboard/dist
+      BITCOIN_RPC_HOST: "${APP_BITCOIN_NODE_IP}"
+      BITCOIN_RPC_PORT: "${APP_BITCOIN_RPC_PORT}"
+      BITCOIN_RPC_USER: "${APP_BITCOIN_RPC_USER}"
+      BITCOIN_RPC_PASS: "${APP_BITCOIN_RPC_PASS}"
+      BHA_DATUM_API_URL: "http://datum_datum_1:21000"
+      BHA_ELECTRS_HOST: "$APP_ELECTRS_NODE_IP"
+      BHA_ELECTRS_PORT: "$APP_ELECTRS_NODE_PORT"
+      BHA_PAYOUT_SOURCE: "electrs"
