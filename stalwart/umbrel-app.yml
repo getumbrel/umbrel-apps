@@ -3,7 +3,7 @@ id: stalwart
 name: Stalwart
 tagline: All-in-one Mail & Collaboration server
 category: files
-version: "v0.16.5"
+version: "v0.16.6"
 port: 8745
 description: >-
   📧 Stalwart is a fast, secure, and scalable open-source server for email, calendars, contacts, and file sharing, built in Rust for top-tier performance and safety.
@@ -54,19 +54,15 @@ releaseNotes: >-
   ⚠️ This version includes multiple breaking changes. Make sure to have a backup before updating. Migrations are run automatically, but it's recommended to review the upgrading guide: https://github.com/stalwartlabs/stalwart/blob/main/UPGRADING/v0_16.md
 
 
-  Changes since v0.16.3 include:
-    - Adds the `is_ip_in_cidr` expression function for CIDR matching
-    - Updates `mail-auth` to 0.9, including `hickory-resolver` 0.26, and deprecates RFC2136 SIG(0) support
-    - Fixes live tracing in community and OSS versions
-    - Fixes JMAP patching/query issues, including JSON Pointers with digit-containing IDs, nested `null` values, nested object references, and `AddressBook/query` results
-    - Fixes external directory behavior for SQL no-result queries and LDAP impersonation before first login
-    - Fixes bootstrap datastore probing timeouts and network binding fallback from IPv6 to IPv4
-    - Fixes HTTP `.well-known` CORS behavior, Autoconfig/Autodiscover responses, queued-message/task/metric pagination, quota recalculations, and import registry restores
-    - Fixes ACME apex-domain handling, DNS zone detection, and multiple DNS provider update issues
-    - Fixes MTA report/rescheduling handling, spam-filter recipient checks, mail-parser attachment panics, FoundationDB multi-instance support, and iCalendar/JSCalendar edge cases
+  Changes since v0.16.5 include:
+    - Adds 58 new DNS provider integrations and improves DNS updater logging
+    - Adds Sieve access to `orcpt` and logs spam-classifier rejections/discards
+    - Updates JMAP File Storage support to draft-ietf-jmap-filenode-14
+    - Accepts additional secure password-hash formats
+    - Fixes DAV, JMAP, IMAP, DNS updater, ACME, WebSocket, LDAP, Sieve, ACL, and email-address handling issues
 
 
-  Full release notes can be found at https://github.com/stalwartlabs/stalwart/releases/tag/v0.16.5
+  Full release notes can be found at https://github.com/stalwartlabs/stalwart/releases/tag/v0.16.6
 dependencies: []
 path: "/admin"
 deterministicPassword: true
