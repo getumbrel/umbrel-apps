@@ -3,7 +3,7 @@ id: gitea-mirror
 name: Gitea Mirror
 tagline: Mirror your GitHub repositories to a Gitea instance automatically
 category: developer
-version: "3.16.0"
+version: "3.16.1"
 port: 4322
 description: >-
   Gitea Mirror automatically mirrors your GitHub repositories to a self-hosted Gitea instance. It supports mirroring public and private repositories, organizations, starred repos, issues, wikis, and pull requests.
@@ -42,11 +42,11 @@ defaultUsername: ""
 defaultPassword: ""
 dependencies: []
 releaseNotes: >-
-  This update adds account settings in the web UI for changing your password and email address.
+  This update fixes issue and pull request mirroring bugs that could create duplicate rows in Gitea when pagination was truncated or a database deadlock triggered a retry.
 
 
-  It also hardens the upstream build pipeline by pinning third-party GitHub Actions and the Bun base image to immutable commit and image digests.
+  It also improves recovery for interrupted mirror jobs after startup, so jobs interrupted by dependency restarts or transient network failures can resume instead of repeatedly being detected without recovery.
 
 
-  Full release notes can be found at https://github.com/RayLabsHQ/gitea-mirror/releases/tag/v3.16.0
+  Full release notes can be found at https://github.com/RayLabsHQ/gitea-mirror/releases/tag/v3.16.1
 path: ""
