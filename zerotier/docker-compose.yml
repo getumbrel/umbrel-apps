@@ -3,7 +3,8 @@ version: "3.7"
 services:
   app_proxy:
     environment:
-      APP_HOST: zerotier_web_1
+      # web shares zerotier's network namespace, so reach it via the zerotier container
+      APP_HOST: zerotier_zerotier_1
       APP_PORT: 8080
 
   zerotier:
@@ -22,12 +23,14 @@ services:
 
   web:
     # Built from github.com/andrijdavid/umbrel-zerotier-web (FastAPI + uvicorn).
-    image: ghcr.io/andrijdavid/umbrel-zerotier-web:0.1.0@sha256:fb15d76fc3911f3b689bc29227e477c2f1d05258eedad3ab5ead166d55565f41
+    image: ghcr.io/andrijdavid/umbrel-zerotier-web:0.1.0@sha256:189ea00e80c4ef3da87eb5a28df0374cccea5ee02182725fc2cf5b7a2b2c8357
     restart: on-failure
+    # Share zerotier's net namespace so the daemon's 127.0.0.1:9993 control plane is reachable.
+    network_mode: "service:zerotier"
     depends_on:
       - zerotier
     environment:
-      ZT_HOST: zerotier
+      ZT_HOST: "127.0.0.1"
       ZT_PORT: "9993"
       ZT_AUTHTOKEN_PATH: /zerotier-data/authtoken.secret
     volumes:
