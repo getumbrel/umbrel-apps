@@ -1,0 +1,34 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: zerotier_web_1
+      APP_PORT: 8080
+
+  zerotier:
+    image: zerotier/zerotier:1.14.2@sha256:575d150a0e09fbee1a7580625b361040a7f78f46cbfbe5016effe812abe202ff
+    restart: on-failure
+    stop_grace_period: 1m
+    cap_add:
+      - NET_ADMIN
+      - SYS_ADMIN
+    devices:
+      - /dev/net/tun
+    ports:
+      - "9993:9993/udp"
+    volumes:
+      - ${APP_DATA_DIR}/data:/var/lib/zerotier-one
+
+  web:
+    # Built from github.com/andrijdavid/umbrel-zerotier-web (FastAPI + uvicorn).
+    image: ghcr.io/andrijdavid/umbrel-zerotier-web:0.1.0@sha256:fb15d76fc3911f3b689bc29227e477c2f1d05258eedad3ab5ead166d55565f41
+    restart: on-failure
+    depends_on:
+      - zerotier
+    environment:
+      ZT_HOST: zerotier
+      ZT_PORT: "9993"
+      ZT_AUTHTOKEN_PATH: /zerotier-data/authtoken.secret
+    volumes:
+      - ${APP_DATA_DIR}/data:/zerotier-data:ro
