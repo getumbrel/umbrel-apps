@@ -1,8 +1,8 @@
-manifestVersion: 1
+manifestVersion: 1.1
 id: localai
 category: ai
 name: LocalAI
-version: "v4.2.6"
+version: "v4.3.0"
 tagline: Drop-in OpenAI replacement
 description: >-
   LocalAI is the free, Open Source OpenAI alternative. LocalAI act as a drop-in replacement REST API that's compatible with OpenAI API specifications for local inferencing.
@@ -15,19 +15,20 @@ description: >-
 
   Before running a model, make sure your device has enough free RAM to support it. Attempting to run a model that exceeds your available memory could cause your device to crash or become unresponsive. Always check the model requirements before downloading or starting it.
 releaseNotes: >-
-  Runtime-downloaded backends are now persisted across restarts and future updates. If you installed a backend in an older LocalAI version, you may need to reinstall it once after this update.
+  Runtime-downloaded backends are persisted across restarts and future updates. If you installed a backend in an older LocalAI version, you may need to reinstall it once after this update.
 
 
-  This release updates LocalAI with llama.cpp MTP defaults, backend updates, and dependency improvements.
+  This release improves backend trust, performance defaults, and admin visibility.
 
 
   Key highlights include:
-    - Bumped llama-cpp to the MTP-merge SHA and automatically set MTP defaults
-    - Updated the ds4, ik_llama.cpp, and stable-diffusion.cpp backend dependencies
-    - Includes the improvements from the v4.2.x series, including DeepSeek V4 Flash backend support and improved Ollama-compatible model metadata
+    - Backend OCI images now include keyless cosign signatures with opt-in strict verification
+    - llama.cpp prompt caching is enabled by default for faster repeated prompts
+    - Usage tracking now includes per-API-key and per-user source views
+    - Distributed mode includes routing, backend-install progress, and trace UI improvements
 
 
-  Full release notes can be found at https://github.com/mudler/LocalAI/releases/tag/v4.2.6
+  Full release notes can be found at https://github.com/mudler/LocalAI/releases/tag/v4.3.0
 backupIgnore:
   - data/models/*
   - data/backends/*
