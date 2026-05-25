@@ -1,0 +1,45 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: nostr-vpn_web_1
+      APP_PORT: 38080
+
+  daemon:
+    image: ghcr.io/mmalmi/nostr-vpn-umbrel:v4.0.40@sha256:3759602d62d5cafbde33be38bcdce9e7df43731fa33d2c3e743d9c8159c27dd3
+    restart: on-failure
+    stop_grace_period: 1m
+    network_mode: "host"
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    entrypoint:
+      - /usr/local/bin/nvpn
+    command:
+      - daemon
+      - --config
+      - /data/config/nvpn/config.toml
+    environment:
+      HOME: /data/home
+      XDG_CONFIG_HOME: /data/config
+      RUST_LOG: info
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+
+  web:
+    image: ghcr.io/mmalmi/nostr-vpn-umbrel:v4.0.40@sha256:3759602d62d5cafbde33be38bcdce9e7df43731fa33d2c3e743d9c8159c27dd3
+    restart: on-failure
+    stop_grace_period: 1m
+    depends_on:
+      - daemon
+    environment:
+      HOME: /data/home
+      XDG_CONFIG_HOME: /data/config
+      NVPN_CLI_PATH: /usr/local/bin/nvpn
+      NVPN_DAEMON_STATUS_MODE: state-file
+      NVPN_EXTERNAL_DAEMON: "true"
+      RUST_LOG: info
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
