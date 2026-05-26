@@ -1,9 +1,9 @@
-manifestVersion: 1
+manifestVersion: 1.1
 id: reitti
 name: Reitti
 tagline: A location tracking and analysis application
 category: files
-version: "4.0.5"
+version: "4.0.5-1"
 port: 8744
 description: >-
   🗺️ Reitti is an application designed to monitor and record your movements in a comprehensive and automated way. It continuously tracks your location throughout the day and identifies the places you visit, creating a detailed log of your daily activities. By analyzing your movements, it can detect the mode of transportation you use, whether you are walking, cycling, or driving, and provides insights into how you travel between different locations.
@@ -34,7 +34,11 @@ gallery:
   - 3.webp
   - 4.webp
   - 5.webp
-releaseNotes: ""
+releaseNotes: >-
+  This update switches Reitti's Redis sidecar back to the upstream-recommended Redis 7 image to fix installs on Raspberry Pi 4 devices where Redis 8 can crash during startup.
+
+
+  If needed, Reitti's Redis cache/queue snapshot is reset during startup. Reitti stores persistent user data in PostGIS and the app data directory, not Redis.
 dependencies: []
 path: ""
 defaultUsername: "admin"
