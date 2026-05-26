@@ -1,6 +1,6 @@
 #!/bin/bash
 export APP_LNBITS_CLN_IP="10.21.21.98"
-export APP_LNBITS_CLN_PORT="3009"
+export APP_LNBITS_CLN_PORT="3015"
 export APP_LNBITS_CLN_DATA_DIR="${EXPORTS_APP_DIR}/data"
 
 # Public URL override — set to your operator domain so LNURL, LNDHub,
