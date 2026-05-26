@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: qbittorrent
 category: networking
 name: qBittorrent
-version: "5.2.0"
+version: "5.2.1"
 tagline: Free and reliable P2P Bittorrent client
 description: >-
   qBittorrent is an open-source software alternative to µTorrent. It's designed to meet the needs of most users while using as little CPU and memory as possible.
@@ -26,22 +26,19 @@ description: >-
 
   ⚠️ qBittorrent downloads torrents over the Clearnet, not Tor.
 releaseNotes: >-
-  ⚠️ This update switches the download path to "/downloads" for better compatibility with other apps.
+  This update includes important WebUI, WebAPI, RSS, search, and startup fixes.
 
-  Existing torrents need to be manually moved to the new location.
+  Highlights:
+    - Prevented SSRF via HTTP redirection
+    - Fixed stale lockfile cleanup on startup
+    - Fixed WebUI issues with magnet links, add torrent dialogs, and file filtering
+    - Fixed WebAPI result caching and RSS refresh behavior
+    - Improved search behavior when a proxy is configured
 
+  If you are upgrading from a version before 5.2.0, note that qBittorrent on umbrelOS now uses "/downloads" as the default download path for better compatibility with other apps. Existing torrents may need to be manually moved to the new location.
 
-  Release notes from version 5.2.0:
-    - Added torrent creation and a new add torrent experience to the WebUI
-    - Added tracker management, share limit actions, and persistent WebUI settings
-    - Added new torrent controls, filters, columns, and customization options
-    - Improved WebUI performance, mobile support, search, RSS, and WebAPI features
-    - Improved resume loading, torrent piece calculation, and large list handling
-    - Fixed crashes when adding torrents, closing dialogs, quitting, and using RSS
-    - Fixed watched folders, tracker reannouncing, file renaming, and session issues
+  Full release notes are available at https://github.com/qbittorrent/qBittorrent/releases/tag/release-5.2.1
 
-
-  Full release notes for qBittorrent are available at https://www.qbittorrent.org/news
 developer: qBittorrent
 website: https://qbittorrent.org/
 dependencies: []
