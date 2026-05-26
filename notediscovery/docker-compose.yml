@@ -7,14 +7,11 @@ services:
       APP_PORT: 8000
 
   web:
-    image: ghcr.io/gamosoft/notediscovery:0.6.1@sha256:2b60def9c2567ec785eb728ed2845291db2bfd83d81c9da4e9d87481a37fcbb7
+    image: ghcr.io/gamosoft/notediscovery:0.24.2@sha256:b8e64bc2ae9ee13660b150514923d09c9222dff414409b451abe1ed78be8a019
     user: 1000:1000
     restart: on-failure
     volumes:
-      - ${APP_DATA_DIR}/data/app_data:/app/data
-      - ${APP_DATA_DIR}/data/plugins:/app/plugins
-      - ${APP_DATA_DIR}/data/themes:/app/themes
-      - ${APP_DATA_DIR}/data/config/config.yaml:/app/config.yaml
+      - ${APP_DATA_DIR}/data:/app/data
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 60s
