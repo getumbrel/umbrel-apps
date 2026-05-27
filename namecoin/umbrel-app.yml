@@ -48,6 +48,55 @@ path: ""
 defaultUsername: ""
 defaultPassword: ""
 torOnly: false
+widgets:
+  - id: "stats"
+    type: "four-stats"
+    refresh: "5s"
+    endpoint: "web:18080/api/widget/stats"
+    link: ""
+    example:
+      type: "four-stats"
+      link: ""
+      items:
+        - title: "Connections"
+          text: "12"
+          subtext: "peers"
+        - title: "Block height"
+          text: "826569"
+          subtext: "blocks"
+        - title: "Mempool"
+          text: "3"
+          subtext: "MB"
+        - title: "Chain size"
+          text: "15.2"
+          subtext: "GB"
+  - id: "sync"
+    type: "text-with-progress"
+    refresh: "2s"
+    endpoint: "web:18080/api/widget/sync"
+    link: ""
+    example:
+      type: "text-with-progress"
+      link: ""
+      title: "Blockchain sync"
+      text: "83%"
+      progressLabel: "In progress"
+      progress: 0.83
+  - id: "connect"
+    type: "list"
+    refresh: "60s"
+    endpoint: "web:18080/api/widget/connect"
+    link: ""
+    example:
+      type: "list"
+      link: ""
+      items:
+        - text: "abcdef1234567890.onion:8336"
+          subtext: "RPC over Tor"
+        - text: "umbrel"
+          subtext: "RPC username"
+        - text: "••••••••••••••••••••"
+          subtext: "RPC password (view in app)"
 submitter: mstrofnone
 submission: https://github.com/getumbrel/umbrel-apps/pull/4962
 backupIgnore:
