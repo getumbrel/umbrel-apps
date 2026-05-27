@@ -1,0 +1,136 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: danhaus93-solostrike_ui_1
+      APP_PORT: 80
+      # v1.8.4: narrow auth whitelist — exposes ONLY read-only stats and the
+      # home-screen widget endpoint without an Umbrel session token. The
+      # widget loader has no session, so without whitelisting /api/widget/*
+      # the home-screen widget shows dashes (this fixes the v1.7.7 widget
+      # bug for real). /metrics is whitelisted for Prometheus/Grafana.
+      # /api/state, /api/health*, and /api/stratum-health are read-only.
+      #
+      # NOT whitelisted (require Umbrel session):
+      #   /api/setup, /api/config, /api/reset-share-stats, /api/webhooks,
+      #   /api/network-stats/* (the POST endpoints under that prefix can
+      #   toggle the Pulse network broadcasting and need protection — and
+      #   the same data is exposed read-only inside /api/state anyway, so
+      #   nothing useful is lost by keeping the network-stats prefix gated).
+      #
+      # Important: Umbrel's app_proxy whitelist does PREFIX matching, so
+      # listing "/api/network-stats" would also expose "/api/network-stats/
+      # enable" etc. Each entry below is either an exact-match path or
+      # ends in /* to mean "this prefix is fine to expose entirely".
+      PROXY_AUTH_WHITELIST: /api/widget/four-stats,/api/health,/api/health/detailed,/api/state,/api/stratum-health,/metrics
+
+  ckpool:
+    image: ghcr.io/getumbrel/docker-ckpool-solo:590fb2a@sha256:4e6b8f4f9c7d74c2111a6e082a2bbdc936fa510989a81e7cef714d1da944336b
+    restart: on-failure
+    stop_grace_period: 1m
+    command: ["--btcsolo", "--log-shares", "--config", "/etc/ckpool/ckpool.conf"]
+    # v1.11.13 — Healthcheck verifies the pid file AND listener socket exist.
+    # Previous v1.11.12 attempt used `pgrep -f ckpool` to verify process
+    # liveness, but the upstream ckpool-solo image doesn't ship pgrep, so
+    # the test always errored out → container reported unhealthy even
+    # though mining was working fine. ckpool writes /tmp/ckpool/main.pid
+    # on startup and removes it on graceful shutdown, so its presence is a
+    # reliable process-liveness signal. Pairing it with the listener socket
+    # check still ensures the API only attaches when ckpool is fully ready
+    # for stratum traffic — same goal as v1.11.12, working implementation.
+    healthcheck:
+      test: ["CMD-SHELL", "test -f /tmp/ckpool/main.pid && test -S /tmp/ckpool/listener"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 30s
+    ports:
+      - "3333:3333"
+      - "3334:3334"
+    volumes:
+      - ${APP_DATA_DIR}/data/ckpool/config:/etc/ckpool
+      - ${APP_DATA_DIR}/data/ckpool/logs:/var/log/ckpool
+    environment:
+      - BITCOIN_RPC_HOST=${APP_BITCOIN_NODE_IP}
+      - BITCOIN_RPC_PORT=${APP_BITCOIN_RPC_PORT}
+      - BITCOIN_RPC_USER=${APP_BITCOIN_RPC_USER}
+      - BITCOIN_RPC_PASS=${APP_BITCOIN_RPC_PASS}
+      - BITCOIN_ZMQ_HASHBLOCK=tcp://${APP_BITCOIN_NODE_IP}:${APP_BITCOIN_ZMQ_HASHBLOCK_PORT}
+      - POOL_SIGNATURE=SoloStrike on Umbrel/
+      - START_DIFFICULTY=10000
+      - MIN_DIFFICULTY=1
+      - MAX_DIFFICULTY=0
+      - BLOCKPOLL=50
+      - UPDATE_INTERVAL=20
+
+  # TLS stratum terminator (v1.5.3+)
+  # Accepts stratum+ssl connections on :4333, decrypts, forwards to ckpool:3333.
+  # Self-signed cert auto-generated on first run and persisted in /data/stunnel.
+  stunnel:
+    # v1.11.1: PINNED by sha256 digest for supply-chain integrity.
+    # The :v1.11.1 tag is human-readable labeling; the @sha256: digest is
+    # the immutable contract — Docker pulls exactly these bytes regardless
+    # of what tag-pointer changes happen in the registry. To update on a
+    # new release: rebuild, push, capture the new digest with
+    # `docker inspect <image>:latest --format='{{index .RepoDigests 0}}'`,
+    # and replace below.
+    image: ghcr.io/danhaus93-ops/solostrike-stunnel:v1.11.52@sha256:7bab2e8255dff30b453ac6c8ad0db554222e64defb93aff006fcab5601fa2fde
+    restart: on-failure
+    # v1.8.4: wait for ckpool to be healthy. stunnel forwards to ckpool:3333
+    # so connecting to a half-booted ckpool would drop early SSL miners.
+    depends_on:
+      ckpool:
+        condition: service_healthy
+    ports:
+      - "4333:4333"
+    volumes:
+      - ${APP_DATA_DIR}/data/stunnel:/certs
+
+  api:
+    image: ghcr.io/danhaus93-ops/solostrike-api:v1.11.52@sha256:53232bcdd9ea9ea3a2a4620731f755706ab4901bdda638cc847eb10bc801938f
+    restart: on-failure
+    stop_grace_period: 30s
+    # v1.8.4: wait for ckpool to be HEALTHY, not just started. Combined
+    # with the ckpool healthcheck above, this prevents the API from
+    # connecting to a half-booted ckpool socket on cold boot.
+    depends_on:
+      ckpool:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "--timeout=5", "http://localhost:3001/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    volumes:
+      - ${APP_DATA_DIR}/data/ckpool/logs:/var/log/ckpool:ro
+      - ${APP_DATA_DIR}/data/ckpool/config:/etc/ckpool
+      - ${APP_DATA_DIR}/data/config:/app/config
+    environment:
+      - NODE_ENV=production
+      - CKPOOL_LOG_DIR=/var/log/ckpool
+      - CKPOOL_CONFIG_DIR=/etc/ckpool
+      - CONFIG_DIR=/app/config
+      - BITCOIN_RPC_HOST=${APP_BITCOIN_NODE_IP}
+      - BITCOIN_RPC_PORT=${APP_BITCOIN_RPC_PORT}
+      - BITCOIN_RPC_USER=${APP_BITCOIN_RPC_USER}
+      - BITCOIN_RPC_PASS=${APP_BITCOIN_RPC_PASS}
+      - BITCOIN_ZMQ_HASHBLOCK=tcp://${APP_BITCOIN_NODE_IP}:${APP_BITCOIN_ZMQ_HASHBLOCK_PORT}
+      - POOL_SIGNATURE=SoloStrike on Umbrel/
+      - START_DIFFICULTY=10000
+      - MIN_DIFFICULTY=1
+      - MAX_DIFFICULTY=0
+      - BLOCKPOLL=50
+      - UPDATE_INTERVAL=20
+      - STRATUM_PORT=3333
+      - STRATUM_PORT_HOBBY=3334
+      - STRATUM_PORT_TLS=4333
+
+  ui:
+    image: ghcr.io/danhaus93-ops/solostrike-ui:v1.11.52@sha256:21b1cc3befb3be12fda332b57e235959edbe5edc7e171257d3cc2898b81950bf
+    restart: on-failure
+    container_name: danhaus93-solostrike_ui_1
+    depends_on:
+      - api
+

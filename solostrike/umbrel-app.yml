@@ -1,0 +1,90 @@
+manifestVersion: 1
+id: solostrike
+category: bitcoin
+name: SoloStrike
+version: "1.11.52"
+tagline: Zero-fee solo Bitcoin mining pool with local-only Private Mode
+description: >-
+  SoloStrike is a self-hosted solo Bitcoin mining pool for Umbrel, powered by
+  the battle-tested ckpool-solo engine and wrapped in a real-time mining
+  dashboard.
+
+
+  Connect your ASICs directly to your own Bitcoin node and keep 100% of every
+  block you find — no pool fees, no custody risk, no middleman.
+
+
+  Privacy-first: Private Mode — Disables all third-party data feeds (mempool.space, price APIs); combine with the opt-in Pulse toggle for fully local operation
+
+
+  Features:
+
+  • 🔒 Private Mode — fully local operation, zero external API calls when enabled
+
+  • 🌐 SoloStrike Pulse — opt-in anonymous community census over nostr, with per-peer Strikers roster and multiple network visualizations (globe, mesh, nonce field)
+
+  • 🛡️ Tor routing for Pulse — broadcasts and subscriptions optionally route through Umbrel's tor_proxy
+
+  • 🎯 The Reckoning — strike forecast simulator with hashrate slider, probability waterfall, and global network rank
+
+  • 🔥 The Burn — power cost integration: net profit per strike, break-even electricity rate, hypothetical reward calculator
+
+  • ⚙ Multi-port stratum — 3333 for ASICs, 3334 for hobby miners (BitAxe, NerdQaxe++), 4333 for TLS-encrypted connections via stunnel
+
+  • Automatic miner-type detection — BitAxe Gamma/Supra/Ultra, NerdQaxe++, Antminer S19/S21 variants, Avalon Nano 3S / Avalon Q, Whatsminer, Braiins rentals
+
+  • Real-time dashboard — Firepower live hashrate, Strike Velocity, The Hunt (block potential), The Ledger (recent blocks), The Crew (workers), Near Strikes, Top Miners, Hot Streak, Difficulty Retarget
+
+  • Bitcoin Core integration — sync warning banner, ZMQ block notifications, full node panel with peers / relay fee / mempool size
+
+  • Webhooks (Discord, ntfy.sh, Home Assistant, Telegram), Prometheus /metrics endpoint, public read-only API, CSV export
+
+  • 8 themes including Paper Light blueprint mode and Performance Mode for low-power devices; mobile-first horizontal scroll-snap carousel with 1 / 2 / 4-column grid on tablets and desktop
+
+  • Drag-and-drop card reordering — layout persists per-device
+
+
+  100% self-custody. Truly zero fees. Your node, your rules, your blocks.
+releaseNotes: ""
+developer: danhaus93-ops
+website: https://github.com/danhaus93-ops/solostrike-umbrel
+dependencies:
+  - bitcoin
+repo: https://github.com/danhaus93-ops/solostrike-umbrel
+support: https://github.com/danhaus93-ops/solostrike-umbrel/issues
+port: 4040
+gallery: []
+path: ""
+defaultUsername: ""
+defaultPassword: ""
+submitter: danhaus93-ops
+submission: https://github.com/getumbrel/umbrel-apps/pull/5698
+widgets:
+  - id: "stats"
+    type: "four-stats"
+    name: "SoloStrike Stats"
+    refresh: "10s"
+    endpoint: "ui:80/api/widget/four-stats"
+    items:
+      - label: "Pool Hashrate"
+        jsonPath: "items[0].text"
+      - label: "Workers"
+        jsonPath: "items[1].text"
+      - label: "Blocks Found"
+        jsonPath: "items[2].text"
+      - label: "Best Diff"
+        jsonPath: "items[3].text"
+    example:
+      type: "four-stats"
+      link: ""
+      items:
+        - title: "Pool Hashrate"
+          text: "542.8"
+          subtext: "GH/s"
+        - title: "Workers"
+          text: "3"
+        - title: "Blocks Found"
+          text: "0"
+        - title: "Best Diff"
+          text: "1.2B"
+icon: ""
