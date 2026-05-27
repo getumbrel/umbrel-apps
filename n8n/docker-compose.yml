@@ -10,7 +10,7 @@ services:
       PROXY_AUTH_WHITELIST: "/webhook-test/*,/webhook/*"
 
   server:
-    image: n8nio/n8n:2.22.3@sha256:75d18a9ecc588c32ece70d87bfd3319004601cf1d0d4fea5f4ba3640acb87f7b
+    image: n8nio/n8n:2.23.0@sha256:8978cc98ec5ba609bdbf250d27ea672ac893ad55f4a61a026d808867381ff9fd
     restart: on-failure
     volumes:
       - ${APP_DATA_DIR}/data:/home/node/.n8n
@@ -23,4 +23,4 @@ services:
       - N8N_SECURE_COOKIE=false
       - N8N_DIAGNOSTICS_ENABLED=false
       - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
-      - N8N_RUNNERS_ENABLED=true
+      - N8N_PROXY_HOPS=1
