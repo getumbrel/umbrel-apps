@@ -5,8 +5,7 @@ services:
     environment:
       APP_HOST: gobrrr-pool_webui_1
       APP_PORT: 21421
-      PROXY_APP_EXTRAS: gobrrr-stats:23002
-      PROXY_AUTH_WHITELIST: /api/*,/widget-api/*
+      PROXY_AUTH_WHITELIST: /api/*
     container_name: gobrrr-pool_app_proxy_1
 
   ckpool:
@@ -68,8 +67,6 @@ services:
     depends_on:
       ckpool:
         condition: service_healthy
-    ports:
-      - '23002:23002'
     volumes:
       - ${APP_DATA_DIR}/data/ckpool-logs/ckpool.log:/data/ckpool.log:ro
     container_name: gobrrr-pool_etl_1   
