@@ -20,3 +20,36 @@ if [ ! -d "${CONFIG_DIR}" ]; then
     echo "The old Frigate config file does not exist."
   fi
 fi
+
+CONFIG_FILE="${CONFIG_DIR}/config.yml"
+
+touch "${CONFIG_FILE}"
+chown 1000:1000 "${CONFIG_FILE}"
+
+# Frigate's documented reverse-proxy path is port 8971 with TLS disabled when a
+# fronting proxy handles access control. Umbrel's app_proxy provides that access
+# control, so keep existing configs on the Umbrel-managed proxy mode unless the
+# user has explicitly configured the relevant top-level section themselves.
+if ! grep -Eq '^auth:' "${CONFIG_FILE}"; then
+  cat <<'EOF' >> "${CONFIG_FILE}"
+
+auth:
+  enabled: False
+EOF
+fi
+
+if ! grep -Eq '^proxy:' "${CONFIG_FILE}"; then
+  cat <<'EOF' >> "${CONFIG_FILE}"
+
+proxy:
+  default_role: admin
+EOF
+fi
+
+if ! grep -Eq '^tls:' "${CONFIG_FILE}"; then
+  cat <<'EOF' >> "${CONFIG_FILE}"
+
+tls:
+  enabled: False
+EOF
+fi

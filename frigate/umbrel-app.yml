@@ -2,7 +2,7 @@ manifestVersion: 1
 id: frigate
 category: automation
 name: Frigate
-version: "0.17.1"
+version: "0.17.1-1"
 tagline: A complete and local NVR
 description: >-
   A complete and local NVR designed for Home Assistant with AI object detection. 
@@ -17,28 +17,13 @@ description: >-
 
   - Your RTSP password (if needed) is the "default app password" that is displayed on Frigate's page in the app store (shown after install).
 releaseNotes: >-
-  ⚠️ As usual, Frigate will attempt to update its configuration automatically. It is still recommended to back up your current config and database before upgrading.
+  This package revision keeps Frigate on upstream 0.17.1 and protects the web UI behind Umbrel app authentication.
 
 
-  🚨 This is a maintenance release with security fixes and bugfixes:
-    - Restricted raw config endpoint to admin role only
-    - Fixed cross-camera authentication in timeline and media endpoints
-    - Fixed RKNN ArcFace input format
-    - Fixed storage cleanup being attempted when Frigate is in safe mode
+  Frigate now opens through Umbrel's app-authenticated proxy instead of exposing Frigate's internal unauthenticated UI directly. The default package uses Frigate's documented reverse-proxy mode, so Umbrel remains the login layer and no separate Frigate admin password is required for the default setup.
 
 
-  Other improvements in this update include:
-    - Improved playback of videos in Tracking Details
-    - Fixed preview retrieval to handle missing previews gracefully
-    - Fixed thumbnail encoding logic
-    - Fixed go2rtc config handling
-    - Fixed GenAI issues
-    - Fixed audio event maintainer
-    - Push notifications now filtered by user role camera access
-    - Various UI fixes and improvements
-
-
-  Full release notes are available at https://github.com/blakeblackshear/frigate/releases
+  Full upstream release notes for Frigate 0.17.1 are available at https://github.com/blakeblackshear/frigate/releases/tag/v0.17.1
 developer: Blake Blackshear
 website: https://frigate.video/
 repo: https://github.com/blakeblackshear/frigate
