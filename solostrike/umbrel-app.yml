@@ -2,11 +2,11 @@ manifestVersion: 1
 id: solostrike
 category: bitcoin
 name: SoloStrike
-version: "1.11.52"
-tagline: Zero-fee solo Bitcoin mining pool with local-only Private Mode
+version: "1.11.59"
+tagline: Zero-fee solo Bitcoin mining pool with airgapped Private Mode
 description: >-
   SoloStrike is a self-hosted solo Bitcoin mining pool for Umbrel, powered by
-  the battle-tested ckpool-solo engine and wrapped in a real-time mining
+  the battle-tested ckpool-solo engine and wrapped in a real-time Deep Mine
   dashboard.
 
 
@@ -14,36 +14,78 @@ description: >-
   block you find — no pool fees, no custody risk, no middleman.
 
 
-  Privacy-first: toggle Private Mode and the app stops outbound calls to
-  third-party APIs (mempool.space, price feeds). Pulse and Tor routing are
-  independent opt-in toggles for users who want community visibility.
+  v1.3.0 introduces Private Mode — toggle one switch and the entire app goes
+  airgapped. No mempool.space calls, no price feeds, no outbound traffic of
+  any kind. Your mining activity is yours alone.
 
 
   Features:
 
-  • 🔒 Private Mode — disables third-party API calls (mempool, price feeds) when enabled
+  • 🔒 Private Mode — fully local operation, zero external API calls when enabled
 
-  • 🌐 SoloStrike Pulse — opt-in anonymous community census over nostr, with per-peer Strikers roster and multiple network visualizations (globe, mesh, nonce field)
+  • 🌐 SoloStrike Pulse (v1.6.0+) — opt-in anonymous community counter over nostr, with per-peer Strikers roster (v1.7.5)
 
-  • 🛡️ Tor routing for Pulse — broadcasts and subscriptions optionally route through Umbrel's tor_proxy
+  • 🛡️ Tor routing for Pulse (v1.7.3) — broadcasts and subscriptions optionally route through Umbrel's tor_proxy
 
-  • 🎯 The Reckoning — strike forecast simulator with hashrate slider, probability waterfall, and global network rank
+  • 🔐 Hardened by default (v1.11.x) — every runtime container runs non-root (ckpool + api as UID 1000, stunnel as nobody, UI on nginx-unprivileged) with no-new-privileges on all services; images SHA-pinned and CI-scanned
 
-  • 🔥 The Burn — power cost integration: net profit per strike, break-even electricity rate, hypothetical reward calculator
+  • ⚡ The Vein (v1.7.6) — block reward + fee tiers + statistical earnings + odds, all in one tap-to-drill card
 
-  • ⚙ Multi-port stratum — 3333 for ASICs, 3334 for hobby miners (BitAxe, NerdQaxe++), 4333 for TLS-encrypted connections via stunnel
+  • 🎯 The Reckoning (v1.7.5) — strike forecast simulator with hashrate slider, probability waterfall, and global network rank
 
-  • Automatic miner-type detection — BitAxe Gamma/Supra/Ultra, NerdQaxe++, Antminer S19/S21 variants, Avalon Nano 3S / Avalon Q, Whatsminer, Braiins rentals
+  • 🔥 The Burn (v1.7.7) — power cost integration: net profit per strike + break-even electricity rate
 
-  • Real-time dashboard — Firepower live hashrate, Strike Velocity, The Hunt (block potential), The Ledger (recent blocks), The Crew (workers), Near Strikes, Top Miners, Hot Streak, Difficulty Retarget
+  • ⚙ Stratum Connection card (v1.7.6) — copy-button setup for ASIC / hobby / SSL ports with live port status
 
-  • Bitcoin Core integration — sync warning banner, ZMQ block notifications, full node panel with peers / relay fee / mempool size
+  • Real-time hashrate waveform with 24h history, 7-day trends, axis labels, and peak tracking
 
-  • Webhooks (Discord, ntfy.sh, Home Assistant, Telegram), Prometheus /metrics endpoint, public read-only API, CSV export
+  • Near Strikes leaderboard — historical top 10 best-diff shares across your fleet
 
-  • 8 themes including Paper Light blueprint mode and Performance Mode for low-power devices; mobile-first horizontal scroll-snap carousel with 1 / 2 / 4-column grid on tablets and desktop
+  • Daily hashrate snapshots — 90 days of avg/peak history
+
+  • Sticky header cluster — pool status, ticker, latest block, sync warnings, ZMQ indicator
+
+  • Automatic miner-type detection (BitAxe Gamma/Supra/Ultra, NerdQaxe++, Antminer S19/S21 variants, Avalon Nano 3S / Avalon Q, Whatsminer, Braiins rentals)
+
+  • Worker search, miner rename aliases, per-worker last-share timestamps
+
+  • Click miner IP to open its web UI in a new tab
+
+  • Worker offline toast notifications — catch outages the moment they happen
+
+  • Bitcoin Core sync warning banner when your node falls behind
+
+  • Bitcoin Node panel — Core version, total/in/out peers, relay fee, mempool size
+
+  • Strike Odds — daily, weekly, and monthly block probability + expected time
+
+  • Hot Streak gauge, difficulty retarget countdown, Claim Jumpers leaderboard
+
+  • Latest Block hero strip — most recently mined block, pool, and reward
+
+  • The Goldfields — recent network blocks feed with solo-winner highlighting
+
+  • Block reward, BTC price (7 currencies), and mempool fees under Bitcoin Network
 
   • Drag-and-drop card reordering — layout persists per-device
+
+  • Mobile-first responsive layout — 1 / 2 / 4 columns based on screen size
+
+  • Top Diggers leaderboard — worker, miner type, hashrate, best diff, status
+
+  • CSV export for workers and found blocks
+
+  • Webhooks — POST events to Discord, ntfy.sh, Home Assistant, Telegram bots, etc.
+
+  • Prometheus /metrics endpoint for Grafana, Home Assistant, and custom monitoring
+
+  • Public read-only API — share your pool stats externally
+
+  • Dual stratum ports — 3333 for ASICs, 3334 for hobby miners (BitAxe, NerdQaxe++)
+
+  • ZMQ status indicator — see at a glance whether Bitcoin Core's block broadcasts are reaching the pool
+
+  • Works with any Stratum V1 miner — one-time setup, miners connect automatically
 
 
   100% self-custody. Truly zero fees. Your node, your rules, your blocks.
@@ -66,7 +108,7 @@ widgets:
     type: "four-stats"
     name: "SoloStrike Stats"
     refresh: "10s"
-    endpoint: "ui:80/api/widget/four-stats"
+    endpoint: "ui:8080/api/widget/four-stats"
     items:
       - label: "Pool Hashrate"
         jsonPath: "items[0].text"
@@ -89,4 +131,4 @@ widgets:
           text: "0"
         - title: "Best Diff"
           text: "1.2B"
-icon: ""
+icon: https://raw.githubusercontent.com/danhaus93-ops/solostrike-umbrel/main/danhaus93-solostrike/icon.svg
