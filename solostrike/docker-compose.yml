@@ -52,9 +52,9 @@ services:
   # Container exits in ~1 second and shows as "Exited (0)" in docker ps -a.
   # Runs on every app boot — idempotent, safe to re-execute.
   init-permissions:
-    image: alpine:3.20@sha256:dabf91b69c191a1a0a1628fd6bdd029c0c4018041c7f052870bb13c5a222ae76
+    image: alpine:3.20
     user: "0:0"
-    restart: "no"
+    restart: on-failure
     environment:
       - BITCOIN_RPC_HOST=${APP_BITCOIN_NODE_IP}
       - BITCOIN_RPC_PORT=${APP_BITCOIN_RPC_PORT}
