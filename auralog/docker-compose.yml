@@ -13,8 +13,6 @@ services:
     stop_grace_period: 1m
     depends_on:
       - proxy
-    networks:
-      - default
 
   proxy:
     image: ghcr.io/nillawafa/auralog-proxy:v1.1.0@sha256:466c58ce37fcbbd69db83fb2b198c3d634c688c4c08c7d3656cf237023900a8e
@@ -26,5 +24,3 @@ services:
       - DATA_DIR=/data
     volumes:
       - ${APP_DATA_DIR}/data:/data
-    networks:
-      - default
