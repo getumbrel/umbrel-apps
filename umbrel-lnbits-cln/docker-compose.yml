@@ -83,8 +83,8 @@ services:
         fi
         if [ -z "$$BACKEND_CLASS" ]; then
           # First boot default when no persisted backend exists yet.
-          BACKEND_CLASS="CLNRestWallet"
-          python3 -c "import sqlite3; c=sqlite3.connect('/data/database.sqlite3'); c.execute(\"INSERT OR REPLACE INTO system_settings(id,value,tag) VALUES('lnbits_backend_wallet_class','\\\"CLNRestWallet\\\"','core')\"); c.commit(); c.close()" >/dev/null 2>&1 || true
+          BACKEND_CLASS="CoreLightningWallet"
+          python3 -c "import sqlite3; c=sqlite3.connect('/data/database.sqlite3'); c.execute(\"INSERT OR REPLACE INTO system_settings(id,value,tag) VALUES('lnbits_backend_wallet_class','\\\"CoreLightningWallet\\\"','core')\"); c.commit(); c.close()" >/dev/null 2>&1 || true
         fi
 
         # Make runtime backend explicit so LNbits startup matches persisted selection.
