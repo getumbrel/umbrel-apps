@@ -23,7 +23,7 @@ services:
     entrypoint: memcached -m 256
 
   seafile:
-    image: seafileltd/seafile-mc:13.0.21@sha256:1e335e704bb0159bd13f443c9c5ac20e72dd2bb47da3a8ab48be977cf30fc7bd
+    image: seafileltd/seafile-mc:13.0.22@sha256:dae911f97ec0a0264cb938fd51590ac7b37a43059c1f4ece59da987b5185b79a
     container_name: seafile
     volumes:
       - ${APP_DATA_DIR}/data/seafile-data:/shared
@@ -66,6 +66,8 @@ services:
       - DB_PASSWORD=db_dev
       - DB_NAME=seahub_db
       - JWT_PRIVATE_KEY=${APP_SEED}
-      - SEAHUB_SERVICE_URL=http://${DEVICE_DOMAIN_NAME}:8920
+      - SEAHUB_SERVICE_URL=http://seafile
+    extra_hosts:
+      - "${DEVICE_DOMAIN_NAME}:host-gateway"
     depends_on:
       - db
