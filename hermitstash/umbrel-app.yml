@@ -2,7 +2,7 @@ manifestVersion: 1
 id: hermitstash
 category: files
 name: HermitStash
-version: "1.11.19"
+version: "1.11.20"
 tagline: Post-quantum encrypted self-hosted file sharing
 description: >-
   HermitStash is a self-hosted file upload server with post-quantum encryption. Every file and database field is sealed with an ML-KEM-1024 + ECDH P-384 hybrid envelope and XChaCha20-Poly1305 before touching disk; passwords use Argon2id. Nothing is stored in plaintext, including database fields the operator never thinks of as sensitive.
@@ -31,8 +31,11 @@ defaultPassword: ""
 submitter: dotCooCoo
 submission: https://github.com/getumbrel/umbrel-apps/pull/5378
 releaseNotes: >-
-  This update improves log safety by redacting password-, token-, and key-shaped fields before they are written, and escapes Unicode bidi/format controls in log messages.
+  This update strengthens encrypted database storage by binding sealed columns to their row and column identity, so copied sealed values cannot decrypt in the wrong place.
 
 
-  It also refreshes the bundled blamejs framework to version 0.13.43.
+  It also returns standardized problem-details errors from the sync endpoints, rejects trailing-dot outbound host bypasses, and updates the bundled blamejs framework to version 0.14.8.
+
+
+  Note: vault-key rotation is temporarily blocked for row-bound sealed values until upstream adds rotation support for the new format.
 dependencies: []
