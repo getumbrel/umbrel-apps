@@ -1,0 +1,20 @@
+version: "3.7"
+services:
+  app_proxy:
+    environment:
+      APP_HOST: originless_app_1
+      APP_PORT: 3232
+
+  app:
+    image: ghcr.io/besoeasy/originless:0.1.0@sha256:f4f232052e2763eb23bd9019da885f5700fae947b8760a695be6774bfc9c38b9
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 5m
+    ports:
+      - "4001:4001/tcp"
+      - "4001:4001/udp"
+    volumes:
+      - ${APP_DATA_DIR}:/data
+    environment:
+      - NODE_ENV=production
+      - STORAGE_MAX=${STORAGE_MAX:-20GB}
