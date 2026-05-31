@@ -2,7 +2,7 @@ manifestVersion: 1
 id: uptime-kuma
 category: networking
 name: Uptime Kuma
-version: "2.3.2"
+version: "2.4.0"
 tagline: Self-hosted uptime monitoring tool
 description: >
   Uptime Kuma is a self-hosted monitoring tool like Uptime Robot.
@@ -40,21 +40,17 @@ path: ""
 defaultPassword: ""
 releaseNotes: >
   New features:
-    - Added Telnyx, VK, and MAX messenger notification providers
-    - Added OracleDB monitor support
-    - Added collapsible groups to status pages
-    - Added custom message template support for Evolution notification provider
-    - Added websocket authentication support
+    - Added incidents to RSS feeds
+    - Added EgoSMS and VKTeams notification providers
+    - Added optional tokens for GameDig monitors and bearer-token support for WebSocket monitors
 
 
-  Bug fixes:
-    - Fixed SQLite database locking issues (reverted to single connection by default)
-    - Fixed uptime ratio and average response time missing from Prometheus metrics
-    - Fixed domain expiry not updating correctly
-    - Fixed monitor graph gaps for sub-millisecond TCP pings
-    - Fixed Prometheus metrics showing duplicate series for monitors with tags
+  Bug fixes and security:
+    - Fixed plain-HTTP NTLM monitors returning 400 Bad Request
+    - Fixed npm handling in the Docker image
+    - Includes an admin/authenticated-path security fix for an upstream dependency vulnerability
 
 
-  Full release notes can be found at https://github.com/louislam/uptime-kuma/releases
+  Full release notes can be found at https://github.com/louislam/uptime-kuma/releases/tag/2.4.0
 submitter: Philipp Haussleiter
 submission: https://github.com/getumbrel/umbrel/pull/1148
