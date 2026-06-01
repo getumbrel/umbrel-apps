@@ -1,8 +1,8 @@
 manifestVersion: 1
-id: solostrike
+id: danhaus93-solostrike
 category: bitcoin
 name: SoloStrike
-version: "1.11.61"
+version: "1.11.63"
 tagline: Zero-fee solo Bitcoin mining pool with airgapped Private Mode
 description: >-
   SoloStrike is a self-hosted solo Bitcoin mining pool for Umbrel, powered by
@@ -26,8 +26,6 @@ description: >-
   • 🌐 SoloStrike Pulse (v1.6.0+) — opt-in anonymous community counter over nostr, with per-peer Strikers roster (v1.7.5)
 
   • 🛡️ Tor routing for Pulse (v1.7.3) — broadcasts and subscriptions optionally route through Umbrel's tor_proxy
-
-  • 🔐 Hardened by default — every runtime container runs non-root (ckpool + api as UID 1000, stunnel as nobody, UI on nginx-unprivileged as UID 101) with no-new-privileges on all services; images SHA-pinned and multi-arch
 
   • ⚡ The Vein (v1.7.6) — block reward + fee tiers + statistical earnings + odds, all in one tap-to-drill card
 
@@ -89,20 +87,374 @@ description: >-
 
 
   100% self-custody. Truly zero fees. Your node, your rules, your blocks.
-releaseNotes: ""
+releaseNotes: >-
+  v1.11.63 — Miner detection + Pulse network improvements.
+
+
+  NEW / CHANGED (1.11.63)
+
+
+  • BitAxe Gamma (601/602) miners are now identified correctly in the
+    Crew card, including when workers are named by model number rather
+    than by family name.
+
+
+  • Pulse network now displays all participating miners, including
+    large ones (previous statistical outlier filtering is removed). A
+    note was added clarifying that Pulse figures are self-reported by
+    opt-in nodes and are approximate, not verified.
+
+
+  • General fixes and refinements.
+
+
+  v1.11.60 — Paper Light lightning bolts now render uniformly bright.
+
+
+  CHANGED (1.11.60)
+
+
+  • On the Paper Light theme, lightning bolts had inconsistent color:
+    main bolts and branches showed a white-hot core (bright), but
+    mini-strikes used a blue core with no white center, reading as
+    darker solid blue. A new per-theme "whiteCore" flag makes every
+    bolt tier use the white-hot core + blue halo on Paper Light, so all
+    bolts look uniformly bright. Other themes (Classic, etc.) keep their
+    original per-tier color scheme — this change is scoped to Paper
+    Light only via the theme palette.
+
+
+  v1.11.59 — Fixed the home-screen widget (endpoint pointed at the old
+  UI port 80; updated to 8080 after the nginx-unprivileged move).
+
+
+  v1.11.58 — Fixed TLS 4333 cert perms, payout address sync to
+  ckpool.conf, "STARTING" status, and cold-boot api restart.
+
+
+  BUG FIX (1.11.54)
+
+
+  • Dashboard showed 0 H/s and no workers even when miners were
+    actively connected to the pool. Root cause: v1.11.53 changed the
+    api container to run as UID 1000 (node) for security hardening,
+    but ckpool still runs as UID 0 (root) and writes sharelog files
+    as root. The api could not read those files, so the dashboard
+    had no mining data to display. Fix: align ckpool to also run as
+    UID 1000 via `user: "1000:1000"` in docker-compose.yml. Both
+    containers now share the same uid → api reads everything ckpool
+    writes natively. ckpool's startup unchanged otherwise.
+
+
+  • Users on v1.11.53 should update to v1.11.54 immediately if your
+    dashboard is showing 0 H/s. After update, no manual chown is
+    required — Umbrel will recreate volumes with proper ownership.
+
+
+  v1.11.11 — Version display fix + trademark policy.
+
+
+  BUG FIX (1.11.11)
+
+
+  • The Pulse Strikers roster and System Health card were both still
+    displaying v1.11.7 in earlier releases even though the rest of the
+    dashboard correctly showed the current version. Root cause: the
+    api/src/server.js state.version field was hardcoded and missed by
+    the release scripts. Now correctly reads v1.11.11 and will follow
+    future bumps. This is what determines what gets broadcast on the
+    Pulse network as your peer's version.
+
+
+  ADDED (1.11.11)
+
+
+  • TRADEMARK.md — formal trademark policy documenting that the
+    SoloStrike name, pickaxe logo, LAVA visual identity, and brand
+    vocabulary ("Strikers", "The Hunt", "The Vein", etc.) are
+    protected marks separate from the AGPL-3.0 source license.
+    Models on Docker / Mozilla / WordPress Foundation policies.
+
+
+  v1.11.10 — Relicensed to AGPL-3.0 + Retarget color consistency.
+
+
+  LICENSING (1.11.10)
+
+
+  • SoloStrike is now licensed under the GNU Affero General Public
+    License v3.0 (AGPL-3.0), replacing the previous MIT license. Personal
+    use remains free with no obligations. Forks must remain AGPL-3.0 with
+    source published. Hosted services running modified SoloStrike must
+    disclose source to users (closes the SaaS loophole). See LICENSE.
+
+
+  • Added TRADEMARK.md — the SoloStrike name, pickaxe logo, and LAVA
+    visual identity are now explicitly trademarked. Forks must use a
+    distinct name and replace the visual identity. AGPL governs the
+    code; trademark policy governs the brand.
+
+
+  BUG FIX (1.11.10)
+
+
+  • The header RETARGET indicator was using inverted color semantics vs
+    the Difficulty Retarget card — both showed the same number but with
+    opposite colors. Now matches the card: positive % (difficulty UP,
+    harder for miners) is RED, negative % (difficulty DOWN, easier for
+    miners) is GREEN. Same semantics across the entire dashboard.
+
+
+  v1.11.9 — iOS reconnect hang fix.
+
+
+  PERFORMANCE (1.11.8)
+
+
+  • Status poller cadence reduced from 5s → 2s. Internal state stays fresh
+    for the HTTP /api/state endpoint and for the next eligible broadcast.
+    File-cache reads only — no extra disk or network load.
+
+
+  • WebSocket broadcasts throttled to ≥3s minimum (was 5s). Dashboard
+    updates feel ~1.7× snappier without proportionally increasing WS
+    bandwidth. Pool hashrate, worker counts, and live tiles tick visibly
+    faster.
+
+
+  • Decoupled poll cadence from broadcast cadence — fresh data on demand
+    via HTTP, throttled push via WebSocket. Best of both worlds.
+
+
+  v1.11.1 — Pulse engagement bundle + supply-chain hardening.
+
+
+  PULSE ENGAGEMENT (1.11.1)
+
+
+  • Anonymous block alerts — when any Striker on the network finds a
+    block, all peers see "⛏ A STRIKER · #height" in their Pulse
+    Strikers modal. The block-finder's identity is never revealed in
+    the UI even though the underlying nostr event is signed. Celebrate
+    together, stay private.
+
+
+  • Earned badges on every Striker row — 🥇 OG (broadcasting 90+ days),
+    ⚡ WHALE (top 10% network hashrate), 🌍 GLOBETROTTER (pinned outside
+    US/EU), 🆕 NEW (joined less than 7 days), 💀 GHOST (broadcasts
+    without worker count). Auto-derived from existing broadcast data;
+    no new protocol fields required.
+
+
+  • Tap any Striker row → drill-down sheet with hashrate hero, 2×2
+    stat grid (workers / version / joined / last seen), and each
+    badge expanded with description. Bottom sheet on mobile, modal
+    on desktop.
+
+
+  • Personal hashrate goal tracker — set a target in TH/s, see a
+    LAVA-gradient progress bar showing your distance to goal. Stored
+    in localStorage per-device. "+X TH/s to go" / "✓ Goal reached!"
+
+
+  • Onboarding "?" tooltip — first-time users see a one-shot "WHAT IS
+    PULSE?" explainer modal. Dismissible, never shows again. Reachable
+    later via the "?" button in the Pulse Strikers title bar.
+
+
+  • Heartbeat indicator — live countdown to your next outbound
+    broadcast in the modal title bar. Pulses green and says
+    "BROADCASTING" for 3 seconds when the broadcast fires.
+
+
+  • Gold echo broadcast ring — replaced the static green ring around
+    your own pin on the Solo Strike Map with three concentric pure-gold
+    rings rippling outward continuously, sonar-style. Reads as
+    "actively broadcasting" even between actual broadcasts.
+
+
+  • LAVA palette hashrate distribution — when 3 or more Strikers are
+    visible, a gold-to-brick gradient bar shows network share by rank.
+    Each row gets a matching color stripe on its left edge. Top
+    hashrate = brightest gold.
+
+
+  • Geo flags from peer locations — 🇺🇸 🇨🇦 🇧🇷 🇪🇺 🇬🇧 🇯🇵 🌏 🇦🇺 🌍 🌐
+    appear next to each Striker based on their broadcast loc (snapped
+    to 5° grid for privacy). Continental buckets only — no
+    country-level resolution.
+
+
+  • Recent Strikes ticker — block-found events from any Striker on
+    the network appear in a dedicated section. Deduped by block height,
+    sorted newest first, top 5 shown.
+
+
+  STABILITY (1.11.1)
+
+
+  • Worker offline banner now fires correctly. ckpool drops disconnected
+    workers from its user files, so the status-poller wasn't seeing
+    them anymore and their status stayed "online" forever. Fix: added
+    an age-out pass that marks workers offline when lastSeen is >120s,
+    matching the same threshold used for live workers.
+
+
+  • Memory leak fixes across long-running deployments — share-watcher
+    cursor pruning (2hr TTL, was leaking 75K stale entries), ua-tailer
+    metaByWorker prune (30 day TTL), share-watcher shareCounters prune
+    (30 day TTL with Date.now() backfill that preserved 1.66M lifetime
+    accepted shares across the upgrade). Verified stable at 67 MiB
+    after 20+ hours uptime.
+
+
+  • WebSocket bufferedAmount backpressure guard — if a client falls
+    behind, the server now stops queuing messages instead of growing
+    its buffer unboundedly.
+
+
+  SUPPLY-CHAIN HARDENING (1.11.1)
+
+
+  • All three SoloStrike Docker images now pinned by sha256 digest in
+    docker-compose.yml. Even if a future GHCR account compromise
+    pushed malicious bytes to a tag, your install pulls exactly the
+    verified bytes. The :vX.Y.Z label is human-readable; the @sha256:
+    digest is the cryptographic contract.
+
+
+  • execFileSync replaces execSync throughout the API — eliminates
+    shell-injection vectors in all subprocess calls.
+
+
+  PRIVACY (Pulse v1.12.x protocol — backward compatible)
+
+
+  • Per-peer "Joined Nd ago" tracking via new optional firstSeen field
+    in the Pulse broadcast payload. v1.11.0 peers ignore the new field;
+    v1.11.1 peers use it to show how long each Striker has been on
+    the network.
+
+
+  • Network hashrate trend arrow (↑12%) on the Strikers modal — uses
+    a server-side rolling 60-sample buffer of aggregate hashrate to
+    compute the change since 1 hour ago. Hides below ±3% (noise
+    filter).
+
+
+  v1.10.1 — Security hardening + visual polish.
+
+
+  SECURITY (1.10.1)
+
+
+  • Closed an unauthenticated information leak: the public /api/state
+    endpoint no longer returns the payout BTC address or webhook URLs.
+    Both fields now travel only over the authenticated /api/config
+    endpoint and the auth-gated WebSocket. UI behavior is unchanged
+    — the StratumPanel still shows your full mining username — but
+    the data path is now correctly gated.
+
+
+  • Added SSRF protection to webhooks. Webhooks targeting
+    private/loopback IPs (10.x, 192.168.x, 127.x, .local hostnames)
+    are now blocked by default. Users with self-hosted services on
+    their LAN — Home Assistant, internal ntfy.sh, etc. — can opt in
+    per webhook via a new "Allow internal/LAN URL" toggle in the
+    webhook form. Existing webhooks are unaffected.
+
+
+  • Added Helmet response headers (X-Content-Type-Options,
+    Referrer-Policy, X-Permitted-Cross-Domain-Policies, etc.).
+    Configured carefully to NOT break Umbrel's webview iframe and
+    to NOT interfere with the React UI's inline styles or the
+    WebGL canvases.
+
+
+  VISUAL POLISH (1.10.0)
+
+
+  • Card chrome refinement — every card now sits in a faint ambient
+    amber glow at its bottom edge, reading as physical hardware
+    on a soft light source rather than a flat outline.
+
+
+  • Living status dots — worker row health indicators now layer a
+    breathing inner core with an outward-pinging ring (green =
+    healthy/full animation, amber = warm/breath only, red =
+    offline/static dead-dot).
+
+
+  • Gradient section headers — every "▸ The Crew", "▸ Firepower",
+    etc. now has a fading amber underline that runs full-strength
+    on the left and trails to nothing on the right, replacing the
+    flat 1px gray default border.
+
+
+  POOL ALIGNMENT + LIVE TELEMETRY (1.9.x)
+
+
+  • Real pool-alignment verification — SoloStrike now connects to
+    each miner's local API (cgminer-JSON for LuxOS / BraiinsOS /
+    Vnish / Whatsminer / Avalon, and ESP-Miner HTTP for BitAxe /
+    NerdQaxe family) every 60 seconds and reads the active pool
+    config. Worker rows show "✓ ALIGNED WITH SOLOSTRIKE" or
+    "✗ NOT ON SOLOSTRIKE" with a clear diagnostic. Defaults on,
+    read-only (never sends write commands), no UI toggle needed
+    — disable with "minerPolling": false in config.json.
+
+
+  • Live telemetry pulled from the same poll cycle: per-worker
+    chip temperature (color-coded green/cyan/amber/red by tier),
+    fan speeds, voltage, and hardware error counter.
+
+
+  • Hot-miner banner appears at the top of the dashboard when any
+    miner crosses 80°C, with a one-tap link to the offending
+    worker's detail modal.
+
+
+  • Avalon Nano 3S support — handles their unusual "MM ID" string
+    format and three-parallel-TCP connection requirement (their
+    firmware drops everything after the first cgminer command).
+
+
+  STABILITY (1.8.5 → 1.9.7)
+
+
+  • Fixed a blank-modal crash when opening worker details (React 18
+    silent unmount on render error — style consts now hoisted to
+    module scope).
+
+
+  • Fixed a false-positive "WRONG POOL" warning on Avalon firmware
+    that redacts the user field (now reads as "unverifiable" rather
+    than misaligned).
+
+
+  • Section titles now read as their own status (e.g. the section
+    is literally titled "✓ ALIGNED WITH SOLOSTRIKE" in green).
+
+
+  Full version history available at:
+  https://github.com/danhaus93-ops/solostrike-umbrel/blob/main/CHANGELOG.md
 developer: danhaus93-ops
 website: https://github.com/danhaus93-ops/solostrike-umbrel
 dependencies:
   - bitcoin
 repo: https://github.com/danhaus93-ops/solostrike-umbrel
 support: https://github.com/danhaus93-ops/solostrike-umbrel/issues
-port: 4040
-gallery: []
+port: 1234
+gallery:
+  - https://raw.githubusercontent.com/danhaus93-ops/solostrike-umbrel/main/danhaus93-solostrike/1.png
+  - https://raw.githubusercontent.com/danhaus93-ops/solostrike-umbrel/main/danhaus93-solostrike/2.png
+  - https://raw.githubusercontent.com/danhaus93-ops/solostrike-umbrel/main/danhaus93-solostrike/3.png
+  - https://raw.githubusercontent.com/danhaus93-ops/solostrike-umbrel/main/danhaus93-solostrike/4.png
 path: ""
 defaultUsername: ""
 defaultPassword: ""
 submitter: danhaus93-ops
-submission: https://github.com/getumbrel/umbrel-apps/pull/5698
+submission: https://github.com/danhaus93-ops/solostrike-umbrel
 widgets:
   - id: "stats"
     type: "four-stats"
@@ -131,4 +483,4 @@ widgets:
           text: "0"
         - title: "Best Diff"
           text: "1.2B"
-icon: ""
+icon: https://raw.githubusercontent.com/danhaus93-ops/solostrike-umbrel/main/danhaus93-solostrike/icon.svg
