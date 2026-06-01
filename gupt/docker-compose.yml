@@ -1,0 +1,13 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: gupt_web_1
+      APP_PORT: 8000
+
+  web:
+    image: ghcr.io/besoeasy/gupt:2026.05.13@sha256:66fc4b97c224dc6d2f9d5496305676428dd1f36a8ee4409dd6d9d8af21c6ed79
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 1m
