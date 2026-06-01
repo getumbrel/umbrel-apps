@@ -3,7 +3,7 @@ id: nginx-proxy-manager
 name: Nginx Proxy Manager
 tagline: Expose your services easily and securely
 category: networking
-version: "2.14.0"
+version: "2.15.0"
 port: 4498
 description: >-
   Expose your apps to the internet easily and securely.
@@ -36,17 +36,17 @@ gallery:
   - 2.jpg
   - 3.jpg
 releaseNotes: >-
-  This update includes several improvements and bug fixes.
+  ⚠️ Major update: Nginx Proxy Manager now uses a Debian Trixie base image with updated OpenResty, Certbot, and Python. If you use DNS plugins for certificates, check the updated Certbot documentation because some plugins may need dependency tweaks.
 
 
   Key highlights include:
-    - Added "Trust Upstream Forwarded Proto Headers" advanced proxy host configuration
-    - Fixed disabling two-factor authentication
-    - Added DNS plugin for ArvanCloud provider
-    - Updated Slovak translation
-    - Fixed uploading of custom certificates
+    - Updated OpenResty to address CVE-2026-42945, CVE-2026-8711, and CVE-2026-9256
+    - Improved Certbot DNS plugin testing in CI
+    - Fixed a SQLite NOW() issue and silent nginx config corruption in 50-ipv6.sh
+    - Added column sorting to nginx tables and clearer proxy host delete confirmations
+    - Added new DNS providers and updated translations
 
 
-  Full release notes are available at https://github.com/NginxProxyManager/nginx-proxy-manager/releases
+  Full release notes can be found at https://github.com/NginxProxyManager/nginx-proxy-manager/releases/tag/v2.15.0
 dependencies: []
 path: ""
