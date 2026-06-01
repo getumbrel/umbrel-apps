@@ -5,11 +5,10 @@ services:
     environment:
       APP_HOST: bolt12-pay_web_1
       APP_PORT: 8081
-      PROXY_AUTH_WHITELIST: "*"
-      PROXY_AUTH_BLACKLIST: "/pay,/pay-login"
+      PROXY_AUTH_WHITELIST: "/,/links,/alias/*,/.well-known/*,/assets/*,/api/info,/api/health,/api/lnurl/*,/api/qr/*,/public.webmanifest,/service-worker.js,/icon.svg"
 
   web:
-    image: alex71btc/bolt12-pay:0.2.94@sha256:a325233db4dfc52ec470f4df0bd4424261879a669c1f417a5b9e970bd7209bc8
+    image: alex71btc/bolt12-pay:0.2.95@sha256:67b153e660507a2640645bdc0c995ded9e6976718201a36f5519bb5107948ef3
     restart: on-failure
     depends_on:
       - lndk
