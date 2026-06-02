@@ -1,21 +1,67 @@
 version: "3.7"
 
 services:
+  setup:
+    image: python:3.12-alpine@sha256:236173eb74001afe2f60862de935b74fcbd00adfca247b2c27051a70a6a39a2d
+    # Host networking so the wizard sees the real host serial devices and the
+    # host's interface/IPv6 state (via /proc and /sys), not a container namespace.
+    network_mode: host
+    restart: on-failure
+    stop_grace_period: 10s
+    environment:
+      SETUP_PORT: "7586"
+      OTBR_WEB_PORT: "7587"
+      OTBR_REST_PORT: "8083"
+    volumes:
+      - ${APP_DATA_DIR}/hooks:/app:ro
+      - ${APP_DATA_DIR}/data:/data
+      - /dev:/dev:ro
+    command: ["python3", "/app/server.py"]
+
+  # OpenThread Border Router. Waits for the setup wizard to write a configured
+  # settings file before launching, so it never crash-loops on the default
+  # device/interface values on a fresh install.
   server:
     image: ghcr.io/ownbee/hass-otbr-docker:v0.3.0@sha256:5ca7008462e94d4c937aca8c1c9a60e709d6d300625363c161b946683032d5b1
     network_mode: host
     privileged: true
     restart: on-failure
     stop_grace_period: 1m
-    env_file:
-      - ${APP_DATA_DIR}/data/settings.env
+    depends_on:
+      - setup
+    environment:
+      OTBR_WEB_PORT: "7587"
+      OTBR_REST_PORT: "8083"
     volumes:
-      - ${APP_DATA_DIR}/data/thread:/data/thread
+      - ${APP_DATA_DIR}/data:/data
       - /dev:/dev
     entrypoint:
       - /bin/bash
       - -c
       - |
+        set -uo pipefail
+        SETTINGS=/data/settings.env
+        load_settings() {
+          CONFIGURED=0; DEVICE=""; BAUDRATE=""; FLOW_CONTROL=""; BACKBONE_IF=""
+          FIREWALL=""; NAT64=""; AUTOFLASH_FIRMWARE=""
+          [ -f "$$SETTINGS" ] || return
+          while IFS='=' read -r key val; do
+            case "$$key" in
+              DEVICE|BAUDRATE|FLOW_CONTROL|BACKBONE_IF|FIREWALL|NAT64|AUTOFLASH_FIRMWARE|CONFIGURED)
+                export "$$key=$$val" ;;
+            esac
+          done < "$$SETTINGS"
+        }
+        echo "[otbr] waiting for first-run setup to complete (open the app to configure)..."
+        while true; do
+          load_settings
+          if [ "$${CONFIGURED:-0}" = "1" ] && [ -n "$${DEVICE:-}" ] && [ -e "$${DEVICE:-/nonexistent}" ]; then
+            break
+          fi
+          echo "[otbr] not configured yet — retrying in 5s"
+          sleep 5
+        done
+        echo "[otbr] configured (DEVICE=$$DEVICE BACKBONE_IF=$${BACKBONE_IF:-}) — starting border router"
         find / -type f -name app.js -path '*frontend/res/js/*' 2>/dev/null \
           | xargs -r sed -i "s/restServerPort = '8081'/restServerPort = '$${OTBR_REST_PORT:-8081}'/"
         exec /init

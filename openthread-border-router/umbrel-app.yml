@@ -6,45 +6,32 @@ version: "0.3.0"
 tagline: Thread border router for Home Assistant and Matter
 description: >-
   OpenThread Border Router (OTBR) lets you bridge a Thread mesh network to your
-  local Wi-Fi/Ethernet network using a supported Thread radio dongle (e.g.
-  Nordic nRF52840, Silicon Labs, Texas Instruments CC1352/CC2652). It enables
+  local Wi-Fi/Ethernet network using a Thread radio dongle. It enables
   Home Assistant and Matter-over-Thread devices (locks, sensors, plugs,
   thermostats) to communicate with your smart home stack without relying on a
   vendor-specific hub like Apple HomePod, Google Nest Hub, or Amazon eero.
 
 
-  This app packages the community-maintained
-  [hass-otbr-docker](https://github.com/ownbee/hass-otbr-docker) image, which
-  is a slim wrapper around the official OpenThread Border Router project,
-  tailored for use alongside Home Assistant.
-
-
-  ** Setup **
-
+  ## Setup
 
   1. Plug your Thread radio dongle into your Umbrel device before installing.
 
-  2. On first start the app creates a settings file at
-     `app-data/openthread-border-router/data/settings.env`. Defaults assume
-     a dongle at `/dev/ttyUSB0` and a backbone interface of `eth0`. Edit
-     this file (e.g. set `DEVICE=/dev/ttyACM0` or `BACKBONE_IF=enp1s0` for
-     Umbrel Home) and restart the app to apply changes. The file is
-     preserved across app updates.
+  2. Open the app. The setup wizard detects
+     your radio's serial device, lets you confirm the backbone network
+     interface, and checks that IPv6 is available on your host and LAN. Pick
+     the device and save — the border router then starts automatically.
 
   3. Open Home Assistant and add the "OpenThread Border Router"
-     integration, pointing it at `http://<umbrel-ip>:8083` (or whichever
-     `OTBR_REST_PORT` you set).
+     integration, pointing it at `http://<umbrel-ip>:8083` (the OTBR REST API).
+     The OTBR web dashboard is available at `http://<umbrel-ip>:7587`.
 
 
-  ** Notes **
+  ## Notes
 
+  - **IPv6 is required.** Thread relies on end-to-end IPv6, so IPv6
+    must be enabled on your Umbrel host and your router/LAN. The setup wizard
+    verifies this.
 
-  - The container runs in `host` networking mode and `privileged` mode because
-    the Thread Border Router needs raw access to the network interface for IPv6
-    multicast/mDNS and to manage the `wpan0` interface.
-
-  - Persistent Thread network credentials are stored in the app data directory
-    so they survive restarts.
 developer: ownbee
 website: https://github.com/ownbee/hass-otbr-docker
 dependencies: []

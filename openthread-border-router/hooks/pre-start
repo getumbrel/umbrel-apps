@@ -1,22 +1,24 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Seed a user-editable settings file on first run. The file lives in the
-# persistent data directory so it survives app updates. Edit it from the
-# Umbrel file browser (or via SSH) and restart the app to apply changes.
 
 APP_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")"
-SETTINGS_FILE="${APP_DIR}/data/settings.env"
+DATA_DIR="${APP_DIR}/data"
+SETTINGS_FILE="${DATA_DIR}/settings.env"
 
-mkdir -p "$(dirname "${SETTINGS_FILE}")"
+mkdir -p "${DATA_DIR}/thread"
+
+BACKBONE_IF="eth0"
+if command -v ip >/dev/null 2>&1; then
+    detected="$(ip route show default 2>/dev/null | awk '/default/ {print $5; exit}')"
+    [[ -n "${detected}" ]] && BACKBONE_IF="${detected}"
+fi
 
 if [[ ! -f "${SETTINGS_FILE}" ]]; then
-    cat > "${SETTINGS_FILE}" <<'EOF'
-# OpenThread Border Router settings — edit and restart the app to apply.
+    cat > "${SETTINGS_FILE}" <<EOF
 
-# Serial device for the Thread radio dongle.
-# Common values: /dev/ttyUSB0, /dev/ttyACM0
-DEVICE=/dev/ttyUSB0
+# Serial device for the Thread radio dongle, e.g. /dev/ttyACM0 or /dev/ttyUSB0.
+DEVICE=
 
 # Baud rate for the radio. Most modern dongles use 460800.
 BAUDRATE=460800
@@ -25,15 +27,7 @@ BAUDRATE=460800
 FLOW_CONTROL=0
 
 # Network interface OTBR should bridge Thread traffic to.
-# Raspberry Pi / generic: eth0
-# Umbrel Home (x86): often enp1s0 — check with `ip link` on your Umbrel.
-BACKBONE_IF=enp1s0
-
-# REST API port (used by Home Assistant's OTBR integration).
-OTBR_REST_PORT=8083
-
-# Web UI port (must match `port:` in umbrel-app.yml).
-OTBR_WEB_PORT=7586
+BACKBONE_IF=${BACKBONE_IF}
 
 # Enable IPv6 firewall for the Thread network (recommended).
 FIREWALL=1
