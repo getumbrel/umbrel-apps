@@ -7,7 +7,7 @@ services:
       APP_PORT: 8788
 
   server:
-    image: ghcr.io/earlvanze/sage-router:1.0.0@sha256:36bd3c7d4aa9adfae2a3b2abc05fe37ba854e60ae8f9cc9f41ba273f483592ea
+    image: ghcr.io/earlvanze/sage-router:1.0.0@sha256:052c2bc181ceb5dae63b0f7f4a7d9cbed03c53ba90e5933044d2d2e6e9730e35
     restart: unless-stopped
     volumes:
       - ${APP_DATA_DIR}/data:/config:ro
@@ -22,4 +22,7 @@ services:
       - SAGE_ROUTER_DARIO_AUTOSTART=0
       - SAGE_ROUTER_BUNDLED_OLLAMA_AUTOSTART=0
       - SAGE_ROUTER_OLLAMA_TIMEOUT_SECONDS=300
+      # Pass the OpenAI Codex OAuth token from the host OpenClaw env so
+      # the router can use it directly without file-mount discovery.
+      - OPENAI_CODEX_API_KEY=${OPENAI_CODEX_API_KEY:-}
     container_name: sage-router_server_1
