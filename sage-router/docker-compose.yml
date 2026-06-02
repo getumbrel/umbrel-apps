@@ -1,0 +1,24 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: sage-router_server_1
+      APP_PORT: 8788
+
+  server:
+    image: ghcr.io/earlvanze/sage-router:latest
+    restart: unless-stopped
+    volumes:
+      - ${APP_DATA_DIR}/data:/config:ro
+      - ${APP_DATA_DIR}/dario:/root/.dario
+      # Mount OpenClaw auth profiles so Codex OAuth token discovery works.
+      # Copy/link your host ~/.openclaw into ${APP_DATA_DIR}/openclaw on first install.
+      - ${APP_DATA_DIR}/openclaw:/root/.openclaw:ro
+    environment:
+      - PORT=8788
+      - SAGE_ROUTER_HOME=/config
+      - SAGE_ROUTER_DARIO_AUTOSTART=0
+      - SAGE_ROUTER_BUNDLED_OLLAMA_AUTOSTART=0
+      - SAGE_ROUTER_OLLAMA_TIMEOUT_SECONDS=300
+    container_name: sage-router_server_1
