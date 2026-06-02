@@ -7,7 +7,7 @@ services:
       APP_PORT: 8788
 
   server:
-    image: ghcr.io/earlvanze/sage-router:latest
+    image: ghcr.io/earlvanze/sage-router:1.0.0@sha256:36bd3c7d4aa9adfae2a3b2abc05fe37ba854e60ae8f9cc9f41ba273f483592ea
     restart: unless-stopped
     volumes:
       - ${APP_DATA_DIR}/data:/config:ro
@@ -18,6 +18,7 @@ services:
     environment:
       - PORT=8788
       - SAGE_ROUTER_HOME=/config
+      - SAGE_ROUTER_ALLOW_RESTART=1
       - SAGE_ROUTER_DARIO_AUTOSTART=0
       - SAGE_ROUTER_BUNDLED_OLLAMA_AUTOSTART=0
       - SAGE_ROUTER_OLLAMA_TIMEOUT_SECONDS=300
