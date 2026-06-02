@@ -171,8 +171,10 @@ def write_settings(values):
     lines.append("CONFIGURED=1")
     lines.append("")
     os.makedirs(os.path.dirname(SETTINGS_FILE), exist_ok=True)
-    with open(SETTINGS_FILE, "w") as fh:
+    tmp = SETTINGS_FILE + ".tmp"
+    with open(tmp, "w") as fh:
         fh.write("\n".join(lines))
+    os.replace(tmp, SETTINGS_FILE)
 
 
 def is_configured():
@@ -494,7 +496,7 @@ def render_status(values):
 
   <h2>Current settings</h2>
   <table class="kv">{rows}</table>
-  <p class="muted">Changing the radio device requires restarting the app to apply.</p>
+  <p class="muted">Saving changes restarts the border router automatically to apply them.</p>
 </div>
 """
     return _page(
