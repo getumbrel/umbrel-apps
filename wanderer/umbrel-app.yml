@@ -3,7 +3,7 @@ id: wanderer
 name: Wanderer
 tagline: A self-hosted trail database
 category: files
-version: "0.19.1"
+version: "0.19.2"
 port: 3111
 description: >-
   🗺️ Wanderer is a self-hosted, open-source platform designed for outdoor enthusiasts who want to manage, explore, and share hiking and biking routes on their own terms. It provides a clean and modern interface for uploading GPX files, drawing new routes on an interactive map, and organizing them with detailed metadata such as difficulty, duration, and elevation gain. Wanderer supports full-text search and powerful filtering to help users find exactly the route they are looking for based on various criteria like region, length, or type of activity.
@@ -28,15 +28,15 @@ gallery:
   - 6.jpg
   - 7.jpg
 releaseNotes: >-
-  This release includes security, performance, and federation fixes:
-    - Remote lists, trails, and trail comments now correctly respect visibility and sharing settings
-    - Improved speed for several database queries
-    - Federated remote trails now sync tags and create missing local tags when needed
-    - Private profiles no longer block access to your own trails, and inaccessible private profiles now return a proper 404
-    - Comment access checks now correctly use the linked comment author
+  This release improves trail search, federation syncing, and media handling:
+    - Fixed corrupted Meilisearch like indexes after un-liking trails
+    - Fixed waypoint creation from photos
+    - Strava sync now imports all activity photos instead of only the primary photo
+    - Shared trail/list search now uses ActivityPub actor IDs for more accurate filtering
+    - Reduced Meilisearch load and debounced federation syncs
 
 
-  Full release notes: https://github.com/open-wanderer/wanderer/releases/tag/v0.19.1
+  Full release notes: https://github.com/open-wanderer/wanderer/releases/tag/v0.19.2
 dependencies: []
 path: ""
 defaultUsername: ""
