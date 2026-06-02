@@ -62,10 +62,16 @@ services:
           sleep 5
         done
         echo "[otbr] configured (DEVICE=$$DEVICE BACKBONE_IF=$${BACKBONE_IF:-}) — starting border router"
+        # Record the settings we are launching with so the wizard can tell when
+        # the live border router matches the saved config (vs. a pending restart).
+        cat "$$SETTINGS" > /data/.applied 2>/dev/null || true
         find / -type f -name app.js -path '*frontend/res/js/*' 2>/dev/null \
           | xargs -r sed -i "s/restServerPort = '8081'/restServerPort = '$${OTBR_REST_PORT:-8081}'/"
-        # Restart the container if settings change so reconfiguring applies live
-        # (restart policy brings it back up, re-reading the new settings).
+        # s6-overlay must run as PID 1, so exec it. A background watcher restarts
+        # the container when settings change: it asks s6 to shut down with a
+        # non-zero exit code (via s6's container-results file), which restart:
+        # on-failure then brings back up to re-read the new settings. A normal
+        # Umbrel stop exits 0, so it is not restarted.
         (
           ref="$$(cat "$$SETTINGS" 2>/dev/null)"
           while sleep 5; do

@@ -5,6 +5,7 @@ import glob
 import html
 import os
 import re
+import socket
 import urllib.parse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
@@ -12,6 +13,7 @@ PORT = int(os.environ.get("SETUP_PORT", "7586"))
 OTBR_WEB_PORT = os.environ.get("OTBR_WEB_PORT", "8080")
 OTBR_REST_PORT = os.environ.get("OTBR_REST_PORT", "8083")
 SETTINGS_FILE = "/data/settings.env"
+APPLIED_FILE = "/data/.applied"
 
 DEFAULTS = {
     "DEVICE": "",
@@ -181,6 +183,45 @@ def is_configured():
     return read_settings().get("CONFIGURED") == "1"
 
 
+def device_exists(path):
+    return bool(path) and os.path.exists(path)
+
+
+def config_applied():
+    """True if the live border router was launched with the current settings
+    (the entrypoint records them in APPLIED_FILE just before starting OTBR).
+    False right after a reconfigure, while the restart is still pending."""
+    try:
+        with open(SETTINGS_FILE) as f:
+            current = f.read()
+        with open(APPLIED_FILE) as f:
+            applied = f.read()
+    except OSError:
+        return False
+    return current == applied
+
+
+def otbr_running():
+    """True if the OTBR REST port is accepting connections (it only listens
+    once otbr-agent has actually started, i.e. the radio came up)."""
+    try:
+        port = int(OTBR_REST_PORT)
+    except ValueError:
+        return False
+    for family, addr in (
+        (socket.AF_INET, ("127.0.0.1", port)),
+        (socket.AF_INET6, ("::1", port)),
+    ):
+        try:
+            with socket.socket(family, socket.SOCK_STREAM) as s:
+                s.settimeout(0.5)
+                if s.connect_ex(addr) == 0:
+                    return True
+        except OSError:
+            pass
+    return False
+
+
 _RE_DEVICE = re.compile(r"^/dev/[\w./\-]{1,200}$")
 _RE_IFACE = re.compile(r"^[A-Za-z0-9._\-]{1,32}$")
 _RE_BAUD = re.compile(r"^[0-9]{3,7}$")
@@ -209,6 +250,7 @@ PAGE = """<!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>OpenThread Border Router</title>
+{head}
 <style>
  :root{{
    --bg:#f4f5f7; --card:#fff; --text:#1c1c1e; --muted:#6b7280;
@@ -334,7 +376,7 @@ def esc(value):
     return html.escape(str(value), quote=True)
 
 
-def _page(body, status_cls, status_text, subtitle, topbtn=""):
+def _page(body, status_cls, status_text, subtitle, topbtn="", head=""):
     return PAGE.format(
         icon=ICON_SVG,
         body=body,
@@ -342,7 +384,16 @@ def _page(body, status_cls, status_text, subtitle, topbtn=""):
         status_text=status_text,
         subtitle=subtitle,
         topbtn=topbtn,
+        head=head,
     )
+
+
+def _settings_table(values):
+    rows = "".join(
+        f"<tr><td><code>{esc(k)}</code></td><td><code>{esc(values.get(k, ''))}</code></td></tr>"
+        for k in DEFAULTS
+    )
+    return f'<table class="kv">{rows}</table>'
 
 
 def _sel(values, key, option):
@@ -475,10 +526,6 @@ def render_wizard(values, message=""):
 
 
 def render_status(values):
-    rows = "".join(
-        f"<tr><td><code>{esc(k)}</code></td><td><code>{esc(values.get(k, ''))}</code></td></tr>"
-        for k in DEFAULTS
-    )
     body = f"""
 <div class="card">
   <p class="sec">Connect Home Assistant</p>
@@ -495,16 +542,52 @@ def render_status(values):
   </div>
 
   <h2>Current settings</h2>
-  <table class="kv">{rows}</table>
+  {_settings_table(values)}
   <p class="muted">Saving changes restarts the border router automatically to apply them.</p>
 </div>
 """
     return _page(
         body,
         status_cls="ok",
-        status_text="Configured",
+        status_text="Running",
         subtitle="The border router is running",
         topbtn='<a class="topbtn" href="/?reconfigure=1">Reconfigure</a>',
+    )
+
+
+def render_waiting(values, reason):
+    device = esc(values.get("DEVICE", ""))
+    if reason == "device":
+        title = "Waiting for the Thread radio"
+        detail = (
+            f"Settings are saved, but the configured device <code>{device}</code> "
+            "isn't connected. Plug the radio in, or choose Reconfigure to pick "
+            "another device — the border router starts automatically once the "
+            "device is present."
+        )
+    else:
+        title = "Starting the border router…"
+        detail = (
+            "The border router is starting with your settings (this also happens "
+            "right after you reconfigure). It can take a minute — this page "
+            "refreshes automatically."
+        )
+    body = f"""
+<div class="card">
+  <p class="sec">Setup</p>
+  <div class="check warn"><strong>! {esc(title)}</strong>
+    <div class="detail">{detail}</div></div>
+  <h2>Current settings</h2>
+  {_settings_table(values)}
+</div>
+"""
+    return _page(
+        body,
+        status_cls="warn",
+        status_text="Waiting",
+        subtitle=title,
+        topbtn='<a class="topbtn" href="/?reconfigure=1">Reconfigure</a>',
+        head='<meta http-equiv="refresh" content="6">',
     )
 
 
@@ -530,10 +613,14 @@ class Handler(BaseHTTPRequestHandler):
             self._send(200, render_ipv6_checks(iface))
             return
         values = read_settings()
-        if is_configured() and "reconfigure" not in query:
+        if not is_configured() or "reconfigure" in query:
+            self._send(200, render_wizard(values))
+        elif not device_exists(values.get("DEVICE")):
+            self._send(200, render_waiting(values, "device"))
+        elif config_applied() and otbr_running():
             self._send(200, render_status(values))
         else:
-            self._send(200, render_wizard(values))
+            self._send(200, render_waiting(values, "starting"))
 
     def _same_origin(self):
         site = self.headers.get("Sec-Fetch-Site")
@@ -583,6 +670,9 @@ class Handler(BaseHTTPRequestHandler):
             "AUTOFLASH_FIRMWARE": field("autoflash", "0"),
         }
         error = validate_settings(candidate)
+        if not error and not device_exists(candidate["DEVICE"]):
+            error = (f"Device {candidate['DEVICE']} was not found. Plug the radio "
+                     "in and reload, or pick a detected device.")
         if error:
             self._send(200, render_wizard(values, error))
             return
