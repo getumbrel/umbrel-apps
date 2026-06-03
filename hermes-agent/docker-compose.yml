@@ -8,7 +8,7 @@ services:
 
   # Web terminal + dashboard proxy
   web:
-    image: ghcr.io/getumbrel/hermes-agent-umbrel:v2026.5.29.2@sha256:b3de1be37dc4a07c6fcc5ad3027e2783ee1ab3b628868554d6e1030618017b60
+    image: ghcr.io/getumbrel/hermes-agent-umbrel:v2026.5.29.2-1@sha256:06f1c71a0003061fc37812473603761aa448e8bde3e0b51984ebeb528581c1ac
     # Keeps the terminal prompt readable as "hermes@hermes-agent"
     hostname: hermes-agent
     init: true
@@ -25,9 +25,9 @@ services:
 
   # Hermes messaging gateway
   gateway:
-    image: ghcr.io/getumbrel/hermes-agent-umbrel:v2026.5.29.2@sha256:b3de1be37dc4a07c6fcc5ad3027e2783ee1ab3b628868554d6e1030618017b60
+    image: ghcr.io/getumbrel/hermes-agent-umbrel:v2026.5.29.2-1@sha256:06f1c71a0003061fc37812473603761aa448e8bde3e0b51984ebeb528581c1ac
     entrypoint: ["/init"]
-    command: ["/opt/hermes/docker/main-wrapper.sh", "gateway", "run"]
+    command: ["/opt/hermes/docker/main-wrapper.sh", "gateway", "run", "--no-supervise"]
     stop_grace_period: 1m
     restart: on-failure
     volumes:
