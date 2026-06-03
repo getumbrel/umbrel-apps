@@ -7,11 +7,16 @@ services:
       APP_PORT: 3003
 
   web:
-    image: ghcr.io/richardr1126/openreader-webui:3.0.0@sha256:446d95e0494198c1996ce4f1c41203d3f7461046d93b803576103e20b5a148ad
+    image: ghcr.io/richardr1126/openreader:4.0.3@sha256:c5ce5d5bb0f881afcfecda7ee4e69a679d91a427747375936389a8aa7ab67272
     user: "1000:1000"
     command: ["node_modules/.bin/next", "start", "-p", "3003"]
     environment:
       - API_BASE=http://kokoro_web_1:8880/v1 #Set the TTS API_BASE URL and/or API_KEY as the default for all devices. These values can also be overridden in the UI.
+      - BASE_URL=http://${DEVICE_DOMAIN_NAME}:3391
+      - AUTH_SECRET=${APP_SEED}
+      # Allows auth requests from the primary .local URL, device hostname, Tailscale FQDNs, and host IP URLs.
+      - AUTH_TRUSTED_ORIGINS=http://${DEVICE_DOMAIN_NAME}:3391,http://${DEVICE_HOSTNAME}:3391,http://*.ts.net:3391,https://*.ts.net:3391,${APP_OPENREADER_LOCAL_URLS}
+      - USE_ANONYMOUS_AUTH_SESSIONS=true
     restart: on-failure
     volumes:
       - ${APP_DATA_DIR}/data/docstore:/app/docstore

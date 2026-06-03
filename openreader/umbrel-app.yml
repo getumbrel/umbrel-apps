@@ -3,7 +3,7 @@ id: openreader
 name: OpenReader
 tagline: A document reader with Text-to-Speech capabilities
 category: ai
-version: "3.0.0"
+version: "4.0.3"
 port: 3391
 description: >-
   OpenReader WebUI is a web-based document reader that integrates text-to-speech (TTS) functionality, allowing users to listen to text from various document formats, including PDF and EPUB. Designed to enhance accessibility and improve the reading experience, it features synchronized text highlighting, ensuring that the currently read portion of the document is visually emphasized as the speech engine narrates the content. This makes it particularly useful for individuals with visual impairments, reading difficulties, or those who simply prefer an auditory learning style.
@@ -23,26 +23,29 @@ developer: Richard Roberson
 website: https://openreader.richardr.dev/
 submitter: dennysubke
 submission: https://github.com/getumbrel/umbrel-apps/pull/2499
-repo: https://github.com/richardr1126/OpenReader-WebUI
-support: https://github.com/richardr1126/OpenReader-WebUI/issues
+repo: https://github.com/richardr1126/openreader
+support: https://github.com/richardr1126/openreader/issues
 gallery:
   - 1.jpg
   - 2.jpg
   - 3.jpg
   - 4.jpg
 releaseNotes: >-
-  ⚠️ Major update: OpenReader 3.0.0 adds server-side document storage and persistent TTS audio segments. Existing Umbrel installs continue using the bundled Kokoro TTS provider after upgrading.
+  ⚠️ Major update: OpenReader 4 adds required app-level auth sessions, a redesigned document library, layout-aware PDF parsing, worker-backed word highlighting, embedded NATS/compute worker startup, and admin-managed runtime settings.
 
 
-  Key highlights:
-    - Added an Admin panel for shared TTS providers and site feature settings
-    - Added persistent per-segment TTS audio storage so documents can resume without re-synthesizing audio
-    - Added per-document controls for TTS segment preloading, lookahead, and maximum block length
-    - Added a changelog panel in Settings that can show release notes after an upgrade
-    - Fixed stale TTS playback after pausing and resuming, plus other playback and document-reader polish
+  Umbrel enables anonymous sessions and continues seeding the bundled Kokoro TTS provider as the default OpenAI-compatible backend.
 
 
-  Full release notes can be found at https://github.com/richardr1126/openreader/releases/tag/v3.0.0
+  Key fixes through 4.0.3:
+    - Fixed worker-backed PDF parse state persistence and stale-state healing
+    - Fixed a TTS control loading bug in the player UI
+    - Removed a legacy runtime flag and related admin/settings UI
+    - Fixed the container startup crash by switching the app image from Alpine to Debian slim for glibc compatibility
+    - Disabled compute worker model prewarming during startup
+
+
+  Full release notes can be found at https://github.com/richardr1126/openreader/releases/tag/v4.0.3
 dependencies:
   - kokoro
 path: ""
