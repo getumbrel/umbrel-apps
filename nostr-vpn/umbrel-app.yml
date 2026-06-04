@@ -2,7 +2,7 @@ manifestVersion: 1
 id: nostr-vpn
 category: networking
 name: Nostr VPN
-version: "v4.0.47"
+version: "v4.0.57"
 tagline: Invite-only mesh VPN over Nostr
 description: >-
   Nostr VPN turns your Umbrel into a private mesh VPN node for your own devices
@@ -31,15 +31,12 @@ gallery:
   - 2.webp
   - 3.webp
 releaseNotes: >-
-  Changes since v4.0.42:
-    - New installs can find peers more reliably: public bootstrap routing now starts enabled with IPv4, IPv6, UDP, and TCP fallback support.
-    - Fixed a bug where UDP connection errors could make busy nodes waste CPU instead of backing off cleanly.
-    - Improved fairness when many peers connect at once, so overloaded bootstrap or server nodes keep serving peers more evenly.
-    - Turning bootstrap routing off now stays off after config reloads.
-    - Fixed Add Network join request handling, including keeping "Join request sent" visible until the Add Network screen closes.
-    - Improved relay discovery and public routing settings labels so the controls describe what they actually change.
-    - Improved stability for large or saturated meshes, including safer connection cleanup and config reload behavior.
-    - Admin roster updates are now signed and verified before acceptance.
-    - Fixed route refresh error text and added stronger release dependency checks.
+  Changes since v4.0.47:
+    - First-run Umbrel configs now select the initial admin network and seed the local `.nvpn` name, keeping device invites and the self device visible while the VPN daemon is paused.
+    - Improved FIPS direct-link stability, failover, liveness handling, and rekey behavior during saturated or changing peer connections.
+    - FIPS status now distinguishes fallback mesh/relay transport from background direct UDP probing.
+    - Direct paths now ignore stale private, CGNAT, and link-local endpoint hints unless they match the current local network, helping peers recover from changing networks and mobile-hotspot NAT flaps.
+    - Daemon startup and network-refresh failures now surface clearer status instead of leaving stale "Turning VPN on" or refresh states visible.
+    - Mobile clients now restore routes, join requests, MagicDNS, peer display, and VPN startup state more reliably when connecting to Nostr VPN networks.
 submitter: mmalmi
 submission: https://github.com/getumbrel/umbrel-apps/pull/5678
