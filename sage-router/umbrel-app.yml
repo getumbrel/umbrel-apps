@@ -2,10 +2,9 @@ manifestVersion: 1.1
 id: sage-router
 name: Sage Router
 tagline: Intelligent multi-provider AI router with OpenClaw Codex OAuth
-icon: https://raw.githubusercontent.com/earlvanze/sage-router/master/umbrel/icon.svg
 category: ai
 version: "1.0.3"
-port: 8788
+port: 8790
 description: >-
   Sage Router is a dynamic multi-provider AI router that discovers available
   LLM providers and routes requests intelligently based on intent, model
@@ -35,26 +34,8 @@ website: https://github.com/earlvanze/sage-router
 submitter: Earl Co
 repo: https://github.com/earlvanze/sage-router
 support: https://github.com/earlvanze/sage-router/issues
-submission: https://github.com/earlvanze/sage-router
-gallery:
-  - 1.jpg
+submission: https://github.com/getumbrel/umbrel-apps/pull/5720
 path: ""
 defaultUsername: ""
 defaultPassword: ""
-releaseNotes: >-
-  1.0.3 — OpenClaw Codex OAuth is the primary ChatGPT backend (3.28.0).
-
-  - Pins the image to `ghcr.io/earlvanze/sage-router:v3.28.0` (also `:latest`)
-  - Removes `openai-codex` from `SAGE_ROUTER_DISABLED_PROVIDERS` so the
-    built-in `openai-codex-responses` provider is enabled alongside the
-    `openai` Chat Completions provider
-  - Wires `OPENAI_CODEX_API_KEY` from the host `.env` and adds
-    `SAGE_ROUTER_OPENAI_CODEX_AUTH_PROFILE_PATH=/config/agents/main/agent/auth-profiles.json`
-    so Sage Router picks up the ChatGPT OAuth bearer from the host OpenClaw
-    auth profile even though the container's `HOME=/root`
-  - Drops the legacy `OPENAI_API_KEY` from the Sage Router env (the Codex
-    OAuth JWT is the only ChatGPT/Codex credential the router now needs)
-  - Verified by `/v1/chat/completions` calls against `openai-codex/gpt-5.5`,
-    `gpt-5.4`, and `gpt-5.4-mini` returning HTTP 200 from
-    `chatgpt.com/backend-api/codex`
 dependencies: []
