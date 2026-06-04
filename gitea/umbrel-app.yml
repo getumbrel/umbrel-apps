@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: gitea
 category: developer
 name: Gitea
-version: "1.26.1"
+version: "1.26.2"
 tagline: A painless self-hosted Git service
 description: >-
   Gitea is a painless self-hosted Git service. It is similar to
@@ -34,21 +34,16 @@ path: ""
 defaultUsername: ""
 defaultPassword: ""
 releaseNotes: >-
-  This is a bug fix release addressing issues found in v1.26.0:
-    - Fixed actions concurrency groups leaking across branches
-    - Fixed container auth for public instances
-    - Fixed URL-related escaping for OAuth2
-    - Fixed an issue where changing an organization's visibility caused problems when users had forked its repositories
-    - Fixed accessing user badges
-    - Fixed RPM package fallback to noarch when requested arch is missing
-    - Fixed Mermaid diagrams failing when node labels contain line breaks
-    - Fixed button layout shift when collapsing file tree in editor
-    - Fixed org team assignee and reviewer lookups for team member permissions
-    - Fixed dump with default zip type producing uncompressed zip
-    - Various additional bug fixes and stability improvements
+  This release includes security fixes and bug fixes:
+    - Strengthened token-scope checks for API queries, repository access, raw/media/attachment downloads, wiki Git writes, LFS token access, and packages
+    - Improved OAuth security with client request binding, stricter PKCE validation, and refresh-token replay protection
+    - Fixed basic auth, URL sanitization, and attachment Content-Security-Policy handling
+    - Fixed pull request reviews when the files view is empty, branch comparison edge cases, merge-base display, and review submission from single-commit views
+    - Fixed several Actions issues, including deadlocks, null workflow/event panics, workflow parameter validation, log transfer, and job status reporting
+    - Fixed package creation conflicts, generic package download filenames, case-insensitive email handling, and invalid UTF-8 commit messages in JSON API responses
 
 
-  Full release notes: https://github.com/go-gitea/gitea/releases
+  Full release notes: https://github.com/go-gitea/gitea/releases/tag/v1.26.2
 torOnly: false
 submitter: Umbrel
 submission: https://github.com/getumbrel/umbrel/commit/d62e00353917143a3a10d3b376859f51b665d150

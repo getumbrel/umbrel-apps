@@ -5,7 +5,7 @@ services:
       APP_HOST: albyhub_server_1
       APP_PORT: 8080
   server:
-    image: ghcr.io/getalby/hub:v1.21.6@sha256:dc05806a3384f57ded8aca2ba58d47ec93a0aeb213539b5faf32e7a3c71b5c32
+    image: ghcr.io/getalby/hub:v1.22.2@sha256:acf158edbb9348a8f84e02ffc97919692bc40280e7d28d501b1fc3d23d7ac266
     user: 1000:1000
     volumes:
       - ${APP_DATA_DIR}/data:/data
@@ -17,6 +17,7 @@ services:
       LND_MACAROON_FILE: ${APP_ALBYHUB_LND_MACAROON_FILE}
       WORK_DIR: "/data/albyhub"
       COOKIE_SECRET: ${APP_SEED}
+      HIDE_UPDATE_BANNER: "true"
       LOG_EVENTS: "true"
     restart: on-failure
     stop_grace_period: 3m

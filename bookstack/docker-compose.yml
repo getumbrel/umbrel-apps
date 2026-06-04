@@ -1,0 +1,56 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: bookstack_server_1
+      APP_PORT: 80
+      PROXY_AUTH_WHITELIST: "/api/*"
+
+  server:
+    image: lscr.io/linuxserver/bookstack:version-v26.05@sha256:2ebf97852661b15aae2660aa1bf622deac613189634821e3351530e79a9b6e36
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
+      # BookStack treats most non-empty APP_URL values as canonical, which would
+      # force generated links/redirects to one launch host. This exact legacy
+      # value is a BookStack sentinel: the app normalizes it to an empty URL.
+      # It is not used for Umbrel routing or outbound requests; app_proxy still
+      # routes to APP_HOST above and BookStack derives the public host from the
+      # incoming request. This avoids the LinuxServer image's example.com
+      # default while preserving umbrel.local, renamed .local hosts, LAN IPs,
+      # and Tailscale/MagicDNS access.
+      - APP_URL=http://bookstack.dev
+      - APP_KEY=${APP_BOOKSTACK_APP_KEY}
+      - DB_HOST=bookstack_db_1
+      - DB_PORT=3306
+      - DB_USERNAME=bookstack
+      - DB_PASSWORD=${APP_BOOKSTACK_DB_PASSWORD}
+      - DB_DATABASE=bookstack
+    volumes:
+      - ${APP_DATA_DIR}/data/config:/config
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: mariadb:11.4.5@sha256:49117dcc565cf51aa57ac5fca59ab31213402ff0eae6ffc13c46a37b938f7e4b
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      MARIADB_DATABASE: bookstack
+      MARIADB_USER: bookstack
+      MARIADB_PASSWORD: ${APP_BOOKSTACK_DB_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${APP_BOOKSTACK_DB_ROOT_PASSWORD}
+    volumes:
+      - ${APP_DATA_DIR}/data/db:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mariadb-admin ping -h 127.0.0.1 -P 3306 --protocol=tcp -u root -p$${MARIADB_ROOT_PASSWORD} --silent"]
+      start_period: 45s
+      interval: 10s
+      timeout: 5s
+      retries: 10

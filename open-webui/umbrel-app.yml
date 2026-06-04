@@ -3,7 +3,7 @@ id: open-webui
 name: Open WebUI
 tagline: Chat with Ollama models like DeepSeek-R1 and LLama, or use an OpenAI API key
 category: ai
-version: "0.9.2"
+version: "0.9.6"
 port: 2876
 description: >-
   Open WebUI lets you chat with advanced AI models running locally on your own device or connect to online models using an API key.
@@ -37,24 +37,17 @@ defaultPassword: ""
 dependencies:
   - ollama
 releaseNotes: >-
-  Key highlights in this release include:
-    - Added PaddleOCR-vl as a document content extraction engine option
-    - Added Firecrawl v2 API support with improved reliability and retry logic
-    - Added configurable reminder duration for calendar events
-    - Added custom API key header support via the CUSTOM_API_KEY_HEADER environment variable
-    - Added a +N badge on the Sources button when more than three sources are available
-    - Improved model list performance by stripping large image data from paginated responses
-    - Improved page load speed with earlier splash image preloading
-    - Fixed interrupted MCP tool calls no longer causing CPU spikes
-    - Fixed skills from persisted chats now injecting correctly into the system prompt
-    - Fixed Docker ARM64 images that previously produced corrupted Python dependencies
-    - Fixed rich text editor extension conflicts causing editor instability
-    - Fixed OAuth discovery fallback for better compatibility with more MCP servers
-    - Fixed cancelled chat generation now properly cleaning up upstream connections
-    - Fixed model profile image endpoints to prevent path traversal vulnerabilities
-    - Fixed browser-native message rendering to eliminate scroll jump artifacts in long conversations
-    - Translation updates for Finnish, Korean, Portuguese (Brazil), and Dutch
+  ⚠️ Major update: this release includes database schema migrations. Back up your Open WebUI data before upgrading.
 
 
-  Full release notes are found at https://github.com/open-webui/open-webui/releases
+  This update includes several security, knowledge base, and reliability improvements:
+    - Adds official knowledge base sync tooling, smart directory sync, nested knowledge base folders, file renaming, and incremental upload support
+    - Adds per-chat skills toggles, an emoji picker, access previews for users and groups, configurable MCP connection timeouts, OAuth wildcard role mapping, and Azure AI Foundry v1 with Entra ID support
+    - Improves performance for initial page loads, tool-enabled chat completions, web search, Ollama backend connections, feedback history, and websocket disconnect cleanup
+    - Fixes multiple security and access-control issues across tool servers, knowledge bases, retrieval collections, prompts, files, calendars, channels, shared chats, OAuth, URL fetching, and profile images
+    - Fixes chat recovery, imports, web search providers, document processing, API chat completions, ComfyUI integrations, text-to-speech, speech-to-text, YouTube transcripts, browser/local-storage resilience, and database migrations
+    - Updates translations across multiple languages
+
+
+  Full release notes are found at https://github.com/open-webui/open-webui/releases/tag/v0.9.6
 path: ""

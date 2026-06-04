@@ -1,0 +1,30 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: anything-llm_app_1
+      APP_PORT: 3001
+
+  app:
+    image: mintplexlabs/anythingllm:1.13.0@sha256:de266ebda8c8aa618c7dcd2ce98ca2cfc7402451c35b7dd0bd65376e7e61a67e
+    restart: on-failure
+    user: "1000:1000"
+    cap_add:
+      - SYS_ADMIN
+    environment:
+      SERVER_PORT: 3001
+      STORAGE_DIR: /app/server/storage
+      UID: 1000
+      GID: 1000
+      DISABLE_TELEMETRY: "true"
+      JWT_SECRET: ${APP_ANYTHING_LLM_JWT_SECRET}
+      SIG_KEY: ${APP_ANYTHING_LLM_SIG_KEY}
+      SIG_SALT: ${APP_ANYTHING_LLM_SIG_SALT}
+    volumes:
+      - ${APP_DATA_DIR}/data/.env:/app/server/.env
+      - ${APP_DATA_DIR}/data/server-storage:/app/server/storage
+      - ${APP_DATA_DIR}/data/collector-hotdir:/app/collector/hotdir
+      - ${APP_DATA_DIR}/data/collector-outputs:/app/collector/outputs
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

@@ -1,0 +1,45 @@
+manifestVersion: 1
+id: nostr-vpn
+category: networking
+name: Nostr VPN
+version: "v4.0.47"
+tagline: Invite-only mesh VPN over Nostr
+description: >-
+  Nostr VPN turns your Umbrel into a private mesh VPN node for your own devices
+  and trusted groups. Create invite-only networks, approve join requests, share
+  QR invites, manage peers, and route traffic through trusted exit nodes without
+  relying on a hosted VPN provider or a central control server.
+
+
+  To connect a device, open Nostr VPN on your Umbrel and create an invite. Then import that
+  invite in the Nostr VPN app or CLI on the device you want to connect. Once you
+  accept the join request on your Umbrel, your devices can reach each other
+  using their private Nostr VPN IPs.
+developer: mmalmi and contributors
+website: https://github.com/mmalmi/nostr-vpn
+repo: https://github.com/mmalmi/nostr-vpn
+support: https://github.com/mmalmi/nostr-vpn/issues
+dependencies: []
+port: 38180
+path: ""
+defaultUsername: ""
+defaultPassword: ""
+deterministicPassword: false
+torOnly: false
+gallery:
+  - 1.webp
+  - 2.webp
+  - 3.webp
+releaseNotes: >-
+  Changes since v4.0.42:
+    - New installs can find peers more reliably: public bootstrap routing now starts enabled with IPv4, IPv6, UDP, and TCP fallback support.
+    - Fixed a bug where UDP connection errors could make busy nodes waste CPU instead of backing off cleanly.
+    - Improved fairness when many peers connect at once, so overloaded bootstrap or server nodes keep serving peers more evenly.
+    - Turning bootstrap routing off now stays off after config reloads.
+    - Fixed Add Network join request handling, including keeping "Join request sent" visible until the Add Network screen closes.
+    - Improved relay discovery and public routing settings labels so the controls describe what they actually change.
+    - Improved stability for large or saturated meshes, including safer connection cleanup and config reload behavior.
+    - Admin roster updates are now signed and verified before acceptance.
+    - Fixed route refresh error text and added stronger release dependency checks.
+submitter: mmalmi
+submission: https://github.com/getumbrel/umbrel-apps/pull/5678

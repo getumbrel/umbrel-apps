@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: qbittorrent
 category: networking
 name: qBittorrent
-version: "5.1.4"
+version: "5.2.1"
 tagline: Free and reliable P2P Bittorrent client
 description: >-
   qBittorrent is an open-source software alternative to µTorrent. It's designed to meet the needs of most users while using as little CPU and memory as possible.
@@ -17,7 +17,7 @@ description: >-
   Some additional tips:
 
 
-  - Please make sure that you do not change the default download path in the app settings. It should remain set to "/app/qBittorrent/downloads" to ensure that your downloads show up in your main Umbrel downloads folder.
+  - Please make sure that you do not change the default download path in the app settings. It should remain set to "/downloads" to ensure that your downloads show up in your main Umbrel downloads folder.
 
   - It is recommended to change the default password for the app after installation.
 
@@ -26,16 +26,19 @@ description: >-
 
   ⚠️ qBittorrent downloads torrents over the Clearnet, not Tor.
 releaseNotes: >-
-  This update includes bug fixes and improvements:
-    - Fixed crashes related to torrent processing and specific Linux setups
-    - Fixed empty folders being left behind when deleting or moving torrents
-    - Fixed the search plugin updater
-    - Fixed an HTTP header issue affecting reverse proxy setups
-    - Fixed screen reader accessibility in the torrent list
-    - Improved tab key focus behavior in the UI
+  This update includes important WebUI, WebAPI, RSS, search, and startup fixes.
 
+  Highlights:
+    - Prevented SSRF via HTTP redirection
+    - Fixed stale lockfile cleanup on startup
+    - Fixed WebUI issues with magnet links, add torrent dialogs, and file filtering
+    - Fixed WebAPI result caching and RSS refresh behavior
+    - Improved search behavior when a proxy is configured
 
-  Full release notes for qBittorrent are available at https://www.qbittorrent.org/news
+  If you are upgrading from a version before 5.2.0, note that qBittorrent on umbrelOS now uses "/downloads" as the default download path for better compatibility with other apps. Existing torrents may need to be manually moved to the new location.
+
+  Full release notes are available at https://github.com/qbittorrent/qBittorrent/releases/tag/release-5.2.1
+
 developer: qBittorrent
 website: https://qbittorrent.org/
 dependencies: []

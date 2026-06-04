@@ -7,6 +7,7 @@ export APP_MONERO_DATA_DIR="${EXPORTS_APP_DIR}/data/monero"
 export APP_MONERO_RPC_PORT="18081"
 export APP_MONERO_RESTRICTED_RPC_PORT="18089"
 export APP_MONERO_P2P_PORT="18080"
+export APP_MONERO_ZMQ_PORT="18083"
 export APP_MONERO_TOR_PORT="9901"
 
 #temporarily set to mainnet
@@ -82,6 +83,7 @@ BIN_ARGS=()
 BIN_ARGS+=( "--rpc-bind-port=${APP_MONERO_RPC_PORT}" )
 BIN_ARGS+=( "--rpc-bind-ip=0.0.0.0" )
 BIN_ARGS+=( "--confirm-external-bind" )
+BIN_ARGS+=( "--zmq-pub=tcp://0.0.0.0:${APP_MONERO_ZMQ_PORT}" )
 
 BIN_ARGS+=( "--rpc-login=\"${APP_MONERO_RPC_AUTH}\"" )
 

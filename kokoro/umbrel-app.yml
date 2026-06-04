@@ -3,7 +3,7 @@ id: kokoro
 name: Kokoro
 tagline: An intelligent, high-quality TTS solution
 category: ai
-version: "0.2.4-master"
+version: "0.4.0"
 port: 8877
 description: >-
   Kokoro is an advanced Text-to-Speech (TTS) model that delivers impressive speech quality with only 82 million parameters, making it competitive with much larger and more resource-intensive models. Despite its relatively compact architecture, Kokoro effectively transforms text into clear, natural-sounding speech, making it an excellent choice for applications relying on speech synthesis. The model has been specifically designed to ensure high efficiency and fast processing, making it suitable for both resource-constrained environments and production systems. In comparison to traditional TTS models, which often require substantial computational resources, Kokoro offers a more cost-effective and faster alternative without compromising the quality of speech output.
@@ -28,15 +28,13 @@ gallery:
   - 3.jpg
 releaseNotes: >-
   This release includes improvements and fixes:
-    - Fixed custom phenomes and made them more robust
-    - Updated PyTorch for RTX 50 Series GPU support
-    - Reduced Docker image size
-    - Added configurable logging level with environment variable support
-    - Improved build stability and compatibility
-    - Enhanced build times through parallelization
+    - Added a web UI footer badge that shows the server version
+    - Fixed WAV responses so generated audio no longer includes extra end-of-file noise
+    - Fixed `/config` version reporting by shipping the VERSION file in Docker images
+    - Changed `/v1/audio/voices` responses to return voice objects instead of strings; clients that need the old format can pass `?legacy=true`
 
 
-  Full release notes are available at https://github.com/remsky/Kokoro-FastAPI/releases/tag/v0.2.4-master
+  Full release notes are available at https://github.com/remsky/Kokoro-FastAPI/releases/tag/v0.4.0
 dependencies: []
 path: "/web"
 defaultUsername: ""

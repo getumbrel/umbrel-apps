@@ -1,0 +1,16 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: picoclaw_server_1
+      APP_PORT: 18800
+
+  server:
+    image: docker.io/sipeed/picoclaw:v0.2.9-launcher@sha256:4ea8675be7760c13f76238e055745fdbf568cbbd11aeb9d777cdaee6d3287efb
+    user: "1000:1000"
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+    environment:
+      PICOCLAW_HOME: /data
