@@ -1,0 +1,28 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: umbrel-dropbox-client_server_1
+      APP_PORT: 8477
+
+  server:
+    image: ghcr.io/earlvanze/umbrel-dropbox-client:v1.2.1
+    restart: unless-stopped
+    volumes:
+      - /data:/data
+      - /home/umbrel/Dropbox:/dropbox
+    environment:
+      - UDC_CONFIG=/data/config.json
+      - UDC_DB=/data/state.db
+      - UDC_ROOT=/dropbox/Obsidian
+      - UDC_REMOTE_PATH=/Obsidian
+      - UDC_TOKEN_FILE=/data/token.json
+      - UDC_REMOTE_DELTA=auto
+      - UDC_LIVE_SCOPE=/Obsidian
+      - UDC_DRY_RUN=true
+      - UDC_ALLOW_LIVE=false
+      - UDC_WATCH=true
+      - UDC_SCAN_INTERVAL_SECONDS=300
+      - UDC_HEALTH_ADDR=0.0.0.0:8477
+    container_name: umbrel-dropbox-client_server_1
