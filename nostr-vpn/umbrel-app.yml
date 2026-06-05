@@ -2,7 +2,7 @@ manifestVersion: 1
 id: nostr-vpn
 category: networking
 name: Nostr VPN
-version: "v4.0.58"
+version: "v4.0.62"
 tagline: Invite-only mesh VPN over Nostr
 description: >-
   Nostr VPN turns your Umbrel into a private mesh VPN node for your own devices
@@ -32,11 +32,9 @@ gallery:
   - 3.webp
 releaseNotes: >-
   Changes since v4.0.47:
-    - Fixed first-run Umbrel setup so the admin network, local `.nvpn` name, device invites, and self device appear correctly while the daemon is starting.
-    - Improved direct FIPS connections: mesh/relay is now only fallback transport, while direct UDP keeps retrying in the background.
-    - Fixed network-change cases where stale private addresses or brief hotspot liveness failures could leave peers stuck on mesh/relay.
-    - Improved FIPS status output so `nvpn status --json` can show fallback transport and direct probing separately.
-    - Improved FIPS rekey, liveness, and failover handling under load and during changing network conditions.
-    - Startup and network-refresh failures now show clearer daemon status instead of stale "Turning VPN on" states.
+    - Fixed first-run Umbrel setup so the admin network, local `.nvpn` name, device invites, and self device appear reliably while the daemon starts.
+    - Improved direct peer connectivity: mesh/relay is now fallback transport while direct UDP keeps probing and can recover after hotspot or NAT changes.
+    - Avoided stale private/hotspot endpoints and brief liveness timeouts leaving peers stuck on mesh.
+    - Improved daemon liveness, rekey, and failover behavior under load, with clearer startup and network-refresh status.
 submitter: mmalmi
 submission: https://github.com/getumbrel/umbrel-apps/pull/5678

@@ -1,14 +1,13 @@
-version: "3.7"
-
 services:
   app_proxy:
+    restart: unless-stopped
     environment:
       APP_HOST: nostr-vpn_web_1
       APP_PORT: 38080
 
   daemon:
-    image: ghcr.io/mmalmi/nostr-vpn-umbrel:v4.0.58@sha256:cf51622fcc1a794ac80e1962fce0855f21575b1d3f69750cb90de82ee3fb52b5
-    restart: on-failure
+    image: ghcr.io/mmalmi/nostr-vpn-umbrel:v4.0.62@sha256:e11c4be353bd6922d1829d9a61073cba3960a985294cafb34869bf2efd5012e1
+    restart: unless-stopped
     stop_grace_period: 1m
     network_mode: "host"
     cap_add:
@@ -29,8 +28,8 @@ services:
       - ${APP_DATA_DIR}/data:/data
 
   web:
-    image: ghcr.io/mmalmi/nostr-vpn-umbrel:v4.0.58@sha256:cf51622fcc1a794ac80e1962fce0855f21575b1d3f69750cb90de82ee3fb52b5
-    restart: on-failure
+    image: ghcr.io/mmalmi/nostr-vpn-umbrel:v4.0.62@sha256:e11c4be353bd6922d1829d9a61073cba3960a985294cafb34869bf2efd5012e1
+    restart: unless-stopped
     stop_grace_period: 1m
     depends_on:
       - daemon
