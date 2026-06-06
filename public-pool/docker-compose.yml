@@ -8,11 +8,13 @@ services:
       PROXY_AUTH_WHITELIST: "/api/*"
 
   web:
-    image: ghcr.io/duckaxe/public-pool-ui:3c1289c@sha256:d916a72b2487c935468b894a89450e5ed688525500fcb81961061c3d7a7877e2
+    image: ghcr.io/benjamin-wilson/public-pool-ui:5f730f4@sha256:c1eaae042ee179eca87b273c04c54c8b1fba5ceb63a03411a21ec8ac6875be3d
     restart: on-failure
     stop_grace_period: 30s
     environment:
       - DOMAIN=$DEVICE_DOMAIN_NAME
+      - PUBLIC_POOL_API_URL=
+      - PUBLIC_POOL_STRATUM_URL=:2018
 
   server:
     image: ghcr.io/benjamin-wilson/public-pool:95565ee@sha256:3edffef3bbad23cbd46098904b22ba8a1c14c679ae90cf1e4d97ed98492bbab4
