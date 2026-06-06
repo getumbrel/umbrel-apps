@@ -3,7 +3,7 @@ version: "3.7"
 services:
   app_proxy:
     environment:
-      APP_HOST: solostrike_ui_1
+      APP_HOST: danhaus93-solostrike_ui_1
       # v1.11.57: UI runs nginx-unprivileged (non-root, UID 101) on 8080.
       APP_PORT: 8080
       # v1.8.4: narrow auth whitelist — exposes ONLY read-only stats and the
@@ -205,7 +205,7 @@ services:
     # new release: rebuild, push, capture the new digest with
     # `docker inspect <image>:latest --format='{{index .RepoDigests 0}}'`,
     # and replace below.
-    image: ghcr.io/danhaus93-ops/solostrike-stunnel:v2.0.2@sha256:a197443a4ebc2673b13bd51f8da9f3f69671750b6539dc707fbea28c79104669
+    image: ghcr.io/danhaus93-ops/solostrike-stunnel:v2.0.3@sha256:479f83c49d26fb0cd7edf61567925a252e5f6fce37b15b799c10edb00d2ec3ee
     restart: on-failure
     security_opt:
       - no-new-privileges:true
@@ -220,7 +220,7 @@ services:
       - ${APP_DATA_DIR}/data/stunnel:/certs
 
   api:
-    image: ghcr.io/danhaus93-ops/solostrike-api:v2.0.2@sha256:6cec6c87d57b6e820bada8911337764eb4efd2530b9cb4cf60a805abe5916483
+    image: ghcr.io/danhaus93-ops/solostrike-api:v2.0.3@sha256:013a7a1e6ce8279f0e9c58e5434775b2d43351d6b769f5542de5f86a1326192a
     restart: on-failure
     security_opt:
       - no-new-privileges:true
@@ -262,11 +262,11 @@ services:
       - STRATUM_PORT_TLS=4333
 
   ui:
-    image: ghcr.io/danhaus93-ops/solostrike-ui:v2.0.2@sha256:b7fee07013af59a1ed052fe62f85d94ba7567220f9f301cf1433afa4134a3e18
+    image: ghcr.io/danhaus93-ops/solostrike-ui:v2.0.3@sha256:9c17db4711a9f991250ac8592bf9cb90710e8fde1e0eee6f822dbd82a14f0d2f
     restart: on-failure
     security_opt:
       - no-new-privileges:true
-    container_name: solostrike_ui_1
+    container_name: danhaus93-solostrike_ui_1
     depends_on:
       - api
 
