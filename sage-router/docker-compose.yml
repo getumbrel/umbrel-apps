@@ -4,7 +4,7 @@ services:
   app_proxy:
     environment:
       APP_HOST: sage-router
-      APP_PORT: 8788
+      APP_PORT: 8790
       PROXY_AUTH_ADD: 'false'
     container_name: sage-router_app_proxy_1
 
@@ -12,14 +12,14 @@ services:
     image: ghcr.io/earlvanze/sage-router-public:v3.28.0@sha256:5c4f6773bf8c81a9df991e8f71cbb724e0b4e9c7c476044de6f607d6744b30be
     container_name: sage-router
     restart: on-failure
-    user: "1000:1000"
     volumes:
       - /home/umbrel/.openclaw:/config:ro
+      - /home/umbrel/.openclaw:/root/.openclaw:ro
       - /home/umbrel/.dario:/root/.dario
       - sage-router-ollama:/root/.ollama
       - sage-router-models:/models
     environment:
-      PORT: '8788'
+      PORT: '8790'
       SAGE_ROUTER_HOME: /config
       SAGE_ROUTER_API_KEY: ${SAGE_ROUTER_API_KEY:-local}
       SAGE_ROUTER_DISABLED_PROVIDERS: >-
@@ -34,7 +34,7 @@ services:
       SAGE_ROUTER_DARIO_AUTOSTART: '1'
       SAGE_ROUTER_DARIO_BASE_URL: http://127.0.0.1:3456
       SAGE_ROUTER_INTENT_CLASSIFIER_ENABLED: '0'
-      OPENAI_CODEX_API_KEY: ${OPENAI_CODEX_API_KEY}
+      OPENAI_CODEX_API_KEY: ${OPENAI_CODEX_API_KEY:-}
       SAGE_ROUTER_OPENAI_CODEX_AUTH_PROFILE_PATH: /config/agents/main/agent/auth-profiles.json
       SAGE_ROUTER_SHOW_MODEL_PREFIX: '1'
 
