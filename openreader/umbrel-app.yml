@@ -3,7 +3,7 @@ id: openreader
 name: OpenReader
 tagline: A document reader with Text-to-Speech capabilities
 category: ai
-version: "4.1.1"
+version: "4.1.2"
 port: 3391
 description: >-
   OpenReader WebUI is a web-based document reader that integrates text-to-speech (TTS) functionality, allowing users to listen to text from various document formats, including PDF and EPUB. Designed to enhance accessibility and improve the reading experience, it features synchronized text highlighting, ensuring that the currently read portion of the document is visually emphasized as the speech engine narrates the content. This makes it particularly useful for individuals with visual impairments, reading difficulties, or those who simply prefer an auditory learning style.
@@ -31,16 +31,16 @@ gallery:
   - 3.jpg
   - 4.jpg
 releaseNotes: >-
-  OpenReader 4.1.1 improves runtime packaging so deployed images include the embedded migration tools, compute worker, and PDF font assets they need at startup.
+  OpenReader 4.1.2 fixes document preview and thumbnail generation in Docker deployments so bundled PDF fonts are found correctly at runtime.
 
 
-  It also adds recovery for legacy PDF parse records missing operation IDs, helping older pending or running documents reconnect to the right operation.
+  Document uploads are smoother and more reliable, including improved DOCX-to-PDF conversion with cleaner timeout handling.
 
 
-  Claimed filesystem sources now use a safer cleanup path through the user-claim flow.
+  PDF parsing now runs through the background worker with versioned re-parsing, and text-to-speech playback resets correctly when switching documents.
 
 
-  Full release notes can be found at https://github.com/richardr1126/openreader/releases/tag/v4.1.1
+  Full release notes can be found at https://github.com/richardr1126/openreader/releases/tag/v4.1.2
 dependencies:
   - kokoro
 path: ""
