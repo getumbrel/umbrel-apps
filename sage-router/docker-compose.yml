@@ -1,64 +1,37 @@
-version: '3.7'
+version: "3.7"
+
 services:
   app_proxy:
-    image: getumbrel/app-proxy:1.0.0@sha256:49eb600c4667c4b948055e33171b42a509b7e0894a77e0ca40df8284c77b52fb
-    container_name: sage-router_app_proxy_1
     environment:
-      APP_HOST: sage-router
-      APP_PORT: '8790'
-      PROXY_AUTH_ADD: 'false'
-      UMBREL_AUTH_SECRET: DEADBEEF
-      JWT_SECRET: c2360a42af1bd95e7b3e54f8053a30891868aa8222333ec01e1131dc1b23c370
-      MANAGER_IP: 10.21.21.4
-      MANAGER_PORT: '3006'
-      AUTH_SERVICE_PORT: '2000'
-      PROXY_PORT: '8790'
-      LOG_LEVEL: info
-    ports:
-      - '8790:8790'
-    volumes:
-      - /home/umbrel/umbrel/app-data/sage-router/umbrel-app.yml:/extra/umbrel-app.yml:ro
-  sage-router:
-    image: ghcr.io/earlvanze/sage-router-public:v3.28.0@sha256:5c4f6773bf8c81a9df991e8f71cbb724e0b4e9c7c476044de6f607d6744b30be
-    container_name: sage-router
+      APP_HOST: sage-router_app_1
+      APP_PORT: 8790
+
+  app:
+    image: ghcr.io/earlvanze/sage-router-public:v3.28.0@sha256:67d242ceec27fb81adfee0acb4d8e77cd42d61541f5d62c7a156bb91c50c424a
     restart: on-failure
+    # not working rootless yet — needs /root/.openclaw and /root/.dario mounts
+    #user: "1000:1000"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
-      - /home/umbrel/.openclaw:/config:ro
-      - /home/umbrel/.openclaw:/root/.openclaw:ro
-      - /home/umbrel/.dario:/root/.dario
-      - sage-router-ollama:/root/.ollama
-      - sage-router-models:/models
-      - /home/umbrel/Dropbox/Projects/sage-router/web/dashboard:/app/web/dashboard:ro
+      - ${APP_DATA_DIR}/data/config:/config:ro
+      - ${UMBREL_ROOT}/.openclaw:/root/.openclaw:ro
+      - ${UMBREL_ROOT}/.dario:/root/.dario
     environment:
-      PORT: '8790'
+      PORT: "8790"
       SAGE_ROUTER_HOME: /config
-      SAGE_ROUTER_API_KEY: ${SAGE_ROUTER_API_KEY:-local}
+      SAGE_ROUTER_API_KEY: ${APP_SAGE_ROUTER_API_KEY:-local}
       SAGE_ROUTER_DISABLED_PROVIDERS: >-
         ollama-cloud,anthropic,dario,openrouter,nvidia-nim,darkbloom,ollama-cyber
       SAGE_ROUTER_DISABLED_MODELS: kimi-k2-thinking
-      SAGE_ROUTER_PROFILE_OVERLAYS: ''
-      SAGE_ROUTER_OLLAMA_TIMEOUT_SECONDS: '300'
-      SAGE_ROUTER_BUNDLED_OLLAMA_AUTOSTART: '0'
-      SAGE_ROUTER_OLLAMA_CLOUD_CATALOG_ENABLED: '0'
-      SAGE_ROUTER_OLLAMA_AUTO_PULL_PATTERNS: ''
-      OLLAMA_HOST: 'http://host.docker.internal:11434'
-      SAGE_ROUTER_OLLAMA_BASE_URL: 'http://host.docker.internal:11434'
-      OPENAI_CODEX_API_KEY: ${OPENAI_CODEX_API_KEY:-}
-      SAGE_ROUTER_OPENAI_CODEX_AUTH_PROFILE_PATH: /config/agents/main/agent/auth-profiles.json
-      SAGE_ROUTER_SHOW_MODEL_PREFIX: '1'
-      SAGE_ROUTER_ALLOW_RESTART: '1'
-    healthcheck:
-      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8790/health', timeout=5)"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 30s
-volumes:
-  sage-router-ollama:
-    external: true
-    name: sage-router-ollama
-  sage-router-models:
-    external: true
-    name: sage-router-models
+      SAGE_ROUTER_PROFILE_OVERLAYS: ""
+      SAGE_ROUTER_OLLAMA_TIMEOUT_SECONDS: "300"
+      SAGE_ROUTER_BUNDLED_OLLAMA_AUTOSTART: "0"
+      SAGE_ROUTER_OLLAMA_CLOUD_CATALOG_ENABLED: "0"
+      SAGE_ROUTER_OLLAMA_AUTO_PULL_PATTERNS: ""
+      OLLAMA_HOST: "http://host.docker.internal:11434"
+      SAGE_ROUTER_OLLAMA_BASE_URL: "http://host.docker.internal:11434"
+      OPENAI_CODEX_API_KEY: ${APP_SAGE_ROUTER_OPENAI_CODEX_API_KEY:-}
+      SAGE_ROUTER_OPENAI_CODEX_AUTH_PROFILE_PATH: /root/.openclaw/agents/main/agent/auth-profiles.json
+      SAGE_ROUTER_SHOW_MODEL_PREFIX: "1"
+      SAGE_ROUTER_ALLOW_RESTART: "1"
