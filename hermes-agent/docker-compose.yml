@@ -6,39 +6,20 @@ services:
       APP_HOST: hermes-agent_web_1
       APP_PORT: 18789
 
-  # Web terminal + dashboard proxy
+  # Official Hermes dashboard + messaging gateway supervised by upstream s6.
   web:
-    image: ghcr.io/getumbrel/hermes-agent-umbrel:v2026.5.29.2-1@sha256:06f1c71a0003061fc37812473603761aa448e8bde3e0b51984ebeb528581c1ac
-    # Keeps the terminal prompt readable as "hermes@hermes-agent"
-    hostname: hermes-agent
-    init: true
-    user: "1000:1000"
+    image: ghcr.io/getumbrel/hermes-agent-umbrel:v2026.6.5-2@sha256:145bc267054888a77759aceaa2df6ded5cc2a2ed3d8798fb92dae471c2b9c789
     restart: on-failure
-    depends_on:
-      - gateway
-    volumes:
-      - ${APP_DATA_DIR}/data/hermes:/opt/data
-    environment:
-      APP_SEED: ${APP_SEED}
-      # Tells the dashboard to probe the gateway via HTTP instead of local PID detection
-      GATEWAY_HEALTH_URL: http://hermes-agent_gateway_1:8642
-
-  # Hermes messaging gateway
-  gateway:
-    image: ghcr.io/getumbrel/hermes-agent-umbrel:v2026.5.29.2-1@sha256:06f1c71a0003061fc37812473603761aa448e8bde3e0b51984ebeb528581c1ac
-    entrypoint: ["/init"]
-    command: ["/opt/hermes/docker/main-wrapper.sh", "gateway", "run", "--no-supervise"]
     stop_grace_period: 1m
-    restart: on-failure
     volumes:
       - ${APP_DATA_DIR}/data/hermes:/opt/data
     environment:
       HERMES_UID: "1000"
       HERMES_GID: "1000"
-      # API server exposes the health endpoint the dashboard probes via GATEWAY_HEALTH_URL.
-      # Must bind to 0.0.0.0 (not default 127.0.0.1) to be reachable from the web container.
-      # Binding to 0.0.0.0 requires an API key — we reuse APP_SEED since the port is
-      # internal only (not exposed to host).
-      API_SERVER_ENABLED: "true"
-      API_SERVER_HOST: "0.0.0.0"
-      API_SERVER_KEY: ${APP_SEED}
+      HERMES_DASHBOARD: "1"
+      HERMES_DASHBOARD_PORT: "18789"
+      HERMES_DASHBOARD_INSECURE: "1"
+      HERMES_TUI_DIR: "/app/umbrel-tui"
+      HERMES_UPSTREAM_TUI_ENTRY: "/opt/hermes/ui-tui/dist/entry.js"
+      HERMES_GATEWAY_BOOTSTRAP_STATE: "running"
+    command: ["gateway", "run"]
