@@ -3,7 +3,7 @@ id: gitea-mirror
 name: Gitea Mirror
 tagline: Mirror your GitHub repositories to a Gitea instance automatically
 category: developer
-version: "3.16.3"
+version: "3.17.0"
 port: 4322
 description: >-
   Gitea Mirror automatically mirrors your GitHub repositories to a self-hosted Gitea instance. It supports mirroring public and private repositories, organizations, starred repos, issues, wikis, and pull requests.
@@ -42,11 +42,14 @@ defaultUsername: ""
 defaultPassword: ""
 dependencies: []
 releaseNotes: >-
-  This update improves reverse-proxy header authentication so proxy-provided users are bridged into a proper Better Auth session.
+  ⚠️ Breaking change for OAuth provider users: OAuth application secrets are now stored hashed after migration. Rotate the client secret for any OAuth application you registered in Gitea Mirror, then update the relying party before using OAuth clients again.
 
 
-  It also updates the Better Auth dependency to 1.6.11.
+  This update fixes SSO/OIDC sign-in bouncing back to `/login?error=UNKNOWN` by linking SSO identities to existing email/password accounts with domain-scoped trust.
 
 
-  Full release notes can be found at https://github.com/RayLabsHQ/gitea-mirror/releases/tag/v3.16.3
+  SSO operators should verify each provider's Domain setting matches the email domain issued by their identity provider. Authentik users with `email_verified: False` are now handled automatically.
+
+
+  Full release notes can be found at https://github.com/RayLabsHQ/gitea-mirror/releases/tag/v3.17.0
 path: ""
