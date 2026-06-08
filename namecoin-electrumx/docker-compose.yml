@@ -1,0 +1,61 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: $APP_NAMECOIN_ELECTRUMX_WEB_IP
+      APP_PORT: 18081
+
+  electrumx:
+    image: ghcr.io/mstrofnone/namecoin-electrumx:1.4.3@sha256:f1c545ea15dd2cc7951c48206463900a278a563f251356e372ae9a57a9d6e53c
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 5m
+    volumes:
+      - ${APP_DATA_DIR}/data/electrumx-db:/data/electrumx-db
+      - ${APP_DATA_DIR}/data/ssl:/data/ssl
+    environment:
+      COIN: "Namecoin"
+      NET: "mainnet"
+      DB_ENGINE: "leveldb"
+      DB_DIRECTORY: "/data/electrumx-db"
+      DAEMON_URL: "http://${APP_NAMECOIN_RPC_USER}:${APP_NAMECOIN_RPC_PASS}@${APP_NAMECOIN_NODE_IP}:${APP_NAMECOIN_RPC_PORT}/"
+      SERVICES: "tcp://0.0.0.0:${APP_NAMECOIN_ELECTRUMX_TCP_PORT},ssl://0.0.0.0:${APP_NAMECOIN_ELECTRUMX_SSL_PORT},rpc://0.0.0.0:${APP_NAMECOIN_ELECTRUMX_RPC_PORT}"
+      SSL_CERTFILE: "/data/ssl/electrumx.crt"
+      SSL_KEYFILE: "/data/ssl/electrumx.key"
+      CACHE_MB: "400"
+      MAX_SESSIONS: "200"
+      BANNER_FILE: "/app/banner.txt"
+      REQUEST_TIMEOUT: "30"
+      INITIAL_CONCURRENT: "20"
+    networks:
+      default:
+        ipv4_address: $APP_NAMECOIN_ELECTRUMX_NODE_IP
+
+  web:
+    image: ghcr.io/mstrofnone/namecoin-electrumx-umbrel-web:1.4.3@sha256:8d900a46fe729ba972dc7712f2bf4dd4ee4c4894cdc2bbb35c60bb32c35fc2eb
+    user: "1000:1000"
+    restart: on-failure
+    environment:
+      ELECTRUMX_RPC_HOST: "${APP_NAMECOIN_ELECTRUMX_NODE_IP}"
+      ELECTRUMX_RPC_PORT: "${APP_NAMECOIN_ELECTRUMX_RPC_PORT}"
+      ELECTRUMX_TCP_PORT: "${APP_NAMECOIN_ELECTRUMX_TCP_PORT}"
+      ELECTRUMX_SSL_PORT: "${APP_NAMECOIN_ELECTRUMX_SSL_PORT}"
+      ELECTRUM_HIDDEN_SERVICE: "${APP_NAMECOIN_ELECTRUMX_HIDDEN_SERVICE}"
+      ELECTRUM_LOCAL_SERVICE: "${DEVICE_DOMAIN_NAME}"
+      PORT: 18081
+    depends_on:
+      - electrumx
+    networks:
+      default:
+        ipv4_address: $APP_NAMECOIN_ELECTRUMX_WEB_IP
+
+  tor:
+    image: getumbrel/tor:0.4.7.8@sha256:2ace83f22501f58857fa9b403009f595137fa2e7986c4fda79d82a8119072b6a
+    user: "1000:1000"
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/torrc:/etc/tor/torrc:ro
+      - ${TOR_DATA_DIR}:/data
+    environment:
+      HOME: "/tmp"
