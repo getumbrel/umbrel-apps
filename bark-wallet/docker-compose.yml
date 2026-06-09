@@ -1,0 +1,42 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: bark-wallet_web_1
+      APP_PORT: 8080
+
+  web:
+    image: secondark/bark-web:0.1.8@sha256:25569e5345962b62aeb76f3f1d0c9185b06c62a83a5bd388057ac53dfdfb0d64
+    restart: on-failure
+    stop_grace_period: 1m
+    depends_on:
+      - api
+      - barkd
+
+  api:
+    image: secondark/bark-web-api:0.1.8@sha256:19ff0fe121b2d2f59961c240fe4a64893548261d203f3930f02bc44d2538470a
+    restart: on-failure
+    stop_grace_period: 1m
+    volumes:
+      - ${APP_DATA_DIR}/data/wallet:/wallet-data:ro
+    environment:
+      PORT: 4001
+      WALLET_DIR: /wallet-data/.bark
+      # We usually use the full Umbrel container name here, but the web image's bundled nginx config also proxies to barkd.
+      BARKD_URL: http://barkd:4000
+      ARK_SERVER: https://ark.second.tech
+      CHAIN_SOURCE: https://mempool.second.tech/api
+      BARK_NETWORK: mainnet
+    depends_on:
+      - barkd
+
+  barkd:
+    # TODO: Use a dedicated barkd image once Second publishes one with ca-certificates.
+    image: secondark/bark:0.2.2@sha256:8d7e0a8531c40701117a77acd483129a86ef6d60f8b906a6f9fd92a30c784f19
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 1m
+    command: sh -c "mkdir -p /data/.bark && exec /usr/local/bin/barkd --port 4000 --host 0.0.0.0 --datadir /data/.bark"
+    volumes:
+      - ${APP_DATA_DIR}/data/wallet:/data
