@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+
+APP_DATA_DIR="$(readlink -f $(dirname "${BASH_SOURCE[0]}")/../data)"
+DESIRED_OWNER="1000:1000"
+
+set_correct_permissions() {
+	local -r path="${1}"
+
+	if [[ -f "${path}" ]]; then
+		owner=$(stat -c "%u:%g" "${path}")
+
+		if [[ "${owner}" != "${DESIRED_OWNER}" ]]; then
+			chown "${DESIRED_OWNER}" "${path}"
+			echo "Changed ownership of ${path} to ${DESIRED_OWNER}"
+		fi
+	else
+		echo "Skipping ${path} - file does not exist"
+	fi
+}
+
+# Ensure data directories exist with correct ownership
+for dir in "${APP_DATA_DIR}/data/namecoind" "${APP_DATA_DIR}/data/i2pd"; do
+	mkdir -p "${dir}"
+	chown "${DESIRED_OWNER}" "${dir}"
+done
+
+# Set correct permissions for any files that may have been created by a previous run as root
+set_correct_permissions "${APP_DATA_DIR}/data/namecoind/namecoin.conf"
+
+# Set permissions recursively on i2pd data directory
+if [[ -d "${APP_DATA_DIR}/i2pd" ]]; then
+	chown -R "${DESIRED_OWNER}" "${APP_DATA_DIR}/i2pd"
+fi
+
+# Delay booting the full app until the RPC and P2P Tor Hidden Services are ready
+
+HIDDEN_SERVICE_FILE="${TOR_DATA_DIR}/app-${APP_ID}-rpc/hostname"
+
+if [[ -f "${HIDDEN_SERVICE_FILE}" ]]; then
+	exit
+fi
+
+"${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" up --detach namecoind
+"${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" up --detach tor
+
+echo "App: ${APP_ID} - Generating Tor Hidden Service..."
+
+for attempt in $(seq 1 100); do
+	if [[ -f "${HIDDEN_SERVICE_FILE}" ]]; then
+		echo "App: ${APP_ID} - Hidden service file created successfully!"
+		break
+	fi
+	sleep 0.1
+done
+
+if [[ ! -f "${HIDDEN_SERVICE_FILE}" ]]; then
+	echo "App: ${APP_ID} - Hidden service file wasn't created"
+fi
