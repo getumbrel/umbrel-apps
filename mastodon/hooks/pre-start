@@ -1,0 +1,178 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+APP_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")"
+APP_DATA_DIR="${APP_DATA_DIR:-${APP_DIR}}"
+UMBREL_ROOT="${UMBREL_ROOT:-$(readlink -f "${APP_DIR}/../..")}"
+APP_ID="${APP_ID:-mastodon}"
+APP_PORT="${APP_MASTODON_PORT:-8388}"
+DEVICE_DOMAIN_NAME="${DEVICE_DOMAIN_NAME:-umbrel.local}"
+
+ADMIN_EMAIL="umbrel@umbrel.local"
+ENV_FILE="${APP_DATA_DIR}/mastodon.env"
+INIT_SENTINEL="${APP_DATA_DIR}/data/.mastodon_initialized"
+NGINX_CONFIG_FILE="${APP_DATA_DIR}/nginx.conf"
+FORCE_HTTP_FILE="${APP_DATA_DIR}/force-http.rb"
+MASTODON_IMAGE="ghcr.io/mastodon/mastodon:v4.5.9@sha256:2f4930e3f84a2f6b90b49c4e58329e9abc8bd354344cbd0607484514decff99f"
+
+mkdir -p \
+  "${APP_DATA_DIR}/data/system" \
+  "${APP_DATA_DIR}/data/db" \
+  "${APP_DATA_DIR}/data/redis"
+
+touch "${ENV_FILE}"
+cp "${APP_DIR}/nginx.conf" "${NGINX_CONFIG_FILE}"
+cp "${APP_DIR}/force-http.rb" "${FORCE_HTTP_FILE}"
+
+if [[ "$(id -u)" -eq 0 ]]; then
+  chown -R 1000:1000 \
+    "${APP_DATA_DIR}/data/system" \
+    "${APP_DATA_DIR}/data/db" \
+    "${APP_DATA_DIR}/data/redis" \
+    2>/dev/null || true
+fi
+
+has_var() {
+  local key="${1}"
+  grep -q "^${key}=" "${ENV_FILE}"
+}
+
+get_var() {
+  local key="${1}"
+  awk -v key="${key}" '
+    $0 ~ "^" key "=" {
+      value = substr($0, length(key) + 2)
+    }
+    END {
+      print value
+    }
+  ' "${ENV_FILE}"
+}
+
+set_var() {
+  local key="${1}"
+  local value="${2}"
+  local tmp_file
+  tmp_file="$(mktemp "${ENV_FILE}.XXXXXX")"
+
+  awk -v key="${key}" -v value="${value}" '
+    $0 ~ "^" key "=" {
+      next
+    }
+    { print }
+    END {
+      print key "=" value
+    }
+  ' "${ENV_FILE}" > "${tmp_file}"
+
+  chmod 600 "${tmp_file}"
+  mv "${tmp_file}" "${ENV_FILE}"
+}
+
+ensure_present() {
+  local key="${1}"
+  local value="${2}"
+
+  if ! has_var "${key}"; then
+    set_var "${key}" "${value}"
+  fi
+}
+
+ensure_nonempty() {
+  local key="${1}"
+  local value="${2}"
+
+  if [[ -z "$(get_var "${key}")" ]]; then
+    set_var "${key}" "${value}"
+  fi
+}
+
+random_hex() {
+  openssl rand -hex 64
+}
+
+random_b64() {
+  openssl rand -base64 32 | tr -d "\n"
+}
+
+generate_vapid_keys() {
+  docker run --rm --entrypoint ruby "${MASTODON_IMAGE}" \
+    -rwebpush \
+    -e 'v = Webpush.generate_key; puts "VAPID_PRIVATE_KEY=#{v.private_key}"; puts "VAPID_PUBLIC_KEY=#{v.public_key}"'
+}
+
+ensure_present RAILS_ENV production
+ensure_present NODE_ENV production
+ensure_present RAILS_SERVE_STATIC_FILES true
+ensure_present BIND 0.0.0.0
+
+ensure_present LOCAL_DOMAIN "${DEVICE_DOMAIN_NAME}"
+ensure_present WEB_DOMAIN "${DEVICE_DOMAIN_NAME}:${APP_PORT}"
+ensure_present LOCAL_HTTPS false
+ensure_present TRUSTED_PROXY_IP "127.0.0.1/8,::1/128,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,fc00::/7"
+
+ensure_present DB_HOST db
+ensure_present DB_PORT 5432
+ensure_present DB_NAME mastodon_production
+ensure_present DB_USER mastodon
+ensure_present DB_PASS mastodon
+
+ensure_present REDIS_HOST redis
+ensure_present REDIS_PORT 6379
+
+ensure_nonempty SECRET_KEY_BASE "$(random_hex)"
+ensure_nonempty OTP_SECRET "$(random_hex)"
+ensure_nonempty ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY "$(random_b64)"
+ensure_nonempty ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT "$(random_b64)"
+ensure_nonempty ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY "$(random_b64)"
+
+if [[ -z "$(get_var VAPID_PRIVATE_KEY)" || -z "$(get_var VAPID_PUBLIC_KEY)" ]]; then
+  VAPID_KEYS="$(generate_vapid_keys)"
+  VAPID_PRIVATE_KEY="$(printf "%s\n" "${VAPID_KEYS}" | sed -n 's/^VAPID_PRIVATE_KEY=//p' | head -n 1)"
+  VAPID_PUBLIC_KEY="$(printf "%s\n" "${VAPID_KEYS}" | sed -n 's/^VAPID_PUBLIC_KEY=//p' | head -n 1)"
+  ensure_nonempty VAPID_PRIVATE_KEY "${VAPID_PRIVATE_KEY}"
+  ensure_nonempty VAPID_PUBLIC_KEY "${VAPID_PUBLIC_KEY}"
+fi
+
+ensure_present ES_ENABLED false
+ensure_present SINGLE_USER_MODE false
+
+LOCAL_DOMAIN_VALUE="$(get_var LOCAL_DOMAIN)"
+ensure_present SMTP_SERVER ""
+ensure_present SMTP_PORT 587
+ensure_present SMTP_FROM_ADDRESS "notifications@${LOCAL_DOMAIN_VALUE}"
+
+if [[ -f "${INIT_SENTINEL}" ]]; then
+  echo "mastodon: already initialized, preserving existing configuration."
+  exit 0
+fi
+
+if [[ ! -x "${UMBREL_ROOT}/scripts/app" ]]; then
+  echo "mastodon: Umbrel app helper not found, skipping first-run bootstrap in this environment."
+  exit 0
+fi
+
+echo "mastodon: starting database and redis for first-run bootstrap."
+"${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" up -d --wait --wait-timeout 180 db redis
+
+echo "mastodon: preparing database."
+"${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" run --rm --no-deps web bundle exec rails db:prepare
+
+echo "mastodon: creating Umbrel owner account."
+"${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" run --rm --no-deps web \
+  bin/tootctl accounts create umbrel \
+    --email "${ADMIN_EMAIL}" \
+    --confirmed \
+    --role Owner || true
+
+if [[ -n "${APP_PASSWORD:-}" ]]; then
+  "${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" run --rm --no-deps -e ADMIN_PASSWORD="${APP_PASSWORD}" web \
+    bin/rails runner "user = User.find_by!(email: '${ADMIN_EMAIL}'); user.password = ENV.fetch('ADMIN_PASSWORD'); user.password_confirmation = ENV.fetch('ADMIN_PASSWORD'); user.save!"
+else
+  echo "mastodon: APP_PASSWORD is not set, leaving the generated account password unchanged."
+fi
+
+touch "${INIT_SENTINEL}"
+
+echo "mastodon: bootstrap finished, stopping helper services for a clean app start."
+"${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" stop
