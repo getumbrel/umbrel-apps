@@ -33,9 +33,13 @@ services:
 
   barkd:
     image: secondark/bark:0.2.3@sha256:a46447faad5508a97c0d2d1a8987c256cf437e0ebea09749c587657ee83926ba
-    user: "1000:1000"
+    # Fix bind mount ownership, then drop to UID 1000 so the API can read barkd's auth token.
+    user: "0:0"
     restart: on-failure
     stop_grace_period: 1m
-    command: sh -c "mkdir -p /data/.bark && exec /usr/local/bin/barkd --port 4000 --host 0.0.0.0 --datadir /data/.bark"
+    command: >
+      sh -c "mkdir -p /data/.bark
+      && chown -R 1000:1000 /data
+      && exec setpriv --reuid 1000 --regid 1000 --clear-groups /usr/local/bin/barkd --port 4000 --host 0.0.0.0 --datadir /data/.bark"
     volumes:
       - ${APP_DATA_DIR}/data/wallet:/data
