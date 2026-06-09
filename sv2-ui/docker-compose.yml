@@ -26,8 +26,8 @@ services:
       - ${APP_DATA_DIR}/entrypoint.sh:/entrypoint.sh
       - ${APP_DATA_DIR}/data/docker:/data
       - ${APP_BITCOIN_DATA_DIR}:/root/.bitcoin:ro
-      # mount setup volume to dind so containers in different Docker contexts can access it:w
-      - sv2-config:/app/data/config
+      # Mount setup config into DIND so nested containers can access it.
+      - ${APP_DATA_DIR}/data/config:/app/data/config
 
   sv2-ui:
     image: stratumv2/sv2-ui:v0.3.0@sha256:dc6654c4f5ff985d0af2533ee01a638573085e3154c0710a8c69000e7ee087f6
@@ -44,12 +44,8 @@ services:
       HOST_OS: "umbrel"
     volumes:
       - ${APP_DATA_DIR}/data/docker:/var/run
-      # expected volume where sv2-ui writes config files after setup
-      - sv2-config:/app/data/config
+      # Config files written by sv2-ui after setup.
+      - ${APP_DATA_DIR}/data/config:/app/data/config
     depends_on:
       docker:
         condition: service_healthy
-
-volumes:
-  sv2-config:
-    name: sv2-config

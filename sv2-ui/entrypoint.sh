@@ -84,9 +84,8 @@ for i in $(seq 1 30); do
     sleep 1
 done
 
-# Recreate sv2-config volume inside dind so nested containers can access it.
-# sv2-ui expects config at /app/data/config in same Docker context as itself,
-# but in Umbrel the managed containers run inside dind (different context).
+# Create sv2-config inside DIND so nested containers can access the same
+# /app/data/config bind mount as sv2-ui.
 create_inner_volume "${DOCKER_SOCKET}" "${DOCKER_VOLUME_NAME}" "${CONFIG_SOURCE_PATH}"
 
 echo "Dockerd is ready. Foregrounding dockerd process..."
