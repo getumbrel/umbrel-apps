@@ -7,7 +7,7 @@ services:
       APP_PORT: 8080
 
   web:
-    image: secondark/bark-web:0.1.8@sha256:25569e5345962b62aeb76f3f1d0c9185b06c62a83a5bd388057ac53dfdfb0d64
+    image: secondark/bark-web:0.2.0@sha256:8b45a3b6ea18df9540cc1a90080fbf3bf994209b64fd50fde585f7aa9b44589b
     restart: on-failure
     stop_grace_period: 1m
     depends_on:
@@ -15,7 +15,7 @@ services:
       - barkd
 
   api:
-    image: secondark/bark-web-api:0.1.8@sha256:19ff0fe121b2d2f59961c240fe4a64893548261d203f3930f02bc44d2538470a
+    image: secondark/bark-web-api:0.2.0@sha256:48392a767d93ec1307ed2287ca7d02eb491e0999482094b1d77a9411bbc1bfcf
     restart: on-failure
     stop_grace_period: 1m
     volumes:
@@ -32,8 +32,7 @@ services:
       - barkd
 
   barkd:
-    # TODO: Use a dedicated barkd image once Second publishes one with ca-certificates.
-    image: secondark/bark:0.2.2@sha256:8d7e0a8531c40701117a77acd483129a86ef6d60f8b906a6f9fd92a30c784f19
+    image: secondark/bark:0.2.3@sha256:a46447faad5508a97c0d2d1a8987c256cf437e0ebea09749c587657ee83926ba
     user: "1000:1000"
     restart: on-failure
     stop_grace_period: 1m
