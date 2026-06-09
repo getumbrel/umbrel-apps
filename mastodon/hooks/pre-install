@@ -12,9 +12,8 @@ mkdir -p \
 touch "${APP_DATA_DIR}/mastodon.env"
 
 if [[ "$(id -u)" -eq 0 ]]; then
+  chown -R 991:991 "${APP_DATA_DIR}/data/system" 2>/dev/null || true
   chown -R 1000:1000 \
-    "${APP_DATA_DIR}/data/system" \
     "${APP_DATA_DIR}/data/db" \
-    "${APP_DATA_DIR}/data/redis" \
-    2>/dev/null || true
+    "${APP_DATA_DIR}/data/redis" 2>/dev/null || true
 fi

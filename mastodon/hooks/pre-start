@@ -25,11 +25,10 @@ cp "${APP_DIR}/nginx.conf" "${NGINX_CONFIG_FILE}"
 cp "${APP_DIR}/force-http.rb" "${FORCE_HTTP_FILE}"
 
 if [[ "$(id -u)" -eq 0 ]]; then
+  chown -R 991:991 "${APP_DATA_DIR}/data/system" 2>/dev/null || true
   chown -R 1000:1000 \
-    "${APP_DATA_DIR}/data/system" \
     "${APP_DATA_DIR}/data/db" \
-    "${APP_DATA_DIR}/data/redis" \
-    2>/dev/null || true
+    "${APP_DATA_DIR}/data/redis" 2>/dev/null || true
 fi
 
 has_var() {

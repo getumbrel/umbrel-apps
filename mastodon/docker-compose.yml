@@ -23,6 +23,7 @@ services:
 
   web:
     image: *mastodon_image
+    user: "991:991"
     restart: on-failure
     stop_grace_period: 1m
     command: ["bundle", "exec", "puma", "-C", "config/puma.rb"]
@@ -41,9 +42,10 @@ services:
 
   streaming:
     image: *mastodon_streaming_image
+    user: "991:991"
     restart: on-failure
     stop_grace_period: 1m
-    command: ["node", "./streaming"]
+    command: ["node", "./streaming/index.js"]
     env_file:
       - ${APP_DATA_DIR}/mastodon.env
     depends_on:
@@ -52,6 +54,7 @@ services:
 
   sidekiq:
     image: *mastodon_image
+    user: "991:991"
     restart: on-failure
     stop_grace_period: 1m
     command: ["bundle", "exec", "sidekiq"]
@@ -70,6 +73,7 @@ services:
 
   migrate:
     image: *mastodon_image
+    user: "991:991"
     restart: on-failure
     command: ["bundle", "exec", "rails", "db:migrate"]
     env_file:
