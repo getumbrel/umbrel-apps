@@ -226,7 +226,9 @@ def otbr_running():
     return False
 
 
-_RE_DEVICE = re.compile(r"^/dev/[\w./\-]{1,200}$")
+_RE_DEVICE = re.compile(
+    r"^/dev/(?:ttyACM[0-9]+|ttyUSB[0-9]+|serial/(?:by-id|by-path)/[A-Za-z0-9][A-Za-z0-9_.+,:=@-]{0,199})$"
+)
 _RE_IFACE = re.compile(r"^[A-Za-z0-9._\-]{1,32}$")
 _RE_BAUD = re.compile(r"^[0-9]{3,7}$")
 _BOOLS = {"0", "1"}
@@ -236,7 +238,7 @@ def validate_settings(values):
     if not values.get("DEVICE"):
         return "Please select or enter a serial device."
     if not _RE_DEVICE.match(values["DEVICE"]):
-        return "Device path must look like /dev/ttyACM0."
+        return "Device path must be a USB serial radio path like /dev/ttyACM0, /dev/ttyUSB0, or /dev/serial/by-id/..."
     if not _RE_BAUD.match(values.get("BAUDRATE", "")):
         return "Baud rate must be a number (e.g. 460800)."
     if not _RE_IFACE.match(values.get("BACKBONE_IF", "")):
