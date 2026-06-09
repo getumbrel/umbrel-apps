@@ -1,6 +1,21 @@
 #!/bin/sh
 set -e
 
+# This hack can be removed if https://github.com/docker-library/docker/pull/444 gets merged.
+
+# Remove docker pidfile if it exists to ensure Docker can start up after a bad shutdown
+pidfile="/var/run/docker.pid"
+if [[ -f "${pidfile}" ]]
+then
+    rm -f "${pidfile}"
+fi
+
+# Use nftables as the backend for iptables
+for command in iptables iptables-restore iptables-restore-translate iptables-save iptables-translate
+do
+    ln -sf /sbin/xtables-nft-multi /sbin/$command
+done
+
 # Ensure that a bridge exists with the given name
 ensure_bridge_exists() {
     local name="${1}"
@@ -45,6 +60,14 @@ create_inner_volume() {
     echo "Volume '${volume_name}' created successfully"
 }
 
+stop_dockerd() {
+    if [[ "${DOCKERD_PID:-}" != "" ]]
+    then
+        kill -TERM "${DOCKERD_PID}" 2>/dev/null || true
+        wait "${DOCKERD_PID}" 2>/dev/null || true
+    fi
+}
+
 if [[ "${DOCKER_ENSURE_BRIDGE}" != "" ]]
 then
     bridge="${DOCKER_ENSURE_BRIDGE%%:*}"
@@ -58,31 +81,37 @@ CONFIG_SOURCE_PATH="/app/data/config"
 
 echo "Starting dockerd in background..."
 
-#cleanup in case of a bad shutdown
-rm -rf /data/docker.pid
+# Cleanup in case of a direct run or bad shutdown. The Umbrel pre-start hook also
+# removes persistent DIND runtime state before this container starts.
+rm -f /data/docker.pid
+
+trap stop_dockerd INT TERM
 
 # Start dockerd in background, we need to perform setup operations
 # after dockerd starts but before nested containers are created
-dockerd \
-    --bridge dind0 \
-    --data-root /data/data \
-    --exec-root /data/exec \
-    --host unix:///data/docker.sock \
-    --pidfile /data/docker.pid \
-    &
+dockerd-entrypoint.sh $@ &
 
 DOCKERD_PID=$!
 
 # Wait for dockerd to be ready before proceeding with setup
 echo "Waiting for dockerd to be ready..."
+docker_ready="false"
 for i in $(seq 1 30); do
     if docker -H unix://${DOCKER_SOCKET} info >/dev/null 2>&1; then
         echo "Dockerd is ready!"
+        docker_ready="true"
         break
     fi
     echo "Waiting for dockerd... (attempt $i/30)"
     sleep 1
 done
+
+if [[ "${docker_ready}" != "true" ]]
+then
+    echo "Dockerd did not become ready in time."
+    stop_dockerd
+    exit 1
+fi
 
 # Create sv2-config inside DIND so nested containers can access the same
 # /app/data/config bind mount as sv2-ui.

@@ -16,6 +16,13 @@ services:
     environment:
       DOCKER_ENSURE_BRIDGE: "dind0:10.32.0.1/16"
     entrypoint: /entrypoint.sh
+    command: >
+      dockerd
+        --bridge dind0
+        --data-root /data/data
+        --exec-root /data/exec
+        --host unix:///data/docker.sock
+        --pidfile /data/docker.pid
     healthcheck:
       test: ["CMD", "docker", "-H", "unix:///data/docker.sock", "info"]
       interval: 5s
