@@ -1,0 +1,46 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: bark-wallet_web_1
+      APP_PORT: 8080
+
+  web:
+    image: secondark/bark-web:0.2.1@sha256:4cc9feb23b89ef8570cad7a802a00b6ab511f39decfe30c2044aa0254f6ed79f
+    restart: on-failure
+    stop_grace_period: 1m
+    depends_on:
+      - api
+      - barkd
+
+  api:
+    image: secondark/bark-web-api:0.2.1@sha256:379668adab6aba314875ccf7634dfcf52eb276776744d2ed0e15f41de6da0db1
+    restart: on-failure
+    stop_grace_period: 1m
+    volumes:
+      - ${APP_DATA_DIR}/data/wallet:/wallet-data:ro
+    environment:
+      PORT: 4001
+      WALLET_DIR: /wallet-data/.bark
+      WALLET_DATA_PATH: /Apps/bark-wallet/data/wallet/.bark/
+      # We usually use the full Umbrel container name here, but the web image's bundled nginx config also proxies to barkd.
+      BARKD_URL: http://barkd:4000
+      ARK_SERVER: https://ark.second.tech
+      CHAIN_SOURCE: https://mempool.second.tech/api
+      BARK_NETWORK: mainnet
+    depends_on:
+      - barkd
+
+  barkd:
+    image: secondark/bark:0.2.3@sha256:a46447faad5508a97c0d2d1a8987c256cf437e0ebea09749c587657ee83926ba
+    # Fix bind mount ownership, then drop to UID 1000 so the API can read barkd's auth token.
+    user: "0:0"
+    restart: on-failure
+    stop_grace_period: 1m
+    command: >
+      sh -c "mkdir -p /data/.bark
+      && chown -R 1000:1000 /data
+      && exec setpriv --reuid 1000 --regid 1000 --clear-groups /usr/local/bin/barkd --port 4000 --host 0.0.0.0 --datadir /data/.bark"
+    volumes:
+      - ${APP_DATA_DIR}/data/wallet:/data
