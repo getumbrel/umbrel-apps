@@ -6,6 +6,13 @@ version: "1.13.0"
 tagline: Autopilot for renting hashrate to mine on Ocean Mining
 
 description: >-
+  ALREADY RUNNING THE COMMUNITY-STORE VERSION? This official-store app has a
+  different app id than the community-store one (rdouma-hashrate-autopilot),
+  so it installs as a separate app with an empty database. A one-time
+  five-minute migration brings your full history across:
+  https://github.com/rdouma/hashrate-autopilot/blob/main/docs/migrating-from-community-store.md
+
+
   Rent hashrate on the Braiins Hashpower marketplace and route it to your own
   Ocean non-custodial mining pool, automatically. Each tick the autopilot finds
   the cheapest available price for your target hashrate, adds a small
@@ -64,38 +71,10 @@ defaultPassword: ""
 submitter: Remco Douma
 submission: https://github.com/getumbrel/umbrel-apps/pull/5685
 releaseNotes: |
-  v1.13.0 - first appearance in the official App Store. Welcome.
+  v1.13.0 - first appearance in the official Umbrel App Store.
 
-  MIGRATING FROM THE COMMUNITY STORE VERSION
+  Already running the community-store version (rdouma-hashrate-autopilot)? It installs side by side with this one. A one-time five-minute migration brings your full history across: https://github.com/rdouma/hashrate-autopilot/blob/main/docs/migrating-from-community-store.md
 
-  Anyone who already runs Hashrate Autopilot via the community store (app id "rdouma-hashrate-autopilot") and just installs this version will end up with two side-by-side instances and an empty database on this one - Umbrel treats the two store IDs as separate apps, so the new install does not inherit the old data. The fix is a one-time copy of state.db over SSH:
+  Highlights in v1.13.0: configurable stats bar (pick your tiles from a catalogue, drag to reorder), dedicated History page with filters and a per-event detail drawer, synced crosshair across both charts, and the USD toggle now greys out with the reason when the BTC price oracle is unreachable instead of silently disappearing. Plus a sweep of mobile and reliability fixes. Full release notes: https://github.com/rdouma/hashrate-autopilot/releases/tag/v1.13.0
 
-  (1) umbreld client apps.stop.mutate --appId rdouma-hashrate-autopilot
-  (2) Install Hashrate Autopilot from this App Store. It creates a fresh data dir.
-  (3) umbreld client apps.stop.mutate --appId hashrate-autopilot
-  (4) sudo cp ~/umbrel/app-data/rdouma-hashrate-autopilot/data/state.db ~/umbrel/app-data/hashrate-autopilot/data/state.db
-  (5) umbreld client apps.start.mutate --appId hashrate-autopilot
-
-  Once you have verified the dashboard reads your history, you can free the disk by uninstalling the community version: umbreld client apps.uninstall.mutate --appId rdouma-hashrate-autopilot. Make an off-Umbrel backup of state.db before step 4 if you have more than a few weeks of history; nothing in step 4 is destructive but a backup is cheap insurance.
-
-  WHAT IS NEW IN v1.13.0
-
-  Configurable stats bar: pick which tiles appear from a catalogue covering uptime decomposition (bid coverage + delivery while bidding), hashrate averages by source, cost-vs-hashprice, three pool-luck windows (24h/7d/30d with window-aware colour bands), share log %, share rejection, wallet runway, hashrate target, and Bitaxe fleet hashrate / power / J-per-TH efficiency / all-time best difficulty. Drag-to-reorder within the bar; choice persists daemon-side so the layout follows you across browsers.
-
-  Dedicated History page at /history: flat sortable table of every bid event (create / edit price / edit speed / cancel) with filter chips by action, full bid id, locale-aware custom date picker, and a denomination-aware |Delta price| filter whose units track the TH/PH/EH toggle. Click a row to open a slide-out drawer with the full reason plus the market snapshot at the event tick (fillable, hashprice, max bid, effective cap, overpay). Drawer carries "View on chart" which jumps to the matching marker on the price chart (with a brief amber pulse so you can spot it); the chart's pinned marker tooltip carries the reverse "Show in history" link.
-
-  Synced crosshair across the Hashrate and Price charts: hovering either chart draws a guide on both with a floating readout of every visible series at the snapped tick. Click to pin.
-
-  USD denomination button now greys out with a tooltip when the BTC price oracle is configured but unreachable, instead of silently disappearing.
-
-  IMPROVEMENTS AND FIXES
-
-  Test connection button for the BTC oracle now sits inline next to the Price source dropdown, matching the rest of the Test-connection idiom across Config.
-  Scan local network: clicking the X actually aborts in-flight HTTP probes so the scan ends in milliseconds (was waiting one probe timeout per worker), and the trigger button reliably reverts to "Scan local network".
-  NerdAxe / NerdQAxe miners that report bestDiff as a raw number are accepted natively. One malformed device's payload can no longer take down the whole fleet poll, and unreachable-device errors now include the underlying network error code instead of a bare "fetch failed".
-  Hero price card no longer overflows on iPhone in BTC denomination.
-  telegram_chat_id is now redacted in the Diagnostics support bundle (used to leak alongside the masked bot_token).
-  Pool-luck step markers anchor at the higher line for FOUND blocks and the lower line for AGED OUT, matching operator intuition.
-  "rejection rate" renamed to "rejection ratio" everywhere, matching Braiins terminology.
-
-  Safe to install fresh. Safe to migrate per the steps above. No new migrations.
+  Safe to install fresh; no migrations.
