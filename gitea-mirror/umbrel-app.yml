@@ -3,7 +3,7 @@ id: gitea-mirror
 name: Gitea Mirror
 tagline: Mirror your GitHub repositories to a Gitea instance automatically
 category: developer
-version: "3.17.0"
+version: "3.17.1"
 port: 4322
 description: >-
   Gitea Mirror automatically mirrors your GitHub repositories to a self-hosted Gitea instance. It supports mirroring public and private repositories, organizations, starred repos, issues, wikis, and pull requests.
@@ -42,14 +42,14 @@ defaultUsername: ""
 defaultPassword: ""
 dependencies: []
 releaseNotes: >-
-  ⚠️ Breaking change for OAuth provider users: OAuth application secrets are now stored hashed after migration. Rotate the client secret for any OAuth application you registered in Gitea Mirror, then update the relying party before using OAuth clients again.
+  Gitea Mirror 3.17.1 is a follow-up to the recent 3.17.0 update. If you're updating from a pre-3.17 version and use OAuth provider clients registered in Gitea Mirror, rotate the client secret for each client after upgrading because OAuth application secrets are stored hashed after migration.
 
 
-  This update fixes SSO/OIDC sign-in bouncing back to `/login?error=UNKNOWN` by linking SSO identities to existing email/password accounts with domain-scoped trust.
+  This release fixes a crash loop that could occur after upgrading to 3.17.0 when the SAML provider migration detected columns that already existed but had not been recorded as migrated.
 
 
-  SSO operators should verify each provider's Domain setting matches the email domain issued by their identity provider. Authentik users with `email_verified: False` are now handled automatically.
+  Affected instances now repair that migration automatically on startup, preserving SAML provider configuration. Fresh installs, clean upgrades, and already-migrated databases are unchanged.
 
 
-  Full release notes can be found at https://github.com/RayLabsHQ/gitea-mirror/releases/tag/v3.17.0
+  Full release notes can be found at https://github.com/RayLabsHQ/gitea-mirror/releases/tag/v3.17.1
 path: ""
