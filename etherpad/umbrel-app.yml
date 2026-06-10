@@ -3,7 +3,7 @@ id: etherpad
 name: Etherpad
 tagline: An intuitive tool for real-time collaborative writing
 category: files
-version: "3.3.0"
+version: "3.3.1"
 port: 9002
 description: >-
   ⚙️ The admin panel for Etherpad is accessible at "http://umbrel.local:9002/admin/".
@@ -34,19 +34,16 @@ gallery:
   - 2.jpg
   - 3.jpg
 releaseNotes: >-
-  Etherpad 3.3 is primarily a security-hardening release with tighter HTTP API handling, CSPRNG-backed random IDs, safer plugin loading validation, and escaped exported HTML data attributes.
+  This release fixes a stored-XSS issue in numbered-list handling and further hardens Etherpad's database connection handling so dropped PostgreSQL, Redis, or RethinkDB connections no longer crash the process.
 
 
-  Plugin pad options are now enabled by default, improving compatibility with plugins that use ep_* pad settings without changing existing deployments that explicitly disabled them.
+  Etherpad now suppresses unnecessary pad-deletion token modals when pad deletion is open to all users, fixes an admin Manage Pads edge case where one unreadable pad could empty the list, and improves language selection display in pad settings.
 
 
-  The in-pad timeslider now respects editor view settings such as authorship colors, font family, and line numbers, and the admin settings UI better explains environment-variable substitution while surfacing auth errors more clearly.
+  It also includes a dark-mode/iOS skin fix and routine dependency updates.
 
 
-  This release also includes pad editor layout, RTL, URL wrapping, and URL-encoding fixes.
-
-
-  Full release notes can be found at https://github.com/ether/etherpad/releases/tag/v3.3.0
+  Full release notes can be found at https://github.com/ether/etherpad/releases/tag/v3.3.1
 dependencies: []
 path: ""
 defaultUsername: "admin"
