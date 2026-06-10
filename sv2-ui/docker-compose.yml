@@ -35,7 +35,7 @@ services:
       - ${APP_DATA_DIR}/data/config:/app/data/config
 
   sv2-ui:
-    image: stratumv2/sv2-ui:v0.3.0@sha256:dc6654c4f5ff985d0af2533ee01a638573085e3154c0710a8c69000e7ee087f6
+    image: stratumv2/sv2-ui:v0.4.0@sha256:f65568d210f55a2da78243391fa9f4865d2a68484ca5430f4df99bc38fa6b1ed
     stop_grace_period: 1m
     restart: on-failure
     # required: sv2-ui expects docker DNS to resolve container names in production.
@@ -46,6 +46,7 @@ services:
       - "sv2-jdc:host-gateway"
     environment:
       HOST_OS: "umbrel"
+      STRATUM_HOST: "umbrel.local"
     volumes:
       - ${APP_DATA_DIR}/data/docker:/var/run
       # Config files written by sv2-ui after setup.
