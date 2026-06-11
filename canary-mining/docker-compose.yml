@@ -1,0 +1,44 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: canary-mining_app_1
+      APP_PORT: 8080
+
+  app:
+    image: schjonhaug/canary-mining:v1.0.0@sha256:4b7b0c449295206a8496bc8c05d0aa308d19f35a80697fd2b6ba5ac47bb2cc55
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 1m
+    entrypoint: ["/bin/sh", "-c"]
+    command: |
+      set -eu
+      cat > /tmp/canary-mining-umbrel.toml <<EOF
+      network = "mainnet"
+      data_dir = "/app/data/mainnet"
+
+      [bitcoin_core]
+      ipc_socket_path = "unix:/root/.bitcoin/${APP_BITCOIN_IPC_SOCKET_RELATIVE_PATH}"
+      rpc_url = "http://${APP_BITCOIN_NODE_IP}:${APP_BITCOIN_RPC_PORT}"
+      rpc_cookie_path = "/root/.bitcoin/.cookie"
+      fee_threshold = 100000
+      min_interval = 60
+
+      [sv2]
+      listen_address = "0.0.0.0:3335"
+
+      [metrics]
+      listen_address = "127.0.0.1:9090"
+      cache_refresh_secs = 15
+
+      [ui]
+      enabled = true
+      listen_address = "0.0.0.0:8080"
+      EOF
+      exec /usr/local/bin/canary-mining run --config /tmp/canary-mining-umbrel.toml
+    volumes:
+      - ${APP_DATA_DIR}/data:/app/data
+      - ${APP_BITCOIN_DATA_DIR}:/root/.bitcoin:ro
+    ports:
+      - "3335:3335/tcp"
