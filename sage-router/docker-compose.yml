@@ -7,19 +7,19 @@ services:
       APP_PORT: 8790
 
   app:
-    image: ghcr.io/earlvanze/sage-router-public:v3.28.0@sha256:67d242ceec27fb81adfee0acb4d8e77cd42d61541f5d62c7a156bb91c50c424a
+    image: ghcr.io/earlvanze/sage-router-public:v3.28.2@sha256:a4400a4dfa136067c394b6b2f99d8c5aee7c2373086eb66a2e0a871357cb7040
     restart: on-failure
-    # not working rootless yet — needs /root/.openclaw and /root/.dario mounts
+    # not working rootless yet; bundled runtimes still expect root-owned state
     #user: "1000:1000"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
-      - ${APP_DATA_DIR}/data/config:/config:ro
-      - ${UMBREL_ROOT}/.openclaw:/root/.openclaw:ro
-      - ${UMBREL_ROOT}/.dario:/root/.dario
+      - ${APP_DATA_DIR}/data:/config
     environment:
       PORT: "8790"
+      APP_DATA_DIR: /config
       SAGE_ROUTER_HOME: /config
+      SAGE_ROUTER_CONFIG_SOURCE: auto
       SAGE_ROUTER_API_KEY: ${APP_SAGE_ROUTER_API_KEY:-local}
       SAGE_ROUTER_DISABLED_PROVIDERS: >-
         ollama-cloud,anthropic,dario,openrouter,nvidia-nim,darkbloom,ollama-cyber
@@ -32,6 +32,6 @@ services:
       OLLAMA_HOST: "http://host.docker.internal:11434"
       SAGE_ROUTER_OLLAMA_BASE_URL: "http://host.docker.internal:11434"
       OPENAI_CODEX_API_KEY: ${APP_SAGE_ROUTER_OPENAI_CODEX_API_KEY:-}
-      SAGE_ROUTER_OPENAI_CODEX_AUTH_PROFILE_PATH: /root/.openclaw/agents/main/agent/auth-profiles.json
+      SAGE_ROUTER_OPENAI_CODEX_AUTH_PROFILE_PATH: /config/agents/main/agent/auth-profiles.json
       SAGE_ROUTER_SHOW_MODEL_PREFIX: "1"
       SAGE_ROUTER_ALLOW_RESTART: "1"
