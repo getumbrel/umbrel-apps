@@ -7,10 +7,9 @@ services:
       APP_PORT: 8790
 
   app:
-    image: ghcr.io/earlvanze/sage-router-public:v3.28.2@sha256:a4400a4dfa136067c394b6b2f99d8c5aee7c2373086eb66a2e0a871357cb7040
+    image: ghcr.io/earlvanze/sage-router-public:v3.28.4@sha256:a05899c4e30325debed8cf00c8be845b2c84763ce21b5e6e0b4604958a13a754
     restart: on-failure
-    # not working rootless yet; bundled runtimes still expect root-owned state
-    #user: "1000:1000"
+    user: "1000:1000"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
