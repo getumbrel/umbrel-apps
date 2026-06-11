@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+# IP ADDRESSES
+export APP_PUBLIC_POOL_IP="10.21.21.11"
+
+# PORTS
+export APP_PUBLIC_POOL_API_PORT="2019"
+export APP_PUBLIC_POOL_STRATUM_PORT="2018"
