@@ -2,7 +2,7 @@ manifestVersion: 1
 id: hermitstash
 category: files
 name: HermitStash
-version: "1.11.42"
+version: "1.12.0"
 tagline: Post-quantum encrypted self-hosted file sharing
 description: >-
   HermitStash is a self-hosted file upload server with post-quantum encryption. Every file and database field is sealed with an ML-KEM-1024 + ECDH P-384 hybrid envelope and XChaCha20-Poly1305 before touching disk; passwords use Argon2id. Nothing is stored in plaintext, including database fields the operator never thinks of as sensitive.
@@ -31,17 +31,14 @@ defaultPassword: ""
 submitter: dotCooCoo
 submission: https://github.com/getumbrel/umbrel-apps/pull/5378
 releaseNotes: >-
-  Improves validation, encrypted error handling, and storage/account reliability.
+  Includes critical security and data-integrity fixes for access control, encrypted uploads, email-gated shares, IP rate limiting, certificate revocation, and atomic database writes.
 
 
-  Email validation now rejects control characters, and more API/session/verification errors use encrypted RFC 9457 problem-details responses.
+  Adds team file sharing with team-scoped stashes and shared file lists.
 
 
-  Fixes audit-log pagination, certificate renewal fingerprint binding, stale-bundle cleanup, and escaping of account-email display names.
+  Moves sealed lookups to per-deployment keyed blind indexes. Existing indexes upgrade automatically on first boot without operator action.
 
 
-  Reduces database churn from API-key last-used writes, uses indexed email-hash lookups for gated bundles, and keeps stash counters accurate under concurrent deletes.
-
-
-  Vault passkey unlock and packed-envelope crypto now use the shared framework implementation, with no on-disk format change.
+  Raises the bundled runtime to Node.js 24.16.0 and improves encrypted API/session error handling and replay defenses.
 dependencies: []
