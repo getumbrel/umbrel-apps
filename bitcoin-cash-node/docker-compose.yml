@@ -1,4 +1,5 @@
 # Bitcoin Cash Node (node only) for Umbrel
+# Fulcrum is now its own app (fulcrum-bch). ZMQ added for SoloStrike Cash.
 services:
   app_proxy:
     environment:
@@ -20,8 +21,8 @@ services:
 
   bitcoind:
     image: mainnet/bitcoin-cash-node:v29.0.0@sha256:5144a579369cbab859119b04c86e4e078cf8ef830a1cb721be96bdc0b7498a35
-    user: "1000:1000"
-    restart: always
+    user: "1000:1000"   # match Umbrel bind-mount ownership (fresh installs are 1000:1000)
+    restart: on-failure
     stop_grace_period: 1m
     volumes:
       - ${APP_DATA_DIR}/data/bitcoind:/data
@@ -37,19 +38,19 @@ services:
       - -rpcuser=bchn
       - -rpcpassword=bchn_local_rpc_pw_2f9c
       - -rpcworkqueue=512
-      - -rpcthreads=64
+      - -rpcthreads=64          # default is 4 — plenty of headroom, idle threads are nearly free
       - -dbcache=512
       - -maxmempool=300
       - -txindex=1
       - -maxconnections=64
-      - -zmqpubhashblock=tcp://0.0.0.0:28332
+      - -zmqpubhashblock=tcp://0.0.0.0:28332   # for SoloStrike Cash (lowest-latency)
     ports:
-      - 8335:8335
+      - 8335:8335   # BCH P2P — forward this on your router for clearnet inbound peers
 
   web:
-    image: ghcr.io/danhaus93-ops/bchn-dashboard@sha256:cc52e8f34972c5cf0a0e7b02b0cba76d2e14c3f81108eeb68a8a8c0037fc2e04
+    image: ghcr.io/danhaus93-ops/bchn-dashboard:latest@sha256:cc52e8f34972c5cf0a0e7b02b0cba76d2e14c3f81108eeb68a8a8c0037fc2e04
     restart: on-failure
-    user: "1000:1000"
+    user: "1000:1000"   # read chain data dir (1000:1000 on fresh installs); no root needed
     volumes:
       - ${APP_DATA_DIR}/data/bitcoind:/nodedata
     depends_on:
