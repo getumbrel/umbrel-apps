@@ -8,12 +8,13 @@ services:
       APP_PORT: 7745
     
   web:
-    image: ghcr.io/sysadminsmedia/homebox:0.25.0@sha256:6506480a3dfadd2cc885fa97b32d11b0ee28ec58629fa34a76afdb4ac540c7fc
+    image: ghcr.io/sysadminsmedia/homebox:0.26.1@sha256:17d82459c12a6592b056d9319d3bc8dc46a2a0272062b433cd6ced4aa7155de7
     restart: on-failure
     user: 1000:1000
     environment:
       - HBOX_LOG_LEVEL=info
       - HBOX_LOG_FORMAT=text
       - HBOX_WEB_MAX_UPLOAD_SIZE=10
+      - HBOX_AUTH_API_KEY_PEPPER=${APP_SEED}
     volumes:
       - ${APP_DATA_DIR}/data:/data/
