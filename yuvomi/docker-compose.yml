@@ -5,12 +5,6 @@ services:
     environment:
       APP_HOST: yuvomi_web_1
       APP_PORT: 3000
-      # Yuvomi ships its own session-based login, so Umbrel's proxy auth is
-      # disabled to avoid a double sign-in (same pattern as Immich).
-      # Caveat: with proxy auth off, the first-run bootstrap endpoint
-      # (POST /api/v1/auth/setup) is reachable by any LAN/Tor client until the
-      # owner creates the first admin. Complete setup immediately after install.
-      PROXY_AUTH_ADD: "false"
 
   web:
     image: ghcr.io/ulsklyc/yuvomi:0.66.0@sha256:0de09531d39d16e13281100b8a55dd3307f1db9a2a07ef5fbfd928894e639cbf
@@ -24,7 +18,7 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3000
-      - DB_PATH=/data/oikos.db
+      - DB_PATH=/data/yuvomi.db
       - BACKUP_DIR=/backups
       # SESSION_SECRET is required; Umbrel injects a deterministic per-app secret.
       - SESSION_SECRET=${APP_SEED}
