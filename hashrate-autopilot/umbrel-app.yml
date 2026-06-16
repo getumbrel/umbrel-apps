@@ -2,7 +2,7 @@ manifestVersion: 1
 id: hashrate-autopilot
 category: bitcoin
 name: Hashrate Autopilot
-version: "1.14.0"
+version: "1.15.0"
 tagline: Autopilot for renting hashrate to mine on Ocean Mining
 
 description: >-
@@ -71,16 +71,19 @@ defaultPassword: ""
 submitter: Remco Douma
 submission: https://github.com/getumbrel/umbrel-apps/pull/5685
 releaseNotes: >-
-  v1.14.0 - run-mode and bid-pause history with chart markers and idle bands.
+  v1.15.0 - aviator branding, bid-vs-hashprice tile, BIP-110 block explorers, not-hashing detection, stale-bid self-heal.
 
 
-  The autopilot now logs every run-mode switch and every Braiins-side bid pause or resume: filterable History rows with the underlying reason, always-visible price-chart markers, and hatched background bands over every span the autopilot was not actively trading - retroactive over your full history. All three marker colors are configurable.
+  New: a stats-bar tile shows your bid as a percentage of Ocean's break-even hashprice with a state-aware caption that tracks cheap-mode entry. Mempool.guide - a mempool.space fork that surfaces BIP-110 miner signaling - is the new default block explorer for fresh installs, with mempool.kilombino.com added as a second BIP-110-aware preset. The app's identity is now a stylized 1940s aviator: favicon, top-bar badge, and Umbrel app icon.
 
 
-  Also new: click a History row for a detail drawer with a view-on-chart jump that scrolls to and rings the exact marker, click a chart legend entry to show or hide that series, speed-edit markers on the hashrate chart, and payout tracking now works (and says so) with any Electrum server - electrs, Fulcrum, or ElectrumX.
+  Improvements & fixes: a Bitaxe / AxeOS miner that is reachable but has stopped hashing (overheat_mode, NerdQAxe shutdown, impossible hashrate-per-watt after a stall) is now excluded from the fleet tile and badged "reboot needed". Stale local bids deleted at Braiins out-of-band self-heal each tick - no more hand-editing the database. False giant "bid paused" idle bands, the History "jump to event" beacon in Firefox / Safari, and a year-long browser cache pinning index.html are all fixed. Daemon-offline gaps now count as downtime in the uptime tile and bid-coverage math.
+
+
+  Safe to upgrade from any 1.14.x release.
 
 
   Migrating from the community-store version (rdouma-hashrate-autopilot)? One-time five-minute guide: https://github.com/rdouma/hashrate-autopilot/blob/main/docs/migrating-from-community-store.md
 
 
-  Full release notes: https://github.com/rdouma/hashrate-autopilot/releases/tag/v1.14.0
+  Full release notes: https://github.com/rdouma/hashrate-autopilot/releases/tag/v1.15.0
