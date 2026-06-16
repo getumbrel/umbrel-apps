@@ -11,15 +11,27 @@ description: >-
   capabilities, cost, and health.
 
 
-  Harness-agnostic config discovery: reads supported provider config shapes
-  from Sage Router's own app data directory. OpenClaw, Hermes, Pi, and generic
-  provider JSON layouts can be copied or exported into app data without
-  mounting another app's private state.
+  On first install, the app seeds its own app data with a local Ollama provider
+  template at `/config/openclaw/openclaw.json` and a `/config/SETUP.md` guide.
+  If Ollama is running on the Umbrel host at port 11434, Sage Router can
+  discover those models immediately. Otherwise, add provider credentials or
+  imported harness config under the Sage Router app data directory.
 
 
-  Auto-discovers configured providers when credentials are present, supporting
-  OpenAI, Anthropic (via Dario), Google, OpenRouter, Ollama (local + cloud),
-  NVIDIA NIM, GitHub Copilot, Darkbloom, and more.
+  Harness-agnostic config discovery reads supported provider config shapes from
+  Sage Router's own app data directory. OpenClaw and Hermes config can be copied
+  into app data without mounting another app's private state. OpenClaw Codex
+  OAuth profiles are read from `/config/openclaw/agents/...` or
+  `/config/agents/...` when users import them. Sage Router does not bundle a
+  custom Codex device-OAuth route; users should authenticate with the official
+  Codex/OpenClaw flow and import the resulting profile or provide
+  `APP_SAGE_ROUTER_CODEX_ACCESS_TOKEN`.
+
+
+  As shipped, cloud and quota-bound providers such as Ollama Cloud,
+  Anthropic/Dario, OpenRouter, NVIDIA NIM, Darkbloom, and Cyber-specific Ollama
+  are disabled until the user adds healthy credentials or an explicit
+  app-to-app export contract.
 
 
   Features:
@@ -27,8 +39,7 @@ description: >-
   - OpenAI Chat Completions + Anthropic Messages + Google Generative AI bridges
   - Streaming SSE for chat and code completions
   - Built-in dashboard with provider health, latency, and usage analytics
-  - Per-tenant API keys with subscription tiers (free/lite/pro/max/metered)
-  - Stripe billing integration
+  - Optional client API-key enforcement via `SAGE_ROUTER_CLIENT_AUTH_REQUIRED`
   - Tool/function calling with Codex Responses API schema translation
 developer: Earl Co
 website: https://github.com/earlvanze/sage-router

@@ -7,7 +7,7 @@ services:
       APP_PORT: 8790
 
   app:
-    image: ghcr.io/earlvanze/sage-router-public:v3.28.4@sha256:a05899c4e30325debed8cf00c8be845b2c84763ce21b5e6e0b4604958a13a754
+    image: ghcr.io/earlvanze/sage-router-public:v3.28.5@sha256:28a1ab64cef68c1086a7eda0cf5fa7bd47c73d3949b7cef95d1822a161414e0c
     restart: on-failure
     user: "1000:1000"
     extra_hosts:
@@ -19,7 +19,7 @@ services:
       APP_DATA_DIR: /config
       SAGE_ROUTER_HOME: /config
       SAGE_ROUTER_CONFIG_SOURCE: auto
-      SAGE_ROUTER_API_KEY: ${APP_SAGE_ROUTER_API_KEY:-local}
+      SAGE_ROUTER_CLIENT_AUTH_REQUIRED: "0"
       SAGE_ROUTER_DISABLED_PROVIDERS: >-
         ollama-cloud,anthropic,dario,openrouter,nvidia-nim,darkbloom,ollama-cyber
       SAGE_ROUTER_DISABLED_MODELS: kimi-k2-thinking
@@ -28,9 +28,12 @@ services:
       SAGE_ROUTER_BUNDLED_OLLAMA_AUTOSTART: "0"
       SAGE_ROUTER_OLLAMA_CLOUD_CATALOG_ENABLED: "0"
       SAGE_ROUTER_OLLAMA_AUTO_PULL_PATTERNS: ""
+      SAGE_ROUTER_DARIO_AUTOSTART: "0"
       OLLAMA_HOST: "http://host.docker.internal:11434"
       SAGE_ROUTER_OLLAMA_BASE_URL: "http://host.docker.internal:11434"
       OPENAI_CODEX_API_KEY: ${APP_SAGE_ROUTER_OPENAI_CODEX_API_KEY:-}
-      SAGE_ROUTER_OPENAI_CODEX_AUTH_PROFILE_PATH: /config/agents/main/agent/auth-profiles.json
+      CODEX_ACCESS_TOKEN: ${APP_SAGE_ROUTER_CODEX_ACCESS_TOKEN:-}
+      SAGE_ROUTER_OPENAI_CODEX_AUTH_PROFILE_PATHS: >-
+        /config/openclaw/agents/main/agent/auth-profiles.json,/config/agents/main/agent/auth-profiles.json
       SAGE_ROUTER_SHOW_MODEL_PREFIX: "1"
       SAGE_ROUTER_ALLOW_RESTART: "1"
