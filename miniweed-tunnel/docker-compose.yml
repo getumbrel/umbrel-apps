@@ -1,0 +1,79 @@
+# docker-compose.yml for the OFFICIAL Umbrel App Store submission.
+# Same as the community-store compose but the web image is pinned by its
+# multi-arch digest (required for the official store). wg and caddy are already
+# pinned. The Umbrel team may further adjust ports/digests during review.
+version: "3.7"
+
+services:
+
+  app_proxy:
+    environment:
+      APP_HOST: miniweed-tunnel_web_1
+      APP_PORT: 3016
+      PROXY_AUTH_ADD: "true"
+
+  web:
+    # 1.6.45 build (multi-arch amd64+arm64). Digest pins the exact tested content.
+    image: ghcr.io/miniweed/umbrel-tunnel-web@sha256:15ce2036c6e8a2bb6295c781686025e628cce1db5954c2e614f70340f76c76b1
+    restart: on-failure
+    stop_grace_period: 30s
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+    environment:
+      - DATA_DIR=/data
+      - WG_API_HOST=wg
+      - WG_API_TOKEN=${APP_SEED}
+      - PORT=3016
+      - APP_SEED=${APP_SEED}
+
+  caddy:
+    image: caddy:2.8-alpine@sha256:af32e97399febea808609119bb21544d0265c58a02836576e32a2d082c262c17
+    restart: on-failure
+    stop_grace_period: 30s
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    security_opt:
+      - no-new-privileges:true
+    network_mode: "service:wg"
+    depends_on:
+      - wg
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+      - ${APP_DATA_DIR}/caddy/data:/data/caddy
+      - ${APP_DATA_DIR}/caddy/config:/config
+    environment:
+      - XDG_DATA_HOME=/data/caddy
+      - WG_API_TOKEN=${APP_SEED}
+    command:
+      - sh
+      - -c
+      - |
+        until [ -s /data/Caddyfile ] && wget -q --header="x-wg-api-token: $$WG_API_TOKEN" -O - http://127.0.0.1:8080/status >/dev/null 2>&1; do
+          echo "[caddy] Waiting for Caddyfile and WireGuard API..."
+          sleep 2
+        done
+        exec caddy run --config /data/Caddyfile --adapter caddyfile --watch
+
+  wg:
+    image: ghcr.io/miniweed/umbrel-tunnel-wg:1.0.5@sha256:2cf7981d175c7e459303816e0bd3553846801b8974494a9b48c36d6638017b36
+    restart: on-failure
+    stop_grace_period: 30s
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    security_opt:
+      - no-new-privileges:true
+    sysctls:
+      - net.ipv4.conf.all.src_valid_mark=1
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+    environment:
+      - WG_API_TOKEN=${APP_SEED}
