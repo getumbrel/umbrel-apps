@@ -12,8 +12,6 @@ services:
     depends_on:
       backend:
         condition: service_healthy
-    volumes:
-      - ${APP_DATA_DIR}/data/certs:/etc/nginx/ssl
     healthcheck:
       test: ["CMD-SHELL", "wget -qO/dev/null http://127.0.0.1:80/ || exit 1"]
       interval: 15s
