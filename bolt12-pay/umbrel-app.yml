@@ -3,7 +3,7 @@ id: bolt12-pay
 name: BOLT12 Pay
 tagline: Self-hosted Lightning payments and identity with BOLT12, BIP353, LNURL, and Nostr
 category: bitcoin
-version: 0.2.106
+version: 0.2.108
 port: 8367
 description: >-
   BOLT12 Pay is a self-hosted Lightning payments and identity app for LND nodes.
@@ -44,13 +44,17 @@ submission: https://github.com/getumbrel/umbrel-apps/pull/5429
 repo: https://github.com/Alex71btc/lndk-pay
 support: https://github.com/Alex71btc/lndk-pay/issues
 releaseNotes: |
-  v0.2.106
 
-  - Added optional Privacy Mode
-  - BOLT12 + BIP353 operation without LNURL fallback
-  - LNURL metadata and callback endpoints disabled in Privacy Mode
-  - Improved setup UI with payment mode selection
-  - BIP353-first public alias display
+  - Migrated offer history from browser localStorage to server-side SQLite
+  - Offer history now syncs across devices and browser sessions
+  - Added direct BIP353 publishing from offer history
+  - Added Lightning Address tracking for history entries
+  - Added Lightning Address deletion with automatic Cloudflare DNS cleanup
+  - Deleting offers now removes associated BIP353 records and DNS entries
+  - Clearing history now removes all associated BIP353 records and DNS entries
+  - New Lightning Addresses appear instantly in history without page refresh
+
+
 dependencies:
   - lightning
 gallery:
