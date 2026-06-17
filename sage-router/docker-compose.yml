@@ -7,7 +7,7 @@ services:
       APP_PORT: 8790
 
   app:
-    image: ghcr.io/earlvanze/sage-router-public:v3.28.6@sha256:4f2088776f24a7ca34148ef7431add8b37e97eca52f8e44173ce1cfffdeafb4e
+    image: ghcr.io/earlvanze/sage-router-public:v3.28.7@sha256:ed6a98b52bc68af3457690586f7e572047d1c4a4e0065854fda4413b072774f1
     restart: on-failure
     user: "1000:1000"
     extra_hosts:
@@ -34,6 +34,7 @@ services:
       OPENAI_CODEX_API_KEY: ${APP_SAGE_ROUTER_OPENAI_CODEX_API_KEY:-}
       CODEX_ACCESS_TOKEN: ${APP_SAGE_ROUTER_CODEX_ACCESS_TOKEN:-}
       SAGE_ROUTER_OPENAI_CODEX_AUTH_PROFILE_PATHS: >-
-        /config/openclaw/agents/main/agent/auth-profiles.json,/config/agents/main/agent/auth-profiles.json
+        /config/.codex/auth.json,/config/codex/auth.json,/config/openai-codex/auth.json,/config/agents/main/agent/auth-profiles.json,/config/openclaw/agents/main/agent/auth-profiles.json
+      SAGE_ROUTER_OPENAI_CODEX_GATEWAY_FALLBACK: "0"
       SAGE_ROUTER_SHOW_MODEL_PREFIX: "1"
       SAGE_ROUTER_ALLOW_RESTART: "1"

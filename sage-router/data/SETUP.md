@@ -1,73 +1,53 @@
 # Sage Router first-run setup
 
 This directory is mounted inside the Sage Router container as `/config`.
+Credentials and imported auth files are stored here, inside Sage Router's own
+Umbrel app data.
 
-## What works immediately
+## Dashboard setup
 
-The package includes `openclaw/openclaw.json`, which configures a local Ollama
-provider at:
+Open the Sage Router app from Umbrel and use the first-run setup panel to add a
+provider or import Codex auth. The dashboard writes provider config to:
+
+```text
+/config/openclaw/openclaw.json
+```
+
+The file uses a compatible `models.providers` JSON shape, but OpenClaw is not
+required. Sage Router reads this file as its own app-owned provider config.
+
+Codex credential imports are written to one of these app-owned paths:
+
+```text
+/config/.codex/auth.json
+/config/agents/main/agent/auth-profiles.json
+```
+
+Do not bind mount another Umbrel app's private data directory or a host user's
+home directory for auth.
+
+## Optional local Ollama
+
+The seeded provider template points at:
 
 ```text
 http://host.docker.internal:11434
 ```
 
-If the Umbrel host is already running Ollama on port `11434`, Sage Router can
-discover those models after startup. If no host Ollama service is running, the
-dashboard still loads but model requests will have no provider to use until you
-add one.
+If an Ollama service is already running on the Umbrel host, Sage Router can use
+it. Ollama is optional; add any healthy provider from the dashboard instead.
+
+## Client endpoint
+
+OpenAI-compatible clients can use:
+
+```text
+http://sage-router:8790/v1
+```
 
 The model API does not require a client key by default. To require client keys,
 set `SAGE_ROUTER_CLIENT_AUTH_REQUIRED=1` and
 `SAGE_ROUTER_CLIENT_API_KEYS=<comma-separated keys>`.
-
-## Add provider config
-
-Edit `/config/openclaw/openclaw.json` to add providers. Use the same
-`models.providers` shape as OpenClaw:
-
-```json
-{
-  "models": {
-    "providers": {
-      "ollama": {
-        "baseUrl": "http://host.docker.internal:11434",
-        "api": "ollama",
-        "models": []
-      },
-      "openai": {
-        "baseUrl": "https://api.openai.com/v1",
-        "apiKey": "${OPENAI_API_KEY}",
-        "api": "openai-completions",
-        "models": []
-      }
-    }
-  }
-}
-```
-
-Restart the app after editing provider config.
-
-## Import OpenClaw Codex OAuth
-
-Sage Router does not implement its own `auth.openai.com/codex/device` OAuth
-route. Use the official Codex/OpenClaw sign-in flow, then import the resulting
-credential into Sage Router's app-owned config or environment.
-
-If you already have OpenClaw auth profiles, copy the `agents` directory into
-one of these app-data layouts:
-
-```text
-/config/openclaw/agents/main/agent/auth-profiles.json
-/config/agents/main/agent/auth-profiles.json
-```
-
-The compose file checks both paths. Sage Router does not mount another Umbrel
-app's private data directory.
-
-For deployments that manage Codex OAuth access tokens outside OpenClaw, set
-`APP_SAGE_ROUTER_CODEX_ACCESS_TOKEN` or
-`APP_SAGE_ROUTER_OPENAI_CODEX_API_KEY` in the app environment. The container
-maps these to `CODEX_ACCESS_TOKEN` and `OPENAI_CODEX_API_KEY`.
 
 ## Providers disabled by default
 

@@ -11,21 +11,18 @@ description: >-
   capabilities, cost, and health.
 
 
-  On first install, the app seeds its own app data with a local Ollama provider
-  template at `/config/openclaw/openclaw.json` and a `/config/SETUP.md` guide.
-  If Ollama is running on the Umbrel host at port 11434, Sage Router can
-  discover those models immediately. Otherwise, add provider credentials or
-  imported harness config under the Sage Router app data directory.
+  On first install, the app seeds its own app data with a provider template and
+  a `/config/SETUP.md` guide. The dashboard includes a built-in setup flow for
+  adding OpenAI-compatible, Anthropic, Google Gemini, Ollama, or Codex
+  credentials. Credentials and imported auth JSON are written only to Sage
+  Router's own app data under `/config`.
 
 
-  Harness-agnostic config discovery reads supported provider config shapes from
-  Sage Router's own app data directory. OpenClaw and Hermes config can be copied
-  into app data without mounting another app's private state. OpenClaw Codex
-  OAuth profiles are read from `/config/openclaw/agents/...` or
-  `/config/agents/...` when users import them. Sage Router does not bundle a
-  custom Codex device-OAuth route; users should authenticate with the official
-  Codex/OpenClaw flow and import the resulting profile or provide
-  `APP_SAGE_ROUTER_CODEX_ACCESS_TOKEN`.
+  Sage Router is harness and provider agnostic. It can optionally discover a
+  local Ollama service on the Umbrel host at port 11434, and it can import
+  compatible provider config or Codex auth JSON into its own app data. It does
+  not mount another app's private state and does not require OpenClaw or Ollama
+  for authentication.
 
 
   As shipped, cloud and quota-bound providers such as Ollama Cloud,
