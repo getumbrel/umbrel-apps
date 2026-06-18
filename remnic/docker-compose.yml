@@ -1,0 +1,31 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: remnic_server_1
+      APP_PORT: 4318
+      PROXY_AUTH_WHITELIST: "/mcp,/engram/v1/*,/remnic/v1/*"
+
+  server:
+    image: ghcr.io/joshuaswarren/remnic:9.3.637
+    user: "1000:1000"
+    init: true
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      HOME: /data
+      REMNIC_HOME: /data
+      REMNIC_HOST: 0.0.0.0
+      REMNIC_PORT: "4318"
+      REMNIC_MEMORY_DIR: /data/memory
+      REMNIC_AUTH_TOKEN: ${APP_PASSWORD}
+      REMNIC_ADMIN_CONSOLE_ENABLED: "true"
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:4318/engram/v1/health',{headers:{authorization:'Bearer '+process.env.REMNIC_AUTH_TOKEN}}).then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
