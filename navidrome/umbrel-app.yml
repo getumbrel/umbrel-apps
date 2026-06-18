@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: navidrome
 category: media
 name: Navidrome
-version: "0.61.2"
+version: "0.62.0"
 tagline: Your personal streaming service
 description: >-
   Navidrome is an open source web-based music collection server and streamer.
@@ -51,19 +51,18 @@ path: ""
 permissions:
   - STORAGE_DOWNLOADS
 releaseNotes: >-
-  ⚠️ Breaking change: The built-in Spotify integration has been removed. The Spotify.ID and Spotify.Secret configuration options are no longer supported. Use the Last.fm or Deezer agents instead.
+  This release includes several security fixes for shares, player ownership, Last.fm callbacks, public share streams, transcoding configuration access, and internet radio management.
 
 
-  This patch release includes transcoding fixes, scanner improvements, and cover art updates. Key improvements include:
-    - Transcoding now properly clamps target channels to codec limits, fixing issues with high channel count codecs
-    - WAV files now play directly in browsers without unnecessary transcoding
-    - Scanner now picks up ORIGYEAR tags for VorbisComment and MP4 formats
-    - Max image upload size is now configurable via MaxImageUploadSize (default 10MB)
-    - Fixed disc cover art being affected by theme CSS filters
-    - Plugin developers now receive file path in TrackInfo for Scrobbler and Lyrics plugins
-    - Various server stability and error handling improvements
+  Key improvements include:
+    - Added OpenSubsonic sonicSimilarity support for plugin-powered audio similarity recommendations
+    - Redesigned the Now Playing experience with the new OpenSubsonic playbackReport extension
+    - Added concurrent transcoding limits to help protect servers from ffmpeg-based denial of service
+    - Added ReplayGain fields and new isMissing/isPresent operators for smart playlists
+    - Added five new UI themes and multiple scanner, artwork, transcoding, and Subsonic API fixes
+    - Added new configuration options and deprecated a few older option names in favor of their new Transcoding and Matcher settings
 
 
-  Full release notes are found at https://github.com/navidrome/navidrome/releases
+  Full release notes can be found at https://github.com/navidrome/navidrome/releases/tag/v0.62.0
 submitter: owmsoton
 submission: https://github.com/getumbrel/umbrel-apps/pull/1232

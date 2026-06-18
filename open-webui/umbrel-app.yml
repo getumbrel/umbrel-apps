@@ -3,7 +3,7 @@ id: open-webui
 name: Open WebUI
 tagline: Chat with Ollama models like DeepSeek-R1 and LLama, or use an OpenAI API key
 category: ai
-version: "0.9.5"
+version: "0.9.6"
 port: 2876
 description: >-
   Open WebUI lets you chat with advanced AI models running locally on your own device or connect to online models using an API key.
@@ -37,16 +37,17 @@ defaultPassword: ""
 dependencies:
   - ollama
 releaseNotes: >-
-  This update includes several security and reliability improvements:
-    - Adds redirect-based SSRF protection for outbound HTTP requests used by web fetch, image loading, OAuth discovery, tools, and code interpreter flows
-    - Adds configurable Content-Security-Policy support for iframe previews and custom terminal proxy response headers
-    - Adds separate Markdown rendering controls for user and assistant messages
-    - Improves Channels with streamed responses and full chat-completion tool support
-    - Fixes note creation/opening, legacy chat history recovery, and model filter selector reactivity
-    - Tightens access checks for public skills, public calendars, feedback attribution, tool source updates, channel messages, file processing, and shared chats
-    - Hardens image URL, profile image, and URL parser validation
-    - Updates Portuguese (Brazil) translations
+  ⚠️ Major update: this release includes database schema migrations. Back up your Open WebUI data before upgrading.
 
 
-  Full release notes are found at https://github.com/open-webui/open-webui/releases/tag/v0.9.5
+  This update includes several security, knowledge base, and reliability improvements:
+    - Adds official knowledge base sync tooling, smart directory sync, nested knowledge base folders, file renaming, and incremental upload support
+    - Adds per-chat skills toggles, an emoji picker, access previews for users and groups, configurable MCP connection timeouts, OAuth wildcard role mapping, and Azure AI Foundry v1 with Entra ID support
+    - Improves performance for initial page loads, tool-enabled chat completions, web search, Ollama backend connections, feedback history, and websocket disconnect cleanup
+    - Fixes multiple security and access-control issues across tool servers, knowledge bases, retrieval collections, prompts, files, calendars, channels, shared chats, OAuth, URL fetching, and profile images
+    - Fixes chat recovery, imports, web search providers, document processing, API chat completions, ComfyUI integrations, text-to-speech, speech-to-text, YouTube transcripts, browser/local-storage resilience, and database migrations
+    - Updates translations across multiple languages
+
+
+  Full release notes are found at https://github.com/open-webui/open-webui/releases/tag/v0.9.6
 path: ""

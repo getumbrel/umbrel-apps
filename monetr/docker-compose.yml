@@ -33,7 +33,7 @@ services:
       retries: 10
 
   monetr:
-    image: ghcr.io/monetr/monetr:1.14.1@sha256:0ae991aa6226856c49f5b80697051556b84a28041ff4807a1f6fe9d322ffbc36
+    image: ghcr.io/monetr/monetr:1.15.1@sha256:08379cd322d56f1131bd22628093fffe47a81793ebc37f12994e8a4693746895
     user: "1000:1000"
     command:
       - serve
@@ -48,6 +48,7 @@ services:
       - ${APP_DATA_DIR}/data/app:/etc/monetr
     environment:
       MONETR_ALLOW_SIGN_UP: ${MONETR_ALLOW_SIGN_UP:-true}
+      MONETR_PROOF_OF_WORK_ENABLED: ${MONETR_PROOF_OF_WORK_ENABLED:-false}
       MONETR_PG_USERNAME: postgres
       MONETR_PG_PASSWORD: m0netrPass123
       MONETR_PG_DATABASE: monetr

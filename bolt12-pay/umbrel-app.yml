@@ -1,0 +1,77 @@
+manifestVersion: 1
+id: bolt12-pay
+name: BOLT12 Pay
+tagline: Self-hosted Lightning payments and identity with BOLT12, BIP353, LNURL, and Nostr
+category: bitcoin
+version: 0.2.108.1
+port: 8367
+description: >-
+  BOLT12 Pay is a self-hosted Lightning payments and identity app for LND nodes.
+  It supports BOLT12 Offers, Lightning Address (BIP353), LNURL, and BOLT11 fallback,
+  with optional Nostr identity features such as NIP-05 and Zaps.
+
+
+  This app currently depends on a custom LND build with BOLT12-related custom
+  message support enabled.
+
+
+  In your LND configuration file (Go to Files: Apps → lightning → data → lnd → lnd.conf), add:
+
+    [protocol]
+    protocol.custom-message=513
+    protocol.custom-nodeann=39
+    protocol.custom-init=39
+
+
+  Save and restart Lightning afterwards. Without this, BOLT12 functionality will not work.
+
+
+  Domain setup guide:
+
+
+  https://github.com/Alex71btc/lndk-pay/blob/main/README.md#-domain-configuration-bip353-vs-lnurl
+
+
+  BOLT12 support on LND is still evolving, wallet compatibility may vary,
+  and this app uses cutting-edge Lightning features.
+
+
+  Support ongoing development by donating to this project:
+
+
+  https://geyser.fund/project/bolt12pay
+
+
+  Made for sovereign Bitcoin users.
+developer: Alex71btc
+website: https://github.com/Alex71btc
+submitter: Alex71btc
+submission: https://github.com/getumbrel/umbrel-apps/pull/5429
+repo: https://github.com/Alex71btc/lndk-pay
+support: https://github.com/Alex71btc/lndk-pay/issues
+releaseNotes: |
+
+  Bugfix release for the v0.2.108 Privacy Mode update.
+
+   - Improved reliability of BOLT12 offer creation
+   - Automatically retries transient LNDK TLS connection failures
+   - Prevents occasional first-attempt offer creation errors observed on some Umbrel systems
+
+  Includes all features from v0.2.108:
+   - Privacy Mode
+   - Private BIP353 Lightning Addresses
+   - Offer History BIP353 Publishing
+   - Automatic DNS Cleanup
+
+dependencies:
+  - lightning
+gallery:
+  - 1.webp
+  - 2.webp
+  - 3.webp
+  - 4.webp
+  - 5.webp
+path: ""
+defaultUsername: ""
+defaultPassword: ""
+torOnly: false

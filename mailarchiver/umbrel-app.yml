@@ -3,7 +3,7 @@ id: mailarchiver
 name: Mail Archiver
 tagline: A comprehensive solution for archiving, searching, and exporting emails
 category: files
-version: "2605.2"
+version: "2606.2"
 port: 5006
 description: >-
   Mail Archiver delivers automated archiving of incoming and outgoing emails from multiple accounts. All email content and attachments are synchronized based on a schedule. The responsive UI is optimized for mobile and desktop use, is multilingual and responsive with dark mode.
@@ -55,17 +55,26 @@ gallery:
   - 2.jpg
   - 3.jpg
 releaseNotes: >-
-  Improvements:
-    - Folder panel is now resizable.
+  ⚠️ Important: If you're updating from a pre-2606.1 version, create a
+  backup before upgrading; the recent attachment deduplication migration may
+  temporarily increase storage usage.
 
 
-  Fixes:
-    - Fixed the batch delete confirmation message.
-    - Fixed ValueCountLimit handling for batch operations.
-    - Fixed folder exclusion behavior.
+  New features:
+    - Added batch creation of accounts for all mailboxes in a Microsoft 365
+      tenant.
+    - Added configurable labels for OIDC login buttons.
 
 
-  Full release notes can be found at https://github.com/s1t5/mail-archiver/releases/tag/2605.2
+  Security and hardening:
+    - Fixed protected-field handling in the user edit form.
+    - Limited the Microsoft 365 credentials endpoint to the client and tenant
+      IDs.
+    - Fixed reply-button XSS handling, hardened HTML email iframe sandboxing,
+      and added import file extension validation.
+
+
+  Full release notes can be found at https://github.com/s1t5/mail-archiver/releases/tag/2606.2
 dependencies: []
 path: ""
 submitter: dirstel
