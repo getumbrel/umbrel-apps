@@ -6,7 +6,7 @@ import path from "node:path";
 import process from "node:process";
 import YAML from "yaml";
 
-const ROOT = path.resolve(import.meta.dirname, "..");
+let ROOT = path.resolve(process.env.UMBREL_APP_LINT_ROOT || path.resolve(import.meta.dirname, ".."));
 
 // Keep this list to hooks that umbrelOS actually calls for app packages.
 const VALID_HOOKS = new Set([
@@ -71,6 +71,7 @@ function parseArgs(args) {
     changed: null,
     checkImages: false,
     format: "text",
+    root: ROOT,
   };
 
   for (let index = 0; index < args.length; index += 1) {
@@ -85,6 +86,10 @@ function parseArgs(args) {
     } else if (arg === "--format") {
       options.format = args[++index];
       if (!options.format) usage("Missing value for --format.");
+    } else if (arg === "--root") {
+      const root = args[++index];
+      if (!root) usage("Missing value for --root.");
+      options.root = path.resolve(root);
     } else if (arg === "-h" || arg === "--help") {
       usage(null, 0);
     } else if (arg.startsWith("-")) {
@@ -106,7 +111,7 @@ function parseArgs(args) {
 }
 
 function usage(error, exitCode = 2) {
-  const message = `Usage: npm run lint:apps -- [APP ...] [--all] [--changed RANGE] [--check-images] [--format text|github|json]`;
+  const message = `Usage: npm run lint:apps -- [APP ...] [--all] [--changed RANGE] [--check-images] [--format text|github|json] [--root PATH]`;
   if (error) console.error(error);
   console.error(message);
   process.exit(exitCode);
@@ -1741,5 +1746,6 @@ function escapeRegex(value) {
 }
 
 const cliOptions = parseArgs(process.argv.slice(2));
+ROOT = cliOptions.root;
 const cliLinter = new AppLinter(cliOptions);
 process.exit(await cliLinter.run());
