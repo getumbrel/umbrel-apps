@@ -1,13 +1,25 @@
 name: Lint apps
 
 on:
-  pull_request_target:
+  pull_request:
     branches:
       - master
+
+permissions:
+  contents: read
 
 jobs:
   lint-apps:
     name: Lint apps
     runs-on: ubuntu-latest
     steps:
-      - uses: sharknoon/umbrel-app-linter-action@d0b39f9ec5867fd001b05d5ddd6037dcc35f41bd
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm run lint:apps -- --changed "origin/${{ github.base_ref }}...HEAD" --check-images --format github
