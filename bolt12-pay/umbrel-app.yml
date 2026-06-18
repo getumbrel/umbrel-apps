@@ -3,7 +3,7 @@ id: bolt12-pay
 name: BOLT12 Pay
 tagline: Self-hosted Lightning payments and identity with BOLT12, BIP353, LNURL, and Nostr
 category: bitcoin
-version: 0.2.108
+version: 0.2.108.1
 port: 8367
 description: >-
   BOLT12 Pay is a self-hosted Lightning payments and identity app for LND nodes.
@@ -15,7 +15,7 @@ description: >-
   message support enabled.
 
 
-  In your LND configuration, add:
+  In your LND configuration file (Go to Files: Apps → lightning → data → lnd → lnd.conf), add:
 
     [protocol]
     protocol.custom-message=513
@@ -23,7 +23,7 @@ description: >-
     protocol.custom-init=39
 
 
-  Restart Lightning afterwards. Without this, BOLT12 functionality will not work.
+  Save and restart Lightning afterwards. Without this, BOLT12 functionality will not work.
 
 
   Domain setup guide:
@@ -36,7 +36,9 @@ description: >-
   and this app uses cutting-edge Lightning features.
 
 
-  Support ongoing development:
+  Support ongoing development by donating to this project:
+
+
   https://geyser.fund/project/bolt12pay
 
 
@@ -49,12 +51,17 @@ repo: https://github.com/Alex71btc/lndk-pay
 support: https://github.com/Alex71btc/lndk-pay/issues
 releaseNotes: |
 
- - Publish BIP353 Lightning Addresses directly from Offer History
- - Create private Lightning Addresses for customers, events, or temporary use
- - Automatic DNS cleanup when deleting history entries or clearing history
- - Improved Offer History management with server-side persistence
- - Extends the Privacy Mode features introduced in v0.2.106
+  Bugfix release for the v0.2.108 Privacy Mode update.
 
+   - Improved reliability of BOLT12 offer creation
+   - Automatically retries transient LNDK TLS connection failures
+   - Prevents occasional first-attempt offer creation errors observed on some Umbrel systems
+
+  Includes all features from v0.2.108:
+   - Privacy Mode
+   - Private BIP353 Lightning Addresses
+   - Offer History BIP353 Publishing
+   - Automatic DNS Cleanup
 
 dependencies:
   - lightning
