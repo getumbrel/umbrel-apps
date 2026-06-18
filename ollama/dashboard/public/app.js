@@ -14,8 +14,17 @@ const counts = {
 };
 
 let models = [];
+let remoteModels = [];
 let filter = "all";
 let saving = false;
+let searchTimer = null;
+let searchRequest = 0;
+
+function isCloudModel(id) {
+  const normalized = String(id || "").trim().toLowerCase();
+  const tag = normalized.includes(":") ? normalized.split(":").pop() : "";
+  return normalized.endsWith(":cloud") || tag.endsWith("-cloud");
+}
 
 function formatBytes(bytes) {
   if (!bytes) return "";
@@ -49,12 +58,22 @@ function detailText(model) {
   if (model.contextWindow) parts.push(`${Number(model.contextWindow).toLocaleString()} context`);
   if (model.reasoning) parts.push("reasoning");
   if (model.supportsChat === false) parts.push("embedding");
+  if (model.pulls) parts.push(`${model.pulls} pulls`);
+  if (model.description) parts.push(model.description);
   return parts.join(" / ") || model.source || "";
+}
+
+function allModels() {
+  const byId = new Map(models.map((model) => [model.id, model]));
+  for (const model of remoteModels) {
+    if (!byId.has(model.id)) byId.set(model.id, { ...model, remote: true });
+  }
+  return Array.from(byId.values());
 }
 
 function visibleModels() {
   const query = searchInput.value.trim().toLowerCase();
-  return models.filter((model) => {
+  return allModels().filter((model) => {
     if (filter === "cloud" && model.type !== "cloud") return false;
     if (filter === "local" && model.type !== "local") return false;
     if (filter === "enabled" && !model.enabled) return false;
@@ -113,8 +132,8 @@ function escapeHtml(value) {
   }[char]));
 }
 
-async function load() {
-  const response = await fetch("/api/dashboard/state", { cache: "no-store" });
+async function load(forceRefresh = false) {
+  const response = await fetch(`/api/dashboard/state${forceRefresh ? "?refresh=1" : ""}`, { cache: "no-store" });
   const state = await response.json();
   if (!response.ok) throw new Error(state.detail || state.error || "Failed to load state");
   models = state.models || [];
@@ -150,7 +169,21 @@ rows.addEventListener("change", (event) => {
   const input = event.target.closest("input[type='checkbox'][data-id]");
   if (!input) return;
   const model = models.find((item) => item.id === input.dataset.id);
-  if (model) model.enabled = input.checked;
+  if (model) {
+    model.enabled = input.checked;
+  } else if (input.checked) {
+    const remote = remoteModels.find((item) => item.id === input.dataset.id);
+    if (remote) {
+      models.push({
+        ...remote,
+        remote: undefined,
+        type: isCloudModel(remote.id) ? "cloud" : remote.type,
+        enabled: true,
+        installed: remote.installed || isCloudModel(remote.id),
+        downloadable: !isCloudModel(remote.id)
+      });
+    }
+  }
   render();
 });
 
@@ -162,8 +195,35 @@ segments.forEach((button) => {
   });
 });
 
-searchInput.addEventListener("input", render);
-refreshButton.addEventListener("click", () => load().catch((error) => {
+async function searchRemoteModels(query, requestId) {
+  if (query.trim().length < 2) {
+    remoteModels = [];
+    render();
+    return;
+  }
+  const response = await fetch(`/api/dashboard/search?q=${encodeURIComponent(query.trim())}`, { cache: "no-store" });
+  const payload = await response.json();
+  if (!response.ok) throw new Error(payload.detail || payload.error || "Model search failed");
+  if (requestId !== searchRequest) return;
+  remoteModels = payload.models || [];
+  render();
+}
+
+searchInput.addEventListener("input", () => {
+  render();
+  clearTimeout(searchTimer);
+  const query = searchInput.value;
+  const requestId = ++searchRequest;
+  searchTimer = setTimeout(() => {
+    searchRemoteModels(query, requestId).catch((error) => {
+      if (requestId !== searchRequest) return;
+      remoteModels = [];
+      statusEl.textContent = error.message;
+      render();
+    });
+  }, 250);
+});
+refreshButton.addEventListener("click", () => load(true).catch((error) => {
   statusEl.textContent = error.message;
 }));
 saveButton.addEventListener("click", () => {
@@ -177,10 +237,10 @@ addButton.addEventListener("click", () => {
   models.push({
     id,
     name: id,
-    type: id.endsWith(":cloud") ? "cloud" : "local",
-    enabled: id.endsWith(":cloud"),
-    installed: id.endsWith(":cloud"),
-    downloadable: !id.endsWith(":cloud"),
+    type: isCloudModel(id) ? "cloud" : "local",
+    enabled: isCloudModel(id),
+    installed: isCloudModel(id),
+    downloadable: !isCloudModel(id),
     source: "custom"
   });
   customInput.value = "";

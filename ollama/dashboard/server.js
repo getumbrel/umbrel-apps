@@ -14,6 +14,14 @@ const CONFIG_PATH = path.join(CONFIG_DIR, "ollama-dashboard.json");
 const MANIFEST_PATH = path.join(CONFIG_DIR, "model-manifest.json");
 const DISABLED_MODELS_ENV_PATH = path.join(CONFIG_DIR, "disabled-models.env");
 const pullJobs = new Map();
+const searchCache = new Map();
+const cloudCatalogCache = { checkedAt: 0, models: [] };
+const OLLAMA_LIBRARY_BASE_URL = (process.env.OLLAMA_LIBRARY_BASE_URL || "https://ollama.com").replace(/\/+$/, "");
+const OLLAMA_CLOUD_CATALOG_ENABLED = !["0", "false", "no", "off"].includes(String(process.env.OLLAMA_CLOUD_CATALOG_ENABLED || "1").trim().toLowerCase());
+const OLLAMA_CLOUD_CATALOG_URL = process.env.OLLAMA_CLOUD_CATALOG_URL || `${OLLAMA_LIBRARY_BASE_URL}/search?c=cloud`;
+const OLLAMA_CLOUD_CATALOG_TTL_MS = Number(process.env.OLLAMA_CLOUD_CATALOG_TTL_SECONDS || 21600) * 1000;
+const OLLAMA_CLOUD_CATALOG_MAX_LIBRARIES = Number(process.env.OLLAMA_CLOUD_CATALOG_MAX_LIBRARIES || 200);
+const OLLAMA_CLOUD_CATALOG_MAX_PAGES = Number(process.env.OLLAMA_CLOUD_CATALOG_MAX_PAGES || 8);
 
 const contentTypes = {
   ".html": "text/html; charset=utf-8",
@@ -96,23 +104,159 @@ async function fetchTags() {
   }
 }
 
+async function fetchTextUrl(url, timeoutMs = 12000) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(url, {
+      headers: {
+        "accept": "text/html,application/json",
+        "user-agent": "ollama-umbrel-dashboard/ollama-cloud-discovery"
+      },
+      signal: controller.signal
+    });
+    if (!response.ok) throw new Error(`${url} returned HTTP ${response.status}`);
+    return await response.text();
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 function normalizeModelId(value) {
   return String(value || "").trim();
 }
 
 function isCloudModel(id) {
-  return normalizeModelId(id).endsWith(":cloud");
+  const normalized = normalizeModelId(id).toLowerCase();
+  const tag = normalized.includes(":") ? normalized.split(":").pop() : "";
+  return normalized.endsWith(":cloud") || tag.endsWith("-cloud");
+}
+
+function modelTypeFor(id, entry = {}) {
+  const source = String(entry.source || "").toLowerCase();
+  if (entry.type === "cloud" || isCloudModel(id) || source === "ollama-cloud" || source === "cloud-catalog" || source === "saved-cloud") {
+    return "cloud";
+  }
+  return "local";
 }
 
 function modelName(entry) {
   return entry.name || entry.model || entry.id || "";
 }
 
-async function buildState() {
-  const [catalog, config, tags] = await Promise.all([
+function dedupeKeepOrder(items) {
+  const seen = new Set();
+  const ordered = [];
+  for (const item of items) {
+    if (!item || seen.has(item)) continue;
+    seen.add(item);
+    ordered.push(item);
+  }
+  return ordered;
+}
+
+function cloudModelMeta(id) {
+  const lower = String(id || "").toLowerCase();
+  const vision = ["gemini", "gemma4", "qwen3.5", "kimi-k2.5", "kimi-k2.6", "ministral", "devstral"].some((hint) => lower.includes(hint));
+  const nonTool = ["embed", "embedding", "ocr", "vision", "-vl", ":vl", "whisper", "tts"].some((hint) => lower.includes(hint));
+  return {
+    id,
+    name: id,
+    source: "ollama-cloud-catalog",
+    type: "cloud",
+    reasoning: ["deepseek", "qwen", "glm", "nemotron", "minimax", "kimi", "gemini", "gemma"].some((hint) => lower.includes(hint)),
+    contextWindow: 256000,
+    maxTokens: 128000,
+    supportsChat: true,
+    supportsTools: !nonTool,
+    supportsJson: true,
+    input: vision ? ["text", "image"] : ["text"],
+    supportsVision: vision
+  };
+}
+
+function parseLibraryLinks(html) {
+  const libraries = [];
+  const pattern = /href=["']\/library\/([a-zA-Z0-9_.-]+)["']/g;
+  let match;
+  while ((match = pattern.exec(html))) {
+    libraries.push(match[1].trim());
+  }
+  return dedupeKeepOrder(libraries);
+}
+
+function parseCloudTags(name, html) {
+  const tags = [];
+  const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const pattern = new RegExp(`href=["']/library/${escaped}:([^"']+)["']`, "g");
+  let match;
+  while ((match = pattern.exec(html))) {
+    const tag = decodeURIComponent(match[1]).trim();
+    if (tag && tag.toLowerCase().includes("cloud")) tags.push(tag);
+  }
+  if (!tags.length && html.toLowerCase().includes("cloud")) tags.push("cloud");
+  return dedupeKeepOrder(tags);
+}
+
+async function discoverCloudCatalogModels(force = false) {
+  if (!OLLAMA_CLOUD_CATALOG_ENABLED) return [];
+  const now = Date.now();
+  if (!force && cloudCatalogCache.models.length && now - cloudCatalogCache.checkedAt < OLLAMA_CLOUD_CATALOG_TTL_MS) {
+    return cloudCatalogCache.models.slice();
+  }
+
+  try {
+    const catalogUrl = new URL(OLLAMA_CLOUD_CATALOG_URL);
+    const libraries = [];
+    const maxPages = Math.max(1, OLLAMA_CLOUD_CATALOG_MAX_PAGES);
+    const maxLibraries = Math.max(1, OLLAMA_CLOUD_CATALOG_MAX_LIBRARIES);
+    for (let page = 1; page <= maxPages; page += 1) {
+      const pageUrl = new URL(catalogUrl);
+      if (page > 1) pageUrl.searchParams.set("p", String(page));
+      const before = libraries.length;
+      for (const library of parseLibraryLinks(await fetchTextUrl(pageUrl.toString()))) {
+        if (!libraries.includes(library)) libraries.push(library);
+        if (libraries.length >= maxLibraries) break;
+      }
+      if (libraries.length >= maxLibraries) break;
+      if (page > 1 && libraries.length === before) break;
+    }
+
+    const models = [];
+    let index = 0;
+    const workers = Array.from({ length: Math.min(6, libraries.length) }, async () => {
+      while (index < libraries.length) {
+        const name = libraries[index];
+        index += 1;
+        try {
+          const html = await fetchTextUrl(`${OLLAMA_LIBRARY_BASE_URL}/library/${encodeURIComponent(name)}`);
+          const tags = parseCloudTags(name, html);
+          for (const tag of tags) models.push(`${name}:${tag}`);
+        } catch {
+          models.push(`${name}:cloud`);
+        }
+      }
+    });
+    await Promise.all(workers);
+
+    const discovered = dedupeKeepOrder(models).filter(isCloudModel).map(cloudModelMeta);
+    if (discovered.length) {
+      cloudCatalogCache.checkedAt = now;
+      cloudCatalogCache.models = discovered;
+      return discovered.slice();
+    }
+  } catch {
+    return cloudCatalogCache.models.slice();
+  }
+  return cloudCatalogCache.models.slice();
+}
+
+async function buildState(options = {}) {
+  const [catalog, config, tags, cloudCatalog] = await Promise.all([
     readJson(CATALOG_PATH, { cloud: [], local: [] }),
     readJson(CONFIG_PATH, { version: 1, models: {} }),
-    fetchTags()
+    fetchTags(),
+    discoverCloudCatalogModels(Boolean(options.forceCloudCatalog))
   ]);
   const saved = config.models && typeof config.models === "object" ? config.models : {};
   const byId = new Map();
@@ -126,15 +270,19 @@ async function buildState() {
   for (const entry of catalog.cloud || []) {
     upsert(entry.id, { ...entry, source: "cloud-catalog", type: "cloud" });
   }
+  for (const entry of cloudCatalog) {
+    upsert(entry.id, { ...entry, source: "ollama-cloud-catalog", type: "cloud" });
+  }
   for (const entry of catalog.local || []) {
     upsert(entry.id, { ...entry, source: "local-catalog", type: "local", downloadable: true });
   }
   for (const tag of tags.models) {
     const id = normalizeModelId(tag.name || tag.model);
     const details = tag.details && typeof tag.details === "object" ? tag.details : {};
+    const cloud = isCloudModel(id);
     upsert(id, {
-      source: isCloudModel(id) ? "ollama-cloud" : "installed",
-      type: isCloudModel(id) ? "cloud" : "local",
+      source: cloud ? "ollama-cloud" : "installed",
+      type: cloud ? "cloud" : "local",
       installed: true,
       digest: tag.digest,
       modifiedAt: tag.modified_at,
@@ -146,15 +294,16 @@ async function buildState() {
     });
   }
   for (const [id, entry] of Object.entries(saved)) {
+    const type = modelTypeFor(id, entry);
     upsert(id, {
-      source: entry.source || (isCloudModel(id) ? "saved-cloud" : "saved-local"),
-      type: isCloudModel(id) ? "cloud" : "local"
+      source: entry.source || (type === "cloud" ? "saved-cloud" : "saved-local"),
+      type
     });
   }
 
   const models = Array.from(byId.values()).map((model) => {
     const savedEntry = saved[model.id];
-    const cloud = model.type === "cloud" || isCloudModel(model.id);
+    const cloud = modelTypeFor(model.id, model) === "cloud";
     const enabled = typeof savedEntry?.enabled === "boolean" ? savedEntry.enabled : cloud;
     return {
       id: model.id,
@@ -194,6 +343,12 @@ async function buildState() {
     configPath: CONFIG_PATH,
     manifestPath: MANIFEST_PATH,
     disabledModelsEnvPath: DISABLED_MODELS_ENV_PATH,
+    cloudCatalog: {
+      enabled: OLLAMA_CLOUD_CATALOG_ENABLED,
+      source: OLLAMA_CLOUD_CATALOG_URL,
+      checkedAt: cloudCatalogCache.checkedAt ? new Date(cloudCatalogCache.checkedAt).toISOString() : null,
+      discovered: cloudCatalog.length
+    },
     models,
     pullJobs: Object.fromEntries(pullJobs)
   };
@@ -228,12 +383,13 @@ async function persistSelection(selection) {
   const known = new Map(state.models.map((model) => [model.id, model]));
   for (const [id] of selected) {
     if (!known.has(id)) {
+      const type = modelTypeFor(id);
       known.set(id, {
         id,
         name: id,
-        type: isCloudModel(id) ? "cloud" : "local",
+        type,
         installed: false,
-        downloadable: !isCloudModel(id),
+        downloadable: type !== "cloud",
         supportsChat: true
       });
     }
@@ -276,6 +432,82 @@ async function isModelEnabled(modelId) {
   const saved = config.models && typeof config.models === "object" ? config.models : {};
   if (typeof saved[id]?.enabled === "boolean") return saved[id].enabled;
   return isCloudModel(id);
+}
+
+function decodeHtml(value) {
+  return String(value || "")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&#39;/g, "'")
+    .replace(/&quot;/g, "\"")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">");
+}
+
+function stripHtml(value) {
+  return decodeHtml(String(value || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim());
+}
+
+function firstMatch(value, regex) {
+  const match = regex.exec(value);
+  return match ? stripHtml(match[1]) : "";
+}
+
+function parseOllamaSearch(html) {
+  const results = [];
+  const seen = new Set();
+  const itemPattern = /<li\b[^>]*x-test-model[^>]*>([\s\S]*?)<\/li>/g;
+  let item;
+  while ((item = itemPattern.exec(html))) {
+    const chunk = item[1];
+    const title = firstMatch(chunk, /<span\b[^>]*x-test-search-response-title[^>]*>([\s\S]*?)<\/span>/);
+    if (!title || seen.has(title)) continue;
+    seen.add(title);
+    const hrefMatch = /<a\s+href="([^"]+)"/.exec(chunk);
+    const href = hrefMatch ? decodeHtml(hrefMatch[1]) : "";
+    const description = firstMatch(chunk, /<p\b[^>]*>([\s\S]*?)<\/p>/);
+    const pulls = firstMatch(chunk, /<span\b[^>]*x-test-pull-count[^>]*>([\s\S]*?)<\/span>/);
+    const type = modelTypeFor(title);
+    results.push({
+      id: title,
+      name: title,
+      type,
+      source: "ollama.com",
+      installed: type === "cloud",
+      downloadable: type !== "cloud",
+      enabled: false,
+      description,
+      pulls,
+      url: href ? `${OLLAMA_LIBRARY_BASE_URL}${href}` : `${OLLAMA_LIBRARY_BASE_URL}/search`
+    });
+  }
+  return results.slice(0, 25);
+}
+
+async function searchOllamaModels(query) {
+  const normalized = String(query || "").trim();
+  if (normalized.length < 2) return [];
+  const key = normalized.toLowerCase();
+  const cached = searchCache.get(key);
+  if (cached && Date.now() - cached.timestamp < 5 * 60 * 1000) return cached.results;
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10000);
+  try {
+    const response = await fetch(`${OLLAMA_LIBRARY_BASE_URL}/search?q=${encodeURIComponent(normalized)}`, {
+      headers: {
+        "accept": "text/html",
+        "user-agent": "ollama-umbrel-dashboard/1.0"
+      },
+      signal: controller.signal
+    });
+    if (!response.ok) throw new Error(`ollama.com search returned HTTP ${response.status}`);
+    const results = parseOllamaSearch(await response.text());
+    searchCache.set(key, { timestamp: Date.now(), results });
+    return results;
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 function shouldEnforceModelSelection(method, pathname) {
@@ -396,7 +628,11 @@ const server = http.createServer(async (req, res) => {
   try {
     const url = new URL(req.url, "http://dashboard.local");
     if (req.method === "GET" && url.pathname === "/api/dashboard/state") {
-      sendJson(res, 200, await buildState());
+      sendJson(res, 200, await buildState({ forceCloudCatalog: url.searchParams.get("refresh") === "1" }));
+      return;
+    }
+    if (req.method === "GET" && url.pathname === "/api/dashboard/search") {
+      sendJson(res, 200, { models: await searchOllamaModels(url.searchParams.get("q")) });
       return;
     }
     if (req.method === "POST" && url.pathname === "/api/dashboard/config") {
