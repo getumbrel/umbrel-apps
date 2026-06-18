@@ -3,9 +3,23 @@ version: '3.7'
 services:
   app_proxy:
     environment:
-      APP_HOST: ollama_ollama_1
-      APP_PORT: 11434
+      APP_HOST: ollama_dashboard_1
+      APP_PORT: 3000
       PROXY_AUTH_ADD: "false"
+
+  dashboard:
+    image: node:22-alpine
+    command: ["node", "/app/server.js"]
+    environment:
+      PORT: "3000"
+      OLLAMA_BASE_URL: "http://ollama_ollama_1:11434"
+      CONFIG_DIR: "/config"
+    volumes:
+      - ./dashboard:/app:ro
+      - ${APP_DATA_DIR}/data:/config
+    depends_on:
+      - ollama
+    restart: on-failure
 
   ollama:
     image: ollama/ollama:0.30.10@sha256:bfc9c6d53cc6989aa5131a6fde6b162b2802d4d337657f3253b5f69579bddeee
