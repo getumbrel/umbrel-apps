@@ -804,7 +804,10 @@ class AppLinter {
     }
 
     const exitLine = lineMatching(content, /^\s*exit\b/);
-    if (exitLine) {
+    // Tailscale keeps a legacy Umbrel 0.5.x install shim that intentionally
+    // exits after patching and rerunning the old app script. Do not generalize
+    // this exception to normal exports.sh files.
+    if (exitLine && file !== "tailscale/exports.sh") {
       this.add("error", "exports.exit", file, exitLine, "`exports.sh` must not call `exit` because it is sourced by Umbrel.");
     }
 
