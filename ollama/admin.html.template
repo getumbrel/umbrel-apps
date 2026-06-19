@@ -1,0 +1,411 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ollama Admin</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f6f7f8;
+      --panel: #ffffff;
+      --text: #1d242b;
+      --muted: #5f6b76;
+      --line: #dce1e6;
+      --accent: #087f5b;
+      --accent-strong: #066849;
+      --warn: #b45309;
+      --error: #b42318;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #111417;
+        --panel: #1a1f24;
+        --text: #f0f3f5;
+        --muted: #a0aab4;
+        --line: #303840;
+        --accent: #34d399;
+        --accent-strong: #6ee7b7;
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    main {
+      width: min(1120px, calc(100vw - 32px));
+      margin: 0 auto;
+      padding: 28px 0 36px;
+    }
+
+    header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    h1 {
+      margin: 0 0 6px;
+      font-size: clamp(28px, 4vw, 42px);
+      line-height: 1.1;
+      letter-spacing: 0;
+    }
+
+    p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    button {
+      min-height: 40px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      color: var(--text);
+      padding: 0 14px;
+      font: inherit;
+      cursor: pointer;
+    }
+
+    button.primary {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: #ffffff;
+    }
+
+    button:disabled {
+      cursor: wait;
+      opacity: 0.65;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      padding: 16px;
+    }
+
+    .label {
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+
+    .value {
+      font-size: 22px;
+      font-weight: 700;
+      overflow-wrap: anywhere;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .status {
+      min-height: 22px;
+      color: var(--muted);
+      margin: 12px 0 0;
+    }
+
+    .status.error {
+      color: var(--error);
+    }
+
+    .models {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    th,
+    td {
+      padding: 11px 8px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    td {
+      overflow-wrap: anywhere;
+    }
+
+    form {
+      display: grid;
+      grid-template-columns: minmax(180px, 1fr) auto;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    input {
+      min-height: 40px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--bg);
+      color: var(--text);
+      padding: 0 12px;
+      font: inherit;
+    }
+
+    @media (max-width: 760px) {
+      main {
+        width: min(100vw - 20px, 1120px);
+        padding-top: 18px;
+      }
+
+      header,
+      .grid,
+      form {
+        grid-template-columns: 1fr;
+      }
+
+      header {
+        display: grid;
+      }
+
+      button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>Ollama Admin</h1>
+        <p>Monitor the local Ollama API, installed models, and active model runners.</p>
+      </div>
+      <button id="refreshButton" class="primary" type="button">Refresh</button>
+    </header>
+
+    <section class="grid" aria-label="Status summary">
+      <div class="panel">
+        <div class="label">API Status</div>
+        <div id="apiStatus" class="value">Checking</div>
+      </div>
+      <div class="panel">
+        <div class="label">Ollama Version</div>
+        <div id="versionValue" class="value">Unknown</div>
+      </div>
+      <div class="panel">
+        <div class="label">Installed Models</div>
+        <div id="modelCount" class="value">0</div>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="pullHeading">
+      <h2 id="pullHeading">Pull Model</h2>
+      <p>Start a download by model name, for example llama3.2 or qwen2.5-coder:7b.</p>
+      <form id="pullForm">
+        <input id="modelNameInput" name="model" autocomplete="off" placeholder="Model name">
+        <button type="submit">Pull</button>
+      </form>
+      <p id="pullStatus" class="status"></p>
+    </section>
+
+    <section class="panel" aria-labelledby="modelsHeading" style="margin-top: 16px;">
+      <h2 id="modelsHeading">Models</h2>
+      <table class="models">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Size</th>
+            <th>Modified</th>
+          </tr>
+        </thead>
+        <tbody id="modelsBody">
+          <tr><td colspan="3">Loading models...</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="panel" aria-labelledby="runningHeading" style="margin-top: 16px;">
+      <h2 id="runningHeading">Running Models</h2>
+      <table class="models">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Context</th>
+            <th>Until</th>
+          </tr>
+        </thead>
+        <tbody id="runningBody">
+          <tr><td colspan="3">Loading runners...</td></tr>
+        </tbody>
+      </table>
+    </section>
+  </main>
+
+  <script>
+    function byId(id) {
+      return document.getElementById(id);
+    }
+
+    function setText(id, text) {
+      const el = byId(id);
+      if (el) el.textContent = text;
+    }
+
+    function formatBytes(bytes) {
+      const value = Number(bytes);
+      if (!Number.isFinite(value) || value <= 0) return "Unknown";
+      const units = ["B", "KB", "MB", "GB", "TB"];
+      let size = value;
+      let index = 0;
+      while (size >= 1024 && index < units.length - 1) {
+        size = size / 1024;
+        index = index + 1;
+      }
+      return size.toFixed(index === 0 ? 0 : 1) + " " + units[index];
+    }
+
+    function formatDate(value) {
+      if (!value) return "Unknown";
+      const date = new Date(value);
+      return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleString();
+    }
+
+    async function fetchJson(path, options) {
+      const response = await fetch(path, options);
+      if (!response.ok) {
+        throw new Error(path + " returned HTTP " + response.status);
+      }
+      return response.json();
+    }
+
+    function renderRows(id, rows, emptyText, cells) {
+      const body = byId(id);
+      if (!body) return;
+      body.textContent = "";
+      if (!rows.length) {
+        const row = document.createElement("tr");
+        const cell = document.createElement("td");
+        cell.colSpan = 3;
+        cell.textContent = emptyText;
+        row.appendChild(cell);
+        body.appendChild(row);
+        return;
+      }
+      rows.forEach(function(item) {
+        const row = document.createElement("tr");
+        cells(item).forEach(function(value) {
+          const cell = document.createElement("td");
+          cell.textContent = value;
+          row.appendChild(cell);
+        });
+        body.appendChild(row);
+      });
+    }
+
+    async function refresh() {
+      const refreshButton = byId("refreshButton");
+      if (refreshButton) refreshButton.disabled = true;
+      setText("apiStatus", "Checking");
+      try {
+        const version = await fetchJson("/api/version");
+        const tags = await fetchJson("/api/tags");
+        let ps = { models: [] };
+        try {
+          ps = await fetchJson("/api/ps");
+        } catch {
+          ps = { models: [] };
+        }
+
+        const models = Array.isArray(tags.models) ? tags.models : [];
+        const running = Array.isArray(ps.models) ? ps.models : [];
+        setText("apiStatus", "Online");
+        setText("versionValue", version.version || "Unknown");
+        setText("modelCount", String(models.length));
+        renderRows("modelsBody", models, "No models installed.", function(model) {
+          return [
+            model.name || model.model || "Unknown",
+            formatBytes(model.size),
+            formatDate(model.modified_at)
+          ];
+        });
+        renderRows("runningBody", running, "No models are currently running.", function(model) {
+          return [
+            model.name || model.model || "Unknown",
+            String(model.context_length || model.size_vram || "Unknown"),
+            formatDate(model.expires_at)
+          ];
+        });
+      } catch (error) {
+        setText("apiStatus", "Offline");
+        setText("versionValue", "Unknown");
+        setText("modelCount", "0");
+        renderRows("modelsBody", [], error.message || String(error), function() { return []; });
+        renderRows("runningBody", [], "Unavailable while the API is offline.", function() { return []; });
+      } finally {
+        if (refreshButton) refreshButton.disabled = false;
+      }
+    }
+
+    async function pullModel(event) {
+      event.preventDefault();
+      const input = byId("modelNameInput");
+      const name = input && input.value ? input.value.trim() : "";
+      if (!name) {
+        const status = byId("pullStatus");
+        if (status) {
+          status.textContent = "Enter a model name first.";
+          status.className = "status error";
+        }
+        return;
+      }
+      const status = byId("pullStatus");
+      if (status) {
+        status.textContent = "Pulling " + name + "...";
+        status.className = "status";
+      }
+      try {
+        await fetchJson("/api/pull", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ name: name, stream: false })
+        });
+        if (status) status.textContent = "Pulled " + name + ".";
+        await refresh();
+      } catch (error) {
+        if (status) {
+          status.textContent = error.message || String(error);
+          status.className = "status error";
+        }
+      }
+    }
+
+    byId("refreshButton").addEventListener("click", refresh);
+    byId("pullForm").addEventListener("submit", pullModel);
+    void refresh();
+  </script>
+</body>
+</html>
