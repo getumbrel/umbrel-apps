@@ -39,7 +39,7 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
       - name: Fetch trusted base branch for diff
-        run: git fetch --no-tags --depth=1 ../trusted "HEAD:refs/remotes/base/${{ github.base_ref }}"
+        run: git fetch --no-tags ../trusted "HEAD:refs/remotes/base/${{ github.base_ref }}"
         working-directory: submission
       - name: Lint changed apps
         run: node .tools/lint-apps.mjs --root ../submission --changed "base/${{ github.base_ref }}...HEAD" --check-images --format github
