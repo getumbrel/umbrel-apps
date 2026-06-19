@@ -675,7 +675,7 @@ class AppLinter {
       const appDataPath = appDataSubpath(source);
       if (appDataPath) {
         if (!appDataPath.includes("$") && !committedAppDataPathExists(app, appDataPath)) {
-          this.add("warning", "persistence.missing_source", `${app}/docker-compose.yml`, line, `Bind mount source \`${source}\` is not committed at \`${app}/${appDataPath}\`.`);
+          this.add("error", "persistence.missing_source", `${app}/docker-compose.yml`, line, `Bind mount source \`${source}\` is not committed at \`${app}/${appDataPath}\`.`);
         }
       }
 
