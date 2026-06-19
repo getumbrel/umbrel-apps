@@ -3,46 +3,50 @@ id: bolt12-pay
 name: BOLT12 Pay
 tagline: Self-hosted Lightning payments and identity with BOLT12, BIP353, LNURL, and Nostr
 category: bitcoin
-version: 0.2.108.1
+version: 0.2.109
 port: 8367
 description: >-
-  BOLT12 Pay is a self-hosted Lightning payments and identity app for LND nodes.
-  It supports BOLT12 Offers, Lightning Address (BIP353), LNURL, and BOLT11 fallback,
-  with optional Nostr identity features such as NIP-05 and Zaps.
+BOLT12 Pay is a self-hosted Lightning payments and identity app for LND nodes.
+It supports BOLT12 Offers, Lightning Address (BIP353), LNURL, and BOLT11 fallback,
+with optional Nostr identity features such as NIP-05 and Zaps.
 
+IMPORTANT: Current releases of BOLT12 Pay depend on LNDK, which is currently
+compatible with LND v0.20.x only.
 
-  This app currently depends on a custom LND build with BOLT12-related custom
-  message support enabled.
+LND v0.21 introduced native onion messaging and is currently incompatible with
+the version of LNDK used by this app. If your Lightning node is upgraded to
+LND v0.21, BOLT12 Offer payments may stop working until LNDK is updated for
+the new API.
 
+If you want to continue using BOLT12 Pay, remain on LND v0.20.x for now.
 
-  In your LND configuration file (Go to Files: Apps → lightning → data → lnd → lnd.conf), add:
+In your LND configuration file (Go to Files: Apps → lightning → data → lnd → lnd.conf), add:
 
-    [protocol]
-    protocol.custom-message=513
-    protocol.custom-nodeann=39
-    protocol.custom-init=39
+```
+[protocol]
+protocol.custom-message=513
+protocol.custom-nodeann=39
+protocol.custom-init=39
+```
 
+Save and restart Lightning afterwards. Without this, BOLT12 functionality will not work.
 
-  Save and restart Lightning afterwards. Without this, BOLT12 functionality will not work.
+Note: These protocol settings are only required for LND v0.20.x and should
+not be used with future native BOLT12/onion messaging implementations.
 
+Domain setup guide:
 
-  Domain setup guide:
+https://github.com/Alex71btc/lndk-pay/blob/main/README.md#-domain-configuration-bip353-vs-lnurl
 
+BOLT12 support on LND is still evolving, wallet compatibility may vary,
+and this app uses cutting-edge Lightning features.
 
-  https://github.com/Alex71btc/lndk-pay/blob/main/README.md#-domain-configuration-bip353-vs-lnurl
+Support ongoing development by donating to this project:
 
+https://geyser.fund/project/bolt12pay
 
-  BOLT12 support on LND is still evolving, wallet compatibility may vary,
-  and this app uses cutting-edge Lightning features.
+Made for sovereign Bitcoin users.
 
-
-  Support ongoing development by donating to this project:
-
-
-  https://geyser.fund/project/bolt12pay
-
-
-  Made for sovereign Bitcoin users.
 developer: Alex71btc
 website: https://github.com/Alex71btc
 submitter: Alex71btc
@@ -51,17 +55,24 @@ repo: https://github.com/Alex71btc/lndk-pay
 support: https://github.com/Alex71btc/lndk-pay/issues
 releaseNotes: |
 
-  Bugfix release for the v0.2.108 Privacy Mode update.
+Compatibility notice:
 
-   - Improved reliability of BOLT12 offer creation
-   - Automatically retries transient LNDK TLS connection failures
-   - Prevents occasional first-attempt offer creation errors observed on some Umbrel systems
+* LND v0.21 is currently incompatible with the LNDK version used by BOLT12 Pay.
+* Users who rely on BOLT12 Offers should remain on LND v0.20.x until LNDK support for LND v0.21 is available.
+* Upgrading Lightning to LND v0.21 may break BOLT12 Offer payments.
 
-  Includes all features from v0.2.108:
-   - Privacy Mode
-   - Private BIP353 Lightning Addresses
-   - Offer History BIP353 Publishing
-   - Automatic DNS Cleanup
+Bugfix release for the v0.2.108 Privacy Mode update.
+
+* Improved reliability of BOLT12 offer creation
+* Automatically retries transient LNDK TLS connection failures
+* Prevents occasional first-attempt offer creation errors observed on some Umbrel systems
+
+Includes all features from v0.2.108:
+
+* Privacy Mode
+* Private BIP353 Lightning Addresses
+* Offer History BIP353 Publishing
+* Automatic DNS Cleanup
 
 dependencies:
   - lightning
