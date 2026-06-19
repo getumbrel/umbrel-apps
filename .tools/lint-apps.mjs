@@ -125,7 +125,7 @@ class AppLinter {
     // Disabled packages have been removed from the active App Store, so they
     // should not reserve ports or fail normal app submission linting.
     this.activeAppDirs = this.appDirs.filter((app) => !this.appDisabled(app));
-    this.baseRef = baseRefFromChangedRange(options.changed) || defaultBaseRef(options);
+    this.baseRef = baseRefFromChangedRange(options.changed);
     this.portIndex = new Map();
     this.imageManifestCache = new Map();
   }
@@ -1019,20 +1019,6 @@ function discoverAppDirs() {
 
 function baseRefFromChangedRange(range) {
   return range ? range.split(/\.\.\.?/, 1)[0] : null;
-}
-
-function defaultBaseRef(options) {
-  if (options.all || options.changed || options.apps.length === 0) return null;
-
-  try {
-    execFileSync("git", ["rev-parse", "--verify", "origin/master"], {
-      cwd: ROOT,
-      stdio: "ignore",
-    });
-    return "origin/master";
-  } catch {
-    return null;
-  }
 }
 
 function validManifestVersion(value) {
