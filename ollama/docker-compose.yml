@@ -8,12 +8,19 @@ services:
       PROXY_AUTH_ADD: "false"
 
   dashboard:
-    image: nginx:1.27.5-alpine@sha256:65645c7bb6a0661892a8b03b89d0743208a18dd2f3f17a54ef4b76fb8e2f2a10
+    image: node:22-alpine@sha256:ab07539e0988b63558ff621f5fbe1077054c39d9809112974fb79993949d41cd
+    command:
+      - node
+      - /app/server.js
+    environment:
+      PORT: 11434
+      OLLAMA_BASE_URL: http://ollama_ollama_1:11434
+      CONFIG_DIR: /config
     depends_on:
       - ollama
     volumes:
-      - ${APP_DATA_DIR}/nginx.conf:/etc/nginx/conf.d/default.conf:ro
-      - ${APP_DATA_DIR}/admin.html:/usr/share/nginx/html/admin/index.html:ro
+      - ${APP_DATA_DIR}/dashboard:/app:ro
+      - ${APP_DATA_DIR}/data:/config
     restart: on-failure
 
   ollama:
