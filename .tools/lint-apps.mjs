@@ -534,7 +534,10 @@ class AppLinter {
     }
 
     if (parsed.tag === "latest") {
-      this.add("error", "image.latest", `${app}/docker-compose.yml`, serviceKeyLine(content, service, "image"), `Image \`${image}\` uses the moving \`latest\` tag.`);
+      // Pinned latest is reproducible, but still weaker than a release tag.
+      // Unpinned latest never reaches this branch because parseImageRef requires
+      // a tag plus sha256 digest.
+      this.add("warning", "image.latest", `${app}/docker-compose.yml`, serviceKeyLine(content, service, "image"), `Image \`${image}\` uses the moving \`latest\` tag pinned by digest. Use a versioned release, commit, or date tag when upstream publishes one; pinned \`latest\` should be a last resort when no stable tag is available.`);
     }
 
     if (this.options.checkImages) {
