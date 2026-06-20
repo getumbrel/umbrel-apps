@@ -40,13 +40,13 @@ services:
       DJANGO_SECRET_KEY: ${APP_SEED}
       DJANGO_DEBUG: "False"
       ALLOWED_HOSTS: "*"
-      CORS_ALLOWED_ORIGINS: "http://${DEVICE_DOMAIN_NAME}:3080,http://*.ts.net:3080"
-      CSRF_TRUSTED_ORIGINS: "http://${DEVICE_DOMAIN_NAME}:3080,http://*.ts.net:3080"
+      CORS_ALLOWED_ORIGINS: "http://${DEVICE_DOMAIN_NAME}:3082,http://*.ts.net:3082"
+      CSRF_TRUSTED_ORIGINS: "http://${DEVICE_DOMAIN_NAME}:3082,http://*.ts.net:3082"
       DJANGO_SUPERUSER_USERNAME: admin
       DJANGO_SUPERUSER_PASSWORD: $APP_PASSWORD
       DJANGO_SUPERUSER_EMAIL: "admin@umbrel.local"
       # API URL for frontend
-      API_BASE_URL: "http://${DEVICE_DOMAIN_NAME}:3080"
+      API_BASE_URL: "http://${DEVICE_DOMAIN_NAME}:3082"
     command: >
       sh -c "
         python manage.py migrate &&
@@ -63,7 +63,7 @@ services:
     depends_on:
       - backend
     environment:
-      VITE_API_URL: "http://${DEVICE_DOMAIN_NAME}:3080"
+      VITE_API_URL: "http://${DEVICE_DOMAIN_NAME}:3082"
 
   data-service:
     image: dcbert/minersentinel-data-service:v1.0.3@sha256:ce4b2a955dc70e5c3fd897c910e8a7a525b6133ff37e49f0a7f7a7f6239b5bc4
