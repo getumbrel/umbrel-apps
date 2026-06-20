@@ -6,7 +6,7 @@ import path from "node:path";
 import process from "node:process";
 import YAML from "yaml";
 
-const ROOT = path.resolve(import.meta.dirname, "..");
+let ROOT = path.resolve(process.env.UMBREL_APP_LINT_ROOT || path.resolve(import.meta.dirname, ".."));
 
 // Keep this list to hooks that umbrelOS actually calls for app packages.
 const VALID_HOOKS = new Set([
@@ -71,6 +71,7 @@ function parseArgs(args) {
     changed: null,
     checkImages: false,
     format: "text",
+    root: ROOT,
   };
 
   for (let index = 0; index < args.length; index += 1) {
@@ -85,6 +86,10 @@ function parseArgs(args) {
     } else if (arg === "--format") {
       options.format = args[++index];
       if (!options.format) usage("Missing value for --format.");
+    } else if (arg === "--root") {
+      const root = args[++index];
+      if (!root) usage("Missing value for --root.");
+      options.root = path.resolve(root);
     } else if (arg === "-h" || arg === "--help") {
       usage(null, 0);
     } else if (arg.startsWith("-")) {
@@ -106,7 +111,7 @@ function parseArgs(args) {
 }
 
 function usage(error, exitCode = 2) {
-  const message = `Usage: npm run lint:apps -- [APP ...] [--all] [--changed RANGE] [--check-images] [--format text|github|json]`;
+  const message = `Usage: npm run lint:apps -- [APP ...] [--all] [--changed RANGE] [--check-images] [--format text|github|json] [--root PATH]`;
   if (error) console.error(error);
   console.error(message);
   process.exit(exitCode);
@@ -120,7 +125,7 @@ class AppLinter {
     // Disabled packages have been removed from the active App Store, so they
     // should not reserve ports or fail normal app submission linting.
     this.activeAppDirs = this.appDirs.filter((app) => !this.appDisabled(app));
-    this.baseRef = baseRefFromChangedRange(options.changed) || defaultBaseRef(options);
+    this.baseRef = baseRefFromChangedRange(options.changed);
     this.portIndex = new Map();
     this.imageManifestCache = new Map();
   }
@@ -529,7 +534,10 @@ class AppLinter {
     }
 
     if (parsed.tag === "latest") {
-      this.add("error", "image.latest", `${app}/docker-compose.yml`, serviceKeyLine(content, service, "image"), `Image \`${image}\` uses the moving \`latest\` tag.`);
+      // Pinned latest is reproducible, but still weaker than a release tag.
+      // Unpinned latest never reaches this branch because parseImageRef requires
+      // a tag plus sha256 digest.
+      this.add("warning", "image.latest", `${app}/docker-compose.yml`, serviceKeyLine(content, service, "image"), `Image \`${image}\` uses the moving \`latest\` tag pinned by digest. Use a versioned release, commit, or date tag when upstream publishes one; pinned \`latest\` should be a last resort when no stable tag is available.`);
     }
 
     if (this.options.checkImages) {
@@ -667,7 +675,7 @@ class AppLinter {
       const appDataPath = appDataSubpath(source);
       if (appDataPath) {
         if (!appDataPath.includes("$") && !committedAppDataPathExists(app, appDataPath)) {
-          this.add("warning", "persistence.missing_source", `${app}/docker-compose.yml`, line, `Bind mount source \`${source}\` is not committed at \`${app}/${appDataPath}\`.`);
+          this.add("error", "persistence.missing_source", `${app}/docker-compose.yml`, line, `Bind mount source \`${source}\` is not committed at \`${app}/${appDataPath}\`.`);
         }
       }
 
@@ -796,7 +804,10 @@ class AppLinter {
     }
 
     const exitLine = lineMatching(content, /^\s*exit\b/);
-    if (exitLine) {
+    // Tailscale keeps a legacy Umbrel 0.5.x install shim that intentionally
+    // exits after patching and rerunning the old app script. Do not generalize
+    // this exception to normal exports.sh files.
+    if (exitLine && file !== "tailscale/exports.sh") {
       this.add("error", "exports.exit", file, exitLine, "`exports.sh` must not call `exit` because it is sourced by Umbrel.");
     }
 
@@ -1014,20 +1025,6 @@ function discoverAppDirs() {
 
 function baseRefFromChangedRange(range) {
   return range ? range.split(/\.\.\.?/, 1)[0] : null;
-}
-
-function defaultBaseRef(options) {
-  if (options.all || options.changed || options.apps.length === 0) return null;
-
-  try {
-    execFileSync("git", ["rev-parse", "--verify", "origin/master"], {
-      cwd: ROOT,
-      stdio: "ignore",
-    });
-    return "origin/master";
-  } catch {
-    return null;
-  }
 }
 
 function validManifestVersion(value) {
@@ -1741,5 +1738,6 @@ function escapeRegex(value) {
 }
 
 const cliOptions = parseArgs(process.argv.slice(2));
+ROOT = cliOptions.root;
 const cliLinter = new AppLinter(cliOptions);
 process.exit(await cliLinter.run());

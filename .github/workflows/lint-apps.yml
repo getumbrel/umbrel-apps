@@ -1,7 +1,7 @@
 name: Lint apps
 
 on:
-  pull_request:
+  pull_request_target:
     branches:
       - master
 
@@ -13,13 +13,34 @@ jobs:
     name: Lint apps
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      # This uses pull_request_target so fork PRs can lint without maintainer approval.
+      # Keep the linter code trusted: install and run tooling from the base repo only.
+      # The PR checkout below must be treated as app package data, not executable code.
+      - name: Checkout trusted lint tooling
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
+          ref: ${{ github.base_ref }}
+          path: trusted
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
           node-version: 22
           cache: npm
+          cache-dependency-path: trusted/package-lock.json
       - run: npm ci --ignore-scripts
-      - run: npm run lint:apps -- --changed "origin/${{ github.base_ref }}...HEAD" --check-images --format github
+        working-directory: trusted
+      - name: Checkout PR package files
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.pull_request.head.sha }}
+          path: submission
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Fetch trusted base branch for diff
+        run: git fetch --no-tags ../trusted "HEAD:refs/remotes/base/${{ github.base_ref }}"
+        working-directory: submission
+      - name: Lint changed apps
+        run: node .tools/lint-apps.mjs --root ../submission --changed "base/${{ github.base_ref }}...HEAD" --check-images --format github
+        working-directory: trusted
