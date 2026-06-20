@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Ollama Models</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <div>
+          <h1>Ollama Models</h1>
+          <p id="status" class="muted">Loading model state</p>
+        </div>
+        <div class="actions">
+          <button id="refresh" class="iconButton" title="Refresh model list" aria-label="Refresh model list">Refresh</button>
+          <button id="save" class="primaryButton">Save</button>
+        </div>
+      </header>
+
+      <section class="toolbar" aria-label="Model filters">
+        <label class="search">
+          <span>Search</span>
+          <input id="search" type="search" placeholder="Model name or family">
+        </label>
+        <div class="segments" role="tablist" aria-label="Model type">
+          <button class="segment active" data-filter="all">All</button>
+          <button class="segment" data-filter="cloud">Cloud</button>
+          <button class="segment" data-filter="local">Local</button>
+          <button class="segment" data-filter="enabled">Enabled</button>
+        </div>
+      </section>
+
+      <section class="customModel" aria-label="Add custom model">
+        <input id="custom-model" type="text" spellcheck="false" placeholder="Add any Ollama model, for example llama3.2:1b">
+        <button id="add-model" class="secondaryButton">Add</button>
+      </section>
+
+      <section class="summary" aria-label="Model summary">
+        <div><strong id="enabled-count">0</strong><span>Enabled</span></div>
+        <div><strong id="cloud-count">0</strong><span>Cloud</span></div>
+        <div><strong id="local-count">0</strong><span>Local</span></div>
+        <div><strong id="pull-count">0</strong><span>Pulling</span></div>
+      </section>
+
+      <section class="tableWrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Enabled</th>
+              <th>Model</th>
+              <th>Type</th>
+              <th>Status</th>
+              <th>Details</th>
+            </tr>
+          </thead>
+          <tbody id="models"></tbody>
+        </table>
+      </section>
+    </main>
+    <script src="app.js"></script>
+  </body>
+</html>
