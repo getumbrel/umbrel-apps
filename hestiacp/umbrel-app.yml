@@ -1,0 +1,52 @@
+manifestVersion: 1
+id: hestiacp
+name: Hestia Control Panel
+tagline: Open-source web hosting control panel
+icon: https://raw.githubusercontent.com/hestiacp/hestiacp/main/web/images/logo/hestiacp-light.svg
+category: networking
+version: "1.9.6"
+port: 9083
+description: >-
+  Hestia Control Panel (HestiaCP) is a free, open-source web hosting control
+  panel — manage websites, databases, DNS and more from a clean web UI, the kind
+  of panel you'd normally run on a dedicated server, now on your Umbrel.
+
+
+  This package runs a purpose-built, NON-privileged, multi-architecture image
+  (ghcr.io/ptrinh/hestiacp): systemd is replaced with a systemctl shim, and the
+  privilege-requiring features (firewall, fail2ban, disk quota) are disabled, so
+  it runs with no privileged mode and no extra Linux capabilities. The web/db
+  stack (Nginx + Apache + PHP-FPM + MariaDB) is fully intact.
+
+
+  Notes:
+
+  - The panel uses a self-signed TLS certificate, so your browser shows a
+    one-time certificate warning.
+
+  - Log in with username "admin" and the password shown on this page.
+
+  - HestiaCP does not claim Umbrel's ports 80/443; hosted sites are published on
+    alternate ports.
+
+  - Network-level protection (firewall/fail2ban) is handled by Umbrel/your
+    router rather than inside the panel.
+developer: HestiaCP
+website: https://hestiacp.com
+submitter: ptrinh
+submission: https://github.com/getumbrel/umbrel-apps/pull/REPLACE_WITH_PR_NUMBER
+repo: https://github.com/ptrinh/hestiacp-docker
+support: https://forum.hestiacp.com
+gallery:
+  - https://hestiacp.com/img/screenshots/list_web.png
+  - https://hestiacp.com/img/screenshots/list_mail.png
+  - https://hestiacp.com/img/screenshots/list_db.png
+releaseNotes: >-
+  First release: non-privileged, multi-arch HestiaCP 1.9.6. The admin password
+  is set to your Umbrel app password on first start; data persists under the
+  app's data directory.
+dependencies: []
+path: ""
+deterministicPassword: true
+defaultUsername: admin
+defaultPassword: ${APP_PASSWORD}

@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# Set HestiaCP's admin password to Umbrel's app password on first start (once).
+CONTAINER="hestiacp_hestia_1"
+SENTINEL="${APP_DATA_DIR:-.}/.admin-password-set"
+HBIN="/usr/local/hestia/bin"
+
+[ -f "$SENTINEL" ] && exit 0
+
+APP_PASSWORD="${APP_PASSWORD}" setsid bash -c '
+  for _ in $(seq 1 120); do
+    if docker exec "'"$CONTAINER"'" "'"$HBIN"'/v-list-users" >/dev/null 2>&1; then
+      if docker exec "'"$CONTAINER"'" "'"$HBIN"'/v-change-user-password" admin "$APP_PASSWORD"; then
+        touch "'"$SENTINEL"'"
+        break
+      fi
+    fi
+    sleep 5
+  done
+' </dev/null >/dev/null 2>&1 &
+
+exit 0
