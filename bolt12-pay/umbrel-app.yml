@@ -3,7 +3,7 @@ id: bolt12-pay
 name: BOLT12 Pay
 tagline: Self-hosted Lightning payments and identity with BOLT12, BIP353, LNURL, and Nostr
 category: bitcoin
-version: 0.2.108.1
+version: 0.2.109
 port: 8367
 description: >-
   BOLT12 Pay is a self-hosted Lightning payments and identity app for LND nodes.
@@ -11,8 +11,22 @@ description: >-
   with optional Nostr identity features such as NIP-05 and Zaps.
 
 
-  This app currently depends on a custom LND build with BOLT12-related custom
+   ## ⚠️  IMPORTANT USER WARNING: 
+    - Current releases of BOLT12 Pay depend on LNDK, which is currently compatible with LND v0.20.x only.
+
+    - LND v0.21 introduced native onion messaging and is currently incompatible with the version of LNDK used by this app.
+
+    - If your Lightning node is upgraded to LND v0.21, BOLT12 Offer payments may stop working until LNDK is updated for the new API.
+
+
+    **⚠️  If you want to continue using BOLT12 Pay, remain on LND v0.20.1-beta for now!**
+
+
+  This app currently depends on custom LND protocol changes in LND versions <=0.20.1 beta with BOLT12-related custom
   message support enabled.
+
+
+  🛠️  SET-UP INSTRUCTIONS:
 
 
   In your LND configuration file (Go to Files: Apps → lightning → data → lnd → lnd.conf), add:
@@ -43,6 +57,8 @@ description: >-
 
 
   Made for sovereign Bitcoin users.
+
+
 developer: Alex71btc
 website: https://github.com/Alex71btc
 submitter: Alex71btc
@@ -51,17 +67,24 @@ repo: https://github.com/Alex71btc/lndk-pay
 support: https://github.com/Alex71btc/lndk-pay/issues
 releaseNotes: |
 
+  Compatibility notice:
+
+  - LND v0.21 is currently incompatible with the LNDK version used by BOLT12 Pay.
+  - Users who rely on BOLT12 Offers should remain on LND v0.20.x until LNDK support for LND v0.21 is available.
+  - Upgrading Lightning to LND v0.21 may break BOLT12 Offer payments.
+
   Bugfix release for the v0.2.108 Privacy Mode update.
 
-   - Improved reliability of BOLT12 offer creation
-   - Automatically retries transient LNDK TLS connection failures
-   - Prevents occasional first-attempt offer creation errors observed on some Umbrel systems
+  - Improved reliability of BOLT12 offer creation
+  - Automatically retries transient LNDK TLS connection failures
+  - Prevents occasional first-attempt offer creation errors observed on some Umbrel systems
 
   Includes all features from v0.2.108:
-   - Privacy Mode
-   - Private BIP353 Lightning Addresses
-   - Offer History BIP353 Publishing
-   - Automatic DNS Cleanup
+
+  - Privacy Mode
+  - Private BIP353 Lightning Addresses
+  - Offer History BIP353 Publishing
+  - Automatic DNS Cleanup
 
 dependencies:
   - lightning
