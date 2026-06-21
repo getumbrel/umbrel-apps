@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+HOOK_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck disable=SC1091
+source "${HOOK_DIR}/common.sh"
+
+APP_DATA_DIR="$(readlink -f "${HOOK_DIR}/.." )"
+
+mkdir -p "${APP_DATA_DIR}/data"
+chmod +x "${APP_DATA_DIR}/hooks/"* 2>/dev/null || true
+chown -R 1000:1000 "${APP_DATA_DIR}/data" 2>/dev/null || true
+
+echo "SINGULARITY Pool (${SINGULARITY_APP_ID}): data ready at ${APP_DATA_DIR}/data"
