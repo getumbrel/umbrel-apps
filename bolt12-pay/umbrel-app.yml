@@ -11,15 +11,63 @@ description: >-
   with optional Nostr identity features such as NIP-05 and Zaps.
 
 
-   ## ⚠️  IMPORTANT USER WARNING: 
-    - Current releases of BOLT12 Pay depend on LNDK, which is currently compatible with LND v0.20.x only.
-
-    - LND v0.21 introduced native onion messaging and is currently incompatible with the version of LNDK used by this app.
-
-    - If your Lightning node is upgraded to LND v0.21, BOLT12 Offer payments may stop working until LNDK is updated for the new API.
+  ## ⚠️ LND Compatibility Notice
 
 
-    **⚠️  If you want to continue using BOLT12 Pay, remain on LND v0.20.1-beta for now!**
+   BOLT12 Pay now supports both:
+
+
+   * LND v0.20.1 beta with the legacy custom-message transport
+   * LND v0.21.0 with native onion messaging support
+
+
+   ### ⚠️  Upgrading from LND v0.20.x to LND v0.21.x
+
+
+   If you previously used BOLT12 Pay with LND v0.20.1 beta, you likely added custom protocol settings to your `lnd.conf`:
+
+
+   [protocol]
+   protocol.custom-message=513
+   protocol.custom-nodeann=39
+   protocol.custom-init=39
+
+
+   ### ⚠️   IMPORTANT
+
+
+   Before upgrading your Lightning node to LND v0.21.x, remove the entire custom protocol section from your `lnd.conf`. 
+   In your LND configuration file (Go to Files: Apps → lightning → data → lnd → lnd.conf), remove 
+
+   [protocol]
+   protocol.custom-message=513
+   protocol.custom-nodeann=39
+   protocol.custom-init=39
+
+
+   Save and restart LND, then you may savely update the Lightning Node app on umbrel.
+
+
+   Native onion messaging support is now built directly into LND v0.21 and these legacy settings are no longer required.
+
+   ⚠️  Leaving old custom protocol settings in place may cause unexpected behaviour after upgrading and may result in Lightning Node crash.
+
+   Once the custom protocol entries are removed, LND will work again.
+
+
+   ### LND v0.20.1 beta Users
+
+
+   If you remain on LND v0.20.x, the custom protocol settings above are still required for BOLT12 functionality.
+
+
+   ### LND v0.21.x Users
+
+
+   No custom protocol configuration is required.
+
+   BOLT12 Pay will automatically use LND's native onion messaging support.
+
 
 
   This app currently depends on custom LND protocol changes in LND versions <=0.20.1 beta with BOLT12-related custom
@@ -28,6 +76,16 @@ description: >-
 
   🛠️  SET-UP INSTRUCTIONS:
 
+
+  ## LND v0.21.0 beta and newer
+
+
+  No custom protocol configuration is required.
+
+  BOLT12 Pay automatically uses LND's native onion messaging support.
+
+
+  ## LND v0.20.1 beta and older LND implementations
 
   In your LND configuration file (Go to Files: Apps → lightning → data → lnd → lnd.conf), add:
 
@@ -67,11 +125,22 @@ repo: https://github.com/Alex71btc/lndk-pay
 support: https://github.com/Alex71btc/lndk-pay/issues
 releaseNotes: |
 
-  Compatibility notice:
+  Native Onion Messaging Release
 
-  - LND v0.21 is currently incompatible with the LNDK version used by BOLT12 Pay.
-  - Users who rely on BOLT12 Offers should remain on LND v0.20.x until LNDK support for LND v0.21 is available.
-  - Upgrading Lightning to LND v0.21 may break BOLT12 Offer payments.
+   - Added support for LND v0.21 native onion messaging
+   - Removed dependency on custom-message transport when using LND v0.21
+   - BOLT12 Offer creation verified on LND v0.21
+   - BOLT12 Offer payments verified on LND v0.21
+   - BIP353 payment flow verified on LND v0.21
+   - Improved future compatibility with upcoming Lightning releases
+
+  Upgrade notes:
+
+  - LND v0.20.x users should keep their existing custom protocol configuration.
+  - LND v0.21.x users should remove all legacy custom protocol settings from lnd.conf before upgrading Lightning.
+
+  This release maintains compatibility with existing BOLT12 Pay installations while preparing for the transition to native onion messaging in LND.
+
 
   Bugfix release for the v0.2.108 Privacy Mode update.
 
