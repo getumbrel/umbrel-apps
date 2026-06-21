@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: gitea
 category: developer
 name: Gitea
-version: "1.26.2"
+version: "1.26.3"
 tagline: A painless self-hosted Git service
 description: >-
   Gitea is a painless self-hosted Git service. It is similar to
@@ -35,15 +35,14 @@ defaultUsername: ""
 defaultPassword: ""
 releaseNotes: >-
   This release includes security fixes and bug fixes:
-    - Strengthened token-scope checks for API queries, repository access, raw/media/attachment downloads, wiki Git writes, LFS token access, and packages
-    - Improved OAuth security with client request binding, stricter PKCE validation, and refresh-token replay protection
-    - Fixed basic auth, URL sanitization, and attachment Content-Security-Policy handling
-    - Fixed pull request reviews when the files view is empty, branch comparison edge cases, merge-base display, and review submission from single-commit views
-    - Fixed several Actions issues, including deadlocks, null workflow/event panics, workflow parameter validation, log transfer, and job status reporting
-    - Fixed package creation conflicts, generic package download filenames, case-insensitive email handling, and invalid UTF-8 commit messages in JSON API responses
+    - Fixed several security issues around host filtering, LFS access, CODEOWNERS matching, OIDC organization links, and repository/package access checks
+    - Updated security-sensitive dependencies, including golang.org/x/net
+    - Tightened Gitea Actions fork pull request approval behavior so only merged pull requests can bypass the approval gate
+    - Fixed panics in SSH LFS endpoint parsing and tracked-time API filters
+    - Fixed workflow dispatch/action log handling, release-note generation for initial tags, HTTP content rendering, issue target branch selection, and stale review requests
 
 
-  Full release notes: https://github.com/go-gitea/gitea/releases/tag/v1.26.2
+  Full release notes: https://github.com/go-gitea/gitea/releases/tag/v1.26.3
 torOnly: false
 submitter: Umbrel
 submission: https://github.com/getumbrel/umbrel/commit/d62e00353917143a3a10d3b376859f51b665d150
