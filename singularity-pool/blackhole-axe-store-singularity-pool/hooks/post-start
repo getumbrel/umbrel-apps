@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+HOOK_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck disable=SC1091
+source "${HOOK_DIR}/common.sh"
+
+APP_DATA_DIR="$(readlink -f "${HOOK_DIR}/.." )"
+mkdir -p "${APP_DATA_DIR}/data"
+
+LAN="$(hostname -I 2>/dev/null | awk '{print $1}')"
+if [[ -n "${LAN}" ]]; then
+  echo "${LAN}" > "${APP_DATA_DIR}/data/host_lan_ip"
+fi
+
+echo "SINGULARITY Pool (${SINGULARITY_APP_ID}): started, LAN=${LAN:-unknown}"

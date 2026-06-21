@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+HOOK_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck disable=SC1091
+source "${HOOK_DIR}/common.sh"
+
+singularity_clean_containers
+
+docker ps -q --filter "name=${SINGULARITY_APP_ID}" 2>/dev/null \
+  | xargs -r docker stop -t 10 2>/dev/null || true
+
+echo "SINGULARITY Pool (${SINGULARITY_APP_ID}): stopped before uninstall"

@@ -1,0 +1,50 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: blackhole-axe-store-singularity-pool_pool_1
+      APP_PORT: 3337
+      PROXY_AUTH_WHITELIST: "/api/state,/events,/widget-api/*"
+    container_name: blackhole-axe-store-singularity-pool_app_proxy_1
+
+  pool:
+    build:
+      context: ${APP_DATA_DIR}/pool
+      dockerfile: Dockerfile
+    image: ghcr.io/blackhole-axe/singularity-pool:latest
+    pull_policy: build
+    container_name: blackhole-axe-store-singularity-pool_pool_1
+    restart: on-failure
+    stop_grace_period: 30s
+    ports:
+      - "2038:2038"
+    volumes:
+      - "${APP_DATA_DIR}/data:/data"
+    environment:
+      APP_BITCOIN_NODE_IP: ${APP_BITCOIN_NODE_IP}
+      APP_BITCOIN_RPC_PORT: ${APP_BITCOIN_RPC_PORT}
+      APP_BITCOIN_RPC_USER: ${APP_BITCOIN_RPC_USER}
+      APP_BITCOIN_RPC_PASS: ${APP_BITCOIN_RPC_PASS}
+      APP_BITCOIN_ZMQ_HASHBLOCK_PORT: ${APP_BITCOIN_ZMQ_HASHBLOCK_PORT}
+      COINBASE_TAG: "SINGULARITY on Umbrel"
+      BITCOIN_NETWORK: mainnet
+      STRATUM_PORT: "2038"
+      STRATUM_BIND: "0.0.0.0"
+      DASHBOARD_PORT: "3337"
+      DASHBOARD_BIND: "0.0.0.0"
+      PAYOUT_ADDRESS: ""
+      INSTANT_EMPTY_JOB: "true"
+      MATERIAL_FEE_DELTA_SATS: "999999999"
+      START_DIFFICULTY: "1024"
+      MIN_DIFFICULTY: "256"
+      MAX_DIFFICULTY: "0"
+      TARGET_SHARE_SECS: "8"
+      RETARGET_SECS: "30"
+      TEMPLATE_REFRESH_MS: "30000"
+      POLL_FALLBACK_MS: "1000"
+      STALE_GRACE_MS: "3000"
+      DATA_DIR: "/data"
+      NODE_ENV: "production"
+      DEVICE_DOMAIN_NAME: ${DEVICE_DOMAIN_NAME}
+      DEVICE_HOSTNAME: ${DEVICE_HOSTNAME}

@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Self-contained — Umbrel copies only this file to /tmp before deleting app-data.
+SINGULARITY_APP_ID="blackhole-axe-store-singularity-pool"
+SINGULARITY_IMAGE_REPO="ghcr.io/blackhole-axe/singularity-pool"
+
+docker ps -aq --filter "name=${SINGULARITY_APP_ID}" 2>/dev/null \
+  | xargs -r docker rm -f 2>/dev/null || true
+
+docker images "${SINGULARITY_IMAGE_REPO}" --format '{{.ID}}' 2>/dev/null \
+  | sort -u | xargs -r docker rmi -f 2>/dev/null || true
+
+echo "SINGULARITY Pool (${SINGULARITY_APP_ID}): removed all containers and ${SINGULARITY_IMAGE_REPO} images"
