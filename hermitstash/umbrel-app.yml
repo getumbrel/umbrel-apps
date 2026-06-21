@@ -2,7 +2,7 @@ manifestVersion: 1
 id: hermitstash
 category: files
 name: HermitStash
-version: "1.12.1"
+version: "1.12.2"
 tagline: Post-quantum encrypted self-hosted file sharing
 description: >-
   HermitStash is a self-hosted file upload server with post-quantum encryption. Every file and database field is sealed with an ML-KEM-1024 + ECDH P-384 hybrid envelope and XChaCha20-Poly1305 before touching disk; passwords use Argon2id. Nothing is stored in plaintext, including database fields the operator never thinks of as sensitive.
@@ -31,14 +31,17 @@ defaultPassword: ""
 submitter: dotCooCoo
 submission: https://github.com/getumbrel/umbrel-apps/pull/5378
 releaseNotes: >-
-  Adds opt-in tamper-evident audit logs and an admin CIDR allowlist for deployments that want extra access controls.
+  Fixes a vault-key log leak so corrupted key files no longer echo private-key material into server logs.
 
 
-  Rejects polyglot and format-mismatched image uploads more strictly.
+  Hardens admin access controls by enforcing CSRF checks on multipart admin uploads and preventing spoofed admin CIDR allowlist checks.
 
 
-  Clears browser-side cookies, storage, and cache on logout so stale tabs cannot reuse a revoked session.
+  Repairs the keyed-index migration and per-user session revocation paths used by account suspend and delete.
 
 
-  Writes vault keys, API payload keys, and migration files atomically to reduce the risk of unreadable encrypted data after crashes or interrupted writes.
+  Restores oversized encrypted vault uploads and admin upload-notification emails.
+
+
+  Tightens Google sign-in verification and confines stash-scoped sync tokens to their own stash.
 dependencies: []
