@@ -179,9 +179,19 @@ class AppLinter {
       .filter(Boolean);
 
     this.lintInfrastructureChanges(files);
+    this.lintUnknownChangedTopLevels(files);
     this.lintDeletedApps(range);
 
     return unique(files.map((file) => file.split("/", 1)[0]).filter((app) => this.appDirs.includes(app))).sort();
+  }
+
+  lintUnknownChangedTopLevels(files) {
+    const topLevelPaths = unique(files.map((file) => file.split("/", 1)[0])).sort();
+    for (const topLevelPath of topLevelPaths) {
+      if (this.appDirs.includes(topLevelPath)) continue;
+
+      this.add("error", "app.top_level", topLevelPath, null, `Changed top-level path \`${topLevelPath}\` is not an app package. App submissions must only change app package directories with \`umbrel-app.yml\` at \`<app-id>/umbrel-app.yml\`.`);
+    }
   }
 
   lintInfrastructureChanges(files) {
