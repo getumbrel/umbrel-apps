@@ -1,0 +1,84 @@
+manifestVersion: 1
+id: dvb-warppool
+category: bitcoin
+name: dvb-WarpPool
+version: "1.9.0"
+tagline: Self-hosted Bitcoin solo mining pool — Stratum V1 + V2, full operator UI
+description: >-
+  dvb-WarpPool is a from-scratch, open-source solo Bitcoin mining pool you run
+  on your own node. The block reward flows straight to your wallet via the
+  coinbase — the pool never holds, forwards, or aggregates your sats. No
+  accounts, no custody, no fees, no middleman.
+
+
+  On umbrelOS it wires up to your Bitcoin node automatically (RPC + ZMQ). On
+  first launch a browser-based setup wizard asks for your payout address and
+  confirms the node connection — then point your miners at the pool and mine.
+
+
+  Built for mixed home hardware — a NerdMiner next to a Bitaxe next to an
+  Avalon Q:
+
+  - Stratum V1 (plain + TLS) and a native Stratum V2 server (NOISE-encrypted,
+    extended + standard channels), enabled out of the box.
+
+  - Persisted, EMA-smoothed per-worker variable difficulty that survives
+    miner reconnects and pool restarts.
+
+  - Live operator PWA: real-time SSE dashboard, 24-hour hashrate chart with
+    best-share peaks, per-worker breakdown, all-time leaderboard, coinbase
+    decoder for the current job.
+
+  - Per-miner vendor telemetry (temperature / power / fan / hashrate) for 12
+    miner families, with mDNS discovery.
+
+  - Hardware-aware profiles (Small … Enterprise), auto-ban + rate limiting,
+    Prometheus /metrics endpoint, notifications (ntfy, Telegram, Discord,
+    Slack, email, web-push) plus generic outbound webhooks.
+
+  - Operator UI in 8 languages. Signed, reproducible, multi-arch builds.
+
+
+  If your miners find a block, the entire reward is yours the moment Bitcoin
+  Core accepts it. Mine independently and help strengthen Bitcoin's
+  decentralization.
+releaseNotes: >-
+  v1.9.0 — the hashrate chart's best-share overlay now draws a continuous
+  per-bucket peak trail across the whole 24-hour window, so your strongest
+  miners stay visible over time. Also smoother variable-difficulty behaviour
+  after miner reconnects and a mobile chart-axis fix.
+developer: dvb-projekt
+website: https://github.com/dvb-projekt/dvb-WarpPool
+dependencies:
+  - bitcoin
+repo: https://github.com/dvb-projekt/dvb-WarpPool
+support: https://github.com/dvb-projekt/dvb-WarpPool/issues
+port: 18334
+gallery: []
+path: ""
+defaultUsername: ""
+defaultPassword: ""
+widgets:
+  - id: "stats"
+    type: "four-stats"
+    refresh: "60s"
+    endpoint: "web:18334/api/umbrel-widget"
+    link: ""
+    example:
+      type: "four-stats"
+      link: ""
+      items:
+        - title: "Hashrate"
+          text: "10.5"
+          subtext: "TH/s"
+        - title: "Miners"
+          text: "8"
+          subtext: ""
+        - title: "Best Share"
+          text: "1.13"
+          subtext: "T"
+        - title: "Shares/min"
+          text: "47"
+          subtext: "/min"
+submitter: dvb-projekt
+submission: ""
