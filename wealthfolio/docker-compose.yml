@@ -1,0 +1,34 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: wealthfolio_server_1
+      APP_PORT: 8088
+
+  server:
+    image: wealthfolio/wealthfolio:3.5.2@sha256:a830fdcf8294f1a7ae224eaf680b86007331c2fd3a739f1349681388e00d2c30
+    user: "1000:1000"
+    restart: on-failure
+    environment:
+      WF_LISTEN_ADDR: "0.0.0.0:8088"
+      WF_DB_PATH: "/data/wealthfolio.db"
+      WF_AUTH_REQUIRED: "false"
+      WF_AUTH_PASSWORD_HASH: ""
+      WF_AUTH_TOKEN_TTL_MINUTES: "60"
+      WF_CORS_ALLOW_ORIGINS: ""
+      WF_REQUEST_TIMEOUT_MS: "30000"
+      WF_SECRET_KEY: ${APP_WEALTHFOLIO_SECRET_KEY}
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1:8088/api/v1/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp:size=64M
