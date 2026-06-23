@@ -28,7 +28,42 @@ services:
     init: true
     restart: on-failure
     stop_grace_period: 1m
-    command: "./wait-for-it.sh mariadb:3306 --timeout=720 --strict -- ./start.sh"
+    # /backend/cache is ${APP_DATA_DIR}/data bind-mounted into this container,
+    # so removing rbfcache.json here removes the persistent host-side cache file
+    # that would otherwise survive container restarts.
+    #
+    # Mempool restores rbfcache.json with a whole-file read + JSON.parse before
+    # the backend is healthy. If the file is too large, V8 can abort before
+    # app-level error handling gets control.
+    #
+    # Keep this guard in the container command instead of an Umbrel pre-start
+    # hook because Docker's restart:on-failure path reruns the container command
+    # on every backend start. Umbrel lifecycle hooks only run when Umbrel starts
+    # or updates the app, so they would not break a Docker-managed restart loop.
+    command:
+      - /bin/sh
+      - -c
+      - |
+        set -eu
+        max="$${MEMPOOL_RBF_CACHE_MAX_BYTES:-0}"
+        case "$${max}" in
+          ""|*[!0-9]*) max="0" ;;
+        esac
+        if [ "$${max}" -gt 0 ]; then
+          for file in /backend/cache/rbfcache.json /backend/cache/tmp-rbfcache.json; do
+            if [ -f "$${file}" ]; then
+              size="$$(wc -c < "$${file}" | tr -d "[:space:]")"
+              case "$${size}" in
+                ""|*[!0-9]*) size="0" ;;
+              esac
+              if [ "$${size}" -gt "$${max}" ]; then
+                rm -f "$${file}"
+                echo "mempool startup: removed oversized $${file} ($${size} bytes > $${max} bytes)"
+              fi
+            fi
+          done
+        fi
+        exec ./wait-for-it.sh mariadb:3306 --timeout=720 --strict -- ./start.sh
     volumes:
       - ${APP_DATA_DIR}/data:/backend/cache
       - ${UMBREL_ROOT}/app-data/lightning/data/lnd:/lnd:ro
@@ -50,6 +85,7 @@ services:
       MEMPOOL_CLEAR_PROTECTION_MINUTES: "20"
       MEMPOOL_INDEXING_BLOCKS_AMOUNT: "52560"
       MEMPOOL_STDOUT_LOG_MIN_PRIORITY: "info"
+      MEMPOOL_RBF_CACHE_MAX_BYTES: "${APP_MEMPOOL_RBF_CACHE_MAX_BYTES:-67108864}"
       LIGHTNING_ENABLED: "true"
       LIGHTNING_BACKEND: "lnd"
       LIGHTNING_STATS_REFRESH_INTERVAL: 3600
@@ -58,7 +94,7 @@ services:
       LND_MACAROON_PATH: "/lnd/data/chain/bitcoin/$APP_BITCOIN_NETWORK/readonly.macaroon"
       LND_REST_API_URL: "https://$APP_MEMPOOL_LIGHTNING_NODE_IP:$APP_MEMPOOL_LIGHTNING_NODE_REST_PORT"
       LND_TIMEOUT: 120000
-      NODE_OPTIONS: "--max-old-space-size=2048"
+      NODE_OPTIONS: "--max-old-space-size=${APP_MEMPOOL_NODE_MAX_OLD_SPACE_SIZE:-1024}"
     networks:
        default:
          ipv4_address: $APP_MEMPOOL_API_IP
