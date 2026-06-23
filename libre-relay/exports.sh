@@ -4,10 +4,10 @@ export APP_LIBRE_RELAY_TOR_PROXY_IP="10.21.22.21"
 export APP_LIBRE_RELAY_I2P_DAEMON_IP="10.21.22.22"
 
 export APP_LIBRE_RELAY_DATA_DIR="${EXPORTS_APP_DIR}/data/bitcoin"
-# Keeping same port pattern as Bitcoin Core but moving to 84xx range to avoid conflicts with Bitcion Node app
-export APP_LIBRE_RELAY_RPC_PORT="8442"
-export APP_LIBRE_RELAY_P2P_PORT="8443"
-export APP_LIBRE_RELAY_TOR_PORT="8444"
+# Keep the Bitcoin Core port pattern while moving to the 845x range to avoid conflicts with other apps
+export APP_LIBRE_RELAY_RPC_PORT="8452"
+export APP_LIBRE_RELAY_P2P_PORT="8453"
+export APP_LIBRE_RELAY_TOR_PORT="8454"
 export APP_LIBRE_RELAY_ZMQ_RAWBLOCK_PORT="28442"
 export APP_LIBRE_RELAY_ZMQ_RAWTX_PORT="28443"
 export APP_LIBRE_RELAY_ZMQ_HASHBLOCK_PORT="28444"

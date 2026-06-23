@@ -1,0 +1,15 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: lubelogger_app_1
+      APP_PORT: 8080
+
+  app:
+    image: ghcr.io/hargata/lubelogger:v1.6.7@sha256:a9d00d747fcf4fc0f1d0d3007957cdce2b68d4e8ddba200f273c3db460a56e22
+    user: "1000:1000"
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data/app:/App/data
+      - ${APP_DATA_DIR}/data/keys:/root/.aspnet/DataProtection-Keys

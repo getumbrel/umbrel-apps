@@ -1,0 +1,21 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: notediscovery_web_1
+      APP_PORT: 8000
+
+  web:
+    image: ghcr.io/gamosoft/notediscovery:0.27.2@sha256:7db36e6b82337d112342f7fd9e4216ef6410843ae0e4048e00b104cbd8b5bbae
+    user: 1000:1000
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data:/app/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 60s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+

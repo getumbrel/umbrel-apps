@@ -1,0 +1,32 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: mailarchiver_app_1
+      APP_PORT: 5000
+
+  app:
+    image: ghcr.io/s1t5/mailarchiver:2606.3@sha256:9ab6f51fa036c7869f64cb052a18f7bb8b9951a120ce1c03df43a273a20d3f59
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data/data-protection-keys:/app/DataProtection-Keys
+      - ${APP_DATA_DIR}/data/appsettings.json:/app/appsettings.json
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:18.3-alpine3.23@sha256:4da1a4828be12604092fa55311276f08f9224a74a62dcb4708bd7439e2a03911
+    restart: on-failure
+    user: 1000:1000
+    environment:
+      POSTGRES_DB: mailarchiver
+      POSTGRES_USER: mailarchiver
+      POSTGRES_PASSWORD: mailarchiver
+    volumes:
+      - ${APP_DATA_DIR}/data/database:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mailarchiver -d mailarchiver"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s

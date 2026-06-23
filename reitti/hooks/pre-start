@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Reitti uses Redis only for cache/queue state. The previous Umbrel package used
+# Redis 8, whose RDB snapshots cannot be loaded by Redis 7. Run this migration
+# once per install so future Redis bumps are not affected by this compatibility
+# cleanup.
+redis_dir="${APP_DATA_DIR}/data/redis"
+rdb_file="${redis_dir}/dump.rdb"
+migration_marker="${APP_DATA_DIR}/.reitti-redis8-rdb-reset-complete"
+
+if [[ -f "${migration_marker}" ]]; then
+  exit 0
+fi
+
+if [[ -f "${rdb_file}" ]]; then
+  rdb_header="$(head -c 9 "${rdb_file}" || true)"
+  if [[ "${rdb_header}" =~ ^REDIS([0-9]{4})$ ]] && ((10#${BASH_REMATCH[1]} > 12)); then
+    echo "Removing incompatible Redis cache snapshot before starting Reitti."
+    rm -f "${rdb_file}"
+    rm -rf "${redis_dir}/appendonlydir"
+  fi
+fi
+
+touch "${migration_marker}" 2>/dev/null || true
