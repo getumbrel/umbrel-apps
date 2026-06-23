@@ -5,21 +5,26 @@ services:
     environment:
       APP_HOST: wger_nginx_1
       APP_PORT: 80
+      PROXY_AUTH_WHITELIST: "/allauth,/allauth/*,/api/v2,/api/v2/*,/ps,/ps/*,/media/exercise-images/*,/media/exercise-video/*,/media/ingredients/*"
 
   web:
-    image: wger/server:2.5@sha256:1cac2c62b8d85b54dab16291df802a1cdbf66828201b8df6104db0400320f0df
+    image: wger/server:2.6@sha256:997ead43aabdcd67d054f933e07d2b23875f01bf43271a267cb7796925ca27c4
     user: "1000:1000"
     depends_on:
       db:
         condition: service_healthy
       cache:
         condition: service_healthy
+      powersync_setup:
+        condition: service_completed_successfully
     environment:
       SECRET_KEY: ${APP_SEED}
-      SIGNING_KEY: ${APP_SEED}
       CSRF_TRUSTED_ORIGINS: http://${DEVICE_DOMAIN_NAME}:${APP_WGER_PORT},http://${DEVICE_HOSTNAME}:${APP_WGER_PORT},${APP_WGER_LOCAL_URLS}
-      SITE_URL: http://${DEVICE_DOMAIN_NAME}:8450
-      MEDIA_URL: http://${DEVICE_DOMAIN_NAME}:8450/media/
+      SITE_URL: http://${DEVICE_DOMAIN_NAME}:${APP_WGER_PORT}
+      MEDIA_URL: http://${DEVICE_DOMAIN_NAME}:${APP_WGER_PORT}/media/
+      PS_DATABASE_URI: postgres://wger:wger@db:5432/wger
+      PS_STORAGE_PG_URI: postgres://powersync_storage:${APP_SEED}@db:5432/wger
+      POWERSYNC_URL_PATH: ps
     env_file:
       - ${APP_DATA_DIR}/config/prod.env
     volumes:
@@ -33,10 +38,47 @@ services:
       retries: 5
     restart: on-failure
 
+  powersync_setup:
+    image: wger/server:2.6@sha256:997ead43aabdcd67d054f933e07d2b23875f01bf43271a267cb7796925ca27c4
+    user: "1000:1000"
+    command: ./manage.py setup-powersync-storage
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SECRET_KEY: ${APP_SEED}
+      PS_DATABASE_URI: postgres://wger:wger@db:5432/wger
+      PS_STORAGE_PG_URI: postgres://powersync_storage:${APP_SEED}@db:5432/wger
+    env_file:
+      - ${APP_DATA_DIR}/config/prod.env
+    restart: on-failure
+
+  powersync:
+    image: journeyapps/powersync-service:1.22.0@sha256:2d5084910f03a029174ebc7f7ce0c0d2c43e932ead63a2d87b919e90ebbb0e77
+    depends_on:
+      db:
+        condition: service_healthy
+      web:
+        condition: service_healthy
+      powersync_setup:
+        condition: service_completed_successfully
+    command: ["start", "-r", "unified"]
+    environment:
+      POWERSYNC_CONFIG_PATH: /config/powersync.yaml
+      PS_JWKS_URL: http://wger_web_1:8000/api/v2/powersync-keys
+      PS_DATABASE_URI: postgres://wger:wger@db:5432/wger
+      PS_STORAGE_PG_URI: postgres://powersync_storage:${APP_SEED}@db:5432/wger
+      PS_PORT: 8080
+    volumes:
+      - ${APP_DATA_DIR}/powersync.yaml:/config/powersync.yaml:ro
+      - ${APP_DATA_DIR}/sync_rules.yaml:/config/sync_rules.yaml:ro
+    restart: on-failure
+
   nginx:
-    image: nginx:alpine3.22@sha256:d67ea0d64d518b1bb04acde3b00f722ac3e9764b3209a9b0a98924ba35e4b779
+    image: nginx:alpine3.22@sha256:b3c656d55d7ad751196f21b7fd2e8d4da9cb430e32f646adcf92441b72f82b14
     depends_on:
       - web
+      - powersync
     volumes:
       - ${APP_DATA_DIR}/config/nginx.conf:/etc/nginx/conf.d/default.conf:ro
       - ${APP_DATA_DIR}/data/static:/wger/static:ro
@@ -52,6 +94,7 @@ services:
   db:
     image: postgres:17.5-alpine@sha256:6567bca8d7bc8c82c5922425a0baee57be8402df92bae5eacad5f01ae9544daa
     user: "1000:1000"
+    shm_size: 256mb
     environment:
       POSTGRES_USER: wger
       POSTGRES_PASSWORD: wger
@@ -59,6 +102,20 @@ services:
       TZ: Europe/Berlin
     volumes:
       - ${APP_DATA_DIR}/data/postgres-data:/var/lib/postgresql/data/
+    command:
+      - postgres
+      - -c
+      - wal_level=logical
+      - -c
+      - shared_buffers=256MB
+      - -c
+      - effective_cache_size=768MB
+      - -c
+      - work_mem=8MB
+      - -c
+      - random_page_cost=1.1
+      - -c
+      - max_connections=30
     healthcheck:
       test: pg_isready -U wger
       interval: 10s
@@ -81,9 +138,13 @@ services:
     restart: on-failure
 
   celery_worker:
-    image: wger/server:2.5@sha256:1cac2c62b8d85b54dab16291df802a1cdbf66828201b8df6104db0400320f0df
+    image: wger/server:2.6@sha256:997ead43aabdcd67d054f933e07d2b23875f01bf43271a267cb7796925ca27c4
     user: "1000:1000"
     command: /start-worker
+    environment:
+      SECRET_KEY: ${APP_SEED}
+      PS_DATABASE_URI: postgres://wger:wger@db:5432/wger
+      PS_STORAGE_PG_URI: postgres://powersync_storage:${APP_SEED}@db:5432/wger
     env_file:
       - ${APP_DATA_DIR}/config/prod.env
     volumes:
@@ -100,9 +161,13 @@ services:
     restart: on-failure
 
   celery_beat:
-    image: wger/server:2.5@sha256:1cac2c62b8d85b54dab16291df802a1cdbf66828201b8df6104db0400320f0df
+    image: wger/server:2.6@sha256:997ead43aabdcd67d054f933e07d2b23875f01bf43271a267cb7796925ca27c4
     user: "1000:1000"
     command: /start-beat
+    environment:
+      SECRET_KEY: ${APP_SEED}
+      PS_DATABASE_URI: postgres://wger:wger@db:5432/wger
+      PS_STORAGE_PG_URI: postgres://powersync_storage:${APP_SEED}@db:5432/wger
     volumes:
       - ${APP_DATA_DIR}/data/celery-beat:${APP_DATA_DIR}/beat/
     env_file:
