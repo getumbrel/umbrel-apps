@@ -191,9 +191,9 @@ services:
       retries: 12
       start_period: 30s
     ports:
-      - "3333:3333"
-      - "3334:3334"
-      - "4334:4334"
+      - "33333:3333"
+      - "33334:3334"
+      - "33444:4334"
     volumes:
       - ${APP_DATA_DIR}/data/ckpool/config:/etc/ckpool
       - ${APP_DATA_DIR}/data/ckpool/logs:/var/log/ckpool
@@ -231,7 +231,7 @@ services:
       ckpool:
         condition: service_healthy
     ports:
-      - "4333:4333"
+      - "34333:4333"
     volumes:
       - ${APP_DATA_DIR}/data/stunnel:/certs
 
@@ -273,18 +273,17 @@ services:
       - MAX_DIFFICULTY=0
       - BLOCKPOLL=50
       - UPDATE_INTERVAL=20
-      - STRATUM_PORT=3333
-      - STRATUM_PORT_HOBBY=3334
-      - STRATUM_PORT_NICEHASH=4334
+      - STRATUM_PORT=33333
+      - STRATUM_PORT_HOBBY=33334
+      - STRATUM_PORT_NICEHASH=33444
       - HIGH_DIFFICULTY=500000
-      - STRATUM_PORT_TLS=4333
+      - STRATUM_PORT_TLS=34333
 
   ui:
     image: ghcr.io/danhaus93-ops/solostrike-ui:v3.0.3@sha256:a2e1b34d557879232aa1df1b19ed64125f93512bc76c1f99429028da42e0753b
     restart: on-failure
     security_opt:
       - no-new-privileges:true
-    container_name: lonestrike_ui_1
     depends_on:
       - api
 
