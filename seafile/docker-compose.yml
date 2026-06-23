@@ -50,6 +50,8 @@ services:
       - CACHE_PROVIDER=memcached
       - MEMCACHED_HOST=memcached
       - MEMCACHED_PORT=11211
+    extra_hosts:
+      - "${DEVICE_DOMAIN_NAME}:host-gateway"
     depends_on:
       - db
       - memcached
