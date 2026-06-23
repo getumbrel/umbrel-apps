@@ -2,7 +2,7 @@ manifestVersion: 1
 id: dvb-warppool
 category: bitcoin
 name: dvb-WarpPool
-version: "1.10.0"
+version: "1.11.0"
 tagline: Self-hosted Bitcoin solo mining pool — Stratum V1 + V2, full operator UI
 description: >-
   dvb-WarpPool is a from-scratch, open-source solo Bitcoin mining pool you run
@@ -27,8 +27,10 @@ description: >-
     BIP54-forward-compatible coinbase locktime — valid under today's rules and
     ready for the Consensus Cleanup soft fork ahead of activation.
 
-  - Persisted, EMA-smoothed per-worker variable difficulty that survives
-    miner reconnects and pool restarts.
+  - Persisted, EMA-smoothed per-worker variable difficulty with a Poisson
+    significance gate that filters share-rate noise — fewer difficulty changes,
+    so ESP32 miner displays stay calm. Survives miner reconnects and pool
+    restarts.
 
   - Live operator PWA: real-time SSE dashboard, 24-hour hashrate chart with
     best-share peaks, per-worker breakdown, all-time leaderboard, coinbase
