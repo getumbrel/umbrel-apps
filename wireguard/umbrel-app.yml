@@ -3,7 +3,7 @@ id: wireguard
 name: WireGuard
 tagline: Run your own free and unlimited WireGuard VPN
 category: networking
-version: "14"
+version: "15.3.0"
 port: 51821
 description: >-
   WireGuard is an extremely simple yet fast and modern VPN that utilizes state-of-the-art cryptography.
@@ -46,7 +46,25 @@ description: >-
 
   If you scan the QR code or download the configuration file, make sure to change the hostname to your device's domain name or public IP address.
 releaseNotes: >-
-  This release upgrades WireGuard Easy to version 14.
+  ⚠️ Existing users: WireGuard Easy 15 is a complete rewrite. Before updating, open WireGuard Easy and download a backup of your existing configuration.
+
+
+  Umbrel will attempt to automatically migrate your existing WireGuard Easy 14 server keys and clients during the update. A copy of the old v14 configuration is preserved in the app data before migration.
+
+
+  After the update, log in with the default WireGuard credentials shown on the App Store page or in the prompt that appears when opening WireGuard.
+
+
+  If WireGuard was open during the update and the page behaves unexpectedly, close the tab and open WireGuard again. You can also hard refresh the page to clear the old WireGuard Easy 14 interface from your browser cache.
+
+
+  If the automatic migration does not complete, do not uninstall WireGuard. Use the v14 backup you downloaded before updating and follow WireGuard Easy's setup wizard to import an existing configuration.
+
+
+  This release adds the redesigned WireGuard Easy UI, API basic authentication, CIDR and IPv6 support, 2FA using TOTP, improved mobile support, userspace WireGuard support, client firewall filtering, QR code download improvements, and new translations.
+
+
+  Full release notes can be found at https://github.com/wg-easy/wg-easy/releases/tag/v15.3.0
 dependencies: []
 developer: Emile Nijssen
 website: https://github.com/wg-easy/wg-easy
@@ -59,3 +77,5 @@ gallery:
   - 2.jpg
   - 3.jpg
 path: ""
+defaultUsername: umbrel
+deterministicPassword: true
