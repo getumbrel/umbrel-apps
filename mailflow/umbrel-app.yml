@@ -2,7 +2,7 @@ manifestVersion: 1
 id: mailflow
 category: networking
 name: MailFlow
-version: "1.7.0"
+version: "1.7.1"
 tagline: Unified self-hosted webmail client
 description: >-
   MailFlow is a self-hosted unified webmail client. Connect multiple IMAP/SMTP
@@ -14,18 +14,12 @@ description: >-
   multiple themes, user management, SSO/OIDC support, and Microsoft 365 OAuth2
   support.
 releaseNotes: >-
-  MailFlow now lets admins run inbox rules on existing messages, adds arrow-key
-  message navigation, remembers compose window size, auto-saves closed compose
-  windows to Drafts, and warns about empty subjects or missing attachments before
-  sending.
+  MailFlow now handles malformed IMAP responses with missing UIDs more safely,
+  preventing affected messages from breaking sync.
 
 
-  Fixes improve IMAP sync, draft deletion, message bold/read state, and inbox
-  rule processing on large mailboxes.
-
-
-  Security update: nodemailer, ws, express, and qs were upgraded to resolve
-  several high and moderate CVEs.
+  IMAP sync also recovers more cleanly when messages are expunged during a sync
+  cycle, reducing noisy errors and aborted sync runs.
 developer: maathimself
 website: https://mailflow.sh
 repo: https://github.com/maathimself/mailflow
