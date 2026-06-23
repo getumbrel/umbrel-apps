@@ -1,0 +1,49 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: lightningmate_web_1
+      APP_PORT: 3001
+
+  # One-shot: make the bind-mounted data dir writable by the non-root app user.
+  # Docker creates the mount source as root, so without this the app (uid 1000)
+  # can't persist its config and settings silently reset on every restart/update.
+  init:
+    image: alpine:3.20
+    user: "0:0"
+    restart: "no"
+    command: sh -c "chown -R 1000:1000 /data"
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+
+  web:
+    image: ghcr.io/opensourceminers/lightningmate:v0.6.1@sha256:a1fc9f52c043f14b7b55ce29497ac6874085079abd527c3b9749c9d711100d62
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 1m
+    depends_on:
+      init:
+        condition: service_completed_successfully
+    volumes:
+      # Read-only access to LND's tls.cert + macaroons.
+      - ${APP_LIGHTNING_NODE_DATA_DIR}:/lnd:ro
+      # App's own writable data dir (autopilot config + rebalance accounting).
+      - ${APP_DATA_DIR}/data:/data
+    environment:
+      APP_LIGHTNING_NODE_IP: "$APP_LIGHTNING_NODE_IP"
+      APP_LIGHTNING_NODE_GRPC_PORT: "$APP_LIGHTNING_NODE_GRPC_PORT"
+      LND_SOCKET: "$APP_LIGHTNING_NODE_IP:$APP_LIGHTNING_NODE_GRPC_PORT"
+      LND_DIR: "/lnd"
+      LND_CERT_PATH: "/lnd/tls.cert"
+      LND_MACAROON_PATH: "/lnd/data/chain/bitcoin/mainnet/readonly.macaroon"
+      DATA_DIR: "/data"
+      PORT: "3001"
+      # Bind all interfaces so app_proxy (which authenticates) can reach us.
+      LM_BIND: "0.0.0.0"
+      # Node management needs write access (like RTL / Thunderhub / Lightning
+      # Terminal). The autopilot itself stays OFF until the user turns it on, and
+      # every fund-moving action asks for confirmation. To run read-only instead,
+      # comment these two lines out.
+      LM_ENABLE_WRITE: "true"
+      LND_WRITE_MACAROON_PATH: "/lnd/data/chain/bitcoin/mainnet/admin.macaroon"
