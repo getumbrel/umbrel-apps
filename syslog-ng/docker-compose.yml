@@ -21,6 +21,14 @@ services:
     volumes:
       - ${APP_DATA_DIR}/data/config:/config
       - ${APP_DATA_DIR}/data/logs:/var/log
+    # Logdy expands /data/*.log once at startup, so create the first matching
+    # log file before the web service starts on fresh installs.
+    healthcheck:
+      test: ["CMD-SHELL", "test -f /var/log/messages-kv.log || touch /var/log/messages-kv.log"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
 
   web:
     image: rickraven/logdy:0.17.1@sha256:a1438c758ed3735e9b06205168a3c63e39bd0895bc5f0cd1adf4ed2270ae66cb
@@ -33,4 +41,5 @@ services:
     volumes:
       - ${APP_DATA_DIR}/data/logs:/data:ro
     depends_on:
-      - syslog
+      syslog:
+        condition: service_healthy
