@@ -103,6 +103,12 @@ for i in $(seq 1 "${DOCKER_READY_TIMEOUT_SECONDS}"); do
         docker_ready="true"
         break
     fi
+    if ! kill -0 "${DOCKERD_PID}" 2>/dev/null
+    then
+        wait "${DOCKERD_PID}" 2>/dev/null || true
+        echo "Dockerd exited before becoming ready."
+        exit 1
+    fi
     echo "Waiting for dockerd... (attempt $i/${DOCKER_READY_TIMEOUT_SECONDS})"
     sleep 1
 done
