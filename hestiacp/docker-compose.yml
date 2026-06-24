@@ -3,8 +3,8 @@ version: "3.7"
 services:
   # HestiaCP serves a self-signed HTTPS panel on 8083. Umbrel's app_proxy
   # validates upstream TLS and can't skip it, so a tiny socat sidecar tunnels
-  # plain HTTP -> TLS to the panel. PROXY_AUTH_ADD is off (HestiaCP has its own
-  # login).
+  # plain HTTP to TLS to the panel. PROXY_AUTH_ADD is off (HestiaCP has its
+  # own login).
   app_proxy:
     environment:
       APP_HOST: hestiacp_sslproxy_1
@@ -19,12 +19,15 @@ services:
       - "OPENSSL-CONNECT:hestiacp_hestia_1:8083,verify=0"
 
   hestia:
-    # Non-privileged, multi-arch HestiaCP (built in github.com/ptrinh/hestiacp-docker).
-    image: ghcr.io/ptrinh/hestiacp:c6d176ee763a0cb07bc271e77c7484982b372d86@sha256:e1939cd9d619e89eb845bcf124a04b29d217b7eca0fff576d5cb9705e12a8883
+    # Non-privileged, multi-arch HestiaCP (github.com/ptrinh/hestiacp-docker).
+    image: ghcr.io/ptrinh/hestiacp:build-28066541490@sha256:46e47e46435c7872712be80d11dfc08f556e02e1165c44c5975361bca446be50
     restart: on-failure
     stop_grace_period: 1m
     environment:
       - TZ=UTC
+      # The image entrypoint sets HestiaCP's admin password to this on first
+      # start (once), before the app is reported ready.
+      - APP_PASSWORD=${APP_PASSWORD}
     volumes:
       - ${APP_DATA_DIR}/data/home:/home
       - ${APP_DATA_DIR}/data/mysql:/var/lib/mysql
@@ -36,8 +39,10 @@ services:
     ports:
       - "9088:80"
       - "9448:443"
+    # Render-check the login UI: a plain request to / still 302s even when the
+    # PHP UI is broken, so we verify the login form actually renders.
     healthcheck:
-      test: ["CMD-SHELL", "curl -k -sf https://localhost:8083/ >/dev/null || exit 1"]
+      test: ["CMD-SHELL", "curl -k -fs https://localhost:8083/login/ | grep -q 'name=.user.' || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 10
