@@ -78,6 +78,7 @@ fi
 DOCKER_SOCKET="/data/docker.sock"
 DOCKER_VOLUME_NAME="sv2-config"
 CONFIG_SOURCE_PATH="/app/data/config"
+DOCKER_READY_TIMEOUT_SECONDS=180
 
 echo "Starting dockerd in background..."
 
@@ -96,19 +97,19 @@ DOCKERD_PID=$!
 # Wait for dockerd to be ready before proceeding with setup
 echo "Waiting for dockerd to be ready..."
 docker_ready="false"
-for i in $(seq 1 30); do
+for i in $(seq 1 "${DOCKER_READY_TIMEOUT_SECONDS}"); do
     if docker -H unix://${DOCKER_SOCKET} info >/dev/null 2>&1; then
         echo "Dockerd is ready!"
         docker_ready="true"
         break
     fi
-    echo "Waiting for dockerd... (attempt $i/30)"
+    echo "Waiting for dockerd... (attempt $i/${DOCKER_READY_TIMEOUT_SECONDS})"
     sleep 1
 done
 
 if [[ "${docker_ready}" != "true" ]]
 then
-    echo "Dockerd did not become ready in time."
+    echo "Dockerd did not become ready within ${DOCKER_READY_TIMEOUT_SECONDS} seconds."
     stop_dockerd
     exit 1
 fi

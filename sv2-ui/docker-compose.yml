@@ -22,11 +22,11 @@ services:
         --host unix:///data/docker.sock
         --pidfile /data/docker.pid
     healthcheck:
-      test: ["CMD", "docker", "-H", "unix:///data/docker.sock", "info"]
+      test: ["CMD-SHELL", "docker -H unix:///data/docker.sock volume inspect sv2-config >/dev/null"]
       interval: 5s
       timeout: 5s
       retries: 10
-      start_period: 10s
+      start_period: 180s
     volumes:
       - ${APP_DATA_DIR}/entrypoint.sh:/entrypoint.sh
       - ${APP_DATA_DIR}/data/docker:/data
