@@ -5,35 +5,12 @@ services:
     environment:
       APP_HOST: dvb-warppool_web_1
       APP_PORT: 18334
-      PROXY_AUTH_ADD: "false"
-
-  # First-run init: runs as root only to chown the bind-mounted data + config
-  # dirs to the warppool user (uid 1000). Without this, Docker creates the
-  # mountpoints as root:root and the setup wizard can't write config.toml.
-  # The container exits immediately after the chown.
-  init:
-    image: ghcr.io/dvb-projekt/dvb-warppool:1.11.0@sha256:46b23d7f7125a92b21094f9673623586ed5926d29a51a73b508a7468a771533b
-    user: "0:0"
-    restart: on-failure
-    volumes:
-      - ${APP_DATA_DIR}/data:/data
-      - ${APP_DATA_DIR}/config:/config
-    command:
-      - /bin/sh
-      - -c
-      - |
-        chown -R 1000:1000 /data /config
-        chmod 755 /data /config
-        echo "[init] chown done — /data + /config now owned by warppool:1000"
 
   web:
-    image: ghcr.io/dvb-projekt/dvb-warppool:1.11.0@sha256:46b23d7f7125a92b21094f9673623586ed5926d29a51a73b508a7468a771533b
+    image: ghcr.io/dvb-projekt/dvb-warppool:1.12.0@sha256:33360466a2f6927f17ea091f937d475fe850125c0724d58a5da308cf8cff9432
     user: "1000:1000"
     restart: on-failure
     stop_grace_period: 1m
-    depends_on:
-      init:
-        condition: service_completed_successfully
     ports:
       # Stratum listeners. Host port = container port so the UI's connect
       # modal shows the correct port. Picked in the app's 188xx range to stay
@@ -49,9 +26,6 @@ services:
     volumes:
       - ${APP_DATA_DIR}/data:/data
       - ${APP_DATA_DIR}/config:/config
-      # Bitcoin Core RPC cookie (read-only). User/Pass via APP_BITCOIN_* env
-      # vars is the default path on umbrelOS; the cookie is a fallback.
-      - ${APP_BITCOIN_DATA_DIR}/.cookie:/bitcoin.cookie:ro
     environment:
       DVB_WARPPOOL_CONFIG: /config/config.toml
       DVB_WARPPOOL_SECRETS: /config/secrets.toml
