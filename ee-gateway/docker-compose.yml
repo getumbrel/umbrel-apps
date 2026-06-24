@@ -35,7 +35,7 @@ services:
   # extra download, and it is the only place root is used. This is NOT privileged
   # mode; the app containers themselves stay non-root.
   init_perms:
-    image: encryptedenergy/ee-gateway-worker:0.7.4@sha256:c9487c7d138e871fd49298ba4f2a4ba2e57173a4e24cfd30e57774026dbcc898
+    image: encryptedenergy/ee-gateway-worker:0.7.5@sha256:e1ce654087e6db114ea8bbb6ae195e96b85330bd3108d6e1616c3a9bee4880d3
     user: "0:0"
     entrypoint: ["sh", "-c", "chown -R 1000:1000 /data"]
     restart: on-failure
@@ -57,7 +57,7 @@ services:
     environment:
       EE_DATA_DIR: /data
       EE_UI_PORT: 8080
-      EE_GATEWAY_VERSION: "0.10.3"
+      EE_GATEWAY_VERSION: "0.10.4"
 
   # BLE scan + GPS-stamped cloud ingest worker. It reaches the host's
   # Bluetooth radio through bluetoothd over the D-Bus system bus, talks to
@@ -66,7 +66,7 @@ services:
   # Python process runs as uid 1000; gpsd starts as root only to open the
   # serial device, then drops to user nobody.
   worker:
-    image: encryptedenergy/ee-gateway-worker:0.7.4@sha256:c9487c7d138e871fd49298ba4f2a4ba2e57173a4e24cfd30e57774026dbcc898
+    image: encryptedenergy/ee-gateway-worker:0.7.5@sha256:e1ce654087e6db114ea8bbb6ae195e96b85330bd3108d6e1616c3a9bee4880d3
     init: true
     restart: on-failure
     depends_on:
@@ -74,9 +74,12 @@ services:
         condition: service_completed_successfully
     # Host networking gives the container direct use of the host Bluetooth
     # stack. Docker does not bridge BlueZ, so this is the only path that
-    # exposes the host's Bluetooth radio to the container. The worker uses
-    # the host network only for outbound HTTPS; it does not bind any
-    # listening port.
+    # exposes the host's Bluetooth radio to the container. The worker
+    # makes outbound HTTPS calls only; it does not bind any LAN-facing
+    # listening port. The container does run a bundled gpsd internally
+    # for the optional GPS dongle, but as of worker 0.7.5 it is started
+    # without -G, so it binds 127.0.0.1:2947 (loopback) only — the worker
+    # reads from that same loopback, no other consumer.
     network_mode: host
     # The only privilege grant for BLE: NET_ADMIN + NET_RAW let the
     # Bluetooth stack manage and read from the radio. Deliberately NO
