@@ -7,7 +7,7 @@ services:
       APP_PORT: 3001
 
   web:
-    image: ghcr.io/opensourceminers/lightningmate:v0.6.1@sha256:a1fc9f52c043f14b7b55ce29497ac6874085079abd527c3b9749c9d711100d62
+    image: ghcr.io/opensourceminers/lightningmate:v0.6.4@sha256:17c0e24aa4b01c34c0e76b37dfd4ac3b87f4a04db72b93cb09e3306dc687a46d
     user: "1000:1000"
     restart: on-failure
     stop_grace_period: 1m
@@ -22,14 +22,20 @@ services:
       LND_SOCKET: "$APP_LIGHTNING_NODE_IP:$APP_LIGHTNING_NODE_GRPC_PORT"
       LND_DIR: "/lnd"
       LND_CERT_PATH: "/lnd/tls.cert"
-      LND_MACAROON_PATH: "/lnd/data/chain/bitcoin/mainnet/readonly.macaroon"
+      LND_MACAROON_PATH: "/lnd/data/chain/bitcoin/$APP_BITCOIN_NETWORK/readonly.macaroon"
       DATA_DIR: "/data"
       PORT: "3001"
       # Bind all interfaces so app_proxy (which authenticates) can reach us.
       LM_BIND: "0.0.0.0"
+      # Per-install secrets for server-side auth. Other app containers share the
+      # Docker network, so the whole API requires a session token proving the
+      # per-app password Umbrel shows the user ($APP_PASSWORD, from
+      # deterministicPassword); $APP_SEED signs the tokens.
+      APP_PASSWORD: "$APP_PASSWORD"
+      APP_SEED: "$APP_SEED"
       # Node management needs write access (like RTL / Thunderhub / Lightning
       # Terminal). The autopilot itself stays OFF until the user turns it on, and
       # every fund-moving action asks for confirmation. To run read-only instead,
       # comment these two lines out.
       LM_ENABLE_WRITE: "true"
-      LND_WRITE_MACAROON_PATH: "/lnd/data/chain/bitcoin/mainnet/admin.macaroon"
+      LND_WRITE_MACAROON_PATH: "/lnd/data/chain/bitcoin/$APP_BITCOIN_NETWORK/admin.macaroon"
