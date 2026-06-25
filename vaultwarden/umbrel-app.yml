@@ -2,53 +2,61 @@ manifestVersion: 1
 id: vaultwarden
 category: files
 name: Vaultwarden
-version: "1.34.3"
+version: "1.36.0"
 tagline: Unofficial Bitwarden® compatible server
 description: >-
-  Vaultwarden is an alternative
-  implementation of the Bitwarden® server API that is compatible with
-  Bitwarden® clients*. Vaultwarden is perfect for self-hosting all of
-  your passwords in an encrypted vault on your Umbrel. Vaultwarden is a full
-  implementation of Bitwarden® API that includes:
+  Vaultwarden is an unofficial Bitwarden-compatible server for self-hosting your encrypted password vault on Umbrel. It works with many official Bitwarden clients and provides a lightweight alternative to the official Bitwarden server.
 
 
-  - Organizations support
+  🛠️ **SET-UP REQUIRED**
 
-  - Attachments
-
-  - Vault API support
-
-  - Serving the static files for Vault interface
-
-  - Website icons API
-
-  - Authenticator and U2F support
-
-  - YubiKey and Duo support
-
-  - Emergency Access
+  Vaultwarden needs to be opened through HTTPS or Tor Browser for account creation. Many Bitwarden clients also require an HTTPS server URL. The easiest private HTTPS option is Tailscale Serve, which gives Vaultwarden an HTTPS URL that only devices in your Tailscale network can access.
 
 
-  🛠️ SET-UP INSTRUCTIONS
+  **Option 1: Set up with Tailscale Serve**
 
-  Vaultwarden's web interface is not accessible over http, meaning that to access it for initial set-up you need to use Tor. Here's how to do it:
+  - Install and sign in to the Tailscale app on your Umbrel.
 
-  - Ensure your Umbrel is accessible over Tor by going to Settings in your dashboard and toggling "Remote Tor access" to enabled. You will need to restart your Umbrel if Remote Tor access was previously disabled.
-  
-  - Access your umbrel through a Tor browser using the .onion address shown in Settings under "Remote Tor access". 
+  - In the Tailscale admin console, enable MagicDNS and HTTPS Certificates.
 
-  - In your Tor browser, open the Vaultwaden app and create an account.
+  - On your Umbrel, go to Settings > Advanced settings > Terminal and select the Tailscale app.
 
-  - Once you've created an account, you can connect your Vaultwarden server from any Bitwarden app (mobile, desktop, browser, etc) by adding your server IP details.
+  - Run `tailscale serve --bg --https=443 http://127.0.0.1:8089`.
 
-  - For the most robust connection from anywhere, install Tailscale on your Umbrel and your devices, and use the Tailscale IP address to connect to your Vaultwarden server.
+  - Open the HTTPS URL shown by Tailscale and create your Vaultwarden account.
+
+  - Use that same HTTPS URL as the self-hosted server URL in Bitwarden clients.
+
+  > **Note:** Clicking the Vaultwarden app icon in the Umbrel dashboard may still show a Tor access warning. When using Tailscale Serve, open the Tailscale HTTPS URL directly instead.
 
 
-  *Please note that Vaultwarden is not associated with the Bitwarden® project nor 8bit Solutions LLC. When using this app, please report any bugs or suggestions to us directly, regardless of whatever clients you are using (mobile, desktop, browser, etc), and do not use Bitwarden®'s official support channels.
+  **Option 2: Set up with Tor**
+
+  - Ensure your Umbrel is accessible over Tor by going to Settings > Advanced settings and toggling "Remote Tor access" to enabled. You will need to restart your Umbrel if Remote Tor access was previously disabled.
+
+  - Access your Umbrel through Tor Browser using the .onion address shown in Settings under "Remote Tor access".
+
+  - In Tor Browser, open the Vaultwarden app and create an account.
+
+
+  🔐 **CONNECTING BITWARDEN CLIENTS**
+
+  Official Bitwarden clients may reject plain HTTP URLs, including http://umbrel.local, plain Tailscale IP addresses, and onion HTTP URLs. Use the Tailscale Serve HTTPS URL or another HTTPS reverse proxy URL for client connections.
+
+
+  **Features:** Vaultwarden supports personal vaults, organizations, attachments, Bitwarden Send, website icons, two-factor authentication, emergency access, and the Vaultwarden admin backend.
+
+
+  **Disclaimer:** Vaultwarden is not associated with Bitwarden or 8bit Solutions LLC. For Vaultwarden issues, contact Vaultwarden/Umbrel support rather than Bitwarden's official support channels.
 
 releaseNotes: >-
   This release includes:
-    - Fixed an issue with MySQL/MariaDB database connections when using Alpine images
+    - Security fixes for SSO login, user and organization enumeration, SSO account binding, icon fetching, and other components
+    - Support for newer Bitwarden client login flows, including the updated prelogin endpoint
+    - Restores web vault account creation over Umbrel's Tor hidden service with newer Bitwarden HTTPS checks
+    - Web Vault updated to v2026.4.1
+    - Item archiving support
+    - Fixes for favicon fetching and SSO behavior
 
 
   Full release notes are available at https://github.com/dani-garcia/vaultwarden/releases
