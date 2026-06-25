@@ -6,15 +6,15 @@ Browse the store at https://apps.umbrel.com.
 
 ## Contributing
 
-Before adding or updating app packages, read `AGENTS.md`.
+The easiest way to contribute is to send your coding agent to this repository and have it read `AGENTS.md`. That file helps the agent choose the right repo-local skill for the work: packaging an existing app, updating an App Store package, testing a package, or building a self-hosted app that can be packaged for the App Store.
 
-`AGENTS.md` routes app packaging, updates, and testing to the repo-local skills in `.claude/skills/`. Those skills are the source of truth for packaging rules and verification steps.
+The skills in `.claude/skills/` capture the current Umbrel App Store guidance for app development, packaging, and verification.
 
 ## App Store Standard
 
-Every app package should open to a web UI, status page, or setup page that makes the app usable without SSH or CLI access.
+Every app package should be understandable from the browser after install. It should open to a web UI, setup flow, login page, or status page that gives users a clear next step without SSH, CLI access, log scraping, or manual file edits.
 
-Beyond that, apps should feel natural on umbrelOS: sensible defaults, browser-based setup, predictable updates, and careful handling of user data. Some apps need special setup or expose advanced controls, but the default path should be understandable from the browser.
+Beyond that, apps should feel natural on umbrelOS: sensible defaults, browser-based setup, predictable updates, and careful handling of user data. Some apps need special setup or expose advanced controls, but the default path should be clear from the browser.
 
 ## App Store Badges
 
