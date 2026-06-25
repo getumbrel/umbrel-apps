@@ -1,0 +1,47 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: singularity-pool_pool_1
+      APP_PORT: 3337
+      PROXY_AUTH_WHITELIST: "/api/state,/events,/api/logs,/api/diag,/widget-api/*"
+
+  pool:
+    # Pre-built, multi-arch (amd64+arm64), pinned by manifest-list digest — required
+    # by the official App Store (no build from source). Image is public on GHCR.
+    image: ghcr.io/blackhole-axe/singularity-pool:1.7.0@sha256:df628f69a02721765f611a9aba0317f255cc3b4dc07e63cf0f245487c6ab95e1
+    restart: on-failure
+    stop_grace_period: 30s
+    ports:
+      - "2038:2038" # Stratum — point your ASIC miners here
+    volumes:
+      - "${APP_DATA_DIR}/data:/data"
+    environment:
+      # Bitcoin node — injected automatically by Umbrel (dependencies: [bitcoin])
+      RPC_URL: http://${APP_BITCOIN_NODE_IP}:${APP_BITCOIN_RPC_PORT}/
+      RPC_USER: ${APP_BITCOIN_RPC_USER}
+      RPC_PASS: ${APP_BITCOIN_RPC_PASS}
+      ZMQ_BLOCKS: tcp://${APP_BITCOIN_NODE_IP}:${APP_BITCOIN_ZMQ_HASHBLOCK_PORT}
+      BITCOIN_NETWORK: mainnet
+      # Per-miner mode: no default wallet. Every miner is paid to the address it
+      # uses as its Stratum username; address-less miners are rejected.
+      PAYOUT_ADDRESS: ""
+      COINBASE_TAG: "SINGULARITY on Umbrel"
+      STRATUM_PORT: "2038"
+      STRATUM_BIND: "0.0.0.0"
+      DASHBOARD_PORT: "3337"
+      DASHBOARD_BIND: "0.0.0.0"
+      START_DIFFICULTY: "1024"
+      MIN_DIFFICULTY: "1024"
+      MAX_DIFFICULTY: "0"
+      TARGET_SHARE_SECS: "8"
+      RETARGET_SECS: "30"
+      VERSION_MASK: "1fffe000"
+      TEMPLATE_REFRESH_MS: "30000"
+      POLL_FALLBACK_MS: "250"
+      INSTANT_EMPTY_JOB: "true"
+      STALE_GRACE_MS: "3000"
+      WORKER_IDLE_SECS: "300"
+      DATA_DIR: "/data"
+      NODE_ENV: "production"

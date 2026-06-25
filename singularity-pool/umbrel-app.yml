@@ -1,0 +1,55 @@
+manifestVersion: 1
+id: singularity-pool
+category: bitcoin
+name: SINGULARITY Pool
+version: "1.7.0"
+tagline: Zero-fee solo Bitcoin mining pool
+description: >-
+  Self-hosted solo Bitcoin mining pool. Connects automatically to your Bitcoin
+  Core node — no manual RPC or ZMQ configuration required.
+
+
+  Zero fees: if you find a block, 100% of the reward goes to your wallet. Each
+  miner uses its own Bitcoin address as the Stratum username, so whoever finds
+  the block is paid directly — the pool never holds a default wallet.
+
+
+  Connect your ASICs:
+
+  - URL: stratum+tcp://umbrel.local:2038
+
+  - Worker / Username: your Bitcoin address (e.g. bc1q...), optionally ADDRESS.workername
+
+  - Password: anything (e.g. x)
+releaseNotes: ""
+developer: BlackHole-Axe
+website: https://github.com/BlackHole-Axe/singularity-umbrel
+dependencies:
+  - bitcoin
+repo: https://github.com/BlackHole-Axe/singularity-umbrel
+support: https://github.com/BlackHole-Axe/singularity-umbrel/issues
+port: 3337
+gallery: []
+path: ""
+defaultUsername: ""
+defaultPassword: ""
+submitter: BlackHole-Axe
+submission: ""
+widgets:
+  - id: "stats"
+    type: "four-stats"
+    refresh: "5s"
+    endpoint: "pool:3337/widget-api/stats"
+    link: ""
+    example:
+      type: "four-stats"
+      link: ""
+      items:
+        - title: "Hash Rate"
+          text: "719 TH/s"
+        - title: "Miners"
+          text: "17"
+        - title: "Blocks Found"
+          text: "0"
+        - title: "Best Share"
+          text: "2.07G"
