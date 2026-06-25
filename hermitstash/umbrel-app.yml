@@ -2,7 +2,7 @@ manifestVersion: 1
 id: hermitstash
 category: files
 name: HermitStash
-version: "1.12.7"
+version: "1.12.11"
 tagline: Post-quantum encrypted self-hosted file sharing
 description: >-
   HermitStash is a self-hosted file upload server with post-quantum encryption. Every file and database field is sealed with an ML-KEM-1024 + ECDH P-384 hybrid envelope and XChaCha20-Poly1305 before touching disk; passwords use Argon2id. Nothing is stored in plaintext, including database fields the operator never thinks of as sensitive.
@@ -31,11 +31,11 @@ defaultPassword: ""
 submitter: dotCooCoo
 submission: https://github.com/getumbrel/umbrel-apps/pull/5378
 releaseNotes: >-
-  Encrypts every stored object in the application before it leaves the process, and removes the old S3 direct-download mode so downloads always stream through HermitStash's encryption layer.
+  Adds security hardening across file sharing and account flows, including verified email changes before anonymous uploads can be claimed, rate-limited and memory-bounded public ZIP downloads, and admin APIs that no longer expose file keys or bundle secrets.
 
 
-  Strengthens credential and backup-code checks with constant-time comparisons, atomic failed-login lockouts, and time-bound OAuth state handling.
+  Improves backup, restore, and vault safety with checksum-verified restores, rollback of certificate material on restore failure, rotation-safe database encryption, and fixes for permanent backup/restore locks.
 
 
-  Improves reverse-proxy session binding, supports CIDR ranges in trusted-proxy settings, caps chunked uploads before reassembly, and includes the latest bundled framework security fixes.
+  Strengthens sessions, lockouts, quotas, token checks, webhook handling, and sync enrollment while fixing admin reset/search, stash counters, and webhook delivery/history behavior.
 dependencies: []
