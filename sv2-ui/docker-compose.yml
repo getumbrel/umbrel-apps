@@ -6,7 +6,7 @@ services:
       PROXY_AUTH_ADD: "false"
 
   docker:
-    image: docker:27.2.0-dind@sha256:f9f72ad901a78f27be922b2d320bbc263174f12919c1b37e6a01f828fa904565
+    image: docker:28.3.0-dind@sha256:56e360024d7d35dac801b8fc87f869ccf5c89b88399dd266f7cfc1169690a86b
     privileged: true
     network_mode: host
     stop_grace_period: 1m
@@ -22,11 +22,11 @@ services:
         --host unix:///data/docker.sock
         --pidfile /data/docker.pid
     healthcheck:
-      test: ["CMD", "docker", "-H", "unix:///data/docker.sock", "info"]
+      test: ["CMD-SHELL", "docker -H unix:///data/docker.sock volume inspect sv2-config >/dev/null"]
       interval: 5s
       timeout: 5s
       retries: 10
-      start_period: 10s
+      start_period: 180s
     volumes:
       - ${APP_DATA_DIR}/entrypoint.sh:/entrypoint.sh
       - ${APP_DATA_DIR}/data/docker:/data
