@@ -85,16 +85,17 @@ echo "Starting dockerd in background..."
 # Cleanup in case of a direct run or bad shutdown. The Umbrel pre-start hook also
 # removes persistent DIND runtime state before this container starts.
 rm -f /data/docker.pid
+rm -f "${DOCKER_SOCKET}"
 
 trap stop_dockerd INT TERM
 
 # Start dockerd in background, we need to perform setup operations
-# after dockerd starts but before nested containers are created
-dockerd-entrypoint.sh $@ &
+# after dockerd starts but before nested containers are created.
+dockerd-entrypoint.sh "$@" &
 
 DOCKERD_PID=$!
 
-# Wait for dockerd to be ready before proceeding with setup
+# Wait for dockerd to be ready before proceeding with setup.
 echo "Waiting for dockerd to be ready..."
 docker_ready="false"
 for i in $(seq 1 "${DOCKER_READY_TIMEOUT_SECONDS}"); do
@@ -102,12 +103,6 @@ for i in $(seq 1 "${DOCKER_READY_TIMEOUT_SECONDS}"); do
         echo "Dockerd is ready!"
         docker_ready="true"
         break
-    fi
-    if ! kill -0 "${DOCKERD_PID}" 2>/dev/null
-    then
-        wait "${DOCKERD_PID}" 2>/dev/null || true
-        echo "Dockerd exited before becoming ready."
-        exit 1
     fi
     echo "Waiting for dockerd... (attempt $i/${DOCKER_READY_TIMEOUT_SECONDS})"
     sleep 1

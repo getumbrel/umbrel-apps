@@ -8,7 +8,7 @@ DOCKER_DIR="${APP_DATA_DIR}/docker"
 ENTRYPOINT_FILE="${APP_DIR}/entrypoint.sh"
 
 # entrypoint.sh is mounted from app data but is not copied into existing installs
-# during app updates, so migrate the v0.1.0 startup checks in place.
+# during app updates, so migrate the v0.1.0 timeout in place.
 if [[ -f "${ENTRYPOINT_FILE}" ]] && grep -q 'for i in $(seq 1 30); do' "${ENTRYPOINT_FILE}"
 then
     sed -i.bak \
@@ -17,22 +17,6 @@ DOCKER_READY_TIMEOUT_SECONDS=180' \
         -e 's/for i in $(seq 1 30); do/for i in $(seq 1 "${DOCKER_READY_TIMEOUT_SECONDS}"); do/' \
         -e 's/attempt $i\/30/attempt $i\/${DOCKER_READY_TIMEOUT_SECONDS}/' \
         -e 's/Dockerd did not become ready in time\./Dockerd did not become ready within ${DOCKER_READY_TIMEOUT_SECONDS} seconds./' \
-        "${ENTRYPOINT_FILE}"
-    rm -f "${ENTRYPOINT_FILE}.bak"
-fi
-
-if [[ -f "${ENTRYPOINT_FILE}" ]] \
-    && ! grep -q 'Dockerd exited before becoming ready\.' "${ENTRYPOINT_FILE}" \
-    && grep -q 'echo "Waiting for dockerd... (attempt' "${ENTRYPOINT_FILE}"
-then
-    sed -i.bak \
-        -e '/echo "Waiting for dockerd... (attempt/i\
-    if ! kill -0 "${DOCKERD_PID}" 2>/dev/null\
-    then\
-        wait "${DOCKERD_PID}" 2>/dev/null || true\
-        echo "Dockerd exited before becoming ready."\
-        exit 1\
-    fi' \
         "${ENTRYPOINT_FILE}"
     rm -f "${ENTRYPOINT_FILE}.bak"
 fi
