@@ -1,0 +1,25 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: freeport-nostr-mcp_server_1
+      APP_PORT: 8788
+
+  server:
+    image: ghcr.io/ptrinh/freeport-nostr-mcp:0.5.0@sha256:013579dd5513d1df9e14523368321a567e30269244ee291583788c9b6849a277
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8788
+      # Rate limits (per-IP + global token buckets)
+      - RATE_LIMIT_PER_MIN=300
+      - RATE_LIMIT_BURST=60
+      - RATE_LIMIT_GLOBAL_PER_MIN=2500
+      # Push notifier. VAPID keys auto-generate into DATA_DIR on first run.
+      - ENABLE_NOTIFY=1
+      - DATA_DIR=/data
+      - VAPID_SUBJECT=mailto:admin@umbrel.local
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
