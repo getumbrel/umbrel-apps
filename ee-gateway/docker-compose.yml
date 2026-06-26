@@ -1,0 +1,117 @@
+# EE Gateway: Umbrel app composition
+# Copyright (C) 2026 encryptedenergy.com
+# SPDX-License-Identifier: GPL-3.0-only
+#
+# Two services share ${APP_DATA_DIR}/data (mounted at /data) for file-based
+# IPC: the UI writes config.json, the worker writes state.json and packets.db.
+# They never communicate over the network, so the worker can run on the host
+# network (which it needs to reach the Bluetooth radio) while the UI stays on
+# Umbrel's app network behind app_proxy.
+#
+# Credentials are NOT passed as environment variables here. The user enters the
+# upstream network's org id and API token once in the UI setup wizard, which
+# writes them to config.json in the shared volume; the worker reads that file
+# every scan cycle.
+#
+# umbreld creates ${APP_DATA_DIR}/data owned by root, but both app containers
+# run as uid 1000 and so cannot write it. The init_perms service fixes ownership
+# once before the app containers start. The worker also carries a restart policy
+# so a transient Bluetooth or D-Bus error on real hardware self-heals.
+
+version: "3.7"
+
+services:
+
+  # Umbrel's reverse proxy. It terminates Umbrel auth and forwards to the UI.
+  # APP_HOST format is <app-id>_<compose-service-name>_1.
+  app_proxy:
+    environment:
+      APP_HOST: ee-gateway_ui_1
+      APP_PORT: 8080
+
+  # One-time root init. umbreld creates the shared /data dir owned by root; both
+  # app containers run as uid 1000 and cannot write it. This chowns /data to
+  # 1000:1000 and exits. It reuses the already-pulled worker image so there is no
+  # extra download, and it is the only place root is used. This is NOT privileged
+  # mode; the app containers themselves stay non-root.
+  init_perms:
+    image: encryptedenergy/ee-gateway-worker:0.7.5@sha256:0b58f6e9e1b0ca5c15150b23ac66958a27fac84db5487581495bf9a0a2c99999
+    user: "0:0"
+    entrypoint: ["sh", "-c", "chown -R 1000:1000 /data"]
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+
+  # Flask setup wizard + status dashboard. Fully unprivileged: no host network,
+  # no added capabilities, no Bluetooth access. During setup it may make
+  # outbound HTTPS requests to encryptedenergy.com to verify credentials.
+  # Runs as uid 1000 (set in the image). init: true so SIGTERM reaches Flask
+  # for a clean shutdown.
+  ui:
+    image: encryptedenergy/ee-gateway-ui:0.6.2@sha256:c565138959c1498706d4954521ff7630cb41f8fec4b2ec1ef91e6a2d36f15a4e
+    init: true
+    restart: on-failure
+    depends_on:
+      init_perms:
+        condition: service_completed_successfully
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+    environment:
+      EE_DATA_DIR: /data
+      EE_UI_PORT: 8080
+      EE_GATEWAY_VERSION: "0.10.4"
+
+  # BLE scan + GPS-stamped cloud ingest worker. It reaches the host's
+  # Bluetooth radio through bluetoothd over the D-Bus system bus, talks to
+  # a bundled gpsd against an optional USB GPS dongle for per-packet
+  # coordinates, and makes outbound HTTPS calls to encryptedenergy.com. The
+  # Python process runs as uid 1000; gpsd starts as root only to open the
+  # serial device, then drops to user nobody.
+  worker:
+    image: encryptedenergy/ee-gateway-worker:0.7.5@sha256:0b58f6e9e1b0ca5c15150b23ac66958a27fac84db5487581495bf9a0a2c99999
+    init: true
+    restart: on-failure
+    depends_on:
+      init_perms:
+        condition: service_completed_successfully
+    # Host networking gives the container direct use of the host Bluetooth
+    # stack. Docker does not bridge BlueZ, so this is the only path that
+    # exposes the host's Bluetooth radio to the container. The worker
+    # makes outbound HTTPS calls only; it does not bind any LAN-facing
+    # listening port. The container does run a bundled gpsd internally
+    # for the optional GPS dongle, but as of worker 0.7.5 it is started
+    # without -G, so it binds 127.0.0.1:2947 (loopback) only — the worker
+    # reads from that same loopback, no other consumer.
+    network_mode: host
+    # The only privilege grant for BLE: NET_ADMIN + NET_RAW let the
+    # Bluetooth stack manage and read from the radio. Deliberately NO
+    # `privileged: true`, NO Docker socket, NO host filesystem write.
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    # USB device access for an optional GPS dongle. Two layers:
+    #
+    # 1) `device_cgroup_rules` grants the container permission to access
+    #    character devices with major 188 (USB serial, e.g. PL2303 ->
+    #    ttyUSB*) and 166 (CDC ACM, e.g. u-blox NEO -> ttyACM*). The
+    #    rule is permission only; without step 2 the device nodes are
+    #    not present inside the container's tmpfs /dev.
+    #
+    # 2) Bind-mounting the host's /dev INTO the container's /dev makes
+    #    the actual device nodes visible. The cgroup_rules above keep
+    #    the container from actually opening any device outside the
+    #    two allowed majors.
+    device_cgroup_rules:
+      - 'c 188:* rwm'
+      - 'c 166:* rwm'
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+      # D-Bus system bus, read-only: the worker speaks to the host
+      # bluetoothd over the bus but never needs to write the bus directory.
+      - /var/run/dbus:/var/run/dbus:ro
+      # Full /dev passthrough so the GPS dongle's tty node is visible to
+      # the container. Constrained to majors 188 and 166 by the
+      # device_cgroup_rules above.
+      - /dev:/dev
+    environment:
+      EE_DATA_DIR: /data
