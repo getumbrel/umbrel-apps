@@ -21,23 +21,26 @@ description: >-
 
 
   An official app from Umbrel.
-releaseNotes: >-
-  ⚠️ Important for users who manually changed LND protocol settings: if you previously added `protocol.custom-nodeann=39` or `protocol.custom-init=39` for BOLT 12/LNDK integrations, remove those lines before updating. LND v0.21.1-beta now advertises onion messaging itself, and leaving those custom feature-bit settings in place can prevent LND from starting.
+releaseNotes: |-
+  ⚠️ Before updating: if you manually added `protocol.custom-nodeann=39` or `protocol.custom-init=39` to your LND config for BOLT 12 or LNDK integrations, remove those lines first. LND now advertises onion messaging itself, and those old settings can prevent it from starting.
 
+  This update includes LND v0.21.1-beta and the latest Lightning Node app improvements for Umbrel.
 
-  This update includes LND v0.21.1-beta along with the latest improvements to the Lightning Node app experience on Umbrel.
+  Highlights:
+  - Onion messaging support in LND.
+  - Production taproot channel support.
+  - Safer channel-close confirmation handling.
+  - Performance improvements.
+  - Fresh Tor v3 node setup fix.
+  - Dark mode in the Lightning Node app.
+  - Fiat currency selection for balances.
+  - Improved QR code scanning in dark mode.
+  - Improved automatic backup and channel recovery handling.
+  - Bug fixes and improvements.
 
+  Power users: LND v0.21 removes deprecated payment RPCs and rejects manually configured Tor v2 onion addresses. Lightning Node on Umbrel already uses Tor v3 by default. Review the upstream release notes if you use custom scripts, external integrations, or custom LND settings.
 
-  LND v0.21.1-beta adds onion messaging support, production taproot channel support, safer channel-close confirmation handling, and performance improvements.
-
-
-  Lightning Node on Umbrel now includes dark mode, a fiat currency selector for balances, improved QR code scanning in dark mode, improved automatic backup and channel recovery handling, plus bug fixes and improvements.
-
-
-  Power users: LND v0.21.1-beta removes deprecated payment RPCs and rejects manually configured Tor v2 onion addresses. Lightning Node on Umbrel already uses Tor v3 by default. Review the upstream release notes if you use custom scripts, external integrations, or custom LND advanced settings.
-
-
-  Full LND release notes can be found at https://github.com/lightningnetwork/lnd/blob/v0.21.1-beta/docs/release-notes/release-notes-0.21.1.md
+  Full LND release notes: https://github.com/lightningnetwork/lnd/blob/v0.21.1-beta/docs/release-notes/release-notes-0.21.1.md
 developer: Umbrel
 website: https://umbrel.com
 dependencies:
