@@ -38,6 +38,56 @@ ensure_bridge_exists() {
     ip addr show "${name}"
 }
 
+configure_bridge_firewall() {
+    local bridge="${1}"
+    local subnet="${2}"
+
+    # This DIND sidecar runs in Umbrel's host network namespace, so Docker's
+    # default iptables management would rewrite host-global DOCKER chains that
+    # Umbrel apps and their dependencies rely on. dockerd is started with
+    # --iptables=false to avoid that, and we add only the forwarding/NAT rules
+    # required for each nested bridge network.
+    iptables -C FORWARD -i "${bridge}" -j ACCEPT 2>/dev/null || iptables -A FORWARD -i "${bridge}" -j ACCEPT
+    iptables -C FORWARD -o "${bridge}" -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT 2>/dev/null || iptables -A FORWARD -o "${bridge}" -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+    iptables -t nat -C POSTROUTING -s "${subnet}" ! -o "${bridge}" -j MASQUERADE 2>/dev/null || iptables -t nat -A POSTROUTING -s "${subnet}" ! -o "${bridge}" -j MASQUERADE
+}
+
+ensure_inner_network_firewall() {
+    local socket="${1}"
+    local network_name="${2}"
+    local network_id
+    local bridge
+    local subnet
+
+    # sv2-ui creates this bridge later for its Translator/JDC containers. Since
+    # Docker's iptables management is disabled, create it early so we can scope
+    # the required forwarding/NAT rules to the actual bridge/subnet Docker chose.
+    if ! docker -H unix://${socket} network inspect "${network_name}" >/dev/null 2>&1
+    then
+        echo "Creating inner docker network '${network_name}'..."
+        docker -H unix://${socket} network create "${network_name}" >/dev/null
+    fi
+
+    network_id="$(docker -H unix://${socket} network inspect "${network_name}" --format '{{.Id}}')"
+    bridge="$(docker -H unix://${socket} network inspect "${network_name}" --format '{{index .Options "com.docker.network.bridge.name"}}')"
+    subnet="$(docker -H unix://${socket} network inspect "${network_name}" --format '{{range .IPAM.Config}}{{if .Subnet}}{{.Subnet}}{{end}}{{end}}')"
+
+    if [[ "${bridge}" == "" || "${bridge}" == "<no value>" ]]
+    then
+        # Docker names user-created bridge interfaces br-<network-id prefix>
+        # when no explicit bridge name option is set.
+        bridge="br-${network_id:0:12}"
+    fi
+
+    if [[ "${subnet}" == "" ]]
+    then
+        echo "Could not determine subnet for inner docker network '${network_name}'."
+        return 1
+    fi
+
+    configure_bridge_firewall "${bridge}" "${subnet}"
+}
+
 create_inner_volume() {
     local socket="${1}"
     local volume_name="${2}"
@@ -73,10 +123,12 @@ then
     bridge="${DOCKER_ENSURE_BRIDGE%%:*}"
     ip_range="${DOCKER_ENSURE_BRIDGE#*:}"
     ensure_bridge_exists "${bridge}" "${ip_range}"
+    configure_bridge_firewall "${bridge}" "${ip_range}"
 fi
 
 DOCKER_SOCKET="/data/docker.sock"
 DOCKER_VOLUME_NAME="sv2-config"
+DOCKER_NETWORK_NAME="sv2-network"
 CONFIG_SOURCE_PATH="/app/data/config"
 DOCKER_READY_TIMEOUT_SECONDS=180
 
@@ -117,6 +169,7 @@ fi
 
 # Create sv2-config inside DIND so nested containers can access the same
 # /app/data/config bind mount as sv2-ui.
+ensure_inner_network_firewall "${DOCKER_SOCKET}" "${DOCKER_NETWORK_NAME}"
 create_inner_volume "${DOCKER_SOCKET}" "${DOCKER_VOLUME_NAME}" "${CONFIG_SOURCE_PATH}"
 
 echo "Dockerd is ready. Foregrounding dockerd process..."

@@ -20,6 +20,8 @@ services:
         --data-root /data/data
         --exec-root /data/exec
         --host unix:///data/docker.sock
+        --iptables=false
+        --userland-proxy=true
         --pidfile /data/docker.pid
     healthcheck:
       test: ["CMD-SHELL", "docker -H unix:///data/docker.sock volume inspect sv2-config >/dev/null"]
