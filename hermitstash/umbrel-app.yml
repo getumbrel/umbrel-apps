@@ -2,7 +2,7 @@ manifestVersion: 1
 id: hermitstash
 category: files
 name: HermitStash
-version: "1.12.11"
+version: "1.13.0"
 tagline: Post-quantum encrypted self-hosted file sharing
 description: >-
   HermitStash is a self-hosted file upload server with post-quantum encryption. Every file and database field is sealed with an ML-KEM-1024 + ECDH P-384 hybrid envelope and XChaCha20-Poly1305 before touching disk; passwords use Argon2id. Nothing is stored in plaintext, including database fields the operator never thinks of as sensitive.
@@ -14,7 +14,7 @@ description: >-
   The admin panel covers users, uploads, webhooks, API keys, branding, and storage backends — local disk by default, or any S3-compatible bucket (MinIO, Cloudflare R2, Backblaze B2) for off-device archives. Retry-safe writes via the standard Idempotency-Key header. RFC 9457 problem-details on every API error response.
 
 
-  On supported browsers the TLS handshake negotiates X25519MLKEM768 or SecP384r1MLKEM1024 for quantum-resistant key exchange — the wire is end-to-end post-quantum, not just the data at rest.
+  Files and database fields are sealed with post-quantum encryption at rest no matter how you reach the app. When it is served over HTTPS — a custom domain, or remote access over Tor or Tailscale — the TLS handshake also negotiates a post-quantum key exchange (X25519MLKEM768 or SecP384r1MLKEM1024), so the connection itself is quantum-resistant; over a plain local-network address the at-rest protection still applies.
 developer: dotCooCoo
 website: https://hermitstash.com
 repo: https://github.com/dotCooCoo/hermitstash
@@ -31,11 +31,28 @@ defaultPassword: ""
 submitter: dotCooCoo
 submission: https://github.com/getumbrel/umbrel-apps/pull/5378
 releaseNotes: >-
-  Adds security hardening across file sharing and account flows, including verified email changes before anonymous uploads can be claimed, rate-limited and memory-bounded public ZIP downloads, and admin APIs that no longer expose file keys or bundle secrets.
+  This release rolls up the security and reliability improvements from versions 1.12.12 through 1.13.0.
 
 
-  Improves backup, restore, and vault safety with checksum-verified restores, rollback of certificate material on restore failure, rotation-safe database encryption, and fixes for permanent backup/restore locks.
+  Sign-in and accounts:
+    - Two-factor authentication is now required on Google and passkey sign-in, not only password login, and a code-entry page completes the flow.
+    - Email changes are verified before they take effect: your current address stays your login identity until you confirm the new one, so a mistyped address can no longer lock you out.
+    - A captured passkey assertion and your two-factor backup codes are now strictly single-use, even when requests arrive at the same time.
 
 
-  Strengthens sessions, lockouts, quotas, token checks, webhook handling, and sync enrollment while fixing admin reset/search, stash counters, and webhook delivery/history behavior.
+  Encryption and key safety:
+    - Vault key rotation can no longer leave a file stranded under a discarded key, and a lost or mismatched vault key no longer overwrites the database key — the server refuses to start instead, so your data stays recoverable.
+    - The file paths of skipped uploads are now encrypted at rest like every other field, and values inserted into HTML email templates are escaped.
+    - The first-response session-key exchange now requires a verified client certificate.
+
+
+  Sync, uploads, and access control:
+    - Revoking a sync API key immediately disconnects its live connection, and the sync channel now enforces the IP blocklist and per-IP rate limits.
+    - API-key scopes are enforced on read and mutating routes, so a key issued for a narrow purpose can no longer act with full administrator authority.
+    - Uploads that fail content validation are rejected rather than accepted, and the global and per-account storage quotas now hold under concurrent uploads.
+
+
+  Reliability:
+    - Scheduled backups run at the configured time of day and survive restarts, and automatic client-certificate renewal no longer locks out an offline sync client.
+    - Large sync catch-up requests are paged, and corrupted stored data now fails with a clear error instead of crashing.
 dependencies: []
