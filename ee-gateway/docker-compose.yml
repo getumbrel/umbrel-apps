@@ -35,7 +35,7 @@ services:
   # extra download, and it is the only place root is used. This is NOT privileged
   # mode; the app containers themselves stay non-root.
   init_perms:
-    image: encryptedenergy/ee-gateway-worker:0.7.5@sha256:e1ce654087e6db114ea8bbb6ae195e96b85330bd3108d6e1616c3a9bee4880d3
+    image: encryptedenergy/ee-gateway-worker:0.7.5@sha256:0b58f6e9e1b0ca5c15150b23ac66958a27fac84db5487581495bf9a0a2c99999
     user: "0:0"
     entrypoint: ["sh", "-c", "chown -R 1000:1000 /data"]
     restart: on-failure
@@ -66,7 +66,7 @@ services:
   # Python process runs as uid 1000; gpsd starts as root only to open the
   # serial device, then drops to user nobody.
   worker:
-    image: encryptedenergy/ee-gateway-worker:0.7.5@sha256:e1ce654087e6db114ea8bbb6ae195e96b85330bd3108d6e1616c3a9bee4880d3
+    image: encryptedenergy/ee-gateway-worker:0.7.5@sha256:0b58f6e9e1b0ca5c15150b23ac66958a27fac84db5487581495bf9a0a2c99999
     init: true
     restart: on-failure
     depends_on:
