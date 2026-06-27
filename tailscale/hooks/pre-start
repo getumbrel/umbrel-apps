@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Kernel TUN subnet routing forwards packets from tailscale0 to the LAN in the
+# host network namespace. These runtime sysctls are required for Linux subnet
+# routing and are safe to apply repeatedly.
+set_proc_sys() {
+  local path="$1"
+  local value="$2"
+
+  if [[ ! -e "$path" ]]; then
+    echo "tailscale pre-start: warning: $path does not exist; skipping" >&2
+    return 0
+  fi
+
+  printf '%s\n' "$value" > "$path"
+  echo "tailscale pre-start: set $path=$value"
+}
+
+set_proc_sys /proc/sys/net/ipv4/ip_forward 1
+set_proc_sys /proc/sys/net/ipv6/conf/all/forwarding 1
+set_proc_sys /proc/sys/net/ipv4/conf/all/src_valid_mark 1

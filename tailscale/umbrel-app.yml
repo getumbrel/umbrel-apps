@@ -1,8 +1,8 @@
-manifestVersion: 1
+manifestVersion: 1.1
 id: tailscale
 category: networking
 name: Tailscale
-version: "v1.98.3-1"
+version: "v1.98.3-2"
 tagline: Zero config VPN to access your Umbrel from anywhere
 description: >-
   Tailscale is zero config VPN that creates a secure network between
@@ -30,10 +30,10 @@ torOnly: false
 submitter: Umbrel
 submission: https://github.com/getumbrel/umbrel/pull/1248
 releaseNotes: >-
-  This update lets umbrelOS use the tailnet routes created by the Tailscale app.
+  Fixes Tailscale subnet routing after the recent host networking update.
 
 
-  Good news for umbrelOS Backups: you can now back up one Umbrel to another over Tailscale. When adding the destination, use its Tailscale IP address shown in the Tailscale app; Tailscale device names are not supported.
+  The previous update moved Tailscale to kernel TUN mode so umbrelOS itself can use tailnet routes, including for Umbrel-to-Umbrel backups. This update enables the Linux forwarding settings needed for approved subnet routes to pass traffic from remote Tailscale clients to devices on your LAN.
 
 
   The bundled Tailscale version remains v1.98.3.
