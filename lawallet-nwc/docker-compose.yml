@@ -1,0 +1,44 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: lawallet-nwc_web_1
+      APP_PORT: 2288
+      PROXY_AUTH_ADD: "false"
+
+  web:
+    image: masize/lawallet-nwc:1.0.9@sha256:cb1a8b87154cb062eb902786ae92b817c866da913e0f8a1df5c31833e64ca4d6
+    environment:
+      DATABASE_URL: postgresql://lawallet:${APP_LAWALLET_NWC_POSTGRES_PASSWORD}@postgres:5432/lawallet
+      JWT_SECRET: ${APP_LAWALLET_NWC_JWT_SECRET}
+      NODE_ENV: production
+      PORT: 2288
+      HOSTNAME: 0.0.0.0
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: on-failure
+    stop_grace_period: 1m
+    init: true
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:2288/api/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+
+  postgres:
+    image: postgres:15-alpine@sha256:cd17e2ac98240fce1541ad2a803b34009b4eea5aec8a832363cdc7eca62e722e
+    environment:
+      POSTGRES_DB: lawallet
+      POSTGRES_USER: lawallet
+      POSTGRES_PASSWORD: ${APP_LAWALLET_NWC_POSTGRES_PASSWORD}
+    volumes:
+      - ${APP_DATA_DIR}/data/postgres:/var/lib/postgresql/data
+    restart: on-failure
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
