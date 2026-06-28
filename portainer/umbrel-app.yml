@@ -1,8 +1,8 @@
-manifestVersion: 1
+manifestVersion: 1.1
 id: portainer
 category: developer
 name: Portainer
-version: "2.33.6"
+version: "2.39.4"
 tagline: Run custom Docker containers on your Umbrel
 description: >-
   ⚠️ Make sure to only use named Docker volumes for your stacks and containers. Data in bind-mounted volumes
@@ -51,17 +51,18 @@ path: ""
 defaultUsername: "admin"
 defaultPassword: "changeme"
 releaseNotes: >-
-  This update includes several improvements and fixes:
-    - Fixed an issue where stacks could not pull private images during GitOps updates
-    - Fixed an issue where starting a stack failed when a private image had been removed
-    - Fixed an issue where duplicate or edited containers could have network issues due to persistent MAC addresses
-    - Fixed an issue where Docker Compose configs were not injected correctly into stack containers
-    - Fixed Docker Swarm Service view display issues
-    - Improved Volumes Browser to prevent adding unwanted file extensions when downloading files
-    - Resolved multiple security vulnerabilities
+  Portainer 2.39.4 LTS includes security fixes, stack management fixes, and reliability improvements. This update also refreshes the bundled Docker runtime used by Portainer.
 
 
-  Full release notes are found at https://github.com/portainer/portainer/releases.
+  Highlights include:
+    - Fixed an issue where users without environment access could enumerate Kubernetes resources
+    - Fixed restore behavior that could allow admin takeover of uninitialized Portainer instances
+    - Fixed stack redeploy and registry image deletion permissions for standard users
+    - Fixed an Amazon ECR token pre-validation warning and a blank volume-label dropdown
+    - Updated Go and go-git dependencies to resolve multiple CVEs
+
+
+  Full release notes can be found at https://github.com/portainer/portainer/releases/tag/2.39.4.
 permissions:
   - GPU
 developer: Portainer

@@ -1,0 +1,25 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: hermes-agent_web_1
+      APP_PORT: 18789
+
+  # Official Hermes dashboard + messaging gateway supervised by upstream s6.
+  web:
+    image: ghcr.io/getumbrel/hermes-agent-umbrel:v2026.6.19-1@sha256:14754b5fe4880ef5b2b366edeacb16836da8da3579cabb7285a4fbfaedde32c9
+    restart: on-failure
+    stop_grace_period: 1m
+    volumes:
+      - ${APP_DATA_DIR}/data/hermes:/opt/data
+    environment:
+      HERMES_UID: "1000"
+      HERMES_GID: "1000"
+      HERMES_DASHBOARD: "1"
+      HERMES_DASHBOARD_PORT: "18789"
+      HERMES_DASHBOARD_INSECURE: "1"
+      HERMES_TUI_DIR: "/app/umbrel-tui"
+      HERMES_UPSTREAM_TUI_ENTRY: "/opt/hermes/ui-tui/dist/entry.js"
+      HERMES_GATEWAY_BOOTSTRAP_STATE: "running"
+    command: ["gateway", "run"]

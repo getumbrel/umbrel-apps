@@ -26,16 +26,17 @@ if [[ -f "${APP_DATA_DIR}/index.redb" ]]; then
 fi
 
 # re-index ord on major version upgrades (so far in ord's history, this has been required on every major version update)
-# 0.23 update note: updating from 0.22.x to 0.23.x does not require re-indexing, see https://x.com/rodarmor/status/1909286899275251887 
-# for fresh installs this file will be harmlessly created 
-if [[ ! -f "${APP_DATA_DIR}/AT_LEAST_0-22-2" ]]; then
+# 0.23 update note: updating from 0.22.x to 0.23.x does not require re-indexing, see https://x.com/rodarmor/status/1909286899275251887
+# 0.27.1 update note: updating from 0.23.x to 0.27.1 requires re-indexing (schema version 30 -> 34)
+# for fresh installs this file will be harmlessly created
+if [[ ! -f "${APP_DATA_DIR}/AT_LEAST_0-27-1" ]]; then
     # delete index db for all bitcoin networks
     for file in "${ORDINALS_DATA_DIR}/index.redb" "${ORDINALS_DATA_DIR}/testnet3/index.redb" "${ORDINALS_DATA_DIR}/testnet4/index.redb" "${ORDINALS_DATA_DIR}/regtest/index.redb" "${ORDINALS_DATA_DIR}/signet/index.redb"; do
         if [[ -f "${file}" ]]; then
             rm -f "${file}"
         fi
     done
-    touch "${APP_DATA_DIR}/AT_LEAST_0-22-2"
+    touch "${APP_DATA_DIR}/AT_LEAST_0-27-1"
 fi
 
 # migrate all wallet database files to ord/wallets, ord/testnet3/wallets, ord/regtest/wallets, and ord/signet/wallets for pre-0.18.2 versions: https://github.com/ordinals/ord/releases/tag/0.18.2

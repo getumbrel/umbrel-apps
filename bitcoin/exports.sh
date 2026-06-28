@@ -23,7 +23,17 @@ export APP_BITCOIN_ZMQ_HASHTX_PORT="28336"
 # NETWORK
 export APP_BITCOIN_NETWORK="mainnet" 
 
-# Check for an existing settings.json file to override APP_BITCOIN_NETWORK with user's choice
+# IPC
+# Consumers should mount APP_BITCOIN_DATA_DIR read-only, for example:
+#   ${APP_BITCOIN_DATA_DIR}:/root/.bitcoin:ro
+# Then resolve the socket inside that mount:
+#   /root/.bitcoin/${APP_BITCOIN_IPC_SOCKET_RELATIVE_PATH}
+# Do not bind-mount the socket directly because Docker may create a directory
+# at the source path if the socket does not exist yet.
+export APP_BITCOIN_IPC_ENABLED="false"
+export APP_BITCOIN_IPC_SOCKET_RELATIVE_PATH="node.sock"
+
+# Check for an existing settings.json file to override exports with the user's saved settings
 {
 	BITCOIN_APP_CONFIG_FILE="${EXPORTS_APP_DIR}/data/app/settings.json"
 	if [[ -f "${BITCOIN_APP_CONFIG_FILE}" ]]
@@ -45,8 +55,27 @@ export APP_BITCOIN_NETWORK="mainnet"
 					echo "Warning (${EXPORTS_APP_ID}): Invalid network '${bitcoin_app_network}' in settings.json. Exporting APP_BITCOIN_NETWORK as default 'mainnet'."
 				fi;;
 		esac
+
+		bitcoin_app_ipc=$(jq -r '.ipc // false' "${BITCOIN_APP_CONFIG_FILE}")
+		if [[ "$bitcoin_app_ipc" == "true" ]]; then
+			APP_BITCOIN_IPC_ENABLED="true"
+		fi
 	fi
 } > /dev/null || true
+
+case $APP_BITCOIN_NETWORK in
+	"testnet")
+		APP_BITCOIN_IPC_SOCKET_RELATIVE_PATH="testnet3/node.sock";;
+	"testnet4")
+		APP_BITCOIN_IPC_SOCKET_RELATIVE_PATH="testnet4/node.sock";;
+	"signet")
+		APP_BITCOIN_IPC_SOCKET_RELATIVE_PATH="signet/node.sock";;
+	"regtest")
+		APP_BITCOIN_IPC_SOCKET_RELATIVE_PATH="regtest/node.sock";;
+esac
+
+export APP_BITCOIN_IPC_ENABLED
+export APP_BITCOIN_IPC_SOCKET_RELATIVE_PATH
 
 # .env file to persist the rpc username and password
 BITCOIN_ENV_FILE="${EXPORTS_APP_DIR}/.env"

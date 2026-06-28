@@ -1,0 +1,18 @@
+version: "3.7"
+services:
+  app_proxy:
+    environment:
+      APP_HOST: openclaw_gateway_1
+      APP_PORT: 18789
+
+  gateway:
+    image: ghcr.io/getumbrel/openclaw-umbrel:2026.6.10@sha256:4c3ef69b3f47195c6043e258f8ef3f7380804df3ec78dfda3e57fc7e93bbc70e
+    user: "1000:1000"
+    init: true
+    restart: on-failure
+    stop_grace_period: 1m
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+      - ${APP_DATA_DIR}/data/linuxbrew:/home/linuxbrew
+    environment:
+      APP_SEED: ${APP_SEED}

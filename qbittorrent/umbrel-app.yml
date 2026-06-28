@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: qbittorrent
 category: networking
 name: qBittorrent
-version: "5.1.2-auth-proxy-patch"
+version: "5.2.2"
 tagline: Free and reliable P2P Bittorrent client
 description: >-
   qBittorrent is an open-source software alternative to µTorrent. It's designed to meet the needs of most users while using as little CPU and memory as possible.
@@ -17,7 +17,7 @@ description: >-
   Some additional tips:
 
 
-  - Please make sure that you do not change the default download path in the app settings. It should remain set to "/app/qBittorrent/downloads" to ensure that your downloads show up in your main Umbrel downloads folder.
+  - Please make sure that you do not change the default download path in the app settings. It should remain set to "/downloads" to ensure that your downloads show up in your main Umbrel downloads folder.
 
   - It is recommended to change the default password for the app after installation.
 
@@ -26,22 +26,19 @@ description: >-
 
   ⚠️ qBittorrent downloads torrents over the Clearnet, not Tor.
 releaseNotes: >-
-  This update includes several new features, bug fixes and improvements:
-    - Added fallback to update mechanism
-    - Fixed incorrectly backported changes in WebUI
-    - Improved security for WebAPI, RSS, and Search modules
-    - Enhanced handling of external programs and local files
-    - Fixed appearance issues and improved UI elements
-    - Improved ratio handling and compilation compatibility
-    - Enhanced IPv6 support and fixed memory leaks
-    - Improved path autofill and preview functionality
-  
-  
-  Security updates:
-    - Enable Proxy Auth
+  This update includes WebUI, WebAPI, RSS, startup, and watch folder fixes.
 
+  Highlights:
+    - Fixed stale lockfile cleanup when the hostname changes
+    - Fixed watched folder path removal behavior
+    - Fixed WebUI issues with magnet submissions, global checkbox toggles, Safari table headers, and the properties panel
+    - Fixed WebAPI reverse-proxy header handling
+    - Fixed RSS smart episode filter and previously matched episode handling
 
-  Full release notes for qBittorrent are available at https://www.qbittorrent.org/news
+  If you are upgrading from a version before 5.2.0, note that qBittorrent on umbrelOS now uses "/downloads" as the default download path for better compatibility with other apps. Existing torrents may need to be manually moved to the new location.
+
+  Full release notes are available at https://github.com/qbittorrent/qBittorrent/releases/tag/release-5.2.2
+
 developer: qBittorrent
 website: https://qbittorrent.org/
 dependencies: []

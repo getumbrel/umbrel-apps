@@ -1,0 +1,17 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: ersatztv-legacy_web_1
+      APP_PORT: 8409
+      PROXY_AUTH_WHITELIST: "/iptv/*,/discover.json,/device.xml,/lineup.json,/lineup_status.json"
+
+  web:
+    image: ghcr.io/ersatztv/legacy:v26.5.1@sha256:98de4493c5b5039796e692f2cc15b58458d684158295be9a989edae0bcf41cd6
+    restart: on-failure
+    user: "1000:1000"
+    volumes:
+      - ${APP_DATA_DIR}/data/config:/config
+      - ${APP_DATA_DIR}/data/transcode:/transcode
+      - ${UMBREL_ROOT}/data/storage/downloads:/media:ro

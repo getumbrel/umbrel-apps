@@ -1,0 +1,21 @@
+version: "3.7"
+
+services:
+  web:
+    image: ghcr.io/music-assistant/server:2.9.4@sha256:e5dbb44e9dc92ff95dd2b15a9176b238f4e0969aed89850bf428b3d424640ca3
+    restart: on-failure
+    user: "1000:1000"
+    # Network mode must be set to host for MA to work correctly
+    network_mode: host
+    # UI at data/settings.json defined port 8896
+    # Streamserver at default port 8078
+    # Sendspin at default port 8927
+    volumes:
+      - ${APP_DATA_DIR}/data:/data/
+      - ${UMBREL_ROOT}/data/storage/downloads:/media
+    # privileged caps (and security-opt) needed to mount smb folders within the container
+    cap_add:
+      - SYS_ADMIN
+      - DAC_READ_SEARCH
+    security_opt:
+      - apparmor=unconfined

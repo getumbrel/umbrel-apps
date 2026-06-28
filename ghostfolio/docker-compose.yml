@@ -7,7 +7,7 @@ services:
       APP_PORT: 3334
 
   server:
-    image: ghostfolio/ghostfolio:2.224.2@sha256:e53240f70c0fbcbf53d3fad81a33ec5f70b917ea204205c73548506fede8936b
+    image: ghostfolio/ghostfolio:3.16.0@sha256:61d81f929600d56b0052c6881b02fc0116d0ba55edfe98fbea962f78d0355e1f
     init: true
     restart: on-failure
     environment:
@@ -15,7 +15,7 @@ services:
       HOST: 0.0.0.0
       PORT: 3334
       ACCESS_TOKEN_SALT: $APP_GHOSTFOLIO_ACCESS_TOKEN_SALT
-      DATABASE_URL: postgresql://${APP_GHOSTFOLIO_DB_USERNAME}:${APP_GHOSTFOLIO_DB_PASSWORD}@ghostfolio_postgres_1:5432/${APP_GHOSTFOLIO_DB_DATABASE_NAME}?sslmode=prefer
+      DATABASE_URL: postgresql://${APP_GHOSTFOLIO_DB_USERNAME}:${APP_GHOSTFOLIO_DB_PASSWORD}@ghostfolio_postgres_1:5432/${APP_GHOSTFOLIO_DB_DATABASE_NAME}
       JWT_SECRET_KEY: ${APP_SEED}
       POSTGRES_DB: ${APP_GHOSTFOLIO_DB_DATABASE_NAME}
       POSTGRES_USER: ${APP_GHOSTFOLIO_DB_USERNAME}

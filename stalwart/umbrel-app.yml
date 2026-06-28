@@ -3,7 +3,7 @@ id: stalwart
 name: Stalwart
 tagline: All-in-one Mail & Collaboration server
 category: files
-version: "v0.15.2"
+version: "v0.16.11"
 port: 8745
 description: >-
   📧 Stalwart is a fast, secure, and scalable open-source server for email, calendars, contacts, and file sharing, built in Rust for top-tier performance and safety.
@@ -51,27 +51,18 @@ gallery:
   - 4.jpg
   - 5.jpg
 releaseNotes: >-
-  ⚠️ If you are upgrading from v0.14.x and below, this version includes multiple breaking changes. Make sure to have a backup before updating: https://github.com/stalwartlabs/stalwart/blob/main/UPGRADING/v0_15.md
+  ⚠️ If updating from Stalwart v0.15.x or earlier, make sure to have a backup before updating. Umbrel runs the v0.16 migration automatically, but it's recommended to review the upgrading guide: https://github.com/stalwartlabs/stalwart/blob/main/UPGRADING/v0_16.md
 
 
-  Key highlights in this release:
-    - OAuth device authorization endpoint support
-    - Improved spam auto-learning from traps and multiple blocklist hits
-    - Enhanced search functionality with pagination support for ElasticSearch
-    - Better handling of large text fields in MySQL and PostgreSQL
+  Changes since v0.16.10 include:
+    - Adds encryption-at-rest support for AES-256-GCM and ChaCha20-Poly1305 S/MIME data
+    - Adds Redis Sentinel support for in-memory store and cluster coordinator backends
+    - Adds an option to allow S3 endpoints with invalid TLS certificates
+    - Fixes DANE TLSA validation, file-backed certificate index updates, JMAP Principal/query filters, and duplicate webhook event IDs
 
 
-  Bug fixes include:
-    - Fixed shared folder double nesting in IMAP
-    - Corrected spam tag detection logic
-    - Improved JMAP search results handling when index is not ready
-    - Fixed JMAP email import to use latest received header
-    - Resolved LDAP attribute comparison issues
-    - Fixed CLI JMAP redirection on non-standard ports
-
-
-  Full release notes can be found at https://github.com/stalwartlabs/stalwart/releases
+  Full release notes can be found at https://github.com/stalwartlabs/stalwart/releases/tag/v0.16.11
 dependencies: []
-path: ""
+path: "/admin"
 deterministicPassword: true
 defaultUsername: admin

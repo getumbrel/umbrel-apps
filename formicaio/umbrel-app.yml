@@ -3,7 +3,7 @@ id: formicaio
 name: Formicaio
 tagline: Run nodes on the Autonomi peer-to-peer (P2P) network
 category: crypto
-version: "0.6.2"
+version: "0.8.4"
 port: 52100
 description: >-
   ## Simplify your decentralized experience with Formicaio
@@ -25,13 +25,15 @@ description: >-
   user interface (GUI) or a terminal. This flexibility allows you to perform
   various actions on individual nodes or groups of selected nodes, including:
   - Creating new nodes
-  - Starting or stopping nodes
+  - Starting or stopping nodes individually or in batches
   - Recycling nodes to generate a new peer ID
   - Removing nodes
   - Upgrading nodes when a new binary version is available
   - Viewing individual node logs in real time
   - Monitoring memory and CPU usage with detailed charts
   - Sorting nodes by different criteria, such as creation date, status, or number of connected peers
+  - Switching between tile and list layouts in the nodes page
+  - Terminal to query and manage nodes through a CLI
 
   The Formicaio backend actively monitors your nodes, providing real-time
   status updates and statistics, including:
@@ -42,6 +44,7 @@ description: >-
   - Peers in the routing table
   - Peers that have shunned the node(s)
   - Estimated total nodes in the network
+  - Disk usage
 
   ## Customizable monitoring and management
 
@@ -51,14 +54,49 @@ description: >-
   - Frequency of version checks for the node binary
   - Frequency of token balance queries
   - Frequency of metrics and node information retrieval
+  - Frequency of disk usage checks
+  - Nodes page default layout (tile or list) and page size
+  - Rewards monitoring (enable/disable automatic balance checks and earnings analytics)
   - Configuration of the ERC20 token contract address and RPC URL for reward balance queries
+  - LCD display configuration for external monitoring on Raspberry Pi
 
-  ## Connection types for nodes
+  ## Node creation options
 
-  When setting up nodes, you can define their connection type and custom data directory:
-  - UPnP support: Attempts to use UPnP to open a port on your home router for incoming connections. If your router doesn't support UPnP, create nodes with UPnP disabled to ensure connectivity.
-  - Listening IP address: This address determines which network interface the node will bind to for incoming connections. The application supports both IPv4 (e.g., `0.0.0.0`, `127.0.0.1`) and IPv6 (e.g., `::`, `fe80::1`) addresses, allowing users to control whether the node is accessible on all interfaces, only locally, or on a specific network. This flexibility is useful for running nodes in different environments, such as local development, private networks, or public-facing deployments.
-  - Custom data directory: This directory is where the node will store its persistent data, such as chunks, logs, and configuration files. By assigning a unique data directory to each node, or batch of nodes, users can run multiple nodes on the same machine without data conflicts. This option is especially valuable for advanced setups or when running nodes with different hard disks or mounting points.
+  When creating nodes, a Basic and an Advanced tab let you configure each node:
+
+  Basic tab:
+  - Port number: TCP port (or range start when creating multiple nodes)
+  - Metrics port: TCP port used for metrics reporting
+  - Rewards address: The ERC-20 address that receives earned ANT tokens
+  - Number of nodes: Create one or a batch in a single operation
+  - Delay between creates: Seconds to wait between spawning each node in a batch
+  - Auto start: Automatically start nodes immediately after creation
+
+  Advanced tab:
+  - IP version: Dual-stack (IPv4 + IPv6, default) or IPv4 only (for hosts without working IPv6)
+  - Enable logging: Toggle log output on or off
+  - Log level: Set the verbosity of node logs
+  - Custom data directory: Path where the node stores its persistent data (chunks, logs,
+    config). Unique directories let you run multiple nodes without data conflicts, and
+    point each node to a different disk or mount point.
+
+  ## AI Agent
+
+  Formicaio includes a built-in AI agent that lets you manage your nodes through
+  natural language. You can ask it to start, stop, recycle, or inspect nodes,
+  get health summaries, or let it monitor your fleet autonomously in the background.
+
+  The agent connects to any OpenAI-compatible LLM backend running on your machine
+  or local network (Ollama, LM Studio, llama.cpp server, Jan, etc.). It is
+  configurable via a dedicated settings panel: system prompt, max context messages,
+  maximum actions per autonomous cycle, and check interval.
+
+  ## MCP Server
+
+  Formicaio exposes an MCP server that any external AI agent or workflow
+  automation tool can connect to, enabling automated node management from
+  platforms like n8n or custom AI pipelines. This allows you to build
+  workflows that monitor and manage your node fleet using AI-driven decisions.
 widgets:
   - id: "formicaio-stats"
     type: "four-stats"
@@ -92,5 +130,30 @@ gallery:
   - 1.jpg
   - 2.jpg
   - 3.jpg
-releaseNotes: ""
+releaseNotes: >-
+  The interface was redesigned with a fresh visual style, and a range of new
+  features were added to give users more visibility and control over their
+  nodes, earnings, and AI tooling:
+
+  - Redesigned look and feel with an updated GUI visual style
+  - Nodes view now supports both tile and list layouts, togglable by the user
+  - Disk usage reported per node and in aggregate, with a configurable polling frequency
+  - Rewards addresses panel on the dashboard listing each address and its balance
+  - Earnings analytics on the dashboard showing rewards payments and totals per period,
+    with a toggle to enable/disable monitoring
+  - New AI section with an MCP server status page, activation instructions, and a
+    dedicated Agent page for interacting with an LLM agent that can manage your nodes
+  - Agent chat displays formatted tool output and responses, with its own settings
+    and background autonomous task support
+  - Nodes can be sorted by binary version
+  - Single-node actions applied directly, bypassing the batch queue
+  - Batch failures stay in the queue until dismissed, with more detail on in-progress failures
+  - Persistent notifications history so users can review past notifications at any time
+  - Log level option when adding new nodes
+  - Clicking the "total nodes" dashboard card navigates to the nodes list
+  - Charts show an empty-state message when switching nodes instead of stale data
+  - Placeholder cards show a title while nodes are being created
+  - Various icon and styling fixes across light and dark themes
+  - A new metric collection mode can be used which doesn't rely on the node's metrics HTTP endpoint.
+  - Allow user to configure a custom node binary full download URL.
 path: ""

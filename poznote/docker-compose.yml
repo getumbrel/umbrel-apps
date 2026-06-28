@@ -1,0 +1,35 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: poznote_app_1
+      APP_PORT: 80
+
+  app:
+    image: ghcr.io/timothepoznanski/poznote:6.27.0@sha256:910c6ff0b5fcd687d047ee080a8dafb306093094eace8fb1ac28b37ee15f4e59
+    restart: on-failure
+    environment:
+      SQLITE_DATABASE: /var/www/html/data/database/poznote.db
+      HTTP_WEB_PORT: 80
+    volumes:
+      - ${APP_DATA_DIR}/data:/var/www/html/data
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--timeout=5", "-O", "/dev/null", "http://127.0.0.1/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  mcp:
+    image: ghcr.io/timothepoznanski/poznote-mcp:6.27.0@sha256:66f51ab0046ea6a22c336852bdbe37108414f7017b7b406a3460621b742c2e91
+    restart: on-failure
+    environment:
+      POZNOTE_API_URL: http://poznote_app_1:80/api/v1
+      POZNOTE_DEBUG: ${POZNOTE_DEBUG:-false}
+    ports:
+      - "8340:8045"
+    volumes:
+      - "${APP_DATA_DIR}/data:/var/www/html/data:ro"
+    depends_on:
+      - app

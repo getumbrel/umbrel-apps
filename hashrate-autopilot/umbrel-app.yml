@@ -1,0 +1,89 @@
+manifestVersion: 1
+id: hashrate-autopilot
+category: bitcoin
+name: Hashrate Autopilot
+version: "1.15.0"
+tagline: Autopilot for renting hashrate to mine on Ocean Mining
+
+description: >-
+  ALREADY RUNNING THE COMMUNITY-STORE VERSION? This official-store app has a
+  different app id than the community-store one (rdouma-hashrate-autopilot),
+  so it installs as a separate app with an empty database. A one-time
+  five-minute migration brings your full history across:
+  https://github.com/rdouma/hashrate-autopilot/blob/main/docs/migrating-from-community-store.md
+
+
+  Rent hashrate on the Braiins Hashpower marketplace and route it to your own
+  Ocean non-custodial mining pool, automatically. Each tick the autopilot finds
+  the cheapest available price for your target hashrate, adds a small
+  operator-chosen cushion, and bids exactly that price. You set a maximum you
+  are willing to pay, and the controller never goes above it.
+
+
+  Why this matters: Ocean is a non-custodial pool. Each Ocean block's coinbase
+  pays out to every miner whose accumulated earnings have crossed the on-chain
+  payout threshold (1,048,576 sat) - the coinbase IS the payout, in a single
+  transaction the chain itself executes when the block confirms. Most pools
+  (FPPS, PPS+, PPLNS) instead pay their own wallet first and then send miners a
+  second transaction on the pool's settlement cadence; that intermediate pool
+  wallet is bitcoin the pool custodies on your behalf, and it's what gets lost
+  when a pool goes dark. With Ocean your maximum exposure to pool failure is
+  your current unpaid balance (bounded by the threshold), and every past payout
+  is publicly verifiable on-chain forever. Ocean's Datum templates also filter
+  non-financial spam transactions. Renting hashrate to that kind of pool is a
+  small contribution to keeping Bitcoin mining decentralized.
+
+
+  Solo mining via Ocean's solo template should also work, though so far the
+  autopilot has only been tested against the regular Ocean+Datum pool setup.
+
+
+  Setup is a three-step web wizard. After setup you get a dashboard with live
+  decisions, charts, the DRY-RUN / LIVE / PAUSED switch, and a P&L panel that
+  reads spend from Braiins and earnings from your on-chain wallet.
+
+
+  This app declares Bitcoin Node, Electrs, and Datum Gateway as dependencies, so
+  Umbrel will prompt you to install them during setup. Once all apps run on the
+  same Umbrel, the autopilot's dashboard auto-discovers the local Datum HTTP
+  API, Electrs server, and Bitcoin RPC across Umbrel's shared Docker network -
+  zero copy/paste, the worker-count, hashrate, P&L earnings, and BIP110
+  signalling panels all populate on first boot. (Pointing at off-Umbrel
+  instances is also supported - just override the URLs in Config after setup.)
+
+developer: Remco Douma
+website: https://github.com/rdouma/hashrate-autopilot
+dependencies:
+  - bitcoin
+  - electrs
+  - datum
+repo: https://github.com/rdouma/hashrate-autopilot
+support: https://github.com/rdouma/hashrate-autopilot/issues
+port: 3018
+gallery:
+  - 1.webp
+  - 2.webp
+  - 3.webp
+  - 4.webp
+path: ""
+defaultUsername: ""
+defaultPassword: ""
+submitter: Remco Douma
+submission: https://github.com/getumbrel/umbrel-apps/pull/5685
+releaseNotes: >-
+  v1.15.0 - aviator branding, bid-vs-hashprice tile, BIP-110 block explorers, not-hashing detection, stale-bid self-heal.
+
+
+  New: a stats-bar tile shows your bid as a percentage of Ocean's break-even hashprice with a state-aware caption that tracks cheap-mode entry. Mempool.guide - a mempool.space fork that surfaces BIP-110 miner signaling - is the new default block explorer for fresh installs, with mempool.kilombino.com added as a second BIP-110-aware preset. The app's identity is now a stylized 1940s aviator: favicon, top-bar badge, and Umbrel app icon.
+
+
+  Improvements & fixes: a Bitaxe / AxeOS miner that is reachable but has stopped hashing (overheat_mode, NerdQAxe shutdown, impossible hashrate-per-watt after a stall) is now excluded from the fleet tile and badged "reboot needed". Stale local bids deleted at Braiins out-of-band self-heal each tick - no more hand-editing the database. False giant "bid paused" idle bands, the History "jump to event" beacon in Firefox / Safari, and a year-long browser cache pinning index.html are all fixed. Daemon-offline gaps now count as downtime in the uptime tile and bid-coverage math.
+
+
+  Safe to upgrade from any 1.14.x release.
+
+
+  Migrating from the community-store version (rdouma-hashrate-autopilot)? One-time five-minute guide: https://github.com/rdouma/hashrate-autopilot/blob/main/docs/migrating-from-community-store.md
+
+
+  Full release notes: https://github.com/rdouma/hashrate-autopilot/releases/tag/v1.15.0

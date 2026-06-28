@@ -2,7 +2,7 @@ manifestVersion: 1
 id: frigate
 category: automation
 name: Frigate
-version: "0.16.3"
+version: "0.17.1-2"
 tagline: A complete and local NVR
 description: >-
   A complete and local NVR designed for Home Assistant with AI object detection. 
@@ -15,23 +15,15 @@ description: >-
   - You can configure your cameras directly within the Frigate app, there is no need to manually edit the configuration files.
 
 
-  - Your RTSP password (if needed) is the "default app password" that is displayed on Frigate's page in the app store (shown after install).
+  - Sign in to Frigate with username `admin` and the "default app password" displayed on Frigate's page in the app store (shown after install). The same default app password is also used as your RTSP password if needed.
 releaseNotes: >-
-  ⚠️ As usual, Frigate will attempt to update its configuration automatically. It is still recommended to back up your current config and database before upgrading.
+  Fixed an issue that could prevent Home Assistant and other apps on your local network from connecting to Frigate.
 
 
-  This release includes a security fix for authenticated users:
-    - Fixed a vulnerability that could allow viewer users to delete admin and other user accounts
+  If Frigate asks you to sign in after updating, use your existing Frigate username and password. If you have not set one, use the default credentials shown by Umbrel before Frigate opens or on Frigate's page in the App Store.
 
 
-  Other improvements in this update include:
-    - Improved recording playback efficiency
-    - Fixed certificate generation crash when using webpush notifications
-    - Fixed YOLOv9 and RF-DETR model export functionality
-    - Updated documentation for various camera models and hardware
-
-
-  Full release notes are available at https://github.com/blakeblackshear/frigate/releases
+  Existing installs are updated automatically. Your cameras and Frigate settings are preserved, and you can change your Frigate password in Frigate after signing in.
 developer: Blake Blackshear
 website: https://frigate.video/
 repo: https://github.com/blakeblackshear/frigate
@@ -42,7 +34,7 @@ gallery:
   - 2.jpg
   - 3.jpg
 path: ""
-defaultUsername: ""
+defaultUsername: "admin"
 deterministicPassword: true
 dependencies: []
 permissions:

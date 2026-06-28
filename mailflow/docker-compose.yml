@@ -1,0 +1,84 @@
+version: '3.7'
+services:
+  app_proxy:
+    environment:
+      APP_HOST: mailflow_frontend_1
+      APP_PORT: 80
+
+  frontend:
+    image: ghcr.io/maathimself/mailflow-frontend:1.7.2@sha256:b821d87f205eb7879ba6f9d39e29fa0f6c93cec2fd3a47c11ef40a8deb925398
+    restart: on-failure
+    stop_grace_period: 1m
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO/dev/null http://127.0.0.1:80/ || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  backend:
+    image: ghcr.io/maathimself/mailflow-backend:1.7.2@sha256:74e88e0a697ef52ebfcf37632074c83ffe1ec08ce7944b8224a8d67629438616
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      APP_URL: "http://${DEVICE_DOMAIN_NAME}:3395"
+      FRONTEND_URL: "http://${DEVICE_DOMAIN_NAME}:3395"
+      SESSION_SECRET: "${APP_SEED}"
+      ENCRYPTION_KEY: "${APP_SEED}"
+      DB_HOST: mailflow_postgres_1
+      DB_NAME: mailflow
+      DB_USER: mailflow
+      DB_PASSWORD: mailflow
+      REDIS_URL: redis://mailflow_redis_1:6379
+      GOOGLE_CLIENT_ID: ""
+      GOOGLE_CLIENT_SECRET: ""
+      VAPID_PUBLIC_KEY: ""
+      VAPID_PRIVATE_KEY: ""
+      VAPID_SUBJECT: ""
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/api/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  postgres:
+    image: postgres:16-alpine@sha256:16bc17c64a573ef34162af9298258d1aec548232985b33ed7b1eac33ba35c229
+    user: "1000:1000"
+    restart: on-failure
+    environment:
+      POSTGRES_DB: mailflow
+      POSTGRES_USER: mailflow
+      POSTGRES_PASSWORD: mailflow
+    volumes:
+      - ${APP_DATA_DIR}/data/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mailflow -d mailflow"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  redis:
+    image: redis:7-alpine@sha256:6ab0b6e7381779332f97b8ca76193e45b0756f38d4c0dcda72dbb3c32061ab99
+    user: "1000:1000"
+    restart: on-failure
+    command: redis-server --save 60 1 --loglevel warning
+    volumes:
+      - ${APP_DATA_DIR}/data/redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s

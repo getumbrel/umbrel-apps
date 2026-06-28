@@ -2,7 +2,7 @@ manifestVersion: 1
 id: fedimintd
 category: bitcoin
 name: Fedimint
-version: "v0.9.1"
+version: "v0.11.1"
 tagline: Federated Chaumian E-Cash Mint for Bitcoin
 description: >-
   Fedimint is a federated Chaumian E-Cash Mint to custody and transact bitcoin in a community. It allows groups of trusted individuals, 
@@ -43,9 +43,10 @@ description: >-
 
   Fedimint supports Lightning payments via a Lightning Gateway. To use Lightning in your federation, there are two options:
 
-  1. Use an existing Lightning Gateway. [Reach out on Discord to get setup](https://chat.fedimint.org).
+  1. Run your own! - [Deploy a Lightning Gateway on your Umbrel](https://apps.umbrel.com/app/fedimint-gateway).
 
-  2. Run your own - [see Lightning Gateway docs for more information](https://github.com/fedimint/fedimint/blob/master/docs/gateway.md).
+  2. Use an existing Lightning Gateway. [Reach out on Discord to get setup](https://chat.fedimint.org).
+
   
 developer: Fedimint Developers
 website: https://fedimint.org/
@@ -64,7 +65,32 @@ defaultPassword: ""
 submitter: Fedimint Developers
 submission: https://github.com/getumbrel/umbrel-apps/pull/3371
 releaseNotes: >-
-  This release includes several bug fixes and improvements.
+  This release includes major improvements to the Gateway experience, guardian discovery, and overall reliability:
+
+
+  Gateway improvements:
+    - New first-boot mnemonic setup and recovery flow for gateways
+    - Export and import federation invite codes for easier recovery
+    - BOLT12 send/receive support in the gateway UI
+    - Balance display toggle between msats, sats, and BTC
+    - One-click channel opens to existing peers
+    - Payment event filtering in the payment log
+    - Peers and Notes tabs added to the gateway UI
+    - Parallelized HTLC handling for better payment throughput
+
+  Guardian & Federation improvements:
+    - Guardians now publish their identity to the decentralized Pkarr DNS system for easier peer discovery
+    - Modernized setup and dashboard UI with Material-style design
+    - QR code display and scanning for setup codes
+    - Network connectivity indicator in setup and dashboard UI
+    - Setup code now embeds federation size for verification
+    - Maximum guardian limit raised to 19
+
+  Performance & reliability:
+    - Drastically lower memory usage — fixed a backtrace caching issue that reduced gatewayd memory from ~1.6GB to under 200MB
+    - RocksDB defaults tuned for lower memory usage in constrained environments
+    - Expanded Prometheus metrics for networking, iroh connections, HTLC handling, and Bitcoin RPC calls
+    - Fixed DB migration issue
 
 
   Full release notes can be found at https://github.com/fedimint/fedimint/releases

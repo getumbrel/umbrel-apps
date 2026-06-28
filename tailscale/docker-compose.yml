@@ -2,10 +2,20 @@ version: "3.7"
 
 services:
   web:
-    network_mode: "host" # TODO: We can remove this later with some iptables magic
-    image: tailscale/tailscale:v1.92.3@sha256:00e029e54305d8d8112db38ceb8817389aefb0d337d428605bf34058f06a971c
+    # Host networking plus kernel TUN mode lets tailscaled create the host
+    # tailscale0 interface and routes. umbrelOS host services, such as CIFS
+    # mounts used by network backups, need those routes to reach tailnet peers.
+    network_mode: "host"
+    image: tailscale/tailscale:v1.98.3@sha256:854b77123b9536adae2e97f5a5fdb1790ed03438b911ab7f07780155e0af6ce2
     restart: on-failure
     stop_grace_period: 1m
-    command: "sh -c 'tailscale web --listen 0.0.0.0:8240 & exec tailscaled --tun=userspace-networking'"
+    # Required for tailscaled to manage the host TUN interface and route table.
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    # Keep tailscaled in kernel TUN mode so host routes are available.
+    command: "sh -c 'tailscale web --listen 0.0.0.0:8240 & exec tailscaled'"
     volumes:
       - ${APP_DATA_DIR}/data:/var/lib

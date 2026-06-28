@@ -1,0 +1,22 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: pearcircle-seeder_app_1
+      APP_PORT: 8730
+
+  app:
+    image: ghcr.io/peerloomllc/pearcircle-seeder:1.0.17@sha256:305485b61dea25507b245066b9d8fd8405b0841132ed8a3b9d3b6e6991198f20
+    restart: on-failure
+    stop_grace_period: 1m
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      SEEDER_HOST: 0.0.0.0
+      SEEDER_PORT: "8730"
+      SEEDER_NO_AUTH: "1"
+      SEEDER_NO_UPDATE_CHECK: "1"
+    volumes:
+      # Seeder identity, per-circle enrollments, retention state, logs.
+      - ${APP_DATA_DIR}/data:/data
