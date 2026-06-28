@@ -191,9 +191,9 @@ services:
       retries: 12
       start_period: 30s
     ports:
-      - "33333:3333"
-      - "33334:3334"
-      - "33444:4334"
+      - "32222:3333"
+      - "32223:3334"
+      - "32225:4334"
     volumes:
       - ${APP_DATA_DIR}/data/ckpool/config:/etc/ckpool
       - ${APP_DATA_DIR}/data/ckpool/logs:/var/log/ckpool
@@ -231,7 +231,7 @@ services:
       ckpool:
         condition: service_healthy
     ports:
-      - "34333:4333"
+      - "32224:4333"
     volumes:
       - ${APP_DATA_DIR}/data/stunnel:/certs
 
@@ -273,11 +273,11 @@ services:
       - MAX_DIFFICULTY=0
       - BLOCKPOLL=50
       - UPDATE_INTERVAL=20
-      - STRATUM_PORT=33333
-      - STRATUM_PORT_HOBBY=33334
-      - STRATUM_PORT_NICEHASH=33444
+      - STRATUM_PORT=32222
+      - STRATUM_PORT_HOBBY=32223
+      - STRATUM_PORT_NICEHASH=32225
       - HIGH_DIFFICULTY=500000
-      - STRATUM_PORT_TLS=34333
+      - STRATUM_PORT_TLS=32224
 
   ui:
     image: ghcr.io/danhaus93-ops/solostrike-ui:v3.0.4@sha256:7275b777a25079a9f6aa846ba4994aac19b12dd042d77d9171bcdf53a78911da
