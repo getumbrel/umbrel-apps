@@ -20,7 +20,7 @@ services:
 
   hestia:
     # Non-privileged, multi-arch HestiaCP (github.com/ptrinh/hestiacp-docker).
-    image: ghcr.io/ptrinh/hestiacp:build-28230633996@sha256:8f287116fa1573ae786134f98ec2263c52cbf9b809c82ff8cd629049975faa38
+    image: ghcr.io/ptrinh/hestiacp:build-28312998327@sha256:d50994871f199e3bb283ef857ef300e164eb2bbce01d611955f77136c316a974
     restart: on-failure
     stop_grace_period: 1m
     environment:
@@ -31,6 +31,7 @@ services:
     volumes:
       - ${APP_DATA_DIR}/data/home:/home
       - ${APP_DATA_DIR}/data/mysql:/var/lib/mysql
+      - ${APP_DATA_DIR}/data/postgresql:/var/lib/postgresql
       - ${APP_DATA_DIR}/data/hestia:/usr/local/hestia/data
       - ${APP_DATA_DIR}/data/hestia-conf:/usr/local/hestia/conf
       - ${APP_DATA_DIR}/data/backup:/backup
