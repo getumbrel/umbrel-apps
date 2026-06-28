@@ -5,7 +5,7 @@ manifestVersion: 1
 id: lightningmate
 category: finance
 name: Lightning Mate
-version: "0.6.10"
+version: "0.6.23"
 tagline: Profit-aware management & autopilot for your Lightning node
 description: >-
   Lightning Mate manages your Lightning node so you don't have to babysit it.
@@ -18,7 +18,7 @@ description: >-
   the network graph and open channels in a click, plus a node health score.
 
 
-  Flip on the Autopilot and the node tunes its own fees, runs only profitable
+  Flip on the Autopilot and the node tunes its own pricing, runs only profitable
   rebalances, and opens channels to top peers — all on recommended settings with
   safe caps and cooldowns.
 
@@ -32,7 +32,35 @@ description: >-
   Lightning Mate signs in with the per-app password Umbrel generates for it
   (shown when you open the app), so no other app on your server can read your
   node or move your funds.
-releaseNotes: ""
+releaseNotes: |-
+  A huge upgrade since 0.6.10 — the Autopilot is now fully profit-first, with
+  one-click strategies (Maximize routing / Magma leasing / Balanced).
+
+  Pricing & routing
+  - Reworked pricing engine: role-aware dynamic channel pricing (source / sink /
+    router) with profit floors, so a channel never routes below its own refill cost.
+  - It learns: tracks how each peer's flow reacts to price changes and adapts.
+
+  Rebalancing
+  - Profit-gated — only runs moves that pay for themselves, with full cost
+    accounting and per-channel cooldowns.
+  - Cheapest-route decisioning + a shared on-chain capital budget across the
+    autopilots so they never fight over the same coins.
+
+  Amboss Magma (buy & sell liquidity)
+  - Sell with adaptive auto-pricing (undercut / market / premium / auto) and a live
+    on-chain cost floor; auto-list freed capital.
+  - Optional Autopilot fulfilment — opens channels to buyers within your capital,
+    channel-size and on-chain reserve caps; fast (~3 min) order poll.
+  - Buy inbound liquidity in one click.
+
+  Analytics & tools
+  - Profit & Loss overview, a full Forwards report, and a "Did the Autopilot pay
+    off?" outcomes view.
+  - Channel peer + close suggestions, node health score, on-chain + Lightning
+    wallet, and one-click channel backup (SCB) export.
+
+  Polished dark UI throughout.
 developer: opensourceminers.de
 website: https://opensourceminers.de
 dependencies:
