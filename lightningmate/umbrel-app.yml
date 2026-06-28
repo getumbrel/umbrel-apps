@@ -5,7 +5,7 @@ manifestVersion: 1
 id: lightningmate
 category: finance
 name: Lightning Mate
-version: "0.6.10"
+version: "0.6.23"
 tagline: Profit-aware management & autopilot for your Lightning node
 description: >-
   Lightning Mate manages your Lightning node so you don't have to babysit it.
@@ -32,7 +32,22 @@ description: >-
   Lightning Mate signs in with the per-app password Umbrel generates for it
   (shown when you open the app), so no other app on your server can read your
   node or move your funds.
-releaseNotes: ""
+releaseNotes: |-
+  A major upgrade — the Autopilot is now profit-first, with one-click strategies
+  (Maximize routing / Magma leasing / Balanced):
+
+  - New fee engine: role-aware dynamic fees with profit floors, so a channel never
+    routes below its own refill cost — and it learns how each peer's flow responds
+    to fee changes.
+  - Profit-gated rebalancing: only runs rebalances that pay for themselves, with
+    full cost accounting.
+  - Amboss Magma, built in: buy inbound liquidity, sell your own liquidity with
+    adaptive auto-pricing, and let the Autopilot fulfil orders automatically within
+    your capital, channel-size and on-chain reserve caps.
+  - Smarter analytics: a Profit & Loss overview, a full Forwards report, and a
+    "Did the Autopilot pay off?" outcomes view.
+  - Channel peer + close suggestions from the network graph, an on-chain + Lightning
+    wallet, and one-click channel backup (SCB) export.
 developer: opensourceminers.de
 website: https://opensourceminers.de
 dependencies:
