@@ -14,8 +14,10 @@ description: >-
   This package runs a purpose-built, non-privileged, multi-architecture image
   (ghcr.io/ptrinh/hestiacp): systemd is replaced with a systemctl shim, and the
   privilege-requiring features (firewall, fail2ban, disk quota) are disabled, so
-  it runs with no privileged mode and no extra Linux capabilities. The web/DB
-  stack (Nginx + PHP-FPM + MariaDB) is intact.
+  it runs with no privileged mode and no extra Linux capabilities. The full
+  panel is intact: Nginx + Apache, PHP-FPM, MariaDB + PostgreSQL, mail
+  (Exim/Dovecot/Roundcube), DNS, FTP, File Manager, cron, phpMyAdmin and
+  phpPgAdmin.
 
 
   Notes:
@@ -31,6 +33,10 @@ description: >-
 
   - Network-level protection (firewall/fail2ban) is handled by Umbrel/your
     router rather than inside the panel.
+
+  - For a user's SSH Access shell use "bash" (or sh/dash/rbash); "jailbash" is
+    not supported on this unprivileged build (its bubblewrap sandbox needs
+    privileges the container does not have) and would lock that user out.
 developer: HestiaCP
 website: https://hestiacp.com
 submitter: ptrinh
