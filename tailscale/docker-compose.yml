@@ -9,6 +9,8 @@ services:
     image: tailscale/tailscale:v1.98.3@sha256:854b77123b9536adae2e97f5a5fdb1790ed03438b911ab7f07780155e0af6ce2
     restart: on-failure
     stop_grace_period: 1m
+    environment:
+      - TS_DEBUG_FIREWALL_MODE=nftables
     # Required for tailscaled to manage the host TUN interface and route table.
     cap_add:
       - NET_ADMIN
