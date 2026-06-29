@@ -1,0 +1,75 @@
+version: "3.7"
+
+services:
+
+  app_proxy:
+    environment:
+      APP_HOST: miniweed-tunnel_web_1
+      APP_PORT: 3016
+      PROXY_AUTH_ADD: "true"
+
+  web:
+    image: ghcr.io/miniweed/umbrel-tunnel-web:1.6.46@sha256:90207c00ba229b4633d9ef2b65bbd527fc2a51362cc8167bbf582e2521a17cf3
+    restart: on-failure
+    stop_grace_period: 30s
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+      - ${APP_DATA_DIR}/caddy/data:/caddy-data
+    environment:
+      - DATA_DIR=/data
+      - CADDYFILE_PATH=/caddy-data/Caddyfile
+      - WG_API_HOST=wg
+      - WG_API_TOKEN=${TUNNEL_WG_TOKEN}
+      - PORT=3016
+      - APP_SEED=${APP_SEED}
+
+  caddy:
+    image: caddy:2.8-alpine@sha256:af32e97399febea808609119bb21544d0265c58a02836576e32a2d082c262c17
+    restart: on-failure
+    stop_grace_period: 30s
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    security_opt:
+      - no-new-privileges:true
+    network_mode: "service:wg"
+    depends_on:
+      - wg
+    volumes:
+      - ${APP_DATA_DIR}/caddy/data:/data/caddy
+      - ${APP_DATA_DIR}/caddy/config:/config
+    environment:
+      - XDG_DATA_HOME=/data/caddy
+      - WG_API_TOKEN=${TUNNEL_WG_TOKEN}
+    command:
+      - sh
+      - -c
+      - |
+        until [ -s /data/caddy/Caddyfile ] && wget -q --header="x-wg-api-token: $$WG_API_TOKEN" -O - http://127.0.0.1:8080/status >/dev/null 2>&1; do
+          echo "[caddy] Waiting for Caddyfile and WireGuard API..."
+          sleep 2
+        done
+        exec caddy run --config /data/caddy/Caddyfile --adapter caddyfile --watch
+
+  wg:
+    image: ghcr.io/miniweed/umbrel-tunnel-wg:1.0.5@sha256:424562865ec99d64cab96861b3747b3d26bbe0463c672c6aec9cda2e23766a6b
+    restart: on-failure
+    stop_grace_period: 30s
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    security_opt:
+      - no-new-privileges:true
+    sysctls:
+      - net.ipv4.conf.all.src_valid_mark=1
+    volumes:
+      - ${APP_DATA_DIR}/data:/data:ro
+    environment:
+      - WG_API_TOKEN=${TUNNEL_WG_TOKEN}
