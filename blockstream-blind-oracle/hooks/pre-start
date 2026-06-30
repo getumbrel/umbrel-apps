@@ -5,14 +5,17 @@
 # files so the compose bind mounts have a source; on first start we replace them
 # with a freshly generated, install-specific keypair. The pin server's generator
 # skips if the key file already exists, so we remove the empty placeholders
-# first, and the `-s` guard means a real key is never regenerated on later
-# starts. Keys must exist before the containers start because the compose file
-# bind-mounts the key files directly. Image is pinned to the same digest as the
-# `node` service.
+# first. We require both files to be non-empty, otherwise an interrupted first
+# run can leave one key written and skip regeneration forever. If generation
+# fails we drop the partial files and bail out before compose runs, so the bind
+# mounts never start with missing sources and the next start retries. Keys must
+# exist before the containers start because the compose file bind-mounts the key
+# files directly. Image is pinned to the same digest as the `node` service.
 SERVER_KEY_FILE="${APP_DATA_DIR}/data/server_private_key.key"
-if [[ ! -s "${SERVER_KEY_FILE}" ]]; then
+SERVER_PUB_FILE="${APP_DATA_DIR}/data/server_public_key.pub"
+if [[ ! -s "${SERVER_KEY_FILE}" || ! -s "${SERVER_PUB_FILE}" ]]; then
 	echo "App: ${APP_ID} - Generating a unique server keypair..."
-	rm -f "${APP_DATA_DIR}/data/server_private_key.key" "${APP_DATA_DIR}/data/server_public_key.pub"
+	rm -f "${SERVER_KEY_FILE}" "${SERVER_PUB_FILE}"
 	docker run --rm \
 		--entrypoint /usr/bin/python3 \
 		--workdir /keys \
@@ -20,6 +23,12 @@ if [[ ! -s "${SERVER_KEY_FILE}" ]]; then
 		--volume "${APP_DATA_DIR}/data:/keys" \
 		tulipan81/blind_pin_server:v0.0.7@sha256:db8ce3f8de8da6cb083d60051a8ec720d5aa311e06148b259c42c4dfb7263c63 \
 		-m pinserver.generateserverkey
+
+	if [[ ! -s "${SERVER_KEY_FILE}" || ! -s "${SERVER_PUB_FILE}" ]]; then
+		echo "App: ${APP_ID} - Key generation failed, aborting so it retries next start"
+		rm -f "${SERVER_KEY_FILE}" "${SERVER_PUB_FILE}"
+		exit 1
+	fi
 fi
 
 # Create hidden service for the node container and ensure the web container
