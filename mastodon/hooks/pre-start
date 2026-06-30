@@ -5,14 +5,15 @@ APP_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")"
 APP_DATA_DIR="${APP_DATA_DIR:-${APP_DIR}}"
 UMBREL_ROOT="${UMBREL_ROOT:-$(readlink -f "${APP_DIR}/../..")}"
 APP_ID="${APP_ID:-mastodon}"
-APP_PORT="${APP_MASTODON_PORT:-8388}"
 DEVICE_DOMAIN_NAME="${DEVICE_DOMAIN_NAME:-umbrel.local}"
 
 ADMIN_EMAIL="umbrel@umbrel.local"
 ENV_FILE="${APP_DATA_DIR}/mastodon.env"
 INIT_SENTINEL="${APP_DATA_DIR}/data/.mastodon_initialized"
 NGINX_CONFIG_FILE="${APP_DATA_DIR}/nginx.conf"
+NGINX_TEMPLATE_FILE="${APP_DIR}/nginx.conf.template"
 FORCE_HTTP_FILE="${APP_DATA_DIR}/force-http.rb"
+FORCE_HTTP_TEMPLATE_FILE="${APP_DIR}/force-http.rb.template"
 MASTODON_IMAGE="ghcr.io/mastodon/mastodon:v4.5.9@sha256:2f4930e3f84a2f6b90b49c4e58329e9abc8bd354344cbd0607484514decff99f"
 
 mkdir -p \
@@ -21,8 +22,9 @@ mkdir -p \
   "${APP_DATA_DIR}/data/redis"
 
 touch "${ENV_FILE}"
-cp "${APP_DIR}/nginx.conf" "${NGINX_CONFIG_FILE}"
-cp "${APP_DIR}/force-http.rb" "${FORCE_HTTP_FILE}"
+cp "${NGINX_TEMPLATE_FILE}" "${NGINX_CONFIG_FILE}"
+cp "${FORCE_HTTP_TEMPLATE_FILE}" "${FORCE_HTTP_FILE}"
+chmod 644 "${NGINX_CONFIG_FILE}" "${FORCE_HTTP_FILE}"
 
 if [[ "$(id -u)" -eq 0 ]]; then
   chown -R 991:991 "${APP_DATA_DIR}/data/system" 2>/dev/null || true
@@ -94,10 +96,29 @@ random_b64() {
   openssl rand -base64 32 | tr -d "\n"
 }
 
+random_password() {
+  openssl rand -hex 32
+}
+
 generate_vapid_keys() {
   docker run --rm --entrypoint ruby "${MASTODON_IMAGE}" \
     -rwebpush \
     -e 'v = Webpush.generate_key; puts "VAPID_PRIVATE_KEY=#{v.private_key}"; puts "VAPID_PUBLIC_KEY=#{v.public_key}"'
+}
+
+is_local_identity() {
+  local value="${1}"
+  local host="${value%%:*}"
+  local device_host="${DEVICE_DOMAIN_NAME%%:*}"
+
+  case "${host}" in
+    ""|"${device_host}"|umbrel.local|localhost|*.local|127.*|0.0.0.0)
+      return 0
+      ;;
+    *)
+      return 1
+      ;;
+  esac
 }
 
 ensure_present RAILS_ENV production
@@ -105,8 +126,14 @@ ensure_present NODE_ENV production
 ensure_present RAILS_SERVE_STATIC_FILES true
 ensure_present BIND 0.0.0.0
 
-ensure_present LOCAL_DOMAIN "${DEVICE_DOMAIN_NAME}"
-ensure_present WEB_DOMAIN "${DEVICE_DOMAIN_NAME}:${APP_PORT}"
+ensure_present LOCAL_DOMAIN ""
+LOCAL_DOMAIN_VALUE="$(get_var LOCAL_DOMAIN)"
+if [[ -n "${LOCAL_DOMAIN_VALUE}" ]]; then
+  ensure_nonempty WEB_DOMAIN "${LOCAL_DOMAIN_VALUE}"
+else
+  ensure_present WEB_DOMAIN ""
+fi
+WEB_DOMAIN_VALUE="$(get_var WEB_DOMAIN)"
 ensure_present LOCAL_HTTPS false
 ensure_present TRUSTED_PROXY_IP "127.0.0.1/8,::1/128,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,fc00::/7"
 
@@ -114,16 +141,28 @@ ensure_present DB_HOST db
 ensure_present DB_PORT 5432
 ensure_present DB_NAME mastodon_production
 ensure_present DB_USER mastodon
-ensure_present DB_PASS mastodon
+ensure_nonempty DB_PASS "$(random_password)"
+set_var POSTGRES_PASSWORD "$(get_var DB_PASS)"
 
 ensure_present REDIS_HOST redis
 ensure_present REDIS_PORT 6379
+ensure_nonempty REDIS_PASSWORD "$(random_password)"
 
 ensure_nonempty SECRET_KEY_BASE "$(random_hex)"
 ensure_nonempty OTP_SECRET "$(random_hex)"
 ensure_nonempty ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY "$(random_b64)"
 ensure_nonempty ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT "$(random_b64)"
 ensure_nonempty ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY "$(random_b64)"
+
+LOCAL_DOMAIN_VALUE="$(get_var LOCAL_DOMAIN)"
+WEB_DOMAIN_VALUE="$(get_var WEB_DOMAIN)"
+if [[ ! -f "${INIT_SENTINEL}" ]] && { is_local_identity "${LOCAL_DOMAIN_VALUE}" || is_local_identity "${WEB_DOMAIN_VALUE}"; }; then
+  set_var MASTODON_SETUP_READY false
+  echo "mastodon: waiting for public LOCAL_DOMAIN and WEB_DOMAIN in mastodon.env before first-run bootstrap."
+  exit 0
+fi
+
+set_var MASTODON_SETUP_READY true
 
 if [[ -z "$(get_var VAPID_PRIVATE_KEY)" || -z "$(get_var VAPID_PUBLIC_KEY)" ]]; then
   VAPID_KEYS="$(generate_vapid_keys)"
@@ -136,10 +175,13 @@ fi
 ensure_present ES_ENABLED false
 ensure_present SINGLE_USER_MODE false
 
-LOCAL_DOMAIN_VALUE="$(get_var LOCAL_DOMAIN)"
 ensure_present SMTP_SERVER ""
 ensure_present SMTP_PORT 587
-ensure_present SMTP_FROM_ADDRESS "notifications@${LOCAL_DOMAIN_VALUE}"
+if [[ -n "${LOCAL_DOMAIN_VALUE}" ]]; then
+  ensure_present SMTP_FROM_ADDRESS "notifications@${LOCAL_DOMAIN_VALUE}"
+else
+  ensure_present SMTP_FROM_ADDRESS ""
+fi
 
 if [[ -f "${INIT_SENTINEL}" ]]; then
   echo "mastodon: already initialized, preserving existing configuration."
