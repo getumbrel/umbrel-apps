@@ -51,6 +51,9 @@ services:
   lightningd:
     image: elementsproject/lightningd:v26.06.1@sha256:abc26f1ece2ea2986f4cb5dc0117c81aed2c1662f6fb266838c4208c2f99468d
     restart: on-failure
+    depends_on:
+      tor:
+        condition: service_healthy
     ports:
       - ${APP_CORE_LIGHTNING_DAEMON_PORT}:9735
       - ${APP_CORE_LIGHTNING_WEBSOCKET_PORT}:${APP_CORE_LIGHTNING_WEBSOCKET_PORT}
@@ -89,3 +92,16 @@ services:
       - ${TOR_DATA_DIR}:/data
     environment:
       HOME: "/tmp"
+    # Gate lightningd on the Tor control port being reachable. lightningd's connectd
+    # calls a fatal, non-retrying status_failed() if it can't reach Tor at startup, so
+    # on a fresh start or OS update it crashes when it races ahead of Tor. The control
+    # port lives on umbrelOS's system Tor at ${TOR_PROXY_IP}:29051 (same endpoint
+    # lightningd connects to via --addr=statictor). The getumbrel/tor image has no nc
+    # and its /bin/sh lacks the /dev/tcp builtin, so probe with bash via CMD (not
+    # CMD-SHELL).
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/${TOR_PROXY_IP}/29051"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 10s

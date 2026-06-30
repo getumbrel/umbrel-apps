@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: core-lightning
 category: bitcoin
 name: Core Lightning
-version: "26.06.1"
+version: "26.06.1-hotfix.1"
 tagline: Run your personal Core Lightning node
 description: >-
   Get started with the Lightning network today with Core Lightning - a
@@ -32,11 +32,12 @@ defaultPassword: ""
 submitter: Blockstream
 submission: https://github.com/getumbrel/umbrel-apps/pull/475
 releaseNotes: >-
-  This updates Core Lightning to v26.06.1. CLN Application remains on v26.04.
+  This is a packaging fix and does not change the Core Lightning version (still v26.06.1).
 
 
-  **Core Lightning v26.06.1:**
-    - Fixes the `bwatch` plugin failing to register on startup after `make install`.
+  It stops lightningd from crashing on startup when it races ahead of Tor — a problem
+  that showed up most often after an umbrelOS update recreated all the containers at once.
+  The node now waits for the Tor control port to be reachable before lightningd starts.
 
 backupIgnore:
   - data/lightningd/bitcoin/lightningd.sqlite3
