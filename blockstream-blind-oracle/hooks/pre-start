@@ -1,4 +1,27 @@
 #!/usr/bin/env bash
+
+# Generate a unique server keypair on first start instead of shipping one
+# committed keypair to every install. The package ships empty placeholder key
+# files so the compose bind mounts have a source; on first start we replace them
+# with a freshly generated, install-specific keypair. The pin server's generator
+# skips if the key file already exists, so we remove the empty placeholders
+# first, and the `-s` guard means a real key is never regenerated on later
+# starts. Keys must exist before the containers start because the compose file
+# bind-mounts the key files directly. Image is pinned to the same digest as the
+# `node` service.
+SERVER_KEY_FILE="${APP_DATA_DIR}/data/server_private_key.key"
+if [[ ! -s "${SERVER_KEY_FILE}" ]]; then
+	echo "App: ${APP_ID} - Generating a unique server keypair..."
+	rm -f "${APP_DATA_DIR}/data/server_private_key.key" "${APP_DATA_DIR}/data/server_public_key.pub"
+	docker run --rm \
+		--entrypoint /usr/bin/python3 \
+		--workdir /keys \
+		--env PYTHONPATH=/ \
+		--volume "${APP_DATA_DIR}/data:/keys" \
+		tulipan81/blind_pin_server:v0.0.7@sha256:db8ce3f8de8da6cb083d60051a8ec720d5aa311e06148b259c42c4dfb7263c63 \
+		-m pinserver.generateserverkey
+fi
+
 # Create hidden service for the node container and ensure the web container
 # gets the hidden service environment variable on first install.
 
