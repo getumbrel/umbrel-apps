@@ -7,7 +7,7 @@ services:
       APP_PORT: 3001
 
   web:
-    image: ghcr.io/opensourceminers/lightningmate:v0.6.10@sha256:199a9df7855714d3b2fe2bc011ebdda88bd58fee2653f283111b35094ca61c1a
+    image: ghcr.io/opensourceminers/lightningmate:v0.6.28@sha256:28612c09bb68140170ba1630c981fd555c28d4dd36182db0472bd804e56d5cd9
     user: "1000:1000"
     restart: on-failure
     stop_grace_period: 1m
@@ -39,3 +39,5 @@ services:
       # comment these two lines out.
       LM_ENABLE_WRITE: "true"
       LND_WRITE_MACAROON_PATH: "/lnd/data/chain/bitcoin/$APP_BITCOIN_NETWORK/admin.macaroon"
+      LM_SELL_FEE_BPS: "100"
+      LM_SELL_FEE_ADDRESS: "lightningmate@btcpay.opensourceminers.de"
