@@ -1,0 +1,66 @@
+# Bitcoin Cash Node (node only) for Umbrel
+# Fulcrum is now its own app (fulcrum-bch). ZMQ added for SoloStrike Cash.
+services:
+  app_proxy:
+    environment:
+      APP_HOST: bitcoin-cash-node_web_1
+      APP_PORT: 3000
+
+  tor:
+    image: getumbrel/tor:0.4.7.8@sha256:2ace83f22501f58857fa9b403009f595137fa2e7986c4fda79d82a8119072b6a
+    user: "1000:1000"
+    restart: on-failure
+    environment:
+      HOME: /tmp
+    volumes:
+      - ${APP_DATA_DIR}/torrc:/etc/tor/torrc:ro
+      - ${APP_DATA_DIR}/data/tor:/data
+    networks:
+      default:
+        ipv4_address: ${APP_BITCOIN_CASH_NODE_TOR_IP}
+
+  bitcoind:
+    image: mainnet/bitcoin-cash-node:v29.0.0@sha256:5144a579369cbab859119b04c86e4e078cf8ef830a1cb721be96bdc0b7498a35
+    user: "1000:1000"   # match Umbrel bind-mount ownership (fresh installs are 1000:1000)
+    restart: on-failure
+    stop_grace_period: 1m
+    volumes:
+      - ${APP_DATA_DIR}/data/bitcoind:/data
+    entrypoint: ["bitcoind"]
+    command:
+      - -datadir=/data
+      - -printtoconsole
+      - -server=1
+      - -listen=1
+      - -port=8335
+      - -rpcbind=0.0.0.0
+      - -rpcallowip=0.0.0.0/0
+      - -rpcuser=${APP_BITCOIN_CASH_NODE_RPC_USER}
+      - -rpcpassword=${APP_BITCOIN_CASH_NODE_RPC_PASS}
+      - -rpcworkqueue=512
+      - -rpcthreads=64          # default is 4 — plenty of headroom, idle threads are nearly free
+      - -dbcache=512
+      - -maxmempool=300
+      - -txindex=1
+      - -maxconnections=64
+      - -zmqpubhashblock=tcp://0.0.0.0:28332   # for SoloStrike Cash (lowest-latency)
+    ports:
+      - 8335:8335   # BCH P2P — forward this on your router for clearnet inbound peers
+
+  web:
+    image: ghcr.io/danhaus93-ops/bchn-dashboard:v29.1.13@sha256:1ef08c6f55565226eaa15ea72c1fb55c38320284f4481d0264a8e26db8cc7e6f
+    restart: on-failure
+    user: "1000:1000"   # read chain data dir (1000:1000 on fresh installs); no root needed
+    volumes:
+      - ${APP_DATA_DIR}/data/bitcoind:/nodedata
+    depends_on:
+      - bitcoind
+    environment:
+      PORT: 3000
+      APP_VERSION: v29.1.13
+      TOR_IP: ${APP_BITCOIN_CASH_NODE_TOR_IP}
+      RPC_HOST: bitcoind
+      RPC_PORT: "8332"
+      RPC_USER: ${APP_BITCOIN_CASH_NODE_RPC_USER}
+      RPC_PASS: ${APP_BITCOIN_CASH_NODE_RPC_PASS}
+      PUBLIC_HOST: ${DEVICE_DOMAIN_NAME}
