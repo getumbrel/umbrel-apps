@@ -1,0 +1,94 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: tela_proxy_1
+      APP_PORT: 80
+      # tela ships its own email-first auth (the /setup wizard creates the admin
+      # on first run) and exposes endpoints that cannot carry an Umbrel session
+      # cookie: the built-in MCP server (/api/mcp, bearer-authed), WebDAV sync
+      # (/dav, PAT-as-Basic), public/blog spaces, and password-gated share links.
+      # Fronting all of that with Umbrel auth would break those clients, so the
+      # app handles its own access control.
+      PROXY_AUTH_ADD: "false"
+
+  # Caddy — the single web entrypoint. Serves the SPA and reverse-proxies
+  # /api to the backend. Listens on :80 internally; app_proxy fronts it.
+  proxy:
+    image: ghcr.io/zcag/tela-proxy:0.7.0@sha256:e320276641781f38f48c97ec10dc3432cc4ecf933ee63c5946d155ded42f81f7
+    restart: on-failure
+    environment:
+      TELA_SITE_ADDRESS: ":80"
+      TELA_UPSTREAM_BACKEND: backend:8080
+      TELA_UPSTREAM_FRONTEND: frontend:80
+    depends_on:
+      - backend
+      - frontend
+
+  # Go API server. Runs its embedded Postgres migrations on first connect.
+  backend:
+    image: ghcr.io/zcag/tela-backend:0.7.0@sha256:fe0f23fcd53fb7903889d8659844edf11d0f7f8aef9572251ab4f336934e2a9f
+    restart: on-failure
+    environment:
+      TELA_PUBLIC_BASE_URL: "http://${DEVICE_DOMAIN_NAME}:${APP_TELA_PORT}"
+      TELA_DATABASE_URL: "postgres://tela:${APP_TELA_POSTGRES_PASSWORD}@postgres:5432/tela?sslmode=disable"
+      TELA_SHARE_SECRET: ${APP_TELA_SHARE_SECRET}
+      TELA_API_KEY_SECRET: ${APP_TELA_API_KEY_SECRET}
+      # PDF export: the backend POSTs to gotenberg, which renders the reader via
+      # the internal proxy origin (never a public URL).
+      TELA_GOTENBERG_URL: http://gotenberg:3000
+      TELA_PDF_RENDER_BASE_URL: http://proxy
+      # Slidev deck render sidecar.
+      TELA_DECK_URL: http://deck:3344
+    depends_on:
+      postgres:
+        condition: service_healthy
+      gotenberg:
+        condition: service_started
+      deck:
+        condition: service_started
+
+  # nginx serving the built React frontend assets.
+  frontend:
+    image: ghcr.io/zcag/tela-frontend:0.7.0@sha256:916648383a9856bc80647ebc767f395c6292514ffcba23db1866e19c86189731
+    restart: on-failure
+
+  # Primary datastore. pgvector/pgvector ships the `vector` extension on top of
+  # the official postgres:17 image — tela's semantic search needs CREATE
+  # EXTENSION vector. All user content, pages, and uploaded attachments live
+  # here (tela has no on-disk blob store), so this volume holds everything.
+  postgres:
+    image: pgvector/pgvector:pg17@sha256:be400b50812ab2cc908ed78593fda2e51e3b45fe774fa637f1c7b16e68531d95
+    restart: on-failure
+    environment:
+      POSTGRES_USER: tela
+      POSTGRES_PASSWORD: ${APP_TELA_POSTGRES_PASSWORD}
+      POSTGRES_DB: tela
+    volumes:
+      - ${APP_DATA_DIR}/data/db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tela -d tela"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+
+  # PDF export engine (headless-Chromium HTML→PDF). Internal only.
+  gotenberg:
+    image: gotenberg/gotenberg:8@sha256:67097317623a503ba2a6a7e9ae8db6929a1f7e1bbd88077bacf2d325fbdab923
+    restart: on-failure
+
+  # Deck render sidecar — Slidev markdown → slide images / PDF. The /data cache
+  # is regenerable (excluded from backups via backupIgnore).
+  deck:
+    image: ghcr.io/zcag/tela-deck:0.7.0@sha256:bdd1a81658370979b308cca788a5ebbad265af8c44a3fe59516b2d0b2591410c
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data/deck:/data
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3344/health',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
