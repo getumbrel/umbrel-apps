@@ -5,7 +5,14 @@ services:
     environment:
       APP_HOST: booklore_web_1
       APP_PORT: 6060
-      
+      # Whitelist BookLore's OPDS catalog and KOReader sync API. E-reader
+      # companion clients (KOReader, CrossPoint) can't send Umbrel auth
+      # cookies, so without this they follow app_proxy's login redirect and
+      # receive the portal HTML instead of JSON (KOReader/CrossPoint report a
+      # "sync failed / JSON parse error"). The web UI stays behind Umbrel auth;
+      # OPDS + KOReader endpoints keep their own BookLore auth.
+      PROXY_AUTH_WHITELIST: "/api/v1/opds*,/api/koreader*"
+
   web:
     image: ghcr.io/booklore-app/booklore:v2.3.1@sha256:d3d3af34bc2cc44349178535ce19e86049968fba2e7d2acf965f770bf37bad01
     # does not work rootless
