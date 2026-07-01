@@ -3,7 +3,7 @@ id: bolt12-pay
 name: BOLT12 Pay
 tagline: Self-hosted Lightning payments and identity with BOLT12, BIP353, LNURL, and Nostr
 category: bitcoin
-version: 0.2.116
+version: 0.2.116.1
 port: 8367
 description: >-
   BOLT12 Pay is a self-hosted Lightning payments and identity app for LND nodes.
@@ -17,7 +17,9 @@ description: >-
   Recommended setup:
 
   - Your own domain (for example: example.com)
-  - DNS managed through Cloudflare, you can also import domains from other providers for DNS management to cloudflare.
+
+  - DNS managed through Cloudflare, you can also import domains from other providers for DNS management to cloudflare
+
   - A public HTTPS endpoint (Cloudflare Tunnel works well on Umbrel)
 
   This enables:
@@ -158,13 +160,18 @@ releaseNotes: |
    - Legacy configuration instructions are hidden when native support is available
    - Maintains compatibility with LND v0.20.x custom-message transport
 
+  User Experience:
+
+   - Added copy-to-clipboard support for Last Payment Result output
+   - Fixed LNURL payment success messages not respecting the selected UI language
+   - Improved setup and documentation guidance
+
   Upgrade notes:
 
-  - LND v0.20.x users should keep their existing custom protocol configuration.
-  - LND v0.21.x users should remove all legacy custom protocol settings from lnd.conf before upgrading Lightning.
+   - LND v0.20.x users should keep their existing custom protocol configuration.
+   - LND v0.21.x users should remove all legacy custom protocol settings from lnd.conf before upgrading Lightning.
 
   This release maintains compatibility with existing BOLT12 Pay installations while preparing for the transition to native onion messaging in LND.
-
 
 dependencies:
   - lightning
