@@ -3,7 +3,7 @@ id: open-webui
 name: Open WebUI
 tagline: Chat with Ollama models like DeepSeek-R1 and LLama, or use an OpenAI API key
 category: ai
-version: "0.10.1"
+version: "0.10.2"
 port: 2876
 description: >-
   Open WebUI lets you chat with advanced AI models running locally on your own device or connect to online models using an API key.
@@ -37,17 +37,15 @@ defaultPassword: ""
 dependencies:
   - ollama
 releaseNotes: >-
-  ⚠️ Major update: this release includes database schema migrations. Back up your Open WebUI data before upgrading; downgrading after the migration is not supported.
+  Open WebUI 0.10.2 is a follow-up to the recent 0.10 major update. If you're updating from a pre-0.10 version, back up your Open WebUI data first; downgrading after the 0.10 database migrations is not supported.
 
 
-  This update includes major collaboration, automation, and reliability improvements:
-    - Adds shared folders with read/write access controls, automatic context compaction for long chats, Open WebUI Computer agent support, external knowledge bases, system events, and outbound webhooks
-    - Reworks memories, adds event functions, improves knowledge-base search performance, and adds admin controls for authentication, permissions, headers, tokenizers, and OAuth/MCP behavior
-    - Changes the default tool-calling mode to Native; switch chats, models, or global defaults back to Legacy if your models depend on the previous behavior
-    - Sandboxes client-side Python code execution by default and moves LDAP/OAuth settings into a dedicated Authentication page
-    - Improves chat recovery, uploads, search, document processing, model settings, notifications, Ollama status display, accessibility, mobile UI, and many admin/workspace workflows
-    - Fixes shared folder read-only chats incorrectly signing users out
+  Key highlights in this release:
+    - Includes security and access-control fixes, including stricter web search domain filtering and more private image-generation logs
+    - Adds streamed reasoning display for supported models and preserves folder structure when uploading or syncing knowledge-base folders
+    - Adds admin controls for memory context, speech-to-text request formats, Ollama/OpenAI API configs, provider failure events, and evaluation arena models
+    - Fixes unexpected logouts, SQLite upgrade/login issues, non-admin settings saving, model selection after refresh, tool dialog hangs, Python code execution loading, structured-output search/notifications, and config startup failures
 
 
-  Full release notes are available at https://github.com/open-webui/open-webui/releases/tag/v0.10.0 and https://github.com/open-webui/open-webui/releases/tag/v0.10.1
+  Full release notes are available at https://github.com/open-webui/open-webui/releases/tag/v0.10.2
 path: ""
