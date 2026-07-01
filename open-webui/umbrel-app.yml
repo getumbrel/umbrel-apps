@@ -3,7 +3,7 @@ id: open-webui
 name: Open WebUI
 tagline: Chat with Ollama models like DeepSeek-R1 and LLama, or use an OpenAI API key
 category: ai
-version: "0.8.10"
+version: "0.10.1"
 port: 2876
 description: >-
   Open WebUI lets you chat with advanced AI models running locally on your own device or connect to online models using an API key.
@@ -37,20 +37,17 @@ defaultPassword: ""
 dependencies:
   - ollama
 releaseNotes: >-
-  Key highlights in this release include:
-    - Administrators can now configure a custom OIDC logout URL for providers like AWS Cognito
-    - Added MariaDB Vector as a new supported vector database backend
-    - Chat messages sent to task models for title and tag generation can now be truncated to reduce token usage
-    - Fixed a bug where HTTP errors in pipeline filters could silently corrupt chat payloads
-    - Fixed knowledge file updates leaving stale embeddings in the database causing duplicate search results
-    - Fixed Docker deployments failing to start due to a missing OpenTelemetry dependency
-    - Fixed non-admin users being unable to view tools due to a missing function import
-    - Fixed YAML file uploads failing when Docling was enabled
-    - Fixed custom model fallback not working when the base model is unavailable
-    - Fixed images in queued messages appearing blank
-    - Fixed Azure text-to-speech using incomplete locale codes in SSML
-    - Fixed token usage analytics not being filtered by user group correctly
+  ⚠️ Major update: this release includes database schema migrations. Back up your Open WebUI data before upgrading; downgrading after the migration is not supported.
 
 
-  Full release notes are found at https://github.com/open-webui/open-webui/releases
+  This update includes major collaboration, automation, and reliability improvements:
+    - Adds shared folders with read/write access controls, automatic context compaction for long chats, Open WebUI Computer agent support, external knowledge bases, system events, and outbound webhooks
+    - Reworks memories, adds event functions, improves knowledge-base search performance, and adds admin controls for authentication, permissions, headers, tokenizers, and OAuth/MCP behavior
+    - Changes the default tool-calling mode to Native; switch chats, models, or global defaults back to Legacy if your models depend on the previous behavior
+    - Sandboxes client-side Python code execution by default and moves LDAP/OAuth settings into a dedicated Authentication page
+    - Improves chat recovery, uploads, search, document processing, model settings, notifications, Ollama status display, accessibility, mobile UI, and many admin/workspace workflows
+    - Fixes shared folder read-only chats incorrectly signing users out
+
+
+  Full release notes are available at https://github.com/open-webui/open-webui/releases/tag/v0.10.0 and https://github.com/open-webui/open-webui/releases/tag/v0.10.1
 path: ""

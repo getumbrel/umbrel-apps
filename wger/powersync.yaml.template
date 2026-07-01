@@ -1,0 +1,26 @@
+# yaml-language-server: $schema=../schema/schema.json
+
+telemetry:
+  disable_telemetry_sharing: true
+  prometheus_port: 9090
+
+replication:
+  connections:
+    - type: postgresql
+      uri: !env PS_DATABASE_URI
+      sslmode: disable
+
+storage:
+  type: postgresql
+  uri: !env PS_STORAGE_PG_URI
+  sslmode: disable
+
+port: !env PS_PORT
+
+sync_rules:
+  path: sync_rules.yaml
+
+client_auth:
+  allow_local_jwks: true
+  jwks_uri: !env PS_JWKS_URL
+  audience: ["powersync"]

@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# This script extracts the NetBird setup code from docker logs and displays it on the web interface
+
+APP_DATA_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")"/..)"
+STATUS_FILE="${APP_DATA_DIR}/data/www/status.json"
+
+echo "Waiting for NetBird container to start and checking status..."
+
+# Wait up to 30 seconds for the container to start and logs to be available
+for attempt in $(seq 1 300); do
+    # Get logs from the netbird app container
+    LOGS=$(docker logs netbird_app_1 2>/dev/null | tail -n 50 || echo "")
+    
+    if echo "${LOGS}" | grep -q "Already connected"; then
+        # Container is already connected
+        echo "NetBird is already connected"
+        echo '{"status":"connected","message":"Already connected to NetBird"}' > "${STATUS_FILE}"
+        break
+    elif echo "${LOGS}" | grep -q "https://login.netbird.io/activate?user_code="; then
+        # Extract the activation URL
+        ACTIVATION_URL=$(echo "${LOGS}" | grep -o "https://login.netbird.io/activate?user_code=[A-Z0-9-]*" | head -n 1)
+        USER_CODE=$(echo "${ACTIVATION_URL}" | grep -o "user_code=[A-Z0-9-]*" | cut -d= -f2)
+        
+        echo "Found activation URL: ${ACTIVATION_URL}"
+        echo "{\"status\":\"pending\",\"activationUrl\":\"${ACTIVATION_URL}\",\"userCode\":\"${USER_CODE}\"}" > "${STATUS_FILE}"
+        break
+    fi
+    
+    sleep 0.1
+done
+
+# If we didn't find anything after 30 seconds, create a default status
+if [[ ! -f "${STATUS_FILE}" ]]; then
+    echo '{"status":"waiting","message":"Waiting for NetBird to initialize. Check the app logs for the activation URL."}' > "${STATUS_FILE}"
+fi

@@ -1,0 +1,193 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+APP_DIR="${APP_DATA_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
+config_dir="${APP_DIR}/config"
+config_file="${config_dir}/prod.env"
+nginx_config_file="${config_dir}/nginx.conf"
+
+# Umbrel updates do not copy nested package files such as config/nginx.conf or
+# config/prod.env. The config directory is already part of the released wger
+# package, so this hook only updates package-owned files inside it. It does not
+# create or chown a new bind-mount directory.
+set_env_default() {
+  local key="$1"
+  local value="$2"
+
+  if ! grep -q "^${key}=" "${config_file}"; then
+    printf '%s=%s\n' "${key}" "${value}" >> "${config_file}"
+  fi
+}
+
+# Existing installs keep their old prod.env, so backfill the 2.6 defaults that
+# fresh installs receive from the package.
+set_env_default "SYNC_INGREDIENTS_DUMP_URL" "https://wger.de/media/ingredients/ingredients.jsonl.gz"
+set_env_default "CACHE_API_EXERCISES_CELERY" "True"
+set_env_default "CACHE_API_EXERCISES_CELERY_FORCE_UPDATE" "True"
+
+# Keep the nginx config in sync for updates. Without this, upgraded installs
+# would keep the 2.5 config and miss the /ps/ proxy required by PowerSync.
+cat > "${nginx_config_file}" <<'NGINX'
+upstream wger {
+    server wger_web_1:8000;
+}
+
+upstream powersync {
+    server wger_powersync_1:8080;
+}
+
+map $http_x_forwarded_proto $final_forwarded_proto {
+    default $http_x_forwarded_proto;
+    ''      $scheme;
+}
+
+server {
+
+    listen 80;
+
+    location / {
+        proxy_pass http://wger;
+
+        proxy_set_header Host $http_host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $final_forwarded_proto;
+        proxy_set_header X-Forwarded-Host $http_host;
+
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+
+        proxy_redirect off;
+        proxy_http_version 1.1;
+
+        proxy_read_timeout 86400s;
+        proxy_send_timeout 86400s;
+    }
+
+    location /ps/ {
+        proxy_pass http://powersync/;
+
+        proxy_set_header Host $http_host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $final_forwarded_proto;
+
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+
+        proxy_buffering off;
+        proxy_read_timeout 1d;
+        proxy_send_timeout 1d;
+    }
+
+    location /static/ {
+        alias /wger/static/;
+        add_header Cache-Control "public, max-age=31536000, immutable" always;
+        add_header Vary "Accept-Encoding" always;
+    }
+
+    location /media/ {
+        alias /wger/media/;
+    }
+
+    client_max_body_size 100M;
+}
+NGINX
+
+if grep -q '^JWT_PRIVATE_KEY=' "${config_file}" && grep -q '^JWT_PUBLIC_KEY=' "${config_file}"; then
+  exit 0
+fi
+
+# wger 2.6 replaced SIGNING_KEY with an RS256 JWK pair used by SimpleJWT,
+# allauth headless auth, and PowerSync. Generate it once per install and keep it
+# stable across restarts and future updates.
+umask 077
+tmp_dir="$(mktemp -d)"
+trap 'rm -rf "${tmp_dir}"' EXIT
+
+openssl genrsa 2048 > "${tmp_dir}/jwt.pem"
+openssl rsa -in "${tmp_dir}/jwt.pem" -outform DER -traditional -out "${tmp_dir}/jwt.der" 2>/dev/null
+
+python3 - "${tmp_dir}/jwt.der" >> "${config_file}" <<'PY'
+import base64
+import json
+import sys
+from pathlib import Path
+
+blob = Path(sys.argv[1]).read_bytes()
+pos = 0
+
+
+def read_byte():
+    global pos
+    b = blob[pos]
+    pos += 1
+    return b
+
+
+def read_len():
+    first = read_byte()
+    if first < 0x80:
+        return first
+    n = first & 0x7F
+    value = int.from_bytes(blob[pos:pos+n], 'big')
+    globals()['pos'] += n
+    return value
+
+
+def expect(tag):
+    actual = read_byte()
+    if actual != tag:
+        raise ValueError(f'Expected ASN.1 tag {tag:#x}, got {actual:#x}')
+    return read_len()
+
+
+def read_int():
+    length = expect(0x02)
+    data = blob[pos:pos+length]
+    globals()['pos'] += length
+    return int.from_bytes(data, 'big')
+
+
+expect(0x30)
+version = read_int()
+if version != 0:
+    raise ValueError('Unexpected RSA private key version')
+
+n = read_int()
+e = read_int()
+d = read_int()
+p = read_int()
+q = read_int()
+dp = read_int()
+dq = read_int()
+qi = read_int()
+
+
+def b64u_int(value):
+    data = value.to_bytes((value.bit_length() + 7) // 8, 'big')
+    return base64.urlsafe_b64encode(data).decode()
+
+
+def b64u_json(value):
+    return base64.urlsafe_b64encode(json.dumps(value, separators=(',', ':')).encode()).decode()
+
+kid = 'umbrel-wger'
+private_jwk = {
+    'kty': 'RSA',
+    'n': b64u_int(n),
+    'e': b64u_int(e),
+    'd': b64u_int(d),
+    'p': b64u_int(p),
+    'q': b64u_int(q),
+    'dp': b64u_int(dp),
+    'dq': b64u_int(dq),
+    'qi': b64u_int(qi),
+    'alg': 'RS256',
+    'kid': kid,
+}
+public_jwk = {key: private_jwk[key] for key in ('kty', 'n', 'e', 'alg', 'kid')}
+print(f'JWT_PRIVATE_KEY={b64u_json(private_jwk)}')
+print(f'JWT_PUBLIC_KEY={b64u_json(public_jwk)}')
+PY

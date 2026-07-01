@@ -7,7 +7,7 @@ services:
       APP_PORT: 3000
 
   app:
-    image: ghcr.io/getumbrel/umbrel-bitcoin:v1.2.1@sha256:edbccb43ba98d6adfad99c2f6cd5401b9dce0175ae1743d01017f8e01ca0eb05
+    image: ghcr.io/getumbrel/umbrel-bitcoin:v1.3.0@sha256:a684213f37985b987c07a4d10cc9d04396eb2eb2a25f6b210052bb102950d7fe
     user: "1000:1000"
     restart: on-failure
     stop_grace_period: 15m30s
@@ -22,10 +22,11 @@ services:
       # BITCOIN_DIR: bitcoin-dir-override
       # APP_STATE_DIR: app-state-dir-override
 
-      # BITCOIND BINARY SETTINGS
+      # BITCOIN CORE BINARY SETTINGS
       # BITCOIND_BIN: bitcoind-binary-path-override
-      # BITCOIND_EXTRA_ARGS is a comma-delimited list of extra startup flags to pass to bitcoind
-      # We can remove depratedrpc=create_bdb in a future update once Jam (JoinMarket) implements descriptor wallet support
+      # BITCOIN_BIN: bitcoin-wrapper-binary-path-override
+      # BITCOIND_EXTRA_ARGS is a comma-delimited list of extra startup flags to pass to Bitcoin Core
+      # We can remove deprecatedrpc=create_bdb in a future update once Jam (JoinMarket) implements descriptor wallet support
       # Bitcoin Core v30 no longer supports legacy bdb wallets, so Jam users will need to run v29.2 for compatibility
       BITCOIND_EXTRA_ARGS: '-deprecatedrpc=create_bdb'
 

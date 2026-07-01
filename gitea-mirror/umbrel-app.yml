@@ -3,7 +3,7 @@ id: gitea-mirror
 name: Gitea Mirror
 tagline: Mirror your GitHub repositories to a Gitea instance automatically
 category: developer
-version: "3.12.5"
+version: "3.20.2"
 port: 4322
 description: >-
   Gitea Mirror automatically mirrors your GitHub repositories to a self-hosted Gitea instance. It supports mirroring public and private repositories, organizations, starred repos, issues, wikis, and pull requests.
@@ -42,9 +42,14 @@ defaultUsername: ""
 defaultPassword: ""
 dependencies: []
 releaseNotes: >-
-  🐛 Bug Fixes
-    - Gracefully handle SAML-protected organizations during GitHub import
+  Gitea Mirror 3.20.2 fixes release creation on Gitea/Forgejo instances where a mirrored Git tag has not finished syncing yet. The app now waits for the tag to appear and retries on the next sync instead of creating the release from a target branch, avoiding "The target couldn't be found" failures.
 
 
-  Full release notes can be found at https://github.com/raylabshq/gitea-mirror
+  Skipped releases are now reported in the logs, and release assets continue to self-heal on later syncs.
+
+
+  If you're updating from a pre-3.17 version and use OAuth provider clients registered in Gitea Mirror, rotate the client secret for each client after upgrading because OAuth application secrets are stored hashed after migration.
+
+
+  Full release notes can be found at https://github.com/RayLabsHQ/gitea-mirror/releases/tag/v3.20.2
 path: ""

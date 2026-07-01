@@ -6,7 +6,7 @@ services:
       APP_PORT: 18789
 
   gateway:
-    image: ghcr.io/getumbrel/openclaw-umbrel:2026.3.8@sha256:430755b4e994ff54bd9850bec75097c3bc320863454848047dcf2b6095c55dcb
+    image: ghcr.io/getumbrel/openclaw-umbrel:2026.6.11@sha256:6bd4c170d5fc4c221cc3fed0c5cedb048765b89367a240622d42c4ffead0ae80
     user: "1000:1000"
     init: true
     restart: on-failure
@@ -14,3 +14,5 @@ services:
     volumes:
       - ${APP_DATA_DIR}/data:/data
       - ${APP_DATA_DIR}/data/linuxbrew:/home/linuxbrew
+    environment:
+      APP_SEED: ${APP_SEED}

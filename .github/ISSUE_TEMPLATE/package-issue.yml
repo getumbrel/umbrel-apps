@@ -1,0 +1,86 @@
+name: App package issue
+description: Report an Umbrel packaging problem with an app
+title: "Package issue: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this for problems with how an app installs, updates, starts, opens from Umbrel, persists data, or connects to Umbrel dependencies.
+
+        If you are using a coding agent, it can help inspect Umbrel app logs, config, and package files before opening the issue.
+
+        If you are not sure whether this is a packaging issue, Umbrel Support or the Umbrel community can help narrow it down first. You can find those links in the issue chooser.
+
+        If the app opens normally and the issue is inside the app itself, the app's developers are usually the best place to report it.
+  - type: input
+    id: app-id
+    attributes:
+      label: App ID
+      description: The app folder name, if known.
+    validations:
+      required: true
+  - type: input
+    id: umbrelos-version
+    attributes:
+      label: umbrelOS version
+    validations:
+      required: true
+  - type: dropdown
+    id: architecture
+    attributes:
+      label: Device architecture
+      options:
+        - amd64
+        - arm64
+        - I don't know
+    validations:
+      required: true
+  - type: dropdown
+    id: install-type
+    attributes:
+      label: When did this happen?
+      options:
+        - Fresh install
+        - App update
+        - App restart
+        - Normal use
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: What failed?
+      options:
+        - Install
+        - Update
+        - Start
+        - Open from Umbrel
+        - Login or default credentials
+        - Data persistence
+        - Dependency connection
+        - Permissions or storage
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: diagnosis
+    attributes:
+      label: Diagnosis or agent summary
+      description: If a coding agent looked at this, paste its short summary here.
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or screenshots
+      description: Include relevant Umbrel app logs if available. Remove secrets, tokens, cookies, private URLs, and personal data.

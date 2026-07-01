@@ -7,8 +7,13 @@ services:
       APP_PORT: 3000
 
   server:
-    image: awinterstein/habitica-server:5.46.1@sha256:895cb41b8d31bc22301a3e1cbfda46d6133ad87ca03469abb20173924878919b
+    image: awinterstein/habitica-server:5.48.2@sha256:6906ac6cd13d652c5c0dbec5c12b2ab74acdf593ecb6fcadbd8eab7e219687cd
     restart: on-failure
+    # Habitica enables Helmet's upgrade-insecure-requests CSP directive in production.
+    # Umbrel apps are commonly served over local/proxied HTTP, with HTTPS handled externally when exposed.
+    # Remove only this directive so those proxied routes work while keeping Habitica's production behavior.
+    command: >-
+      sh -c "perl -0pi -e 's/upgradeInsecureRequests: IS_PROD \\? \\[\\] : null,?/upgradeInsecureRequests: null/g' /var/lib/habitica/website/server/middlewares/index.js /var/lib/habitica/website/transpiled-babel/middlewares/index.js && printenv | grep -v 'no_proxy' >> /etc/environment && /etc/init.d/cron start && node /var/lib/habitica/website/transpiled-babel/index.js"
     depends_on:
       - mongo
     environment:

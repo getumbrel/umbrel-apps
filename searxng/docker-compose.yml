@@ -3,14 +3,16 @@ version: "3.7"
 services:
   app_proxy:
     environment:
-      APP_HOST: searxng_web_1
+      APP_HOST: searxng-web
       APP_PORT: 8080
 
   web:
-    image: ghcr.io/searxng/searxng:2026.2.23-4964d664f@sha256:edf110a2816d8963949d03879c72a7e19c221b5f7bfb7952a33ae073f96ccb18
+    image: ghcr.io/searxng/searxng:2026.6.30-bfeaad6c3@sha256:8002ca51119acf12ff1e704c1ec45287e8692bafd868c6ebd2889002f120930e
+    container_name: searxng-web # Avoid underscores in hostname (Werkzeug rejects them)
     restart: on-failure
     environment:
       SEARXNG_SECRET: ${APP_SEED}
+      SEARXNG_LIMITER: "false" # Disable bot detection — container-to-container calls lack proxy headers
     volumes:
       - ${APP_DATA_DIR}/data/config:/etc/searxng
       - ${APP_DATA_DIR}/data/cache:/var/cache/searxng

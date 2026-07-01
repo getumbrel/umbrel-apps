@@ -1,3 +1,6 @@
+# Legacy Umbrel 0.5.x install shim for Tailscale only.
+# Do not copy this pattern to other apps: exports.sh is sourced by Umbrel and should normally only export values.
+
 # Detect we are running in a tailscale install
 if ! cat "${UMBREL_ROOT}/db/user.json" | grep --quiet '"tailscale"'
 then

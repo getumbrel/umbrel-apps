@@ -1,0 +1,18 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: grocy_server_1
+      APP_PORT: 80
+
+  server:
+    image: linuxserver/grocy:4.6.0@sha256:971fb0b4dac073652915c3c90e540a97d17075f40e2998d2850351c2dc9f1305
+    restart: on-failure
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
+      - GROCY_BASE_URL=/
+    volumes:
+      - ${APP_DATA_DIR}/data/config:/config

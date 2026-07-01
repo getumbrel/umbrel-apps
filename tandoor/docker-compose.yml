@@ -1,0 +1,51 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: tandoor_web_1
+      APP_PORT: 80
+
+  web:
+    image: vabene1111/recipes:2.6.12@sha256:53b5dfe9f6cd0784f4d7b992286adfebf30ab206b504d691f6b097d8dc34eaf4
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      SECRET_KEY: ${APP_TANDOOR_SECRET_KEY}
+      TZ: Etc/UTC
+      TANDOOR_PORT: 80
+      # Keep ALLOWED_HOSTS broad so Tandoor stays reachable through Tailscale
+      # MagicDNS/custom hostnames while CSRF remains scoped to known Umbrel/Tailscale origins.
+      ALLOWED_HOSTS: "*"
+      CSRF_TRUSTED_ORIGINS: "http://${DEVICE_DOMAIN_NAME}:${APP_TANDOOR_PORT},http://${DEVICE_HOSTNAME}:${APP_TANDOOR_PORT},http://*.ts.net:${APP_TANDOOR_PORT},https://*.ts.net:${APP_TANDOOR_PORT},${APP_TANDOOR_LOCAL_URLS}"
+      ENABLE_SIGNUP: "0"
+      DB_ENGINE: django.db.backends.postgresql
+      POSTGRES_HOST: tandoor_db_1
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: tandoor
+      POSTGRES_USER: tandoor
+      POSTGRES_PASSWORD: ${APP_TANDOOR_DB_PASSWORD}
+    volumes:
+      - ${APP_DATA_DIR}/data/mediafiles:/opt/recipes/mediafiles
+      - ${APP_DATA_DIR}/data/staticfiles:/opt/recipes/staticfiles
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:16-alpine@sha256:16bc17c64a573ef34162af9298258d1aec548232985b33ed7b1eac33ba35c229
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      POSTGRES_DB: tandoor
+      POSTGRES_USER: tandoor
+      POSTGRES_PASSWORD: ${APP_TANDOOR_DB_PASSWORD}
+    volumes:
+      - ${APP_DATA_DIR}/data/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
+      start_period: 45s
+      interval: 10s
+      timeout: 5s
+      retries: 10
