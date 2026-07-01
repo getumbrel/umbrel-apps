@@ -2,7 +2,7 @@ manifestVersion: 1
 id: hermitstash
 category: files
 name: HermitStash
-version: "1.13.2"
+version: "1.13.8"
 tagline: Post-quantum encrypted self-hosted file sharing
 description: >-
   HermitStash is a self-hosted file upload server with post-quantum encryption. Every file and database field is sealed with an ML-KEM-1024 + ECDH P-384 hybrid envelope and XChaCha20-Poly1305 before touching disk; passwords use Argon2id. Nothing is stored in plaintext, including database fields the operator never thinks of as sensitive.
@@ -31,11 +31,12 @@ defaultPassword: ""
 submitter: dotCooCoo
 submission: https://github.com/getumbrel/umbrel-apps/pull/5378
 releaseNotes: >-
-  This release adds more granular sharing and upload controls for admins and users.
+  This release expands HermitStash's audit and upload controls.
 
 
-  - Customer stashes can now be shared with individual user accounts directly, without first creating a team.
-  - Users who have been added to customer stashes now see a "Shared with me" section on their dashboard.
-  - Admins can set per-user upload limits, storage quotas, maximum file size, maximum bundle size, file-count limits, and allowed file extensions from the user list.
-  - Per-user limits are blank by default and fall back to the global settings until an admin sets an override.
+  - Audit logs now capture richer request context, including method/path, auth type, request ID, and optional full IP/user-agent data controlled from a new Audit Log settings panel.
+  - Admins can export decrypted audit logs as CSV, JSON, or CADF, and optionally archive older audit entries into encrypted, signed on-disk bundles.
+  - Audit events can now be forwarded to a SIEM in real time over syslog or HTTP webhooks, with secret/PII-shaped values redacted before forwarding.
+  - Per-user and per-stash upload caps now support explicit No limit overrides, and admin dialogs have improved spacing.
+  - Registration and sign-in audit events now record searchable email addresses instead of unreadable encrypted blobs.
 dependencies: []
