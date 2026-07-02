@@ -2,14 +2,14 @@ manifestVersion: 1
 id: public-pool-web
 category: bitcoin
 name: Public Pool's Web
-version: "0.1.0"
+version: "0.2.0"
 tagline: Modern web interface for managing your Public Pool's data
 description: >
   Public Pool's Web provides a sleek, user-friendly interface for managing and monitoring
   your Public Pool's data. 
 
 
-  Built with Rails 8.0 and modern web technologies, it offers
+  Built with Rails 8.1 and modern web technologies, it offers
   real-time updates, detailed analytics, and comprehensive pool management features.
 
 
@@ -18,12 +18,6 @@ description: >
     - Add worker
     - Change theme
     - Sidekiq web interface ( to check background jobs, usually you do not mess with it )
-
-
-  ⚠️ Notes:
-    - Change host IP ( and port is needed ) of your pool. ( Public Pool doesn't expose its IP yet ) 
-    - If you change host IP and port of the pool, restart the application in umbrel OS. Otherwise, sidekiq will not see them.
-
 
   This is a hobby project!
 developer: martinbarilik
@@ -40,9 +34,18 @@ gallery:
 path: "/"
 defaultUsername: ""
 defaultPassword: ""
-releaseNotes: >-
+releaseNotes: |-
+  ⚠️ BREAKING CHANGES! ⚠️
+  PostgreSQL database was updated from 17 to 18 which introduced change in mount point. Please UNINSTALL before updating.
+
   Key highlights in this release:
-    - fixed issue with incorrect initial database creation on fresh install
-    - updated PostgresSQL to version 17.6
+    - using docker's domain names instead of IP addresses
+    - block height in pool info
+    - worker's temperature ( with worker's ip address setting)
+    - donation page
+    - tons of bug fixes, cleanups and improvements
+    - PostgreSQL 18.4
+    - Redis replaced by Valkey ( without persisted data, irrelevant for this app )
+    - Rails 8.1, Ruby 4.0.5
 submitter: "martinbarilik"
 submission: https://github.com/getumbrel/umbrel-apps/pull/3159
