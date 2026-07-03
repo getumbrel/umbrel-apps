@@ -2,7 +2,7 @@ manifestVersion: 1
 id: hashrate-autopilot
 category: bitcoin
 name: Hashrate Autopilot
-version: "1.15.1"
+version: "1.16.0"
 tagline: Autopilot for renting hashrate to mine on Ocean Mining
 
 description: >-
@@ -71,16 +71,16 @@ defaultPassword: ""
 submitter: Remco Douma
 submission: https://github.com/getumbrel/umbrel-apps/pull/5685
 releaseNotes: >-
-  v1.15.1 - patch release: fixes and polish, no new headline features.
+  v1.16.0 - the Timeline release: one unified event log, alert recoveries, Excel export, and two controller-safety fixes.
 
 
-  Price-chart fixes: the safety-ceiling line is relabeled from "max bid" to "effective cap", and the "max premium over hashprice" knob is now recorded per tick (and backfilled for older history), so changing it moves the line from that point forward instead of rewriting your whole past.
+  New: the former "History" page is rebuilt as **Timeline**, a single chronological feed of everything that happened - bid actions, alert conditions with their durations, on-chain payouts, Braiins deposits, every pool block (yours crowned), difficulty retargets, public-IP changes, config edits, and daemon restarts. Every row opens a detail panel; rows and chart markers jump to each other with a sonar ping. Alert **recoveries** now log as emerald "resolved" rows the moment the condition heals. **Excel export** streams the current filtered Timeline to a formatted .xlsx (frozen header, autofilter, your display units, your language) with no row cap. **Follow (live tail)** pins newest events to the top and polls all sources faster - a live console during an incident. Daemon restarts show on the price chart as an emerald power marker. Timeline columns, detail panels, chart tooltips, decision reasons, and the Excel export are all denomination-aware (sats/BTC/USD, TH/PH/EH).
 
 
-  Other fixes: invalid Bitcoin payout addresses are now rejected at Config and in the first-run wizard, so a typo can't silently credit earnings to nobody. The "Per Day" P&L card no longer sticks on "refreshing...". DATUM stats-API errors now tell you whether the API is behind an auth proxy or its port moved, instead of a cryptic parse error. Electrum host/port help points you to your server's own connection page. The IP-change marker tooltip shows how long ago the address changed. On mobile, the "add tile" control no longer overlaps the time-range buttons, and block-explorer presets set both the block and transaction URL in one click. Ocean payout wording corrected throughout - payouts arrive as batched sweep transactions, not coinbase-direct.
+  Fixes: a transient failure fetching Braiins's bid list could make the autopilot post a duplicate bid - creating now requires a confirmed-successful fetch and an empty local ledger. Stop-spend protection during a DATUM outage now keys on the mandatory stratum probe instead of the optional stats API, so the protection works without the stats API configured and a stats-API blip can no longer cancel healthy bids. Pool-block alerts now report the exact TIDES credit Ocean recorded instead of a ~1%-high estimate. Wallet-runway alert threshold accepts fractional days via env var; BIP 110 block amounts render with fixed 8 decimals; unpaid-line block dots explain the balance step they sit on.
 
 
   Migrating from the community-store version (rdouma-hashrate-autopilot)? One-time five-minute guide: https://github.com/rdouma/hashrate-autopilot/blob/main/docs/migrating-from-community-store.md
 
 
-  Full release notes: https://github.com/rdouma/hashrate-autopilot/releases/tag/v1.15.1
+  Full release notes: https://github.com/rdouma/hashrate-autopilot/releases/tag/v1.16.0
