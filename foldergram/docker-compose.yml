@@ -1,0 +1,20 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: foldergram_web_1
+      APP_PORT: 4141
+      PROXY_AUTH_ADD: "false"
+
+  web:
+    image: ghcr.io/foldergram/foldergram:1.2.2@sha256:f72dfe39d9042555fd1b509a06f6c93c8b9a8be02541c80135a9a8f25fe362d4
+    restart: on-failure
+    environment:
+      IMAGE_DETAIL_SOURCE: preview
+      DERIVATIVE_MODE: eager
+    volumes:
+      - ${UMBREL_ROOT}/data/storage/Photos:/app/data/gallery
+      - ${APP_DATA_DIR}/data/db:/app/data/db
+      - ${APP_DATA_DIR}/data/thumbnails:/app/data/thumbnails
+      - ${APP_DATA_DIR}/data/previews:/app/data/previews
