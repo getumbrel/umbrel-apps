@@ -9,6 +9,8 @@ services:
     image: tailscale/tailscale:v1.98.3@sha256:854b77123b9536adae2e97f5a5fdb1790ed03438b911ab7f07780155e0af6ce2
     restart: on-failure
     stop_grace_period: 1m
+    environment:
+      - TS_DEBUG_FIREWALL_MODE=nftables
     # Required for tailscaled to manage the host TUN interface and route table.
     cap_add:
       - NET_ADMIN
@@ -16,6 +18,28 @@ services:
     devices:
       - /dev/net/tun:/dev/net/tun
     # Keep tailscaled in kernel TUN mode so host routes are available.
-    command: "sh -c 'tailscale web --listen 0.0.0.0:8240 & exec tailscaled'"
+    #
+    # Disable accept-routes on startup to migrate older Tailscale prefs that
+    # defaulted to accepting subnet routes. In host networking mode, accepting
+    # an overlapping subnet route can route local LAN replies through tailscale0
+    # and make the Umbrel unreachable on its LAN IP.
+    command:
+      - sh
+      - -c
+      - |
+        tailscale web --listen 0.0.0.0:8240 &
+
+        (
+          for attempt in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30; do
+            if tailscale set --accept-routes=false >/dev/null 2>&1; then
+              exit 0
+            fi
+            sleep 1
+          done
+
+          echo "Warning: failed to disable Tailscale accept-routes; continuing"
+        ) &
+
+        exec tailscaled
     volumes:
       - ${APP_DATA_DIR}/data:/var/lib

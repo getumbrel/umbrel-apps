@@ -7,7 +7,7 @@ services:
       APP_PORT: 3000
 
   app:
-    image: lissy93/domain-locker:0.1.4@sha256:c49d00d31d0bc948c01c046ce283a11af4bdc0742643ee1ab21675ce7f80da69
+    image: lissy93/domain-locker:0.2.0@sha256:1c3379d97344c153595973327957b23bc5695bb8c956f11a3d21e7cd92358781
     user: "1000:1000"
     restart: on-failure
     environment:
@@ -20,7 +20,7 @@ services:
     depends_on:
       - postgres
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/api/health"]
       interval: 30s
       timeout: 10s
       retries: 3
