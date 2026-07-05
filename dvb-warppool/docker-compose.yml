@@ -1,0 +1,79 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: dvb-warppool_web_1
+      APP_PORT: 18334
+
+  web:
+    image: ghcr.io/dvb-projekt/dvb-warppool:1.15.0@sha256:0ab305568643b9cb6dc21221895745d1eddbd49eb3e7451009805dad327b0a55
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 1m
+    ports:
+      # Stratum listeners. Host port = container port so the UI's connect
+      # modal shows the correct port. Picked in the app's 188xx range to stay
+      # clear of host ports already taken by other App Store apps.
+      # Stratum V1 (plain).
+      - "18335:18335"
+      # Stratum V2 (NOISE-encrypted). The daemon generates its authority key
+      # on first start and persists it in secrets.toml.
+      - "18336:18336"
+      # Stratum V1 over TLS. The daemon generates a self-signed cert under
+      # /data/tls/ on first start.
+      - "18337:18337"
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+      - ${APP_DATA_DIR}/config:/config
+    environment:
+      DVB_WARPPOOL_CONFIG: /config/config.toml
+      DVB_WARPPOOL_SECRETS: /config/secrets.toml
+      DVB_WARPPOOL_DATA_DIR: /data
+      DVB_WARPPOOL_UI_DIR: /opt/dvb-warppool/ui
+      # Deployment mode — the setup wizard renders the Bitcoin Core install
+      # card as "external (container)" and takes its RPC/ZMQ defaults from the
+      # APP_BITCOIN_* env vars below instead of scanning for a bitcoin.conf.
+      DVB_WARPPOOL_DEPLOY: umbrel
+      # Bitcoin Core connectivity (provided by the umbrelOS orchestrator via
+      # `dependencies: [bitcoin]`). Read by the setup wizard as form defaults.
+      APP_BITCOIN_NODE_IP: ${APP_BITCOIN_NODE_IP}
+      APP_BITCOIN_RPC_PORT: ${APP_BITCOIN_RPC_PORT}
+      APP_BITCOIN_RPC_USER: ${APP_BITCOIN_RPC_USER}
+      APP_BITCOIN_RPC_PASS: ${APP_BITCOIN_RPC_PASS}
+      APP_BITCOIN_ZMQ_HASHBLOCK_PORT: ${APP_BITCOIN_ZMQ_HASHBLOCK_PORT}
+      APP_BITCOIN_ZMQ_RAWBLOCK_PORT: ${APP_BITCOIN_ZMQ_RAWBLOCK_PORT}
+      # Stratum V2 out of the box: env override for config.stratum.sv2_listen.
+      DVB_WARPPOOL_SV2_LISTEN: "0.0.0.0:18336"
+      # TLS-Stratum out of the box: env override; self-signed cert/key are
+      # generated under /data/tls/ on first start.
+      DVB_WARPPOOL_STRATUM_TLS_LISTEN: "0.0.0.0:18337"
+      RUST_LOG: "info,warppool=info"
+    # First-run handling: if /config/config.toml does not exist (fresh
+    # install), launch the browser setup wizard on the app's port (18334).
+    # The wizard reads the APP_BITCOIN_* env vars for its RPC/ZMQ defaults and
+    # writes config.toml + secrets.toml on Save, then exits. The loop guards
+    # against an accidental exit without saving; once config exists it exec's
+    # into the daemon.
+    command:
+      - /bin/sh
+      - -c
+      - |
+        set -e
+        while [ ! -f /config/config.toml ]; do
+          echo "[entrypoint] /config/config.toml missing — starting setup wizard on :18334"
+          dvb-warppool-setup \
+            --bind 0.0.0.0:18334 \
+            --config-path /config/config.toml \
+            --secrets-path /config/secrets.toml \
+            || echo "[entrypoint] setup wizard exited (non-zero) — retrying"
+          sleep 1
+        done
+        echo "[entrypoint] config.toml found — starting daemon"
+        exec dvb-warppool-daemon \
+          --config /config/config.toml \
+          --secrets /config/secrets.toml \
+          --data-dir /data \
+          --ui-dir /opt/dvb-warppool/ui \
+          --stratum-listen 0.0.0.0:18335 \
+          --api-listen 0.0.0.0:18334
