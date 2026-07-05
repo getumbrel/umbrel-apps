@@ -1,0 +1,13 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: denny-transmute_web_1
+      APP_PORT: 3313
+
+  web:
+    image: ghcr.io/transmute-app/transmute:2.0.0@sha256:51a32b28e0cb84cde624ca41570f069d91ee7e83fac5c9d0b970e7a583b3abde
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data:/app/data
