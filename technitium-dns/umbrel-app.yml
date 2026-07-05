@@ -2,24 +2,27 @@ manifestVersion: 1
 id: technitium-dns
 category: networking
 name: Technitium DNS Server
-version: "15.2.0"
+version: "15.3.0"
 tagline: Block ads & malware at the DNS level for your entire network
 description: >-
   Technitium DNS Server is an open source authoritative, as well as recursive, DNS server that can be used for self hosting a DNS server for privacy & security.
   It works out-of-the-box with no or minimal configuration.
 releaseNotes: >-
-  ⚠️ Major update: Technitium DNS Server now runs on .NET 10. Most Umbrel users do not need to take any action, but if you use Technitium clustering, upgrade all cluster nodes together for compatibility.
+  ⚠️ Security note: This release removes the default Delete permission from DNS Administrators in the Apps and Settings sections. Existing installations should manually remove that permission from DNS Administrators in those sections.
+
+
+  If you're updating from a pre-15 version, Technitium DNS Server 15.x runs on .NET 10. Most Umbrel users do not need to take action, but if you use Technitium clustering, upgrade all cluster nodes together for compatibility.
 
 
   Key highlights include:
-    - Improved Single Sign-On (SSO) support, including configurable scopes and better user-info handling
-    - Added reverse proxy address controls for trusted Real IP header handling
-    - Added Prometheus metrics improvements and lifetime counters
-    - Fixed multiple DNS amplification vulnerabilities
-    - Added live query log updates, new theme options, and several DNS app improvements
+    - Fixed multiple Stored XSS vulnerabilities and RFC compliance/security issues
+    - Added Unix socket support for the Web Service and DNS-over-HTTP optional protocol
+    - Added zone search/filtering and multi-zone delete options
+    - Added new settings for update checks, CSP frame ancestors, DoH help-page redirects, and shorter error logs
+    - Added new DNS health-check and status APIs and improved local-zone handling
 
 
-  Full release notes can be found at https://github.com/TechnitiumSoftware/DnsServer/blob/master/CHANGELOG.md
+  Full release notes can be found at https://github.com/TechnitiumSoftware/DnsServer/releases/tag/v15.3.0
 developer: Technitium
 website: https://technitium.com/dns/
 dependencies: []
