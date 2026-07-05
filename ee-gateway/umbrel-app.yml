@@ -2,7 +2,7 @@ manifestVersion: 1
 id: ee-gateway
 category: networking
 name: EE Gateway
-version: "0.10.4"
+version: "0.10.5"
 tagline: Self-hosted Bluetooth gateway for open BLE networks
 description: >-
   EE Gateway turns your Umbrel into a self-hosted Bluetooth gateway for
@@ -26,7 +26,19 @@ description: >-
   EE Gateway is free and open-source software (GPL-3.0-only), built by
   encryptedenergy.com. It is an independent community project and is not
   affiliated with any specific BLE network.
-releaseNotes: ""
+releaseNotes: >-
+  Fixes the (0.0, 0.0) fixed-location bug. Two coordinated changes:
+  the UI's location form no longer accepts (0, 0) as a valid coordinate
+  pair (they're the classic "unset" tell), and the worker's GpsClient
+  ignores any (0, 0) it finds in config.json and falls back to gpsd.
+  Prevents the failure mode where every packet gets rejected upstream
+  with an opaque HTTP 422.
+
+
+  Also adds EE_GPS_BAUD env var for u-blox M10-based receivers
+  (EVK-M102, NEO-M9N modules) that need a 38400 baud hint to gpsd.
+  Unset by default; standard consumer dongles (BU-353N, VK-172)
+  continue to work with gpsd's auto-probe.
 developer: encryptedenergy.com
 website: https://encryptedenergy.com
 dependencies: []
