@@ -5,7 +5,7 @@ manifestVersion: 1
 id: lightningmate
 category: finance
 name: Lightning Mate
-version: "0.6.10"
+version: "0.7.0"
 tagline: Profit-aware management & autopilot for your Lightning node
 description: >-
   Lightning Mate manages your Lightning node so you don't have to babysit it.
@@ -18,7 +18,7 @@ description: >-
   the network graph and open channels in a click, plus a node health score.
 
 
-  Flip on the Autopilot and the node tunes its own fees, runs only profitable
+  Flip on the Autopilot and the node tunes its own pricing, runs only profitable
   rebalances, and opens channels to top peers — all on recommended settings with
   safe caps and cooldowns.
 
@@ -29,10 +29,47 @@ description: >-
   reserve caps.
 
 
+  LSP mode (beta) turns your node into a Lightning Service Provider: wallets
+  speaking the open LSPS1 standard (bLIP-51) can buy inbound channels from you
+  directly — priced automatically, paid via a hold invoice that only settles
+  once the channel is opening, refunded automatically on any failure. Off by
+  default.
+
+
   Lightning Mate signs in with the per-app password Umbrel generates for it
   (shown when you open the app), so no other app on your server can read your
   node or move your funds.
-releaseNotes: ""
+releaseNotes: |-
+  A major upgrade — the Autopilot is now volume-first and profit-aware, and the
+  node can act as a Lightning Service Provider.
+
+  - LSP mode (beta): sell inbound channels directly to wallets speaking the open
+    LSPS1 standard (bLIP-51) — priced by the same profit-aware engine, paid via
+    a hold invoice that settles only once the channel is opening (automatic
+    refunds on any failure), guarded by shared capital caps. Off by default.
+  - More completed forwards: an optional autopilot pass keeps each channel's max
+    HTLC just under its spendable balance so senders skip depleted channels, and
+    a new "Unserved demand" panel shows the forwards refused for lack of
+    liquidity — where a rebalance pays for itself.
+  - Reworked pricing engine: low, competitive channel pricing by default (and a
+    zero base rate) to win forwards, with profit floors so a channel never routes
+    below its refill cost; a channel that stops routing is automatically priced
+    cheaper until flow returns — and the engine remembers the price at which flow
+    came back, returning straight to it next time.
+  - One-click Strategy — Max routing / Balanced / Max profit — tunes pricing,
+    rebalancing, channel-opening and Magma together, and applies instantly.
+  - Paced, self-correcting adjustments: raises wait days, cuts step once a day,
+    protection ramps gradually; rebalancing is profit-gated with a daily budget
+    and backs off failing routes.
+  - Amboss Magma, built in: buy inbound liquidity, sell your own with adaptive
+    auto-pricing and a market-aware slider, optional Autopilot fulfilment — plus
+    market fill telemetry that watches the order book around the clock and prices
+    your offer toward what actually sells, and a seller-score coach.
+  - Channels: on-chain close dialog with a chosen confirmation speed; channels
+    stay visible as "pending open" / "pending close" until they confirm.
+  - Dashboard: a "today" digest (what the autopilot last did, next run, alerts),
+    routing at a glance (24h / 7d), yield on capital vs the market lease
+    benchmark, a Profit & Loss overview, and a node health score. Mobile-friendly.
 developer: opensourceminers.de
 website: https://opensourceminers.de
 dependencies:
