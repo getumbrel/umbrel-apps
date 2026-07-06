@@ -2,12 +2,9 @@
 
 # This hack can be removed if https://github.com/docker-library/docker/pull/444 gets merged.
 
-# Remove a stale docker pidfile left behind by an unclean shutdown (power loss,
-# hard stop, OOM) so dockerd can start again. This must match the --pidfile path
-# set in docker-compose.yml (/data/docker.pid). The previous code removed
-# /var/run/docker.pid, which is not the file dockerd actually writes here, so the
-# cleanup was a no-op and Dockge failed to start with "pid file found" after a
-# bad shutdown. `rm -f` is a no-op when the file is absent.
+# Remove a stale Docker-in-Docker pidfile so dockerd can start after an
+# unclean shutdown. Keep this in sync with the --pidfile value in
+# docker-compose.yml.
 rm -f /data/docker.pid
 
 # Use nftables as the backend for iptables
