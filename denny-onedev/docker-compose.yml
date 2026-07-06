@@ -1,0 +1,58 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: denny-onedev_web_1
+      APP_PORT: 6610
+      PROXY_AUTH_ADD: "false"
+
+  docker:
+    image: docker:27.2.0-dind@sha256:f9f72ad901a78f27be922b2d320bbc263174f12919c1b37e6a01f828fa904565
+    privileged: true
+    network_mode: host
+    stop_grace_period: 1m
+    restart: on-failure
+    environment:
+      DOCKER_ENSURE_BRIDGE: "dind0:10.32.0.1/16"
+    entrypoint: /entrypoint.sh
+    command: >
+      dockerd
+      --bridge dind0
+      --data-root /data/data
+      --exec-root /data/exec
+      --host unix:///data/docker.sock
+      --pidfile /data/docker.pid
+    volumes:
+      - ${APP_DATA_DIR}/entrypoint.sh:/entrypoint.sh
+      - ${APP_DATA_DIR}/data/docker:/data
+
+  web:
+    image: 1dev/server:16.0.2@sha256:9db3c4bb9c2d2b549c9f61ac1f3ee2448a8691f032ed3c850f1e56dd9494d2a7
+    restart: on-failure
+    tty: true
+    depends_on:
+      - postgres
+      - docker
+    ports:
+      - "6611:6611"
+    volumes:
+      - ${APP_DATA_DIR}/data/onedev:/opt/onedev
+      - ${APP_DATA_DIR}/data/docker:/var/run
+    environment:
+      hibernate_connection_password: "password123"
+      hibernate_dialect: io.onedev.server.persistence.PostgreSQLDialect
+      hibernate_connection_driver_class: org.postgresql.Driver
+      hibernate_connection_url: jdbc:postgresql://postgres:5432/onedev
+      hibernate_connection_username: postgres
+      DOCKER_HOST: unix:///var/run/docker.sock
+
+  postgres:
+    image: postgres:17.10-alpine@sha256:dc17045ccfd343b49600570ea734b9c4991cf1c3f3302e67df51e3b402dd55c4
+    restart: on-failure
+    environment:
+      POSTGRES_PASSWORD: "password123"
+      POSTGRES_USER: "postgres"
+      POSTGRES_DB: "onedev"
+    volumes:
+      - ${APP_DATA_DIR}/data/postgres:/var/lib/postgresql/data
