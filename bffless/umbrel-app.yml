@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: bffless
 category: developer
 name: BFFless
-version: '0.1.53'
+version: '0.1.90'
 tagline: Self-hosted static site hosting platform
 description: >-
   BFFless is a self-hosted platform for hosting static websites and build artifacts from CI/CD pipelines.
@@ -33,22 +33,48 @@ gallery:
   - 2.jpg
   - 3.jpg
 releaseNotes: >-
-  Updates BFFless CE from v0.1.42 to v0.1.53.
+  Updates BFFless CE from v0.1.53 to v0.1.90.
 
 
-  Highlights:
-    - Accept multiple proxy rule sets when creating a deployment
-    - Choose 301 or 302 status for redirect-type domains
-    - Custom-domain sign-ups now relay back to the target domain
-    - Pipeline string response bodies served verbatim instead of JSON-encoded
-    - Stronger authorization: global Admin treated as project Owner consistently, role lanes enforced when granting project permissions, and global admin honored on the repo feed and project settings
-    - Create Deployment button and proxy-rule actions hidden/disabled for viewers
-    - Fixed Azure Blob Storage upload and its setup wizard step
-    - Surface storage migration errors with a force-switch recovery path
-    - Include redirectType in the domain response DTO and SSL renewal regeneration
+  Pipelines & automation:
+    - New file_delete pipeline handler, with multi-object (keys[]) mode and runtime array expressions
+    - Project secrets for pipelines
+    - Presigned direct-to-bucket upload handlers
+    - file_serve_handler improvements: explicit key mode, byte-range streaming, and private caching by default
+    - Set arbitrary custom response headers via the UI editor and MCP tools
+    - Expose crypto utils to the function_handler sandbox; step-timeout field for the Replicate handler
 
 
-  Full release notes can be found at https://github.com/bffless/ce/releases/tag/v0.1.53
+  Proxy rules & domains:
+    - Export and import proxy rule sets from the admin UI, with bundled schema dependencies
+    - Proxy rules can match multiple HTTP methods
+    - Support absolute external URLs as path redirect targets
+
+
+  AI:
+    - Fetch Anthropic models live from /v1/models
+    - Pin which deployment alias AI skills load from
+
+
+  Auth & access:
+    - ENABLE_EMAIL_PASSWORD flag for OIDC-only sign-in
+    - Mint a content-domain session from a project API key
+    - Member-accessible user directory for people-pickers
+
+
+  Privacy:
+    - Opt-out install telemetry controls (setup wizard and settings)
+
+
+  Fixes:
+    - nginx: larger proxy header buffers for SuperTokens session refresh, http-level client_max_body_size, and upload-size fixes
+    - Raise the request body limit and return 413 for oversized bodies
+    - Markdown viewer renders GitHub-style with a source toggle
+    - Correct permission badges for global admins on repo cards
+    - Various proxy-rule and /auth routing fixes
+
+
+  Full release notes can be found at https://github.com/bffless/ce/releases/tag/v0.1.90
 path: ''
 defaultUsername: ''
 deterministicPassword: false
