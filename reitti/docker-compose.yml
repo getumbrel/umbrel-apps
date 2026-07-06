@@ -3,9 +3,9 @@ services:
     environment:
       APP_HOST: reitti_app_1
       APP_PORT: 8080
-      
+
   app:
-    image: dedicatedcode/reitti:4.0.5@sha256:03ab9c781552f89f8c5f4b39fec5397566f873010c2fd013ff7a8ce1414a3bca
+    image: dedicatedcode/reitti:5.0.0@sha256:561d21b82f8eee2eeaf0de9c147f5b0418c6b24b26ae151094ff4bfefcc042a8
     restart: on-failure
     depends_on:
       postgis:
@@ -21,7 +21,7 @@ services:
       POSTGIS_DB: reittidb
       POSTGIS_HOST: reitti_postgis_1
     volumes:
-      - ${APP_DATA_DIR}/data/app:/app/data
+      - ${APP_DATA_DIR}/data/app:/data
 
   postgis:
     image: imresamu/postgis:17-3.5-alpine@sha256:ba5f5012ffe7a01a78e85404d3e081ed7e961013161bb09d39ff09c867ada17b
@@ -52,12 +52,13 @@ services:
       retries: 5
 
   tile-cache:
-    image: dedicatedcode/reitti-tile-cache:4.0.5@sha256:e51ec7497085db0fa0deb5aef387dfbac8938ae5cbcf0c8f543846bf42e3287c
-    restart: on-failure 
+    image: dedicatedcode/reitti-tile-cache:5.0.0@sha256:8fe5e2b9dfd7006c044b7dca55f010ca41f49df26110ee036900719645f52362
+    restart: on-failure
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1/osm/0/0/0.png"]
+      test: ["CMD-SHELL", "curl -f -s -o /dev/null -H \"X-Reitti-Upstream-Url: https://tiles.dedicatedcode.com\" http://localhost/custom/planet/latest/0/0/0.pbf || exit 1"]
       interval: 10s
       timeout: 5s
+      start_period: 5s
       retries: 5
     volumes:
       - ${APP_DATA_DIR}/data/title-cache:/var/cache/nginx

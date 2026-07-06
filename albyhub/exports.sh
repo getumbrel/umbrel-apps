@@ -1,5 +1,3 @@
-#!/bin/bash
-
 # Check if Lightning Node app is installed and export required variables if so
 installed_apps=$("${UMBREL_ROOT}/scripts/app" ls-installed)
 
