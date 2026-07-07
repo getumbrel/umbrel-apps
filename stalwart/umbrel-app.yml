@@ -3,7 +3,7 @@ id: stalwart
 name: Stalwart
 tagline: All-in-one Mail & Collaboration server
 category: files
-version: "v0.16.11"
+version: "v0.16.12"
 port: 8745
 description: >-
   📧 Stalwart is a fast, secure, and scalable open-source server for email, calendars, contacts, and file sharing, built in Rust for top-tier performance and safety.
@@ -54,14 +54,14 @@ releaseNotes: >-
   ⚠️ If updating from Stalwart v0.15.x or earlier, make sure to have a backup before updating. Umbrel runs the v0.16 migration automatically, but it's recommended to review the upgrading guide: https://github.com/stalwartlabs/stalwart/blob/main/UPGRADING/v0_16.md
 
 
-  Changes since v0.16.10 include:
-    - Adds encryption-at-rest support for AES-256-GCM and ChaCha20-Poly1305 S/MIME data
-    - Adds Redis Sentinel support for in-memory store and cluster coordinator backends
-    - Adds an option to allow S3 endpoints with invalid TLS certificates
-    - Fixes DANE TLSA validation, file-backed certificate index updates, JMAP Principal/query filters, and duplicate webhook event IDs
+  Changes since v0.16.11 include:
+    - Adds DKIM2 support and implements the updated DMARC, DMARC aggregate reporting, and DMARC failure reporting RFCs
+    - Improves DANE handling so DNSSEC bogus responses are treated as temporary failures instead of allowing downgrade attacks
+    - Fixes OIDC provider/directory syncing issues, Prometheus metric names, account type changes, masked email recipient handling, and IDN email validation
+    - Fixes Auto-ban expiration, Meilisearch text search scope, CalDAV empty-query responses, long-duration Snowflake ID generation, calendar RSVP base URLs, and cluster MTA queue refresh broadcasts
 
 
-  Full release notes can be found at https://github.com/stalwartlabs/stalwart/releases/tag/v0.16.11
+  Full release notes can be found at https://github.com/stalwartlabs/stalwart/releases/tag/v0.16.12
 dependencies: []
 path: "/admin"
 deterministicPassword: true
