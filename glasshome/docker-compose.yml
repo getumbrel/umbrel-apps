@@ -1,0 +1,19 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: glasshome_server_1
+      APP_PORT: 3123
+      # GlassHome has its own account system, and its companion mobile apps
+      # pair with the server over the same origin without Umbrel auth cookies.
+      PROXY_AUTH_ADD: "false"
+
+  server:
+    image: ghcr.io/glasshome/dash:1.0.0-beta.10@sha256:cfa093010261a464db246964451fbd04d4f5bdff4004c41f83ccb046bb5e4567
+    restart: on-failure
+    environment:
+      PORT: 3123
+      DATA_DIR: /data
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
