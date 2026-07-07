@@ -16,7 +16,7 @@ services:
       - ${APP_DATA_DIR}/data:/data
 
   pogolo:
-    image: 0xf0xx0/pogolo:v1.x@sha256:0b7a7bc9f549fdaa9239b78c7eecac84330a5e4e70119700b1be5585864e122a
+    image: 0xf0xx0/pogolo:v1.x@sha256:d98604dd5b5ac53f3ddfe131323a5326627d846698d349bd6848c002179b79d6
     restart: on-failure
     user: "1000:1000"
     stop_grace_period: 30s
@@ -31,6 +31,7 @@ services:
       POGOLO_HOST: "0.0.0.0"
       POGOLO_BACKEND_HOST: "$APP_BITCOIN_NODE_IP:$APP_BITCOIN_RPC_PORT"
       POGOLO_BACKEND_RPCAUTH: "$APP_BITCOIN_RPC_USER:$APP_BITCOIN_RPC_PASS"
+      POGOLO_BACKEND_ZMQHOST: "$APP_BITCOIN_NODE_IP:APP_BITCOIN_ZMQ_HASHBLOCK_PORT"
       # colorful logs
       FORCE_COLOR: 1
     command: ["/pogolo", "--conf", "/data/pogolo.toml", "--logfile", "/data/pogolo.log"]
