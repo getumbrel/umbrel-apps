@@ -3,7 +3,7 @@ id: copyparty
 name: copyparty
 tagline: A versatile all-in-one file server for everything
 category: files
-version: "1.20.16"
+version: "1.20.17"
 port: 3923
 description: >-
   📼 copyparty is a lightweight yet incredibly powerful file sharing platform designed to give you complete control over your data. It transforms any environment into a personal and fully featured file hub where you can upload, download, edit, and organize files directly through an intuitive web interface. Everything happens in the browser without the need for additional software, making it fast, convenient, and accessible from virtually anywhere.
@@ -32,21 +32,22 @@ gallery:
   - 4.jpg
   - 5.jpg
 releaseNotes: >-
+  ⚠️ Security update: fixes a dirkey/filekey vulnerability that could allow a valid filekey to grant read access to the containing folder when both optional dirkeys and filekeys are enabled.
+
+
   New features in this release:
-    - Improved OPDS compatibility with more clients
-    - Users with read access can now create get-only shares
-    - Download-as-zip and download-as-tar archives can rename or remove the top-level folder
-    - Music tools now support logarithmic spectrograms and playback of MKA files
+    - Added CSP nonces for stronger XSS protection; custom JavaScript-based plugins may need review
+    - Added CBZ reader go-to-page support, new readme/logue display flags, and an FTP banner option
+    - Improved FFmpeg security hardening outside Docker and removed many obscure codecs and formats
 
 
   Bugfixes in this release:
-    - Fixed get-only shares not expiring when their creator is removed
-    - Fixed music cover art toggling between cropped and full-size views
-    - Fixed file listings breaking on extremely future-dated files
-    - Fixed a JavaScript crash when dragging gallery images out of the browser
+    - Fixed resuming relocated or server-restarted partial uploads
+    - Fixed several directory sorting edge cases
+    - Fixed timezone handling for --rotf-tz
 
 
-  Full release notes can be found at https://github.com/9001/copyparty/releases/tag/v1.20.16
+  Full release notes can be found at https://github.com/9001/copyparty/releases/tag/v1.20.17
 dependencies: []
 path: ""
 defaultUsername: "admin"
