@@ -23,6 +23,9 @@ services:
     volumes:
       - ${APP_DATA_DIR}/data/app:/app/data
       - ${APP_DATA_DIR}/data/books:/books
+      # BookDrop watched-import folder (fixed container path, not configurable
+      # upstream), surfaced in Umbrel's shared Downloads storage.
+      - ${UMBREL_ROOT}/data/storage/downloads/BookDrop:/bookdrop
 
   db:
     image: mariadb:12.0.2@sha256:b30cc65b57a11a2e791ad5c06284e599fe9f1bf3fe9081a88d85bcf36389be4a

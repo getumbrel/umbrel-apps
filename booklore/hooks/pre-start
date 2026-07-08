@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# BookLore watches a fixed /bookdrop path inside the container for new book
+# files. The compose file bind-mounts it from Umbrel's shared Downloads
+# storage. This hook makes sure the host-side folder exists and is writable
+# by the container's booklore user (uid 1000) before containers start, on
+# both fresh installs and updates of existing installs.
+
+APP_DIR="${APP_DATA_DIR:-$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")}"
+UMBREL_ROOT="${UMBREL_ROOT:-$(readlink -f "${APP_DIR}/../..")}"
+DESIRED_OWNER="1000:1000"
+
+# The package mounts ${UMBREL_ROOT}/data/storage/downloads/BookDrop. Current
+# umbrelOS rewrites that compatibility path to ${UMBREL_ROOT}/home/Downloads
+# when patching the compose file, but this hook is not rewritten, so resolve
+# the same path generation the mount will actually use.
+BOOKDROP_DIR="${UMBREL_ROOT}/data/storage/downloads/BookDrop"
+if [[ -d "${UMBREL_ROOT}/home/Downloads" ]]; then
+  BOOKDROP_DIR="${UMBREL_ROOT}/home/Downloads/BookDrop"
+fi
+
+mkdir -p "${BOOKDROP_DIR}"
+
+owner="$(stat -c "%u:%g" "${BOOKDROP_DIR}")"
+if [[ "${owner}" != "${DESIRED_OWNER}" ]]; then
+  chown "${DESIRED_OWNER}" "${BOOKDROP_DIR}"
+fi
