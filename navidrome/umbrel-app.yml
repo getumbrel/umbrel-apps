@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: navidrome
 category: media
 name: Navidrome
-version: "0.62.0"
+version: "0.63.0"
 tagline: Your personal streaming service
 description: >-
   Navidrome is an open source web-based music collection server and streamer.
@@ -51,18 +51,18 @@ path: ""
 permissions:
   - STORAGE_DOWNLOADS
 releaseNotes: >-
-  This release includes several security fixes for shares, player ownership, Last.fm callbacks, public share streams, transcoding configuration access, and internet radio management.
+  This release adds full synced sidecar lyrics support in TTML, ELRC, SRT, YAML, and LRC formats, including word-by-word karaoke timing and multi-voice layers for OpenSubsonic clients.
 
 
   Key improvements include:
-    - Added OpenSubsonic sonicSimilarity support for plugin-powered audio similarity recommendations
-    - Redesigned the Now Playing experience with the new OpenSubsonic playbackReport extension
-    - Added concurrent transcoding limits to help protect servers from ffmpeg-based denial of service
-    - Added ReplayGain fields and new isMissing/isPresent operators for smart playlists
-    - Added five new UI themes and multiple scanner, artwork, transcoding, and Subsonic API fixes
-    - Added new configuration options and deprecated a few older option names in favor of their new Transcoding and Matcher settings
+    - Improved search ranking for exact matches, short artist names, and non-ASCII artists
+    - Made full-library sync via search3 much faster for large libraries and fixed pagination issues that could affect offline-first clients
+    - Improved getRandomSongs, smart playlist filtering, and album/artist song sorting performance on large collections
+    - Added new scanner options for artist split exceptions and dot-folder indexing
+    - Fixed per-library access checks for playlist import, public share streams, and shared playlists
+    - Sharing is now enabled by default; set EnableSharing=false if you prefer the previous behavior
 
 
-  Full release notes can be found at https://github.com/navidrome/navidrome/releases/tag/v0.62.0
+  Full release notes can be found at https://github.com/navidrome/navidrome/releases/tag/v0.63.0
 submitter: owmsoton
 submission: https://github.com/getumbrel/umbrel-apps/pull/1232
