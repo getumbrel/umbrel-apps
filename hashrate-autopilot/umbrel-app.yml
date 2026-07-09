@@ -2,7 +2,7 @@ manifestVersion: 1
 id: hashrate-autopilot
 category: bitcoin
 name: Hashrate Autopilot
-version: "1.16.0"
+version: "1.17.0"
 tagline: Autopilot for renting hashrate to mine on Ocean Mining
 
 description: >-
@@ -71,16 +71,16 @@ defaultPassword: ""
 submitter: Remco Douma
 submission: https://github.com/getumbrel/umbrel-apps/pull/5685
 releaseNotes: >-
-  v1.16.0 - the Timeline release: one unified event log, alert recoveries, Excel export, and two controller-safety fixes.
+  v1.17.0 - the security release: your secrets are now encrypted at rest, you can change your password and rotate tokens in-app, and Profit & Loss counts Lightning payouts.
 
 
-  New: the former "History" page is rebuilt as **Timeline**, a single chronological feed of everything that happened - bid actions, alert conditions with their durations, on-chain payouts, Braiins deposits, every pool block (yours crowned), difficulty retargets, public-IP changes, config edits, and daemon restarts. Every row opens a detail panel; rows and chart markers jump to each other with a sonar ping. Alert **recoveries** now log as emerald "resolved" rows the moment the condition heals. **Excel export** streams the current filtered Timeline to a formatted .xlsx (frozen header, autofilter, your display units, your language) with no row cap. **Follow (live tail)** pins newest events to the top and polls all sources faster - a live console during an incident. Daemon restarts show on the price chart as an emerald power marker. Timeline columns, detail panels, chart tooltips, decision reasons, and the Excel export are all denomination-aware (sats/BTC/USD, TH/PH/EH).
+  Security: your Braiins tokens, bitcoind RPC password, Telegram token, and DDNS credential are now AES-256-GCM encrypted in the database instead of plaintext, and your dashboard password is stored as a one-way hash. A copied database or a backup no longer hands over your secrets. The config-change history no longer records credential values, and any previously logged are scrubbed on upgrade. Existing installs encrypt themselves on the first start of this version; there is nothing for you to do. This protects the data-leaves-the-box cases; by design it cannot protect against someone who already controls the machine.
 
 
-  Fixes: a transient failure fetching Braiins's bid list could make the autopilot post a duplicate bid - creating now requires a confirmed-successful fetch and an empty local ledger. Stop-spend protection during a DATUM outage now keys on the mandatory stratum probe instead of the optional stats API, so the protection works without the stats API configured and a stats-API blip can no longer cancel healthy bids. Pool-block alerts now report the exact TIDES credit Ocean recorded instead of a ~1%-high estimate. Wallet-runway alert threshold accepts fractional days via env var; BIP 110 block amounts render with fixed 8 decimals; unpaid-line block dots explain the balance step they sit on.
+  New: change your dashboard password and rotate your Braiins owner and read-only tokens right from Config, Pool & Payout, Security & credentials. The password change is instant, and a new token is checked against Braiins before it is saved so a typo cannot break bidding. Profit & Loss now reads "collected" from Ocean's own payout ledger, so both on-chain and Lightning payouts count, split by rail, and a payout you have already spent still shows up - no Bitcoin node required for that number anymore.
 
 
   Migrating from the community-store version (rdouma-hashrate-autopilot)? One-time five-minute guide: https://github.com/rdouma/hashrate-autopilot/blob/main/docs/migrating-from-community-store.md
 
 
-  Full release notes: https://github.com/rdouma/hashrate-autopilot/releases/tag/v1.16.0
+  Full release notes: https://github.com/rdouma/hashrate-autopilot/releases/tag/v1.17.0
