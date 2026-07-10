@@ -1,0 +1,623 @@
+version: "3.7"
+
+x-logging: &logging
+  logging:
+    driver: "json-file"
+    options:
+      max-file: "5"
+      max-size: "10m"
+
+x-appwrite-env: &appwrite-env
+  _APP_ENV: "production"
+  _APP_WORKER_PER_CORE: "6"
+  _APP_LOCALE: "en"
+  _APP_COMPRESSION_MIN_SIZE_BYTES: "1024"
+  _APP_CONSOLE_WHITELIST_ROOT: "enabled"
+  _APP_CONSOLE_WHITELIST_EMAILS: ""
+  _APP_CONSOLE_SESSION_ALERTS: "enabled"
+  _APP_CONSOLE_WHITELIST_IPS: ""
+  _APP_CONSOLE_HOSTNAMES: "${DEVICE_DOMAIN_NAME}"
+  _APP_SYSTEM_EMAIL_NAME: "Appwrite"
+  _APP_SYSTEM_EMAIL_ADDRESS: "team@appwrite.io"
+  _APP_SYSTEM_SECURITY_EMAIL_ADDRESS: "certs@appwrite.io"
+  _APP_EMAIL_SECURITY: ""
+  _APP_SYSTEM_RESPONSE_FORMAT: ""
+  _APP_OPTIONS_ABUSE: "enabled"
+  _APP_OPTIONS_ROUTER_PROTECTION: "disabled"
+  _APP_OPTIONS_FORCE_HTTPS: "disabled"
+  _APP_OPTIONS_ROUTER_FORCE_HTTPS: "disabled"
+  _APP_OPENSSL_KEY_V1: "b9f7a6d84e3c4a12a6c2f58e91d73b0f4a8e39d76c1b42e7a5f2c8d90e6b3a41"
+  _APP_DOMAIN: "${DEVICE_DOMAIN_NAME}"
+  _APP_DOMAIN_TARGET_CNAME: "${DEVICE_DOMAIN_NAME}"
+  _APP_DOMAIN_TARGET_AAAA: ""
+  _APP_DOMAIN_TARGET_A: ""
+  _APP_DOMAIN_TARGET_CAA: ""
+  _APP_DNS: "1.1.1.1"
+  _APP_DOMAIN_FUNCTIONS: "functions.${DEVICE_DOMAIN_NAME}"
+  _APP_DOMAIN_SITES: "sites.${DEVICE_DOMAIN_NAME}"
+  _APP_REDIS_HOST: "redis"
+  _APP_REDIS_PORT: "6379"
+  _APP_REDIS_USER: ""
+  _APP_REDIS_PASS: ""
+  _APP_DB_ADAPTER: "mongodb"
+  _APP_DB_HOST: "mongodb"
+  _APP_DB_PORT: "27017"
+  _APP_DB_SCHEMA: "appwrite"
+  _APP_DB_USER: "appwrite"
+  _APP_DB_PASS: "appwrite-user-MongoDB-F4h8Mq2Xt9La"
+  _APP_SMTP_HOST: ""
+  _APP_SMTP_PORT: ""
+  _APP_SMTP_SECURE: ""
+  _APP_SMTP_USERNAME: ""
+  _APP_SMTP_PASSWORD: ""
+  _APP_USAGE_STATS: "disabled"
+  _APP_STORAGE_LIMIT: "30000000"
+  _APP_STORAGE_PREVIEW_LIMIT: "20000000"
+  _APP_STORAGE_ANTIVIRUS: "disabled"
+  _APP_STORAGE_ANTIVIRUS_HOST: "clamav"
+  _APP_STORAGE_ANTIVIRUS_PORT: "3310"
+  _APP_STORAGE_DEVICE: "local"
+  _APP_STORAGE_S3_ACCESS_KEY: ""
+  _APP_STORAGE_S3_SECRET: ""
+  _APP_STORAGE_S3_REGION: ""
+  _APP_STORAGE_S3_BUCKET: ""
+  _APP_STORAGE_S3_ENDPOINT: ""
+  _APP_STORAGE_DO_SPACES_ACCESS_KEY: ""
+  _APP_STORAGE_DO_SPACES_SECRET: ""
+  _APP_STORAGE_DO_SPACES_REGION: ""
+  _APP_STORAGE_DO_SPACES_BUCKET: ""
+  _APP_STORAGE_BACKBLAZE_ACCESS_KEY: ""
+  _APP_STORAGE_BACKBLAZE_SECRET: ""
+  _APP_STORAGE_BACKBLAZE_REGION: ""
+  _APP_STORAGE_BACKBLAZE_BUCKET: ""
+  _APP_STORAGE_LINODE_ACCESS_KEY: ""
+  _APP_STORAGE_LINODE_SECRET: ""
+  _APP_STORAGE_LINODE_REGION: ""
+  _APP_STORAGE_LINODE_BUCKET: ""
+  _APP_STORAGE_WASABI_ACCESS_KEY: ""
+  _APP_STORAGE_WASABI_SECRET: ""
+  _APP_STORAGE_WASABI_REGION: ""
+  _APP_STORAGE_WASABI_BUCKET: ""
+  _APP_COMPUTE_SIZE_LIMIT: "30000000"
+  _APP_COMPUTE_BUILD_TIMEOUT: "900"
+  _APP_COMPUTE_CPUS: "0"
+  _APP_COMPUTE_MEMORY: "0"
+  _APP_COMPUTE_INACTIVE_THRESHOLD: "60"
+  _APP_COMPUTE_MAINTENANCE_INTERVAL: "3600"
+  _APP_COMPUTE_RUNTIMES_NETWORK: "bridge"
+  _APP_FUNCTIONS_TIMEOUT: "900"
+  _APP_SITES_TIMEOUT: "900"
+  _APP_FUNCTIONS_RUNTIMES: "node-22.0,node-21.0,node-20.0,node-18.0,python-3.12,python-3.11,php-8.3,ruby-3.3"
+  _APP_SITES_RUNTIMES: "static-1"
+  _APP_EXECUTOR_SECRET: "appwrite-executor-secret-Q9v6Lm3Rx8Nc2Zd5Wp7Ts4Hy"
+  _APP_EXECUTOR_HOST: "http://openruntimes-executor/v1"
+  _APP_BROWSER_HOST: "http://browser/v1"
+  _APP_LOGGING_CONFIG: ""
+  _APP_MAINTENANCE_INTERVAL: "86400"
+  _APP_MAINTENANCE_DELAY: "0"
+  _APP_MAINTENANCE_START_TIME: "00:00"
+  _APP_MAINTENANCE_RETENTION_EXECUTION: "1209600"
+  _APP_MAINTENANCE_RETENTION_CACHE: "2592000"
+  _APP_MAINTENANCE_RETENTION_ABUSE: "86400"
+  _APP_MAINTENANCE_RETENTION_AUDIT: "1209600"
+  _APP_MAINTENANCE_RETENTION_AUDIT_CONSOLE: "1209600"
+  _APP_MAINTENANCE_RETENTION_USAGE_HOURLY: "8640000"
+  _APP_MAINTENANCE_RETENTION_SCHEDULES: "86400"
+  _APP_SMS_PROVIDER: ""
+  _APP_SMS_FROM: ""
+  _APP_GRAPHQL_INTROSPECTION: "disabled"
+  _APP_GRAPHQL_MAX_BATCH_SIZE: "10"
+  _APP_GRAPHQL_MAX_COMPLEXITY: "250"
+  _APP_GRAPHQL_MAX_DEPTH: "3"
+  _APP_VCS_GITHUB_APP_NAME: ""
+  _APP_VCS_GITHUB_PRIVATE_KEY: ""
+  _APP_VCS_GITHUB_APP_ID: ""
+  _APP_VCS_GITHUB_WEBHOOK_SECRET: ""
+  _APP_VCS_GITHUB_CLIENT_SECRET: ""
+  _APP_VCS_GITHUB_CLIENT_ID: ""
+  _APP_MIGRATIONS_FIREBASE_CLIENT_ID: ""
+  _APP_MIGRATIONS_FIREBASE_CLIENT_SECRET: ""
+  _APP_ASSISTANT_OPENAI_API_KEY: ""
+  _APP_DOCKER_HUB_USERNAME: ""
+  _APP_DOCKER_HUB_PASSWORD: ""
+  _APP_OPEN_RUNTIMES_NFT: "false"
+  _APP_MIGRATION_HOST: "http://appwrite/v1"
+  _APP_DATABASE_SHARED_TABLES: ""
+  _APP_STATS_RESOURCES_INTERVAL: "30"
+  _APP_USAGE_AGGREGATION_INTERVAL: "30"
+  _APP_EMAIL_CERTIFICATES: ""
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: appwrite_web_1
+      APP_PORT: 80
+      PROXY_AUTH_ADD: "false"
+
+  docker:
+    image: docker:27.2.0-dind@sha256:f9f72ad901a78f27be922b2d320bbc263174f12919c1b37e6a01f828fa904565
+    privileged: true
+    network_mode: host
+    stop_grace_period: 1m
+    restart: on-failure
+    environment:
+      DOCKER_ENSURE_BRIDGE: "appwrite-dind0:10.33.0.1/16"
+    entrypoint: /entrypoint.sh
+    command: >
+      dockerd
+      --bridge appwrite-dind0
+      --data-root /data/data
+      --exec-root /data/exec
+      --host unix:///data/docker.sock
+      --pidfile /data/docker.pid
+    volumes:
+      - ${APP_DATA_DIR}/entrypoint.sh:/entrypoint.sh
+      - ${APP_DATA_DIR}/data/docker:/data
+      - ${APP_DATA_DIR}/data/builds:/storage/builds:rw
+      - ${APP_DATA_DIR}/data/functions:/storage/functions:rw
+      - ${APP_DATA_DIR}/data/sites:/storage/sites:rw
+      - ${APP_DATA_DIR}/data/tmp:/tmp:rw
+
+  web:
+    image: nginx:alpine@sha256:54f2a904c251d5a34adf545a72d32515a15e08418dae0266e23be2e18c66fefa
+    <<: *logging
+    restart: on-failure
+    depends_on:
+      - appwrite
+      - console
+      - realtime
+    command:
+      - /bin/sh
+      - -c
+      - |
+        cat > /etc/nginx/conf.d/default.conf <<'EOF'
+        map $$http_upgrade $$connection_upgrade {
+          default upgrade;
+          '' close;
+        }
+
+        server {
+          listen 80;
+          server_name _;
+          client_max_body_size 0;
+          proxy_read_timeout 3600s;
+          proxy_send_timeout 3600s;
+          proxy_buffering off;
+
+          location /v1/realtime {
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $$http_upgrade;
+            proxy_set_header Connection $$connection_upgrade;
+            proxy_set_header Host $$host;
+            proxy_set_header X-Real-IP $$remote_addr;
+            proxy_set_header X-Forwarded-For $$proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $$scheme;
+            proxy_pass http://realtime;
+          }
+
+          location /console {
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $$http_upgrade;
+            proxy_set_header Connection $$connection_upgrade;
+            proxy_set_header Host $$host;
+            proxy_set_header X-Real-IP $$remote_addr;
+            proxy_set_header X-Forwarded-For $$proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $$scheme;
+            proxy_pass http://console;
+          }
+
+          location / {
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $$http_upgrade;
+            proxy_set_header Connection $$connection_upgrade;
+            proxy_set_header Host $$host;
+            proxy_set_header X-Real-IP $$remote_addr;
+            proxy_set_header X-Forwarded-For $$proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $$scheme;
+            proxy_pass http://appwrite;
+          }
+        }
+        EOF
+        nginx -g 'daemon off;'
+
+  appwrite:
+    image: appwrite/appwrite:1.9.5@sha256:6ff3a9b006981911ba0190b364d4945f10c106d16f5916df5634c206462d2684
+    <<: *logging
+    restart: on-failure
+    depends_on:
+      redis:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+    volumes:
+      - ${APP_DATA_DIR}/data/uploads:/storage/uploads:rw
+      - ${APP_DATA_DIR}/data/imports:/storage/imports:rw
+      - ${APP_DATA_DIR}/data/cache:/storage/cache:rw
+      - ${APP_DATA_DIR}/data/config:/storage/config:rw
+      - ${APP_DATA_DIR}/data/certificates:/storage/certificates:rw
+      - ${APP_DATA_DIR}/data/functions:/storage/functions:rw
+      - ${APP_DATA_DIR}/data/sites:/storage/sites:rw
+      - ${APP_DATA_DIR}/data/builds:/storage/builds:rw
+    environment: *appwrite-env
+
+  console:
+    image: appwrite/console:8.7.5@sha256:71892d67498225ef2926b4333eb1c711074c25bdc4cebfff9b9ea346b35aa09b
+    <<: *logging
+    restart: on-failure
+
+  realtime:
+    image: appwrite/appwrite:1.9.5@sha256:6ff3a9b006981911ba0190b364d4945f10c106d16f5916df5634c206462d2684
+    entrypoint: realtime
+    <<: *logging
+    restart: on-failure
+    depends_on:
+      redis:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+    environment: *appwrite-env
+
+  worker-audits:
+    image: appwrite/appwrite:1.9.5@sha256:6ff3a9b006981911ba0190b364d4945f10c106d16f5916df5634c206462d2684
+    entrypoint: worker-audits
+    <<: *logging
+    restart: on-failure
+    depends_on:
+      redis:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+    environment: *appwrite-env
+
+  worker-webhooks:
+    image: appwrite/appwrite:1.9.5@sha256:6ff3a9b006981911ba0190b364d4945f10c106d16f5916df5634c206462d2684
+    entrypoint: worker-webhooks
+    <<: *logging
+    restart: on-failure
+    depends_on:
+      redis:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+    environment: *appwrite-env
+
+  worker-deletes:
+    image: appwrite/appwrite:1.9.5@sha256:6ff3a9b006981911ba0190b364d4945f10c106d16f5916df5634c206462d2684
+    entrypoint: worker-deletes
+    <<: *logging
+    restart: on-failure
+    depends_on:
+      redis:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+    volumes:
+      - ${APP_DATA_DIR}/data/uploads:/storage/uploads:rw
+      - ${APP_DATA_DIR}/data/cache:/storage/cache:rw
+      - ${APP_DATA_DIR}/data/functions:/storage/functions:rw
+      - ${APP_DATA_DIR}/data/sites:/storage/sites:rw
+      - ${APP_DATA_DIR}/data/builds:/storage/builds:rw
+      - ${APP_DATA_DIR}/data/certificates:/storage/certificates:rw
+    environment: *appwrite-env
+
+  worker-databases:
+    image: appwrite/appwrite:1.9.5@sha256:6ff3a9b006981911ba0190b364d4945f10c106d16f5916df5634c206462d2684
+    entrypoint: worker-databases
+    <<: *logging
+    restart: on-failure
+    depends_on:
+      redis:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+    environment: *appwrite-env
+
+  worker-builds:
+    image: appwrite/appwrite:1.9.5@sha256:6ff3a9b006981911ba0190b364d4945f10c106d16f5916df5634c206462d2684
+    entrypoint: worker-builds
+    <<: *logging
+    restart: on-failure
+    depends_on:
+      redis:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+    volumes:
+      - ${APP_DATA_DIR}/data/functions:/storage/functions:rw
+      - ${APP_DATA_DIR}/data/sites:/storage/sites:rw
+      - ${APP_DATA_DIR}/data/builds:/storage/builds:rw
+      - ${APP_DATA_DIR}/data/uploads:/storage/uploads:rw
+    environment: *appwrite-env
+
+  worker-screenshots:
+    image: appwrite/appwrite:1.9.5@sha256:6ff3a9b006981911ba0190b364d4945f10c106d16f5916df5634c206462d2684
+    entrypoint: worker-screenshots
+    <<: *logging
+    restart: on-failure
+    depends_on:
+      redis:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+    volumes:
+      - ${APP_DATA_DIR}/data/uploads:/storage/uploads:rw
+    environment: *appwrite-env
+
+  worker-certificates:
+    image: appwrite/appwrite:1.9.5@sha256:6ff3a9b006981911ba0190b364d4945f10c106d16f5916df5634c206462d2684
+    entrypoint: worker-certificates
+    <<: *logging
+    restart: on-failure
+    depends_on:
+      redis:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+    volumes:
+      - ${APP_DATA_DIR}/data/config:/storage/config:rw
+      - ${APP_DATA_DIR}/data/certificates:/storage/certificates:rw
+    environment: *appwrite-env
+
+  worker-executions:
+    image: appwrite/appwrite:1.9.5@sha256:6ff3a9b006981911ba0190b364d4945f10c106d16f5916df5634c206462d2684
+    entrypoint: worker-executions
+    <<: *logging
+    restart: on-failure
+    depends_on:
+      redis:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+    environment: *appwrite-env
+
+  worker-functions:
+    image: appwrite/appwrite:1.9.5@sha256:6ff3a9b006981911ba0190b364d4945f10c106d16f5916df5634c206462d2684
+    entrypoint: worker-functions
+    <<: *logging
+    restart: on-failure
+    depends_on:
+      redis:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+      openruntimes-executor:
+        condition: service_started
+    environment: *appwrite-env
+
+  worker-mails:
+    image: appwrite/appwrite:1.9.5@sha256:6ff3a9b006981911ba0190b364d4945f10c106d16f5916df5634c206462d2684
+    entrypoint: worker-mails
+    <<: *logging
+    restart: on-failure
+    depends_on:
+      redis:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+    environment: *appwrite-env
+
+  worker-messaging:
+    image: appwrite/appwrite:1.9.5@sha256:6ff3a9b006981911ba0190b364d4945f10c106d16f5916df5634c206462d2684
+    entrypoint: worker-messaging
+    <<: *logging
+    restart: on-failure
+    depends_on:
+      redis:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+    volumes:
+      - ${APP_DATA_DIR}/data/uploads:/storage/uploads:rw
+    environment: *appwrite-env
+
+  worker-migrations:
+    image: appwrite/appwrite:1.9.5@sha256:6ff3a9b006981911ba0190b364d4945f10c106d16f5916df5634c206462d2684
+    entrypoint: worker-migrations
+    <<: *logging
+    restart: on-failure
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    volumes:
+      - ${APP_DATA_DIR}/data/imports:/storage/imports:rw
+    environment: *appwrite-env
+
+  task-maintenance:
+    image: appwrite/appwrite:1.9.5@sha256:6ff3a9b006981911ba0190b364d4945f10c106d16f5916df5634c206462d2684
+    entrypoint: maintenance
+    <<: *logging
+    restart: on-failure
+    depends_on:
+      redis:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+    environment: *appwrite-env
+
+  task-interval:
+    image: appwrite/appwrite:1.9.5@sha256:6ff3a9b006981911ba0190b364d4945f10c106d16f5916df5634c206462d2684
+    entrypoint: interval
+    <<: *logging
+    restart: on-failure
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment: *appwrite-env
+
+  task-stats-resources:
+    image: appwrite/appwrite:1.9.5@sha256:6ff3a9b006981911ba0190b364d4945f10c106d16f5916df5634c206462d2684
+    entrypoint: stats-resources
+    <<: *logging
+    restart: on-failure
+    depends_on:
+      redis:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+    environment: *appwrite-env
+
+  worker-stats-resources:
+    image: appwrite/appwrite:1.9.5@sha256:6ff3a9b006981911ba0190b364d4945f10c106d16f5916df5634c206462d2684
+    entrypoint: worker-stats-resources
+    <<: *logging
+    restart: on-failure
+    depends_on:
+      redis:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+    environment: *appwrite-env
+
+  worker-stats-usage:
+    image: appwrite/appwrite:1.9.5@sha256:6ff3a9b006981911ba0190b364d4945f10c106d16f5916df5634c206462d2684
+    entrypoint: worker-stats-usage
+    <<: *logging
+    restart: on-failure
+    depends_on:
+      redis:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+    environment: *appwrite-env
+
+  task-scheduler-functions:
+    image: appwrite/appwrite:1.9.5@sha256:6ff3a9b006981911ba0190b364d4945f10c106d16f5916df5634c206462d2684
+    entrypoint: schedule-functions
+    <<: *logging
+    restart: on-failure
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment: *appwrite-env
+
+  task-scheduler-executions:
+    image: appwrite/appwrite:1.9.5@sha256:6ff3a9b006981911ba0190b364d4945f10c106d16f5916df5634c206462d2684
+    entrypoint: schedule-executions
+    <<: *logging
+    restart: on-failure
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment: *appwrite-env
+
+  task-scheduler-messages:
+    image: appwrite/appwrite:1.9.5@sha256:6ff3a9b006981911ba0190b364d4945f10c106d16f5916df5634c206462d2684
+    entrypoint: schedule-messages
+    <<: *logging
+    restart: on-failure
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment: *appwrite-env
+
+  assistant:
+    image: appwrite/assistant:0.8.4@sha256:2678c49b73dca8a5dbe9b9d075c777ce684e6e33372b7a2d9eb0500ef53b5c45
+    <<: *logging
+    restart: on-failure
+    environment:
+      _APP_ASSISTANT_OPENAI_API_KEY: ""
+
+  browser:
+    image: appwrite/browser:0.3.2@sha256:f289dcc5a6fce6da1334ae5f03755f2280910b1bfc40c4e9e85a80732c09c42b
+    <<: *logging
+    restart: on-failure
+
+  openruntimes-executor:
+    image: openruntimes/executor:0.25.1@sha256:f638aacd3627b39b5c398480a0f72f8cefa1f1b0591cf4d7eabee924f492ce6a
+    hostname: exc1
+    <<: *logging
+    restart: on-failure
+    stop_signal: SIGINT
+    depends_on:
+      - docker
+    volumes:
+      - ${APP_DATA_DIR}/data/docker:/var/run
+      - ${APP_DATA_DIR}/data/builds:/storage/builds:rw
+      - ${APP_DATA_DIR}/data/functions:/storage/functions:rw
+      - ${APP_DATA_DIR}/data/sites:/storage/sites:rw
+      - ${APP_DATA_DIR}/data/tmp:/tmp:rw
+    environment:
+      DOCKER_HOST: "unix:///var/run/docker.sock"
+      OPR_EXECUTOR_INACTIVE_TRESHOLD: "60"
+      OPR_EXECUTOR_MAINTENANCE_INTERVAL: "3600"
+      OPR_EXECUTOR_NETWORK: "bridge"
+      OPR_EXECUTOR_DOCKER_HUB_USERNAME: ""
+      OPR_EXECUTOR_DOCKER_HUB_PASSWORD: ""
+      OPR_EXECUTOR_ENV: "production"
+      OPR_EXECUTOR_RUNTIMES: "node-22.0,node-21.0,node-20.0,node-18.0,python-3.12,python-3.11,php-8.3,ruby-3.3,static-1"
+      OPR_EXECUTOR_SECRET: "appwrite-executor-secret-Q9v6Lm3Rx8Nc2Zd5Wp7Ts4Hy"
+      OPR_EXECUTOR_RUNTIME_VERSIONS: "v5"
+      OPEN_RUNTIMES_NFT: "false"
+      OPR_EXECUTOR_LOGGING_CONFIG: ""
+      OPR_EXECUTOR_STORAGE_DEVICE: "local"
+
+  mongodb:
+    image: mongo:8.2.5@sha256:60aa240412f473f672ec8b282fd5651aa156dcc7a220f81f5381ce768ccc3167
+    <<: *logging
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data/mongodb:/data/db
+      - ${APP_DATA_DIR}/data/mongodb-keyfile:/data/keyfile
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: "root"
+      MONGO_INITDB_ROOT_PASSWORD: "appwrite-root-MongoDB-7b9dJp4Qw2Ns"
+      MONGO_INITDB_DATABASE: "appwrite"
+      MONGO_INITDB_USERNAME: "appwrite"
+      MONGO_INITDB_PASSWORD: "appwrite-user-MongoDB-F4h8Mq2Xt9La"
+    entrypoint:
+      - /bin/bash
+      - -c
+      - |
+        set -e
+        KEYFILE_PATH="/data/keyfile/mongo-keyfile"
+        INIT_FLAG="/data/db/.mongodb_initialized"
+        if [ ! -f "$$KEYFILE_PATH" ]; then
+          mkdir -p /data/keyfile
+          openssl rand -base64 756 > "$$KEYFILE_PATH"
+        fi
+        chmod 400 "$$KEYFILE_PATH"
+        chown mongodb:mongodb "$$KEYFILE_PATH" 2>/dev/null || chown 999:999 "$$KEYFILE_PATH"
+        if [ ! -f "$$INIT_FLAG" ]; then
+          mongod --replSet rs0 --bind_ip_all --fork --logpath /var/log/mongodb/mongod.log --dbpath /data/db
+          sleep 5
+          mongosh --eval "rs.initiate({_id: 'rs0', members: [{_id: 0, host: 'mongodb:27017'}]})"
+          sleep 5
+          mongosh admin --eval "db.createUser({user: '$$MONGO_INITDB_ROOT_USERNAME', pwd: '$$MONGO_INITDB_ROOT_PASSWORD', roles: ['root']})"
+          mongosh admin --eval "db.createUser({user: '$$MONGO_INITDB_USERNAME', pwd: '$$MONGO_INITDB_PASSWORD', roles: [{role: 'readWrite', db: '$$MONGO_INITDB_DATABASE'}]})"
+          mongod --dbpath /data/db --shutdown
+          touch "$$INIT_FLAG"
+        fi
+        exec mongod --replSet rs0 --bind_ip_all --auth --keyFile "$$KEYFILE_PATH"
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh -u root -p \"$${MONGO_INITDB_ROOT_PASSWORD}\" --authenticationDatabase admin --quiet --eval \"rs.status().ok\" | grep -q 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+
+  redis:
+    image: redis:7.4.7-alpine@sha256:02f2cc4882f8bf87c79a220ac958f58c700bdec0dfb9b9ea61b62fb0e8f1bfcf
+    <<: *logging
+    restart: on-failure
+    command: >
+      redis-server
+      --maxmemory 512mb
+      --maxmemory-policy allkeys-lru
+      --maxmemory-samples 5
+    volumes:
+      - ${APP_DATA_DIR}/data/redis:/data:rw
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
