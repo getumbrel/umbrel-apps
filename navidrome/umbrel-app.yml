@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: navidrome
 category: media
 name: Navidrome
-version: "0.63.0"
+version: "0.63.1"
 tagline: Your personal streaming service
 description: >-
   Navidrome is an open source web-based music collection server and streamer.
@@ -51,18 +51,16 @@ path: ""
 permissions:
   - STORAGE_DOWNLOADS
 releaseNotes: >-
-  This release adds full synced sidecar lyrics support in TTML, ELRC, SRT, YAML, and LRC formats, including word-by-word karaoke timing and multi-voice layers for OpenSubsonic clients.
+  This maintenance release fixes plugin scrobble buffering issues and improves Navidrome's packaged service templates.
 
 
-  Key improvements include:
-    - Improved search ranking for exact matches, short artist names, and non-ASCII artists
-    - Made full-library sync via search3 much faster for large libraries and fixed pagination issues that could affect offline-first clients
-    - Improved getRandomSongs, smart playlist filtering, and album/artist song sorting performance on large collections
-    - Added new scanner options for artist split exceptions and dot-folder indexing
-    - Fixed per-library access checks for playlist import, public share streams, and shared playlists
-    - Sharing is now enabled by default; set EnableSharing=false if you prefer the previous behavior
+  Bug fixes include:
+    - Fixed buffered plugin scrobbles so removed plugins no longer keep pending scrobbles
+    - Added the username to buffered plugin scrobbles
+    - Fixed a startup crash affecting 32-bit download builds
+    - Updated the systemd service template used outside Umbrel
 
 
-  Full release notes can be found at https://github.com/navidrome/navidrome/releases/tag/v0.63.0
+  Full release notes can be found at https://github.com/navidrome/navidrome/releases/tag/v0.63.1
 submitter: owmsoton
 submission: https://github.com/getumbrel/umbrel-apps/pull/1232
