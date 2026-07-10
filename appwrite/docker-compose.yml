@@ -157,6 +157,16 @@ services:
       - ${APP_DATA_DIR}/data/functions:/storage/functions:rw
       - ${APP_DATA_DIR}/data/sites:/storage/sites:rw
       - ${APP_DATA_DIR}/data/tmp:/tmp:rw
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "docker --host unix:///data/docker.sock info >/dev/null 2>&1 || exit 1"
+        ]
+      interval: 10s
+      timeout: 10s
+      retries: 12
+      start_period: 30s
 
   web:
     image: nginx:alpine@sha256:54f2a904c251d5a34adf545a72d32515a15e08418dae0266e23be2e18c66fefa
@@ -537,7 +547,8 @@ services:
     restart: on-failure
     stop_signal: SIGINT
     depends_on:
-      - docker
+      docker:
+        condition: service_healthy
     volumes:
       - ${APP_DATA_DIR}/data/docker:/var/run
       - ${APP_DATA_DIR}/data/builds:/storage/builds:rw
@@ -579,12 +590,15 @@ services:
         set -e
         KEYFILE_PATH="/data/keyfile/mongo-keyfile"
         INIT_FLAG="/data/db/.mongodb_initialized"
+
         if [ ! -f "$$KEYFILE_PATH" ]; then
           mkdir -p /data/keyfile
           openssl rand -base64 756 > "$$KEYFILE_PATH"
         fi
+
         chmod 400 "$$KEYFILE_PATH"
         chown mongodb:mongodb "$$KEYFILE_PATH" 2>/dev/null || chown 999:999 "$$KEYFILE_PATH"
+
         if [ ! -f "$$INIT_FLAG" ]; then
           mongod --replSet rs0 --bind_ip_all --fork --logpath /var/log/mongodb/mongod.log --dbpath /data/db
           sleep 5
@@ -595,9 +609,14 @@ services:
           mongod --dbpath /data/db --shutdown
           touch "$$INIT_FLAG"
         fi
+
         exec mongod --replSet rs0 --bind_ip_all --auth --keyFile "$$KEYFILE_PATH"
     healthcheck:
-      test: ["CMD-SHELL", "mongosh -u root -p \"$${MONGO_INITDB_ROOT_PASSWORD}\" --authenticationDatabase admin --quiet --eval \"rs.status().ok\" | grep -q 1"]
+      test:
+        [
+          "CMD-SHELL",
+          "mongosh -u root -p \"$${MONGO_INITDB_ROOT_PASSWORD}\" --authenticationDatabase admin --quiet --eval \"rs.status().ok\" | grep -q 1"
+        ]
       interval: 10s
       timeout: 10s
       retries: 10
@@ -620,4 +639,3 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
-
