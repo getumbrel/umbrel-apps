@@ -1,0 +1,33 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: freeport_server_1
+      APP_PORT: 1988
+
+  server:
+    image: ghcr.io/ptrinh/freeport-self-hosted:0.7.0@sha256:24200894eeab021d88688baac9383f41adf3911222ecc6290705199059262943
+    restart: on-failure
+    stop_grace_period: 1m
+    ports:
+      # Embedded NIP-01 Nostr relay (WebSocket) — nearby users can add
+      # ws://<umbrel>:1989 to their relay list. Remove to keep it private.
+      - "1989:1989"
+    environment:
+      - HOST=0.0.0.0
+      - PORT=1988
+      - RELAY_HOST=0.0.0.0
+      # Rate limits (per-IP + global token buckets)
+      - RATE_LIMIT_PER_MIN=300
+      - RATE_LIMIT_BURST=60
+      - RATE_LIMIT_GLOBAL_PER_MIN=2500
+      # Push notifier. VAPID keys auto-generate into DATA_DIR on first run.
+      - ENABLE_NOTIFY=1
+      - DATA_DIR=/data
+      - VAPID_SUBJECT=mailto:admin@umbrel.local
+      # Telegram bridge (optional): set a BotFather token to enable.
+      # - TELEGRAM_BOT_TOKEN=123456:ABC...
+      # - TELEGRAM_WEB_BASE=https://freeport.network
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
