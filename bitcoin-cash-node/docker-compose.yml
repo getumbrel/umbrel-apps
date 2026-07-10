@@ -42,13 +42,14 @@ services:
       - -dbcache=512
       - -maxmempool=300
       - -txindex=1
+      - -disablewallet=1   # node wallet unused by this stack
       - -maxconnections=64
       - -zmqpubhashblock=tcp://0.0.0.0:28332   # for SoloStrike Cash (lowest-latency)
     ports:
       - 8335:8335   # BCH P2P — forward this on your router for clearnet inbound peers
 
   web:
-    image: ghcr.io/danhaus93-ops/bchn-dashboard:v29.1.13@sha256:1ef08c6f55565226eaa15ea72c1fb55c38320284f4481d0264a8e26db8cc7e6f
+    image: ghcr.io/danhaus93-ops/bchn-dashboard:v29.1.14@sha256:318c17b24c7f407a6ab6fe4cb717179ea0db011d03aac5dfb7a5565ded8a53ff
     restart: on-failure
     user: "1000:1000"   # read chain data dir (1000:1000 on fresh installs); no root needed
     volumes:
@@ -57,7 +58,7 @@ services:
       - bitcoind
     environment:
       PORT: 3000
-      APP_VERSION: v29.1.13
+      APP_VERSION: v29.1.14
       TOR_IP: ${APP_BITCOIN_CASH_NODE_TOR_IP}
       RPC_HOST: bitcoind
       RPC_PORT: "8332"
