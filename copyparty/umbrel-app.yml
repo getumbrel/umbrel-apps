@@ -3,7 +3,7 @@ id: copyparty
 name: copyparty
 tagline: A versatile all-in-one file server for everything
 category: files
-version: "1.20.17"
+version: "1.20.18"
 port: 3923
 description: >-
   📼 copyparty is a lightweight yet incredibly powerful file sharing platform designed to give you complete control over your data. It transforms any environment into a personal and fully featured file hub where you can upload, download, edit, and organize files directly through an intuitive web interface. Everything happens in the browser without the need for additional software, making it fast, convenient, and accessible from virtually anywhere.
@@ -32,22 +32,17 @@ gallery:
   - 4.jpg
   - 5.jpg
 releaseNotes: >-
-  ⚠️ Security update: fixes a dirkey/filekey vulnerability that could allow a valid filekey to grant read access to the containing folder when both optional dirkeys and filekeys are enabled.
-
-
   New features in this release:
-    - Added CSP nonces for stronger XSS protection; custom JavaScript-based plugins may need review
-    - Added CBZ reader go-to-page support, new readme/logue display flags, and an FTP banner option
-    - Improved FFmpeg security hardening outside Docker and removed many obscure codecs and formats
+    - Adds filesystem path shadowing with //NULL so a volume can be fully unmapped from the server filesystem
 
 
-  Bugfixes in this release:
-    - Fixed resuming relocated or server-restarted partial uploads
-    - Fixed several directory sorting edge cases
-    - Fixed timezone handling for --rotf-tz
+  Improvements and fixes in this release:
+    - Disables the optional bwrap FFmpeg sandbox by default to avoid environment-specific startup and filesystem issues
+    - Fixes a false-positive startup warning
+    - Rotates log files on startup by default and reduces thumbnail expiration refresh I/O when cleanup is disabled
 
 
-  Full release notes can be found at https://github.com/9001/copyparty/releases/tag/v1.20.17
+  Full release notes can be found at https://github.com/9001/copyparty/releases/tag/v1.20.18
 dependencies: []
 path: ""
 defaultUsername: "admin"
