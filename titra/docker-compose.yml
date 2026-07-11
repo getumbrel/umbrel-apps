@@ -1,0 +1,24 @@
+version: '3.7'
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: titra_web_1
+      APP_PORT: 3000
+      PROXY_AUTH_ADD: "false"
+
+  web:
+    image: titraio/titra:v1.0.10@sha256:76eef3dee66eec759ec3ddc13a3053c21461e45868ded1018825475c7bf8c713
+    restart: on-failure
+    depends_on:
+      - titra-mongodb
+    environment:
+      ROOT_URL: "http://${DEVICE_DOMAIN_NAME}:3471"
+      MONGO_URL: "mongodb://titra-mongodb:27017/titra?directConnection=true"
+      PORT: "3000"
+
+  titra-mongodb:
+    image: mongo:7.0@sha256:d5b3ca8c3f3cdce78d44870dc0871b76d5235e9b2ad4ea6bea5d1fbff8027703
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data/mongodb:/data/db
