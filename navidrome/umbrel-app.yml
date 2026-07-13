@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: navidrome
 category: media
 name: Navidrome
-version: "0.63.1"
+version: "0.63.2"
 tagline: Your personal streaming service
 description: >-
   Navidrome is an open source web-based music collection server and streamer.
@@ -51,16 +51,15 @@ path: ""
 permissions:
   - STORAGE_DOWNLOADS
 releaseNotes: >-
-  This maintenance release fixes plugin scrobble buffering issues and improves Navidrome's packaged service templates.
+  This maintenance release fixes plugin loading, scanner symlink handling, and smart playlist validation.
 
 
   Bug fixes include:
-    - Fixed buffered plugin scrobbles so removed plugins no longer keep pending scrobbles
-    - Added the username to buffered plugin scrobbles
-    - Fixed a startup crash affecting 32-bit download builds
-    - Updated the systemd service template used outside Umbrel
+    - Surfaced host service failures when loading plugins
+    - Resolved file symlinks correctly with the production local storage filesystem
+    - Rejected invalid smart playlists that mix top-level "any" and "all" rules
 
 
-  Full release notes can be found at https://github.com/navidrome/navidrome/releases/tag/v0.63.1
+  Full release notes can be found at https://github.com/navidrome/navidrome/releases/tag/v0.63.2
 submitter: owmsoton
 submission: https://github.com/getumbrel/umbrel-apps/pull/1232
