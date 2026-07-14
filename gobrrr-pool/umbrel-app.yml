@@ -2,7 +2,7 @@ manifestVersion: 1
 id: gobrrr-pool
 category: bitcoin
 name: Go Brrr Pool
-version: "1.1.0"
+version: "1.2.1"
 tagline: Bitcoin Solo Mining, Done Right!
 description: >-
   Go Brrr Pool is a self-hosted solo Bitcoin mining pool powered by ckpool-solo.
@@ -12,8 +12,9 @@ description: >-
 
   Features a customizable real-time web dashboard with hashrate monitoring,
   worker statistics, pool-wide leaderboard, efficiency dashboard, and local
-  mempool API integration. ZMQ enables instant block notifications and automatic
-  difficulty adjustment accepts diff proposals from miners.
+  mempool API integration, using your local Mempool app when installed. ZMQ
+  enables instant block notifications and automatic difficulty adjustment
+  accepts diff proposals from miners.
 
 
   Two stratum ports: port 21420 for standard mining, port 21422 for
@@ -30,12 +31,24 @@ description: >-
 
 
   Homescreen widget developed by RodB.
-releaseNotes: ""
+releaseNotes: >-
+  ckpool engine updated to the latest upstream release: new high-performance
+  stratum message engine, numerous memory-leak and stability fixes.
+
+
+  Mempool is now optional. Go Brrr Pool uses your local Mempool app when
+  installed and otherwise falls back to the public mempool.space API.
+
+
+  The dashboard now shows whether it is connected to Bitcoin Core or Bitcoin
+  Knots — thanks @BuffaloDyl.
+
+
+  Leaderboard best-diff color improved for readability — thanks @rafxo.
 developer: GoBrrr
 website: https://gobrrr.me
 dependencies:
   - bitcoin
-  - mempool
 repo: https://github.com/gobrrrme/GoBrrr-Pool
 support: https://github.com/gobrrrme/GoBrrr-Pool/issues
 port: 21421
