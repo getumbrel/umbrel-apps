@@ -1,0 +1,28 @@
+# Kaspa Stratum Bridge configuration (Umbrel)
+#
+# NOTE: Comments in this file are lost if you save configuration changes
+# through the web dashboard.
+#
+# kaspad_address points at the Rusty Kaspad app's node container (gRPC).
+kaspad_address: "rusty-kaspad_kaspad_1:16110"
+block_wait_time: 1000
+print_stats: true
+log_to_file: false
+health_check_port: ""
+web_dashboard_port: ":3030"
+var_diff: true
+shares_per_min: 30
+var_diff_stats: false
+pow2_clamp: true
+extranonce_size: 2
+coinbase_tag_suffix: ""
+
+instances:
+  # Single stratum listener. VarDiff automatically tunes per-worker difficulty,
+  # so one port works for ASICs of any size. Add more instances here (with
+  # different ports) if you want fixed-difficulty listeners - remember to also
+  # publish the new ports in docker-compose.yml.
+  - stratum_port: ":5555"
+    min_share_diff: 4
+    prom_port: ""
+    log_to_file: false
