@@ -3,17 +3,116 @@ id: bolt12-pay
 name: BOLT12 Pay
 tagline: Self-hosted Lightning payments and identity with BOLT12, BIP353, LNURL, and Nostr
 category: bitcoin
-version: 0.2.108.1
+version: 0.3.0.2
 port: 8367
 description: >-
   BOLT12 Pay is a self-hosted Lightning payments and identity app for LND nodes.
   It supports BOLT12 Offers, Lightning Address (BIP353), LNURL, and BOLT11 fallback,
   with optional Nostr identity features such as NIP-05 and Zaps.
 
+  ## 🚀 Before you install
 
-  This app currently depends on a custom LND build with BOLT12-related custom
+  To get the most out of BOLT12 Pay you should ideally own a domain name.
+
+  Recommended setup:
+
+  - Your own domain (for example: example.com)
+
+  - DNS managed through Cloudflare, you can also import domains from other providers for DNS management to cloudflare
+
+  - A public HTTPS endpoint (Cloudflare Tunnel works well on Umbrel)
+
+  This enables:
+
+  - Human-readable Lightning Addresses
+  - BIP353 Lightning Addresses
+  - Automatic DNS management
+  - Public payment pages
+  - Nostr NIP-05 identities
+
+  🔥 BOLT12 Offers can still be paid, created and stored without a real domain by using the suggested placeholder values during setup,
+  but Lightning Addresses, BIP353 and public payment identities require a real domain.
+
+  Domain setup guide:
+
+  https://github.com/Alex71btc/lndk-pay/blob/main/README.md#-domain-configuration-bip353-vs-lnurl
+
+
+  ## ⚠️ LND Compatibility Notice
+
+
+   BOLT12 Pay now supports both:
+
+
+   * LND v0.20.1 beta with the legacy custom-message transport
+   * LND v0.21.0 with native onion messaging support
+
+
+   ### ⚠️  Upgrading from LND v0.20.x to LND v0.21.x
+
+
+   If you previously used BOLT12 Pay with LND v0.20.1 beta, you likely added custom protocol settings to your `lnd.conf`:
+
+
+   [protocol]
+   protocol.custom-message=513
+   protocol.custom-nodeann=39
+   protocol.custom-init=39
+
+
+   ### ⚠️   IMPORTANT
+
+
+   Before upgrading your Lightning node to LND v0.21.x, remove the entire custom protocol section from your `lnd.conf`. 
+   In your LND configuration file (Go to Files: Apps → lightning → data → lnd → lnd.conf), remove 
+
+   [protocol]
+   protocol.custom-message=513
+   protocol.custom-nodeann=39
+   protocol.custom-init=39
+
+
+   Save and restart LND, then you may savely update the Lightning Node app on umbrel.
+
+
+   Native onion messaging support is now built directly into LND v0.21 and these legacy settings are no longer required.
+
+   ⚠️  Leaving old custom protocol settings in place may cause unexpected behaviour after upgrading and may result in Lightning Node crash.
+
+   Once the custom protocol entries are removed, LND will work again.
+
+
+   ### LND v0.20.1 beta Users
+
+
+   If you remain on LND v0.20.x, the custom protocol settings above are still required for BOLT12 functionality.
+
+
+   ### LND v0.21.x Users
+
+
+   No custom protocol configuration is required.
+
+   BOLT12 Pay will automatically use LND's native onion messaging support.
+
+
+
+  This app currently depends on custom LND protocol changes in LND versions <=0.20.1 beta with BOLT12-related custom
   message support enabled.
 
+
+  🛠️  SET-UP INSTRUCTIONS:
+
+
+  ## LND v0.21.0 beta and newer
+
+
+  No custom protocol configuration is required.
+
+  BOLT12 Pay automatically uses LND's native onion messaging support.
+
+
+  ## LND v0.20.1 beta and older LND implementations
 
   In your LND configuration file (Go to Files: Apps → lightning → data → lnd → lnd.conf), add:
 
@@ -43,6 +142,8 @@ description: >-
 
 
   Made for sovereign Bitcoin users.
+
+
 developer: Alex71btc
 website: https://github.com/Alex71btc
 submitter: Alex71btc
@@ -51,17 +152,33 @@ repo: https://github.com/Alex71btc/lndk-pay
 support: https://github.com/Alex71btc/lndk-pay/issues
 releaseNotes: |
 
-  Bugfix release for the v0.2.108 Privacy Mode update.
+  Highlights:
 
-   - Improved reliability of BOLT12 offer creation
-   - Automatically retries transient LNDK TLS connection failures
-   - Prevents occasional first-attempt offer creation errors observed on some Umbrel systems
+  - Introduces Transaction History for incoming and outgoing Lightning payments
+  - Automatically synchronizes payment history from LND
+  - Preserves payment metadata including BOLT12, Lightning Address, LNURL, NWC, Zaps and Keysend
+  - Live synchronization keeps transaction history up to date
+  - Improved NWC wallet integration and payment handling
+  - Numerous UI improvements and bug fixes
 
-  Includes all features from v0.2.108:
-   - Privacy Mode
-   - Private BIP353 Lightning Addresses
-   - Offer History BIP353 Publishing
-   - Automatic DNS Cleanup
+  Native Onion Messaging:
+
+  - Automatic detection of native Onion Messaging support in LND v0.21+
+  - Native Onion Messaging status is displayed during setup
+  - Legacy custom-message configuration is automatically hidden when no longer required
+  - Full compatibility with both LND v0.20.x and LND v0.21.x
+
+  Payment Compatibility:
+
+  - Automatic fallback between LND v0.20 and v0.21 payment APIs
+  - Automatically switches to RouterRPC on LND v0.21 when required
+  - Improved Lightning Address, LNURL, BOLT11, BOLT12 and NWC payment compatibility
+  - Added default routing fee limits for better interoperability with wallets and Lightning Address providers
+
+  Upgrade Notes:
+
+  - LND v0.20.x users should keep their existing custom protocol configuration.
+  - LND v0.21.x users should remove legacy custom protocol settings from lnd.conf after upgrading to native Onion Messaging support.
 
 dependencies:
   - lightning

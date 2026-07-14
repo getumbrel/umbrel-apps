@@ -7,12 +7,14 @@ services:
       APP_PORT: 7860
 
   app:
-    image: langflowai/langflow:1.10.1@sha256:bb52d9bc6f413e1a73235497c75cab334d05b7c3db0818515f54771b17376be5
+    image: langflowai/langflow:1.10.2@sha256:ae6f9afd03bc032dc2989ece49791fcf83871230aff9d6e485c8e1ebada1e70f
     user: "1000:1000"
     restart: on-failure
     environment:
       LANGFLOW_CONFIG_DIR: /app/langflow
       DO_NOT_TRACK: "true"
+      LANGFLOW_AUTO_LOGIN: "true"
+      LANGFLOW_SUPERUSER_PASSWORD: ${APP_PASSWORD}
       LANGFLOW_DATABASE_URL: "postgresql://langflow:langflow@langflow_db_1:5432/langflow"
     volumes:
       - ${APP_DATA_DIR}/data/app:/app/langflow

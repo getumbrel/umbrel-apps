@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: elements
 category: bitcoin
 name: Elements Core
-version: "23.3.3"
+version: "23.3.3-patch.2"
 tagline: Liquid Network full node
 description: >-
   Elements is an open source full node implementation to run the Liquid
@@ -13,13 +13,13 @@ description: >-
 
   This app has the potential to use up to 6GB of RAM. It's important to confirm that your device meets the necessary hardware requirements before installing and running the app.
 releaseNotes: >-
-  This release updates Elements Core from version 23.3.0 to 23.3.3. It includes Liquid node and wallet fixes, optional peg-in subsidy/minimum peg-in support, asset issuance improvements, QR URI fixes, Simplicity updates, and peer/logging hardening.
+  This security update upgrades the bundled Tor sidecar to 0.4.9.11, restoring Tor connectivity and including the latest Tor security fixes. The primary app version is unchanged.
 
 
-  Note: the tweakfedpegscript RPC now returns both p2wsh and p2shwsh addresses.
+  For users who have set up umbrelOS Backups, this update reduces Elements backup size and hourly backup activity by excluding re-downloadable Liquid blockchain and index data.
 
 
-  Full release notes can be found at https://github.com/ElementsProject/elements/releases/tag/elements-23.3.3
+  Elements wallets, configuration, and other user-owned data will still be included in umbrelOS Backups.
 developer: Elements Core Developers
 website: https://elementsproject.org
 dependencies:
@@ -34,5 +34,9 @@ gallery:
 path: ''
 deterministicPassword: false
 torOnly: false
+backupIgnore:
+- data/liquidv1/blocks
+- data/liquidv1/chainstate
+- data/liquidv1/indexes
 submitter: Marco Argentieri
 submission: https://github.com/getumbrel/umbrel/pull/1319

@@ -7,13 +7,13 @@ services:
       APP_PORT: 3000
       
   web:
-    image: flomp/wanderer-web:v0.19.2@sha256:f57164b8e2bc4533f7d687bf22725704a770e4dfb1ebc5c921147ea4ffd3597d
+    image: flomp/wanderer-web:v0.20.0@sha256:d76177573caab135e8167179c9954168b5c582a48cbef0fcb7e1571af0c84d98
     user: "1000:1000"
     depends_on:
       search:
         condition: service_healthy
       db:
-        condition: service_started
+        condition: service_healthy
     environment:
       ORIGIN: http://${DEVICE_DOMAIN_NAME}:3111
       BODY_SIZE_LIMIT: Infinity
@@ -48,7 +48,7 @@ services:
       timeout: 10s
 
   db:
-    image: flomp/wanderer-db:v0.19.2@sha256:32a827057b2fc9205a06654156fb56da42e90fcca2a7c3cf794ad7f8d5fc8f9a
+    image: flomp/wanderer-db:v0.20.0@sha256:591974a7cb92be1d30a9033da0b97ef628d0ee1328e3ec29683b0075619805ba
     user: "1000:1000"
     depends_on:
       search:
@@ -61,3 +61,10 @@ services:
     restart: on-failure
     volumes:
       - ${APP_DATA_DIR}/data/pb_data:/pb_data
+      - ${APP_DATA_DIR}/data/plugins:/data/plugins
+    healthcheck:
+      test: ["CMD", "/curl", "--fail", "http://localhost:8090/health"]
+      interval: 15s
+      retries: 10
+      start_period: 20s
+      timeout: 10s

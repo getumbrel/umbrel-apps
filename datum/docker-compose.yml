@@ -12,6 +12,11 @@ services:
     command: ["--config=/app/conf/datum_gateway_config.json"]
     user: 1000:1000
     restart: on-failure
+    # Match Debian's DATUM Gateway systemd service (LimitNOFILE=65535).
+    ulimits:
+      nofile:
+        soft: 65535
+        hard: 65535
     volumes:
       - ${APP_DATA_DIR}/data/settings/:/app/conf/
     ports:

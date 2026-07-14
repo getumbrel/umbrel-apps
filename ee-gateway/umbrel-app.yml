@@ -1,0 +1,56 @@
+manifestVersion: 1
+id: ee-gateway
+category: networking
+name: EE Gateway
+version: "0.10.5"
+tagline: Self-hosted Bluetooth gateway for open BLE networks
+description: >-
+  EE Gateway turns your Umbrel into a self-hosted Bluetooth gateway for
+  open BLE networks.
+
+
+  It scans with your device's Bluetooth radio for nearby BLE devices from
+  supported networks and forwards their packets to the right upstream cloud,
+  extending ground coverage from hardware you already own. Hubble Network
+  is supported today; more partner networks will be added as they come
+  online.
+
+
+  Two containers do the work: a worker that scans over Bluetooth and ingests
+  packets upstream, and a small web dashboard for first-time setup and live
+  status. You'll need a free encryptedenergy.com account to create the
+  organization ID and API token used during setup. Enter those once in the
+  setup wizard, and the gateway runs on its own.
+
+
+  EE Gateway is free and open-source software (GPL-3.0-only), built by
+  encryptedenergy.com. It is an independent community project and is not
+  affiliated with any specific BLE network.
+releaseNotes: >-
+  Fixes the (0.0, 0.0) fixed-location bug. Two coordinated changes:
+  the UI's location form no longer accepts (0, 0) as a valid coordinate
+  pair (they're the classic "unset" tell), and the worker's GpsClient
+  ignores any (0, 0) it finds in config.json and falls back to gpsd.
+  Prevents the failure mode where every packet gets rejected upstream
+  with an opaque HTTP 422.
+
+
+  Also adds EE_GPS_BAUD env var for u-blox M10-based receivers
+  (EVK-M102, NEO-M9N modules) that need a 38400 baud hint to gpsd.
+  Unset by default; standard consumer dongles (BU-353N, VK-172)
+  continue to work with gpsd's auto-probe.
+developer: encryptedenergy.com
+website: https://encryptedenergy.com
+dependencies: []
+repo: https://github.com/Encrypted-Energy/gateway
+support: https://github.com/Encrypted-Energy/gateway/issues
+port: 8083
+gallery:
+  - 1.webp
+  - 2.webp
+  - 3.webp
+path: ""
+defaultUsername: ""
+defaultPassword: ""
+submitter: John Marbach
+submission: https://github.com/getumbrel/umbrel-apps/pull/5771

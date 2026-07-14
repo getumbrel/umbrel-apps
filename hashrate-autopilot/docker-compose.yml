@@ -7,7 +7,7 @@ services:
       APP_PORT: 3010
 
   web:
-    image: ghcr.io/rdouma/hashrate-autopilot:1.15.0@sha256:bcc72c2b8f17207e3ece7e9ab0ba9f7da782dd9685194c372eae666c1dae6a50
+    image: ghcr.io/rdouma/hashrate-autopilot:1.17.0@sha256:8f952ab293975694b2c8169b7c5db18d0bc32636336d884712f3d89753bc665a
     restart: on-failure
     stop_grace_period: 1m
     volumes:
@@ -25,3 +25,9 @@ services:
       BHA_ELECTRS_HOST: "$APP_ELECTRS_NODE_IP"
       BHA_ELECTRS_PORT: "$APP_ELECTRS_NODE_PORT"
       BHA_PAYOUT_SOURCE: "electrs"
+      # At-rest encryption key for DB-stored secrets (#331). APP_SEED is
+      # the device-derived per-app secret Umbrel injects; it lives outside
+      # this app's data folder, so an app-data backup never carries the
+      # key. If unset the daemon would fall back to a keyfile next to the
+      # database (still encrypted, but inside app-data).
+      BHA_SECRET_KEY: "${APP_SEED}"
