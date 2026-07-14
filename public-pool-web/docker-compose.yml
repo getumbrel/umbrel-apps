@@ -6,6 +6,7 @@ services:
 
   rails-app:
     image: martinbarilik/public-pool-web:0.2.0@sha256:f708bdea807986de548df4b2011cee47a827034786293bb7305d53a0a99f86a7
+    restart: on-failure
     user: "1000:1000"
     environment:
       - RAILS_MASTER_KEY=${APP_PUBLIC_POOL_WEB_MASTER_KEY}
@@ -23,6 +24,7 @@ services:
         
   db:
     image: postgres:18.4@sha256:4aabea78cf39b90e834caf3af7d602a18565f6fe2508705c8d01aa63245c2e20
+    restart: on-failure
     user: "1000:1000"
     environment:
       - POSTGRES_USER=${APP_PUBLIC_POOL_WEB_POSTGRES_USERNAME}
@@ -38,6 +40,7 @@ services:
 
   redis:
     image: valkey/valkey:8@sha256:c6d4637d757379a2ff040148b95c85936d85a06c129eafa5fbe582f9e720e12f
+    restart: on-failure
     user: "1000:1000"
     healthcheck:
       test: ["CMD-SHELL", "redis-cli ping"]
@@ -47,6 +50,7 @@ services:
 
   sidekiq:
     image: martinbarilik/public-pool-web:0.2.0@sha256:f708bdea807986de548df4b2011cee47a827034786293bb7305d53a0a99f86a7
+    restart: on-failure
     user: "1000:1000"
     environment:
       - RAILS_MASTER_KEY=${APP_PUBLIC_POOL_WEB_MASTER_KEY}
