@@ -2,7 +2,7 @@ manifestVersion: 1
 id: urbit
 category: networking
 name: Urbit
-version: "v4.3"
+version: "v4.5"
 tagline: Run Urbit on your Umbrel
 description: >-
   Urbit is a personal server for self-sovereign personal & networked
@@ -35,10 +35,14 @@ torOnly: false
 submitter: ~mopfel-winrux
 submission: https://github.com/getumbrel/umbrel/pull/1246
 releaseNotes: >-
-  vere-v4.3 is a minor release with the following highlighted fixes and features:
-    - The runtime now supports gzip compression of http responses, causing significant speedups for the tlon app.
-    - The windows build would immediately crash when receiving a directed messaging packet because of an improperly vendored libblake3 dependency.
-    - The lmdb version used by vere-v4.2 and below did not support sparse files on windows, causing the event log to balloon to 63 GB immediately on boot.
+  vere-v4.5 is a minor release with one specific bugfix targeted
+  specifically at ships running in kubernetes clusters:
+  
+  The spin hint introduced in vere-v4.0 uses posix shared memory which is
+  shared between containers in a kubernetes pod by default. This creates
+  opportunities for multiple ships to thrash each others spin hint pages,
+  usually resulting in both ships crashing. To prevent this we now key the
+  shared memory by ship name in addition to process id.
 
 
-  Full release notes here: https://github.com/urbit/vere/releases/tag/vere-v4.3
+  Full release notes here: https://github.com/urbit/vere/releases/tag/vere-v4.5

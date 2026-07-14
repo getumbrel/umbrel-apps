@@ -2,7 +2,7 @@ manifestVersion: 1
 id: hashrate-autopilot
 category: bitcoin
 name: Hashrate Autopilot
-version: "1.15.1"
+version: "1.17.0"
 tagline: Autopilot for renting hashrate to mine on Ocean Mining
 
 description: >-
@@ -71,16 +71,16 @@ defaultPassword: ""
 submitter: Remco Douma
 submission: https://github.com/getumbrel/umbrel-apps/pull/5685
 releaseNotes: >-
-  v1.15.1 - patch release: fixes and polish, no new headline features.
+  v1.17.0 - the security release: your secrets are now encrypted at rest, you can change your password and rotate tokens in-app, and Profit & Loss counts Lightning payouts.
 
 
-  Price-chart fixes: the safety-ceiling line is relabeled from "max bid" to "effective cap", and the "max premium over hashprice" knob is now recorded per tick (and backfilled for older history), so changing it moves the line from that point forward instead of rewriting your whole past.
+  Security: your Braiins tokens, bitcoind RPC password, Telegram token, and DDNS credential are now AES-256-GCM encrypted in the database instead of plaintext, and your dashboard password is stored as a one-way hash. A copied database or a backup no longer hands over your secrets. The config-change history no longer records credential values, and any previously logged are scrubbed on upgrade. Existing installs encrypt themselves on the first start of this version; there is nothing for you to do. This protects the data-leaves-the-box cases; by design it cannot protect against someone who already controls the machine.
 
 
-  Other fixes: invalid Bitcoin payout addresses are now rejected at Config and in the first-run wizard, so a typo can't silently credit earnings to nobody. The "Per Day" P&L card no longer sticks on "refreshing...". DATUM stats-API errors now tell you whether the API is behind an auth proxy or its port moved, instead of a cryptic parse error. Electrum host/port help points you to your server's own connection page. The IP-change marker tooltip shows how long ago the address changed. On mobile, the "add tile" control no longer overlaps the time-range buttons, and block-explorer presets set both the block and transaction URL in one click. Ocean payout wording corrected throughout - payouts arrive as batched sweep transactions, not coinbase-direct.
+  New: change your dashboard password and rotate your Braiins owner and read-only tokens right from Config, Pool & Payout, Security & credentials. The password change is instant, and a new token is checked against Braiins before it is saved so a typo cannot break bidding. Profit & Loss now reads "collected" from Ocean's own payout ledger, so both on-chain and Lightning payouts count, split by rail, and a payout you have already spent still shows up - no Bitcoin node required for that number anymore.
 
 
   Migrating from the community-store version (rdouma-hashrate-autopilot)? One-time five-minute guide: https://github.com/rdouma/hashrate-autopilot/blob/main/docs/migrating-from-community-store.md
 
 
-  Full release notes: https://github.com/rdouma/hashrate-autopilot/releases/tag/v1.15.1
+  Full release notes: https://github.com/rdouma/hashrate-autopilot/releases/tag/v1.17.0

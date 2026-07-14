@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+DATA_DIR="${APP_DATA_DIR}/data/hermes"
+SENTINEL="${APP_DATA_DIR}/.umbrel-permissions-migrated-v2026.7.1"
+
+mkdir -p "${DATA_DIR}"
+
+if [[ -f "${SENTINEL}" ]]; then
+  exit 0
+fi
+
+# Hermes v2026.7.1 runs upstream migrations against data that older versions
+# may have left root-owned or missing owner write bits.
+chown -R 1000:1000 "${DATA_DIR}"
+find "${DATA_DIR}" -type d -exec chmod u+rwx {} +
+find "${DATA_DIR}" -type f -exec chmod u+rw {} +
+
+touch "${SENTINEL}"

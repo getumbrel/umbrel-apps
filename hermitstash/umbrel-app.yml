@@ -2,7 +2,7 @@ manifestVersion: 1
 id: hermitstash
 category: files
 name: HermitStash
-version: "1.13.2"
+version: "1.13.9"
 tagline: Post-quantum encrypted self-hosted file sharing
 description: >-
   HermitStash is a self-hosted file upload server with post-quantum encryption. Every file and database field is sealed with an ML-KEM-1024 + ECDH P-384 hybrid envelope and XChaCha20-Poly1305 before touching disk; passwords use Argon2id. Nothing is stored in plaintext, including database fields the operator never thinks of as sensitive.
@@ -31,11 +31,12 @@ defaultPassword: ""
 submitter: dotCooCoo
 submission: https://github.com/getumbrel/umbrel-apps/pull/5378
 releaseNotes: >-
-  This release adds more granular sharing and upload controls for admins and users.
+  This release hardens HermitStash's auth, upload, backup, and audit-log paths.
 
 
-  - Customer stashes can now be shared with individual user accounts directly, without first creating a team.
-  - Users who have been added to customer stashes now see a "Shared with me" section on their dashboard.
-  - Admins can set per-user upload limits, storage quotas, maximum file size, maximum bundle size, file-count limits, and allowed file extensions from the user list.
-  - Per-user limits are blank by default and fall back to the global settings until an admin sets an override.
+  - Sign-in domain checks, CSRF origin comparisons, session refreshes, one-time access codes, invite/two-factor time windows, and admin IP blocklist entries now fail closed and canonicalize inputs more consistently.
+  - Uploaded files with mismatched magic bytes are forced to download-only handling with nosniff headers, reducing spoofed inline-preview risk.
+  - Off-site backups now skip the plaintext chunk-assembly scratch directory, and decrypted audit-log exports verify encrypted archive signatures and tamper chains before returning rows.
+  - Idempotency-Key replay slots are now scoped per authenticated user, and settings/path/email handling uses hardened primitives for prototype-key, traversal, and header-injection defenses.
+  - Folder ZIP download links now use a query parameter for nested folder paths.
 dependencies: []
