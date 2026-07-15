@@ -7,7 +7,14 @@ services:
       APP_PORT: 3000
 
   tor:
-    image: getumbrel/tor:0.4.7.8@sha256:2ace83f22501f58857fa9b403009f595137fa2e7986c4fda79d82a8119072b6a
+    # 0.4.7.8 (Aug 2022) is EOL and can no longer bootstrap: its directory
+    # authority list is stale, so dir servers answer 404 "Consensus not
+    # signed by sufficient number of requested authorities" and Tor sticks
+    # at 30%. With Tor dead, "All traffic via Tor" points -proxy at a proxy
+    # that never answers: every outbound connection fails, only inbound
+    # peers remain, and the node silently stops receiving blocks. Pinned to
+    # the same image the official apps ship (see fulcrum, electrs).
+    image: ghcr.io/getumbrel/tor:0.4.9.11@sha256:e382b8629c0dfef6ceb396b062622d4e4e955b19d6f16b883fd2c0723ad5671a
     user: "1000:1000"
     restart: on-failure
     environment:
@@ -49,7 +56,7 @@ services:
       - 8335:8335   # BCH P2P — forward this on your router for clearnet inbound peers
 
   web:
-    image: ghcr.io/danhaus93-ops/bchn-dashboard:v29.1.14@sha256:318c17b24c7f407a6ab6fe4cb717179ea0db011d03aac5dfb7a5565ded8a53ff
+    image: ghcr.io/danhaus93-ops/bchn-dashboard:v29.1.17@sha256:6bd0f045fb1387102bd668462a724b460cef791d0adce058fc862ea171e09f0b
     restart: on-failure
     user: "1000:1000"   # read chain data dir (1000:1000 on fresh installs); no root needed
     volumes:
@@ -58,7 +65,7 @@ services:
       - bitcoind
     environment:
       PORT: 3000
-      APP_VERSION: v29.1.14
+      APP_VERSION: v29.1.17
       TOR_IP: ${APP_BITCOIN_CASH_NODE_TOR_IP}
       RPC_HOST: bitcoind
       RPC_PORT: "8332"
