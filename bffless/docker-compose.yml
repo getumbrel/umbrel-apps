@@ -56,6 +56,13 @@ services:
     image: supertokens/supertokens-postgresql:9.3@sha256:39c36693b19c4e231684c9e614422c1c95751c346c6fc3ffd74980161d0b041c
     restart: on-failure
     stop_grace_period: 30s
+    # Provide the hostname used by SUPERTOKENS_CONNECTION_URI below. This avoids
+    # underscores in the generated container name and service-name collisions with
+    # other apps on Umbrel's shared Docker network.
+    networks:
+      default:
+        aliases:
+          - bffless-supertokens
     depends_on:
       postgres:
         condition: service_healthy
@@ -105,7 +112,7 @@ services:
       ENABLE_REDIS: 'false'
       # SuperTokens
       SUPERTOKENS_MODE: local
-      SUPERTOKENS_CONNECTION_URI: http://bffless_supertokens_1:3567
+      SUPERTOKENS_CONNECTION_URI: http://bffless-supertokens:3567
       SUPERTOKENS_API_KEY: ''
       # Default URLs - overridden by entrypoint if domain.txt exists
       PRIMARY_DOMAIN: localhost
