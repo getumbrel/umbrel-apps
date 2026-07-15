@@ -2,7 +2,7 @@ manifestVersion: 1
 id: urbit
 category: networking
 name: Urbit
-version: "v4.5"
+version: "v4.6"
 tagline: Run Urbit on your Umbrel
 description: >-
   Urbit is a personal server for self-sovereign personal & networked
@@ -35,14 +35,19 @@ torOnly: false
 submitter: ~mopfel-winrux
 submission: https://github.com/getumbrel/umbrel/pull/1246
 releaseNotes: >-
-  vere-v4.5 is a minor release with one specific bugfix targeted
-  specifically at ships running in kubernetes clusters:
+  vere-v4.6 is a minor release aimed at fixing several issues that were
+  discovered during the 408k pre-release testing process:
   
-  The spin hint introduced in vere-v4.0 uses posix shared memory which is
-  shared between containers in a kubernetes pod by default. This creates
-  opportunities for multiple ships to thrash each others spin hint pages,
-  usually resulting in both ships crashing. To prevent this we now key the
-  shared memory by ship name in addition to process id.
+  -   A directed messaging driver bug caused sporadic crashes, mainly on
+      busy distribution ships.
+  -   The spin hint kubernetes fix in vere-v4.6 caused the spin hint to be
+      unavailable on macos.
+  -   The directed messaging packet queue was uncapped, causing
+      bufferbloat on heavy traffic.
+  -   Each directed messaging flow in the driver had nine retries once
+      every second until the first response packet was heard, this caused
+      unnecessary amplification on the receiver. We have reduced the retry
+      count to two.
 
 
-  Full release notes here: https://github.com/urbit/vere/releases/tag/vere-v4.5
+  Full release notes here: https://github.com/urbit/vere/releases/tag/vere-v4.6
