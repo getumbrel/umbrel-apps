@@ -1,9 +1,28 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-APP_DATA_DIR="$(readlink -f $(dirname "${BASH_SOURCE[0]}")/..)/data"
+APP_DATA_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")"
 
-DOCKER_DIR="${APP_DATA_DIR}/docker"
+DOCKER_DIR="${APP_DATA_DIR}/data/docker"
+ENTRYPOINT_FILE="${APP_DATA_DIR}/entrypoint.sh"
+
+sync_entrypoint() {
+    local app_template_dir="${SCRIPT_APP_REPO_DIR:-}"
+    local source_entrypoint="${app_template_dir}/entrypoint.sh"
+
+    if [[ "${app_template_dir}" == "" ]] || [[ ! -f "${source_entrypoint}" ]]
+    then
+        return
+    fi
+
+    cp -f "${source_entrypoint}" "${ENTRYPOINT_FILE}"
+    chmod +x "${ENTRYPOINT_FILE}"
+}
+
+# entrypoint.sh is bind-mounted from app data. Umbrel updates copy hooks and
+# docker-compose.yml into existing installs, but not this top-level file, so
+# refresh it from the current app-store package before the DIND sidecar starts.
+sync_entrypoint
 
 # Remove stale Docker-in-Docker runtime state that can survive power loss,
 # crashes, restarts, or updates and prevent the nested Docker daemon from

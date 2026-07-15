@@ -2,7 +2,7 @@ manifestVersion: 1
 id: hashrate-autopilot
 category: bitcoin
 name: Hashrate Autopilot
-version: "1.15.1"
+version: "1.17.1"
 tagline: Autopilot for renting hashrate to mine on Ocean Mining
 
 description: >-
@@ -43,13 +43,15 @@ description: >-
   reads spend from Braiins and earnings from your on-chain wallet.
 
 
-  This app declares Bitcoin Node, Electrs, and Datum Gateway as dependencies, so
-  Umbrel will prompt you to install them during setup. Once all apps run on the
-  same Umbrel, the autopilot's dashboard auto-discovers the local Datum HTTP
-  API, Electrs server, and Bitcoin RPC across Umbrel's shared Docker network -
-  zero copy/paste, the worker-count, hashrate, P&L earnings, and BIP110
-  signalling panels all populate on first boot. (Pointing at off-Umbrel
-  instances is also supported - just override the URLs in Config after setup.)
+  This app declares a Bitcoin node, an Electrum server, and Datum Gateway as
+  dependencies, so Umbrel will prompt you to install them during setup - any of
+  Umbrel's Bitcoin node apps and any Electrum server (Electrs, Fulcrum, or
+  ElectrumX) works. Once all apps run on the same Umbrel, the autopilot's
+  dashboard auto-discovers the local Datum HTTP API, Electrum server, and
+  Bitcoin RPC across Umbrel's shared Docker network - zero copy/paste, the
+  worker-count, hashrate, P&L earnings, and BIP110 signalling panels all
+  populate on first boot. (Pointing at off-Umbrel instances is also supported -
+  just override the URLs in Config after setup.)
 
 developer: Remco Douma
 website: https://github.com/rdouma/hashrate-autopilot
@@ -71,16 +73,16 @@ defaultPassword: ""
 submitter: Remco Douma
 submission: https://github.com/getumbrel/umbrel-apps/pull/5685
 releaseNotes: >-
-  v1.15.1 - patch release: fixes and polish, no new headline features.
+  v1.17.1 - a current-block-height tile, a searchable Timeline with personal notes, and a Profit & Loss self-heal.
 
 
-  Price-chart fixes: the safety-ceiling line is relabeled from "max bid" to "effective cap", and the "max premium over hashprice" knob is now recorded per tick (and backfilled for older history), so changing it moves the line from that point forward instead of rewriting your whole past.
+  New: a stats-bar tile shows the latest Bitcoin block and names the pool or miner that found it, crowning your own blocks and marking Ocean and BIP 110 blocks, with a link straight to your block explorer. The Timeline's bid-id filter is now a full-text search box that matches across the bid id, the reason, your personal notes, and each row's identifiers (block heights, IPs, deposit tx ids, config values) across your entire history. You can attach a personal note to any Timeline event, and it is saved, searchable, and included in the Excel export.
 
 
-  Other fixes: invalid Bitcoin payout addresses are now rejected at Config and in the first-run wizard, so a typo can't silently credit earnings to nobody. The "Per Day" P&L card no longer sticks on "refreshing...". DATUM stats-API errors now tell you whether the API is behind an auth proxy or its port moved, instead of a cryptic parse error. Electrum host/port help points you to your server's own connection page. The IP-change marker tooltip shows how long ago the address changed. On mobile, the "add tile" control no longer overlaps the time-range buttons, and block-explorer presets set both the block and transaction URL in one click. Ocean payout wording corrected throughout - payouts arrive as batched sweep transactions, not coinbase-direct.
+  Improved: Profit & Loss gains a hard-reset button next to rebuild that wipes and rebuilds the Ocean payout store and the Braiins spend cache from scratch, and both controls now report what they did. The "collected" figure also self-heals - the payout history is re-fetched on every restart and periodically, so a partial fetch during an upgrade can no longer leave it permanently short. An alert's detail panel now breaks an outage into the threshold you waited out, when it fired, when it recovered, the alert duration, and the total time the condition was open, with durations rounded to the nearest minute. The Dynamic DNS test now pushes the daemon's own detected public IP.
 
 
   Migrating from the community-store version (rdouma-hashrate-autopilot)? One-time five-minute guide: https://github.com/rdouma/hashrate-autopilot/blob/main/docs/migrating-from-community-store.md
 
 
-  Full release notes: https://github.com/rdouma/hashrate-autopilot/releases/tag/v1.15.1
+  Full release notes: https://github.com/rdouma/hashrate-autopilot/releases/tag/v1.17.1

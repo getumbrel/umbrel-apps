@@ -9,7 +9,7 @@ services:
   # Nginx reverse proxy - serves frontend, routes API calls
   # Uses custom umbrel image with baked-in config template and setup page
   nginx:
-    image: ghcr.io/bffless/ce-nginx:umbrel@sha256:c49cbce6626ba73ccf296d7e39d4e192996fb613fb11d4ff7994ef8e7115afc4
+    image: ghcr.io/bffless/ce-nginx:umbrel@sha256:e3bbe4fc349af155e60c4768042b1794c615843845c697f375816f72a786a35f
     restart: on-failure
     stop_grace_period: 30s
     environment:
@@ -56,6 +56,13 @@ services:
     image: supertokens/supertokens-postgresql:9.3@sha256:39c36693b19c4e231684c9e614422c1c95751c346c6fc3ffd74980161d0b041c
     restart: on-failure
     stop_grace_period: 30s
+    # Provide the hostname used by SUPERTOKENS_CONNECTION_URI below. This avoids
+    # underscores in the generated container name and service-name collisions with
+    # other apps on Umbrel's shared Docker network.
+    networks:
+      default:
+        aliases:
+          - bffless-supertokens
     depends_on:
       postgres:
         condition: service_healthy
@@ -79,7 +86,7 @@ services:
   # NestJS backend API
   # Uses custom umbrel image with baked-in entrypoint that derives keys from APP_SEED
   backend:
-    image: ghcr.io/bffless/ce-backend:umbrel@sha256:c974e83fd5f1cfea84b2c35db4417f3250a2ef322af476704aef93b61176cc0c
+    image: ghcr.io/bffless/ce-backend:umbrel@sha256:055a7bee1e63b403d51019b97e81d716078c98f58e2153d43b43b601ccbf440e
     restart: on-failure
     stop_grace_period: 30s
     depends_on:
@@ -105,7 +112,7 @@ services:
       ENABLE_REDIS: 'false'
       # SuperTokens
       SUPERTOKENS_MODE: local
-      SUPERTOKENS_CONNECTION_URI: http://bffless_supertokens_1:3567
+      SUPERTOKENS_CONNECTION_URI: http://bffless-supertokens:3567
       SUPERTOKENS_API_KEY: ''
       # Default URLs - overridden by entrypoint if domain.txt exists
       PRIMARY_DOMAIN: localhost
@@ -136,7 +143,7 @@ services:
 
   # React frontend (serves static files)
   frontend:
-    image: ghcr.io/bffless/ce-frontend:umbrel@sha256:f31234703e2a5baa4d913b30a26ea39077ac2283f5f0f3f90cdaab0133e91a97
+    image: ghcr.io/bffless/ce-frontend:umbrel@sha256:99b8b5f15827588eab86b03b0ef0ca04afd27ed408a12ca89ff9b6aeef2e1abc
     restart: on-failure
     stop_grace_period: 30s
     volumes:

@@ -6,7 +6,7 @@ services:
     # tailscale0 interface and routes. umbrelOS host services, such as CIFS
     # mounts used by network backups, need those routes to reach tailnet peers.
     network_mode: "host"
-    image: tailscale/tailscale:v1.98.3@sha256:854b77123b9536adae2e97f5a5fdb1790ed03438b911ab7f07780155e0af6ce2
+    image: tailscale/tailscale:v1.98.8@sha256:d54b2e6a9c09f0e5ec52e82b9ad4af3d446b54a7c08075e92f11c39dd410105f
     restart: on-failure
     stop_grace_period: 1m
     environment:
@@ -18,6 +18,28 @@ services:
     devices:
       - /dev/net/tun:/dev/net/tun
     # Keep tailscaled in kernel TUN mode so host routes are available.
-    command: "sh -c 'tailscale web --listen 0.0.0.0:8240 & exec tailscaled'"
+    #
+    # Disable accept-routes on startup to migrate older Tailscale prefs that
+    # defaulted to accepting subnet routes. In host networking mode, accepting
+    # an overlapping subnet route can route local LAN replies through tailscale0
+    # and make the Umbrel unreachable on its LAN IP.
+    command:
+      - sh
+      - -c
+      - |
+        tailscale web --listen 0.0.0.0:8240 &
+
+        (
+          for attempt in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30; do
+            if tailscale set --accept-routes=false >/dev/null 2>&1; then
+              exit 0
+            fi
+            sleep 1
+          done
+
+          echo "Warning: failed to disable Tailscale accept-routes; continuing"
+        ) &
+
+        exec tailscaled
     volumes:
       - ${APP_DATA_DIR}/data:/var/lib

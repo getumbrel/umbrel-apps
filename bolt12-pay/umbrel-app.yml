@@ -3,12 +3,39 @@ id: bolt12-pay
 name: BOLT12 Pay
 tagline: Self-hosted Lightning payments and identity with BOLT12, BIP353, LNURL, and Nostr
 category: bitcoin
-version: 0.2.114
+version: 0.3.0.2
 port: 8367
 description: >-
   BOLT12 Pay is a self-hosted Lightning payments and identity app for LND nodes.
   It supports BOLT12 Offers, Lightning Address (BIP353), LNURL, and BOLT11 fallback,
   with optional Nostr identity features such as NIP-05 and Zaps.
+
+  ## 🚀 Before you install
+
+  To get the most out of BOLT12 Pay you should ideally own a domain name.
+
+  Recommended setup:
+
+  - Your own domain (for example: example.com)
+
+  - DNS managed through Cloudflare, you can also import domains from other providers for DNS management to cloudflare
+
+  - A public HTTPS endpoint (Cloudflare Tunnel works well on Umbrel)
+
+  This enables:
+
+  - Human-readable Lightning Addresses
+  - BIP353 Lightning Addresses
+  - Automatic DNS management
+  - Public payment pages
+  - Nostr NIP-05 identities
+
+  🔥 BOLT12 Offers can still be paid, created and stored without a real domain by using the suggested placeholder values during setup,
+  but Lightning Addresses, BIP353 and public payment identities require a real domain.
+
+  Domain setup guide:
+
+  https://github.com/Alex71btc/lndk-pay/blob/main/README.md#-domain-configuration-bip353-vs-lnurl
 
 
   ## ⚠️ LND Compatibility Notice
@@ -125,46 +152,33 @@ repo: https://github.com/Alex71btc/lndk-pay
 support: https://github.com/Alex71btc/lndk-pay/issues
 releaseNotes: |
 
-  Bugfix Release for the initial Native Onion Messaging Release
+  Highlights:
 
-   - Added support for LND v0.21 native onion messaging
-   - Removed dependency on custom-message transport when using LND v0.21
-   - BOLT12 Offer creation verified on LND v0.21
-   - BOLT12 Offer payments verified on LND v0.21
-   - BIP353 payment flow verified on LND v0.21
-   - Improved future compatibility with upcoming Lightning releases
+  - Introduces Transaction History for incoming and outgoing Lightning payments
+  - Automatically synchronizes payment history from LND
+  - Preserves payment metadata including BOLT12, Lightning Address, LNURL, NWC, Zaps and Keysend
+  - Live synchronization keeps transaction history up to date
+  - Improved NWC wallet integration and payment handling
+  - Numerous UI improvements and bug fixes
 
+  Native Onion Messaging:
 
-  REST API compatibility:
+  - Automatic detection of native Onion Messaging support in LND v0.21+
+  - Native Onion Messaging status is displayed during setup
+  - Legacy custom-message configuration is automatically hidden when no longer required
+  - Full compatibility with both LND v0.20.x and LND v0.21.x
 
-   - Added automatic fallback for LND v0.21 payment APIs
-   - Maintains compatibility with both LND v0.20.x and LND v0.21.x
-   - Uses legacy REST payment endpoint on LND v0.20.x
-   - Automatically switches to RouterRPC payment endpoint on LND v0.21 when required
-   - Fixes LNURL, Lightning Address, BOLT11 and NWC payment flows on LND v0.21
+  Payment Compatibility:
 
-  Upgrade notes:
+  - Automatic fallback between LND v0.20 and v0.21 payment APIs
+  - Automatically switches to RouterRPC on LND v0.21 when required
+  - Improved Lightning Address, LNURL, BOLT11, BOLT12 and NWC payment compatibility
+  - Added default routing fee limits for better interoperability with wallets and Lightning Address providers
+
+  Upgrade Notes:
 
   - LND v0.20.x users should keep their existing custom protocol configuration.
-  - LND v0.21.x users should remove all legacy custom protocol settings from lnd.conf before upgrading Lightning.
-
-  This release maintains compatibility with existing BOLT12 Pay installations while preparing for the transition to native onion messaging in LND.
-
-
-  Bugfix release for the v0.2.108 Privacy Mode update.
-
-  - Improved reliability of BOLT12 offer creation
-  - Automatically retries transient LNDK TLS connection failures
-  - Prevents occasional first-attempt offer creation errors observed on some Umbrel systems
-  - Adds a default routing fee limit for improved compatibility with GetAlby, Wallet of Satoshi and other Lightning Address providers
-  - Fixed LNURL string and QR-code payments failing with "CSRF Validation failed" after login 
-
-  Includes all features from v0.2.108:
-
-  - Privacy Mode
-  - Private BIP353 Lightning Addresses
-  - Offer History BIP353 Publishing
-  - Automatic DNS Cleanup
+  - LND v0.21.x users should remove legacy custom protocol settings from lnd.conf after upgrading to native Onion Messaging support.
 
 dependencies:
   - lightning

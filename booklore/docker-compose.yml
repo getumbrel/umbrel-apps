@@ -5,7 +5,9 @@ services:
     environment:
       APP_HOST: booklore_web_1
       APP_PORT: 6060
-      
+      # OPDS catalog access and KOReader progress sync.
+      PROXY_AUTH_WHITELIST: "/api/v1/opds,/api/v1/opds/*,/api/koreader/*"
+
   web:
     image: ghcr.io/booklore-app/booklore:v2.3.1@sha256:d3d3af34bc2cc44349178535ce19e86049968fba2e7d2acf965f770bf37bad01
     # does not work rootless
