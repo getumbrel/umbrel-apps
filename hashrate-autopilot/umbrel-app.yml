@@ -2,7 +2,7 @@ manifestVersion: 1
 id: hashrate-autopilot
 category: bitcoin
 name: Hashrate Autopilot
-version: "1.17.1"
+version: "1.17.2"
 tagline: Autopilot for renting hashrate to mine on Ocean Mining
 
 description: >-
@@ -73,16 +73,16 @@ defaultPassword: ""
 submitter: Remco Douma
 submission: https://github.com/getumbrel/umbrel-apps/pull/5685
 releaseNotes: >-
-  v1.17.1 - a current-block-height tile, a searchable Timeline with personal notes, and a Profit & Loss self-heal.
+  v1.17.2 - Lightning payouts no longer missing from Profit & Loss.
 
 
-  New: a stats-bar tile shows the latest Bitcoin block and names the pool or miner that found it, crowning your own blocks and marking Ocean and BIP 110 blocks, with a link straight to your block explorer. The Timeline's bid-id filter is now a full-text search box that matches across the bid id, the reason, your personal notes, and each row's identifiers (block heights, IPs, deposit tx ids, config values) across your entire history. You can attach a personal note to any Timeline event, and it is saved, searchable, and included in the Excel export.
+  New: Ocean's payout API turns out not to report Lightning payouts at all (confirmed by Ocean support), so anyone paid over Lightning saw a too-low collected figure and an inflated loss rate. The autopilot now deduces those payouts from your unpaid earnings dropping to zero - confirmed over two consecutive readings so a brief API glitch can't fake one, and only when no matching entry exists in Ocean's own ledger. A deduced payout shows as "type not known yet" for its first 24 hours (a late-arriving on-chain record replaces it automatically), then as "probably Lightning". Your history is backfilled on upgrade, and deduced payouts render on the chart as a ghost gem whose tooltip explains the deduction and marks the amount as approximate.
 
 
-  Improved: Profit & Loss gains a hard-reset button next to rebuild that wipes and rebuilds the Ocean payout store and the Braiins spend cache from scratch, and both controls now report what they did. The "collected" figure also self-heals - the payout history is re-fetched on every restart and periodically, so a partial fetch during an upgrade can no longer leave it permanently short. An alert's detail panel now breaks an outage into the threshold you waited out, when it fired, when it recovered, the alert duration, and the total time the condition was open, with durations rounded to the nearest minute. The Dynamic DNS test now pushes the daemon's own detected public IP.
+  Fixed: Timeline notes survive the Profit & Loss hard reset - rebuilding your finances no longer erases the personal notes you attached to payout events.
 
 
   Migrating from the community-store version (rdouma-hashrate-autopilot)? One-time five-minute guide: https://github.com/rdouma/hashrate-autopilot/blob/main/docs/migrating-from-community-store.md
 
 
-  Full release notes: https://github.com/rdouma/hashrate-autopilot/releases/tag/v1.17.1
+  Full release notes: https://github.com/rdouma/hashrate-autopilot/releases/tag/v1.17.2
