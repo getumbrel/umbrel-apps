@@ -26,7 +26,7 @@ services:
 
   hestia:
     # Non-privileged, multi-arch HestiaCP (github.com/ptrinh/hestiacp-docker).
-    image: ghcr.io/ptrinh/hestiacp:build-29484723625@sha256:deb07bcb76fd848028c1d0fa002e1d580dab6f48c7d3f57277288955c20c3cf5
+    image: ghcr.io/ptrinh/hestiacp:build-29500756493@sha256:95c36aa0f2a02083418e49030f5b8c069fb72f810a875e0f282078e35299a9f2
     restart: on-failure
     stop_grace_period: 1m
     environment:
@@ -47,11 +47,13 @@ services:
       - "9088:80"
       - "9448:443"
     # Only report healthy once the panel really works: the admin password has
-    # been applied (sentinel) AND the login UI renders (a plain request to /
-    # still 302s even when the PHP UI is broken). This avoids "ready but can't
-    # log in yet" right after install.
+    # been applied (sentinel), the login UI renders (a plain request to /
+    # still 302s even when the PHP UI is broken), AND the hosted-sites web
+    # server answers on the container IP (any HTTP response counts). This
+    # avoids both "ready but can't log in yet" and "ready but hosted sites
+    # are down" after install/restart.
     healthcheck:
-      test: ["CMD-SHELL", "test -f /usr/local/hestia/data/.admin-password-set && curl -k -fs https://localhost:8083/login/ | grep -q 'name=.user.' || exit 1"]
+      test: ["CMD-SHELL", "test -f /usr/local/hestia/data/.admin-password-set && curl -k -fs https://localhost:8083/login/ | grep -q 'name=.user.' && curl -s -o /dev/null --max-time 5 http://$$(hostname -i | awk '{print $$1}'):80/ || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 10
