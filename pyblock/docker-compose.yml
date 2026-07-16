@@ -8,6 +8,7 @@ services:
 
   web:
     image: galtranch/pyblock:v4.0.2@sha256:930a73873054f539c61bd45588f80a96d607b4ff2c337397eafd1f89169f4e38
+    # PyBLOCK resolves config paths relative to the process working directory.
     working_dir: /app/pyblock/pybitblock
     restart: on-failure
     stop_grace_period: 1m
@@ -25,6 +26,7 @@ services:
       LND_HOST: $APP_LIGHTNING_NODE_IP
       LND_GRPC_PORT: $APP_LIGHTNING_NODE_GRPC_PORT
       LND_TLS_CERT_PATH: /lnd/tls.cert
+      # PyBLOCK exposes LND write actions, so the read-only macaroon is insufficient.
       LND_MACAROON_PATH: /lnd/data/chain/bitcoin/${APP_BITCOIN_NETWORK}/admin.macaroon
       # PyBLOCK auto-config
       PYBLOCK_MODE: "A"
