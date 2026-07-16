@@ -14,11 +14,12 @@ description: >-
   This package runs a purpose-built, non-privileged, multi-architecture image
   (ghcr.io/ptrinh/hestiacp): systemd is replaced with a systemctl shim, and the
   privilege-requiring features (firewall, fail2ban, disk quota) are disabled, so
-  it runs with no privileged mode and no extra Linux capabilities. It is scoped
-  to the parts of the panel that work well on Umbrel: web hosting (Nginx +
-  Apache with PHP-FPM), databases (MariaDB + PostgreSQL, with phpMyAdmin and
-  phpPgAdmin built into the panel), the File Manager, cron jobs and backups.
-  Mail, DNS and FTP services are not included in this build.
+  it runs with no privileged mode and no extra Linux capabilities. The full
+  panel is included: web hosting (Nginx + Apache with PHP-FPM), databases
+  (MariaDB + PostgreSQL, with phpMyAdmin and phpPgAdmin built into the panel),
+  mail (Exim + Dovecot), DNS (Bind), FTP, the File Manager, cron jobs and
+  backups. Mailboxes, DNS zones, FTP accounts and the mail queue are all
+  persisted in the app's data directory.
 
 
   Notes:
@@ -28,6 +29,20 @@ description: >-
 
   - HestiaCP does not claim Umbrel's ports 80/443. Hosted websites are published
     on alternate host ports: HTTP on 9088 and HTTPS on 9448.
+
+  - Mail uses the standard ports on your Umbrel (25, 465, 587, 110/995,
+    143/993). Receiving mail from the internet requires forwarding port 25 to
+    your Umbrel, and most residential ISPs block outbound port 25, so sending
+    may require a smarthost (configurable in HestiaCP).
+
+  - DNS (port 53) serves the zones you create in the panel; point your
+    domain's NS records at your public IP only if you really want to host
+    authoritative DNS at home.
+
+  - FTP runs on port 21 with passive ports 12000-12100. Prefer the built-in
+    File Manager or SFTP where possible; if an FTP client fails to list
+    directories, enable its "use control-connection address for passive
+    mode" option.
 
   - Network-level protection (firewall/fail2ban) is handled by Umbrel/your
     router rather than inside the panel.

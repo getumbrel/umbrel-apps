@@ -26,7 +26,7 @@ services:
 
   hestia:
     # Non-privileged, multi-arch HestiaCP (github.com/ptrinh/hestiacp-docker).
-    image: ghcr.io/ptrinh/hestiacp:build-29504071755@sha256:d9f31d8eda0a8fc42463011b78ea1c2025d74721cd160502ec81c44c027988bd
+    image: ghcr.io/ptrinh/hestiacp:build-29518538167@sha256:14c5df9c2c589e33c96b819fb86f58a357558c1be82a11ae6c4f8c741318413f
     restart: on-failure
     stop_grace_period: 1m
     environment:
@@ -40,12 +40,28 @@ services:
       - ${APP_DATA_DIR}/data/postgresql:/var/lib/postgresql
       - ${APP_DATA_DIR}/data/hestia:/usr/local/hestia/data
       - ${APP_DATA_DIR}/data/hestia-conf:/usr/local/hestia/conf
+      - ${APP_DATA_DIR}/data/exim-spool:/var/spool/exim4
       - ${APP_DATA_DIR}/data/backup:/backup
     # Hosted sites on alternate host ports so HestiaCP never claims Umbrel's
     # 80/443. The panel itself is reached through app_proxy, not these.
+    # Mail/DNS/FTP are published on their standard ports (unused on umbrelOS).
+    # Note: receiving mail from other servers requires inbound 25 reachable
+    # from the internet, and most residential ISPs block OUTBOUND 25, so
+    # sending may require a smarthost (configurable in HestiaCP).
     ports:
       - "9088:80"
       - "9448:443"
+      - "25:25"                  # SMTP (receive)
+      - "587:587"                # mail submission
+      - "465:465"                # SMTPS
+      - "143:143"                # IMAP
+      - "993:993"                # IMAPS
+      - "110:110"                # POP3
+      - "995:995"                # POP3S
+      - "53:53/tcp"              # DNS (authoritative, for zones you host)
+      - "53:53/udp"
+      - "21:21"                  # FTP control
+      - "12000-12100:12000-12100"  # FTP passive data range
     # Only report healthy once the panel really works: the admin password has
     # been applied (sentinel), the login UI renders (a plain request to /
     # still 302s even when the PHP UI is broken), AND the hosted-sites web
