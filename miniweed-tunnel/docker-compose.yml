@@ -9,11 +9,15 @@ services:
       PROXY_AUTH_ADD: "true"
 
   web:
-    image: ghcr.io/miniweed/umbrel-tunnel-web:1.6.48@sha256:c4d6af5cf6a2316da0210d44150eeff39e1898fe600f2a296cefd7354a8d01f2
+    image: ghcr.io/miniweed/umbrel-tunnel-web:1.6.49@sha256:984ba28eb543e0f8c9d506fc3166c5220e40ebca890536b92bcfb8698b7b7b68
     restart: on-failure
     stop_grace_period: 30s
     cap_drop:
       - ALL
+    cap_add:
+      # Mounted data dirs are owned by 1000:1000 on umbrelOS while the process
+      # runs as root with all caps dropped; without this it cannot write to them.
+      - DAC_OVERRIDE
     security_opt:
       - no-new-privileges:true
     volumes:
@@ -35,6 +39,8 @@ services:
       - ALL
     cap_add:
       - NET_BIND_SERVICE
+      # Same as web: mounted dirs are 1000:1000 and Caddy runs as root.
+      - DAC_OVERRIDE
     security_opt:
       - no-new-privileges:true
     network_mode: "service:wg"
@@ -70,6 +76,8 @@ services:
     sysctls:
       - net.ipv4.conf.all.src_valid_mark=1
     volumes:
-      - ${APP_DATA_DIR}/data:/data:ro
+      # Only the subdir holding the generated wg0.conf: wg does not need to see
+      # config.json/app-seed/etc.
+      - ${APP_DATA_DIR}/data/wg:/data:ro
     environment:
       - WG_API_TOKEN=${TUNNEL_WG_TOKEN}
