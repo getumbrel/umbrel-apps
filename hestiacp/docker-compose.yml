@@ -6,6 +6,12 @@ services:
   # plain HTTP to TLS to the panel. PROXY_AUTH_ADD is off (HestiaCP has its
   # own login).
   app_proxy:
+    # Don't report the app ready (and don't route to it) until Hestia's own
+    # healthcheck passes - otherwise the launch URL 502s / shows a broken
+    # panel while services are still starting.
+    depends_on:
+      hestia:
+        condition: service_healthy
     environment:
       APP_HOST: hestiacp_sslproxy_1
       APP_PORT: 8081
@@ -20,7 +26,7 @@ services:
 
   hestia:
     # Non-privileged, multi-arch HestiaCP (github.com/ptrinh/hestiacp-docker).
-    image: ghcr.io/ptrinh/hestiacp:build-28317331723@sha256:18d1311ff352ebe61a5393c0e8fac97ffaf03235a2c0ad3c1f15b0aebf21cf2a
+    image: ghcr.io/ptrinh/hestiacp:build-29484723625@sha256:deb07bcb76fd848028c1d0fa002e1d580dab6f48c7d3f57277288955c20c3cf5
     restart: on-failure
     stop_grace_period: 1m
     environment:
