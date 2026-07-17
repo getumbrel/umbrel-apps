@@ -16,7 +16,7 @@ services:
   # Caddy — the single web entrypoint. Serves the SPA and reverse-proxies
   # /api to the backend. Listens on :80 internally; app_proxy fronts it.
   proxy:
-    image: ghcr.io/zcag/tela-proxy:0.7.0@sha256:e320276641781f38f48c97ec10dc3432cc4ecf933ee63c5946d155ded42f81f7
+    image: ghcr.io/zcag/tela-proxy:0.9.0@sha256:1c4b7d612cf2ee10e2d3f9a3d6008ce229f94ac61ce9306ecfc5b7069eb1c992
     restart: on-failure
     environment:
       TELA_SITE_ADDRESS: ":80"
@@ -28,13 +28,19 @@ services:
 
   # Go API server. Runs its embedded Postgres migrations on first connect.
   backend:
-    image: ghcr.io/zcag/tela-backend:0.7.0@sha256:fe0f23fcd53fb7903889d8659844edf11d0f7f8aef9572251ab4f336934e2a9f
+    image: ghcr.io/zcag/tela-backend:0.9.0@sha256:78479914ff63e7481d8c5a046367f45db4a6c500a11347a07f86f3af72ccb616
     restart: on-failure
     environment:
       TELA_PUBLIC_BASE_URL: "http://${DEVICE_DOMAIN_NAME}:${APP_TELA_PORT}"
       TELA_DATABASE_URL: "postgres://tela:${APP_TELA_POSTGRES_PASSWORD}@postgres:5432/tela?sslmode=disable"
       TELA_SHARE_SECRET: ${APP_TELA_SHARE_SECRET}
       TELA_API_KEY_SECRET: ${APP_TELA_API_KEY_SECRET}
+      # This package ships no SMTP relay, so email verification / password-reset
+      # links would only land in the container logs. Seed self-registration
+      # closed on first boot; the admin creates users from the app UI (and can
+      # flip this on later in Settings → Instance if they wire up SMTP). Seed is
+      # ignored once set, so a later admin choice always wins.
+      TELA_REGISTRATION_OPEN: "false"
       # PDF export: the backend POSTs to gotenberg, which renders the reader via
       # the internal proxy origin (never a public URL).
       TELA_GOTENBERG_URL: http://gotenberg:3000
@@ -51,7 +57,7 @@ services:
 
   # nginx serving the built React frontend assets.
   frontend:
-    image: ghcr.io/zcag/tela-frontend:0.7.0@sha256:916648383a9856bc80647ebc767f395c6292514ffcba23db1866e19c86189731
+    image: ghcr.io/zcag/tela-frontend:0.9.0@sha256:a17dcf8160e516360c303ae789df935bef147cd032438893f8fc1989111b6fbc
     restart: on-failure
 
   # Primary datastore. pgvector/pgvector ships the `vector` extension on top of
@@ -82,7 +88,7 @@ services:
   # Deck render sidecar — Slidev markdown → slide images / PDF. The /data cache
   # is regenerable (excluded from backups via backupIgnore).
   deck:
-    image: ghcr.io/zcag/tela-deck:0.7.0@sha256:bdd1a81658370979b308cca788a5ebbad265af8c44a3fe59516b2d0b2591410c
+    image: ghcr.io/zcag/tela-deck:0.9.0@sha256:630d334f622228850e5442f90f8feff79813c3d886e35c1ce3e22e87a6997a31
     restart: on-failure
     volumes:
       - ${APP_DATA_DIR}/data/deck:/data
