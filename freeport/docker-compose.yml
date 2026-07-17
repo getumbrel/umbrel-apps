@@ -5,14 +5,20 @@ services:
     environment:
       APP_HOST: freeport_server_1
       APP_PORT: 1988
+      # Keep the web app (/) behind Umbrel auth, but let the machine-to-machine
+      # routes through unauthenticated: MCP clients, the healthcheck, and
+      # native/mobile Web Push + Expo registration can't send an Umbrel session
+      # cookie. /subscribe is protected instead by REQUIRE_SUBSCRIBE_AUTH below.
+      PROXY_AUTH_WHITELIST: "/mcp,/health,/vapidPublicKey,/subscribe,/unsubscribe"
 
   server:
-    image: ghcr.io/ptrinh/freeport-self-hosted:0.7.0@sha256:24200894eeab021d88688baac9383f41adf3911222ecc6290705199059262943
+    image: ghcr.io/ptrinh/freeport-self-hosted:0.7.0@sha256:9cec5a2e0c6fb6dbfb5f374dafce35c7959b560bdb3de17a45245489b228fe6f
     restart: on-failure
     stop_grace_period: 1m
     ports:
       # Embedded NIP-01 Nostr relay (WebSocket) — nearby users can add
-      # ws://<umbrel>:1989 to their relay list. Remove to keep it private.
+      # ws://<umbrel>:1989 to their relay list. Ephemeral / in-memory: events
+      # are cleared on restart. Remove this mapping to keep it private.
       - "1989:1989"
     environment:
       - HOST=0.0.0.0
@@ -26,8 +32,8 @@ services:
       - ENABLE_NOTIFY=1
       - DATA_DIR=/data
       - VAPID_SUBJECT=mailto:admin@umbrel.local
-      # Telegram bridge (optional): set a BotFather token to enable.
-      # - TELEGRAM_BOT_TOKEN=123456:ABC...
-      # - TELEGRAM_WEB_BASE=https://freeport.network
+      # A DM-watch /subscribe without a valid auth proof is rejected (the route
+      # is whitelisted from Umbrel auth above, so this is its access control).
+      - REQUIRE_SUBSCRIBE_AUTH=1
     volumes:
       - ${APP_DATA_DIR}/data:/data
