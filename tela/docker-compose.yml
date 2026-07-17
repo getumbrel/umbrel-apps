@@ -5,13 +5,19 @@ services:
     environment:
       APP_HOST: tela_proxy_1
       APP_PORT: 80
-      # tela ships its own email-first auth (the /setup wizard creates the admin
-      # on first run) and exposes endpoints that cannot carry an Umbrel session
-      # cookie: the built-in MCP server (/api/mcp, bearer-authed), WebDAV sync
-      # (/dav, PAT-as-Basic), public/blog spaces, and password-gated share links.
-      # Fronting all of that with Umbrel auth would break those clients, so the
-      # app handles its own access control.
-      PROXY_AUTH_ADD: "false"
+      # tela is a multi-user team wiki that ships its own email-first auth, and
+      # exposes endpoints that cannot carry an Umbrel session cookie: the MCP
+      # server (/api/mcp, bearer-authed), WebDAV sync (/dav, PAT-as-Basic),
+      # public/blog spaces, and password-gated share links. Fronting the whole
+      # app with Umbrel's single-owner auth would lock out non-owner teammates
+      # and break those clients — so the app owns access control (WHITELIST "*").
+      # The one exception is first-run admin setup: gate /setup + /api/setup
+      # behind Umbrel auth so only the box owner can claim the first admin
+      # account (a LAN device can't race to it). Blacklist wins over whitelist;
+      # bare rules match that exact path, so /api/setup/status stays public.
+      PROXY_AUTH_ADD: "true"
+      PROXY_AUTH_WHITELIST: "*"
+      PROXY_AUTH_BLACKLIST: "/setup,/api/setup"
 
   # Caddy — the single web entrypoint. Serves the SPA and reverse-proxies
   # /api to the backend. Listens on :80 internally; app_proxy fronts it.
