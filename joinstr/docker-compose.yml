@@ -1,0 +1,23 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: joinstr_web_1
+      APP_PORT: 5000
+
+  web:
+    # Multi-arch (amd64+arm64) image pinned by digest — required by umbrel-apps.
+    image: ghcr.io/1440000bytes/joinstr-web:0.1.1@sha256:3a3d513c758fb5a5346dc1e26c430c3e35f72062a3fe5dcc064cf75b6fd83d7c
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      JOINSTR_MANAGED: "1"
+      JOINSTR_WALLET: joinstr
+      JOINSTR_DATA_DIR: /app/data
+      BITCOIN_RPC_HOST: $APP_BITCOIN_NODE_IP
+      BITCOIN_RPC_PORT: $APP_BITCOIN_RPC_PORT
+      BITCOIN_RPC_USER: $APP_BITCOIN_RPC_USER
+      BITCOIN_RPC_PASS: $APP_BITCOIN_RPC_PASS
+    volumes:
+      - ${APP_DATA_DIR}/data:/app/data
