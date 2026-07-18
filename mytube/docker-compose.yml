@@ -1,0 +1,18 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: mytube_mytube_1
+      APP_PORT: 5551
+
+  mytube:
+    image: ghcr.io/franklioxygen/mytube:v1.10.19@sha256:c02aa8a403b16523b52d11d6a4f7560b3e352ebbc5d0bafb43c7371abff290dd
+    restart: on-failure
+    environment:
+      PUID: "1000"
+      PGID: "1000"
+      MYTUBE_ADMIN_TRUST_LEVEL: container
+    volumes:
+      - ${APP_DATA_DIR}/data/app:/app/data
+      - ${APP_DATA_DIR}/data/uploads:/app/uploads
