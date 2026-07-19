@@ -1,8 +1,8 @@
-manifestVersion: 1
+manifestVersion: 1.1
 id: localai
 category: ai
 name: LocalAI
-version: "v3.11.0"
+version: "v4.7.1"
 tagline: Drop-in OpenAI replacement
 description: >-
   LocalAI is the free, Open Source OpenAI alternative. LocalAI act as a drop-in replacement REST API that's compatible with OpenAI API specifications for local inferencing.
@@ -15,27 +15,19 @@ description: >-
 
   Before running a model, make sure your device has enough free RAM to support it. Attempting to run a model that exceeds your available memory could cause your device to crash or become unresponsive. Always check the model requirements before downloading or starting it.
 releaseNotes: >-
-  This is a massive update for audio and multimodal capabilities, introducing realtime audio conversations, music generation, and expanded speech recognition and text-to-speech backends.
+  If you installed a backend in a LocalAI version before backend persistence was added, you may need to reinstall it once after updating.
 
 
-  Key highlights include:
-    - Realtime Audio Conversations - Native support for fluid voice interactions with agents, enabling low-latency audio-in/audio-out workflows with tool calling support
-    - Music Generation UI - New interface for generating music from text prompts using Ace-Step (MusicGen) directly in the browser
-    - Expanded Speech Recognition - Added WhisperX with speaker diarization, VibeVoice ASR, Qwen-ASR, and Nvidia NeMo backends
-    - TTS Streaming - Text-to-speech now supports streaming mode for lower latency responses
-    - New TTS Backends - Added VoxCPM and Qwen-TTS support, plus most remaining Piper voices from Hugging Face
-    - vLLM Omni Support - New backend integration for vLLM Omni models
-    - Hardware Expansion - Extended support for CUDA 12/13, L4T (Jetson), SBSA, and improved Metal (Apple Silicon) integration with MLX backends
+  This update adds UI-managed voice cloning profiles, local video and avatar generation, new audio engines, and improved model controls such as full-context mode, GPU device selection, and model-load cooldowns.
 
 
-  ⚠️ Breaking Changes
-
-  ExLlama (deprecated) and Bark (unmaintained) backends have been removed
+  It also fixes llama.cpp configuration so serving options are only injected for llama.cpp models.
 
 
-  Full release notes can be found at https://github.com/mudler/LocalAI/releases
+  Full release notes can be found at https://github.com/mudler/LocalAI/releases/tag/v4.7.1
 backupIgnore:
   - data/models/*
+  - data/backends/*
 developer: Ettore Di Giacinto
 website: https://localai.io/
 dependencies: []

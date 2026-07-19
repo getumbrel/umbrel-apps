@@ -4,13 +4,13 @@ services:
   app_proxy:
     environment:
       APP_HOST: frigate_web_1
-      APP_PORT: 5000
+      APP_PORT: 8971
       PROXY_AUTH_ADD: "false"
   
   web:
     privileged: true # this may not be necessary for all setups
     restart: on-failure
-    image: ghcr.io/blakeblackshear/frigate:0.16.4@sha256:1f8dbaaa4c7c2855c2aef711842d13b0c20bfdc3f28ad88faf66aa1bc219b108
+    image: ghcr.io/blakeblackshear/frigate:0.17.2@sha256:d4351369984d4a9e2a49ac59736f6490856a7ea11f7790040746d21496967010
     shm_size: "128mb" # update for your cameras based on calculation above
     volumes:
       - /etc/localtime:/etc/localtime:ro

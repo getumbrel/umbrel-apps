@@ -1,0 +1,64 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: reitti_app_1
+      APP_PORT: 8080
+
+  app:
+    image: dedicatedcode/reitti:5.1.0@sha256:f97f94df5b18e6f8c12774e4f421b234c74f2a258b77247320a445a697b8fb17
+    restart: on-failure
+    depends_on:
+      postgis:
+        condition: service_healthy
+        restart: true
+      redis:
+        condition: service_healthy
+      tile-cache:
+        condition: service_healthy
+    environment:
+      POSTGIS_USER: reitti
+      POSTGIS_PASSWORD: reitti
+      POSTGIS_DB: reittidb
+      POSTGIS_HOST: reitti_postgis_1
+    volumes:
+      - ${APP_DATA_DIR}/data/app:/data
+
+  postgis:
+    image: imresamu/postgis:17-3.5-alpine@sha256:ba5f5012ffe7a01a78e85404d3e081ed7e961013161bb09d39ff09c867ada17b
+    user: "1000:1000"
+    restart: on-failure
+    environment:
+      POSTGRES_USER: reitti
+      POSTGRES_PASSWORD: reitti
+      POSTGRES_DB: reittidb
+    volumes:
+      - ${APP_DATA_DIR}/data/postgis:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U reitti -d reittidb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7.4.9-alpine@sha256:6ab0b6e7381779332f97b8ca76193e45b0756f38d4c0dcda72dbb3c32061ab99
+    user: "1000:1000"
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data/redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  tile-cache:
+    image: dedicatedcode/reitti-tile-cache:5.1.0@sha256:98a96e6df5948a80e731193f4e5e4f0d5c4263beee13ea5980561db0ef7030b9
+    restart: on-failure
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f -s -o /dev/null -H \"X-Reitti-Upstream-Url: https://tiles.dedicatedcode.com\" http://localhost/custom/planet/latest/0/0/0.pbf || exit 1"]
+      interval: 10s
+      timeout: 5s
+      start_period: 5s
+      retries: 5
+    volumes:
+      - ${APP_DATA_DIR}/data/title-cache:/var/cache/nginx

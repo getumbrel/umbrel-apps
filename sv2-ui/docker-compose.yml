@@ -1,0 +1,58 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: sv2-ui_sv2-ui_1
+      APP_PORT: 8080
+      PROXY_AUTH_ADD: "false"
+
+  docker:
+    image: docker:28.3.0-dind@sha256:56e360024d7d35dac801b8fc87f869ccf5c89b88399dd266f7cfc1169690a86b
+    privileged: true
+    network_mode: host
+    stop_grace_period: 1m
+    restart: on-failure
+    environment:
+      DOCKER_ENSURE_BRIDGE: "dind0:10.32.0.1/16"
+    entrypoint: /entrypoint.sh
+    command: >
+      dockerd
+        --bridge dind0
+        --data-root /data/data
+        --exec-root /data/exec
+        --host unix:///data/docker.sock
+        --iptables=false
+        --userland-proxy=true
+        --pidfile /data/docker.pid
+    healthcheck:
+      test: ["CMD-SHELL", "docker -H unix:///data/docker.sock volume inspect sv2-config >/dev/null"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 180s
+    volumes:
+      - ${APP_DATA_DIR}/entrypoint.sh:/entrypoint.sh
+      - ${APP_DATA_DIR}/data/docker:/data
+      - ${APP_BITCOIN_DATA_DIR}:/root/.bitcoin:ro
+      # Mount setup config into DIND so nested containers can access it.
+      - ${APP_DATA_DIR}/data/config:/app/data/config
+
+  sv2-ui:
+    image: stratumv2/sv2-ui:v0.5.0@sha256:e02bb0ec9588dda71817ef70bad9ff6c41f800d5d2c770ca4e39227d7d48381d
+    stop_grace_period: 1m
+    restart: on-failure
+    # required: sv2-ui expects docker DNS to resolve container names in production.
+    # With dind, the inner network (sv2-network) isn't directly accessible from outer network.
+    # since dind is network_mode: host we just map it to host-gateway
+    extra_hosts:
+      - "sv2-translator:host-gateway"
+      - "sv2-jdc:host-gateway"
+    environment:
+      HOST_OS: "umbrel"
+      STRATUM_HOST: "${DEVICE_DOMAIN_NAME}"
+    volumes:
+      - ${APP_DATA_DIR}/data/docker:/var/run
+      # Config files written by sv2-ui after setup.
+      - ${APP_DATA_DIR}/data/config:/app/data/config
+    depends_on:
+      docker:
+        condition: service_healthy

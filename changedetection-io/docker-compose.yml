@@ -1,0 +1,21 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: changedetection-io_app_1
+      APP_PORT: 5000
+
+  app:
+    image: ghcr.io/dgtlmoon/changedetection.io:0.55.8@sha256:5438423d5e906eff4e8f7886823482ad23f472bf7b8530ccaca89fb48c337882
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      BASE_URL: http://${DEVICE_DOMAIN_NAME}:5037
+      USE_X_SETTINGS: "1"
+      HIDE_REFERER: "true"
+      TZ: "Etc/UTC"
+      DISABLE_VERSION_CHECK: "true"
+    volumes:
+      - ${APP_DATA_DIR}/data:/datastore

@@ -7,13 +7,13 @@ services:
       APP_PORT: 3000
       
   web:
-    image: flomp/wanderer-web:v0.18.4@sha256:2b9c275c1ac4f2e15bbdb0ae26c420417d8bce5d2187a1067413cf3115afa445
+    image: flomp/wanderer-web:v0.20.0@sha256:d76177573caab135e8167179c9954168b5c582a48cbef0fcb7e1571af0c84d98
     user: "1000:1000"
     depends_on:
       search:
         condition: service_healthy
       db:
-        condition: service_started
+        condition: service_healthy
     environment:
       ORIGIN: http://${DEVICE_DOMAIN_NAME}:3111
       BODY_SIZE_LIMIT: Infinity
@@ -22,8 +22,9 @@ services:
       UPLOAD_FOLDER: /app/uploads
       UPLOAD_USER: admin
       UPLOAD_PASSWORD: ${APP_PASSWORD}
-      PUBLIC_VALHALLA_URL: https://valhalla1.openstreetmap.de
-      PUBLIC_NOMINATIM_URL: https://nominatim.openstreetmap.org
+      VALHALLA_URL: https://valhalla1.openstreetmap.de
+      NOMINATIM_URL: https://nominatim.openstreetmap.org
+      OVERPASS_API_URL: https://overpass-api.de
       MEILI_URL: http://wanderer_search_1:7700
       MEILI_MASTER_KEY: ${APP_SEED}
     volumes:
@@ -47,7 +48,7 @@ services:
       timeout: 10s
 
   db:
-    image: flomp/wanderer-db:v0.18.4@sha256:d787bbb2f027232dbe51a0bbf4dabac23b7a74adf7c9f05defec63f665e545e7
+    image: flomp/wanderer-db:v0.20.0@sha256:591974a7cb92be1d30a9033da0b97ef628d0ee1328e3ec29683b0075619805ba
     user: "1000:1000"
     depends_on:
       search:
@@ -60,3 +61,10 @@ services:
     restart: on-failure
     volumes:
       - ${APP_DATA_DIR}/data/pb_data:/pb_data
+      - ${APP_DATA_DIR}/data/plugins:/data/plugins
+    healthcheck:
+      test: ["CMD", "/curl", "--fail", "http://localhost:8090/health"]
+      interval: 15s
+      retries: 10
+      start_period: 20s
+      timeout: 10s

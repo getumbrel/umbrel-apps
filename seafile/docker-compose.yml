@@ -8,40 +8,56 @@ services:
       PROXY_AUTH_ADD: "false"
 
   db:
-    image: mariadb:10.11.6@sha256:20a8bd91d972c97cffded88f2ba0ab533c8988b2dc08090c57d50caf7114ed20
+    image: mariadb:10.11.6@sha256:e846701e66dcc95a3f90d161cc3dfc2e4ff96f0699ee4fb93b0bfdab94158570
     container_name: seafile-mysql
     environment:
       - MYSQL_ROOT_PASSWORD=db_dev
       - MYSQL_LOG_CONSOLE=true
+      - MARIADB_AUTO_UPGRADE=1
     volumes:
       - ${APP_DATA_DIR}/data/db:/var/lib/mysql
 
   memcached:
-    image: memcached:1.6.18@sha256:4ab520657d9919221f752771bb013d632c9b39cea9dfae9162244b2e39885bcd
+    image: memcached:1.6.42@sha256:26983a43c9181d37d0f9b0d2cf49c3ccf02e5b816afb1f8ffff7f825e65bcdad
     container_name: seafile-memcached
     entrypoint: memcached -m 256
 
   seafile:
-    image: seafileltd/seafile-mc:12.0.14@sha256:8d0dd6b682c12cb0e1d4f1f73ba223b0176e9e3d43805408a2f631706e9c10e8
+    image: seafileltd/seafile-mc:13.0.25@sha256:90c1aaa08731116750cd7ce16cbc6afe0c26006433002d3c7215a5f4254ec244
     container_name: seafile
     volumes:
       - ${APP_DATA_DIR}/data/seafile-data:/shared
     environment:
       - DB_HOST=seafile-mysql
       - DB_ROOT_PASSWD=db_dev
+      - SEAFILE_MYSQL_DB_HOST=seafile-mysql
+      - SEAFILE_MYSQL_DB_PORT=3306
+      - SEAFILE_MYSQL_DB_USER=root
+      - SEAFILE_MYSQL_DB_PASSWORD=db_dev
+      - INIT_SEAFILE_MYSQL_ROOT_PASSWORD=db_dev
+      - SEAFILE_MYSQL_DB_CCNET_DB_NAME=ccnet_db
+      - SEAFILE_MYSQL_DB_SEAFILE_DB_NAME=seafile_db
+      - SEAFILE_MYSQL_DB_SEAHUB_DB_NAME=seahub_db
       - JWT_PRIVATE_KEY=${APP_SEED}
       - INIT_SEAFILE_ADMIN_EMAIL=umbrel
       - INIT_SEAFILE_ADMIN_PASSWORD=${APP_PASSWORD}
       - SEAFILE_SERVER_LETSENCRYPT=false
       - SEAFILE_SERVER_HOSTNAME=${DEVICE_DOMAIN_NAME}:8920
+      - SEAFILE_SERVER_PROTOCOL=http
+      - SITE_ROOT=/
       - ENABLE_SEADOC=true
       - SEADOC_SERVER_URL=http://${DEVICE_DOMAIN_NAME}:8921
+      - CACHE_PROVIDER=memcached
+      - MEMCACHED_HOST=memcached
+      - MEMCACHED_PORT=11211
+    extra_hosts:
+      - "${DEVICE_DOMAIN_NAME}:host-gateway"
     depends_on:
       - db
       - memcached
 
   seadoc:
-    image: seafileltd/sdoc-server:1.0.5@sha256:b5d3aff910be22388d329053c7dc2847a6760a6c7cfd7f0b1ef0e4f445b158b3
+    image: seafileltd/sdoc-server:2.0.9@sha256:5b1bf5a8bfdb8bc5db957e7faee2220111fd6eff00795eaaf172e2f80bb999a5
     volumes:
       - ${APP_DATA_DIR}/data/seadoc-data:/shared
     ports:
@@ -52,6 +68,8 @@ services:
       - DB_PASSWORD=db_dev
       - DB_NAME=seahub_db
       - JWT_PRIVATE_KEY=${APP_SEED}
-      - SEAHUB_SERVICE_URL=http://${DEVICE_DOMAIN_NAME}:8920
+      - SEAHUB_SERVICE_URL=http://seafile
+    extra_hosts:
+      - "${DEVICE_DOMAIN_NAME}:host-gateway"
     depends_on:
       - db

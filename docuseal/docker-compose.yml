@@ -5,7 +5,7 @@ services:
       APP_PORT: 3000
 
   server:
-    image: docuseal/docuseal:2.3.2@sha256:327031ea9c992d0867df348bd7058622d21b1be044d3ed573984aaa876ecdd07
+    image: docuseal/docuseal:3.1.4@sha256:325a0528dc9a259997797b40ab96d3852c10df09ca0b71a090065b8a9f58f44e
     user: "1000:1000"
     depends_on:
       - db
@@ -15,7 +15,7 @@ services:
       DATABASE_URL: 'postgresql://docusealuser:docusealpass@docuseal_db_1:5432/docuseal?sslmode=disable'
     volumes:
       - ${APP_DATA_DIR}/data/app:/data/docuseal
-  
+
   db:
     image: postgres:17.3@sha256:0321e2252ebfeecb8bc1a899755084d29bce872953e1a5a3e25ec0860b739098
     user: "1000:1000"

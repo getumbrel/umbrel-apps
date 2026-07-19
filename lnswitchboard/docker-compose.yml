@@ -1,0 +1,28 @@
+version: "3.9"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: lnswitchboard_app_1
+      APP_PORT: 22121
+      PROXY_AUTH_WHITELIST: "/.well-known/*"
+
+  app:
+    image: ghcr.io/ryleastark/lnswitchboard:0.2.3@sha256:16a031d84746100c5c8ceefc06ac40570c759b546c978d07d951e85cfc771401
+    user: "1000:1000"
+    restart: on-failure
+    environment:
+      SERVICE_PORT: 22121
+      LND_HOST: "$APP_LIGHTNING_NODE_IP"
+      LND_GRPC_PORT: "$APP_LIGHTNING_NODE_GRPC_PORT"
+      DATA_STORE_PATH: "/app/data/lnswitchboard.db"
+      NOSTR_ZAP_SECRET_PATH: "/app/data/nostr_zap_signer.hex"
+      LND_TLS_PATH: "/lnd/tls.cert"
+      LND_MACAROON_PATH: "/lnd/invoice.macaroon"
+      LND_READONLY_MACAROON_PATH: "/lnd/readonly.macaroon"
+      DEP_ENV: "UMBREL"
+    volumes:
+      - ${APP_LIGHTNING_NODE_DATA_DIR}/data/chain/bitcoin/${APP_BITCOIN_NETWORK}/invoice.macaroon:/lnd/invoice.macaroon:ro
+      - ${APP_LIGHTNING_NODE_DATA_DIR}/data/chain/bitcoin/${APP_BITCOIN_NETWORK}/readonly.macaroon:/lnd/readonly.macaroon:ro
+      - ${APP_LIGHTNING_NODE_DATA_DIR}/tls.cert:/lnd/tls.cert:ro
+      - ${APP_DATA_DIR}/data:/app/data:rw

@@ -2,7 +2,7 @@ manifestVersion: 1
 id: urbit
 category: networking
 name: Urbit
-version: "v4.2"
+version: "v4.6"
 tagline: Run Urbit on your Umbrel
 description: >-
   Urbit is a personal server for self-sovereign personal & networked
@@ -35,18 +35,19 @@ torOnly: false
 submitter: ~mopfel-winrux
 submission: https://github.com/getumbrel/umbrel/pull/1246
 releaseNotes: >-
-  vere-v4.2 is a runtime release with the following highlighted changes:
-    - Fix rare loom corruption caused by allocator bugs and longstanding signal handling issues.
-    - Fix a regression in the vere 4 sort jet that caused it to behave as an unstable sort in some scenarios.
-    - Fix a buffer overflow when adding bodies to eyre HTTP responses that should not have any (e.g. 204 responses).
-    - Fix various bugs in scry-over-HTTP.
-    - Introduce the %jinx hint to enable event computation timeouts.
-    - Introduce the %loop hint to crash on obvious non-terminating loops, extending the use cases of the %memo hint.
-    - Restore the Windows build.
-    - Fix a regression where shutting down a ship would unmount all desks from the host system.
+  vere-v4.6 is a minor release aimed at fixing several issues that were
+  discovered during the 408k pre-release testing process:
+  
+  -   A directed messaging driver bug caused sporadic crashes, mainly on
+      busy distribution ships.
+  -   The spin hint kubernetes fix in vere-v4.6 caused the spin hint to be
+      unavailable on macos.
+  -   The directed messaging packet queue was uncapped, causing
+      bufferbloat on heavy traffic.
+  -   Each directed messaging flow in the driver had nine retries once
+      every second until the first response packet was heard, this caused
+      unnecessary amplification on the receiver. We have reduced the retry
+      count to two.
 
 
-  Note: After upgrading, users will need to unmount and mount any desks they want mounted once.
-
-
-  Full release notes here: https://github.com/urbit/vere/releases
+  Full release notes here: https://github.com/urbit/vere/releases/tag/vere-v4.6

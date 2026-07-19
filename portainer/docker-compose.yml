@@ -5,6 +5,7 @@ services:
     environment:
       APP_HOST: portainer_portainer_1
       APP_PORT: 9000
+      PROXY_AUTH_ADD: "false"
 
   docker:
     image: docker:27.2.0-dind@sha256:f9f72ad901a78f27be922b2d320bbc263174f12919c1b37e6a01f828fa904565
@@ -27,7 +28,7 @@ services:
       - ${APP_DATA_DIR}/data/docker:/data
 
   portainer:
-    image: portainer/portainer-ce:2.33.7@sha256:9012a4256c4632f2c6162da361a4d4db9d6d04800e0db0137de96e31656ab876
+    image: portainer/portainer-ce:2.39.5-alpine@sha256:d9771805f1757233d706b5995ec4418d5d4310299c383822ae3bdafb54e753df
     command: --host unix:///var/run/docker.sock --admin-password-file=/default-password
     restart: on-failure
     volumes:

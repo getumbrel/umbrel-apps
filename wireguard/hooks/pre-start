@@ -1,0 +1,350 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# WireGuard Easy v15 still defaults to legacy iptables, which is unavailable on
+# newer Raspberry Pi kernels. This hook starts the real app container, keeps the
+# legacy backend where it works, or selects the bundled nft backend before the
+# normal app start. The selection lives in the container's writable layer, so it
+# is reapplied whenever Umbrel recreates the container.
+#
+# The hook also handles WireGuard Easy's v14 to v15 migration. Version 15
+# replaces the v14 wg0.json runtime config with a SQLite database and a first-run
+# setup wizard. Upstream only documents a manual migration: start v15, create the
+# admin user, upload the v14 wg0.json backup, then set the public host/port again.
+#
+# Umbrel users expect app updates to preserve state without SSH/manual file
+# handling, so this hook drives that same upstream setup API automatically. It
+# imports the existing v14 config when present, verifies the import, records a
+# persistent done marker, then stops the temporary service so the normal Umbrel
+# start can continue. If migration cannot be verified, no done marker is written
+# and future starts retry while leaving the preserved v14 backup in app data.
+
+APP_DIR="${APP_DATA_DIR:-$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")}"
+UMBREL_ROOT="${UMBREL_ROOT:-$(readlink -f "${APP_DIR}/../..")}"
+APP_ID="${APP_ID:-wireguard}"
+WG_DIR="${APP_DIR}/data/wireguard"
+STATE_DIR="${APP_DIR}/data/umbrel-v15-migration"
+OLD_CONFIG="${WG_DIR}/wg0.json"
+BACKUP="${STATE_DIR}/wg0-v14.json"
+DONE_MARKER="${STATE_DIR}/done"
+PENDING_MARKER="${STATE_DIR}/pending"
+LOG_FILE="${STATE_DIR}/migration.log"
+LOG_PREFIX="WireGuard Easy v15 setup:"
+
+USERNAME="umbrel"
+PASSWORD="${APP_PASSWORD:-}"
+HOSTNAME="${DEVICE_DOMAIN_NAME:-umbrel.local}"
+WIREGUARD_PORT="51820"
+STARTED_APP_FOR_PRE_START=false
+
+log() {
+  local message="${LOG_PREFIX} $*"
+  echo "${message}"
+  if [[ -d "${STATE_DIR}" ]]; then
+    printf '%s\n' "${message}" >> "${LOG_FILE}" || true
+  fi
+}
+
+fail() {
+  log "ERROR: $*"
+  if [[ -s "${BACKUP}" ]]; then
+    log "preserved v14 backup: ${BACKUP}"
+  elif [[ -s "${OLD_CONFIG}" ]]; then
+    log "v14 config remains at: ${OLD_CONFIG}"
+  fi
+  log "manual migration guide: https://wg-easy.github.io/wg-easy/latest/advanced/migrate/from-14-to-15/"
+  exit 1
+}
+
+require_command() {
+  if ! command -v "$1" >/dev/null 2>&1; then
+    fail "required command is missing: $1"
+  fi
+}
+
+app_compose() {
+  "${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" "$@"
+}
+
+configure_firewall_backends() {
+  app_compose exec -T app sh -s <<'EOF'
+set -eu
+
+select_firewall_backend() {
+  family="$1"
+  legacy="${family}-legacy"
+  nft="${family}-nft"
+
+  # Preserve the image's legacy backend where the host kernel supports it.
+  # Newer kernels without the legacy modules use the bundled nft backend.
+  if "${legacy}" -w 5 -t nat -L >/dev/null 2>&1; then
+    selected="${legacy}"
+  elif "${nft}" -w 5 -t nat -L >/dev/null 2>&1; then
+    update-alternatives --install "/usr/sbin/${family}" "${family}" "/usr/sbin/${nft}" 20 \
+      --slave "/usr/sbin/${family}-restore" "${family}-restore" "/usr/sbin/${nft}-restore" \
+      --slave "/usr/sbin/${family}-save" "${family}-save" "/usr/sbin/${nft}-save" >/dev/null
+    selected="${nft}"
+  else
+    echo "neither ${legacy} nor ${nft} can access the nat table" >&2
+    return 1
+  fi
+
+  update-alternatives --set "${family}" "/usr/sbin/${selected}" >/dev/null
+  if ! "${family}" -w 5 -t nat -L >/dev/null 2>&1; then
+    echo "selected ${selected}, but ${family} still cannot access the nat table" >&2
+    return 1
+  fi
+
+  echo "${family}: ${selected}"
+}
+
+select_firewall_backend iptables
+select_firewall_backend ip6tables
+EOF
+}
+
+start_prestart_app() {
+  log "starting app service for pre-start checks"
+  app_compose up --detach app >/dev/null
+  STARTED_APP_FOR_PRE_START=true
+}
+
+stop_prestart_app() {
+  if [[ "${STARTED_APP_FOR_PRE_START}" == "true" ]]; then
+    log "stopping temporary app service before normal Umbrel start"
+    app_compose stop app >/dev/null 2>&1 || true
+    STARTED_APP_FOR_PRE_START=false
+  fi
+}
+
+container_ip() {
+  local ip
+  read -r ip _ < <(app_compose exec -T app hostname -i 2>/dev/null || true)
+  printf '%s\n' "${ip:-}"
+}
+
+wait_for_app() {
+  local ip
+  for _ in $(seq 1 300); do
+    ip="$(container_ip)"
+    if [[ -n "${ip}" ]]; then
+      BASE_URL="http://${ip}:51821"
+      if curl -fsS --max-time 2 "${BASE_URL}/api/information" >/dev/null 2>&1 || curl -fsS --max-time 2 "${BASE_URL}/setup/1" >/dev/null 2>&1; then
+        return 0
+      fi
+    fi
+    sleep 0.2
+  done
+  return 1
+}
+
+post_setup_json() {
+  local path="$1"
+  local data="$2"
+  curl -fsS --max-time 20 \
+    -H 'Content-Type: application/json' \
+    -X POST \
+    --data "${data}" \
+    "${BASE_URL}${path}"
+}
+
+admin_get() {
+  local path="$1"
+  curl -fsS --max-time 20 \
+    -u "${USERNAME}:${PASSWORD}" \
+    "${BASE_URL}${path}"
+}
+
+admin_post_json() {
+  local path="$1"
+  local data="$2"
+  curl -fsS --max-time 20 \
+    -u "${USERNAME}:${PASSWORD}" \
+    -H 'Content-Type: application/json' \
+    -X POST \
+    --data "${data}" \
+    "${BASE_URL}${path}"
+}
+
+ensure_admin_user() {
+  local payload
+  payload="$(jq -n --arg username "${USERNAME}" --arg password "${PASSWORD}" '{username:$username,password:$password,confirmPassword:$password}')"
+
+  if post_setup_json "/api/setup/2" "${payload}" >/dev/null 2>&1; then
+    log "created v15 admin user"
+    return 0
+  fi
+
+  if admin_get "/api/admin/userconfig" >/dev/null 2>&1; then
+    log "admin user already exists"
+    return 0
+  fi
+
+  log "admin user setup route failed; continuing in case setup is already at migration step"
+}
+
+set_user_config() {
+  local current_config updated_config
+
+  if current_config="$(admin_get "/api/admin/userconfig" 2>/dev/null)"; then
+    updated_config="$(printf '%s' "${current_config}" | jq --arg host "${HOSTNAME}" --argjson port "${WIREGUARD_PORT}" '.host=$host | .port=$port | del(.id,.createdAt,.updatedAt)')"
+    admin_post_json "/api/admin/userconfig" "${updated_config}" >/dev/null || fail "failed to update v15 host and port"
+    log "set v15 host and port to ${HOSTNAME}:${WIREGUARD_PORT}"
+    return 0
+  fi
+
+  fail "could not read v15 user configuration"
+}
+
+restart_interface() {
+  if admin_post_json "/api/admin/interface/restart" '{}' >/dev/null 2>&1; then
+    log "restarted WireGuard interface"
+  else
+    log "WireGuard interface restart failed after config save; continuing"
+  fi
+}
+
+verify_import() {
+  local clients_json imported_count interface_json public_key
+
+  clients_json="$(admin_get "/api/client" 2>/dev/null)" || return 1
+  imported_count="$(printf '%s' "${clients_json}" | jq -r 'length' 2>/dev/null)" || return 1
+  if [[ ! "${imported_count}" =~ ^[0-9]+$ ]] || [[ "${imported_count}" -lt "${CLIENT_COUNT}" ]]; then
+    log "verification saw ${imported_count:-0}/${CLIENT_COUNT} imported client(s)"
+    return 1
+  fi
+
+  interface_json="$(admin_get "/api/admin/interface" 2>/dev/null)" || return 1
+  public_key="$(jq -r '.server.publicKey' "${BACKUP}")"
+  printf '%s' "${interface_json}" | jq -e --arg publicKey "${public_key}" '.publicKey == $publicKey' >/dev/null 2>&1
+}
+
+mark_done() {
+  local mode="$1"
+  local count="$2"
+  {
+    printf 'completed_at=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    printf 'mode=%s\n' "${mode}"
+    printf 'client_count=%s\n' "${count}"
+  } > "${DONE_MARKER}"
+  rm -f "${PENDING_MARKER}"
+}
+
+bootstrap_fresh_install() {
+  log "no v14 wg0.json found; configuring fresh v15 install"
+  ensure_admin_user
+
+  local payload
+  payload="$(jq -n --arg host "${HOSTNAME}" --argjson port "${WIREGUARD_PORT}" '{host:$host,port:$port}')"
+  if post_setup_json "/api/setup/4" "${payload}" >/dev/null 2>&1; then
+    log "completed fresh v15 setup"
+  elif admin_get "/api/admin/userconfig" >/dev/null 2>&1; then
+    set_user_config
+  else
+    fail "fresh v15 setup failed"
+  fi
+
+  mark_done "fresh" "0"
+}
+
+migrate_v14_install() {
+  if ! jq -e '
+    (.server.privateKey | type == "string") and
+    (.server.publicKey | type == "string") and
+    (.server.address | type == "string") and
+    (.clients | type == "object") and
+    ([.clients[] |
+      (.name | type == "string") and
+      (.address | type == "string") and
+      (.privateKey | type == "string") and
+      (.publicKey | type == "string") and
+      (.preSharedKey | type == "string") and
+      (.createdAt | type == "string") and
+      (.updatedAt | type == "string") and
+      (.enabled | type == "boolean")
+    ] | all)
+  ' "${OLD_CONFIG}" >/dev/null 2>&1; then
+    fail "v14 wg0.json does not match the expected migration schema"
+  fi
+
+  if [[ ! -s "${BACKUP}" ]]; then
+    install -m 600 "${OLD_CONFIG}" "${BACKUP}"
+    log "preserved v14 backup at ${BACKUP}"
+  fi
+
+  CLIENT_COUNT="$(jq -r '(.clients // {}) | length' "${BACKUP}")"
+  printf 'started_at=%s\nclient_count=%s\nbackup=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "${CLIENT_COUNT}" "${BACKUP}" > "${PENDING_MARKER}"
+
+  ensure_admin_user
+
+  local payload
+  payload="$(jq -n --rawfile file "${BACKUP}" '{file:$file}')"
+  if post_setup_json "/api/setup/migrate" "${payload}" >/dev/null 2>&1; then
+    log "imported v14 configuration with ${CLIENT_COUNT} client(s)"
+  elif verify_import; then
+    log "migration route was already complete; verified imported data"
+  else
+    fail "v14 configuration import failed"
+  fi
+
+  if ! verify_import; then
+    fail "import verification failed"
+  fi
+
+  set_user_config
+  restart_interface
+  mark_done "migration" "${CLIENT_COUNT}"
+  log "auto-migration completed with ${CLIENT_COUNT} client(s)"
+}
+
+mkdir -p "${STATE_DIR}"
+chmod 700 "${STATE_DIR}" || true
+
+require_command curl
+
+if [[ ! -x "${UMBREL_ROOT}/scripts/app" ]]; then
+  fail "Umbrel app script is unavailable at ${UMBREL_ROOT}/scripts/app"
+fi
+
+BASE_URL=""
+start_prestart_app
+trap stop_prestart_app EXIT
+
+if ! wait_for_app; then
+  log "ERROR: v15 web service did not become ready for firewall setup"
+  exit 1
+fi
+
+FIREWALL_BACKEND_OUTPUT=""
+if ! FIREWALL_BACKEND_OUTPUT="$(configure_firewall_backends 2>&1)"; then
+  log "ERROR: firewall backend setup failed: ${FIREWALL_BACKEND_OUTPUT}"
+  exit 1
+fi
+while IFS= read -r line; do
+  [[ -n "${line}" ]] && log "firewall backend ${line}"
+done <<< "${FIREWALL_BACKEND_OUTPUT}"
+
+log "restarting app service with the selected firewall backend"
+app_compose restart app >/dev/null
+if ! wait_for_app; then
+  log "ERROR: v15 web service did not become ready after firewall setup"
+  exit 1
+fi
+
+if [[ -f "${DONE_MARKER}" ]]; then
+  log "setup already completed; firewall backend is ready"
+  exit 0
+fi
+
+require_command jq
+require_command sed
+
+if [[ -z "${PASSWORD}" ]]; then
+  fail "APP_PASSWORD is unavailable"
+fi
+
+if [[ -s "${OLD_CONFIG}" ]]; then
+  migrate_v14_install
+else
+  bootstrap_fresh_install
+fi

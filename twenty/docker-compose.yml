@@ -8,7 +8,7 @@ services:
       PROXY_AUTH_ADD: "false"
 
   server:
-    image: twentycrm/twenty:v1.16.6@sha256:761c7aa7faf6eefa932ac63dc1c39e0c21c7960b5d67f12a128e7da0a4738192
+    image: twentycrm/twenty:v2.21.0@sha256:e31a700e65650ea47812d71278a18619f8e2392c3320c305cb5ffa6d9499ff4f
     user: "1000:1000"
     volumes:
       - ${APP_DATA_DIR}/data/server-local-data:/app/packages/twenty-server/.local-storage
@@ -29,10 +29,11 @@ services:
       interval: 10s
       timeout: 30s
       retries: 10
+      start_period: 120s
     restart: on-failure
 
   worker:
-    image: twentycrm/twenty:v1.16.6@sha256:761c7aa7faf6eefa932ac63dc1c39e0c21c7960b5d67f12a128e7da0a4738192
+    image: twentycrm/twenty:v2.21.0@sha256:e31a700e65650ea47812d71278a18619f8e2392c3320c305cb5ffa6d9499ff4f
     user: "1000:1000"
     volumes:
       - ${APP_DATA_DIR}/data/server-local-data:/app/packages/twenty-server/.local-storage

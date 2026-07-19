@@ -1,0 +1,37 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: am-i-exposed_web_1
+      APP_PORT: 8080
+
+  web:
+    image: ghcr.io/copexit/am-i-exposed-umbrel:v0.35.7@sha256:809a579e475d36377b41c162346973ccf37b05cac540098660981f29dd273fd9
+    user: "101:101"
+    init: true
+    restart: on-failure
+    stop_grace_period: 30s
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/health || exit 1"]
+      interval: 30s
+      timeout: 3s
+    environment:
+      APP_MEMPOOL_IP: ${APP_MEMPOOL_IP}
+      APP_MEMPOOL_PORT: ${APP_MEMPOOL_PORT}
+      APP_MEMPOOL_HIDDEN_SERVICE: ${APP_MEMPOOL_HIDDEN_SERVICE}
+      APP_TOR_PROXY_IP: tor-proxy
+      APP_TOR_PROXY_PORT: "3001"
+    depends_on:
+      - tor-proxy
+
+  tor-proxy:
+    image: ghcr.io/copexit/am-i-exposed-tor-proxy:v0.35.7@sha256:929f8b8f03486f0d0ccc61a02093c1a1841606c1296e96dea3ef17b935c9f65a
+    user: "1000:1000"
+    init: true
+    restart: on-failure
+    stop_grace_period: 10s
+    environment:
+      PORT: "3001"
+      TOR_PROXY_IP: ${TOR_PROXY_IP}
+      TOR_PROXY_PORT: ${TOR_PROXY_PORT}

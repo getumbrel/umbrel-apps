@@ -1,0 +1,166 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ENV_FILE="${APP_DATA_DIR}/settings.env"
+TMP_DIR="${APP_DATA_DIR}/tmp"
+DB_DATA_DIR="${APP_DATA_DIR}/data/db"
+REDIS_DATA_DIR="${APP_DATA_DIR}/data/redis"
+RUSTFS_DATA_DIR="${APP_DATA_DIR}/data/rustfs"
+RUSTFS_LOGS_DIR="${APP_DATA_DIR}/data/rustfs-logs"
+SEARXNG_DATA_DIR="${APP_DATA_DIR}/data/searxng"
+
+mkdir -p "${TMP_DIR}"
+mkdir -p "${DB_DATA_DIR}" "${REDIS_DATA_DIR}" "${RUSTFS_DATA_DIR}" "${RUSTFS_LOGS_DIR}" "${SEARXNG_DATA_DIR}"
+touch "${ENV_FILE}"
+chown -R 1000:1000 "${DB_DATA_DIR}" "${REDIS_DATA_DIR}" 2>/dev/null || true
+chown -R 10001:10001 "${RUSTFS_DATA_DIR}" "${RUSTFS_LOGS_DIR}" 2>/dev/null || true
+
+if [[ ! -f "${SEARXNG_DATA_DIR}/settings.yml" ]]; then
+  cat > "${SEARXNG_DATA_DIR}/settings.yml" <<'EOF'
+use_default_settings: true
+
+search:
+  formats:
+    - html
+    - json
+EOF
+fi
+
+get_var() {
+  local key="$1"
+  if grep -q "^${key}=" "${ENV_FILE}"; then
+    grep "^${key}=" "${ENV_FILE}" | tail -n 1 | cut -d= -f2-
+  fi
+}
+
+set_var() {
+  local key="$1"
+  local value="$2"
+  python3 - "$ENV_FILE" "$key" "$value" <<'PY'
+import pathlib
+import sys
+
+path = pathlib.Path(sys.argv[1])
+key = sys.argv[2]
+value = sys.argv[3]
+
+lines = path.read_text().splitlines() if path.exists() else []
+updated = False
+
+for index, line in enumerate(lines):
+    if line.startswith(f"{key}="):
+        lines[index] = f"{key}={value}"
+        updated = True
+        break
+
+if not updated:
+    lines.append(f"{key}={value}")
+
+path.write_text("\n".join(lines) + "\n")
+PY
+}
+
+generate_secret() {
+  openssl rand -base64 32 | tr -d '\n'
+}
+
+generate_jwks() {
+  local pem_file="${TMP_DIR}/jwks.pem"
+  openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out "${pem_file}" >/dev/null 2>&1
+  python3 - "${pem_file}" <<'PY'
+import base64
+import hashlib
+import json
+import re
+import subprocess
+import sys
+
+pem_file = sys.argv[1]
+text = subprocess.check_output(
+    ["openssl", "rsa", "-in", pem_file, "-text", "-noout"],
+    stderr=subprocess.DEVNULL,
+    text=True,
+)
+
+mapping = {
+    "modulus": "n",
+    "privateExponent": "d",
+    "prime1": "p",
+    "prime2": "q",
+    "exponent1": "dp",
+    "exponent2": "dq",
+    "coefficient": "qi",
+}
+
+values = {}
+current = None
+
+for line in text.splitlines():
+    stripped = line.strip()
+
+    if stripped.startswith("publicExponent:"):
+        exponent = int(stripped.split()[1])
+        values["e"] = exponent.to_bytes((exponent.bit_length() + 7) // 8, "big")
+        current = None
+        continue
+
+    if stripped.endswith(":") and stripped[:-1] in mapping:
+        current = mapping[stripped[:-1]]
+        values[current] = b""
+        continue
+
+    if current and re.fullmatch(r"[0-9a-f:]+", stripped):
+        values[current] += bytes.fromhex(stripped.replace(":", ""))
+        continue
+
+    current = None
+
+for key in ("n", "d", "p", "q", "dp", "dq", "qi"):
+    value = values[key]
+    while len(value) > 1 and value[0] == 0:
+        value = value[1:]
+    values[key] = value
+
+def b64url(data):
+    return base64.urlsafe_b64encode(data).decode().rstrip("=")
+
+kid = hashlib.sha256(values["n"]).hexdigest()[:16]
+
+print(
+    json.dumps(
+        {
+            "keys": [
+                {
+                    "kty": "RSA",
+                    "use": "sig",
+                    "alg": "RS256",
+                    "kid": kid,
+                    "n": b64url(values["n"]),
+                    "e": b64url(values["e"]),
+                    "d": b64url(values["d"]),
+                    "p": b64url(values["p"]),
+                    "q": b64url(values["q"]),
+                    "dp": b64url(values["dp"]),
+                    "dq": b64url(values["dq"]),
+                    "qi": b64url(values["qi"]),
+                }
+            ]
+        },
+        separators=(",", ":"),
+    )
+)
+PY
+  rm -f "${pem_file}"
+}
+
+if [[ -z "$(get_var KEY_VAULTS_SECRET)" ]]; then
+  set_var KEY_VAULTS_SECRET "$(generate_secret)"
+fi
+
+if [[ -z "$(get_var AUTH_SECRET)" ]]; then
+  set_var AUTH_SECRET "$(generate_secret)"
+fi
+
+if [[ -z "$(get_var JWKS_KEY)" ]]; then
+  set_var JWKS_KEY "$(generate_jwks)"
+fi

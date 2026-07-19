@@ -1,0 +1,33 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: hashrate-autopilot_web_1
+      APP_PORT: 3010
+
+  web:
+    image: ghcr.io/rdouma/hashrate-autopilot:1.17.2@sha256:7346288b77e979ff654a31337d2028b870e7076accdc8a86518764e87ddd2632
+    restart: on-failure
+    stop_grace_period: 1m
+    volumes:
+      - ${APP_DATA_DIR}/data:/app/data
+    environment:
+      HTTP_PORT: 3010
+      HTTP_HOST: 0.0.0.0
+      DB_PATH: /app/data/state.db
+      DASHBOARD_STATIC: packages/dashboard/dist
+      BITCOIN_RPC_HOST: "${APP_BITCOIN_NODE_IP}"
+      BITCOIN_RPC_PORT: "${APP_BITCOIN_RPC_PORT}"
+      BITCOIN_RPC_USER: "${APP_BITCOIN_RPC_USER}"
+      BITCOIN_RPC_PASS: "${APP_BITCOIN_RPC_PASS}"
+      BHA_DATUM_API_URL: "http://datum_datum_1:21000"
+      BHA_ELECTRS_HOST: "$APP_ELECTRS_NODE_IP"
+      BHA_ELECTRS_PORT: "$APP_ELECTRS_NODE_PORT"
+      BHA_PAYOUT_SOURCE: "electrs"
+      # At-rest encryption key for DB-stored secrets (#331). APP_SEED is
+      # the device-derived per-app secret Umbrel injects; it lives outside
+      # this app's data folder, so an app-data backup never carries the
+      # key. If unset the daemon would fall back to a keyfile next to the
+      # database (still encrypted, but inside app-data).
+      BHA_SECRET_KEY: "${APP_SEED}"

@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: lightning
 category: bitcoin
 name: Lightning Node
-version: "0.20.0-beta"
+version: "0.21.1-beta-patch.2"
 tagline: Run your personal Lightning Network node
 description: >-
   Run your personal Lightning Network node, and join the future of Bitcoin today.
@@ -22,10 +22,21 @@ description: >-
 
   An official app from Umbrel.
 releaseNotes: >-
-  This update includes the latest version of LND (v0.20.0-beta).
+  This update fixes an issue that could prevent sending payments directly from the Lightning Node interface after the latest update. It also provides clearer, more
+  helpful messages when something goes wrong.
 
 
-  Full LND release notes can be found at https://github.com/lightningnetwork/lnd/releases/tag/v0.20.0-beta
+  Important information from the previous Lightning Node update (LND v0.21.1-beta):
+
+
+  ⚠️ If you manually added `protocol.custom-nodeann=39` or `protocol.custom-init=39` to your LND config for BOLT 12 or LNDK integrations, remove those lines first. LND now advertises onion messaging itself, and those old settings can prevent it from starting.
+
+
+  Power users: LND v0.21 removes deprecated payment RPCs and rejects manually configured Tor v2 onion addresses. Lightning Node on Umbrel already uses Tor v3 by
+  default. Review the upstream release notes if you use custom scripts, external integrations, or custom LND settings.
+
+
+  Full LND release notes: https://github.com/lightningnetwork/lnd/blob/v0.21.1-beta/docs/release-notes/release-notes-0.21.1.md
 developer: Umbrel
 website: https://umbrel.com
 dependencies:
@@ -102,4 +113,6 @@ widgets:
 submitter: Umbrel
 submission: https://github.com/getumbrel/umbrel-apps/commit/576ecd2bef8d625abceed0f67ec9c487da9b2b1b
 backupIgnore:
-  - data/graph/mainnet/channel.db
+  - data/lnd/data/graph/*/channel.db
+  - data/lnd/data/graph/*/wtclient.db
+  - data/lnd/data/watchtower/*/*/watchtower.db

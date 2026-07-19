@@ -1,0 +1,78 @@
+manifestVersion: 1.1
+id: bffless
+category: developer
+name: BFFless
+version: '0.2.10'
+tagline: Self-hosted static site hosting platform
+description: >-
+  BFFless is a self-hosted platform for hosting static websites and build artifacts from CI/CD pipelines.
+
+
+  Key Features:
+    - Upload static sites via CLI, API, or GitHub Actions
+    - Instant deployments with unique URLs per commit
+    - Deployment aliases for staging, production, and custom environments
+    - Custom domain support with subdomain routing
+    - Built-in admin dashboard for managing deployments
+    - Privacy-focused: All data stays on your Umbrel
+
+
+  Perfect for developers who want full control over their static site hosting without relying on external services.
+
+
+  Note: This app requires a Cloudflare Tunnel for external domain access. Internal access shows setup instructions.
+developer: BFFless
+website: https://docs.bffless.app/deployment/umbrel/
+dependencies:
+  - cloudflared
+repo: https://github.com/bffless/ce
+support: https://github.com/bffless/ce/issues
+port: 5537
+gallery:
+  - 1.jpg
+  - 2.jpg
+  - 3.jpg
+releaseNotes: >-
+  Updates BFFless CE from v0.1.90 to v0.2.10.
+
+
+  Proxy rules as code:
+    - New bffless CLI: manage proxy rule sets as TypeScript files in your repo — compile, decompile, publish, and live sync
+    - Rule set revisions with rollback (accepts the short revision ids shown in the CLI table)
+    - Write pipeline handlers in TypeScript with a local rules dev workflow
+
+
+  Traffic monitoring & blocklists:
+    - Live traffic tail in the admin UI, with unmatched-request history and per-IP rollups
+    - IP blocklists: reusable blocklist library, per-domain attachment, and inline add-to-blocklist
+    - Enforcement at both the application and nginx edge
+
+
+  Pipelines:
+    - Pipeline schedules (cron) with a full admin UI
+    - New handlers: xml_feed_parse and data_upsert_many (with optional update-on-conflict)
+    - ai_handler attachments (multi-part image/file content)
+    - New "in" (array-membership) filter operator; data_delete supports the full filter operator set
+    - file_serve_handler cacheability supports expressions; verbatim keyStrategy for presigned uploads
+
+
+  Storage:
+    - Edit provider credentials in place without migrating
+    - Presigned download URLs can sign Content-Disposition for friendly filenames
+
+
+  Fixes:
+    - Users with the "user" global role can create projects again
+    - Copying a proxy rule set re-encrypts header secrets
+    - Auth-proxy rules work through the visibility gate on private deployments
+    - Large JSON pipeline responses are sent verbatim to avoid out-of-memory
+    - data_query consistently returns arrays unless single/recordId is set
+    - Custom content types allowed in the response_handler UI
+
+
+  Full release notes can be found at https://github.com/bffless/ce/releases/tag/v0.2.10
+path: ''
+defaultUsername: ''
+deterministicPassword: false
+submitter: Bffless
+submission: https://github.com/getumbrel/umbrel-apps/pull/4784

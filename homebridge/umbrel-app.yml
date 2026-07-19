@@ -2,7 +2,7 @@ manifestVersion: 1
 id: homebridge
 category: automation
 name: Homebridge
-version: "1.11.1-2025-12-12"
+version: "2.0.2-2026-05-10"
 tagline: "HomeKit support for the impatient"
 description: >-
   Bringing HomeKit support where there is none. Homebridge allows you to integrate with smart home devices that do not natively support HomeKit.
@@ -41,13 +41,18 @@ torOnly: false
 permissions:
   - GPU
 releaseNotes: >-
-  This release includes several improvements and updates:
-    - Updated to Ubuntu 24.04
-    - Upgraded Homebridge APT Package to version 1.8.4
-    - Updated Node.js to version 24.12.0
-    - Updated Homebridge UI to version 5.11.2
+  ⚠️ Major update: Check Homebridge's plugin readiness indicators and update any outdated plugins before upgrading to Homebridge 2. Most plugins should continue to work, but older plugins that use removed Homebridge or HAP-NodeJS APIs may fail until updated.
 
 
-  Full release notes can be found at https://github.com/homebridge/homebridge/releases
+  If an incompatible plugin is running outside a child bridge, Homebridge may restart until that plugin is disabled or updated. Plugins in child bridges are isolated, so the Homebridge UI should remain accessible while the affected child bridge restarts.
+
+
+  Homebridge 2 changes the default mDNS advertiser to Avahi when available. If your HomeKit devices show "No Response" after updating, open Homebridge Settings → mDNS Advertiser and switch back to Bonjour HAP.
+
+
+  This release logs the Matter.js version at bridge and child bridge startup, updates dependencies, and includes Homebridge UI 5.22.0 with Node.js 24.15.0.
+
+
+  Full release notes can be found at https://github.com/homebridge/homebridge/releases/tag/v2.0.2
 submitter: Umbrel
 submission: https://github.com/getumbrel/umbrel-apps/pull/606

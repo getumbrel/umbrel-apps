@@ -1,0 +1,48 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: hermitstash_web_1
+      APP_PORT: 3000
+
+  web:
+    image: ghcr.io/dotcoocoo/hermitstash:1.13.9@sha256:ea0f4c6862c1fb1fa79353d17d43634b18e720b8f2c849b4a0497e9dc04f6988
+    user: "1000:1000"
+    init: true
+    restart: on-failure
+    stop_grace_period: 1m
+    shm_size: "256m"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health',function(r){process.exit(r.statusCode===200?0:1)}).on('error',function(){process.exit(1)})"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+    volumes:
+      - ${APP_DATA_DIR}/data/db:/app/data
+      - ${APP_DATA_DIR}/data/uploads:/app/uploads
+      # Admin-uploaded custom branding (logo, favicon, login background)
+      # land here. Image ships /app/public/img/custom owned by the in-image
+      # `hermit` system user; mounting a 1000-owned bind on top gives the
+      # rootless container a writable surface for these uploads.
+      - ${APP_DATA_DIR}/data/custom:/app/public/img/custom
+    environment:
+      UMASK: "022"
+      TZ: "Etc/UTC"
+      NODE_ENV: production
+      TRUST_PROXY: "true"
+      # Public origin — used to build share URLs in upload responses and to
+      # pin the WebAuthn relying-party origin. ${DEVICE_DOMAIN_NAME} is the
+      # umbrel-supplied hostname (e.g. umbrel.local); the app reaches it
+      # through the app_proxy on port 3081 (declared in umbrel-app.yml).
+      RP_ORIGIN: "http://${DEVICE_DOMAIN_NAME}:3081"
+      # Skip email confirmation on signup. Umbrel deployments are typically
+      # single-operator (the device owner is the user); requiring a verified
+      # email round-trip adds friction without a meaningful security gain.
+      # Operators who want email verification can flip this in the admin UI.
+      EMAIL_VERIFICATION: "false"

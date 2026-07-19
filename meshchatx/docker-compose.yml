@@ -1,0 +1,22 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: meshchatx_web_1
+      APP_PORT: 8000
+
+  web:
+    image: ghcr.io/quad4-software/meshchatx:4.7.2@sha256:ae3dc06d1bd6e5c4cf4fab82b2a6cfe456db007c9cd5a2e8623bb7f21f16c46e
+    restart: on-failure
+    user: "1000:1000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/status')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 90s
+    volumes:
+      - ${APP_DATA_DIR}/data:/config
+    environment:
+      MESHCHAT_NO_HTTPS: "true" # disable https

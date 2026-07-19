@@ -7,7 +7,7 @@ services:
       APP_PORT: 3000
 
   app:
-    image: ghcr.io/getumbrel/umbrel-bitcoin:v1.1.0@sha256:be68b700d56e9454a9b92902a3fcd25adebfef93e3cd24179374303fc2e9f14c
+    image: ghcr.io/getumbrel/umbrel-bitcoin:v1.3.0@sha256:a684213f37985b987c07a4d10cc9d04396eb2eb2a25f6b210052bb102950d7fe
     user: "1000:1000"
     restart: on-failure
     stop_grace_period: 15m30s
@@ -22,10 +22,11 @@ services:
       # BITCOIN_DIR: bitcoin-dir-override
       # APP_STATE_DIR: app-state-dir-override
 
-      # BITCOIND BINARY SETTINGS
+      # BITCOIN CORE BINARY SETTINGS
       # BITCOIND_BIN: bitcoind-binary-path-override
-      # BITCOIND_EXTRA_ARGS is a comma-delimited list of extra startup flags to pass to bitcoind
-      # We can remove depratedrpc=create_bdb in a future update once Jam (JoinMarket) implements descriptor wallet support
+      # BITCOIN_BIN: bitcoin-wrapper-binary-path-override
+      # BITCOIND_EXTRA_ARGS is a comma-delimited list of extra startup flags to pass to Bitcoin Core
+      # We can remove deprecatedrpc=create_bdb in a future update once Jam (JoinMarket) implements descriptor wallet support
       # Bitcoin Core v30 no longer supports legacy bdb wallets, so Jam users will need to run v29.2 for compatibility
       BITCOIND_EXTRA_ARGS: '-deprecatedrpc=create_bdb'
 
@@ -61,7 +62,7 @@ services:
         ipv4_address: $APP_BITCOIN_NODE_IP
 
   tor:
-    image: getumbrel/tor:0.4.7.8@sha256:2ace83f22501f58857fa9b403009f595137fa2e7986c4fda79d82a8119072b6a
+    image: ghcr.io/getumbrel/tor:0.4.9.11@sha256:e382b8629c0dfef6ceb396b062622d4e4e955b19d6f16b883fd2c0723ad5671a
     user: "1000:1000"
     restart: on-failure
     volumes:
@@ -74,7 +75,7 @@ services:
         ipv4_address: "${APP_BITCOIN_TOR_PROXY_IP}"
   
   i2pd_daemon:
-    image: purplei2p/i2pd:release-2.44.0@sha256:d154a599793c393cf9c91f8549ba7ece0bb40e5728e1813aa6dd4c210aa606f6
+    image: purplei2p/i2pd:release-2.59.0@sha256:257653c18ce0b127ef480e3d8373b3ddbf1495e842674c8cfc59909be0015979
     user: "root"
     command: --sam.enabled=true --sam.address=0.0.0.0 --sam.port=7656 --loglevel=error
     restart: on-failure

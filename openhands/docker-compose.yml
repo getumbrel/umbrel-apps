@@ -21,13 +21,17 @@ services:
         --data-root /data/data
         --exec-root /data/exec
         --host unix:///data/docker.sock
+        --iptables=false
         --pidfile /data/docker.pid
     volumes:
       - ${APP_DATA_DIR}/entrypoint.sh:/entrypoint.sh
       - ${APP_DATA_DIR}/data/docker:/data
 
   web:
-    image: ghcr.io/openhands/openhands:1.3.0@sha256:bc087a38ab2dc758a8c14b1235de5d77481af71f54290a4c3caa89fb0b109114
+    image: ghcr.io/openhands/openhands:1.10.0@sha256:1e5c81b0ccfc4fd33a3524ba2a561f594879e238117c024a1b60edfee0412dc8
+    depends_on:
+      docker:
+        condition: service_started
     stdin_open: true
     tty: true
     pull_policy: always
@@ -38,12 +42,17 @@ services:
       retries: 3
       start_period: 90s
     environment:
-      - SANDBOX_RUNTIME_CONTAINER_IMAGE=docker.openhands.dev/openhands/runtime:0.62-nikolaik@sha256:95fc4d8e753f41d34cd564e78d3d64217c5d22296ea1cb7bf92614c8198de8f5
+      - AGENT_SERVER_IMAGE_REPOSITORY=ghcr.io/openhands/agent-server
+      - AGENT_SERVER_IMAGE_TAG=1.33.0-python
+      - SANDBOX_HOST_PORT=3994
+      - SANDBOX_CONTAINER_URL_PATTERN=http://localhost:{port}
       - WORKSPACE_MOUNT_PATH=/opt/workspace_base
       - LOG_ALL_EVENTS=true
+    ports:
+      - 10.32.0.1:3994:3000
     volumes:
       - ${APP_DATA_DIR}/data/docker:/var/run:rw
-      - ${APP_DATA_DIR}/data/openhands:/.openhands-state:rw
+      - ${APP_DATA_DIR}/data/openhands:/.openhands:rw
       - ${APP_DATA_DIR}/data/workspace:/opt/workspace_base:rw
     extra_hosts:
       - host.docker.internal:host-gateway

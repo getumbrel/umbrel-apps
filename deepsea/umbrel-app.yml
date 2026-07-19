@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: deepsea
 category: bitcoin
 name: DeepSea Dashboard
-version: "1.1.3"
+version: "2.0.4"
 tagline: Retro style Ocean dashboard
 description: >-
   This open-source dashboard monitors Ocean.xyz pool miners in real time. It presents hashrate, profitability, worker status and network metrics through a retro terminal interface. The goal is to keep miners fully informed with minimal fuss.
@@ -94,15 +94,20 @@ path: ""
 releaseNotes: >-
   This release comes with new features and various improvements and fixes.
 
-  
+
   Key Highlights:
-    - Refactored backend into modular blueprints for better scalability
-    - Improved earnings calculations and UI consistency
-    - Enhanced memory management with safer session handling
-    - Reworked scheduler and SSE into separate services
-    - Added dynamic audio controls with theme-aware styling
-    - Strengthened cache and memory cleanup mechanisms
-    - Added regression tests and fixed various UI bugs
+    - Complete platform rebuild with React 18 + TypeScript + Vite frontend and FastAPI backend
+    - Smooth boot-to-dashboard transition with fade animations, progress bar, and 25-step boot sequence
+    - Server-persisted worker settings (ASIC overrides, electricity rate) synced across devices via SQLite
+    - Full Progressive Web App (PWA) support with offline fallback, install prompt, and versioned service worker caching
+    - Eliminated chart flicker with in-place updates and retroactive block annotation seeding
+    - Low-hashrate mode for BitAxe and small miners with relaxed notification thresholds
+    - Three immersive themes: Bitcoin, DeepSea (bubbles/droplets), and Matrix (rain/glyphs)
+    - Rich workers page with ASIC model selector, fleet cost/profit calculations, and manual overrides
+    - Fixed ASIC override accuracy for power, cost, and profit calculations
+    - Hardened SPA path traversal protection and service worker host validation
+    - Extended chart history up to 30 days with zero-hashrate guard and auto-scaling units
+    - Upgraded frontend tooling: Vite 8.0.1, Vitest 4.1.0, @vitejs/plugin-react v6
 
 
   Full release notes are available at https://github.com/Djobleezy/DeepSea-Dashboard/releases
