@@ -16,7 +16,7 @@ services:
       - DOMAIN=$DEVICE_DOMAIN_NAME
       # Next SSR talks to the pool on the Docker network; browser /api goes via nginx.
       - PUBLIC_POOL_API_URL=http://lido_server_1:2019
-      - PUBLIC_POOL_STRATUM_URL=${DEVICE_DOMAIN_NAME}:2121
+      - PUBLIC_POOL_STRATUM_URL=${DEVICE_DOMAIN_NAME}:6970
 
   server:
     # Lido Nest pool fork (not upstream benjamin-wilson/public-pool)
@@ -25,8 +25,8 @@ services:
     stop_grace_period: 30s
     ports:
       # Host ports must be unique across the App Store (3333/4444 are other apps' UI ports).
-      - "2121:3333/tcp"
-      - "2323:4444/tcp"
+      - "6970:3333/tcp"
+      - "6972:4444/tcp"
     volumes:
       - "${APP_DATA_DIR}/data/database:/public-pool/DB"
     environment:
