@@ -1,0 +1,67 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      # Umbrel names containers: <app-id>_<service>_1
+      APP_HOST: lido_proxy_1
+      APP_PORT: 80
+      PROXY_AUTH_WHITELIST: "/api/*"
+
+  web:
+    image: ghcr.io/kevinguest/lido-ui:0.1.27@sha256:0c8ebf2800b0577efa1df6e54b5fc0e06509ff5e427cde4506a162ddb8218042
+    restart: on-failure
+    stop_grace_period: 30s
+    environment:
+      - DOMAIN=$DEVICE_DOMAIN_NAME
+      # Next SSR talks to the pool on the Docker network; browser /api goes via nginx.
+      - PUBLIC_POOL_API_URL=http://lido_server_1:2019
+      - PUBLIC_POOL_STRATUM_URL=${DEVICE_DOMAIN_NAME}:21333
+
+  server:
+    # Lido Nest pool fork (not upstream benjamin-wilson/public-pool)
+    image: ghcr.io/kevinguest/lido:0.1.15@sha256:ec5bd68b9b76a366c5c7c5f48f578e324131e3d2484a2abb961c4d22fbc34b3d
+    restart: on-failure
+    stop_grace_period: 30s
+    ports:
+      # Host ports must be unique across the App Store (3333/4444 are other apps' UI ports).
+      - "21333:3333/tcp"
+      - "21444:4444/tcp"
+    volumes:
+      - "${APP_DATA_DIR}/data/database:/public-pool/DB"
+    environment:
+      - NODE_ENV=production
+      - BITCOIN_RPC_URL=http://${APP_BITCOIN_NODE_IP}
+      - BITCOIN_RPC_USER=${APP_BITCOIN_RPC_USER}
+      - BITCOIN_RPC_PASSWORD=${APP_BITCOIN_RPC_PASS}
+      - BITCOIN_RPC_PORT=${APP_BITCOIN_RPC_PORT}
+      - BITCOIN_RPC_TIMEOUT=10000
+      - API_PORT=2019
+      - STRATUM_PORT=3333
+      - ENABLE_STRATUM_V2=true
+      - STRATUM_V2_PORT=4444
+      - NETWORK=mainnet
+      - API_SECURE=false
+      - ENABLE_SOLO=true
+      - ENABLE_PROXY=false
+      - POOL_IDENTIFIER="Lido on Umbrel"
+
+  proxy:
+    image: nginx:1.25.3@sha256:4c0fdaa8b6341bfdeca5f18f7837462c80cff90527ee35ef185571e1c327beac
+    volumes:
+      - ${APP_DATA_DIR}/data/proxy/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - web
+      - server
+    restart: on-failure
+
+  # Homepage four-stats widget (Hash Rate, Miners, Blocks Found, Block Height)
+  widget-server:
+    image: ghcr.io/getumbrel/umbrel-public-pool-widget:v1.0.0@sha256:b8861a5b79471377f1bfbf6733f11350970b482103d4ef4185f372350ffff6b3
+    user: "1000:1000"
+    environment:
+      - PUBLIC_POOL_API_URL=http://lido_proxy_1/api/pool
+    depends_on:
+      - proxy
+      - server
+    restart: on-failure
