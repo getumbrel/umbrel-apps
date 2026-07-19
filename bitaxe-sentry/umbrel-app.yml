@@ -2,7 +2,7 @@ manifestVersion: 1
 id: bitaxe-sentry
 category: bitcoin
 name: Bitaxe Sentry
-version: "0.6.1"
+version: "0.8.0"
 tagline: Bitaxe stats and alerts, all in one
 description: >-
   Bitaxe Sentry is a monitoring and management solution for Bitaxe ASIC miners.
@@ -12,10 +12,20 @@ description: >-
   Features included: 
     - 📊 Centralized dashboard for all Bitaxe miners
     - 🌡️ Temperature and hashrate monitoring
-    - 🚨 Discord notifications for critical events
+    - 🚨 Discord and ntfy notifications for critical events
 releaseNotes: >-
-  This release includes a minor bug fix:
-    - Changed mh/s to gh/s to reflect the correct unit of hashrate
+    This release adds VR temperature monitoring, fan/pool telemetry, ntfy push notifications, pool latency monitoring, and per-miner notification muting, plus several bug fixes:
+      - Added VR temperature tracking and alerting (default threshold 90°C, configurable in settings)
+      - Added fan RPM/%, active pool URL, and session best difficulty to the dashboard
+      - Added ntfy push notification support alongside existing notifiers
+      - Added pool failover alerts when a miner switches between primary and fallback stratum
+      - Added pool latency monitoring with a graph and configurable alert threshold
+      - Added a consecutive-failure counter for miner status
+      - Changed miner polling to run in parallel threads for faster, non-blocking refresh
+      - Changed offline alerts to require 2 consecutive failed checks, reducing false-positive spam
+      - Fixed dark mode flash on page load
+      - Fixed history chart timeframes being shared instead of independent per chart
+      - Fixed a fatal crash on fresh installs caused by an outdated Starlette TemplateResponse call
 developer: Zach Price
 website: https://github.com/zachchan105/bitaxe-sentry
 repo: https://github.com/zachchan105/bitaxe-sentry
