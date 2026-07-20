@@ -1,0 +1,73 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: bitcoin-cash-node_web_1
+      APP_PORT: 3000
+
+  tor:
+    image: ghcr.io/getumbrel/tor:0.4.9.11@sha256:e382b8629c0dfef6ceb396b062622d4e4e955b19d6f16b883fd2c0723ad5671a
+    user: "1000:1000"
+    restart: on-failure
+    environment:
+      HOME: /tmp
+    volumes:
+      - ${APP_DATA_DIR}/torrc:/etc/tor/torrc:ro
+      - ${APP_DATA_DIR}/data/tor:/data
+    networks:
+      default:
+        ipv4_address: ${APP_BITCOIN_CASH_NODE_TOR_IP}
+
+  bitcoind:
+    image: mainnet/bitcoin-cash-node:v29.0.0@sha256:5144a579369cbab859119b04c86e4e078cf8ef830a1cb721be96bdc0b7498a35
+    user: "1000:1000"
+    # The dashboard stops bitcoind cleanly when applying Tor or storage settings,
+    # so it must restart after successful exits.
+    restart: always
+    stop_grace_period: 1m
+    volumes:
+      - ${APP_DATA_DIR}/data/bitcoind:/data
+    entrypoint: ["bitcoind"]
+    command:
+      - -datadir=/data
+      - -printtoconsole
+      - -server=1
+      - -listen=1
+      - -port=8335
+      - -rpcbind=0.0.0.0
+      - -rpcallowip=0.0.0.0/0
+      - -rpcuser=${APP_BITCOIN_CASH_NODE_RPC_USER}
+      - -rpcpassword=${APP_BITCOIN_CASH_NODE_RPC_PASS}
+      - -rpcworkqueue=512
+      # Default is 4; plenty of headroom, idle threads are nearly free.
+      - -rpcthreads=64
+      - -dbcache=512
+      - -maxmempool=300
+      - -txindex=1
+      # Node wallet unused by this stack.
+      - -disablewallet=1
+      - -maxconnections=64
+      # Publish block notifications to compatible companion apps.
+      - -zmqpubhashblock=tcp://0.0.0.0:28332
+    ports:
+      - 8335:8335   # BCH P2P — forward this on your router for clearnet inbound peers
+    networks:
+      default:
+        ipv4_address: ${APP_BITCOIN_CASH_NODE_NODE_IP}
+
+  web:
+    image: ghcr.io/danhaus93-ops/bchn-dashboard:e9b9860b8b9a87178a9bca1985b4793b694ceb8d@sha256:cbb3fc4bd5bf43906993165d9fdcfc60a4978bdbfc33ce8994ea1f4449ac6312
+    restart: on-failure
+    user: "1000:1000"
+    volumes:
+      - ${APP_DATA_DIR}/data/bitcoind:/nodedata
+    depends_on:
+      - bitcoind
+    environment:
+      PORT: 3000
+      APP_VERSION: v29.1.34
+      TOR_IP: ${APP_BITCOIN_CASH_NODE_TOR_IP}
+      RPC_HOST: bitcoind
+      RPC_PORT: "8332"
+      RPC_USER: ${APP_BITCOIN_CASH_NODE_RPC_USER}
+      RPC_PASS: ${APP_BITCOIN_CASH_NODE_RPC_PASS}
+      PUBLIC_HOST: ${DEVICE_DOMAIN_NAME}
