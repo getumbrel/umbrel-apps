@@ -3,7 +3,7 @@ id: gitea-mirror
 name: Gitea Mirror
 tagline: Mirror your GitHub repositories to a Gitea instance automatically
 category: developer
-version: "3.20.4"
+version: "3.21.0"
 port: 4322
 description: >-
   Gitea Mirror automatically mirrors your GitHub repositories to a self-hosted Gitea instance. It supports mirroring public and private repositories, organizations, starred repos, issues, wikis, and pull requests.
@@ -42,14 +42,17 @@ defaultUsername: ""
 defaultPassword: ""
 dependencies: []
 releaseNotes: >-
-  Gitea Mirror 3.20.4 fixes manually added repositories being falsely archived as orphaned repositories. Cleanup now double-checks each candidate on GitHub before archiving, and installs already affected by the false archiving can self-heal on the next sync.
+  Gitea Mirror 3.21.0 adds an Auto/12-hour/24-hour time-format toggle and now follows your browser locale by default.
 
 
-  Syncing renamed or archived mirrors no longer fails with HTTP 405, and Manual Sync now keeps intentionally archived repositories archived.
+  Settings saves now preserve env-only mirror options such as GITEA_MIRROR_INTERVAL, repositories left stuck as "Syncing" recover automatically after a restart, and bulk "Mirror Organization" jobs now honor destination overrides.
+
+
+  This release also includes security and dependency updates, including a better-auth update that fixes a high-severity stored XSS issue in auth-server redirect handling.
 
 
   If you're updating from a pre-3.17 version and use OAuth provider clients registered in Gitea Mirror, rotate the client secret for each client after upgrading because OAuth application secrets are stored hashed after migration.
 
 
-  Full release notes can be found at https://github.com/RayLabsHQ/gitea-mirror/releases/tag/v3.20.4
+  Full release notes can be found at https://github.com/RayLabsHQ/gitea-mirror/releases/tag/v3.21.0
 path: ""
