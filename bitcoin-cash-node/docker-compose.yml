@@ -1,5 +1,3 @@
-# Bitcoin Cash Node (node only) for Umbrel
-# Fulcrum is now its own app (fulcrum-bch). ZMQ added for LoneStrike Cash.
 services:
   app_proxy:
     environment:
@@ -7,13 +5,6 @@ services:
       APP_PORT: 3000
 
   tor:
-    # 0.4.7.8 (Aug 2022) is EOL and can no longer bootstrap: its directory
-    # authority list is stale, so dir servers answer 404 "Consensus not
-    # signed by sufficient number of requested authorities" and Tor sticks
-    # at 30%. With Tor dead, "All traffic via Tor" points -proxy at a proxy
-    # that never answers: every outbound connection fails, only inbound
-    # peers remain, and the node silently stops receiving blocks. Pinned to
-    # the same image the official apps ship (see fulcrum, electrs).
     image: ghcr.io/getumbrel/tor:0.4.9.11@sha256:e382b8629c0dfef6ceb396b062622d4e4e955b19d6f16b883fd2c0723ad5671a
     user: "1000:1000"
     restart: on-failure
@@ -28,11 +19,9 @@ services:
 
   bitcoind:
     image: mainnet/bitcoin-cash-node:v29.0.0@sha256:5144a579369cbab859119b04c86e4e078cf8ef830a1cb721be96bdc0b7498a35
-    user: "1000:1000"   # match Umbrel bind-mount ownership (fresh installs are 1000:1000)
-    # `always`, not on-failure: the dashboard's Tor Apply and Storage-mode
-    # switch stop the node over RPC (a CLEAN exit) and rely on docker to bring
-    # it back. on-failure does not restart a clean exit, so Apply would leave
-    # the node down until someone noticed.
+    user: "1000:1000"
+    # The dashboard stops bitcoind cleanly when applying Tor or storage settings,
+    # so it must restart after successful exits.
     restart: always
     stop_grace_period: 1m
     volumes:
@@ -49,20 +38,23 @@ services:
       - -rpcuser=${APP_BITCOIN_CASH_NODE_RPC_USER}
       - -rpcpassword=${APP_BITCOIN_CASH_NODE_RPC_PASS}
       - -rpcworkqueue=512
-      - -rpcthreads=64          # default is 4 — plenty of headroom, idle threads are nearly free
+      # Default is 4; plenty of headroom, idle threads are nearly free.
+      - -rpcthreads=64
       - -dbcache=512
       - -maxmempool=300
       - -txindex=1
-      - -disablewallet=1   # node wallet unused by this stack
+      # Node wallet unused by this stack.
+      - -disablewallet=1
       - -maxconnections=64
-      - -zmqpubhashblock=tcp://0.0.0.0:28332   # for LoneStrike Cash (lowest-latency)
+      # Publish block notifications to compatible companion apps.
+      - -zmqpubhashblock=tcp://0.0.0.0:28332
     ports:
       - 8335:8335   # BCH P2P — forward this on your router for clearnet inbound peers
 
   web:
     image: ghcr.io/danhaus93-ops/bchn-dashboard:e9b9860b8b9a87178a9bca1985b4793b694ceb8d@sha256:cbb3fc4bd5bf43906993165d9fdcfc60a4978bdbfc33ce8994ea1f4449ac6312
     restart: on-failure
-    user: "1000:1000"   # read chain data dir (1000:1000 on fresh installs); no root needed
+    user: "1000:1000"
     volumes:
       - ${APP_DATA_DIR}/data/bitcoind:/nodedata
     depends_on:
