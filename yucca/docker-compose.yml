@@ -8,13 +8,12 @@ services:
       PROXY_AUTH_WHITELIST: "/v1/*"
 
   yucca:
-    image: yuccastream/yucca:0.12.3@sha256:04fdb29981d01c00b20b22f02b46d7e844f2a5c2a8675dcc52d8c748bc853e0c
+    image: yuccastream/yucca:0.13.0@sha256:dc0aa25eaf0d1a3e957e9741dd6d52f9770ff427b2fc799b2888a9446838ff49
     restart: on-failure
     shm_size: "128mb"
     working_dir: /opt/yucca
     volumes:
       - "${APP_DATA_DIR}/data/data:/opt/yucca/data"
-      - "${APP_DATA_DIR}/data/ffmpeg:/opt/yucca/ffmpeg"
     ports:
       - 10925:10925 # SMTP server
       - 9912:9912 # telemetry (prometheus)
