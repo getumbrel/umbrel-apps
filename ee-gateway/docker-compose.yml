@@ -8,10 +8,9 @@
 # network (which it needs to reach the Bluetooth radio) while the UI stays on
 # Umbrel's app network behind app_proxy.
 #
-# Credentials are NOT passed as environment variables here. The user enters the
-# upstream network's org id and API token once in the UI setup wizard, which
-# writes them to config.json in the shared volume; the worker reads that file
-# every scan cycle.
+# Credentials are NOT passed as environment variables here. The user enters an
+# encryptedenergy.com API token once in the UI setup wizard, which writes it to
+# config.json in the shared volume; the worker reads that file every scan cycle.
 #
 # umbreld creates ${APP_DATA_DIR}/data owned by root, but both app containers
 # run as uid 1000 and so cannot write it. The init_perms service fixes ownership
