@@ -50,6 +50,9 @@ services:
       - -zmqpubhashblock=tcp://0.0.0.0:28332
     ports:
       - 8335:8335   # BCH P2P — forward this on your router for clearnet inbound peers
+    networks:
+      default:
+        ipv4_address: ${APP_BITCOIN_CASH_NODE_NODE_IP}
 
   web:
     image: ghcr.io/danhaus93-ops/bchn-dashboard:e9b9860b8b9a87178a9bca1985b4793b694ceb8d@sha256:cbb3fc4bd5bf43906993165d9fdcfc60a4978bdbfc33ce8994ea1f4449ac6312
