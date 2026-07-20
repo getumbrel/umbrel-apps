@@ -4,7 +4,7 @@
 # (e.g. old API port) would 502 browser /api calls while SSR still worked.
 set -euo pipefail
 
-APP_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")"
+APP_DIR="${APP_DATA_DIR:-$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")}"
 PROXY_DIR="${APP_DIR}/data/proxy"
 NGINX_CONF="${PROXY_DIR}/nginx.conf"
 
