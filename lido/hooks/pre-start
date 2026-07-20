@@ -1,3 +1,16 @@
+#!/usr/bin/env bash
+# Keep nginx routing in sync with the packaged app.
+# Umbrel preserves APP_DATA_DIR across updates, so a stale data/proxy/nginx.conf
+# (e.g. old API port) would 502 browser /api calls while SSR still worked.
+set -euo pipefail
+
+APP_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")"
+PROXY_DIR="${APP_DIR}/data/proxy"
+NGINX_CONF="${PROXY_DIR}/nginx.conf"
+
+mkdir -p "${PROXY_DIR}"
+
+cat > "${NGINX_CONF}" <<'EOF'
 server {
   listen 80;
 
@@ -33,3 +46,6 @@ server {
     proxy_set_header X-Forwarded-Proto $scheme;
   }
 }
+EOF
+
+echo "lido: refreshed ${NGINX_CONF}"
