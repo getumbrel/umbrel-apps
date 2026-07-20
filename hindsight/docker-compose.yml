@@ -7,6 +7,9 @@ services:
       APP_PORT: 9999
 
   server:
+    # NOTE: bump to a release that includes the instance LLM-config UI
+    # (server LLM config API) before submitting the Umbrel PR, so the app can be
+    # configured from the browser after a keyless boot below.
     image: ghcr.io/vectorize-io/hindsight:0.8.4@sha256:2c60f233eaba8f51db31adb920a560735aaf6f314e4b63c36c73159742dfa1a7
     restart: on-failure
     stop_grace_period: 1m
@@ -20,9 +23,8 @@ services:
       # Embeddings and reranking run locally on-device (no external calls).
       - HINDSIGHT_API_EMBEDDINGS_PROVIDER=local
       - HINDSIGHT_API_RERANKER_PROVIDER=local
-      # LLM used to extract and consolidate memories. Set your provider and key
-      # before storing memories. OpenAI is the default; Anthropic, Gemini, Groq
-      # and other OpenAI-compatible providers are also supported.
-      - HINDSIGHT_API_LLM_PROVIDER=openai
-      - HINDSIGHT_API_LLM_API_KEY=
-      # - HINDSIGHT_API_LLM_MODEL=gpt-4.1-mini
+      # Boot without an LLM so the app starts on a fresh install (a key-requiring
+      # provider would otherwise fail to boot). The user then sets their LLM
+      # provider + API key in the app's Settings page, which applies at runtime
+      # without a restart.
+      - HINDSIGHT_API_LLM_PROVIDER=none
