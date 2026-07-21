@@ -1,0 +1,53 @@
+manifestVersion: 1
+id: msgvault
+category: files
+name: msgvault
+version: "0.18.0"
+tagline: Archive a lifetime of email and chat, searchable offline
+description: >-
+  msgvault keeps a private, offline-first copy of your whole message history on
+  your Umbrel. It ingests your mail and chats into an embedded SQLite archive,
+  then gives you fast full-text search, DuckDB-powered analytics, and an API you
+  can point an AI assistant at — all running locally, with no hosted service in
+  the loop.
+
+
+  Setup note: msgvault links your accounts from the msgvault command-line app on
+  your own computer, not from this screen. Install the msgvault CLI, run its
+  setup wizard to sign in to Gmail, an IMAP mailbox, Microsoft 365 / Teams, and
+  other providers, then export the resulting token to this server with
+  `msgvault export-token you@example.com --to http://umbrel.local:8480 --api-key
+  <API KEY>`. This server then keeps those accounts synced on a schedule. The
+  API key is the auto-generated password shown on this app's info screen.
+
+
+  Sources: Gmail and any IMAP mailbox, Microsoft Teams, and — via the CLI's
+  importers — Discord, Beeper, Granola, Circleback, Google Voice, and
+  WhatsApp / iMessage / SMS exports. Everything lands in one deduplicated
+  archive with attachments preserved on disk as plain files.
+
+
+  Local by default: full-text search across hundreds of thousands of messages,
+  millisecond DuckDB aggregate queries, and an MCP server so Claude Desktop or
+  any MCP-capable agent can query decades of correspondence conversationally.
+  Your messages stay yours — no mailbox network access is required once the
+  archive is built.
+
+
+  This app runs the msgvault HTTP server. Opening it lands on the interactive
+  API docs at `/docs`; there is no dashboard-style web UI yet. Authenticate API
+  and CLI requests with the app's password as a Bearer token (`Authorization:
+  Bearer <API KEY>`) or an `X-Api-Key` header.
+releaseNotes: ""
+developer: kenn.io
+website: https://msgvault.io
+dependencies: []
+repo: https://github.com/kenn-io/msgvault
+support: https://discord.gg/fDnmxB8Wkq
+port: 8480
+gallery: []
+path: ""
+defaultUsername: ""
+deterministicPassword: true
+submitter: salmonumbrella
+submission: https://github.com/getumbrel/umbrel-apps/pull/0000
