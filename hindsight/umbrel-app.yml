@@ -13,16 +13,15 @@ description: >-
 
   This app bundles everything in a single container: the Hindsight API, the
   web-based Control Plane, and an embedded PostgreSQL (pgvector) database.
-  Embeddings and reranking run locally on-device, so retrieval works fully
-  offline and none of your stored memories leave your Umbrel.
+  Embeddings and reranking run locally on-device, and it uses your local Ollama
+  app for the LLM — so it runs fully offline and none of your data leaves your
+  Umbrel.
 
 
-  Setup: Hindsight uses an LLM to extract and consolidate memories. Before your
-  agents can store or reflect on memories, set your LLM provider and API key in
-  the app's environment (OpenAI, Anthropic, Gemini, Groq and other
-  OpenAI-compatible providers are supported). Only the text sent for
-  extraction and reflection reaches your chosen provider; your memory data and
-  embeddings stay on-device.
+  Setup: install the Ollama app (a required dependency) and pull the model
+  Hindsight uses for memory extraction — in a terminal for the Ollama app run
+  `ollama pull llama3.1:8b`. Once the model is available, your agents can store
+  and reflect on memories.
 
 
   Connect your agents to the API at port 8888 and manage banks, browse memories,
@@ -30,7 +29,8 @@ description: >-
 releaseNotes: ""
 developer: Vectorize
 website: https://hindsight.vectorize.io
-dependencies: []
+dependencies:
+  - ollama
 repo: https://github.com/vectorize-io/hindsight
 support: https://github.com/vectorize-io/hindsight/issues
 port: 8288
