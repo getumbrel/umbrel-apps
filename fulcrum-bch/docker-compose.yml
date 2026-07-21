@@ -1,0 +1,82 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: fulcrum-bch_web_1
+      APP_PORT: 80
+
+  # Writes fulcrum.conf into the data volume with this install's RPC password.
+  init:
+    image: alpine:3.22.1@sha256:4bcff63911fcb4448bd4fdacec207030997caf25e9bea4045fa6c8c44de311d1
+    restart: on-failure
+    environment:
+      RPC_PASS: ${APP_BITCOIN_CASH_NODE_RPC_PASS}
+    volumes:
+      - ${APP_DATA_DIR}/data/fulcrum:/data
+    command:
+      - sh
+      - -c
+      - |
+        cat > /data/fulcrum.conf <<CONF
+        datadir = /data
+        bitcoind = ${APP_BITCOIN_CASH_NODE_NODE_IP}:${APP_BITCOIN_CASH_NODE_RPC_PORT}
+        rpcuser = ${APP_BITCOIN_CASH_NODE_RPC_USER}
+        rpcpassword = $${RPC_PASS}
+        tcp = 0.0.0.0:50021
+        ssl = 0.0.0.0:50022
+        cert = /data/fulcrum.crt
+        key  = /data/fulcrum.key
+        peering  = false
+        announce = false
+        stats = 0.0.0.0:8081
+        db_mem             = 1024
+        db_max_open_files  = 200
+        bitcoind_timeout   = 600
+        bitcoind_clients   = 1
+        worker_threads     = 1
+        CONF
+
+  fulcrum:
+    networks:
+      default:
+        ipv4_address: $APP_FULCRUM_BCH_NODE_IP
+    image: cculianu/fulcrum:v2.1.1@sha256:72d8b2f9142f83a51c6c3ba2f6931b496a08bede610b28ef2315b87aa1e3bb64
+    restart: on-failure
+    stop_grace_period: 1m
+    depends_on:
+      init:
+        condition: service_completed_successfully
+    volumes:
+      - ${APP_DATA_DIR}/data/fulcrum:/data
+    command:
+      - sh
+      - -c
+      - |
+        mkfifo /tmp/logpipe 2>/dev/null || true
+        ( while IFS= read -r l; do
+            printf '%s\n' "$$l"
+            case "$$l" in
+              *"Processed height: "*)
+                h="$${l#*Processed height: }"
+                printf '%s' "$${h%%,*}" > /data/progress.txt
+                ;;
+              *"Block height "*", up-to-date"*)
+                h="$${l#*Block height }"
+                printf '%s' "$${h%%,*}" > /data/progress.txt
+                ;;
+            esac
+          done < /tmp/logpipe ) &
+        trap 'kill -TERM "$$FPID" 2>/dev/null' TERM INT
+        Fulcrum /data/fulcrum.conf > /tmp/logpipe 2>&1 &
+        FPID=$$!
+        wait "$$FPID"
+    ports:
+      - 50021:50021   # Electrum TCP
+      - 50022:50022   # Electrum SSL
+
+  web:
+    image: ghcr.io/danhaus93-ops/fulcrum-info:56c54ace144de796cbd095f857ed9f051ea4d18b@sha256:14c1285b933e96195f41266137e4c6535b13f5dd6d8cc2ad557311bb0169b5a5
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data/fulcrum:/fdata:ro
+    depends_on:
+      - fulcrum
