@@ -170,8 +170,6 @@ Widgets are glanceable cards on the Umbrel home screen for app status, progress,
 Use `app_proxy` for normal browser-based apps.
 
 - Define an `app_proxy` service with environment only.
-- Treat `app_proxy` as declarative Umbrel gateway configuration, not as a runtime Compose service. Current umbrelOS releases consume this block in umbreld and do not create an `app_proxy` container or Docker DNS name.
-- Never use `depends_on: app_proxy`, connect to `<app-id>_app_proxy_1`, or use the app proxy as an internal API endpoint. Point same-app and cross-app traffic at the real upstream service instead.
 - Treat manifest `port` and app_proxy `APP_PORT` as different values: manifest `port` is the host-facing app_proxy port; `APP_PORT` is the internal web service port.
 - Set `APP_HOST` to the Umbrel-injected container name: `<app-id>_<service-name>_1`.
 - Set `APP_PORT` to the internal port the web service listens on.
@@ -250,6 +248,7 @@ Values available after app env is sourced:
 - `APP_DATA_DIR`: installed app data root, `${UMBREL_ROOT}/app-data/<app-id>`.
 - `APP_DOMAIN`: local `.local` domain for the Umbrel device; use with a port when upstream needs a browser-facing app URL.
 - `APP_HIDDEN_SERVICE`: app Tor hidden-service hostname when Umbrel remote Tor access is enabled. It may be a placeholder such as `not-enabled.onion` or `notyetset.onion` before a hidden service exists.
+- `APP_PROXY_HOSTNAME`: internal hostname of the generated `app_proxy` service.
 - `APP_PROXY_PORT`: manifest `port`, the host-facing app URL port.
 - `APP_SEED`: stable per-install derived value for the app; see Generated Secrets.
 - `APP_PASSWORD`: stable per-install derived value for local app credentials when the package wires the app login/admin password to this value; see Generated Secrets.
