@@ -9,7 +9,7 @@ services:
       PROXY_AUTH_WHITELIST: "/api/*"
 
   penpot-frontend:
-    image: penpotapp/frontend:2.16.2@sha256:4725b4698d8d1bd25ee1666e0d900d20da8937fea845c6a088f76cd69293560b
+    image: penpotapp/frontend:2.17.0@sha256:861989dfff50f12b9de1358c6b0f3cc1e601d7a678db2826f3643d0f93438500
     volumes:
       - ${APP_DATA_DIR}/data/assets:/opt/data/assets
     environment:
@@ -21,7 +21,7 @@ services:
     restart: on-failure
 
   penpot-backend:
-    image: penpotapp/backend:2.16.2@sha256:6c8e3851f3734e98e48d5a4a68e2c64485f6bd67a1ffec809aa9f1847d90a646
+    image: penpotapp/backend:2.17.0@sha256:471cdebf185be899ef7d7593e9cd7994b908ebd7ffb78ca547e3d843bb83536f
     # user 1000:1000 to avoid permission issues when importing libraries and templates
     user: "1000:1000"
     volumes:
@@ -33,8 +33,8 @@ services:
       - PENPOT_DATABASE_USERNAME=penpot
       - PENPOT_DATABASE_PASSWORD=penpot
       - PENPOT_REDIS_URI=redis://penpot_penpot-valkey_1/0
-      - PENPOT_ASSETS_STORAGE_BACKEND=assets-fs
-      - PENPOT_STORAGE_ASSETS_FS_DIRECTORY=/opt/data/assets
+      - PENPOT_OBJECTS_STORAGE_BACKEND=fs
+      - PENPOT_OBJECTS_STORAGE_FS_DIRECTORY=/opt/data/assets
       - PENPOT_TELEMETRY_ENABLED=false
       # PENPOT_PUBLIC_URI needs to be set to in order to render thumbnails in the frontend
       - PENPOT_PUBLIC_URI=http://${DEVICE_DOMAIN_NAME}:${APP_PENPOT_UI_PORT}
@@ -44,16 +44,17 @@ services:
     restart: on-failure
 
   penpot-exporter:
-    image: penpotapp/exporter:2.16.2@sha256:b370f14927050fb05ac646441b5993d9337dda7eec60d944aa112819c88207bc
+    image: penpotapp/exporter:2.17.0@sha256:7e8beb6ef2bdb9d778e9bbcbf7feebf8c99a137b2d9eb3969450c0a1a49e41c5
     user: "1000:1000"
     environment:
       - PENPOT_SECRET_KEY=${APP_SEED}
-      - PENPOT_PUBLIC_URI=http://penpot-frontend
+      - PENPOT_PUBLIC_URI=http://${DEVICE_DOMAIN_NAME}:${APP_PENPOT_UI_PORT}
+      - PENPOT_INTERNAL_URI=http://penpot-frontend:8080
       - PENPOT_REDIS_URI=redis://penpot_penpot-valkey_1/0
     restart: on-failure
 
   penpot-mcp:
-    image: penpotapp/mcp:2.16.2@sha256:d7bd6be8d12c4c4fd2bd9f09eb1b1df2d2c0e8807a698020ba44558afad22c95
+    image: penpotapp/mcp:2.17.0@sha256:185a1d255a9580cc9e3ad858b51a1246d17fc44e9ab76bc7a685649f3c8ecfc9
     user: "1000:1000"
     restart: on-failure
 
