@@ -43,6 +43,8 @@ services:
       - ${APP_DATA_DIR}/data/onedev:/opt/onedev
       - ${APP_DATA_DIR}/data/docker:/var/run
     environment:
+      # Pre-fill the Umbrel URL while keeping system settings editable during onboarding.
+      ONEDEV_SERVICE_HOST: "${DEVICE_DOMAIN_NAME}:${APP_PROXY_PORT}"
       hibernate_connection_password: ${APP_SEED}
       hibernate_dialect: io.onedev.server.persistence.PostgreSQLDialect
       hibernate_connection_driver_class: org.postgresql.Driver
