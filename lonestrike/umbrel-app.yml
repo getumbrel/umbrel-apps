@@ -1,0 +1,132 @@
+manifestVersion: 1
+id: lonestrike
+category: bitcoin
+name: LoneStrike
+version: "3.6.6"
+tagline: Zero-fee solo Bitcoin mining pool with airgapped Private Mode
+description: >-
+  LoneStrike is a self-hosted solo Bitcoin mining pool for Umbrel, powered by
+  the battle-tested ckpool-solo engine and wrapped in a real-time Deep Mine
+  dashboard.
+
+
+  Connect your ASICs directly to your own Bitcoin node and keep 100% of every
+  block you find — no pool fees, no custody risk, no middleman.
+
+
+  v1.3.0 introduces Private Mode — toggle one switch and the entire app goes
+  airgapped. No mempool.space calls, no price feeds, no outbound traffic of
+  any kind. Your mining activity is yours alone.
+
+
+  Features:
+
+  • 🔒 Private Mode — fully local operation, zero external API calls when enabled
+
+  • 🌐 SoloStrike Pulse (v1.6.0+) — opt-in anonymous community counter over nostr, with per-peer Strikers roster (v1.7.5)
+
+  • 🛡️ Tor routing for Pulse (v1.7.3) — broadcasts and subscriptions optionally route through Umbrel's tor_proxy
+
+  • ⚡ The Vein (v1.7.6) — block reward + fee tiers + statistical earnings + odds, all in one tap-to-drill card
+
+  • 🎯 The Reckoning (v1.7.5) — strike forecast simulator with hashrate slider, probability waterfall, and global network rank
+
+  • 🔥 The Burn (v1.7.7) — power cost integration: net profit per strike + break-even electricity rate
+
+  • ⚙ Stratum Connection card (v1.7.6) — copy-button setup for ASIC / hobby / SSL ports with live port status
+
+  • Real-time hashrate waveform with 24h history, 7-day trends, axis labels, and peak tracking
+
+  • Near Strikes leaderboard — historical top 10 best-diff shares across your fleet
+
+  • Daily hashrate snapshots — 90 days of avg/peak history
+
+  • Sticky header cluster — pool status, ticker, latest block, sync warnings, ZMQ indicator
+
+  • Automatic miner-type detection (BitAxe Gamma/Supra/Ultra, NerdQaxe++, Antminer S19/S21 variants, Avalon Nano 3S / Avalon Q, Whatsminer, Braiins rentals)
+
+  • Worker search, miner rename aliases, per-worker last-share timestamps
+
+  • Click miner IP to open its web UI in a new tab
+
+  • Worker offline toast notifications — catch outages the moment they happen
+
+  • Bitcoin Core sync warning banner when your node falls behind
+
+  • Bitcoin Node panel — Core version, total/in/out peers, relay fee, mempool size
+
+  • Strike Odds — daily, weekly, and monthly block probability + expected time
+
+  • Hot Streak gauge, difficulty retarget countdown, Claim Jumpers leaderboard
+
+  • Latest Block hero strip — most recently mined block, pool, and reward
+
+  • The Goldfields — recent network blocks feed with solo-winner highlighting
+
+  • Block reward, BTC price (7 currencies), and mempool fees under Bitcoin Network
+
+  • Drag-and-drop card reordering — layout persists per-device
+
+  • Mobile-first responsive layout — 1 / 2 / 4 columns based on screen size
+
+  • Top Diggers leaderboard — worker, miner type, hashrate, best diff, status
+
+  • CSV export for workers and found blocks
+
+  • Webhooks — POST events to Discord, ntfy.sh, Home Assistant, Telegram bots, etc.
+
+  • Prometheus /metrics endpoint for Grafana, Home Assistant, and custom monitoring
+
+  • Public read-only API — share your pool stats externally
+
+  • Stratum ports — 32222 for ASICs, 32223 for hobby miners (BitAxe, NerdQaxe++), 32225 for NiceHash rented hashrate (500k high-diff)
+
+  • ZMQ status indicator — see at a glance whether Bitcoin Core's block broadcasts are reaching the pool
+
+  • Works with any Stratum V1 miner — one-time setup, miners connect automatically
+
+
+  100% self-custody. Truly zero fees. Your node, your rules, your blocks.
+releaseNotes: ""
+developer: danhaus93-ops
+website: https://github.com/danhaus93-ops/solostrike-umbrel
+dependencies:
+  - bitcoin
+repo: https://github.com/danhaus93-ops/solostrike-umbrel
+support: https://github.com/danhaus93-ops/solostrike-umbrel/issues
+port: 32226
+gallery: []
+path: ""
+defaultUsername: ""
+defaultPassword: ""
+submitter: danhaus93-ops
+submission: https://github.com/danhaus93-ops/solostrike-umbrel
+widgets:
+  - id: "stats"
+    type: "four-stats"
+    name: "LoneStrike Stats"
+    link: ""
+    refresh: "10s"
+    endpoint: "ui:8080/api/widget/four-stats"
+    items:
+      - label: "Pool Hashrate"
+        jsonPath: "items[0].text"
+      - label: "Workers"
+        jsonPath: "items[1].text"
+      - label: "Blocks Found"
+        jsonPath: "items[2].text"
+      - label: "Best Diff"
+        jsonPath: "items[3].text"
+    example:
+      type: "four-stats"
+      link: ""
+      items:
+        - title: "Pool Hashrate"
+          text: "542.8"
+          subtext: "GH/s"
+        - title: "Workers"
+          text: "3"
+        - title: "Blocks Found"
+          text: "0"
+        - title: "Best Diff"
+          text: "1.2B"
