@@ -24,7 +24,7 @@ services:
       POSTGRES_PASSWORD: paperless
 
   webserver:
-    image: ghcr.io/paperless-ngx/paperless-ngx:2.20.15@sha256:6c86cad803970ea782683a8e80e7403444c5bf3cf70de63b4d3c8e87500db92f
+    image: ghcr.io/paperless-ngx/paperless-ngx:3.0.0@sha256:80f96a38de1a04c49a466b236b9c34491e6c4b29cc1e216a4a5134ba5dd22059
     restart: on-failure
     depends_on:
       - db
@@ -45,6 +45,7 @@ services:
       PAPERLESS_TIKA_ENDPOINT: http://paperless_tika_1:9998
       PAPERLESS_ADMIN_USER: admin
       PAPERLESS_ADMIN_PASSWORD: $APP_PASSWORD
+      PAPERLESS_SECRET_KEY: $APP_SEED
 
   gotenberg:
     image: docker.io/gotenberg/gotenberg:7.10@sha256:d03b8a04c6e6c5e568b38f57352266dee4674849b71818774025f8f48d869a9a
