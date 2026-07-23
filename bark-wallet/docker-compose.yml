@@ -7,7 +7,7 @@ services:
       APP_PORT: 8080
 
   web:
-    image: secondark/bark-web:0.3.0@sha256:d00308ef6739243ea7d5187dffe250851857deb88aa93acc9527dd23d1288ef2
+    image: secondark/bark-web:0.4.0@sha256:b384b374555f7a7776fb664311782069111f3d372bf35a65e75c9d5f78b49e9f
     restart: on-failure
     stop_grace_period: 1m
     depends_on:
@@ -15,7 +15,7 @@ services:
       - barkd
 
   api:
-    image: secondark/bark-web-api:0.3.0@sha256:846086e4507ea1827de51aa91a8fd22ddbb93816aff6c182c704f22fd0af720a
+    image: secondark/bark-web-api:0.4.0@sha256:17e8b8b09a0ef8d9d75c84685b4fe049fe4c2cdbe4caec33c8c3eb4fa8b50c96
     restart: on-failure
     stop_grace_period: 1m
     volumes:
@@ -33,7 +33,7 @@ services:
       - barkd
 
   barkd:
-    image: secondark/bark:0.3.0@sha256:4cfa73136f8098af164283aa2d5a79f1d46005ea7568fff8c6ae130abfd9c599
+    image: secondark/bark:0.4.0@sha256:0a5db82c0e3a82d8d7cd438f4dfbbd42fea686d4c25ab6271752b0d5872fbc1b
     # Fix bind mount ownership, then drop to UID 1000 so the API can read barkd's auth token.
     user: "0:0"
     restart: on-failure
