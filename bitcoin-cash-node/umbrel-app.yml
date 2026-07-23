@@ -2,7 +2,7 @@ manifestVersion: 1
 id: bitcoin-cash-node
 category: crypto
 name: Bitcoin Cash Node
-version: "29.1.34"
+version: "29.1.36"
 tagline: Run your own Bitcoin Cash full node (BCHN)
 description: >-
   Run your own Bitcoin Cash full node powered by Bitcoin Cash Node (BCHN).
@@ -27,7 +27,14 @@ description: >-
   Donations are never expected. If LoneStrike Labs apps are useful to you,
   contributions help keep development going:
   qpp8hg2n60mhhlsr2apw6l60x5vrdq0vp5pq3j4gyt
-releaseNotes: ""
+releaseNotes: >-
+  Fixes the vanishing onion-peers list. The node's address manager hides
+  addresses after repeated failed connection attempts, so an unlucky stretch
+  of retries against offline onion services could shrink the visible list to
+  a couple of dead entries and hide the reliable ones. The seven onion seeds
+  that ship with Bitcoin Cash Node are now always listed and always tried
+  first, and the keep-connected option rotates away from unresponsive
+  services instead of retrying them forever.
 developer: LoneStrike Labs
 website: https://bitcoincashnode.org
 dependencies: []
