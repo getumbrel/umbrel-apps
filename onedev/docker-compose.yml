@@ -38,6 +38,7 @@ services:
       docker:
         condition: service_started
     ports:
+      # Expose OneDev's Git-over-SSH endpoint, which cannot use the HTTP app proxy.
       - "6611:6611"
     volumes:
       - ${APP_DATA_DIR}/data/onedev:/opt/onedev
