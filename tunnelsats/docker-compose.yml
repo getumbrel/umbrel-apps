@@ -1,0 +1,19 @@
+version: "3.7"
+
+services:
+  tunnelsats:
+    # Use the specific version tag for production
+    image: tunnelsats/ts-umbrel-app:3.3.1@sha256:ea8c7a7f66e63012d82cbdbfdad8a2a9541a231be62e15e8c571ab4377bb6ba4
+    restart: on-failure
+    network_mode: "host"
+    cap_add:
+      - NET_ADMIN
+    environment:
+      - SECURE_MODE=${SECURE_MODE:-true}
+    volumes:
+      # Persistent peer directory (Uninstall-safe)
+      - ${APP_DATA_DIR}/data:/data
+      # Lightning Node config mounts (Graceful discovery via relative paths)
+      # These use relative paths to avoid the strict Umbrel "AND" dependency requirement
+      - ${APP_DATA_DIR}/../lightning/data/lnd:/lightning-data/lnd:ro
+      - ${APP_DATA_DIR}/../core-lightning/data/lightningd:/lightning-data/cln:ro
