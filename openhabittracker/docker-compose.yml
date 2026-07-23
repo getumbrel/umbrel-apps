@@ -1,0 +1,27 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: openhabittracker_server_1
+      APP_PORT: 8080
+
+  server:
+    image: jinjinov/openhabittracker:1.2.3@sha256:7e2c753c8ec7b2821e004be27f934f086c6d2f16ff5142c3b864d98731e0b507
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      TZ: Etc/UTC
+      AppSettings__UserName: umbrel
+      AppSettings__Email: umbrel@example.com
+      AppSettings__Password: ${APP_PASSWORD}
+      AppSettings__JwtSecret: ${APP_OPENHABITTRACKER_JWT_SECRET}
+    volumes:
+      - ${APP_DATA_DIR}/data:/app/.OpenHabitTracker
+    healthcheck:
+      # the aspnet base image ships neither curl nor wget; bash /dev/tcp works
+      test: ["CMD", "bash", "-c", "cat < /dev/null > /dev/tcp/127.0.0.1/8080"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
