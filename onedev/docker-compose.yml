@@ -32,8 +32,10 @@ services:
     restart: on-failure
     tty: true
     depends_on:
-      - postgres
-      - docker
+      postgres:
+        condition: service_healthy
+      docker:
+        condition: service_started
     ports:
       - "6611:6611"
     volumes:
@@ -54,5 +56,10 @@ services:
       POSTGRES_PASSWORD: ${APP_SEED}
       POSTGRES_USER: "postgres"
       POSTGRES_DB: "onedev"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d onedev"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
     volumes:
       - ${APP_DATA_DIR}/data/postgres:/var/lib/postgresql/data
