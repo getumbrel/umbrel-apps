@@ -1,0 +1,23 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: based-pool-dashboard_web_1
+      APP_PORT: 8080
+      PROXY_AUTH_ADD: "false"
+
+  web:
+    image: basedminingco/pool-dashboard:1.2.0@sha256:5e355b53cdd3c98f563038a139003b2e581323b661f8b396e37905e6117dccd9
+    restart: on-failure
+    stop_grace_period: 1m
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  scanner:
+    image: basedminingco/pool-dashboard:1.2.0@sha256:5e355b53cdd3c98f563038a139003b2e581323b661f8b396e37905e6117dccd9
+    restart: on-failure
+    network_mode: host
+    command: ["python3", "/opt/scanner/scanner.py"]
+    environment:
+      SCANNER_PORT: "47800"
