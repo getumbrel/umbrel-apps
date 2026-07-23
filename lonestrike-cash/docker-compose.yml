@@ -1,0 +1,80 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: lonestrike-cash_dashboard_1
+      APP_PORT: 3000
+
+  pool:
+    image: ghcr.io/danhaus93-ops/asicseer-pool:56c54ace144de796cbd095f857ed9f051ea4d18b@sha256:a0bf1263de4e13fa5b0925c7c98333e6db18c3c642a8bbdc0384efd3dedbc208
+    restart: on-failure
+    stop_grace_period: 30s
+    environment:
+      RPC_HOST: ${APP_BITCOIN_CASH_NODE_NODE_IP}
+      RPC_PORT: "${APP_BITCOIN_CASH_NODE_RPC_PORT}"
+      RPC_USER: ${APP_BITCOIN_CASH_NODE_RPC_USER}
+      RPC_PASS: ${APP_BITCOIN_CASH_NODE_RPC_PASS}
+      # Lowest-latency block notifications via BCHN's ZMQ hashblock publisher.
+      # Requires BCHN to run with: -zmqpubhashblock=tcp://0.0.0.0:28332
+      ZMQ_ENDPOINT: tcp://${APP_BITCOIN_CASH_NODE_NODE_IP}:${APP_BITCOIN_CASH_NODE_ZMQ_HASHBLOCK_PORT}
+      # Optional seed only — you can set the address in the dashboard UI instead.
+      BCH_ADDRESS: ""
+    volumes:
+      - ${APP_DATA_DIR}/data/pool:/pool
+    ports:
+      - "3383:3333"   # host 3335 (LoneStrike already owns 3333/3334/4333)
+
+  dashboard:
+    image: ghcr.io/danhaus93-ops/solostrike-cash-dashboard:decfaa0284dfa8bd76f2bc88a4beb76a9cd42773@sha256:e042b0dd6534ef81bf4b711d69bd2aecceab46949938531591f08cef7c4cc5ea
+    restart: on-failure
+    environment:
+      POOL_LOGDIR: /pool/logs
+      STRATUM_HOST: ${DEVICE_DOMAIN_NAME:-umbrel.local}
+      STRATUM_PORT: "3335"
+      RPC_HOST: ${APP_BITCOIN_CASH_NODE_NODE_IP}
+      RPC_PORT: "${APP_BITCOIN_CASH_NODE_RPC_PORT}"
+      RPC_USER: ${APP_BITCOIN_CASH_NODE_RPC_USER}
+      RPC_PASS: ${APP_BITCOIN_CASH_NODE_RPC_PASS}
+      APP_VERSION: v1.4.62
+    volumes:
+      - ${APP_DATA_DIR}/data/pool:/pool
+      - ${APP_DATA_DIR}/data/sv2:/sv2
+    depends_on:
+      - pool
+
+  sv2-bridge:
+    image: ghcr.io/danhaus93-ops/bchn-sv2-bridge:1b5a40b8d3101f2643aac2234f81a5850c2c9fa6@sha256:ee9dbaf78fe02d363a2ac3cd886b9cee22d1f55fc9071bd4131bf22b4928ea39
+    restart: on-failure
+    environment:
+      BCHN_RPC_URL: http://${APP_BITCOIN_CASH_NODE_NODE_IP}:${APP_BITCOIN_CASH_NODE_RPC_PORT}
+      BCHN_RPC_USER: ${APP_BITCOIN_CASH_NODE_RPC_USER}
+      BCHN_RPC_PASS: ${APP_BITCOIN_CASH_NODE_RPC_PASS}
+      TP_PORT: "8443"
+      SV2_DATA: /data
+      ZMQ_ADDR: tcp://${APP_BITCOIN_CASH_NODE_NODE_IP}:${APP_BITCOIN_CASH_NODE_ZMQ_HASHBLOCK_PORT}
+      PYTHONUNBUFFERED: "1"
+    volumes:
+      - ${APP_DATA_DIR}/data/sv2:/data
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  sv2-pool:
+    image: ghcr.io/danhaus93-ops/lonestrike-sv2-pool:e3e254ebf7d8fb12c74864f2495cff184d2340e7@sha256:2772216fdc33db965ad51251ee210df23f7ba43def00a11947634000b45678f5
+    restart: on-failure
+    environment:
+      # Optional override; normally set via the dashboard's Stratum V2 card.
+      PAYOUT_ADDRESS: ""
+      BRIDGE_ADDR: sv2-bridge:8443
+    volumes:
+      - ${APP_DATA_DIR}/data/sv2:/data
+    ports:
+      - "33333:33333"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    depends_on:
+      - sv2-bridge
