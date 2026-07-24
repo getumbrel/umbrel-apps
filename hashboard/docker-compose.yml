@@ -1,0 +1,12 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: hashboard_web_1
+      APP_PORT: 80
+
+  web:
+    image: ghcr.io/heatpunk/hashboard:0.5.2@sha256:0976041ef019b099c34a9a1924ef9ec2bf5cf1e682addb35ecb85319789bab46
+    restart: on-failure
+    stop_grace_period: 1m
