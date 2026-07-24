@@ -1,0 +1,69 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: onedev_web_1
+      APP_PORT: 6610
+      # Allow Git, package, API, and agent clients to authenticate directly with OneDev.
+      PROXY_AUTH_ADD: "false"
+
+  docker:
+    image: docker:27.2.0-dind@sha256:f9f72ad901a78f27be922b2d320bbc263174f12919c1b37e6a01f828fa904565
+    privileged: true
+    network_mode: host
+    stop_grace_period: 1m
+    restart: on-failure
+    environment:
+      DOCKER_ENSURE_BRIDGE: "dind0:10.32.0.1/16"
+    entrypoint: /entrypoint.sh
+    command: >
+      dockerd
+      --bridge dind0
+      --data-root /data/data
+      --exec-root /data/exec
+      --host unix:///data/docker.sock
+      --pidfile /data/docker.pid
+    volumes:
+      - ${APP_DATA_DIR}/entrypoint.sh:/entrypoint.sh
+      - ${APP_DATA_DIR}/data/docker:/data
+
+  web:
+    image: 1dev/server:16.2.3@sha256:38e560bd9488c1dabf093c9f18c95f66ca3ed1b3f32bca9504881b2053024c25
+    restart: on-failure
+    tty: true
+    depends_on:
+      postgres:
+        condition: service_healthy
+      docker:
+        condition: service_started
+    ports:
+      # Expose OneDev's Git-over-SSH endpoint, which cannot use the HTTP app proxy.
+      - "6611:6611"
+    volumes:
+      - ${APP_DATA_DIR}/data/onedev:/opt/onedev
+      - ${APP_DATA_DIR}/data/docker:/var/run
+    environment:
+      # Pre-fill the Umbrel URL while keeping system settings editable during onboarding.
+      ONEDEV_SERVICE_HOST: "${DEVICE_DOMAIN_NAME}:${APP_PROXY_PORT}"
+      hibernate_connection_password: ${APP_SEED}
+      hibernate_dialect: io.onedev.server.persistence.PostgreSQLDialect
+      hibernate_connection_driver_class: org.postgresql.Driver
+      hibernate_connection_url: jdbc:postgresql://onedev_postgres_1:5432/onedev
+      hibernate_connection_username: postgres
+      DOCKER_HOST: unix:///var/run/docker.sock
+
+  postgres:
+    image: postgres:17.10-alpine@sha256:742f40ea20b9ff2ff31db5458d127452988a2164df9e17441e191f3b72252193
+    restart: on-failure
+    environment:
+      POSTGRES_PASSWORD: ${APP_SEED}
+      POSTGRES_USER: "postgres"
+      POSTGRES_DB: "onedev"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d onedev"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - ${APP_DATA_DIR}/data/postgres:/var/lib/postgresql/data

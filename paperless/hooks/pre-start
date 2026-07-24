@@ -1,0 +1,79 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+APP_ID="${APP_ID:-paperless}"
+APP_ROOT_DIR="${APP_DATA_DIR:-$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")}"
+UMBREL_ROOT="${UMBREL_ROOT:-$(readlink -f "${APP_ROOT_DIR}/../..")}"
+PGDATA_DIR="${APP_ROOT_DIR}/data/pgdata"
+
+log() {
+  echo "paperless pre-start: $*"
+}
+
+app_compose() {
+  "${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" "$@"
+}
+
+# Fresh installs have no existing PostgreSQL data yet, so there is no Paperless
+# migration history to repair before the official image runs its migrations.
+if [[ ! -f "${PGDATA_DIR}/PG_VERSION" ]]; then
+  log "no existing PostgreSQL data found; skipping migration-history backfill"
+  exit 0
+fi
+
+log "checking Paperless mail migration history"
+app_compose up --detach db >/dev/null
+
+for _ in {1..60}; do
+  if app_compose exec -T db pg_isready -U paperless -d paperless >/dev/null 2>&1; then
+    break
+  fi
+  sleep 2
+done
+
+if ! app_compose exec -T db pg_isready -U paperless -d paperless >/dev/null 2>&1; then
+  log "PostgreSQL did not become ready for migration-history check"
+  exit 1
+fi
+
+migration_state="$(
+  app_compose exec -T db psql -U paperless -d paperless -v ON_ERROR_STOP=1 -At <<'SQL'
+SELECT CASE
+  WHEN to_regclass('public.django_migrations') IS NULL THEN 'no-migrations-table'
+  WHEN EXISTS (
+    SELECT 1 FROM django_migrations
+    WHERE app = 'paperless_mail' AND name = '0001_1_clamp_mailrule_maximum_age'
+  ) THEN 'already-recorded'
+  WHEN EXISTS (
+    SELECT 1 FROM django_migrations
+    WHERE app = 'paperless_mail' AND name = '0002_optimize_integer_field_sizes'
+  ) THEN 'backfill-needed'
+  ELSE 'not-needed'
+END;
+SQL
+)"
+
+case "${migration_state}" in
+  backfill-needed)
+    log "recording Paperless 3.0.1 split mail-rule clamp migration for existing 3.0.0 database"
+    app_compose exec -T db psql -U paperless -d paperless -v ON_ERROR_STOP=1 <<'SQL'
+INSERT INTO django_migrations (app, name, applied)
+SELECT 'paperless_mail', '0001_1_clamp_mailrule_maximum_age', CURRENT_TIMESTAMP
+WHERE EXISTS (
+  SELECT 1 FROM django_migrations
+  WHERE app = 'paperless_mail' AND name = '0002_optimize_integer_field_sizes'
+)
+AND NOT EXISTS (
+  SELECT 1 FROM django_migrations
+  WHERE app = 'paperless_mail' AND name = '0001_1_clamp_mailrule_maximum_age'
+);
+SQL
+    ;;
+  already-recorded|not-needed|no-migrations-table)
+    log "migration-history backfill ${migration_state}; no action needed"
+    ;;
+  *)
+    log "unexpected migration state: ${migration_state}"
+    exit 1
+    ;;
+esac
