@@ -1,0 +1,22 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: bisq2_server_1
+      APP_PORT: 8091
+
+  server:
+    image: ghcr.io/bisq-network/bisq2-api@sha256:af77443abc90114b0282d44a1fa5b5f3beeb608b6df76d8674f4366236856154
+    restart: on-failure
+    stop_grace_period: 1m
+    mem_limit: 2g
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+
+  web:
+    image: ghcr.io/bisq-network/bisq2-api-web-ui@sha256:0295d45b6dafb3d9bf0d2e6ba74caeb42222e00eb30d9fa847a136a0f358aa23
+    restart: on-failure
+    network_mode: "service:server"
+    volumes:
+      - ${APP_DATA_DIR}/data:/data:ro
