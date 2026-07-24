@@ -1,0 +1,83 @@
+manifestVersion: 1
+id: lido
+category: bitcoin
+name: Lido
+version: "0.1.40"
+tagline: Solo Bitcoin mining pool for your Umbrel node
+description: >-
+  Lido is an open-source, solo Bitcoin mining application that lets you run your
+  own pool using your own node. Instead of relying on centralized pools, Lido
+  enables your mining hardware to submit work to your personal setup, ensuring
+  that you have full control over your mining operation. If you successfully
+  mine a block, you receive the entire block reward. No splitting with other
+  miners. No fees. No middleman.
+
+
+  Lido is a fully open source solo Bitcoin mining pool fork of Public Pool, with
+  a modern dashboard and Stratum V1 + V2.
+
+
+  Configure Discord and Telegram alerts for blocks found, struggling miners, and
+  optional pool digests—so you stay informed without watching the dashboard.
+
+
+  On umbrelOS, Lido requires the Bitcoin app and is automatically configured to
+  work with your Bitcoin node—no extra setup required. Simply install the
+  Bitcoin node, then Lido, and it's ready to go.
+
+
+  To start mining, point your mining hardware at your Lido instance using the
+  stratum details in the app (host port 2301 for Stratum V1, 2302 for Stratum
+  V2). Monitor hashrate, connected workers, network difficulty, and more from
+  the dashboard.
+releaseNotes: ""
+developer: Kevin Guest
+website: https://github.com/KevinGuest/lido-app
+dependencies:
+  - bitcoin
+repo: https://github.com/KevinGuest/lido-app
+support: https://github.com/KevinGuest/lido-app/issues
+port: 2300
+gallery: []
+path: ""
+defaultUsername: ""
+defaultPassword: ""
+widgets:
+  - id: "stats"
+    type: "four-stats"
+    refresh: "5s"
+    endpoint: "widget-server:3000/widgets/pool"
+    link: ""
+    example:
+      type: "four-stats"
+      link: ""
+      items:
+        - title: "Hash Rate"
+          text: "968"
+          subtext: "GH/s"
+        - title: "Miners"
+          text: "1"
+        - title: "Blocks Found"
+          text: "1"
+        - title: "Block Height"
+          text: "883453"
+  - id: "workers"
+    type: "four-stats"
+    refresh: "5s"
+    endpoint: "server:2299/api/widgets/workers"
+    link: ""
+    example:
+      type: "four-stats"
+      link: ""
+      items:
+        - title: "Hashrate"
+          text: "968"
+          subtext: "GH/s"
+        - title: "Workers"
+          text: "3"
+        - title: "Best Difficulty"
+          text: "1.2M"
+        - title: "Total Shares"
+          text: "48.5K"
+submitter: KevinGuest
+submission: https://github.com/getumbrel/umbrel-apps/pull/5910
