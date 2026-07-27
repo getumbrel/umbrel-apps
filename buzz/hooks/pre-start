@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+APP_DIR="${APP_DATA_DIR:-$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")}"
+SECRETS_DIR="${APP_DIR}/data/relay"
+SECRETS_FILE="${SECRETS_DIR}/relay.env"
+
+mkdir -p "${SECRETS_DIR}"
+
+if [[ -f "${SECRETS_FILE}" ]]; then
+  if grep -Eq '^BUZZ_RELAY_PRIVATE_KEY=[0-9a-f]{64}$' "${SECRETS_FILE}"; then
+    exit 0
+  fi
+
+  echo "Buzz relay identity file is invalid: ${SECRETS_FILE}" >&2
+  exit 1
+fi
+
+umask 077
+relay_private_key="$(od -An -N32 -tx1 /dev/urandom | tr -d ' \n')"
+temporary_file="${SECRETS_FILE}.tmp"
+
+printf 'BUZZ_RELAY_PRIVATE_KEY=%s\n' "${relay_private_key}" >"${temporary_file}"
+mv "${temporary_file}" "${SECRETS_FILE}"
