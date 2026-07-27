@@ -1,0 +1,54 @@
+manifestVersion: 1
+id: dmarc-analyzer
+category: networking
+name: DMARC Analyzer
+version: "0.2.2"
+tagline: Collect and chart the DMARC reports for your domains
+description: >-
+  DMARC Analyzer reads the aggregate reports that Gmail, Outlook and other
+  receivers send back about mail claiming to be from your domains, and turns them
+  into something you can act on: who is sending as you, how much of it passes
+  SPF and DKIM, and what is still blocking a stricter policy.
+
+
+  🛠️ **SET-UP REQUIRED**
+
+
+  You need a mailbox that receives DMARC reports. Publish a DMARC record for your
+  domain with a `rua=` address pointing at it, for example
+  `v=DMARC1; p=none; rua=mailto:dmarc@yourdomain.com`, then add that mailbox
+  under Mailbox sources. Reports arrive roughly once a day per receiver, so the
+  first charts appear within about 24 hours.
+
+
+  The first account you create becomes the administrator; registration closes
+  after that.
+
+
+  **Good to know**
+
+
+  - Nothing is sent anywhere. The app connects out to your mailbox over IMAP and
+    keeps every report in its own PostgreSQL database on your Umbrel.
+
+  - Aggregate (RUA) reports only. Forensic (RUF) reports are not parsed.
+
+  - Reports are statistics, not mail. They contain sending IPs and pass/fail
+    counts, never message content.
+releaseNotes: ""
+
+developer: dmarc-analyzer.net
+website: https://dmarc-analyzer.net
+dependencies: []
+repo: https://github.com/dmarc-analyzer-net/DmarcAnalyzerApp
+support: https://github.com/dmarc-analyzer-net/DmarcAnalyzerApp/issues
+
+port: 8189
+gallery: []
+path: ""
+
+defaultUsername: ""
+defaultPassword: ""
+
+submitter: dmarc-analyzer-net
+submission: ""
