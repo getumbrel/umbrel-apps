@@ -1,218 +1,130 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-DOWNLOADS_DIR="${UMBREL_ROOT}/data/storage/downloads"
-DESIRED_OWNER="1000:1000"
-CONFIG_FILE="${APP_DATA_DIR}/data/config/config.ini"
-TORRENT_CONFIG_FLAG="${APP_DATA_DIR}/TORRENT_CLIENT_CONFIGURED_BY_UMBREL"
-SABNZBD_CONFIG_FLAG="${APP_DATA_DIR}/SABNZBD_CONFIGURED_BY_UMBREL"
+# Current umbrelOS releases include python3. This block uses only Python's
+# standard library, so it has no third-party Python dependencies.
+#
+# Do not create or chown folders in Umbrel's shared Downloads storage here.
+# umbrelOS provisions that storage, and LazyLibrarian runs as UID/GID 1000
+# and creates its required subdirectories with its default 0755 permissions.
+python3 - "${APP_DATA_DIR}" "${UMBREL_ROOT}" <<'PY'
+import configparser
+import os
+from pathlib import Path
+import stat
+import sys
+import tempfile
 
-ensure_downloads_dir() {
-	local -r path="${1}"
+app_data_dir = Path(sys.argv[1])
+umbrel_root = Path(sys.argv[2])
+config_path = app_data_dir / "data/config/config.ini"
+torrent_flag = app_data_dir / "TORRENT_CLIENT_CONFIGURED_BY_UMBREL"
+sabnzbd_flag = app_data_dir / "SABNZBD_CONFIGURED_BY_UMBREL"
 
-	if [[ ! -d "${path}" ]]; then
-		mkdir -p "${path}"
-	fi
-
-	if [[ -d "${path}" ]]; then
-		owner=$(stat -c "%u:%g" "${path}")
-		if [[ "${owner}" != "${DESIRED_OWNER}" ]]; then
-			chown "${DESIRED_OWNER}" "${path}"
-		fi
-	fi
+installed_apps = {
+    app
+    for app in ("transmission", "qbittorrent", "sabnzbd")
+    if (umbrel_root / "app-data" / app / "umbrel-app.yml").is_file()
 }
 
-ensure_downloads_dir "${DOWNLOADS_DIR}/books"
-ensure_downloads_dir "${DOWNLOADS_DIR}/audiobooks"
-ensure_downloads_dir "${DOWNLOADS_DIR}/magazines"
-ensure_downloads_dir "${DOWNLOADS_DIR}/comics"
-ensure_downloads_dir "${DOWNLOADS_DIR}/complete"
-ensure_downloads_dir "${DOWNLOADS_DIR}/complete/books"
-ensure_downloads_dir "${DOWNLOADS_DIR}/complete/audiobooks"
-ensure_downloads_dir "${DOWNLOADS_DIR}/complete/magazines"
-ensure_downloads_dir "${DOWNLOADS_DIR}/complete/comics"
+if not config_path.is_file():
+    print(f"{config_path} does not exist; skipping downloader setup.", file=sys.stderr)
+    sys.exit(0)
 
-set_ini_value() {
-	local -r file="${1}"
-	local -r section="${2}"
-	local -r key="${3}"
-	local -r value="${4}"
-	local tmp
-	tmp="$(mktemp)"
+config = configparser.RawConfigParser(strict=False)
+try:
+    config.read(config_path)
+except configparser.Error as error:
+    print(f"Unable to read {config_path}: {error}", file=sys.stderr)
+    sys.exit(0)
 
-	awk -v section="${section}" -v key="${key}" -v value="${value}" '
-		function trim(str) {
-			gsub(/^[ \t]+|[ \t]+$/, "", str)
-			return str
-		}
 
-		function write_key() {
-			print key " = " value
-			key_written = 1
-		}
+def section(name):
+    for existing in config.sections():
+        if existing.casefold() == name.casefold():
+            return existing
+    config.add_section(name)
+    return name
 
-		BEGIN {
-			target_section = "[" tolower(section) "]"
-			in_section = 0
-			section_found = 0
-			key_written = 0
-		}
 
-		{
-			line = $0
-			normalized = tolower(trim(line))
+def enabled(section_name, prefix):
+    target = section(section_name)
+    return any(
+        key.casefold().startswith(prefix)
+        and value.strip().casefold() in {"1", "true", "yes", "on"}
+        for key, value in config.items(target)
+    )
 
-			if (normalized ~ /^\[[^]]+\]$/) {
-				if (in_section && !key_written) {
-					write_key()
-				}
-				in_section = 0
-			}
 
-			if (normalized == target_section) {
-				in_section = 1
-				section_found = 1
-				key_written = 0
-				print line
-				next
-			}
+changed = False
 
-			if (in_section) {
-				line_key = line
-				sub(/=.*/, "", line_key)
-				line_key = tolower(trim(line_key))
-				if (line_key == tolower(key)) {
-					if (!key_written) {
-						write_key()
-					}
-					next
-				}
-			}
 
-			print line
-		}
+def set_value(section_name, key, value, *, only_if_empty=False):
+    global changed
+    target = section(section_name)
+    if only_if_empty and config.get(target, key, fallback="").strip():
+        return
+    if config.get(target, key, fallback=None) != value:
+        config.set(target, key, value)
+        changed = True
 
-		END {
-			if (!section_found) {
-				print ""
-				print "[" section "]"
-				write_key()
-			} else if (in_section && !key_written) {
-				write_key()
-			}
-		}
-	' "${file}" > "${tmp}"
 
-	mv "${tmp}" "${file}"
-}
+mark_torrent_configured = False
+if not torrent_flag.exists():
+    if enabled("TORRENT", "tor_downloader_"):
+        mark_torrent_configured = True
+    else:
+        torrent_downloaders = {
+            "transmission": "tor_downloader_transmission",
+            "qbittorrent": "tor_downloader_qbittorrent",
+        }
+        installed_torrent_downloaders = [
+            downloader for downloader in torrent_downloaders if downloader in installed_apps
+        ]
+        if len(installed_torrent_downloaders) == 1:
+            downloader = installed_torrent_downloaders[0]
+            set_value("TORRENT", torrent_downloaders[downloader], "1")
+            mark_torrent_configured = True
 
-is_app_installed() {
-	local -r app="${1}"
+mark_sabnzbd_configured = False
+if not sabnzbd_flag.exists():
+    if enabled("USENET", "nzb_downloader_"):
+        mark_sabnzbd_configured = True
+    elif "sabnzbd" in installed_apps:
+        sabnzbd_section = section("SABnzbd")
+        api_key = config.get(sabnzbd_section, "sab_api", fallback="").strip()
+        try:
+            sabnzbd_config = (
+                umbrel_root / "app-data/sabnzbd/data/config/sabnzbd.ini"
+            ).read_text()
+            if not api_key:
+                for line in sabnzbd_config.splitlines():
+                    key, separator, value = line.partition("=")
+                    if separator and key.strip() == "api_key":
+                        api_key = value.strip()
+                        break
+        except OSError:
+            pass
+        if api_key:
+            set_value("USENET", "nzb_downloader_sabnzbd", "1")
+            set_value("SABnzbd", "sab_api", api_key, only_if_empty=True)
+            mark_sabnzbd_configured = True
 
-	"${UMBREL_ROOT}/scripts/app" ls-installed | grep --quiet "${app}"
-}
+if changed:
+    original = config_path.stat()
+    with tempfile.NamedTemporaryFile(
+        "w",
+        dir=config_path.parent,
+        delete=False,
+    ) as temporary:
+        config.write(temporary)
+        temporary_path = Path(temporary.name)
+    os.chmod(temporary_path, stat.S_IMODE(original.st_mode))
+    os.chown(temporary_path, original.st_uid, original.st_gid)
+    os.replace(temporary_path, config_path)
 
-has_active_torrent_downloader() {
-	grep -Eiq '^[[:space:]]*tor_downloader_[^=]*=[[:space:]]*1' "${CONFIG_FILE}"
-}
-
-has_active_usenet_downloader() {
-	grep -Eiq '^[[:space:]]*nzb_downloader_[^=]*=[[:space:]]*1' "${CONFIG_FILE}"
-}
-
-configure_transmission() {
-	set_ini_value "${CONFIG_FILE}" "TORRENT" "tor_downloader_transmission" "1"
-	set_ini_value "${CONFIG_FILE}" "TRANSMISSION" "transmission_host" "transmission_server_1"
-	set_ini_value "${CONFIG_FILE}" "TRANSMISSION" "transmission_port" "9091"
-	set_ini_value "${CONFIG_FILE}" "TRANSMISSION" "transmission_base" "/transmission"
-	set_ini_value "${CONFIG_FILE}" "TRANSMISSION" "transmission_dir" "/downloads/complete"
-	set_ini_value "${CONFIG_FILE}" "TRANSMISSION" "transmission_label" "books,audiobooks,magazines,comics"
-}
-
-configure_qbittorrent() {
-	set_ini_value "${CONFIG_FILE}" "TORRENT" "tor_downloader_qbittorrent" "1"
-	set_ini_value "${CONFIG_FILE}" "QBITTORRENT" "qbittorrent_host" "qbittorrent_server_1"
-	set_ini_value "${CONFIG_FILE}" "QBITTORRENT" "qbittorrent_port" "8080"
-	set_ini_value "${CONFIG_FILE}" "QBITTORRENT" "qbittorrent_base" ""
-	set_ini_value "${CONFIG_FILE}" "QBITTORRENT" "qbittorrent_user" ""
-	set_ini_value "${CONFIG_FILE}" "QBITTORRENT" "qbittorrent_pass" ""
-	set_ini_value "${CONFIG_FILE}" "QBITTORRENT" "qbittorrent_label" ""
-	set_ini_value "${CONFIG_FILE}" "QBITTORRENT" "qbittorrent_dir" "/downloads/complete"
-}
-
-configure_torrent_client_if_available() {
-	if [[ -f "${TORRENT_CONFIG_FLAG}" ]]; then
-		return
-	fi
-
-	if has_active_torrent_downloader; then
-		echo "LazyLibrarian already has an active torrent client configured. Skipping torrent client auto-configuration."
-		return
-	fi
-
-	if is_app_installed "transmission"; then
-		configure_transmission
-		touch "${TORRENT_CONFIG_FLAG}"
-		return
-	fi
-
-	if is_app_installed "qbittorrent"; then
-		configure_qbittorrent
-		touch "${TORRENT_CONFIG_FLAG}"
-		return
-	fi
-}
-
-get_sabnzbd_api_key() {
-	local -r sabnzbd_config="${UMBREL_ROOT}/app-data/sabnzbd/data/config/sabnzbd.ini"
-
-	if [[ ! -f "${sabnzbd_config}" ]]; then
-		return
-	fi
-
-	awk -F= '
-		/^[[:space:]]*api_key[[:space:]]*=/ {
-			value = $2
-			gsub(/^[ \t]+|[ \t]+$/, "", value)
-			print value
-			exit
-		}
-	' "${sabnzbd_config}"
-}
-
-configure_sabnzbd_if_available() {
-	local sabnzbd_api_key
-
-	if [[ -f "${SABNZBD_CONFIG_FLAG}" ]]; then
-		return
-	fi
-
-	if ! is_app_installed "sabnzbd"; then
-		return
-	fi
-
-	if has_active_usenet_downloader; then
-		echo "LazyLibrarian already has an active Usenet client configured. Skipping SABnzbd auto-configuration."
-		return
-	fi
-
-	sabnzbd_api_key="$(get_sabnzbd_api_key)"
-	if [[ -z "${sabnzbd_api_key}" ]]; then
-		echo "SABnzbd is installed, but its API key is not available yet. Skipping SABnzbd auto-configuration."
-		return
-	fi
-
-	set_ini_value "${CONFIG_FILE}" "USENET" "nzb_downloader_sabnzbd" "1"
-	set_ini_value "${CONFIG_FILE}" "SABnzbd" "sab_host" "sabnzbd_web_1"
-	set_ini_value "${CONFIG_FILE}" "SABnzbd" "sab_port" "8080"
-	set_ini_value "${CONFIG_FILE}" "SABnzbd" "sab_subdir" ""
-	set_ini_value "${CONFIG_FILE}" "SABnzbd" "sab_user" ""
-	set_ini_value "${CONFIG_FILE}" "SABnzbd" "sab_pass" ""
-	set_ini_value "${CONFIG_FILE}" "SABnzbd" "sab_api" "${sabnzbd_api_key}"
-	set_ini_value "${CONFIG_FILE}" "SABnzbd" "sab_cat" ""
-	touch "${SABNZBD_CONFIG_FLAG}"
-}
-
-touch "${CONFIG_FILE}"
-configure_torrent_client_if_available
-configure_sabnzbd_if_available
+if mark_torrent_configured:
+    torrent_flag.touch()
+if mark_sabnzbd_configured:
+    sabnzbd_flag.touch()
+PY
