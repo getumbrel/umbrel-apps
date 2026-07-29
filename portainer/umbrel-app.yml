@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: portainer
 category: developer
 name: Portainer
-version: "2.39.4-1"
+version: "2.39.5"
 tagline: Run custom Docker containers on your Umbrel
 description: >-
   ⚠️ Make sure to only use named Docker volumes for your stacks and containers. Data in bind-mounted volumes
@@ -51,10 +51,18 @@ path: ""
 defaultUsername: "admin"
 defaultPassword: "changeme"
 releaseNotes: >-
-  Fixes a networking issue from the last update that could cause other Umbrel apps to lose internet access while Portainer was running.
+  Portainer 2.39.5 LTS includes reliability fixes for Docker and Edge environments, plus security dependency updates. This package keeps the Docker runtime rollback from 2.39.4-1 that fixes a networking issue affecting other Umbrel apps.
 
 
-  If any apps still have network issues after updating Portainer, please restart your Umbrel.
+  Highlights include:
+    - Fixed Git stack deployments that use relative env_file paths from repository subdirectories
+    - Improved Edge tunnel reliability on high-latency connections
+    - Fixed team visibility in access control selectors and Swarm image deletion across nodes
+    - Prevented long Docker stack deployments from staying stuck in "Deploying" after timeout
+    - Updated Alpine and containerd dependencies to address CVEs
+
+
+  Full release notes can be found at https://github.com/portainer/portainer/releases/tag/2.39.5.
 permissions:
   - GPU
 developer: Portainer

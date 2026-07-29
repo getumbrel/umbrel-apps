@@ -3,7 +3,7 @@ id: bolt12-pay
 name: BOLT12 Pay
 tagline: Self-hosted Lightning payments and identity with BOLT12, BIP353, LNURL, and Nostr
 category: bitcoin
-version: 0.2.116.1
+version: 0.3.0.2
 port: 8367
 description: >-
   BOLT12 Pay is a self-hosted Lightning payments and identity app for LND nodes.
@@ -152,26 +152,33 @@ repo: https://github.com/Alex71btc/lndk-pay
 support: https://github.com/Alex71btc/lndk-pay/issues
 releaseNotes: |
 
+  Highlights:
+
+  - Introduces Transaction History for incoming and outgoing Lightning payments
+  - Automatically synchronizes payment history from LND
+  - Preserves payment metadata including BOLT12, Lightning Address, LNURL, NWC, Zaps and Keysend
+  - Live synchronization keeps transaction history up to date
+  - Improved NWC wallet integration and payment handling
+  - Numerous UI improvements and bug fixes
+
   Native Onion Messaging:
 
-   - Added automatic detection of native onion messaging support in LND v0.21+
-   - Setup page automatically detects compatible LND versions
-   - Native Onion Messaging status is displayed during setup
-   - Legacy configuration instructions are hidden when native support is available
-   - Maintains compatibility with LND v0.20.x custom-message transport
+  - Automatic detection of native Onion Messaging support in LND v0.21+
+  - Native Onion Messaging status is displayed during setup
+  - Legacy custom-message configuration is automatically hidden when no longer required
+  - Full compatibility with both LND v0.20.x and LND v0.21.x
 
-  User Experience:
+  Payment Compatibility:
 
-   - Added copy-to-clipboard support for Last Payment Result output
-   - Fixed LNURL payment success messages not respecting the selected UI language
-   - Improved setup and documentation guidance
+  - Automatic fallback between LND v0.20 and v0.21 payment APIs
+  - Automatically switches to RouterRPC on LND v0.21 when required
+  - Improved Lightning Address, LNURL, BOLT11, BOLT12 and NWC payment compatibility
+  - Added default routing fee limits for better interoperability with wallets and Lightning Address providers
 
-  Upgrade notes:
+  Upgrade Notes:
 
-   - LND v0.20.x users should keep their existing custom protocol configuration.
-   - LND v0.21.x users should remove all legacy custom protocol settings from lnd.conf before upgrading Lightning.
-
-  This release maintains compatibility with existing BOLT12 Pay installations while preparing for the transition to native onion messaging in LND.
+  - LND v0.20.x users should keep their existing custom protocol configuration.
+  - LND v0.21.x users should remove legacy custom protocol settings from lnd.conf after upgrading to native Onion Messaging support.
 
 dependencies:
   - lightning

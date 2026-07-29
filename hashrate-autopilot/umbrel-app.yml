@@ -2,7 +2,7 @@ manifestVersion: 1
 id: hashrate-autopilot
 category: bitcoin
 name: Hashrate Autopilot
-version: "1.16.0"
+version: "1.17.4"
 tagline: Autopilot for renting hashrate to mine on Ocean Mining
 
 description: >-
@@ -43,13 +43,15 @@ description: >-
   reads spend from Braiins and earnings from your on-chain wallet.
 
 
-  This app declares Bitcoin Node, Electrs, and Datum Gateway as dependencies, so
-  Umbrel will prompt you to install them during setup. Once all apps run on the
-  same Umbrel, the autopilot's dashboard auto-discovers the local Datum HTTP
-  API, Electrs server, and Bitcoin RPC across Umbrel's shared Docker network -
-  zero copy/paste, the worker-count, hashrate, P&L earnings, and BIP110
-  signalling panels all populate on first boot. (Pointing at off-Umbrel
-  instances is also supported - just override the URLs in Config after setup.)
+  This app declares a Bitcoin node, an Electrum server, and Datum Gateway as
+  dependencies, so Umbrel will prompt you to install them during setup - any of
+  Umbrel's Bitcoin node apps and any Electrum server (Electrs, Fulcrum, or
+  ElectrumX) works. Once all apps run on the same Umbrel, the autopilot's
+  dashboard auto-discovers the local Datum HTTP API, Electrum server, and
+  Bitcoin RPC across Umbrel's shared Docker network - zero copy/paste, the
+  worker-count, hashrate, P&L earnings, and BIP110 signalling panels all
+  populate on first boot. (Pointing at off-Umbrel instances is also supported -
+  just override the URLs in Config after setup.)
 
 developer: Remco Douma
 website: https://github.com/rdouma/hashrate-autopilot
@@ -71,16 +73,25 @@ defaultPassword: ""
 submitter: Remco Douma
 submission: https://github.com/getumbrel/umbrel-apps/pull/5685
 releaseNotes: >-
-  v1.16.0 - the Timeline release: one unified event log, alert recoveries, Excel export, and two controller-safety fixes.
+  v1.17.4 - a daemon-stability fix, corrected Lightning payout amounts, and a new FAQ (everything since v1.17.2).
 
 
-  New: the former "History" page is rebuilt as **Timeline**, a single chronological feed of everything that happened - bid actions, alert conditions with their durations, on-chain payouts, Braiins deposits, every pool block (yours crowned), difficulty retargets, public-IP changes, config edits, and daemon restarts. Every row opens a detail panel; rows and chart markers jump to each other with a sonar ping. Alert **recoveries** now log as emerald "resolved" rows the moment the condition heals. **Excel export** streams the current filtered Timeline to a formatted .xlsx (frozen header, autofilter, your display units, your language) with no row cap. **Follow (live tail)** pins newest events to the top and polls all sources faster - a live console during an incident. Daemon restarts show on the price chart as an emerald power marker. Timeline columns, detail panels, chart tooltips, decision reasons, and the Excel export are all denomination-aware (sats/BTC/USD, TH/PH/EH).
+  Fixed: The daemon no longer crash-loops when your Electrum server (electrs, Fulcrum, or ElectrumX) restarts or drops an idle connection while it is mid-request - previously that could crash the daemon and restart it in a loop, spamming Telegram. It now handles a dropped connection cleanly and retries.
 
 
-  Fixes: a transient failure fetching Braiins's bid list could make the autopilot post a duplicate bid - creating now requires a confirmed-successful fetch and an empty local ledger. Stop-spend protection during a DATUM outage now keys on the mandatory stratum probe instead of the optional stats API, so the protection works without the stats API configured and a stats-API blip can no longer cancel healthy bids. Pool-block alerts now report the exact TIDES credit Ocean recorded instead of a ~1%-high estimate. Wallet-runway alert threshold accepts fractional days via env var; BIP 110 block amounts render with fixed 8 decimals; unpaid-line block dots explain the balance step they sit on.
+  Fixed: Removed a misleading "Telegram 2FA tap required" note shown after placing a bid - the autopilot bids through Braiins' API with your owner token, which needs no Telegram confirmation (that step exists only in Braiins' own web interface).
+
+
+  Fixed: Deduced Lightning payouts no longer overcount a partial sweep - when Ocean credits a freshly found block and then pays out only the older balance, the payout is now recorded as the actual balance decrease rather than the full pre-drop reading, and any amounts already stored self-correct on the next scan.
+
+
+  Fixed: The Bitaxe miners card now respects your number-format locale instead of a hard-coded decimal point.
+
+
+  New: A short, plain-language FAQ covering setup and topology (including what to put in the Stratum host field), payouts and Profit & Loss, bidding, and what you need running: https://github.com/rdouma/hashrate-autopilot/blob/main/FAQ.md
 
 
   Migrating from the community-store version (rdouma-hashrate-autopilot)? One-time five-minute guide: https://github.com/rdouma/hashrate-autopilot/blob/main/docs/migrating-from-community-store.md
 
 
-  Full release notes: https://github.com/rdouma/hashrate-autopilot/releases/tag/v1.16.0
+  Full release notes: https://github.com/rdouma/hashrate-autopilot/releases/tag/v1.17.4

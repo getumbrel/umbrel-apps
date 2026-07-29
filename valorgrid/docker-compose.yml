@@ -1,0 +1,19 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: valorgrid_app_1
+      APP_PORT: 1325
+
+  app:
+    image: ghcr.io/aivm23/valorgrid:v3.33.4@sha256:38a7009a9f7deb53eed9169d49d3982b4da2be6327557e89fad458987e48d54a
+    restart: on-failure
+    environment:
+      HOST: 0.0.0.0
+      PORT: 1325
+      PORTFOLIO_DB_PATH: /data/portfolio.sqlite
+      VALORGRID_BACKUP_DIR: /data/backups
+      VALORGRID_AUTH_USER: valorgrid
+      VALORGRID_AUTH_PASSWORD: ""
+      VALORGRID_ALPHA_VANTAGE_API_KEY: ""
+    volumes:
+      - ${APP_DATA_DIR}/data:/data

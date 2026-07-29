@@ -1,0 +1,22 @@
+services:
+
+  app_proxy:
+    environment:
+      APP_HOST: skybro_web_1
+      APP_PORT: 5000
+
+  tracker:
+    image: xdeekay/skybro-tracker:1.5.7@sha256:bdf57d79bd57edab657fc8c87f6699636e381d796228c6e0f545864155b6ecc6
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+      - /etc/localtime:/etc/localtime:ro
+
+  web:
+    image: xdeekay/skybro-dashboard:1.5.7@sha256:4582ab1ca4bd682e4b36631ab9f1ba37ef6d0b7acf17560395835da525c33158
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+      - /etc/localtime:/etc/localtime:ro
+    depends_on:
+      - tracker

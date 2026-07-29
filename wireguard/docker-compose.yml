@@ -7,6 +7,9 @@ services:
       APP_PORT: 51821
   
   app:
+    # TODO: When updating WireGuard Easy, check the compatibility issue documented in
+    # https://github.com/getumbrel/private-umbrel-apps/pull/1325. If upstream has resolved
+    # it, remove the firewall backend compatibility logic from hooks/pre-start.
     image: ghcr.io/wg-easy/wg-easy:15.3.0@sha256:93bbd593e07bab98d02807a28770ac87ab6c48818e319e68c1f66561feb99876
     restart: on-failure
     stop_grace_period: 1m

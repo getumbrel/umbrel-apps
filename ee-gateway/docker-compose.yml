@@ -8,10 +8,9 @@
 # network (which it needs to reach the Bluetooth radio) while the UI stays on
 # Umbrel's app network behind app_proxy.
 #
-# Credentials are NOT passed as environment variables here. The user enters the
-# upstream network's org id and API token once in the UI setup wizard, which
-# writes them to config.json in the shared volume; the worker reads that file
-# every scan cycle.
+# Credentials are NOT passed as environment variables here. The user enters an
+# encryptedenergy.com API token once in the UI setup wizard, which writes it to
+# config.json in the shared volume; the worker reads that file every scan cycle.
 #
 # umbreld creates ${APP_DATA_DIR}/data owned by root, but both app containers
 # run as uid 1000 and so cannot write it. The init_perms service fixes ownership
@@ -35,7 +34,7 @@ services:
   # extra download, and it is the only place root is used. This is NOT privileged
   # mode; the app containers themselves stay non-root.
   init_perms:
-    image: encryptedenergy/ee-gateway-worker:0.7.6@sha256:b3098383cbdf7be72d4e43e5f4581ae7b5f0ae4d3cb71e6e0136711c54a89df2
+    image: encryptedenergy/ee-gateway-worker:0.7.7@sha256:678688523b9357b87308aae532b8f57a0a5769eb43ad33911ad0c345220eb17b
     user: "0:0"
     entrypoint: ["sh", "-c", "chown -R 1000:1000 /data"]
     restart: on-failure
@@ -48,7 +47,7 @@ services:
   # Runs as uid 1000 (set in the image). init: true so SIGTERM reaches Flask
   # for a clean shutdown.
   ui:
-    image: encryptedenergy/ee-gateway-ui:0.6.3@sha256:2a5c2bb43daf5d22ad5f284d4cb6236c89365d83b31848acb8223c724e9bca75
+    image: encryptedenergy/ee-gateway-ui:0.6.4@sha256:c30e4b2a2bd640005499e4fe564a04f6650b920c0726b15e2437eaa41ffb25eb
     init: true
     restart: on-failure
     depends_on:
@@ -59,7 +58,7 @@ services:
     environment:
       EE_DATA_DIR: /data
       EE_UI_PORT: 8080
-      EE_GATEWAY_VERSION: "0.10.5"
+      EE_GATEWAY_VERSION: "0.10.6"
 
   # BLE scan + GPS-stamped cloud ingest worker. It reaches the host's
   # Bluetooth radio through bluetoothd over the D-Bus system bus, talks to
@@ -68,7 +67,7 @@ services:
   # Python process runs as uid 1000; gpsd starts as root only to open the
   # serial device, then drops to user nobody.
   worker:
-    image: encryptedenergy/ee-gateway-worker:0.7.6@sha256:b3098383cbdf7be72d4e43e5f4581ae7b5f0ae4d3cb71e6e0136711c54a89df2
+    image: encryptedenergy/ee-gateway-worker:0.7.7@sha256:678688523b9357b87308aae532b8f57a0a5769eb43ad33911ad0c345220eb17b
     init: true
     restart: on-failure
     depends_on:

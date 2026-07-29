@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Paperless 3.0.2 and later restore the released paperless_mail.0002 migration
+# graph, so the temporary 3.0.1 migration-history backfill must not run for
+# users who skip directly from that package. Keep this no-op hook so updates
+# overwrite the old copied hook in existing app data.
+echo "paperless pre-start: upstream 3.0.2+ migration fix active; no migration-history backfill needed"

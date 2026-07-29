@@ -1,14 +1,19 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# WireGuard Easy v15 is a full rewrite that replaces the v14 wg0.json runtime
-# config with a SQLite database and a first-run setup wizard. Upstream only
-# documents a manual migration: start v15, create the admin user, upload the
-# v14 wg0.json backup, then set the public host/port again.
+# WireGuard Easy v15 still defaults to legacy iptables, which is unavailable on
+# newer Raspberry Pi kernels. This hook starts the real app container, keeps the
+# legacy backend where it works, or selects the bundled nft backend before the
+# normal app start. The selection lives in the container's writable layer, so it
+# is reapplied whenever Umbrel recreates the container.
+#
+# The hook also handles WireGuard Easy's v14 to v15 migration. Version 15
+# replaces the v14 wg0.json runtime config with a SQLite database and a first-run
+# setup wizard. Upstream only documents a manual migration: start v15, create the
+# admin user, upload the v14 wg0.json backup, then set the public host/port again.
 #
 # Umbrel users expect app updates to preserve state without SSH/manual file
 # handling, so this hook drives that same upstream setup API automatically. It
-# runs in pre-start, briefly starts the app service through Umbrel's app script,
 # imports the existing v14 config when present, verifies the import, records a
 # persistent done marker, then stops the temporary service so the normal Umbrel
 # start can continue. If migration cannot be verified, no done marker is written
@@ -30,7 +35,7 @@ USERNAME="umbrel"
 PASSWORD="${APP_PASSWORD:-}"
 HOSTNAME="${DEVICE_DOMAIN_NAME:-umbrel.local}"
 WIREGUARD_PORT="51820"
-STARTED_APP_FOR_SETUP=false
+STARTED_APP_FOR_PRE_START=false
 
 log() {
   local message="${LOG_PREFIX} $*"
@@ -61,17 +66,54 @@ app_compose() {
   "${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" "$@"
 }
 
-start_setup_app() {
-  log "starting app service for v15 setup"
-  app_compose up --detach app >/dev/null
-  STARTED_APP_FOR_SETUP=true
+configure_firewall_backends() {
+  app_compose exec -T app sh -s <<'EOF'
+set -eu
+
+select_firewall_backend() {
+  family="$1"
+  legacy="${family}-legacy"
+  nft="${family}-nft"
+
+  # Preserve the image's legacy backend where the host kernel supports it.
+  # Newer kernels without the legacy modules use the bundled nft backend.
+  if "${legacy}" -w 5 -t nat -L >/dev/null 2>&1; then
+    selected="${legacy}"
+  elif "${nft}" -w 5 -t nat -L >/dev/null 2>&1; then
+    update-alternatives --install "/usr/sbin/${family}" "${family}" "/usr/sbin/${nft}" 20 \
+      --slave "/usr/sbin/${family}-restore" "${family}-restore" "/usr/sbin/${nft}-restore" \
+      --slave "/usr/sbin/${family}-save" "${family}-save" "/usr/sbin/${nft}-save" >/dev/null
+    selected="${nft}"
+  else
+    echo "neither ${legacy} nor ${nft} can access the nat table" >&2
+    return 1
+  fi
+
+  update-alternatives --set "${family}" "/usr/sbin/${selected}" >/dev/null
+  if ! "${family}" -w 5 -t nat -L >/dev/null 2>&1; then
+    echo "selected ${selected}, but ${family} still cannot access the nat table" >&2
+    return 1
+  fi
+
+  echo "${family}: ${selected}"
 }
 
-stop_setup_app() {
-  if [[ "${STARTED_APP_FOR_SETUP}" == "true" ]]; then
-    log "stopping setup app service before normal Umbrel start"
+select_firewall_backend iptables
+select_firewall_backend ip6tables
+EOF
+}
+
+start_prestart_app() {
+  log "starting app service for pre-start checks"
+  app_compose up --detach app >/dev/null
+  STARTED_APP_FOR_PRE_START=true
+}
+
+stop_prestart_app() {
+  if [[ "${STARTED_APP_FOR_PRE_START}" == "true" ]]; then
+    log "stopping temporary app service before normal Umbrel start"
     app_compose stop app >/dev/null 2>&1 || true
-    STARTED_APP_FOR_SETUP=false
+    STARTED_APP_FOR_PRE_START=false
   fi
 }
 
@@ -255,30 +297,51 @@ migrate_v14_install() {
   log "auto-migration completed with ${CLIENT_COUNT} client(s)"
 }
 
-if [[ -f "${DONE_MARKER}" ]]; then
-  log "setup already completed; skipping"
-  exit 0
-fi
-
 mkdir -p "${STATE_DIR}"
 chmod 700 "${STATE_DIR}" || true
 
 require_command curl
-require_command jq
-require_command sed
 
 if [[ ! -x "${UMBREL_ROOT}/scripts/app" ]]; then
   fail "Umbrel app script is unavailable at ${UMBREL_ROOT}/scripts/app"
 fi
 
+BASE_URL=""
+start_prestart_app
+trap stop_prestart_app EXIT
+
+if ! wait_for_app; then
+  log "ERROR: v15 web service did not become ready for firewall setup"
+  exit 1
+fi
+
+FIREWALL_BACKEND_OUTPUT=""
+if ! FIREWALL_BACKEND_OUTPUT="$(configure_firewall_backends 2>&1)"; then
+  log "ERROR: firewall backend setup failed: ${FIREWALL_BACKEND_OUTPUT}"
+  exit 1
+fi
+while IFS= read -r line; do
+  [[ -n "${line}" ]] && log "firewall backend ${line}"
+done <<< "${FIREWALL_BACKEND_OUTPUT}"
+
+log "restarting app service with the selected firewall backend"
+app_compose restart app >/dev/null
+if ! wait_for_app; then
+  log "ERROR: v15 web service did not become ready after firewall setup"
+  exit 1
+fi
+
+if [[ -f "${DONE_MARKER}" ]]; then
+  log "setup already completed; firewall backend is ready"
+  exit 0
+fi
+
+require_command jq
+require_command sed
+
 if [[ -z "${PASSWORD}" ]]; then
   fail "APP_PASSWORD is unavailable"
 fi
-
-BASE_URL=""
-start_setup_app
-trap stop_setup_app EXIT
-wait_for_app || fail "v15 web service did not become ready"
 
 if [[ -s "${OLD_CONFIG}" ]]; then
   migrate_v14_install
