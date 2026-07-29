@@ -10,7 +10,7 @@ services:
       PROXY_AUTH_WHITELIST: "/api/pool,/api/pool/*"
 
   web:
-    image: ghcr.io/kevinguest/lido-ui:0.1.39@sha256:f99fe29e84f16d98bd58e3d33cd695a605fbd37ce0a9dc5bcebdf916da1135d0
+    image: ghcr.io/kevinguest/lido-ui:0.1.40@sha256:5bb0beb49efda0f469779b694128a3ca1b50fda9231f53c2f78ab3fd78035d96
     restart: on-failure
     stop_grace_period: 30s
     environment:
@@ -19,11 +19,11 @@ services:
       - PUBLIC_POOL_API_URL=http://lido_server_1:2299
       - PUBLIC_POOL_STRATUM_URL=${DEVICE_DOMAIN_NAME}:2301
       # App-store package version for update checks (not the UI image tag).
-      - LIDO_APP_VERSION=0.1.41
+      - LIDO_APP_VERSION=0.1.42
 
   server:
     # Lido Nest pool fork (not upstream benjamin-wilson/public-pool)
-    image: ghcr.io/kevinguest/lido:0.1.20@sha256:3cf63140282a499e0d84fc06b8ae79962db78e4c3e21e9cdedee49c0eddc2165
+    image: ghcr.io/kevinguest/lido:0.1.21@sha256:5d69c723997f5b8bfcbd702c6063e7985c0f55be3dc701a944b4bcdc9a78b0ce
     restart: on-failure
     stop_grace_period: 30s
     ports:
