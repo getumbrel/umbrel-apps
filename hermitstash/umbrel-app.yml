@@ -2,7 +2,7 @@ manifestVersion: 1
 id: hermitstash
 category: files
 name: HermitStash
-version: "1.13.14"
+version: "1.13.21"
 tagline: Post-quantum encrypted self-hosted file sharing
 description: >-
   HermitStash is a self-hosted file upload server with post-quantum encryption. Every file and database field is sealed with an ML-KEM-1024 + ECDH P-384 hybrid envelope and XChaCha20-Poly1305 before touching disk; passwords use Argon2id. Nothing is stored in plaintext, including database fields the operator never thinks of as sensitive.
@@ -31,9 +31,12 @@ defaultPassword: ""
 submitter: dotCooCoo
 submission: https://github.com/getumbrel/umbrel-apps/pull/5378
 releaseNotes: >-
-  This release refreshes HermitStash's runtime base image with patched security updates.
+  This security-focused release keeps plaintext upload data off disk and hardens authentication, backup/restore, and path cleanup behavior.
 
+  - Uploads and chunked-upload fragments are now processed in memory or encrypted while staged, so plaintext file content is not written to disk before sealing.
+  - Backup restores, sealed-column queries, sealed-array updates, and backup operation locks are now more robust.
+  - Google sign-in now binds returning accounts to their stable Google identity, uses PKCE, and has stronger request handling and rate limiting.
+  - Certificate, encrypted-blob, path-containment, directory-cleanup, and startup HTTPS-warning checks now fail closed more consistently.
 
-  - The runtime base image now includes npm's patched node-tar package for CVE-2026-59871, CVE-2026-59873, and CVE-2026-59874.
-  - The base image also includes the latest glibc rebuild used by HermitStash's runtime.
+  Full release notes can be found at https://github.com/dotCooCoo/hermitstash/releases/tag/v1.13.21
 dependencies: []
