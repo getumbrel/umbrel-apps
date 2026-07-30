@@ -14,11 +14,14 @@ services:
       - titra-mongodb
     environment:
       ROOT_URL: "http://${DEVICE_DOMAIN_NAME}:3471"
-      MONGO_URL: "mongodb://titra-mongodb:27017/titra?directConnection=true"
+      MONGO_URL: "mongodb://titra:${APP_SEED}@titra-mongodb:27017/titra?authSource=admin&directConnection=true"
       PORT: "3000"
 
   titra-mongodb:
-    image: mongo:7.0@sha256:d5b3ca8c3f3cdce78d44870dc0871b76d5235e9b2ad4ea6bea5d1fbff8027703
+    image: mongo:7.0.37@sha256:340c1c56fb10e95cf79ff547f8664b96bc6ead9909bc355238cbf865a9695a6f
     restart: on-failure
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: titra
+      MONGO_INITDB_ROOT_PASSWORD: ${APP_SEED}
     volumes:
       - ${APP_DATA_DIR}/data/mongodb:/data/db
