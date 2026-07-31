@@ -2,7 +2,7 @@ manifestVersion: 1
 id: yuvomi
 category: files
 name: Yuvomi
-version: "1.45.0"
+version: "1.63.0"
 tagline: Self-hosted family planner — calendar, tasks, shopping, meals & budget
 description: >-
   Yuvomi is a self-hosted, privacy-focused family planner that bundles everything
@@ -51,12 +51,30 @@ description: >-
   Open Yuvomi from your Umbrel dashboard and create the first account — that
   account becomes the family admin and can invite the rest of the household.
 releaseNotes: >-
-  Yuvomi adds Google Drive storage support for Documents and Calendar attachments
-  when OAuth credentials are configured. Existing files stay on their recorded
-  backend.
+  Yuvomi now encrypts its SQLite database on Umbrel. Existing databases are
+  encrypted on first start; the original remains as
+  yuvomi.db.plaintext-backup in app data for manual removal after you have
+  checked your data. Existing app-managed database backups are left unchanged.
 
-  Calendar attachment access now stays aligned with event visibility and
-  assignees, so private or restricted files are not exposed to the household.
+  Calendar sync now sends edits, deletions, and calendar moves back to Google,
+  CalDAV, and iCloud calendars. Google recurring events are migrated back into
+  proper series during a one-time full sync, and CardDAV contact duplication and
+  unnecessary sync writes are fixed.
+
+  A new Pantry module tracks household stock, expiry dates, and shopping-list
+  transfers. Subscriptions can now end on a date or after a set number of
+  payments.
+
+  Recipes, meal planning, shopping lists, Budget, mobile layouts, accessibility,
+  push reminders, and passwords containing accented characters all receive
+  improvements and fixes.
+
+  Full release notes are available at
+  https://github.com/ulsklyc/yuvomi/compare/v1.45.0...v1.63.0
+
+backupIgnore:
+  - data/app/yuvomi.db.plaintext-backup*
+  - data/backups/*.db
 
 developer: Ulas Kalayci
 website: https://github.com/ulsklyc/yuvomi
