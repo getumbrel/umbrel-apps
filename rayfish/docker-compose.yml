@@ -1,0 +1,24 @@
+# Rayfish is a mesh VPN: the daemon must own a host TUN interface and the
+# host route table so the whole Umbrel (and its other apps) is reachable
+# over the mesh. That requires host networking plus NET_ADMIN/NET_RAW and
+# /dev/net/tun, the same access pattern as the Tailscale app. Because of
+# host networking there is no app_proxy; the manifest port 8480 is served
+# by the container itself (the ray gui dashboard behind a local proxy).
+version: "3.7"
+
+services:
+  web:
+    network_mode: "host"
+    image: ghcr.io/rayfish/rayfish-umbrel:f3a5e28@sha256:06867c9d5fdd8920d1ea4e15aa06f5c5254ceb83eff9fc6a3b0a18c589f23956
+    restart: on-failure
+    stop_grace_period: 1m
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    volumes:
+      # Identity, settings.toml, and per-network config; must survive
+      # restarts and updates.
+      - ${APP_DATA_DIR}/data/config:/etc/rayfish
+      - ${APP_DATA_DIR}/data/logs:/var/log/rayfish
