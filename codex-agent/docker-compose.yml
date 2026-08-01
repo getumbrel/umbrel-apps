@@ -1,0 +1,60 @@
+version: "3.7"
+
+services:
+  # Umbrel's managed proxy is the sole route from a browser to this app.
+  app_proxy:
+    environment:
+      APP_HOST: codex-agent_app_1
+      APP_PORT: "8080"
+    networks:
+      default: {}
+      codex_agent_private: {}
+
+  app:
+    build:
+      context: ${APP_DATA_DIR}
+      dockerfile: Dockerfile
+      args:
+        CODEX_VERSION: "0.145.0"
+    user: "1000:1000"
+    init: true
+    restart: on-failure
+    stop_grace_period: 45s
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    environment:
+      HOME: /data/codex-home
+      CODEX_HOME: /data/codex-home
+      PORT: "8080"
+      CODEX_WORKSPACE: /projects
+      CODEX_AUTH_FILE: /run/secrets/codex/auth.json
+      NODE_ENV: production
+    volumes:
+      # Persistent SSD-backed application state and user project workspaces.
+      - ${APP_DATA_DIR}/data:/data:rw
+      - ${APP_DATA_DIR}/projects:/projects:rw
+      # Created on the host at deployment time; never committed or baked in.
+      - ${APP_DATA_DIR}/runtime-secrets:/run/secrets/codex:ro
+    tmpfs:
+      - /runtime:uid=1000,gid=1000,mode=0700
+      - /tmp:uid=1000,gid=1000,mode=1777
+    healthcheck:
+      test: ["CMD", "node", "/app/healthcheck.mjs"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    networks:
+      codex_agent_private: {}
+
+networks:
+  # Required by Umbrel's proxy; the app service itself does not join it.
+  default:
+    name: umbrel_main_network
+    external: true
+  # Prevents any other Umbrel app from reaching the gateway directly.
+  codex_agent_private:
+    internal: true
