@@ -13,4 +13,3 @@ RUN chmod 0555 /app/entrypoint.sh
 USER node
 EXPOSE 8080
 ENTRYPOINT ["/app/entrypoint.sh"]
-
