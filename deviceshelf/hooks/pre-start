@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# The image runs as uid 10001 (non-root, so the scanner's raw sockets come from
+# capabilities rather than root). umbrelOS creates ${APP_DATA_DIR} as root, so
+# without this the server cannot create /data/DeviceShelf, logs "permission
+# denied" and restart-loops — verified on Ubuntu 24.04, where the same bind
+# mount crash-looped before the chown and came up healthy after it.
+set -euo pipefail
+
+data_dir="${APP_DATA_DIR}/data"
+mkdir -p "${data_dir}"
+chown -R 10001:10001 "${data_dir}"
