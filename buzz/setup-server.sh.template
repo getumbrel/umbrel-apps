@@ -1,0 +1,37 @@
+#!/bin/sh
+set -eu
+
+request_line=""
+IFS= read -r request_line || exit 0
+request_line=@D@(printf '%s' "@D@request_line" | tr -d '\r')
+set -- @D@request_line
+method=@D@{1:-}
+path=@D@{2:-}
+content_length=0
+
+while IFS= read -r header; do
+  header=@D@(printf '%s' "@D@header" | tr -d '\r')
+  [ -z "@D@header" ] && break
+  case "@D@header" in
+    [Cc]ontent-[Ll]ength:*)
+      content_length=@D@(printf '%s' "@D@header" | cut -d: -f2- | tr -d ' ')
+      ;;
+  esac
+done
+
+case "@D@content_length" in
+  ''|*[!0-9]*) content_length=0 ;;
+esac
+
+if [ "@D@content_length" -gt 1024 ]; then
+  body="REQUEST_TOO_LARGE"
+else
+  body=@D@(dd bs=1 count="@D@content_length" 2>/dev/null || true)
+fi
+
+SETUP_METHOD="@D@method"
+SETUP_PATH="@D@path"
+SETUP_BODY="@D@body"
+export SETUP_METHOD SETUP_PATH SETUP_BODY
+
+exec awk -f "@D@{SETUP_PAGE:-/opt/setup-page.awk}"

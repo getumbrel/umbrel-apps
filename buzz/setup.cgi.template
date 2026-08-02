@@ -1,0 +1,100 @@
+#!/bin/awk -f
+
+function html_escape(value, escaped) {
+  escaped = value
+  gsub(/&/, "\&amp;", escaped)
+  gsub(/</, "\&lt;", escaped)
+  gsub(/>/, "\&gt;", escaped)
+  gsub(/\"/, "\&quot;", escaped)
+  return escaped
+}
+
+function current_owner(line, value) {
+  while ((getline line < owner_file) > 0) {
+    if (line ~ /^RELAY_OWNER_PUBKEY=/) {
+      value = line
+      sub(/^RELAY_OWNER_PUBKEY=/, "", value)
+      if (length(value) == 64 && value !~ /[^0-9a-f]/) {
+        close(owner_file)
+        return value
+      }
+    }
+  }
+  close(owner_file)
+  return ""
+}
+
+function render_page(message, error, owner, relay_url, button_label) {
+  print "HTTP/1.1 200 OK\r"
+  print "Content-Type: text/html; charset=utf-8\r"
+  print "Connection: close\r"
+  print "Cache-Control: no-store\r"
+  print "X-Content-Type-Options: nosniff\r"
+  print "Referrer-Policy: no-referrer\r"
+  print "\r"
+  print "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">"
+  print "<title>Buzz Relay setup</title><style>"
+  print ":root{color-scheme:dark;font-family:Inter,ui-sans-serif,system-ui,sans-serif;background:#11110f;color:#f7f4e8}*{box-sizing:border-box}"
+  print "body{margin:0;min-height:100vh;display:grid;place-items:center;padding:24px;background:radial-gradient(circle at top,#332d13,#11110f 55%)}"
+  print "main{width:min(720px,100%);background:#1d1b14;border:1px solid #4a4122;border-radius:24px;padding:clamp(24px,5vw,48px);box-shadow:0 24px 70px #0008}"
+  print ".eyebrow{color:#f5c842;font-weight:800;letter-spacing:.12em;text-transform:uppercase;font-size:.78rem}h1{font-size:clamp(2rem,6vw,3.5rem);line-height:1;margin:.35em 0 .25em}"
+  print "p,li{line-height:1.65;color:#d8d2bf}code{display:block;padding:14px 16px;border-radius:12px;background:#0d0d0b;border:1px solid #343126;color:#fff;overflow-wrap:anywhere}"
+  print "form{display:grid;gap:12px;margin:28px 0}label{font-weight:750}input{width:100%;padding:14px 16px;border-radius:12px;border:1px solid #5b5230;background:#0d0d0b;color:#fff;font:inherit}"
+  print "button{justify-self:start;border:0;border-radius:999px;padding:13px 20px;background:#f5c842;color:#17150d;font-weight:850;font:inherit;cursor:pointer}.notice{padding:12px 14px;border-radius:12px}.ok{background:#18351f;color:#bdf0c7}.error{background:#471d1d;color:#ffc5c5}.muted{font-size:.9rem;color:#aaa38f}"
+  print "</style></head><body><main><div class=\"eyebrow\">Buzz on Umbrel</div><h1>Run your own relay</h1>"
+  print "<p>This app runs the private Buzz relay described in Block's self-hosting guide. Choose the existing Buzz Desktop identity that should permanently own this community.</p>"
+  if (message != "") print "<p class=\"notice ok\">" html_escape(message) "</p>"
+  if (error != "") print "<p class=\"notice error\">" html_escape(error) "</p>"
+  print "<form method=\"post\" action=\"/setup\" autocomplete=\"off\"><label for=\"owner_pubkey\">Owner public key</label>"
+  print "<input id=\"owner_pubkey\" name=\"owner_pubkey\" inputmode=\"text\" minlength=\"64\" maxlength=\"64\" pattern=\"[0-9a-fA-F]{64}\" placeholder=\"64-character hex public key\" required>"
+  print "<button type=\"submit\">" button_label "</button></form>"
+  if (owner == "") print "<p class=\"muted\">The relay is waiting for an owner key and will start automatically after you save one.</p>"
+  else {
+    print "<p class=\"muted\">Current owner</p><code>" html_escape(owner) "</code>"
+    print "<p class=\"muted\">Changing the owner takes effect after restarting the app in Umbrel.</p>"
+  }
+  print "<h2>Connect Buzz Desktop</h2><ol><li>In Buzz Desktop, open <strong>Settings → Identity</strong> and copy the 64-character public key.</li><li>Save that key above.</li><li>Choose <strong>Join an existing community</strong> and enter:</li></ol>"
+  print "<code>" html_escape(relay_url) "</code><p>Keep this relay on your trusted local network. Use Buzz Desktop to invite additional members after the owner connects.</p>"
+  print "</main></body></html>"
+}
+
+BEGIN {
+  owner_file = ENVIRON["OWNER_FILE"] == "" ? "/data/relay/owner.env" : ENVIRON["OWNER_FILE"]
+  relay_url = ENVIRON["RELAY_URL"]
+  method = ENVIRON["SETUP_METHOD"]
+  message = ""
+  error = ""
+  owner = current_owner()
+  was_configured = owner != ""
+
+  if (method == "POST") {
+    body = ENVIRON["SETUP_BODY"]
+    if (body == "REQUEST_TOO_LARGE") {
+      error = "Request is too large."
+    } else {
+      value = body
+      sub(/^owner_pubkey=/, "", value)
+      sub(/&.*/, "", value)
+
+      if (length(value) != 64 || value ~ /[^0-9A-Fa-f]/) {
+        error = "Enter the 64-character hexadecimal public key shown by Buzz Desktop."
+      } else {
+        value = tolower(value)
+        temporary_file = owner_file ".tmp"
+        print "RELAY_OWNER_PUBKEY=" value > temporary_file
+        close(temporary_file)
+        if (system("chmod 600 " temporary_file " && mv " temporary_file " " owner_file) != 0) {
+          error = "Could not save the owner key. Check the app logs."
+        } else {
+          owner = value
+          message = was_configured ? "Owner key saved. Restart Buzz Relay in Umbrel to apply the change." : "Owner key saved. The relay is starting now."
+        }
+      }
+    }
+  } else if (method != "GET" && method != "HEAD") {
+    error = "Unsupported request method."
+  }
+
+  button_label = owner == "" ? "Start private relay" : "Replace owner key"
+  render_page(message, error, owner, relay_url, button_label)
+}
