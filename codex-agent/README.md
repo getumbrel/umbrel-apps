@@ -15,6 +15,11 @@ network.
 - The Codex OAuth `auth.json` is a runtime secret, not a repository file or
   image layer. It is mounted read-only, copied only into a container tmpfs at
   startup, and never served by the UI.
+- Optional Remnic MCP access reads `runtime-secrets/remnic-auth-token` at
+  startup. The token is exported only to Codex processes; persistent
+  `config.toml` stores the endpoint and environment-variable name, not the
+  credential. Set `REMNIC_MCP_URL` in the app's Umbrel environment when the
+  service is not reachable as `http://remnic_server_1:4318/mcp`.
 - `${APP_DATA_DIR}/data` and `${APP_DATA_DIR}/projects` are persistent Umbrel
   storage. The latter is the only host project mount available to Codex.
 - The existing host `codex-umbrel-app` tmux session is neither mounted nor

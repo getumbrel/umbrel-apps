@@ -11,7 +11,7 @@ services:
       codex_agent_private: {}
 
   app:
-    image: ghcr.io/earlvanze/codex-agent:0.1.1@sha256:0a2cece67f2d2ac4a5b1b46a8a345d7a2486bb6783096844112530656be865ee
+    image: ghcr.io/earlvanze/codex-agent:0.1.4@sha256:a728fe8e216c54a71f1469d3e6d9bca52c3f1adafdb87ec8ee964ac65fe1e0af
     user: "1000:1000"
     init: true
     restart: on-failure
@@ -21,12 +21,16 @@ services:
       - no-new-privileges:true
     cap_drop:
       - ALL
+    extra_hosts:
+      - host.docker.internal:host-gateway
     environment:
       HOME: /data/codex-home
       CODEX_HOME: /data/codex-home
       PORT: "8080"
       CODEX_WORKSPACE: /projects
       CODEX_AUTH_FILE: /run/secrets/codex/auth.json
+      REMNIC_AUTH_FILE: /run/secrets/codex/remnic-auth-token
+      REMNIC_MCP_URL: ${REMNIC_MCP_URL:-http://remnic_server_1:4318/mcp}
       NODE_ENV: production
     volumes:
       # Persistent SSD-backed application state and user project workspaces.
@@ -44,10 +48,11 @@ services:
       retries: 3
       start_period: 20s
     networks:
+      default: {}
       codex_agent_private: {}
 
 networks:
-  # Required by Umbrel's proxy; the app service itself does not join it.
+  # Lets Codex reach optional MCP services without publishing a host port.
   default:
     name: umbrel_main_network
     external: true
