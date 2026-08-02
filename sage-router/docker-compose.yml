@@ -1,0 +1,48 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    restart: unless-stopped
+    environment:
+      APP_HOST: sage-router_app_1
+      APP_PORT: 8790
+    networks:
+      - umbrel_main_network
+
+  app:
+    image: ghcr.io/earlvanze/sage-router-public:v3.28.12-slim@sha256:7a6e6c02bc2655322ee7cb5075d3ae6af601f3c84a443311ffc644ae76cd894e
+    restart: on-failure
+    user: "1000:1000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ${APP_DATA_DIR}/data:/config
+    environment:
+      PORT: "8790"
+      APP_DATA_DIR: /config
+      SAGE_ROUTER_HOME: /config
+      SAGE_ROUTER_CONFIG_SOURCE: auto
+      SAGE_ROUTER_CLIENT_AUTH_REQUIRED: "0"
+      SAGE_ROUTER_DISABLED_MODELS: kimi-k2-thinking
+      SAGE_ROUTER_PROFILE_OVERLAYS: ""
+      SAGE_ROUTER_OLLAMA_TIMEOUT_SECONDS: "300"
+      SAGE_ROUTER_BUNDLED_OLLAMA_AUTOSTART: "0"
+      SAGE_ROUTER_OLLAMA_CLOUD_CATALOG_ENABLED: "0"
+      SAGE_ROUTER_OLLAMA_AUTO_PULL_PATTERNS: ""
+      SAGE_ROUTER_DARIO_AUTOSTART: "0"
+      OLLAMA_HOST: $APP_OLLAMA_URL
+      SAGE_ROUTER_OLLAMA_BASE_URL: $APP_OLLAMA_URL
+      OPENAI_CODEX_API_KEY: ${APP_SAGE_ROUTER_OPENAI_CODEX_API_KEY:-}
+      CODEX_ACCESS_TOKEN: ${APP_SAGE_ROUTER_CODEX_ACCESS_TOKEN:-}
+      SAGE_ROUTER_OPENAI_CODEX_AUTH_PROFILE_PATHS: >-
+        /config/.codex/auth.json,/config/codex/auth.json,/config/openai-codex/auth.json,/config/agents/main/agent/auth-profiles.json,/config/openclaw/agents/main/agent/auth-profiles.json
+      SAGE_ROUTER_OPENAI_CODEX_GATEWAY_FALLBACK: "0"
+      SAGE_ROUTER_SHOW_MODEL_PREFIX: "1"
+      SAGE_ROUTER_ALLOW_RESTART: "1"
+    networks:
+      - default
+      - umbrel_main_network
+
+networks:
+  umbrel_main_network:
+    external: true
