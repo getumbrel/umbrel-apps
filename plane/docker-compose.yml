@@ -111,7 +111,7 @@ services:
     container_name: plane-minio-1
 
   api:
-    image: makeplane/plane-backend:v1.3.1@sha256:2cdcb5f778c6ccacebce0e5a751d39fac4a549a44e049a5b110a7623cfdad139
+    image: makeplane/plane-backend:v1.4.0@sha256:fbd4b3cea455df88e5473d01e56162286d5f61991898903d9142a7f502799481
     user: "1000:1000"
     restart: on-failure
     environment:
@@ -127,7 +127,7 @@ services:
         condition: service_started
 
   worker:
-    image: makeplane/plane-backend:v1.3.1@sha256:2cdcb5f778c6ccacebce0e5a751d39fac4a549a44e049a5b110a7623cfdad139
+    image: makeplane/plane-backend:v1.4.0@sha256:fbd4b3cea455df88e5473d01e56162286d5f61991898903d9142a7f502799481
     user: "1000:1000"
     restart: on-failure
     environment:
@@ -144,7 +144,7 @@ services:
     command: ["sh","-c","celery -A plane worker --loglevel=info"]
 
   beat-worker:
-    image: makeplane/plane-backend:v1.3.1@sha256:2cdcb5f778c6ccacebce0e5a751d39fac4a549a44e049a5b110a7623cfdad139
+    image: makeplane/plane-backend:v1.4.0@sha256:fbd4b3cea455df88e5473d01e56162286d5f61991898903d9142a7f502799481
     user: "1000:1000"
     restart: on-failure
     environment:
@@ -163,7 +163,7 @@ services:
     command: ["sh","-c","celery -A plane beat --loglevel=info"]
 
   migrator:
-    image: makeplane/plane-backend:v1.3.1@sha256:2cdcb5f778c6ccacebce0e5a751d39fac4a549a44e049a5b110a7623cfdad139
+    image: makeplane/plane-backend:v1.4.0@sha256:fbd4b3cea455df88e5473d01e56162286d5f61991898903d9142a7f502799481
     user: "1000:1000"
     restart: on-failure
     environment:
@@ -176,7 +176,7 @@ services:
     command: ["sh","-c","python manage.py wait_for_db && python manage.py migrate"]
 
   web:
-    image: makeplane/plane-frontend:v1.3.1@sha256:c178fd85c4588165262cfe748bd103fdeccebbbab827c53e71b9ce32fff84f86
+    image: makeplane/plane-frontend:v1.4.0@sha256:8f0f5ee02169c3435fa178aa60707920bfc398bff2ebbe83e72881c029d5fe56
     restart: on-failure
     environment:
       <<: *env
@@ -186,7 +186,7 @@ services:
       - api
 
   live:
-    image: makeplane/plane-live:v1.3.1@sha256:2073b6950a394545ea1db6ed4157e951ad5a6e1881e74f4f9238ace6c35bbf3d
+    image: makeplane/plane-live:v1.4.0@sha256:046c38a1c091e6bce9ce79cf89a300bd226bd749f8f62e7ba7871ab853455f16
     user: "1000:1000"
     restart: on-failure
     environment:
@@ -197,7 +197,7 @@ services:
       - api
 
   space:
-    image: makeplane/plane-space:v1.3.1@sha256:e08c2c8741ae6f81a9326dc9201e7e09c0c411b87a20198f9ea9e5cf2fae3488
+    image: makeplane/plane-space:v1.4.0@sha256:6ef9b14ca5be4f5e09cae2d452478954e18dd5f6f417a655aac13fa3e502e2d9
     user: "1000:1000"
     restart: on-failure
     environment:
@@ -214,7 +214,7 @@ services:
       retries: 3
 
   admin:
-    image: makeplane/plane-admin:v1.3.1@sha256:ff9219127a2c2c4a4bb066d6a0e25a5fc6a11204cf8484b521dada53d696fe43
+    image: makeplane/plane-admin:v1.4.0@sha256:8fd95429127eaaf9feb47f1e25f7db4e29aad1f66109a19bdd86a19bca660482
     restart: on-failure
     environment:
       <<: *env
