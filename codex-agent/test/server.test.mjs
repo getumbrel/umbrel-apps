@@ -26,6 +26,9 @@ test('the client performs the required initialized acknowledgement', async () =>
   assert.match(ui, /send\('thread\/start'/);
   assert.match(source, /readUInt16BE\(2\)/);
   assert.match(source, /readBigUInt64BE\(2\)/);
+  assert.match(source, /state\.buffer\.length \+ chunk\.length > maxFrameBytes \+ 14/);
+  assert.match(source, /request\.headers\['sec-websocket-version'\] !== '13'/);
+  assert.match(source, /Buffer\.from\(key, 'base64'\)\.length === 16/);
 });
 
 test('Codex state is persistent while its OAuth credential stays in tmpfs', async () => {
@@ -52,6 +55,12 @@ test('Remnic authentication remains a runtime secret', async () => {
 test('application files are readable by host-mapped runtime users', async () => {
   const dockerfile = await readFile(new URL('../Dockerfile', import.meta.url), 'utf8');
   assert.match(dockerfile, /chmod -R a\+rX \/app/);
+});
+
+test('the browser client reports the package version', async () => {
+  const ui = await readFile(new URL('../public/index.html', import.meta.url), 'utf8');
+  const packageJson = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'));
+  assert.match(ui, new RegExp(`version:'${packageJson.version}'`));
 });
 
 test('Remnic configuration preserves existing settings without storing the token', async () => {

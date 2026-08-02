@@ -8,6 +8,7 @@ const port = Number(process.env.PORT || 8080);
 const workspace = process.env.CODEX_WORKSPACE || '/projects';
 const authFile = process.env.CODEX_AUTH_FILE || '/run/secrets/codex/auth.json';
 const maxSessions = 4;
+const maxFrameBytes = 64 * 1024;
 const sessions = new Map();
 
 function headers() {
@@ -40,6 +41,7 @@ function sendFrame(socket, payload) {
 }
 
 function parseFrames(state, chunk, onText) {
+  if (state.buffer.length + chunk.length > maxFrameBytes + 14) return false;
   state.buffer = Buffer.concat([state.buffer, chunk]);
   while (state.buffer.length >= 2) {
     const first = state.buffer[0];
@@ -56,11 +58,11 @@ function parseFrames(state, chunk, onText) {
     } else if (length === 127) {
       if (state.buffer.length < 10) return true;
       const wideLength = state.buffer.readBigUInt64BE(2);
-      if (wideLength > 64n * 1024n) return false;
+      if (wideLength > BigInt(maxFrameBytes)) return false;
       length = Number(wideLength);
       headerLength = 10;
     }
-    if (length > 64 * 1024) return false;
+    if (length > maxFrameBytes) return false;
     if (state.buffer.length < headerLength + 4 + length) return true;
     const key = state.buffer.subarray(headerLength, headerLength + 4);
     const payloadOffset = headerLength + 4;
@@ -100,6 +102,10 @@ function startSession(socket, sessionId) {
   });
   const session = { id: sessionId, child, socket, pending: '' };
   sessions.set(sessionId, session);
+  child.once('error', () => {
+    sessions.delete(sessionId);
+    try { session.socket?.end(); } catch {}
+  });
   gatewayMessage(socket, { sessionId, fresh: true });
   child.stdout.on('data', (part) => {
     session.pending += part.toString('utf8');
@@ -122,7 +128,7 @@ function attachSocket(session, socket) {
   socket.once('close', detach);
   const state = { buffer: Buffer.alloc(0) };
   socket.on('data', (chunk) => parseFrames(state, chunk, (message) => {
-    if (Buffer.byteLength(message) > 64 * 1024) return socket.end();
+    if (Buffer.byteLength(message) > maxFrameBytes) return socket.end();
     try {
       const rpc = JSON.parse(message);
       if (rpc.method === 'gateway/end') {
@@ -155,13 +161,27 @@ const server = http.createServer((request, response) => {
 server.on('upgrade', (request, socket) => {
   const origin = request.headers.origin;
   const host = request.headers.host;
-  const requestUrl = new URL(request.url, `http://${host}`);
-  const sessionId = requestUrl.searchParams.get('session');
-  if (requestUrl.pathname !== '/ws' || !origin || !host || new URL(origin).host !== host || !/^[0-9a-f-]{36}$/i.test(sessionId || '') || !existsSync('/runtime/codex-home/auth.json')) {
+  let requestUrl;
+  let originUrl;
+  try {
+    requestUrl = new URL(request.url, 'http://localhost');
+    originUrl = typeof origin === 'string' ? new URL(origin) : null;
+  } catch {
     socket.write('HTTP/1.1 403 Forbidden\r\nConnection: close\r\n\r\n'); socket.destroy(); return;
   }
+  const sessionId = requestUrl.searchParams.get('session');
   const key = request.headers['sec-websocket-key'];
-  if (typeof key !== 'string') { socket.destroy(); return; }
+  const upgrade = request.headers.upgrade;
+  const connection = request.headers.connection;
+  const validKey = typeof key === 'string' && Buffer.from(key, 'base64').length === 16;
+  const validUpgrade = typeof upgrade === 'string' && upgrade.toLowerCase() === 'websocket'
+    && typeof connection === 'string' && connection.toLowerCase().split(',').map((value) => value.trim()).includes('upgrade');
+  if (requestUrl.pathname !== '/ws' || !originUrl || !host || originUrl.host !== host
+    || !['http:', 'https:'].includes(originUrl.protocol) || !/^[0-9a-f-]{36}$/i.test(sessionId || '')
+    || request.headers['sec-websocket-version'] !== '13' || !validKey || !validUpgrade
+    || !existsSync('/runtime/codex-home/auth.json')) {
+    socket.write('HTTP/1.1 403 Forbidden\r\nConnection: close\r\n\r\n'); socket.destroy(); return;
+  }
   const accept = crypto.createHash('sha1').update(`${key}258EAFA5-E914-47DA-95CA-C5AB0DC85B11`).digest('base64');
   socket.write(`HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: ${accept}\r\n\r\n`);
   startSession(socket, sessionId);
