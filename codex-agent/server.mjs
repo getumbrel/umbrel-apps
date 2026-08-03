@@ -7,184 +7,200 @@ import path from 'node:path';
 const port = Number(process.env.PORT || 8080);
 const workspace = process.env.CODEX_WORKSPACE || '/projects';
 const authFile = process.env.CODEX_AUTH_FILE || '/run/secrets/codex/auth.json';
-const maxSessions = 4;
-const maxFrameBytes = 64 * 1024;
-const sessions = new Map();
+const runtimeAuthFile = process.env.CODEX_RUNTIME_AUTH_FILE || '/runtime/codex-home/auth.json';
+const bridgeApiKey = process.env.BRIDGE_API_KEY || '';
+const codexBin = process.env.CODEX_BIN || 'codex';
+const maxRequestBytes = 1024 * 1024;
+const maxConcurrentTurns = 4;
+let activeTurns = 0;
 
-function headers() {
+function securityHeaders() {
   return {
-    'Content-Security-Policy': "default-src 'self'; connect-src 'self' ws: wss:; style-src 'self'; base-uri 'none'; frame-ancestors 'none'",
+    'Content-Security-Policy': "default-src 'self'; connect-src 'self'; style-src 'self'; base-uri 'none'; frame-ancestors 'none'",
     'Referrer-Policy': 'no-referrer',
     'X-Content-Type-Options': 'nosniff',
     'X-Frame-Options': 'DENY',
   };
 }
 
-function sendFrame(socket, payload) {
-  const body = Buffer.from(payload);
-  const size = body.length;
-  let prefix;
-  if (size < 126) {
-    prefix = Buffer.from([0x81, size]);
-  } else if (size < 65536) {
-    prefix = Buffer.allocUnsafe(4);
-    prefix[0] = 0x81;
-    prefix[1] = 126;
-    prefix.writeUInt16BE(size, 2);
-  } else {
-    prefix = Buffer.allocUnsafe(10);
-    prefix[0] = 0x81;
-    prefix[1] = 127;
-    prefix.writeBigUInt64BE(BigInt(size), 2);
-  }
-  socket.write(Buffer.concat([prefix, body]));
+function json(response, status, body) {
+  response.writeHead(status, { ...securityHeaders(), 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
+  response.end(JSON.stringify(body));
 }
 
-function parseFrames(state, chunk, onText) {
-  if (state.buffer.length + chunk.length > maxFrameBytes + 14) return false;
-  state.buffer = Buffer.concat([state.buffer, chunk]);
-  while (state.buffer.length >= 2) {
-    const first = state.buffer[0];
-    const second = state.buffer[1];
-    const opcode = first & 15;
-    let length = second & 127;
-    let headerLength = 2;
-    const masked = Boolean(second & 128);
-    if (!(first & 128) || !masked) return false;
-    if (length === 126) {
-      if (state.buffer.length < 4) return true;
-      length = state.buffer.readUInt16BE(2);
-      headerLength = 4;
-    } else if (length === 127) {
-      if (state.buffer.length < 10) return true;
-      const wideLength = state.buffer.readBigUInt64BE(2);
-      if (wideLength > BigInt(maxFrameBytes)) return false;
-      length = Number(wideLength);
-      headerLength = 10;
-    }
-    if (length > maxFrameBytes) return false;
-    if (state.buffer.length < headerLength + 4 + length) return true;
-    const key = state.buffer.subarray(headerLength, headerLength + 4);
-    const payloadOffset = headerLength + 4;
-    const value = Buffer.from(state.buffer.subarray(payloadOffset, payloadOffset + length));
-    for (let index = 0; index < value.length; index++) value[index] ^= key[index % 4];
-    state.buffer = state.buffer.subarray(payloadOffset + length);
-    if (opcode === 8) return false;
-    if (opcode === 9 || opcode === 10) continue;
-    if (opcode !== 1) return false;
-    onText(value.toString('utf8'));
-  }
-  return true;
+function unauthorized(response) {
+  response.writeHead(401, { ...securityHeaders(), 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'WWW-Authenticate': 'Bearer' });
+  response.end(JSON.stringify({ error: { message: 'Invalid API key', type: 'authentication_error', code: 'invalid_api_key' } }));
 }
 
-function gatewayMessage(socket, params) {
-  sendFrame(socket, JSON.stringify({ method: 'gateway/session', params }));
+function authorized(request) {
+  const header = request.headers.authorization;
+  if (!bridgeApiKey || typeof header !== 'string' || !header.startsWith('Bearer ')) return false;
+  const supplied = Buffer.from(header.slice(7));
+  const expected = Buffer.from(bridgeApiKey);
+  return supplied.length === expected.length && crypto.timingSafeEqual(supplied, expected);
 }
 
-function startSession(socket, sessionId) {
-  const existing = sessions.get(sessionId);
-  if (existing) {
-    if (existing.socket && existing.socket !== socket) existing.socket.end();
-    existing.socket = socket;
-    gatewayMessage(socket, { sessionId, fresh: false });
-    attachSocket(existing, socket);
-    return;
-  }
-  if (sessions.size >= maxSessions) {
-    sendFrame(socket, JSON.stringify({ error: 'Session limit reached' }));
-    socket.end();
-    return;
-  }
-  const child = spawn('codex', ['app-server', '--stdio'], {
+function contentToText(content) {
+  if (typeof content === 'string') return content;
+  if (!Array.isArray(content)) return '';
+  return content.map((part) => {
+    if (!part || typeof part !== 'object') return '';
+    if (part.type === 'text' && typeof part.text === 'string') return part.text;
+    if (part.type === 'image_url') return '[Image attached]';
+    return '';
+  }).filter(Boolean).join('\n');
+}
+
+function buildPrompt(messages) {
+  const transcript = messages.map((message) => {
+    const role = ['system', 'user', 'assistant', 'tool'].includes(message.role) ? message.role : 'user';
+    return `${role.toUpperCase()}: ${contentToText(message.content)}`;
+  }).filter((line) => !line.endsWith(': ')).join('\n\n');
+  return `Continue this LibreChat conversation as Codex. Work in the configured workspace, use tools when useful, and give the user a clear final answer.\n\n${transcript}`;
+}
+
+function readJson(request) {
+  return new Promise((resolve, reject) => {
+    let size = 0;
+    const chunks = [];
+    request.on('data', (chunk) => {
+      size += chunk.length;
+      if (size > maxRequestBytes) {
+        reject(Object.assign(new Error('Request body is too large'), { status: 413 }));
+        request.destroy();
+        return;
+      }
+      chunks.push(chunk);
+    });
+    request.once('error', reject);
+    request.once('end', () => {
+      try { resolve(JSON.parse(Buffer.concat(chunks).toString('utf8'))); } catch { reject(Object.assign(new Error('Invalid JSON body'), { status: 400 })); }
+    });
+  });
+}
+
+function writeRpc(child, message) {
+  child.stdin.write(`${JSON.stringify(message)}\n`);
+}
+
+function runCodexTurn(payload, onDelta, onDone, onError) {
+  const child = spawn(codexBin, ['app-server', '--stdio'], {
     cwd: workspace,
     env: { ...process.env, HOME: '/data/codex-home', CODEX_HOME: '/data/codex-home' },
     stdio: ['pipe', 'pipe', 'pipe'],
   });
-  const session = { id: sessionId, child, socket, pending: '' };
-  sessions.set(sessionId, session);
-  child.once('error', () => {
-    sessions.delete(sessionId);
-    try { session.socket?.end(); } catch {}
-  });
-  gatewayMessage(socket, { sessionId, fresh: true });
-  child.stdout.on('data', (part) => {
-    session.pending += part.toString('utf8');
+  let buffer = '';
+  let finished = false;
+  const finish = (error) => {
+    if (finished) return;
+    finished = true;
+    try { child.kill('SIGTERM'); } catch {}
+    if (error) onError(error); else onDone();
+  };
+  const handle = (message) => {
+    if (message.id === 1 && message.error) return finish(new Error(message.error.message || 'Codex initialization failed'));
+    if (message.id === 2 && message.error) return finish(new Error(message.error.message || 'Unable to start Codex thread'));
+    if (message.id === 2 && message.result?.thread?.id) {
+      const params = {
+        threadId: message.result.thread.id,
+        input: [{ type: 'text', text: buildPrompt(payload.messages) }],
+        cwd: workspace,
+        approvalPolicy: process.env.CODEX_APPROVAL_POLICY || 'never',
+        sandboxPolicy: { type: 'workspaceWrite', writableRoots: [workspace], networkAccess: true },
+      };
+      if (payload.model && payload.model !== 'codex-agent') params.model = payload.model;
+      writeRpc(child, { method: 'turn/start', id: 3, params });
+      return;
+    }
+    if (message.id === 3 && message.error) return finish(new Error(message.error.message || 'Unable to start Codex turn'));
+    if (message.method === 'item/agentMessage/delta') {
+      const delta = message.params?.delta ?? message.params?.text ?? '';
+      if (typeof delta === 'string' && delta) onDelta(delta);
+    }
+    if (message.method === 'turn/completed') {
+      const turn = message.params?.turn;
+      if (turn?.status === 'completed') return finish();
+      return finish(new Error(turn?.error?.message || `Codex turn ${turn?.status || 'failed'}`));
+    }
+    if (message.method === 'error') return finish(new Error(message.params?.error?.message || 'Codex request failed'));
+  };
+  child.once('error', (error) => finish(error));
+  child.once('exit', (code) => { if (!finished) finish(new Error(`Codex exited before completing the turn (code ${code ?? 'unknown'})`)); });
+  child.stderr.resume();
+  child.stdout.on('data', (chunk) => {
+    buffer += chunk.toString('utf8');
     for (;;) {
-      const newline = session.pending.indexOf('\n');
+      const newline = buffer.indexOf('\n');
       if (newline < 0) break;
-      const message = session.pending.slice(0, newline);
-      session.pending = session.pending.slice(newline + 1);
-      if (message && session.socket && !session.socket.destroyed) sendFrame(session.socket, message);
+      const line = buffer.slice(0, newline);
+      buffer = buffer.slice(newline + 1);
+      if (!line) continue;
+      try { handle(JSON.parse(line)); } catch { finish(new Error('Codex returned malformed JSON-RPC output')); }
     }
   });
-  // stderr stays server-side: it can contain filesystem paths and diagnostics.
-  child.stderr.resume();
-  child.once('exit', () => { sessions.delete(sessionId); try { session.socket?.end(); } catch {} });
-  attachSocket(session, socket);
+  writeRpc(child, { method: 'initialize', id: 1, params: { clientInfo: { name: 'umbrel_codex_agent_bridge', title: 'Umbrel Codex Agent Bridge', version: '0.2.0' } } });
+  writeRpc(child, { method: 'initialized', params: {} });
+  writeRpc(child, { method: 'thread/start', id: 2, params: {} });
+  return () => finish(new Error('Client disconnected'));
 }
 
-function attachSocket(session, socket) {
-  const detach = () => { if (session.socket === socket) session.socket = null; };
-  socket.once('close', detach);
-  const state = { buffer: Buffer.alloc(0) };
-  socket.on('data', (chunk) => parseFrames(state, chunk, (message) => {
-    if (Buffer.byteLength(message) > maxFrameBytes) return socket.end();
-    try {
-      const rpc = JSON.parse(message);
-      if (rpc.method === 'gateway/end') {
-        session.child.kill('SIGTERM');
-        sessions.delete(session.id);
-        return socket.end();
-      }
-      session.child.stdin.write(`${message}\n`);
-    } catch { sendFrame(socket, JSON.stringify({ error: 'Invalid JSON-RPC message' })); }
-  }) || socket.end());
+function completionId() { return `chatcmpl-${crypto.randomUUID()}`; }
+
+function sse(response, value) { response.write(`data: ${JSON.stringify(value)}\n\n`); }
+
+async function handleCompletion(request, response) {
+  if (!authorized(request)) return unauthorized(response);
+  if (!existsSync(authFile) || !existsSync(runtimeAuthFile)) return json(response, 503, { error: { message: 'Codex authentication is not ready', type: 'service_unavailable' } });
+  let payload;
+  try { payload = await readJson(request); } catch (error) { return json(response, error.status || 400, { error: { message: error.message, type: 'invalid_request_error' } }); }
+  if (!Array.isArray(payload.messages) || payload.messages.length === 0) return json(response, 400, { error: { message: 'messages must be a non-empty array', type: 'invalid_request_error' } });
+  if (activeTurns >= maxConcurrentTurns) return json(response, 429, { error: { message: 'Codex bridge is busy; retry shortly', type: 'rate_limit_error' } });
+  activeTurns += 1;
+  const id = completionId();
+  const created = Math.floor(Date.now() / 1000);
+  let text = '';
+  const settle = () => { activeTurns -= 1; };
+  if (payload.stream) {
+    response.writeHead(200, { ...securityHeaders(), 'Content-Type': 'text/event-stream; charset=utf-8', 'Cache-Control': 'no-cache, no-transform', Connection: 'keep-alive', 'X-Accel-Buffering': 'no' });
+    sse(response, { id, object: 'chat.completion.chunk', created, model: payload.model || 'codex-agent', choices: [{ index: 0, delta: { role: 'assistant' }, finish_reason: null }] });
+    const cancel = runCodexTurn(payload, (delta) => {
+      text += delta;
+      sse(response, { id, object: 'chat.completion.chunk', created, model: payload.model || 'codex-agent', choices: [{ index: 0, delta: { content: delta }, finish_reason: null }] });
+    }, () => {
+      sse(response, { id, object: 'chat.completion.chunk', created, model: payload.model || 'codex-agent', choices: [{ index: 0, delta: {}, finish_reason: 'stop' }] });
+      response.end('data: [DONE]\n\n'); settle();
+    }, (error) => {
+      sse(response, { error: { message: error.message, type: 'server_error' } });
+      response.end('data: [DONE]\n\n'); settle();
+    });
+    request.once('aborted', cancel);
+    response.once('close', () => { if (!response.writableEnded) cancel(); });
+    return;
+  }
+  runCodexTurn(payload, (delta) => { text += delta; }, () => {
+    settle();
+    json(response, 200, { id, object: 'chat.completion', created, model: payload.model || 'codex-agent', choices: [{ index: 0, message: { role: 'assistant', content: text }, finish_reason: 'stop' }] });
+  }, (error) => { settle(); json(response, 500, { error: { message: error.message, type: 'server_error' } }); });
 }
 
 const server = http.createServer((request, response) => {
-  const common = headers();
-  if (request.method === 'GET' && request.url === '/healthz') {
-    const codex = spawnSync('codex', ['--version'], { stdio: 'ignore', timeout: 2000 });
-    const ready = existsSync(authFile) && existsSync('/runtime/codex-home/auth.json') && codex.status === 0;
-    response.writeHead(ready ? 200 : 503, { ...common, 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
-    response.end(JSON.stringify({ status: ready ? 'ok' : 'not-ready' }));
-    return;
+  const pathname = new URL(request.url, 'http://localhost').pathname;
+  if (request.method === 'GET' && pathname === '/healthz') {
+    const codex = spawnSync(codexBin, ['--version'], { stdio: 'ignore', timeout: 2000 });
+    const ready = Boolean(bridgeApiKey) && existsSync(authFile) && existsSync(runtimeAuthFile) && codex.status === 0;
+    return json(response, ready ? 200 : 503, { status: ready ? 'ok' : 'not-ready' });
   }
-  if (request.method === 'GET' && (request.url === '/' || request.url === '/index.html')) {
-    response.writeHead(200, { ...common, 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
-    createReadStream(path.join('/app', 'index.html')).pipe(response);
-    return;
+  if (request.method === 'GET' && pathname === '/v1/models') {
+    if (!authorized(request)) return unauthorized(response);
+    return json(response, 200, { object: 'list', data: [{ id: 'codex-agent', object: 'model', created: 0, owned_by: 'openai' }] });
   }
-  response.writeHead(404, common); response.end();
-});
-
-server.on('upgrade', (request, socket) => {
-  const origin = request.headers.origin;
-  const host = request.headers.host;
-  let requestUrl;
-  let originUrl;
-  try {
-    requestUrl = new URL(request.url, 'http://localhost');
-    originUrl = typeof origin === 'string' ? new URL(origin) : null;
-  } catch {
-    socket.write('HTTP/1.1 403 Forbidden\r\nConnection: close\r\n\r\n'); socket.destroy(); return;
+  if (request.method === 'POST' && pathname === '/v1/chat/completions') return handleCompletion(request, response);
+  if (request.method === 'GET' && (pathname === '/' || pathname === '/index.html')) {
+    response.writeHead(200, { ...securityHeaders(), 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
+    return createReadStream(path.join('/app', 'index.html')).pipe(response);
   }
-  const sessionId = requestUrl.searchParams.get('session');
-  const key = request.headers['sec-websocket-key'];
-  const upgrade = request.headers.upgrade;
-  const connection = request.headers.connection;
-  const validKey = typeof key === 'string' && Buffer.from(key, 'base64').length === 16;
-  const validUpgrade = typeof upgrade === 'string' && upgrade.toLowerCase() === 'websocket'
-    && typeof connection === 'string' && connection.toLowerCase().split(',').map((value) => value.trim()).includes('upgrade');
-  if (requestUrl.pathname !== '/ws' || !originUrl || !host || originUrl.host !== host
-    || !['http:', 'https:'].includes(originUrl.protocol) || !/^[0-9a-f-]{36}$/i.test(sessionId || '')
-    || request.headers['sec-websocket-version'] !== '13' || !validKey || !validUpgrade
-    || !existsSync('/runtime/codex-home/auth.json')) {
-    socket.write('HTTP/1.1 403 Forbidden\r\nConnection: close\r\n\r\n'); socket.destroy(); return;
-  }
-  const accept = crypto.createHash('sha1').update(`${key}258EAFA5-E914-47DA-95CA-C5AB0DC85B11`).digest('base64');
-  socket.write(`HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: ${accept}\r\n\r\n`);
-  startSession(socket, sessionId);
+  return json(response, 404, { error: { message: 'Not found', type: 'invalid_request_error' } });
 });
 
 server.listen(port, '0.0.0.0');
