@@ -60,7 +60,7 @@ services:
     # Einmalig: erzeugt einen gültigen Fernet-Schlüssel (32 Bytes urlsafe-base64)
     # nach data/secret/fernet.key, falls noch nicht vorhanden. Idempotent.
     # Braucht keine DB — nur Schreibzugriff auf data/secret.
-    image: ghcr.io/altbierjupp/sovereigncast:0.3.2@sha256:a4fc174628d6a3727549135eb4e1fbe8ed609846336fd880718e6cdfbca18205
+    image: ghcr.io/altbierjupp/sovereigncast:0.3.2.1@sha256:474c3bebc60d315fdca91d55691f8dc22444602f6b0c6049725a94892679a32a
     restart: on-failure
     user: "1000:1000"
     volumes:
@@ -88,7 +88,7 @@ services:
     # idempotent; bestehende 1000:1000-Verzeichnisse bleiben unberührt. /data/backups
     # nur auf Verzeichnis-Ebene (kann viele/large Backups enthalten — nicht -R);
     # Dateien darin werden von der Web-App (uid 1000) selbst 1000-owned angelegt.
-    image: ghcr.io/altbierjupp/sovereigncast:0.3.2@sha256:a4fc174628d6a3727549135eb4e1fbe8ed609846336fd880718e6cdfbca18205
+    image: ghcr.io/altbierjupp/sovereigncast:0.3.2.1@sha256:474c3bebc60d315fdca91d55691f8dc22444602f6b0c6049725a94892679a32a
     restart: on-failure
     user: "0:0"
     volumes:
@@ -127,7 +127,7 @@ services:
     # non-zero → migrator/web starten nicht (lieber down als auf halb-restored DB).
     # Setzt bei Erfolg /data/secret/.admin-seeded, falls die DB schon Benutzer
     # enthält, damit admin-init das wiederhergestellte Passwort nicht überschreibt.
-    image: ghcr.io/altbierjupp/sovereigncast:0.3.2@sha256:a4fc174628d6a3727549135eb4e1fbe8ed609846336fd880718e6cdfbca18205
+    image: ghcr.io/altbierjupp/sovereigncast:0.3.2.1@sha256:474c3bebc60d315fdca91d55691f8dc22444602f6b0c6049725a94892679a32a
     restart: on-failure
     user: "1000:1000"
     depends_on:
@@ -156,7 +156,7 @@ services:
     # (reine ALTER TABLE ADD COLUMN) und setzt die Basistabellen VORAUSS. Auf
     # einer frischen DB failt das sofort an "relation episodes does not exist"
     # und restart: on-failure bringt es in einen Endlos-Loop.
-    image: ghcr.io/altbierjupp/sovereigncast:0.3.2@sha256:a4fc174628d6a3727549135eb4e1fbe8ed609846336fd880718e6cdfbca18205
+    image: ghcr.io/altbierjupp/sovereigncast:0.3.2.1@sha256:474c3bebc60d315fdca91d55691f8dc22444602f6b0c6049725a94892679a32a
     restart: on-failure
     user: "1000:1000"
     depends_on:
@@ -189,7 +189,7 @@ services:
     # .admin-seeded verhindert, dass ein vom Nutzer geändertes Passwort bei jedem
     # Start zurückgesetzt wird). create_admin.py nutzt den Env-Fallback, wenn keine
     # CLI-Args gesetzt sind — daher keine ${...}-Interpolation im command nötig.
-    image: ghcr.io/altbierjupp/sovereigncast:0.3.2@sha256:a4fc174628d6a3727549135eb4e1fbe8ed609846336fd880718e6cdfbca18205
+    image: ghcr.io/altbierjupp/sovereigncast:0.3.2.1@sha256:474c3bebc60d315fdca91d55691f8dc22444602f6b0c6049725a94892679a32a
     restart: on-failure
     user: "1000:1000"
     depends_on:
@@ -214,7 +214,7 @@ services:
         touch /data/secret/.admin-seeded
 
   web:
-    image: ghcr.io/altbierjupp/sovereigncast:0.3.2@sha256:a4fc174628d6a3727549135eb4e1fbe8ed609846336fd880718e6cdfbca18205
+    image: ghcr.io/altbierjupp/sovereigncast:0.3.2.1@sha256:474c3bebc60d315fdca91d55691f8dc22444602f6b0c6049725a94892679a32a
     restart: on-failure
     user: "1000:1000"
     depends_on:
@@ -271,7 +271,7 @@ services:
   worker:
     # Schweres Image (ffmpeg + faster-whisper + pyannote + torch, CPU-only).
     # Rein DB-gesteuert (pollt processing_queue) — idlet, wenn keine Aufträge.
-    image: ghcr.io/altbierjupp/sovereigncast-worker:0.3.2@sha256:be7eb0f479c392362b2a18e491c66e157b28586a8841362fc9d85a14be921821
+    image: ghcr.io/altbierjupp/sovereigncast-worker:0.3.2.1@sha256:d2ad0000b625c95da4cfe39b0a4a438675bab83ee997caf5f38419e3e5a1488f
     restart: on-failure
     user: "1000:1000"
     depends_on:
@@ -295,7 +295,7 @@ services:
     # Holt sein Wallet aus der DB (db.get_wallet_by_usecase('releaseboosting'));
     # boosting_monitor.conf wird nicht gebraucht (alle Settings haben Fallbacks).
     # Idlet, bis in der App-Konfiguration ein Release-Boosting-Wallet hinterlegt ist.
-    image: ghcr.io/altbierjupp/sovereigncast:0.3.2@sha256:a4fc174628d6a3727549135eb4e1fbe8ed609846336fd880718e6cdfbca18205
+    image: ghcr.io/altbierjupp/sovereigncast:0.3.2.1@sha256:474c3bebc60d315fdca91d55691f8dc22444602f6b0c6049725a94892679a32a
     restart: on-failure
     user: "1000:1000"
     depends_on:
@@ -311,7 +311,7 @@ services:
   wallet-accounting:
     # Holt NWC-URLs aus der DB (db.get_wallets_by_wallet_type('lightning'));
     # wallet_accounting_config.conf nicht nötig (Defaults). Idlet bis Wallets konfiguriert.
-    image: ghcr.io/altbierjupp/sovereigncast:0.3.2@sha256:a4fc174628d6a3727549135eb4e1fbe8ed609846336fd880718e6cdfbca18205
+    image: ghcr.io/altbierjupp/sovereigncast:0.3.2.1@sha256:474c3bebc60d315fdca91d55691f8dc22444602f6b0c6049725a94892679a32a
     restart: on-failure
     user: "1000:1000"
     depends_on:
@@ -337,7 +337,7 @@ services:
     # wallet-accounting ("idlet bis konfiguriert"). NWC URL ist praktisch immer
     # Pflicht, weil read_config() NostrWalletConnectUri.parse(nwc_url) bedingungs-
     # los ruft (auch im lightning_address-Modus).
-    image: ghcr.io/altbierjupp/sovereigncast:0.3.2@sha256:a4fc174628d6a3727549135eb4e1fbe8ed609846336fd880718e6cdfbca18205
+    image: ghcr.io/altbierjupp/sovereigncast:0.3.2.1@sha256:474c3bebc60d315fdca91d55691f8dc22444602f6b0c6049725a94892679a32a
     restart: on-failure
     user: "1000:1000"
     depends_on:
