@@ -4,21 +4,58 @@ set -euo pipefail
 APP_DIR="${APP_DATA_DIR:-$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")}"
 SECRETS_DIR="${APP_DIR}/data/relay"
 SECRETS_FILE="${SECRETS_DIR}/relay.env"
+COMMUNITY_FILE="${SECRETS_DIR}/community.env"
 
 mkdir -p "${SECRETS_DIR}"
 
 if [[ -f "${SECRETS_FILE}" ]]; then
   if grep -Eq '^BUZZ_RELAY_PRIVATE_KEY=[0-9a-f]{64}$' "${SECRETS_FILE}"; then
-    exit 0
+    :
+  else
+    echo "Buzz relay identity file is invalid: ${SECRETS_FILE}" >&2
+    exit 1
   fi
+else
+  umask 077
+  relay_private_key="$(od -An -N32 -tx1 /dev/urandom | tr -d ' \n')"
+  temporary_file="${SECRETS_FILE}.tmp"
 
-  echo "Buzz relay identity file is invalid: ${SECRETS_FILE}" >&2
-  exit 1
+  printf 'BUZZ_RELAY_PRIVATE_KEY=%s\n' "${relay_private_key}" >"${temporary_file}"
+  mv "${temporary_file}" "${SECRETS_FILE}"
 fi
 
-umask 077
-relay_private_key="$(od -An -N32 -tx1 /dev/urandom | tr -d ' \n')"
-temporary_file="${SECRETS_FILE}.tmp"
+if [[ -f "${COMMUNITY_FILE}" ]]; then
+  relay_url="$(sed -n 's/^RELAY_URL=//p' "${COMMUNITY_FILE}")"
+  if [[ ! "${relay_url}" =~ ^wss?://[a-zA-Z0-9][a-zA-Z0-9.-]*(:[0-9]{1,5})?$ ]]; then
+    echo "Buzz relay community file is invalid: ${COMMUNITY_FILE}" >&2
+    exit 1
+  fi
 
-printf 'BUZZ_RELAY_PRIVATE_KEY=%s\n' "${relay_private_key}" >"${temporary_file}"
-mv "${temporary_file}" "${SECRETS_FILE}"
+  case "${relay_url}" in
+    ws://*) http_origin="http://${relay_url#ws://}" ;;
+    wss://*) http_origin="https://${relay_url#wss://}" ;;
+  esac
+
+  if ! grep -Fxq "BUZZ_CORS_ORIGINS=${http_origin},tauri://localhost,http://localhost:1420" "${COMMUNITY_FILE}" ||
+    ! grep -Fxq "BUZZ_MEDIA_BASE_URL=${http_origin}/media" "${COMMUNITY_FILE}"; then
+    echo "Buzz relay community origins are invalid: ${COMMUNITY_FILE}" >&2
+    exit 1
+  fi
+else
+  relay_url="ws://${DEVICE_DOMAIN_NAME}:3023"
+  http_origin="http://${DEVICE_DOMAIN_NAME}:3023"
+  temporary_file="${COMMUNITY_FILE}.tmp"
+
+  umask 077
+  {
+    printf 'RELAY_URL=%s\n' "${relay_url}"
+    printf 'BUZZ_CORS_ORIGINS=%s,tauri://localhost,http://localhost:1420\n' "${http_origin}"
+    printf 'BUZZ_MEDIA_BASE_URL=%s/media\n' "${http_origin}"
+  } >"${temporary_file}"
+  mv "${temporary_file}" "${COMMUNITY_FILE}"
+fi
+
+# The setup and relay containers run as Umbrel's unprivileged app user and
+# access this bind-mounted file directly. Hooks run as root, so hand ownership
+# to that user after creating or validating the persisted configuration.
+chown 1000:1000 "${COMMUNITY_FILE}"

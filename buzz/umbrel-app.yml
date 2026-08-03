@@ -10,17 +10,24 @@ description: >-
   control. Buzz Desktop is required to use and administer the community.
 
 
-  After installation, open Buzz Relay and paste the 64-character public key
-  from Buzz Desktop's Settings → Identity screen — never your private key. The
-  relay stays in closed-membership mode and makes that identity its permanent
-  owner. Then choose Join an existing community in Buzz Desktop, enter
-  `ws://umbrel.local:3023`, and invite the people and agents you want there.
+  After installation, open Buzz Relay, choose local or private Tailscale access,
+  and paste the 64-character public key from Buzz Desktop's Settings → Identity
+  screen — never your private key. The relay stays in closed-membership mode and
+  makes that identity its initial owner. Umbrel generates and stores a separate
+  service identity for the relay itself. The setup page shows the exact URL to
+  enter under Join an existing community in Buzz Desktop.
 
 
-  The relay URL is its permanent community identity. This package is configured
-  for local Umbrel access; do not expose port 3023 publicly or change the URL
-  after adding data. Public-domain and TLS deployment require a matching
-  `wss://` relay URL and are not part of this package.
+  For access away from home, install Tailscale on your Umbrel and client devices,
+  sign them into the same tailnet, and enable MagicDNS before first setup. The
+  Tailscale option stays private to that encrypted network; it does not expose
+  port 3023 to the public internet.
+
+
+  The relay URL is its permanent community identity and locks when setup is
+  completed. Do not rename the Umbrel in Tailscale or change the URL after adding
+  data. Public-domain and TLS deployment require a matching `wss://` relay URL
+  and are not part of this package.
 
 
   This app runs the relay infrastructure. It does not run AI models or the

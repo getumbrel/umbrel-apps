@@ -9,22 +9,51 @@ function html_escape(value, escaped) {
   return escaped
 }
 
-function current_owner(line, value) {
-  while ((getline line < owner_file) > 0) {
-    if (line ~ /^RELAY_OWNER_PUBKEY=/) {
-      value = line
-      sub(/^RELAY_OWNER_PUBKEY=/, "", value)
-      if (length(value) == 64 && value !~ /[^0-9a-f]/) {
-        close(owner_file)
-        return value
-      }
+function setting(file, key, line, prefix, value) {
+  prefix = key "="
+  while ((getline line < file) > 0) {
+    if (index(line, prefix) == 1) {
+      value = substr(line, length(prefix) + 1)
+      close(file)
+      return value
     }
   }
-  close(owner_file)
+  close(file)
   return ""
 }
 
-function render_page(message, error, owner, relay_url, button_label) {
+function current_owner(value) {
+  value = setting(owner_file, "RELAY_OWNER_PUBKEY")
+  return length(value) == 64 && value !~ /[^0-9a-f]/ ? value : ""
+}
+
+function current_relay_url(value) {
+  value = setting(community_file, "RELAY_URL")
+  return value ~ /^wss?:\/\/[A-Za-z0-9][A-Za-z0-9.-]*(:[0-9]+)?$/ ? value : ""
+}
+
+function form_value(body, wanted, count, fields, i, separator, key) {
+  count = split(body, fields, "&")
+  for (i = 1; i <= count; i++) {
+    separator = index(fields[i], "=")
+    key = separator == 0 ? fields[i] : substr(fields[i], 1, separator - 1)
+    if (key == wanted) return separator == 0 ? "" : substr(fields[i], separator + 1)
+  }
+  return ""
+}
+
+function origin_for_relay(url, origin) {
+  origin = url
+  sub(/^ws:/, "http:", origin)
+  sub(/^wss:/, "https:", origin)
+  return origin
+}
+
+function render_mark() {
+  print "<svg class=\"brand-mark\" aria-hidden=\"true\" viewBox=\"0 0 466 309\"><defs><mask id=\"buzz-cutouts\"><rect width=\"466\" height=\"309\" fill=\"white\"/><circle cx=\"193.3\" cy=\"84.4\" r=\"27\" fill=\"black\"/><circle cx=\"276\" cy=\"84.4\" r=\"27\" fill=\"black\"/><rect x=\"166.3\" y=\"157.2\" width=\"136.9\" height=\"38.3\" rx=\"5\" fill=\"black\"/><rect x=\"166.9\" y=\"235.1\" width=\"136.2\" height=\"37.6\" rx=\"5\" fill=\"black\"/></mask></defs><rect width=\"466\" height=\"309\" fill=\"currentColor\" mask=\"url(#buzz-cutouts)\"/></svg>"
+}
+
+function render_page(message, error, owner, relay_url, button_label, mode, locked, local_checked, tailscale_checked) {
   print "HTTP/1.1 200 OK\r"
   print "Content-Type: text/html; charset=utf-8\r"
   print "Connection: close\r"
@@ -34,60 +63,99 @@ function render_page(message, error, owner, relay_url, button_label) {
   print "\r"
   print "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">"
   print "<title>Buzz Relay setup</title><style>"
-  print ":root{color-scheme:dark;font-family:Inter,ui-sans-serif,system-ui,sans-serif;background:#11110f;color:#f7f4e8}*{box-sizing:border-box}"
-  print "body{margin:0;min-height:100vh;display:grid;place-items:center;padding:24px;background:radial-gradient(circle at top,#332d13,#11110f 55%)}"
-  print "main{width:min(720px,100%);background:#1d1b14;border:1px solid #4a4122;border-radius:24px;padding:clamp(24px,5vw,48px);box-shadow:0 24px 70px #0008}"
-  print ".eyebrow{color:#f5c842;font-weight:800;letter-spacing:.12em;text-transform:uppercase;font-size:.78rem}h1{font-size:clamp(2rem,6vw,3.5rem);line-height:1;margin:.35em 0 .25em}"
-  print "p,li{line-height:1.65;color:#d8d2bf}code{display:block;padding:14px 16px;border-radius:12px;background:#0d0d0b;border:1px solid #343126;color:#fff;overflow-wrap:anywhere}"
-  print "form{display:grid;gap:12px;margin:28px 0}label{font-weight:750}input{width:100%;padding:14px 16px;border-radius:12px;border:1px solid #5b5230;background:#0d0d0b;color:#fff;font:inherit}"
-  print "button{justify-self:start;border:0;border-radius:999px;padding:13px 20px;background:#f5c842;color:#17150d;font-weight:850;font:inherit;cursor:pointer}.notice{padding:12px 14px;border-radius:12px}.ok{background:#18351f;color:#bdf0c7}.error{background:#471d1d;color:#ffc5c5}.muted{font-size:.9rem;color:#aaa38f}"
-  print "</style></head><body><main><div class=\"eyebrow\">Buzz on Umbrel</div><h1>Run your own relay</h1>"
-  print "<p>This app runs the private Buzz relay described in Block's self-hosting guide. Choose the existing Buzz Desktop identity that should permanently own this community.</p>"
+  print ":root{color-scheme:light;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;background:#d7d72e;color:#171713}*{box-sizing:border-box}"
+  print "body{margin:0;min-height:100vh;padding:clamp(18px,4vw,48px);background:#d7d72e;background-image:radial-gradient(#1717131b 1px,transparent 1px);background-size:22px 22px}"
+  print "main{width:min(960px,100%);margin:auto;background:#f7f7ed;border:2px solid #171713;border-radius:28px;overflow:hidden;box-shadow:12px 12px 0 #171713}"
+  print ".hero{display:grid;grid-template-columns:1fr auto;gap:28px;padding:clamp(28px,6vw,64px);background:#d7d72e;border-bottom:2px solid #171713}.brand-mark{width:clamp(112px,18vw,178px);color:#171713;align-self:center}"
+  print ".eyebrow{font-weight:900;letter-spacing:.12em;text-transform:uppercase;font-size:.78rem}h1{max-width:680px;font-size:clamp(2.65rem,8vw,5.4rem);letter-spacing:-.065em;line-height:.88;margin:.22em 0 .2em}"
+  print ".hero p{max-width:620px;margin:0;font-size:1.02rem;line-height:1.55}.content{padding:clamp(26px,6vw,58px)}.status{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border:1.5px solid #171713;border-radius:999px;font-size:.82rem;font-weight:850;text-transform:uppercase;letter-spacing:.06em}.dot{width:9px;height:9px;border-radius:50%;background:#171713}"
+  print "p,li{line-height:1.65;color:#4a493f}h2{margin:1.65em 0 .65em;font-size:1.45rem;letter-spacing:-.025em}.notice{padding:13px 15px;border:1.5px solid #171713;border-radius:14px;font-weight:700}.ok{background:#e8f4c6}.error{background:#ffd5ce}.muted{font-size:.91rem;color:#6a695d}"
+  print "form{display:grid;gap:18px;margin:26px 0}.field-label{font-weight:850}.modes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.mode{position:relative;display:block}.mode input{position:absolute;opacity:0;pointer-events:none}.mode-card{height:100%;padding:16px;border:1.5px solid #a5a593;border-radius:16px;background:#fff;cursor:pointer;transition:.16s ease}.mode input:checked+.mode-card{border-color:#171713;background:#eeeea9;box-shadow:4px 4px 0 #171713}.mode input:focus-visible+.mode-card{outline:3px solid #77770d;outline-offset:3px}.mode-title{display:block;font-weight:900;color:#171713}.mode-url{display:block;margin-top:6px;font:600 .84rem ui-monospace,SFMono-Regular,Consolas,monospace;overflow-wrap:anywhere;color:#4f4e42}.locked{cursor:not-allowed;opacity:.68}"
+  print "input[type=text]{width:100%;padding:15px 16px;border-radius:14px;border:1.5px solid #8e8d7c;background:#fff;color:#171713;font:600 .96rem ui-monospace,SFMono-Regular,Consolas,monospace}input[type=text]:focus{outline:3px solid #d7d72e;outline-offset:2px;border-color:#171713}"
+  print "button{justify-self:start;border:2px solid #171713;border-radius:999px;padding:13px 22px;background:#171713;color:#d7d72e;font:850 1rem Inter,ui-sans-serif,system-ui,sans-serif;cursor:pointer;box-shadow:4px 4px 0 #8b8b16}button:hover{transform:translate(-1px,-1px);box-shadow:6px 6px 0 #8b8b16}"
+  print "code{display:block;padding:15px 17px;border-radius:14px;background:#171713;color:#d7d72e;font:600 .92rem ui-monospace,SFMono-Regular,Consolas,monospace;overflow-wrap:anywhere}.steps{display:grid;gap:10px;padding-left:1.35rem}.key-note{padding:15px 17px;border-left:5px solid #171713;background:#eeeea9;border-radius:4px 14px 14px 4px}.key-note p{margin:.25rem 0 0}.rule{height:1.5px;background:#d6d5c7;margin:34px 0}strong{color:#171713}"
+  print "@media(max-width:680px){body{padding:14px}main{border-radius:20px;box-shadow:7px 7px 0 #171713}.hero{grid-template-columns:1fr;padding:30px}.brand-mark{grid-row:1;width:94px}.content{padding:28px}.modes{grid-template-columns:1fr}h1{font-size:clamp(2.6rem,15vw,4.2rem)}}"
+  print "</style></head><body><main><section class=\"hero\"><div><div class=\"eyebrow\">Buzz Relay · Umbrel</div><h1>Your Buzz.<br>Your relay.</h1><p>Host a private community on hardware you control, with a clear path for local or Tailscale access.</p></div>"
+  render_mark()
+  print "</section><section class=\"content\">"
+  print "<div class=\"status\"><span class=\"dot\"></span>" (owner == "" ? "Waiting for setup" : "Community configured") "</div>"
   if (message != "") print "<p class=\"notice ok\">" html_escape(message) "</p>"
   if (error != "") print "<p class=\"notice error\">" html_escape(error) "</p>"
-  print "<form method=\"post\" action=\"/setup\" autocomplete=\"off\"><label for=\"owner_pubkey\">Owner public key</label>"
-  print "<input id=\"owner_pubkey\" name=\"owner_pubkey\" inputmode=\"text\" minlength=\"64\" maxlength=\"64\" pattern=\"[0-9a-fA-F]{64}\" placeholder=\"64-character hex public key\" required>"
+  print "<h2>Choose how you connect</h2><p>The address becomes this community's permanent identity when the first owner is saved.</p>"
+  print "<form method=\"post\" action=\"/setup\" autocomplete=\"off\">"
+  if (locked) print "<input type=\"hidden\" name=\"connection\" value=\"" mode "\">"
+  print "<div class=\"modes\">"
+  print "<label class=\"mode\"><input type=\"radio\" name=\"connection\" value=\"local\" " local_checked (locked ? " disabled" : "") "><span class=\"mode-card" (locked ? " locked" : "") "\"><span class=\"mode-title\">Local network</span><span class=\"mode-url\">" html_escape(local_relay_url) "</span></span></label>"
+  print "<label class=\"mode\"><input type=\"radio\" name=\"connection\" value=\"tailscale\" " tailscale_checked (locked ? " disabled" : "") "><span class=\"mode-card" (locked ? " locked" : "") "\"><span class=\"mode-title\">Tailscale · anywhere</span><span class=\"mode-url\">" html_escape(tailscale_relay_url) "</span></span></label>"
+  print "</div>"
+  if (locked) print "<p class=\"muted\"><strong>Address locked.</strong> Changing it after a community contains data would create a different community identity.</p>"
+  else print "<p class=\"muted\">Tailscale requires the official Tailscale app on Umbrel and your other devices, all signed into the same tailnet with MagicDNS enabled. The WireGuard tunnel encrypts the connection even though the private relay URL begins with <strong>ws://</strong>.</p>"
+  print "<label class=\"field-label\" for=\"owner_pubkey\">Owner public key</label>"
+  print "<input type=\"text\" id=\"owner_pubkey\" name=\"owner_pubkey\" inputmode=\"text\" minlength=\"64\" maxlength=\"64\" pattern=\"[0-9a-fA-F]{64}\" placeholder=\"Paste 64-character hex public key\" autocapitalize=\"none\" spellcheck=\"false\" required>"
+  print "<p class=\"muted\"><strong>Need an identity?</strong> Open Buzz Desktop first. It creates and protects one during onboarding. Then copy the 64-character public key from <strong>Settings → Identity</strong>. This page never asks for your private key.</p>"
+  print "<div class=\"key-note\"><strong>Two identities, kept separate.</strong><p>Your public key makes your Buzz Desktop identity the initial owner. Umbrel generates and protects a different service key for the relay itself. Your personal <em>nsec</em> never belongs on this server.</p></div>"
   print "<button type=\"submit\">" button_label "</button></form>"
-  if (owner == "") print "<p class=\"muted\">The relay is waiting for an owner key and will start automatically after you save one.</p>"
-  else {
-    print "<p class=\"muted\">Current owner</p><code>" html_escape(owner) "</code>"
-    print "<p class=\"muted\">Changing the owner takes effect after restarting the app in Umbrel.</p>"
+  if (owner != "") {
+    print "<div class=\"rule\"></div><p class=\"muted\">Current owner</p><code>" html_escape(owner) "</code>"
   }
-  print "<h2>Connect Buzz Desktop</h2><ol><li>In Buzz Desktop, open <strong>Settings → Identity</strong> and copy the 64-character public key.</li><li>Save that key above.</li><li>Choose <strong>Join an existing community</strong> and enter:</li></ol>"
-  print "<code>" html_escape(relay_url) "</code><p>Keep this relay on your trusted local network. Use Buzz Desktop to invite additional members after the owner connects.</p>"
-  print "</main></body></html>"
+  print "<div class=\"rule\"></div><h2>Connect Buzz Desktop</h2><ol class=\"steps\"><li>Complete setup above.</li><li>In Buzz Desktop, choose <strong>Join an existing community</strong>.</li><li>Enter this exact address:</li></ol>"
+  print "<code>" html_escape(relay_url == "" ? local_relay_url : relay_url) "</code>"
+  if (mode == "tailscale") print "<p>Keep the Umbrel and client signed into Tailscale, and do not rename this Umbrel in Tailscale after creating the community.</p>"
+  else print "<p>Use Buzz Desktop to invite additional members after the owner connects.</p>"
+  print "</section></main></body></html>"
 }
 
 BEGIN {
   owner_file = ENVIRON["OWNER_FILE"] == "" ? "/data/relay/owner.env" : ENVIRON["OWNER_FILE"]
-  relay_url = ENVIRON["RELAY_URL"]
+  community_file = ENVIRON["COMMUNITY_FILE"] == "" ? "/data/relay/community.env" : ENVIRON["COMMUNITY_FILE"]
+  local_relay_url = ENVIRON["LOCAL_RELAY_URL"]
+  tailscale_relay_url = ENVIRON["TAILSCALE_RELAY_URL"]
   method = ENVIRON["SETUP_METHOD"]
   message = ""
   error = ""
   owner = current_owner()
+  relay_url = current_relay_url()
   was_configured = owner != ""
+  mode = relay_url == tailscale_relay_url ? "tailscale" : "local"
 
   if (method == "POST") {
     body = ENVIRON["SETUP_BODY"]
     if (body == "REQUEST_TOO_LARGE") {
       error = "Request is too large."
     } else {
-      value = body
-      sub(/^owner_pubkey=/, "", value)
-      sub(/&.*/, "", value)
+      value = form_value(body, "owner_pubkey")
+      connection = form_value(body, "connection")
+      selected_url = connection == "tailscale" ? tailscale_relay_url : local_relay_url
 
-      if (length(value) != 64 || value ~ /[^0-9A-Fa-f]/) {
+      if (connection != "local" && connection != "tailscale") {
+        error = "Choose local network or Tailscale access."
+      } else if (length(value) != 64 || value ~ /[^0-9A-Fa-f]/) {
         error = "Enter the 64-character hexadecimal public key shown by Buzz Desktop."
+      } else if (was_configured && relay_url != "" && selected_url != relay_url) {
+        error = "The relay address is locked after first setup to protect the community identity."
       } else {
         value = tolower(value)
-        temporary_file = owner_file ".tmp"
-        print "RELAY_OWNER_PUBKEY=" value > temporary_file
-        close(temporary_file)
-        if (system("chmod 600 " temporary_file " && mv " temporary_file " " owner_file) != 0) {
-          error = "Could not save the owner key. Check the app logs."
+        origin = origin_for_relay(selected_url)
+        temporary_community = community_file ".tmp"
+        print "RELAY_URL=" selected_url > temporary_community
+        print "BUZZ_CORS_ORIGINS=" origin ",tauri://localhost,http://localhost:1420" >> temporary_community
+        print "BUZZ_MEDIA_BASE_URL=" origin "/media" >> temporary_community
+        close(temporary_community)
+
+        if (system("chmod 600 " temporary_community " && mv " temporary_community " " community_file) != 0) {
+          error = "Could not save the relay address. Check the app logs."
         } else {
-          owner = value
-          message = was_configured ? "Owner key saved. Restart Buzz Relay in Umbrel to apply the change." : "Owner key saved. The relay is starting now."
+          temporary_owner = owner_file ".tmp"
+          print "RELAY_OWNER_PUBKEY=" value > temporary_owner
+          close(temporary_owner)
+          if (system("chmod 600 " temporary_owner " && mv " temporary_owner " " owner_file) != 0) {
+            error = "Could not save the owner key. Check the app logs."
+          } else {
+            owner = value
+            relay_url = selected_url
+            mode = connection
+            message = was_configured ? "Owner key saved. Restart Buzz Relay in Umbrel to apply the change." : "Configuration saved. Buzz Relay is starting now."
+          }
         }
       }
     }
@@ -95,6 +163,9 @@ BEGIN {
     error = "Unsupported request method."
   }
 
-  button_label = owner == "" ? "Start private relay" : "Replace owner key"
-  render_page(message, error, owner, relay_url, button_label)
+  button_label = owner == "" ? "Start Buzz Relay" : "Save owner key"
+  locked = owner != ""
+  local_checked = mode == "local" ? "checked" : ""
+  tailscale_checked = mode == "tailscale" ? "checked" : ""
+  render_page(message, error, owner, relay_url, button_label, mode, locked, local_checked, tailscale_checked)
 }
