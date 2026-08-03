@@ -94,13 +94,14 @@ process.stdin.on('data', (chunk) => {
 });
 
 test('Umbrel exposes browser setup and protects the shared-network bridge with a derived key', async () => {
-  const [compose, exportsFile, manifest, librechatConfig, librechatManifest, openWebui] = await Promise.all([
+  const [compose, exportsFile, manifest, librechatConfig, librechatManifest, openWebui, setupPage] = await Promise.all([
     readFile(new URL('../docker-compose.yml', import.meta.url), 'utf8'),
     readFile(new URL('../exports.sh', import.meta.url), 'utf8'),
     readFile(new URL('../umbrel-app.yml', import.meta.url), 'utf8'),
     readFile(new URL('../../librechat/data/api/librechat.yaml', import.meta.url), 'utf8'),
     readFile(new URL('../../librechat/umbrel-app.yml', import.meta.url), 'utf8'),
     readFile(new URL('../../open-webui/umbrel-app.yml', import.meta.url), 'utf8'),
+    readFile(new URL('../public/index.html', import.meta.url), 'utf8'),
   ]);
   assert.doesNotMatch(compose, /ports:/);
   assert.match(compose, /BRIDGE_API_KEY: \$\{APP_PASSWORD\}/);
@@ -113,6 +114,7 @@ test('Umbrel exposes browser setup and protects the shared-network bridge with a
   assert.match(librechatConfig, /name: "Codex Agent"/);
   assert.match(librechatConfig, /apiKey: "user_provided"/);
   assert.match(librechatConfig, /baseURL: "http:\/\/codex-agent_app_1:8080\/v1"/);
+  assert.match(setupPage, /Open WebUI URL: http:\/\/codex-agent_app_1:8080\/v1/);
 });
 
 test('Codex stays on stdio and owns its browser-created credential privately', async () => {
@@ -122,7 +124,7 @@ test('Codex stays on stdio and owns its browser-created credential privately', a
     readFile(new URL('../docker-compose.yml', import.meta.url), 'utf8'),
   ]);
   assert.match(source, /\['app-server', '--stdio'\]/);
-  assert.match(source, /Umbrel Codex Agent Bridge', version: '0\.3\.1'/);
+  assert.match(source, /Umbrel Codex Agent Bridge', version: '0\.3\.2'/);
   assert.match(source, /\['login', '-c', 'cli_auth_credentials_store="file"', '--device-auth'\]/);
   assert.doesNotMatch(source, /--listen/);
   assert.match(source, /crypto\.timingSafeEqual/);

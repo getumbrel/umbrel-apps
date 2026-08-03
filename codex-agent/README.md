@@ -14,10 +14,11 @@ experimental Codex network transport or a raw host port.
 3. Complete sign-in in a browser. Codex saves its normal file-backed auth cache
    in the app's private persistent data; the credential is never returned to
    the browser or included in the image.
-4. In the selected chat client, choose **Codex Agent**, use model
-   `codex-agent`, and enter Codex Agent's Umbrel-generated password as the API
-   key. LibreChat already contains this endpoint; Open WebUI can add the same
-   internal OpenAI-compatible endpoint.
+4. In LibreChat, choose **Codex Agent** and model `codex-agent`. In Open WebUI,
+   add an OpenAI-compatible connection using
+   `http://codex-agent_app_1:8080/v1`, model `codex-agent`, and Codex Agent's
+   Umbrel-generated password as its API key. The hostname is intentionally
+   internal to Umbrel's Docker network; it is not a browser URL.
 
 An existing pre-0.3.0 host-local credential at
 `${APP_DATA_DIR}/runtime-secrets/auth.json` is migrated automatically at first
