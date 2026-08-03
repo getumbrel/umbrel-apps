@@ -103,8 +103,8 @@ test('Umbrel exposes browser setup and protects the shared-network bridge with a
     readFile(new URL('../../open-webui/umbrel-app.yml', import.meta.url), 'utf8'),
   ]);
   assert.doesNotMatch(compose, /ports:/);
-  assert.match(compose, /BRIDGE_API_KEY: \$\{APP_CODEX_AGENT_BRIDGE_API_KEY\}/);
-  assert.match(exportsFile, /APP_CODEX_AGENT_BRIDGE_API_KEY="\$\{APP_PASSWORD\}"/);
+  assert.match(compose, /BRIDGE_API_KEY: \$\{APP_PASSWORD\}/);
+  assert.doesNotMatch(exportsFile, /^\s*export\s+/m);
   assert.match(manifest, /deterministicPassword: true/);
   assert.match(manifest, /dependencies:\n  - librechat/);
   assert.doesNotMatch(manifest, /must be placed at/);

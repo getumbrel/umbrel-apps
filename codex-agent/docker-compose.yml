@@ -24,7 +24,10 @@ services:
       HOME: /data/codex-home
       CODEX_HOME: /data/codex-home
       PORT: "8080"
-      BRIDGE_API_KEY: ${APP_CODEX_AGENT_BRIDGE_API_KEY}
+      # Umbrel derives this before rendering Compose. Do not obtain it via
+      # exports.sh: legacy lifecycle hooks source exports before APP_PASSWORD
+      # exists, which would leave the internal bridge unauthenticated.
+      BRIDGE_API_KEY: ${APP_PASSWORD}
       CODEX_WORKSPACE: /projects
       CODEX_AUTH_FILE: /run/secrets/codex/auth.json
       CODEX_PERSISTENT_AUTH_FILE: /data/codex-home/auth.json
