@@ -10,8 +10,13 @@ set -eu
 # app-owned file directly. Never alter the mounted legacy file.
 mkdir -p "$(dirname "$CODEX_PERSISTENT_AUTH_FILE")"
 umask 077
-if [ -r "$CODEX_AUTH_FILE" ] && { [ ! -s "$CODEX_PERSISTENT_AUTH_FILE" ] || [ -L "$CODEX_PERSISTENT_AUTH_FILE" ]; }; then
+# Releases before 0.3.0 used a runtime-secret symlink here. Remove it even
+# when that optional legacy file is no longer mounted, so browser login can
+# create an app-owned credential file.
+if [ -L "$CODEX_PERSISTENT_AUTH_FILE" ]; then
     rm -f "$CODEX_PERSISTENT_AUTH_FILE"
+fi
+if [ -r "$CODEX_AUTH_FILE" ] && [ ! -s "$CODEX_PERSISTENT_AUTH_FILE" ]; then
     cp "$CODEX_AUTH_FILE" "$CODEX_PERSISTENT_AUTH_FILE"
 fi
 if [ -f "$CODEX_PERSISTENT_AUTH_FILE" ]; then

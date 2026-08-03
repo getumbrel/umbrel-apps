@@ -1,6 +1,6 @@
 import crypto from 'node:crypto';
 import { spawn, spawnSync } from 'node:child_process';
-import { createReadStream, existsSync } from 'node:fs';
+import { chmodSync, createReadStream, existsSync } from 'node:fs';
 import http from 'node:http';
 import path from 'node:path';
 
@@ -81,6 +81,11 @@ function startDeviceLogin() {
   child.once('error', () => { state.status = 'failed'; state.error = 'Unable to start Codex device login.'; });
   child.once('exit', (code) => {
     if (codexAuthenticated()) {
+      try {
+        chmodSync(persistentAuthFile, 0o600);
+      } catch {
+        // The login succeeded; report it even if an unusual volume rejects chmod.
+      }
       state.status = 'authenticated';
     } else if (state.status === 'pending') {
       state.status = code === 0 ? 'expired' : 'failed';

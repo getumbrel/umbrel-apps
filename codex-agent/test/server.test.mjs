@@ -126,6 +126,7 @@ test('Codex stays on stdio and owns its browser-created credential privately', a
   assert.doesNotMatch(source, /--listen/);
   assert.match(source, /crypto\.timingSafeEqual/);
   assert.match(entrypoint, /Migrate existing host-local credentials once/);
+  assert.match(entrypoint, /if \[ -L "\$CODEX_PERSISTENT_AUTH_FILE" \]; then/);
   assert.doesNotMatch(entrypoint, /test -r "\$CODEX_AUTH_FILE"/);
   assert.match(compose, /runtime-secrets:\/run\/secrets\/codex:ro/);
   assert.doesNotMatch(compose, /codex_agent_private/);
