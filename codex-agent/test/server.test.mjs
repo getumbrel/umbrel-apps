@@ -81,6 +81,7 @@ test('Umbrel only exposes the browser setup route and protects the shared-networ
   assert.match(compose, /BRIDGE_API_KEY: \$\{APP_CODEX_AGENT_BRIDGE_API_KEY\}/);
   assert.match(exportsFile, /APP_CODEX_AGENT_BRIDGE_API_KEY="\$\{APP_PASSWORD\}"/);
   assert.match(manifest, /deterministicPassword: true/);
+  assert.match(manifest, /dependencies:\n  - librechat/);
   assert.match(librechat, /name: "Codex Agent"/);
   assert.match(librechat, /apiKey: "user_provided"/);
   assert.match(librechat, /baseURL: "http:\/\/codex-agent_app_1:8080\/v1"/);
