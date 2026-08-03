@@ -2,6 +2,9 @@ version: "3.7"
 
 services:
   app_proxy:
+    depends_on:
+      gateway:
+        condition: service_healthy
     environment:
       APP_HOST: buzz_gateway_1
       APP_PORT: 8080
@@ -15,6 +18,7 @@ services:
     user: "1000:1000"
     init: true
     restart: on-failure
+    entrypoint: ["caddy"]
     command: ["run", "--config", "/etc/caddy/Caddyfile", "--adapter", "caddyfile"]
     environment:
       HOME: /tmp
@@ -25,6 +29,12 @@ services:
     depends_on:
       setup:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/setup"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 5s
 
   setup:
     image: redis:7.4.9-alpine@sha256:6ab0b6e7381779332f97b8ca76193e45b0756f38d4c0dcda72dbb3c32061ab99
@@ -93,6 +103,7 @@ services:
       RUST_LOG: buzz_relay=info,buzz_db=info,buzz_auth=info,buzz_pubsub=info,tower_http=info
     volumes:
       - ${APP_DATA_DIR}/data/git:/data/git
+      - ${APP_DATA_DIR}/data/relay:/data/relay:ro
     depends_on:
       postgres:
         condition: service_healthy
