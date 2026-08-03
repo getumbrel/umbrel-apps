@@ -71,20 +71,24 @@ process.stdin.on('data', (chunk) => {
 });
 
 test('Umbrel only exposes the browser setup route and protects the shared-network bridge with a derived key', async () => {
-  const [compose, exportsFile, manifest, librechat] = await Promise.all([
+  const [compose, exportsFile, manifest, librechatConfig, librechatManifest, openWebui] = await Promise.all([
     readFile(new URL('../docker-compose.yml', import.meta.url), 'utf8'),
     readFile(new URL('../exports.sh', import.meta.url), 'utf8'),
     readFile(new URL('../umbrel-app.yml', import.meta.url), 'utf8'),
     readFile(new URL('../../librechat/data/api/librechat.yaml', import.meta.url), 'utf8'),
+    readFile(new URL('../../librechat/umbrel-app.yml', import.meta.url), 'utf8'),
+    readFile(new URL('../../open-webui/umbrel-app.yml', import.meta.url), 'utf8'),
   ]);
   assert.doesNotMatch(compose, /ports:/);
   assert.match(compose, /BRIDGE_API_KEY: \$\{APP_CODEX_AGENT_BRIDGE_API_KEY\}/);
   assert.match(exportsFile, /APP_CODEX_AGENT_BRIDGE_API_KEY="\$\{APP_PASSWORD\}"/);
   assert.match(manifest, /deterministicPassword: true/);
   assert.match(manifest, /dependencies:\n  - librechat/);
-  assert.match(librechat, /name: "Codex Agent"/);
-  assert.match(librechat, /apiKey: "user_provided"/);
-  assert.match(librechat, /baseURL: "http:\/\/codex-agent_app_1:8080\/v1"/);
+  assert.doesNotMatch(librechatManifest, /implements:/);
+  assert.match(openWebui, /implements:\n  - librechat/);
+  assert.match(librechatConfig, /name: "Codex Agent"/);
+  assert.match(librechatConfig, /apiKey: "user_provided"/);
+  assert.match(librechatConfig, /baseURL: "http:\/\/codex-agent_app_1:8080\/v1"/);
 });
 
 test('Codex stays on stdio and the bridge does not persist the OAuth credential', async () => {
