@@ -6,9 +6,6 @@ services:
     environment:
       APP_HOST: codex-agent_app_1
       APP_PORT: "8080"
-    networks:
-      default: {}
-      codex_agent_private: {}
 
   app:
     image: ghcr.io/earlvanze/codex-agent:0.2.0@sha256:bd2dd2a2759ea4f23468177472881091090eca7a844856dee95fbca2b0c99a98
@@ -30,6 +27,7 @@ services:
       BRIDGE_API_KEY: ${APP_CODEX_AGENT_BRIDGE_API_KEY}
       CODEX_WORKSPACE: /projects
       CODEX_AUTH_FILE: /run/secrets/codex/auth.json
+      CODEX_PERSISTENT_AUTH_FILE: /data/codex-home/auth.json
       REMNIC_AUTH_FILE: /run/secrets/codex/remnic-auth-token
       REMNIC_MCP_URL: ${REMNIC_MCP_URL:-http://remnic_server_1:4318/mcp}
       NODE_ENV: production
@@ -37,7 +35,8 @@ services:
       # Persistent SSD-backed application state and user project workspaces.
       - ${APP_DATA_DIR}/data:/data:rw
       - ${APP_DATA_DIR}/projects:/projects:rw
-      # Created on the host at deployment time; never committed or baked in.
+      # Legacy host-local credentials are migrated once when present. New
+      # installs authenticate through the app's browser device-code flow.
       - ${APP_DATA_DIR}/runtime-secrets:/run/secrets/codex:ro
     tmpfs:
       - /runtime:uid=1000,gid=1000,mode=0700
@@ -48,15 +47,3 @@ services:
       timeout: 5s
       retries: 3
       start_period: 20s
-    networks:
-      default: {}
-      codex_agent_private: {}
-
-networks:
-  # Lets Codex reach optional MCP services without publishing a host port.
-  default:
-    name: umbrel_main_network
-    external: true
-  # Prevents any other Umbrel app from reaching the gateway directly.
-  codex_agent_private:
-    internal: true

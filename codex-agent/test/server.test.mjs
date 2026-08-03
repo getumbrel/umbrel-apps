@@ -27,15 +27,24 @@ async function waitForHealth(port) {
   throw new Error('bridge did not become healthy');
 }
 
-test('the bridge implements an authenticated, streamed OpenAI-compatible Codex endpoint', async () => {
+test('the bridge completes browser device-code setup before serving authenticated streamed completions', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'codex-agent-bridge-'));
-  const auth = join(directory, 'auth.json');
-  const runtimeAuth = join(directory, 'runtime-auth.json');
+  const legacyAuth = join(directory, 'legacy-auth.json');
+  const persistentAuth = join(directory, 'auth.json');
   const mockCodex = join(directory, 'mock-codex.mjs');
   const port = 18080 + Math.floor(Math.random() * 1000);
-  await Promise.all([writeFile(auth, '{}'), writeFile(runtimeAuth, '{}')]);
+  await writeFile(legacyAuth, '{}');
   await writeFile(mockCodex, `#!/usr/bin/env node
+import { existsSync, writeFileSync } from 'node:fs';
 if (process.argv.includes('--version')) process.exit(0);
+if (process.argv.includes('login')) {
+  if (process.argv.includes('status')) process.exit(existsSync(process.env.CODEX_PERSISTENT_AUTH_FILE) ? 0 : 1);
+  if (process.argv.includes('--device-auth')) {
+    console.error('Open https://auth.openai.com/device and enter code: TEST-CODE');
+    setTimeout(() => { writeFileSync(process.env.CODEX_PERSISTENT_AUTH_FILE, '{}'); process.exit(0); }, 100);
+    process.stdin.resume();
+  }
+}
 let buffer = '';
 process.stdin.on('data', (chunk) => {
   buffer += chunk;
@@ -52,9 +61,23 @@ process.stdin.on('data', (chunk) => {
 });
 `);
   await chmod(mockCodex, 0o755);
-  const server = spawn(process.execPath, ['server.mjs'], { cwd: root, env: { ...process.env, PORT: String(port), CODEX_BIN: mockCodex, CODEX_AUTH_FILE: auth, CODEX_RUNTIME_AUTH_FILE: runtimeAuth, BRIDGE_API_KEY: 'test-bridge-key', CODEX_WORKSPACE: directory }, stdio: 'ignore' });
+  const server = spawn(process.execPath, ['server.mjs'], { cwd: root, env: { ...process.env, PORT: String(port), CODEX_BIN: mockCodex, CODEX_AUTH_FILE: legacyAuth, CODEX_PERSISTENT_AUTH_FILE: persistentAuth, BRIDGE_API_KEY: 'test-bridge-key', CODEX_WORKSPACE: directory }, stdio: 'ignore' });
   try {
     await waitForHealth(port);
+    assert.deepEqual(JSON.parse((await request(port, 'GET', '/api/auth/status')).body), { status: 'unauthenticated' });
+    let deviceLogin = JSON.parse((await request(port, 'POST', '/api/auth/device/start')).body);
+    assert.equal(deviceLogin.status, 'pending');
+    for (let index = 0; index < 50 && !deviceLogin.userCode; index += 1) {
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      deviceLogin = JSON.parse((await request(port, 'GET', '/api/auth/status')).body);
+    }
+    assert.equal(deviceLogin.verificationUrl, 'https://auth.openai.com/device');
+    assert.equal(deviceLogin.userCode, 'TEST-CODE');
+    for (let index = 0; index < 50; index += 1) {
+      if (JSON.parse((await request(port, 'GET', '/api/auth/status')).body).status === 'authenticated') break;
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    }
+    assert.equal(JSON.parse((await request(port, 'GET', '/api/auth/status')).body).status, 'authenticated');
     assert.equal((await request(port, 'GET', '/v1/models')).status, 401);
     const models = await request(port, 'GET', '/v1/models', undefined, { Authorization: 'Bearer test-bridge-key' });
     assert.equal(models.status, 200);
@@ -70,7 +93,7 @@ process.stdin.on('data', (chunk) => {
   }
 });
 
-test('Umbrel only exposes the browser setup route and protects the shared-network bridge with a derived key', async () => {
+test('Umbrel exposes browser setup and protects the shared-network bridge with a derived key', async () => {
   const [compose, exportsFile, manifest, librechatConfig, librechatManifest, openWebui] = await Promise.all([
     readFile(new URL('../docker-compose.yml', import.meta.url), 'utf8'),
     readFile(new URL('../exports.sh', import.meta.url), 'utf8'),
@@ -84,6 +107,7 @@ test('Umbrel only exposes the browser setup route and protects the shared-networ
   assert.match(exportsFile, /APP_CODEX_AGENT_BRIDGE_API_KEY="\$\{APP_PASSWORD\}"/);
   assert.match(manifest, /deterministicPassword: true/);
   assert.match(manifest, /dependencies:\n  - librechat/);
+  assert.doesNotMatch(manifest, /must be placed at/);
   assert.doesNotMatch(librechatManifest, /implements:/);
   assert.match(openWebui, /implements:\n  - librechat/);
   assert.match(librechatConfig, /name: "Codex Agent"/);
@@ -91,15 +115,18 @@ test('Umbrel only exposes the browser setup route and protects the shared-networ
   assert.match(librechatConfig, /baseURL: "http:\/\/codex-agent_app_1:8080\/v1"/);
 });
 
-test('Codex stays on stdio and the bridge does not persist the OAuth credential', async () => {
+test('Codex stays on stdio and owns its browser-created credential privately', async () => {
   const [source, entrypoint, compose] = await Promise.all([
     readFile(new URL('../server.mjs', import.meta.url), 'utf8'),
     readFile(new URL('../entrypoint.sh', import.meta.url), 'utf8'),
     readFile(new URL('../docker-compose.yml', import.meta.url), 'utf8'),
   ]);
   assert.match(source, /\['app-server', '--stdio'\]/);
+  assert.match(source, /\['login', '-c', 'cli_auth_credentials_store="file"', '--device-auth'\]/);
   assert.doesNotMatch(source, /--listen/);
   assert.match(source, /crypto\.timingSafeEqual/);
-  assert.match(entrypoint, /ln -s \/runtime\/codex-home\/auth\.json \/data\/codex-home\/auth\.json/);
+  assert.match(entrypoint, /Migrate existing host-local credentials once/);
+  assert.doesNotMatch(entrypoint, /test -r "\$CODEX_AUTH_FILE"/);
   assert.match(compose, /runtime-secrets:\/run\/secrets\/codex:ro/);
+  assert.doesNotMatch(compose, /codex_agent_private/);
 });

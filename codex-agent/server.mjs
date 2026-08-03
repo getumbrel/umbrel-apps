@@ -6,13 +6,13 @@ import path from 'node:path';
 
 const port = Number(process.env.PORT || 8080);
 const workspace = process.env.CODEX_WORKSPACE || '/projects';
-const authFile = process.env.CODEX_AUTH_FILE || '/run/secrets/codex/auth.json';
-const runtimeAuthFile = process.env.CODEX_RUNTIME_AUTH_FILE || '/runtime/codex-home/auth.json';
+const persistentAuthFile = process.env.CODEX_PERSISTENT_AUTH_FILE || '/data/codex-home/auth.json';
 const bridgeApiKey = process.env.BRIDGE_API_KEY || '';
 const codexBin = process.env.CODEX_BIN || 'codex';
 const maxRequestBytes = 1024 * 1024;
 const maxConcurrentTurns = 4;
 let activeTurns = 0;
+let deviceLogin = null;
 
 function securityHeaders() {
   return {
@@ -39,6 +39,57 @@ function authorized(request) {
   const supplied = Buffer.from(header.slice(7));
   const expected = Buffer.from(bridgeApiKey);
   return supplied.length === expected.length && crypto.timingSafeEqual(supplied, expected);
+}
+
+function codexEnvironment() {
+  return { ...process.env, HOME: '/data/codex-home', CODEX_HOME: '/data/codex-home' };
+}
+
+function codexAuthenticated() {
+  if (!existsSync(persistentAuthFile)) return false;
+  return spawnSync(codexBin, ['login', 'status'], { env: codexEnvironment(), stdio: 'ignore', timeout: 3000 }).status === 0;
+}
+
+function deviceLoginStatus() {
+  if (codexAuthenticated()) return { status: 'authenticated' };
+  if (!deviceLogin) return { status: 'unauthenticated' };
+  const { status, verificationUrl, userCode, startedAt, error } = deviceLogin;
+  return { status, ...(verificationUrl ? { verificationUrl } : {}), ...(userCode ? { userCode } : {}), ...(error ? { error } : {}), startedAt };
+}
+
+function parseDeviceInstructions(output) {
+  const verificationUrl = output.match(/https:\/\/[^\s"'<>]+/i)?.[0];
+  const userCode = output.match(/\b[A-Z0-9]{4,8}-[A-Z0-9]{4,8}\b/)?.[0];
+  return { verificationUrl, userCode };
+}
+
+function startDeviceLogin() {
+  if (codexAuthenticated()) return { status: 'authenticated' };
+  if (deviceLogin?.status === 'pending') return deviceLoginStatus();
+  const state = { status: 'pending', startedAt: new Date().toISOString(), verificationUrl: undefined, userCode: undefined, error: undefined, output: '' };
+  const child = spawn(codexBin, ['login', '-c', 'cli_auth_credentials_store="file"', '--device-auth'], { env: codexEnvironment(), stdio: ['ignore', 'pipe', 'pipe'] });
+  state.child = child;
+  deviceLogin = state;
+  const collect = (chunk) => {
+    state.output = `${state.output}${chunk.toString('utf8')}`.slice(-8192);
+    const instructions = parseDeviceInstructions(state.output);
+    if (instructions.verificationUrl) state.verificationUrl = instructions.verificationUrl;
+    if (instructions.userCode) state.userCode = instructions.userCode;
+  };
+  child.stdout.on('data', collect);
+  child.stderr.on('data', collect);
+  child.once('error', () => { state.status = 'failed'; state.error = 'Unable to start Codex device login.'; });
+  child.once('exit', (code) => {
+    if (codexAuthenticated()) {
+      state.status = 'authenticated';
+    } else if (state.status === 'pending') {
+      state.status = code === 0 ? 'expired' : 'failed';
+      state.error = code === 0 ? 'The device code expired before authentication completed.' : 'Codex device login did not complete. Start a new login and try again.';
+    }
+    delete state.child;
+    state.output = '';
+  });
+  return deviceLoginStatus();
 }
 
 function contentToText(content) {
@@ -87,7 +138,7 @@ function writeRpc(child, message) {
 function runCodexTurn(payload, onDelta, onDone, onError) {
   const child = spawn(codexBin, ['app-server', '--stdio'], {
     cwd: workspace,
-    env: { ...process.env, HOME: '/data/codex-home', CODEX_HOME: '/data/codex-home' },
+    env: codexEnvironment(),
     stdio: ['pipe', 'pipe', 'pipe'],
   });
   let buffer = '';
@@ -151,7 +202,7 @@ function sse(response, value) { response.write(`data: ${JSON.stringify(value)}\n
 
 async function handleCompletion(request, response) {
   if (!authorized(request)) return unauthorized(response);
-  if (!existsSync(authFile) || !existsSync(runtimeAuthFile)) return json(response, 503, { error: { message: 'Codex authentication is not ready', type: 'service_unavailable' } });
+  if (!codexAuthenticated()) return json(response, 503, { error: { message: 'Codex authentication is not ready. Complete setup in the Codex Agent app.', type: 'service_unavailable' } });
   let payload;
   try { payload = await readJson(request); } catch (error) { return json(response, error.status || 400, { error: { message: error.message, type: 'invalid_request_error' } }); }
   if (!Array.isArray(payload.messages) || payload.messages.length === 0) return json(response, 400, { error: { message: 'messages must be a non-empty array', type: 'invalid_request_error' } });
@@ -188,8 +239,15 @@ const server = http.createServer((request, response) => {
   const pathname = new URL(request.url, 'http://localhost').pathname;
   if (request.method === 'GET' && pathname === '/healthz') {
     const codex = spawnSync(codexBin, ['--version'], { stdio: 'ignore', timeout: 2000 });
-    const ready = Boolean(bridgeApiKey) && existsSync(authFile) && existsSync(runtimeAuthFile) && codex.status === 0;
-    return json(response, ready ? 200 : 503, { status: ready ? 'ok' : 'not-ready' });
+    const running = Boolean(bridgeApiKey) && codex.status === 0;
+    return json(response, running ? 200 : 503, { status: running ? (codexAuthenticated() ? 'ok' : 'needs-authentication') : 'not-ready' });
+  }
+  if (request.method === 'GET' && pathname === '/api/auth/status') return json(response, 200, deviceLoginStatus());
+  if (request.method === 'POST' && pathname === '/api/auth/device/start') return json(response, 202, startDeviceLogin());
+  if (request.method === 'POST' && pathname === '/api/auth/device/cancel') {
+    if (deviceLogin?.child) deviceLogin.child.kill('SIGTERM');
+    deviceLogin = null;
+    return json(response, 200, { status: codexAuthenticated() ? 'authenticated' : 'unauthenticated' });
   }
   if (request.method === 'GET' && pathname === '/v1/models') {
     if (!authorized(request)) return unauthorized(response);

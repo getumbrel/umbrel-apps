@@ -4,16 +4,18 @@ set -eu
 : "${CODEX_AUTH_FILE:=/run/secrets/codex/auth.json}"
 : "${REMNIC_AUTH_FILE:=/run/secrets/codex/remnic-auth-token}"
 
-# The bind-mounted secret is never altered. Its tmpfs copy is symlinked into
-# the persistent Codex home: thread state persists, but the credential does not.
-test -r "$CODEX_AUTH_FILE"
-mkdir -p /runtime/codex-home
+# Migrate existing host-local credentials once, if supplied by a pre-0.3.0
+# installation. New installs use the browser device-code flow and write this
+# app-owned file directly. Never alter the mounted legacy file.
 mkdir -p /data/codex-home
 umask 077
-cp "$CODEX_AUTH_FILE" /runtime/codex-home/auth.json
-chmod 600 /runtime/codex-home/auth.json
-rm -f /data/codex-home/auth.json
-ln -s /runtime/codex-home/auth.json /data/codex-home/auth.json
+if [ -r "$CODEX_AUTH_FILE" ] && { [ ! -s /data/codex-home/auth.json ] || [ -L /data/codex-home/auth.json ]; }; then
+    rm -f /data/codex-home/auth.json
+    cp "$CODEX_AUTH_FILE" /data/codex-home/auth.json
+fi
+if [ -f /data/codex-home/auth.json ]; then
+    chmod 600 /data/codex-home/auth.json
+fi
 
 # Remnic is optional. Keep its credential out of persistent Codex state while
 # making it available to every app-server child launched by the gateway.
