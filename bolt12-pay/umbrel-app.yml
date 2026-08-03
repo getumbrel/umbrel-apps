@@ -3,7 +3,7 @@ id: bolt12-pay
 name: BOLT12 Pay
 tagline: Self-hosted Lightning payments and identity with BOLT12, BIP353, LNURL, and Nostr
 category: bitcoin
-version: 0.3.0.2
+version: 0.3.0.7
 port: 8367
 description: >-
   BOLT12 Pay is a self-hosted Lightning payments and identity app for LND nodes.
@@ -154,31 +154,22 @@ releaseNotes: |
 
   Highlights:
 
-  - Introduces Transaction History for incoming and outgoing Lightning payments
-  - Automatically synchronizes payment history from LND
-  - Preserves payment metadata including BOLT12, Lightning Address, LNURL, NWC, Zaps and Keysend
-  - Live synchronization keeps transaction history up to date
-  - Improved NWC wallet integration and payment handling
-  - Numerous UI improvements and bug fixes
+  - Fixes BIP353 resolution on recent StartOS releases
+  - Restores Lightning Address payments on StartOS 0.4.x
+  - Improves Lightning Address fallback behaviour during temporary DNS transport failures
+  - Uses the system DNS resolver for improved compatibility across platforms
 
-  Native Onion Messaging:
+  Compatibility:
 
-  - Automatic detection of native Onion Messaging support in LND v0.21+
-  - Native Onion Messaging status is displayed during setup
-  - Legacy custom-message configuration is automatically hidden when no longer required
-  - Full compatibility with both LND v0.20.x and LND v0.21.x
+  - Verified on Docker deployments
+  - Verified on Umbrel
+  - Verified on StartOS 0.4.x
+  - Preserves existing DNSSEC behaviour and interoperability
 
-  Payment Compatibility:
+  Notes:
 
-  - Automatic fallback between LND v0.20 and v0.21 payment APIs
-  - Automatically switches to RouterRPC on LND v0.21 when required
-  - Improved Lightning Address, LNURL, BOLT11, BOLT12 and NWC payment compatibility
-  - Added default routing fee limits for better interoperability with wallets and Lightning Address providers
-
-  Upgrade Notes:
-
-  - LND v0.20.x users should keep their existing custom protocol configuration.
-  - LND v0.21.x users should remove legacy custom protocol settings from lnd.conf after upgrading to native Onion Messaging support.
+  - No configuration changes are required.
+  - Existing Lightning Addresses, BIP353 addresses and BOLT12 Offers continue to work as before.
 
 dependencies:
   - lightning
