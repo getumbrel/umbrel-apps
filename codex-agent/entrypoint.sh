@@ -2,19 +2,20 @@
 set -eu
 
 : "${CODEX_AUTH_FILE:=/run/secrets/codex/auth.json}"
+: "${CODEX_PERSISTENT_AUTH_FILE:=/data/codex-home/auth.json}"
 : "${REMNIC_AUTH_FILE:=/run/secrets/codex/remnic-auth-token}"
 
 # Migrate existing host-local credentials once, if supplied by a pre-0.3.0
 # installation. New installs use the browser device-code flow and write this
 # app-owned file directly. Never alter the mounted legacy file.
-mkdir -p /data/codex-home
+mkdir -p "$(dirname "$CODEX_PERSISTENT_AUTH_FILE")"
 umask 077
-if [ -r "$CODEX_AUTH_FILE" ] && { [ ! -s /data/codex-home/auth.json ] || [ -L /data/codex-home/auth.json ]; }; then
-    rm -f /data/codex-home/auth.json
-    cp "$CODEX_AUTH_FILE" /data/codex-home/auth.json
+if [ -r "$CODEX_AUTH_FILE" ] && { [ ! -s "$CODEX_PERSISTENT_AUTH_FILE" ] || [ -L "$CODEX_PERSISTENT_AUTH_FILE" ]; }; then
+    rm -f "$CODEX_PERSISTENT_AUTH_FILE"
+    cp "$CODEX_AUTH_FILE" "$CODEX_PERSISTENT_AUTH_FILE"
 fi
-if [ -f /data/codex-home/auth.json ]; then
-    chmod 600 /data/codex-home/auth.json
+if [ -f "$CODEX_PERSISTENT_AUTH_FILE" ]; then
+    chmod 600 "$CODEX_PERSISTENT_AUTH_FILE"
 fi
 
 # Remnic is optional. Keep its credential out of persistent Codex state while
