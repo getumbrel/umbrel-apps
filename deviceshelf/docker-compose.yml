@@ -1,0 +1,31 @@
+version: "3.7"
+
+services:
+  # No app_proxy service. Layer-2 discovery (ARP, mDNS, passive DHCP) needs the
+  # host's network namespace, and a proxied bridge network would leave the
+  # scanner looking at Docker's own subnet instead of the LAN. AdGuard Home,
+  # Pi-hole and Tailscale are packaged the same way, and umbrelOS opens the app
+  # on the manifest `port` directly.
+  server:
+    image: ghcr.io/wealthwallet/deviceshelf-server:1.7.7
+    restart: on-failure
+    network_mode: host
+    cap_add:
+      - NET_RAW           # raw sockets for the ARP scan (pcap)
+      - NET_BIND_SERVICE  # UDP/67 for passive DHCP fingerprinting
+    environment:
+      # The dashboard is reachable on the LAN because of host networking, so it
+      # is never left unauthenticated. Umbrel's per-install APP_PASSWORD is
+      # deterministic and shown in the UI, which is what `deterministicPassword`
+      # in the manifest promises — without it the token would only exist in a
+      # file inside the container and would need a shell to read, which the App
+      # Store Standard rules out.
+      DEVICESHELF_API_TOKEN: ${APP_PASSWORD}
+      # 8088 is the product default but element already claims it in this store,
+      # and manifest ports must be unique across the App Store. 8097 was free
+      # against all 390 port declarations in the repo at the time of writing.
+      DEVICESHELF_API_PORT: "8097"
+      DEVICESHELF_INTERVAL: "5m"
+      DEVICESHELF_PORTSCAN: "true"
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
