@@ -57,8 +57,7 @@ configure_public_funnel() {
     write_funnel_status "needs-login"
     return
   fi
-  if [[ "${compact_node_status}" != *'"InMagicSock":true'* ]] ||
-    [[ "${compact_node_status}" != *'"Online":true'* ]] ||
+  if [[ "${compact_node_status}" != *'"Online":true'* ]] ||
     { [[ "${compact_node_status}" != *'"Health":null'* ]] && [[ "${compact_node_status}" != *'"Health":[]'* ]]; }; then
     write_funnel_status "error"
     return
