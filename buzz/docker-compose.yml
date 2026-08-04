@@ -52,11 +52,15 @@ services:
       TAILSCALE_RELAY_URL: ws://${DEVICE_HOSTNAME}:3023
       COMMUNITY_FILE: /data/relay/community.env
       COMMUNITY_NAME_FILE: /www/community-name.txt
+      OWNER_FILE: /data/relay/owner.env
+      SETTINGS_FILE: /data/relay/settings.env
+      APPLIED_CONFIG_FILE: /status/applied-config.sha256
     volumes:
       - ${APP_DATA_DIR}/setup.cgi:/opt/setup-page.awk:ro
       - ${APP_DATA_DIR}/setup-server.sh:/opt/setup-server.sh:ro
       - ${APP_DATA_DIR}/data/setup:/www
       - ${APP_DATA_DIR}/data/relay:/data/relay
+      - ${APP_DATA_DIR}/data/setup-status:/status
     healthcheck:
       test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8081/setup"]
       interval: 5s
@@ -79,11 +83,63 @@ services:
           echo "Buzz relay community URL is missing or invalid" >&2
           exit 1
         fi
-        set -a
-        source /data/relay/owner.env
-        source /data/relay/community.env
-        set +a
-        exec /usr/local/bin/buzz-relay
+        if ! grep -Eq '^BUZZ_HUDDLE_AUDIO_AVAILABLE=(true|false)$$' /data/relay/settings.env 2>/dev/null; then
+          echo "Buzz relay settings are missing or invalid" >&2
+          exit 1
+        fi
+
+        relay_pid=""
+        shutdown() {
+          if [ -n "$${relay_pid}" ]; then
+            kill -TERM "$${relay_pid}" 2>/dev/null || true
+            wait "$${relay_pid}" 2>/dev/null || true
+          fi
+          exit 0
+        }
+        config_signature() {
+          sha256sum /data/relay/owner.env /data/relay/community.env /data/relay/settings.env | sha256sum | cut -d' ' -f1
+        }
+        trap shutdown TERM INT
+
+        while true; do
+          startup_signature="$$(config_signature)"
+          set -a
+          source /data/relay/owner.env
+          source /data/relay/community.env
+          source /data/relay/settings.env
+          set +a
+
+          /usr/local/bin/buzz-relay &
+          relay_pid="$$!"
+          config_changed=0
+          applied=0
+
+          while kill -0 "$${relay_pid}" 2>/dev/null; do
+            current_signature="$$(config_signature 2>/dev/null || true)"
+            if [ "$${current_signature}" != "$${startup_signature}" ]; then
+              config_changed=1
+              kill -TERM "$${relay_pid}" 2>/dev/null || true
+              break
+            fi
+            if [ "$${applied}" = 0 ] && curl -fsS http://127.0.0.1:8080/_readiness >/dev/null 2>&1; then
+              printf '%s\n' "$${startup_signature}" >/status/applied-config.sha256.tmp
+              mv /status/applied-config.sha256.tmp /status/applied-config.sha256
+              applied=1
+            fi
+            sleep 1
+          done
+
+          set +e
+          wait "$${relay_pid}"
+          relay_status="$$?"
+          set -e
+          relay_pid=""
+
+          if [ "$${config_changed}" = 1 ]; then
+            continue
+          fi
+          exit "$${relay_status}"
+        done
     env_file:
       - ${APP_DATA_DIR}/data/relay/relay.env
     environment:
@@ -109,6 +165,7 @@ services:
     volumes:
       - ${APP_DATA_DIR}/data/git:/data/git
       - ${APP_DATA_DIR}/data/relay:/data/relay:ro
+      - ${APP_DATA_DIR}/data/setup-status:/status
     depends_on:
       postgres:
         condition: service_healthy

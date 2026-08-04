@@ -19,11 +19,35 @@ while IFS= read -r header; do
   esac
 done
 
+if [ "@D@method" = "GET" ] && [ "@D@path" = "/setup?status=1" ]; then
+  response='{"ready":false}'
+  status='503 Service Unavailable'
+  desired_signature=""
+  applied_signature=""
+
+  if [ -f "@D@{OWNER_FILE}" ] && [ -f "@D@{COMMUNITY_FILE}" ] && [ -f "@D@{SETTINGS_FILE}" ]; then
+    desired_signature=@D@(sha256sum "@D@{OWNER_FILE}" "@D@{COMMUNITY_FILE}" "@D@{SETTINGS_FILE}" | sha256sum | cut -d' ' -f1)
+  fi
+  if [ -f "@D@{APPLIED_CONFIG_FILE}" ]; then
+    applied_signature=@D@(tr -d '[:space:]' <"@D@{APPLIED_CONFIG_FILE}")
+  fi
+
+  if [ -n "@D@desired_signature" ] && [ "@D@desired_signature" = "@D@applied_signature" ] &&
+    wget -q -O /dev/null http://relay:8080/_readiness; then
+    response='{"ready":true}'
+    status='200 OK'
+  fi
+
+  printf 'HTTP/1.1 %s\r\nContent-Type: application/json\r\nCache-Control: no-store\r\nContent-Length: %s\r\nConnection: close\r\n\r\n%s' \
+    "@D@status" "@D@{#response}" "@D@response"
+  exit 0
+fi
+
 case "@D@content_length" in
   ''|*[!0-9]*) content_length=0 ;;
 esac
 
-if [ "@D@content_length" -gt 1024 ]; then
+if [ "@D@content_length" -gt 16384 ]; then
   body="REQUEST_TOO_LARGE"
 else
   body=@D@(dd bs=1 count="@D@content_length" 2>/dev/null || true)
