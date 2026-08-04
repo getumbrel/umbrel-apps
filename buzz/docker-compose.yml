@@ -8,10 +8,8 @@ services:
     environment:
       APP_HOST: buzz_gateway_1
       APP_PORT: 8080
-      # Buzz Desktop cannot send Umbrel cookies. Relay routes remain public and
-      # enforce Nostr/NIP-98 auth; the owner setup page keeps Umbrel auth.
-      PROXY_AUTH_WHITELIST: "/,/*"
-      PROXY_AUTH_BLACKLIST: "/setup"
+      # This port is the owner control plane. Umbrel auth remains enabled for
+      # every route; public relay clients use the separate 3023 listener below.
 
   gateway:
     image: caddy:2.10.2-alpine@sha256:4c6e91c6ed0e2fa03efd5b44747b625fec79bc9cd06ac5235a779726618e530d
@@ -141,6 +139,10 @@ services:
           fi
           exit "$${relay_status}"
         done
+    # Preserve the existing relay/Funnel port while keeping it separate from
+    # the Umbrel-authenticated owner UI on the manifest port.
+    ports:
+      - "3023:3000"
     env_file:
       - ${APP_DATA_DIR}/data/relay/relay.env
     environment:

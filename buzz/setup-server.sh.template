@@ -43,6 +43,34 @@ if [ "@D@method" = "GET" ] && [ "@D@path" = "/setup?status=1" ]; then
   exit 0
 fi
 
+if [ "@D@method" = "GET" ] && [ "@D@path" = "/setup?public=1" ]; then
+  response='{"ready":false}'
+  status='503 Service Unavailable'
+  relay_url=""
+  relay_origin=""
+
+  if [ -f "@D@{COMMUNITY_FILE}" ]; then
+    relay_url=@D@(sed -n 's/^RELAY_URL=//p' "@D@{COMMUNITY_FILE}" | head -n 1)
+  fi
+
+  if printf '%s' "@D@relay_url" | grep -Eq '^wss?://[A-Za-z0-9][A-Za-z0-9.-]*(:[0-9]{1,5})?@D@'; then
+    case "@D@relay_url" in
+      ws://*) relay_origin="http://@D@{relay_url#ws://}" ;;
+      wss://*) relay_origin="https://@D@{relay_url#wss://}" ;;
+    esac
+  fi
+
+  if [ -n "@D@relay_origin" ] &&
+    wget -q -T 6 -O /dev/null "@D@relay_origin/api/join-policy"; then
+    response='{"ready":true}'
+    status='200 OK'
+  fi
+
+  printf 'HTTP/1.1 %s\r\nContent-Type: application/json\r\nCache-Control: no-store\r\nContent-Length: %s\r\nConnection: close\r\n\r\n%s' \
+    "@D@status" "@D@{#response}" "@D@response"
+  exit 0
+fi
+
 case "@D@content_length" in
   ''|*[!0-9]*) content_length=0 ;;
 esac

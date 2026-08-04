@@ -33,7 +33,11 @@ write_funnel_status() {
 }
 
 configure_public_funnel() {
+  local expected_relay_url="${1:-}"
+  local node_status=""
+  local compact_node_status=""
   local dns_name=""
+  local discovered_relay_url=""
   local funnel_status=""
   local compact_status=""
   local approval_url=""
@@ -44,13 +48,24 @@ configure_public_funnel() {
     return
   fi
 
-  if ! docker exec "${TAILSCALE_CONTAINER}" tailscale ip -4 >/dev/null 2>&1; then
+  node_status="$(
+    docker exec "${TAILSCALE_CONTAINER}" sh -lc \
+      'timeout 8s tailscale status --json --peers=false' 2>/dev/null || true
+  )"
+  compact_node_status="$(printf '%s' "${node_status}" | tr -d '[:space:]')"
+  if [[ "${compact_node_status}" != *'"BackendState":"Running"'* ]]; then
     write_funnel_status "needs-login"
+    return
+  fi
+  if [[ "${compact_node_status}" != *'"InMagicSock":true'* ]] ||
+    [[ "${compact_node_status}" != *'"Online":true'* ]] ||
+    { [[ "${compact_node_status}" != *'"Health":null'* ]] && [[ "${compact_node_status}" != *'"Health":[]'* ]]; }; then
+    write_funnel_status "error"
     return
   fi
 
   dns_name="$(
-    docker exec "${TAILSCALE_CONTAINER}" tailscale status --json --peers=false 2>/dev/null |
+    printf '%s' "${node_status}" |
       sed -n 's/^[[:space:]]*"DNSName"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' |
       head -n 1 |
       sed 's/[.]$//'
@@ -59,12 +74,20 @@ configure_public_funnel() {
     write_funnel_status "error"
     return
   fi
+  discovered_relay_url="wss://${dns_name}"
+  if [[ -n "${expected_relay_url}" && "${expected_relay_url}" != "${discovered_relay_url}" ]]; then
+    write_funnel_status "error"
+    return
+  fi
 
-  funnel_status="$(docker exec "${TAILSCALE_CONTAINER}" tailscale funnel status --json 2>/dev/null || true)"
+  funnel_status="$(
+    docker exec "${TAILSCALE_CONTAINER}" sh -lc \
+      'timeout 8s tailscale funnel status --json' 2>/dev/null || true
+  )"
   compact_status="$(printf '%s' "${funnel_status}" | tr -d '[:space:]')"
   if [[ "${compact_status}" == *"127.0.0.1:3023"* ]] &&
     printf '%s' "${compact_status}" | grep -Eq '"AllowFunnel":\{[^}]*:443":true'; then
-    write_funnel_status "ready" "wss://${dns_name}"
+    write_funnel_status "ready" "${discovered_relay_url}"
     return
   fi
   if [[ "${compact_status}" == *":443"* ]]; then
@@ -76,11 +99,14 @@ configure_public_funnel() {
   if docker exec "${TAILSCALE_CONTAINER}" sh -lc \
     'timeout 20s tailscale funnel --bg --yes http://127.0.0.1:3023' \
     >"${output_file}" 2>&1; then
-    funnel_status="$(docker exec "${TAILSCALE_CONTAINER}" tailscale funnel status --json 2>/dev/null || true)"
+    funnel_status="$(
+      docker exec "${TAILSCALE_CONTAINER}" sh -lc \
+        'timeout 8s tailscale funnel status --json' 2>/dev/null || true
+    )"
     compact_status="$(printf '%s' "${funnel_status}" | tr -d '[:space:]')"
     if [[ "${compact_status}" == *"127.0.0.1:3023"* ]] &&
       printf '%s' "${compact_status}" | grep -Eq '"AllowFunnel":\{[^}]*:443":true'; then
-      write_funnel_status "ready" "wss://${dns_name}"
+      write_funnel_status "ready" "${discovered_relay_url}"
     else
       write_funnel_status "error"
     fi
@@ -178,6 +204,7 @@ elif ! validate_settings; then
   exit 1
 fi
 
+relay_url=""
 if [[ -f "${COMMUNITY_FILE}" ]]; then
   relay_url="$(sed -n 's/^RELAY_URL=//p' "${COMMUNITY_FILE}")"
   if [[ ! "${relay_url}" =~ ^wss?://[a-zA-Z0-9][a-zA-Z0-9.-]*(:[0-9]{1,5})?$ ]]; then
@@ -197,11 +224,18 @@ if [[ -f "${COMMUNITY_FILE}" ]]; then
   fi
 fi
 
-# A configured relay keeps its canonical address. Fresh installs use the
-# installed Tailscale dependency to create one stable public WSS endpoint.
-# Funnel only exposes the Buzz app proxy; /setup remains behind Umbrel auth.
+# Fresh installs use the installed Tailscale dependency to create one stable
+# public WSS endpoint. Configured Funnel relays re-check that same Tailscale
+# identity on every Buzz restart so a stale/offline Funnel is never presented
+# as connectable. Non-Tailscale legacy addresses keep their canonical URL.
+# Funnel only exposes the relay's protocol listener on port 3023. The owner
+# /setup page remains behind Umbrel auth on the separate manifest port.
 if ! grep -Eq '^RELAY_OWNER_PUBKEY=[0-9a-f]{64}$' "${OWNER_FILE}" 2>/dev/null; then
   configure_public_funnel
+elif [[ "${relay_url}" =~ ^wss://[a-zA-Z0-9][a-zA-Z0-9.-]*\.ts\.net$ ]]; then
+  configure_public_funnel "${relay_url}"
+else
+  write_funnel_status "ready" "${relay_url}"
 fi
 
 # The setup and relay containers run as Umbrel's unprivileged app user and
