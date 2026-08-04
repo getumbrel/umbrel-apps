@@ -55,24 +55,12 @@ function valid_name(value) {
   return length(value) >= 2 && length(value) <= 48 && value !~ /[^A-Za-z0-9 ._-]/
 }
 
-function normalize_tailscale_host(value) {
-  value = tolower(value)
-  gsub(/^[ ]+|[ ]+$/, "", value)
-  sub(/^(https?|wss?):\/\//, "", value)
-  sub(/\/+$/, "", value)
-  sub(/:3023$/, "", value)
-  return value
+function valid_funnel_relay_url(value) {
+  return length(value) <= 260 && value ~ /^wss:\/\/[a-z0-9][a-z0-9.-]*[.]ts[.]net$/ && value !~ /[.][.]/
 }
 
-function valid_tailscale_host(value) {
-  return length(value) <= 253 && value ~ /^[a-z0-9][a-z0-9.-]*[.]ts[.]net$/ && value !~ /[.][.]/ && value !~ /(^|[.])-|-([.]|$)/
-}
-
-function tailscale_host_from_relay(url, host) {
-  host = url
-  sub(/^wss?:\/\//, "", host)
-  sub(/:[0-9]+$/, "", host)
-  return valid_tailscale_host(host) ? host : ""
+function valid_approval_url(value) {
+  return length(value) <= 2048 && value ~ /^https:\/\/login[.]tailscale[.]com\// && value !~ /[[:space:]<>]/
 }
 
 function valid_integer(value, minimum, maximum) {
@@ -240,17 +228,18 @@ function render_mark() {
   print "<svg class=\"brand-mark\" aria-hidden=\"true\" viewBox=\"0 0 466 309\" fill=\"currentColor\"><defs><mask id=\"buzz-cutouts\" x=\"-80\" y=\"-80\" width=\"626\" height=\"469\" maskUnits=\"userSpaceOnUse\" maskContentUnits=\"userSpaceOnUse\"><rect x=\"-80\" y=\"-80\" width=\"626\" height=\"469\" fill=\"white\"/><ellipse cx=\"193.3\" cy=\"84.4\" rx=\"27\" ry=\"27\" fill=\"black\"/><ellipse cx=\"276\" cy=\"84.4\" rx=\"27\" ry=\"27\" fill=\"black\"/><rect x=\"166.3\" y=\"157.2\" width=\"136.9\" height=\"38.3\" rx=\"5\" fill=\"black\"/><rect x=\"166.9\" y=\"235.1\" width=\"136.2\" height=\"37.6\" rx=\"5\" fill=\"black\"/></mask></defs><g mask=\"url(#buzz-cutouts)\"><circle cx=\"91.7\" cy=\"154.5\" r=\"91.7\"/><circle cx=\"374.3\" cy=\"154.5\" r=\"91.7\"/><rect x=\"128\" y=\"0\" width=\"210\" height=\"309\" rx=\"34\"/></g></svg>"
 }
 
-function render_tailscale_guide(hidden_attribute, field_value, editable) {
-  print "<aside id=\"tailscale-guide\" class=\"guide\" " hidden_attribute "><strong>Private Tailscale access</strong><p class=\"muted\">This is a private tailnet address, not a public internet link. Every connecting computer needs Tailscale access to this Umbrel.</p><ol>"
-  print "<li>Install <strong>Tailscale</strong> from the Umbrel App Store, open it, and sign in.</li>"
-  print "<li>Open this Umbrel's device details in Tailscale and copy its full DNS name ending in <strong>.ts.net</strong>.</li>"
-  print "<li>Run Tailscale on every computer using Buzz Desktop and grant it access to this Umbrel.</li>"
-  print "</ol>"
-  if (editable) {
-    print "<label class=\"tailnet-field\" for=\"tailscale_host\"><span class=\"field-label\">Tailscale device DNS name</span><input type=\"text\" id=\"tailscale_host\" name=\"tailscale_host\" maxlength=\"272\" inputmode=\"url\" placeholder=\"umbrel.example-tailnet.ts.net\" value=\"" html_escape(field_value) "\" autocapitalize=\"none\" spellcheck=\"false\"><small>Paste the name or URL shown by Tailscale. Buzz removes http:// or https:// automatically.</small></label>"
-    print "<div class=\"summary tailnet-preview\"><span class=\"summary-label\">Buzz relay address</span><code id=\"tailscale-relay-preview\">Paste the .ts.net name above</code></div>"
+function render_public_access(state, relay_url, approval_url, tailscale_url) {
+  if (state == "ready") {
+    print "<div class=\"summary public-address\"><span class=\"summary-label\">Public address</span><code>" html_escape(relay_url) "</code></div>"
+  } else if (state == "needs-approval") {
+    print "<div class=\"access-card\"><span><strong>Enable the public link</strong><small>Approve Funnel once, then restart Buzz Relay.</small></span><a class=\"secondary\" href=\"" html_escape(approval_url) "\" target=\"_blank\" rel=\"noreferrer\">Enable</a></div>"
+  } else if (state == "conflict") {
+    print "<div class=\"access-card error-card\"><span><strong>Funnel is already in use</strong><small>Free port 443 in Tailscale, then restart Buzz Relay.</small></span></div>"
+  } else if (state == "error") {
+    print "<div class=\"access-card error-card\"><span><strong>Public link unavailable</strong><small>Restart Tailscale and Buzz Relay, then try again.</small></span></div>"
+  } else {
+    print "<div class=\"access-card\"><span><strong>Create a public address</strong><small>Sign in on this Umbrel, then restart Buzz Relay. Members do not need Tailscale.</small></span><a class=\"secondary\" href=\"" html_escape(tailscale_url) "\" target=\"_blank\" rel=\"noreferrer\">Open Tailscale</a></div>"
   }
-  print "<p class=\"public-note\"><strong>Need access without the Tailscale app?</strong> That requires a public Tailscale Funnel or another public TLS endpoint. This Buzz package does not configure Funnel.</p></aside>"
 }
 
 function render_number(name, label, value, minimum, maximum, help) {
@@ -262,30 +251,23 @@ function render_switch(name, title, description, checked) {
   print "<label class=\"switch-row\"><span><strong>" title "</strong><small>" description "</small></span><span class=\"switch\"><input type=\"checkbox\" name=\"" name "\" value=\"true\" " checked "><span aria-hidden=\"true\"></span></span></label>"
 }
 
-function render_setup_form(owner, relay_url, community_name, mode, tailscale_host, locked, local_checked, tailscale_checked, button_label, guide_hidden) {
+function render_setup_form(owner, relay_url, community_name, locked, button_label, funnel_state, funnel_relay_url, funnel_approval_url, tailscale_app_url, disabled) {
   print "<form id=\"setup-form\" method=\"post\" action=\"/setup\" autocomplete=\"off\" data-submit-label=\"Starting Buzz Relay…\"><input type=\"hidden\" name=\"intent\" value=\"setup\">"
-  print "<div class=\"step\"><span class=\"step-number\">1</span><h2>Name your community</h2></div>"
   if (locked && community_name != "") {
     print "<input type=\"hidden\" name=\"community_name\" value=\"" html_escape(community_name) "\"><div class=\"summary\"><span class=\"summary-label\">Community name</span><strong>" html_escape(community_name) "</strong></div>"
   } else {
-    print "<label class=\"field-label\" for=\"community_name\">Community name</label><input type=\"text\" id=\"community_name\" name=\"community_name\" minlength=\"2\" maxlength=\"48\" pattern=\"[A-Za-z0-9 ._-]{2,48}\" placeholder=\"Example: Garden Club\" value=\"" html_escape(community_name) "\" required>"
+    print "<label class=\"field\" for=\"community_name\"><span class=\"field-label\">Community name</span><input type=\"text\" id=\"community_name\" name=\"community_name\" minlength=\"2\" maxlength=\"48\" pattern=\"[A-Za-z0-9 ._-]{2,48}\" placeholder=\"Example: Garden Club\" value=\"" html_escape(community_name) "\" required></label>"
   }
 
   if (locked) {
-    print "<input type=\"hidden\" name=\"connection\" value=\"" mode "\"><div class=\"step\"><span class=\"step-number\">2</span><h2>Relay address</h2></div><div class=\"summary\"><span class=\"summary-label\">Relay address</span><code>" html_escape(relay_url) "</code></div>"
-    if (mode == "tailscale") render_tailscale_guide("", tailscale_host, 0)
+    print "<div class=\"summary\"><span class=\"summary-label\">Relay address</span><code>" html_escape(relay_url) "</code></div>"
   } else {
-    print "<div class=\"step\"><span class=\"step-number\">2</span><h2>Where will you use Buzz?</h2></div><div class=\"modes\">"
-    print "<label class=\"mode\"><input type=\"radio\" name=\"connection\" value=\"local\" " local_checked "><span class=\"mode-card\"><span class=\"mode-title\">At home</span><span class=\"mode-copy\">Use Buzz on the same network as this Umbrel.</span></span></label>"
-    print "<label class=\"mode\"><input type=\"radio\" name=\"connection\" value=\"tailscale\" " tailscale_checked "><span class=\"mode-card\"><span class=\"mode-title\">Private Tailscale</span><span class=\"mode-copy\">Use Buzz away from home. Every connecting device needs Tailscale.</span></span></label></div>"
-    guide_hidden = mode == "tailscale" ? "" : "hidden"
-    render_tailscale_guide(guide_hidden, tailscale_host, 1)
+    render_public_access(funnel_state, funnel_relay_url, funnel_approval_url, tailscale_app_url)
   }
 
-  print "<div class=\"step\"><span class=\"step-number\">3</span><h2>Add the owner</h2></div><label class=\"field-label\" for=\"owner_pubkey\">Owner public key</label>"
-  print "<input class=\"owner-input\" type=\"text\" id=\"owner_pubkey\" name=\"owner_pubkey\" minlength=\"64\" maxlength=\"64\" pattern=\"[0-9a-fA-F]{64}\" placeholder=\"Paste 64-character hex public key\" value=\"" html_escape(owner) "\" autocapitalize=\"none\" spellcheck=\"false\" required>"
-  print "<p class=\"muted\">Find it in <strong>Buzz Desktop → Settings → Identity</strong>.</p><div class=\"key-note\"><strong>Never paste an nsec here.</strong> Only your public key is needed.</div>"
-  print "<button class=\"submit-button start-button\" type=\"submit\"><span class=\"button-spinner\" aria-hidden=\"true\"></span><span class=\"button-label\">" button_label "</span></button></form>"
+  print "<label class=\"field\" for=\"owner_pubkey\"><span class=\"field-label\">Owner public key</span><input class=\"owner-input\" type=\"text\" id=\"owner_pubkey\" name=\"owner_pubkey\" minlength=\"64\" maxlength=\"64\" pattern=\"[0-9a-fA-F]{64}\" placeholder=\"Paste 64-character hex public key\" value=\"" html_escape(owner) "\" autocapitalize=\"none\" spellcheck=\"false\" required><small>Buzz Desktop → Settings → Identity. Never paste your private key.</small></label>"
+  disabled = !locked && funnel_state != "ready" ? "disabled aria-disabled=\"true\"" : ""
+  print "<button class=\"submit-button start-button\" type=\"submit\" " disabled "><span class=\"button-spinner\" aria-hidden=\"true\"></span><span class=\"button-label\">" button_label "</span></button></form>"
 }
 
 function render_status(state, title, copy) {
@@ -342,11 +324,9 @@ function render_settings_form(owner) {
   print "<button class=\"submit-button\" type=\"submit\"><span class=\"button-spinner\" aria-hidden=\"true\"></span><span class=\"button-label\">Save and apply settings</span></button></form></section>"
 }
 
-function render_page(message, error, owner, relay_url, community_name, mode, ready_for_settings, status_state, settings_open, connect_url, deep_link, local_checked, tailscale_checked, body_posted) {
-  connect_url = relay_url == "" ? local_relay_url : relay_url
+function render_page(message, error, owner, relay_url, community_name, ready_for_settings, status_state, settings_open, connect_url, deep_link, body_posted) {
+  connect_url = relay_url == "" ? funnel_relay_url : relay_url
   deep_link = owner != "" && community_name != "" ? "buzz://add-community?relay=" url_encode(connect_url) "&name=" url_encode(community_name) : ""
-  local_checked = mode == "local" ? "checked" : ""
-  tailscale_checked = mode == "tailscale" ? "checked" : ""
   body_posted = method == "POST" ? "1" : "0"
 
   print "HTTP/1.1 200 OK\r"
@@ -358,7 +338,8 @@ function render_page(message, error, owner, relay_url, community_name, mode, rea
   print "\r"
   print "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>Buzz Relay</title><style>"
   print ":root{color-scheme:light;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;background:#d7d72e;color:#171713}*{box-sizing:border-box}[hidden]{display:none!important}body{margin:0;min-height:100vh;padding:32px 16px;background:#d7d72e}main{width:100%;max-width:700px;margin:0 auto;background:#fffef7;border:2px solid #171713;border-radius:18px;overflow:hidden;box-shadow:7px 7px 0 #171713}.hero{display:flex;align-items:center;gap:16px;padding:25px 28px;background:#d7d72e;border-bottom:2px solid #171713}.brand-mark{width:50px;height:auto;color:#000;flex:none}h1{margin:0;font-size:clamp(1.7rem,5vw,2.25rem);letter-spacing:-.04em;line-height:1.05}.content{padding:26px 28px 30px}p,li{line-height:1.5;color:#58584e}.notice{margin:0 0 14px;padding:11px 13px;border-radius:9px;font-weight:750}.ok{background:#edf4d7;color:#33400f}.error{background:#ffe2dc;color:#751f10}form{display:grid;gap:12px}.step{display:flex;align-items:center;gap:9px;margin:20px 0 0}.step:first-of-type{margin-top:0}.step-number{display:grid;place-items:center;width:25px;height:25px;border-radius:50%;background:#171713;color:#d7d72e;font-size:.76rem;font-weight:900}.step h2{margin:0;font-size:1.06rem}.muted{margin:0;font-size:.84rem;color:#6a6a5f}.field-label,.setting-label{font-size:.86rem;font-weight:850}input[type=text],input[type=number]{width:100%;min-width:0;padding:12px 13px;border:1px solid #9d9d8e;border-radius:9px;background:#fff;color:#171713;font:650 .92rem Inter,ui-sans-serif,system-ui,sans-serif}.owner-input{font-family:ui-monospace,SFMono-Regular,Consolas,monospace!important;font-size:.82rem!important}input:focus{outline:3px solid #d7d72e;outline-offset:1px;border-color:#626208}.modes{display:grid;grid-template-columns:1fr 1fr;gap:9px}.mode{position:relative;display:block}.mode input{position:absolute;opacity:0}.mode-card{display:block;height:100%;padding:13px;border:1px solid #b7b7a7;border-radius:10px;background:#fff;cursor:pointer}.mode input:checked+.mode-card{border-color:#171713;background:#f7f7cd;box-shadow:inset 4px 0 0 #d7d72e}.mode input:focus-visible+.mode-card{outline:3px solid #d7d72e;outline-offset:2px}.mode-title{display:block;font-weight:850}.mode-copy{display:block;margin-top:4px;font-size:.79rem;line-height:1.4;color:#66665a}.guide{margin-top:2px;padding:14px;border:1px solid #c4c414;border-radius:11px;background:#fafad9}.guide[hidden]{display:none}.guide ol{margin:9px 0 0;padding-left:21px}.guide li{margin:4px 0;font-size:.83rem}.summary{padding:12px 13px;border:1px solid #d0d0c2;border-radius:10px;background:#f7f7ef}.summary-label{display:block;margin-bottom:4px;font-size:.7rem;font-weight:850;color:#6b6b60;text-transform:uppercase;letter-spacing:.06em}.summary code{display:block}.key-note{padding:11px 13px;border-radius:9px;background:#f7f7cd;font-size:.84rem;color:#4e4e42}.submit-button,.primary{display:inline-flex;align-items:center;justify-content:center;gap:9px;width:100%;border:1px solid #171713;border-radius:10px;padding:13px 17px;background:#171713;color:#d7d72e;font:850 .92rem Inter,ui-sans-serif,system-ui,sans-serif;text-decoration:none;cursor:pointer}.start-button{margin-top:5px;padding:16px 18px;font-size:1rem;box-shadow:3px 3px 0 #8d8d18}.submit-button:hover,.primary:hover{background:#303028}.submit-button:disabled{cursor:wait;opacity:.82}.button-spinner,.status-spinner{display:none;width:17px;height:17px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:spin .75s linear infinite}.submit-button[aria-busy=true] .button-spinner,.status-spinner{display:block}@keyframes spin{to{transform:rotate(360deg)}}.status-card{display:flex;align-items:center;gap:13px;padding:15px;border:1px solid #b7b7a7;border-radius:12px;background:#f7f7ef}.status-card .status-icon{display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:#171713;color:#d7d72e;flex:none}.status-card>span:last-child{display:grid;gap:2px}.status-card strong{font-size:.95rem}.status-card small{color:#646457;line-height:1.35}.status-card.ready{background:#edf4d7;border-color:#91a74e}.status-card.ready .status-icon{background:#3f5515;color:#fff}.status-card.delayed{background:#fff3cd;border-color:#d3b358}.identity{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}.identity .summary{min-width:0}.lock-note{margin:10px 0 0;font-size:.8rem}.rule{height:1px;background:#deded2;margin:24px 0}.connect{padding:18px;border-radius:12px;background:#171713;color:#fff}.connect h2{margin:0 0 5px;font-size:1.08rem}.connect p{margin:0 0 12px;color:#cfcfc0}.connect .primary{background:#d7d72e;color:#171713;border-color:#d7d72e}.connect code{display:block;margin-top:11px;color:#d7d72e}.connect .fallback{margin-top:11px;font-size:.76rem;color:#aaa99c}.settings{margin-top:18px;border:1px solid #c8c8ba;border-radius:12px;background:#fff}.settings>summary{display:flex;justify-content:space-between;align-items:center;padding:15px 16px;font-weight:900;cursor:pointer}.summary-meta{padding:4px 7px;border-radius:99px;background:#f0f0df;font-size:.67rem;text-transform:uppercase;letter-spacing:.05em}.settings form{padding:0 16px 17px}.settings fieldset{display:grid;gap:11px;margin:0;padding:17px 0;border:0;border-top:1px solid #e0e0d5}.settings legend{padding:0 0 10px;font-weight:900}.settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px}.setting-field{display:grid;align-content:start;gap:5px}.setting-field small,.switch-row small{font-size:.73rem;line-height:1.35;color:#747467}.switch-row{display:flex;align-items:center;justify-content:space-between;gap:18px}.switch-row>span:first-child{display:grid;gap:3px}.switch{position:relative;display:block;width:44px;height:25px;flex:none}.switch input{position:absolute;opacity:0}.switch span{position:absolute;inset:0;border-radius:99px;background:#adada1;cursor:pointer;transition:.15s}.switch span:before{content:\"\";position:absolute;width:19px;height:19px;left:3px;top:3px;border-radius:50%;background:#fff;transition:.15s;box-shadow:0 1px 3px #0004}.switch input:checked+span{background:#171713}.switch input:checked+span:before{transform:translateX(19px);background:#d7d72e}.switch input:focus-visible+span{outline:3px solid #d7d72e;outline-offset:2px}.settings-note{margin:0;padding:11px 12px;border-radius:9px;background:#f7f7ef;font-size:.78rem}code{font:650 .8rem ui-monospace,SFMono-Regular,Consolas,monospace;overflow-wrap:anywhere}strong{color:inherit}@media(prefers-reduced-motion:reduce){.button-spinner,.status-spinner{animation:none}}@media(max-width:560px){body{padding:0;background:#fffef7}main{border:0;border-radius:0;box-shadow:none;min-height:100vh}.hero{padding:21px 19px}.brand-mark{width:42px}.content{padding:22px 19px 26px}.modes,.identity,.settings-grid{grid-template-columns:1fr}.guide,.connect{padding:14px}}"
-  print ".tailnet-field{display:grid;gap:5px;margin-top:12px}.tailnet-field small{font-size:.73rem;line-height:1.35;color:#747467}.tailnet-preview{margin-top:10px}.public-note{margin:12px 0 0;padding:10px 11px;border-radius:8px;background:#fffef7;font-size:.78rem}.page-tabs{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:14px;padding:5px;border:1px solid #b7b7a7;border-radius:12px;background:#f0f0df}.page-tab{min-height:44px;border:0;border-radius:8px;background:transparent;color:#555548;font:900 .9rem Inter,ui-sans-serif,system-ui,sans-serif;cursor:pointer}.page-tab[aria-selected=true]{background:#171713;color:#d7d72e}.page-tab:focus-visible{outline:3px solid #d7d72e;outline-offset:2px}.tab-panel{margin-top:14px}.tab-panel .identity{margin-top:0}.tab-panel .settings{margin-top:0}.tab-panel .settings fieldset:first-child{border-top:0}"
+  print ".field{display:grid;gap:6px}.field small,.access-card small{font-size:.75rem;line-height:1.4;color:#6a6a5f}.access-card{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:13px;border:1px solid #c4c414;border-radius:10px;background:#fafad9}.access-card>span{display:grid;gap:3px}.secondary{display:inline-flex;align-items:center;justify-content:center;min-height:38px;padding:8px 12px;border:1px solid #171713;border-radius:8px;background:#fff;color:#171713;font-size:.8rem;font-weight:850;text-decoration:none;white-space:nowrap}.secondary:hover{background:#f0f0df}.error-card{border-color:#d7998d;background:#ffece8}.public-address{border-color:#91a74e;background:#edf4d7}.page-tabs{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:14px;padding:5px;border:1px solid #b7b7a7;border-radius:12px;background:#f0f0df}.page-tab{min-height:44px;border:0;border-radius:8px;background:transparent;color:#555548;font:900 .9rem Inter,ui-sans-serif,system-ui,sans-serif;cursor:pointer}.page-tab[aria-selected=true]{background:#171713;color:#d7d72e}.page-tab:focus-visible{outline:3px solid #d7d72e;outline-offset:2px}.tab-panel{margin-top:14px}.tab-panel .identity{margin-top:0}.tab-panel .settings{margin-top:0}.tab-panel .settings fieldset:first-child{border-top:0}"
+  print ".submit-button:disabled{cursor:not-allowed}.submit-button[aria-busy=true]{cursor:wait}"
   print "</style></head><body data-posted=\"" body_posted "\"><main><header class=\"hero\">"
   render_mark()
   print "<h1>Buzz Relay</h1></header><section class=\"content\">"
@@ -367,7 +348,7 @@ function render_page(message, error, owner, relay_url, community_name, mode, rea
 
   if (!ready_for_settings) {
     button_label = owner == "" ? "Start Buzz Relay" : "Finish setup"
-    render_setup_form(owner, relay_url, community_name, mode, tailscale_host, owner != "", local_checked, tailscale_checked, button_label)
+    render_setup_form(owner, relay_url, community_name, owner != "", button_label, funnel_state, funnel_relay_url, funnel_approval_url, tailscale_app_url)
   } else {
     render_status(status_state)
     initial_tab = settings_open ? "settings" : "home"
@@ -375,10 +356,8 @@ function render_page(message, error, owner, relay_url, community_name, mode, rea
     print "<nav class=\"page-tabs\" role=\"tablist\" aria-label=\"Buzz Relay\"><button class=\"page-tab\" type=\"button\" id=\"home-tab\" role=\"tab\" aria-controls=\"home-panel\" aria-selected=\"true\" data-tab-target=\"home\">Home</button><button class=\"page-tab\" type=\"button\" id=\"settings-tab\" role=\"tab\" aria-controls=\"settings-panel\" aria-selected=\"false\" data-tab-target=\"settings\">Settings</button></nav>"
     print "<section id=\"home-panel\" class=\"tab-panel\" role=\"tabpanel\" aria-labelledby=\"home-tab\" data-tab-panel=\"home\">"
     print "<div class=\"identity\"><div class=\"summary\"><span class=\"summary-label\">Community name</span><strong>" html_escape(community_name) "</strong></div><div class=\"summary\"><span class=\"summary-label\">Relay address</span><code>" html_escape(relay_url) "</code></div></div>"
-    print "<p class=\"lock-note\">The name and address stay fixed because existing Buzz Desktop connections use them. A new relay address represents a different community.</p>"
-    if (mode == "tailscale") render_tailscale_guide("", tailscale_host, 0)
     if (deep_link != "") {
-      print "<div class=\"rule\"></div><section class=\"connect\"><h2>Connect Buzz Desktop</h2><p>Add <strong>" html_escape(community_name) "</strong> with everything filled in.</p><a class=\"primary\" href=\"" html_escape(deep_link) "\">Open in Buzz Desktop</a><div class=\"fallback\">Or enter this address manually:</div><code>" html_escape(connect_url) "</code></section>"
+      print "<div class=\"rule\"></div><section class=\"connect\"><h2>Connect Buzz Desktop</h2><a class=\"primary\" href=\"" html_escape(deep_link) "\">Open in Buzz Desktop</a></section>"
     }
     print "</section><section id=\"settings-panel\" class=\"tab-panel\" role=\"tabpanel\" aria-labelledby=\"settings-tab\" data-tab-panel=\"settings\" hidden>"
     render_settings_form(owner)
@@ -387,7 +366,6 @@ function render_page(message, error, owner, relay_url, community_name, mode, rea
 
   print "</section></main><script>"
   print "(function(){"
-  print "var guide=document.getElementById('tailscale-guide');var choices=document.querySelectorAll('input[name=connection]');var tailnetField=document.getElementById('tailscale_host');var tailnetPreview=document.getElementById('tailscale-relay-preview');function normalizedTailnetHost(value){return value.trim().toLowerCase().replace(/^(https?|wss?):\\/\\//,'').replace(/\\/+$/,'').replace(/:3023$/,'');}function syncTailnetPreview(){if(!tailnetField||!tailnetPreview)return;var host=normalizedTailnetHost(tailnetField.value);tailnetPreview.textContent=host?'ws://'+host+':3023':'Paste the .ts.net name above';}function syncGuide(){if(!guide||!choices.length)return;var selected=document.querySelector('input[name=connection]:checked');var active=!!selected&&selected.value==='tailscale';guide.hidden=!active;if(tailnetField){tailnetField.disabled=!active;tailnetField.required=active;syncTailnetPreview();}}for(var i=0;i<choices.length;i++){choices[i].addEventListener('change',syncGuide);}if(tailnetField)tailnetField.addEventListener('input',syncTailnetPreview);syncGuide();"
   print "var forms=document.querySelectorAll('form[data-submit-label]');for(var f=0;f<forms.length;f++){forms[f].addEventListener('submit',function(){var button=this.querySelector('.submit-button');if(!button)return;button.disabled=true;button.setAttribute('aria-busy','true');button.querySelector('.button-label').textContent=this.getAttribute('data-submit-label');});}"
   print "if(document.body.getAttribute('data-posted')==='1'&&window.history&&history.replaceState){history.replaceState(null,'','/setup');}"
   print "var readyContent=document.getElementById('ready-content');var tabs=document.querySelectorAll('[data-tab-target]');var panels=document.querySelectorAll('[data-tab-panel]');function selectTab(name){for(var t=0;t<tabs.length;t++){var selected=tabs[t].getAttribute('data-tab-target')===name;tabs[t].setAttribute('aria-selected',selected?'true':'false');tabs[t].tabIndex=selected?0:-1;}for(var p=0;p<panels.length;p++){panels[p].hidden=panels[p].getAttribute('data-tab-panel')!==name;}}for(var t=0;t<tabs.length;t++){tabs[t].addEventListener('click',function(){selectTab(this.getAttribute('data-tab-target'));});tabs[t].addEventListener('keydown',function(event){if(event.key!=='ArrowLeft'&&event.key!=='ArrowRight')return;event.preventDefault();var next=this===tabs[0]?tabs[1]:tabs[0];selectTab(next.getAttribute('data-tab-target'));next.focus();});}if(readyContent)selectTab(readyContent.getAttribute('data-initial-tab')||'home');"
@@ -401,9 +379,9 @@ BEGIN {
   owner_file = ENVIRON["OWNER_FILE"] == "" ? "/data/relay/owner.env" : ENVIRON["OWNER_FILE"]
   community_file = ENVIRON["COMMUNITY_FILE"] == "" ? "/data/relay/community.env" : ENVIRON["COMMUNITY_FILE"]
   community_name_file = ENVIRON["COMMUNITY_NAME_FILE"] == "" ? "/www/community-name.txt" : ENVIRON["COMMUNITY_NAME_FILE"]
+  funnel_status_file = ENVIRON["FUNNEL_STATUS_FILE"] == "" ? "/www/funnel-status.env" : ENVIRON["FUNNEL_STATUS_FILE"]
   settings_file = ENVIRON["SETTINGS_FILE"] == "" ? "/data/relay/settings.env" : ENVIRON["SETTINGS_FILE"]
-  local_relay_url = ENVIRON["LOCAL_RELAY_URL"]
-  tailscale_relay_url = ENVIRON["TAILSCALE_RELAY_URL"]
+  tailscale_app_url = ENVIRON["TAILSCALE_APP_URL"]
   method = ENVIRON["SETUP_METHOD"]
   message = ""
   error = ""
@@ -412,10 +390,16 @@ BEGIN {
   owner = current_owner()
   relay_url = current_relay_url()
   community_name = current_community_name()
+  funnel_state = setting(funnel_status_file, "FUNNEL_STATE")
+  funnel_relay_url = setting(funnel_status_file, "FUNNEL_RELAY_URL")
+  funnel_approval_url = setting(funnel_status_file, "FUNNEL_APPROVAL_URL")
+  if (!valid_funnel_relay_url(funnel_relay_url)) funnel_relay_url = ""
+  if (!valid_approval_url(funnel_approval_url)) funnel_approval_url = ""
+  if (funnel_state != "ready" && funnel_state != "needs-login" && funnel_state != "needs-approval" && funnel_state != "conflict" && funnel_state != "error") funnel_state = "needs-login"
+  if (funnel_state == "ready" && funnel_relay_url == "") funnel_state = "error"
+  if (funnel_state == "needs-approval" && funnel_approval_url == "") funnel_state = "error"
   was_configured = owner != ""
   had_community_name = community_name != ""
-  mode = relay_url != "" && relay_url != local_relay_url ? "tailscale" : "local"
-  tailscale_host = tailscale_host_from_relay(relay_url)
   load_settings()
 
   if (method == "POST") {
@@ -441,25 +425,17 @@ BEGIN {
     } else if (intent == "setup") {
       value = form_value(body, "owner_pubkey")
       submitted_name = normalize_name(form_value(body, "community_name"))
-      connection = form_value(body, "connection")
-      submitted_tailscale_host = normalize_tailscale_host(form_value(body, "tailscale_host"))
       address_locked = was_configured && relay_url != ""
-      selected_url = address_locked ? relay_url : (connection == "tailscale" ? "ws://" submitted_tailscale_host ":3023" : local_relay_url)
+      selected_url = address_locked ? relay_url : funnel_relay_url
       owner = tolower(value)
       community_name = submitted_name
-      if (connection == "local" || connection == "tailscale") {
-        mode = connection
-        if (connection == "tailscale") tailscale_host = submitted_tailscale_host
-      }
 
       if (!valid_name(submitted_name)) {
         error = "Enter a community name using 2–48 letters, numbers, spaces, dots, underscores, or hyphens."
       } else if (had_community_name && submitted_name != current_community_name()) {
         error = "The community name is fixed after first setup because existing Desktop connections use it."
-      } else if (connection != "local" && connection != "tailscale") {
-        error = "Choose where you will use Buzz."
-      } else if (connection == "tailscale" && !address_locked && !valid_tailscale_host(submitted_tailscale_host)) {
-        error = "Paste the full Tailscale device DNS name ending in .ts.net."
+      } else if (!address_locked && (funnel_state != "ready" || !valid_funnel_relay_url(selected_url))) {
+        error = "Connect Tailscale and enable the public link before starting Buzz Relay."
       } else if (length(value) != 64 || value ~ /[^0-9A-Fa-f]/) {
         error = "Enter the 64-character hexadecimal public key shown by Buzz Desktop."
       } else if (was_configured && relay_url != "" && selected_url != relay_url) {
@@ -484,7 +460,6 @@ BEGIN {
           owner = tolower(value)
           relay_url = selected_url
           community_name = submitted_name
-          mode = connection
           status_state = was_configured ? "checking" : "starting"
         }
       }
@@ -496,5 +471,5 @@ BEGIN {
   }
 
   ready_for_settings = owner != "" && community_name != ""
-  render_page(message, error, owner, relay_url, community_name, mode, ready_for_settings, status_state, settings_open)
+  render_page(message, error, owner, relay_url, community_name, ready_for_settings, status_state, settings_open)
 }

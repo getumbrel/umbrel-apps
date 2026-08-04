@@ -48,12 +48,13 @@ services:
         chmod 755 /www/setup-server.sh
         exec busybox nc -lk -p 8081 -e /www/setup-server.sh
     environment:
-      LOCAL_RELAY_URL: ws://${DEVICE_DOMAIN_NAME}:3023
       COMMUNITY_FILE: /data/relay/community.env
       COMMUNITY_NAME_FILE: /www/community-name.txt
+      FUNNEL_STATUS_FILE: /www/funnel-status.env
       OWNER_FILE: /data/relay/owner.env
       SETTINGS_FILE: /data/relay/settings.env
       APPLIED_CONFIG_FILE: /status/applied-config.sha256
+      TAILSCALE_APP_URL: http://${DEVICE_DOMAIN_NAME}:8240
     volumes:
       - ${APP_DATA_DIR}/setup.cgi:/opt/setup-page.awk:ro
       - ${APP_DATA_DIR}/setup-server.sh:/opt/setup-server.sh:ro

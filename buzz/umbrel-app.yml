@@ -2,43 +2,28 @@ manifestVersion: 1
 id: buzz
 category: social
 name: Buzz Relay
-version: "0.5.3-6"
-tagline: Host a private Buzz community on your Umbrel
+version: "0.5.3-7"
+tagline: Host a Buzz community on your Umbrel
 description: >-
-  Buzz Relay lets you host a private Buzz community on your Umbrel. Messages,
-  media, membership, and Nostr-signed Git repositories stay on hardware you
-  control. Buzz Desktop is required to use and administer the community.
+  Buzz Relay hosts your community's messages, media, membership, and
+  Nostr-signed Git repositories on your Umbrel. Buzz Desktop is required to use
+  and administer the community.
 
 
-  After installation, open Buzz Relay, name the community, choose local or
-  private Tailscale access, and paste the 64-character public key from Buzz
-  Desktop's Settings → Identity screen — never your private key. The relay stays
-  in closed-membership mode and makes that identity its initial owner. Umbrel
-  generates and stores a separate service identity for the relay itself. The
-  setup page then opens Buzz Desktop with the community name and relay address
-  already filled in.
+  Tailscale Funnel gives the relay a stable public, encrypted address so members
+  can connect without installing Tailscale. Sign in to the Tailscale app on your
+  Umbrel once, then Buzz Relay prepares the public address automatically.
 
 
-  For private access away from home, the setup page asks for the Umbrel's full
-  Tailscale device DNS name and previews the exact relay address before saving.
-  Every connecting Buzz Desktop computer must run Tailscale and have access to
-  that Umbrel. This private-tailnet option does not expose the relay to the
-  public internet; Tailscale Funnel is not configured by this package.
-
-
-  The relay URL is its permanent community identity and locks when setup is
-  completed. Do not rename the Umbrel in Tailscale or change the URL after adding
-  data. Public-domain and TLS deployment require a matching `wss://` relay URL
-  and are not part of this package.
-
-
-  This app runs the relay infrastructure. It does not run AI models or the
-  Buzz Desktop client.
+  Name the community and paste the 64-character public key from Buzz Desktop's
+  Settings → Identity screen. The relay stays in closed-membership mode and
+  makes that identity its initial owner. Never paste a private key.
 releaseNotes: ""
 
 developer: Block, Inc.
 website: https://buzz.xyz
-dependencies: []
+dependencies:
+  - tailscale
 repo: https://github.com/block/buzz
 support: https://github.com/block/buzz/issues
 
