@@ -1,0 +1,31 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: based-pool-dashboard_web_1
+      APP_PORT: 8080
+
+  web:
+    image: basedminingco/pool-dashboard:1.2.1@sha256:8bc8d1b03b4959c2c99b7f904b9a68130f6e3c02c64f69cc2d38378dd06b935a
+    restart: on-failure
+    stop_grace_period: 1m
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      # nginx reaches the host-networked scanner over the Umbrel bridge and adds
+      # the token server-side on the /local/ proxy, so it never reaches browsers.
+      SCANNER_HOST: ${GATEWAY_IP}
+      SCANNER_TOKEN: ${APP_SEED}
+
+  scanner:
+    image: basedminingco/pool-dashboard:1.2.1@sha256:8bc8d1b03b4959c2c99b7f904b9a68130f6e3c02c64f69cc2d38378dd06b935a
+    restart: on-failure
+    network_mode: host
+    command: ["python3", "/opt/scanner/scanner.py"]
+    environment:
+      SCANNER_PORT: "47800"
+      # Host networking is needed to discover miners on the LAN, but the API
+      # itself only listens on the Umbrel bridge and requires the token above.
+      SCANNER_BIND_ADDRESS: ${GATEWAY_IP}
+      SCANNER_TOKEN: ${APP_SEED}
