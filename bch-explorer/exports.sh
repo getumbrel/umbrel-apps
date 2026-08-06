@@ -1,0 +1,1 @@
+export APP_BCH_EXPLORER_IP="10.21.22.62"
