@@ -1,0 +1,19 @@
+version: "3.7"
+services:
+  app_proxy:
+    environment:
+      APP_HOST: executor_web_1
+      APP_PORT: 4788
+      # MCP clients cannot present Umbrel's browser session. Executor applies
+      # its own OAuth or bearer authentication to these protocol endpoints.
+      PROXY_AUTH_WHITELIST: "/mcp,/mcp/*,/.well-known/*,/api/auth/mcp/*,/api/auth/device/*,/api/auth/cli-login"
+
+  web:
+    image: ghcr.io/usefulsoftwareco/executor-selfhost:v1.5.34@sha256:4a5997d38c38bf2c4554297fcf021e9c7089dbf3e5a27c92cb0657580f0c484a
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      EXECUTOR_WEB_BASE_URL: "http://${DEVICE_DOMAIN_NAME}:${APP_PROXY_PORT}"
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
