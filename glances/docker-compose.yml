@@ -1,0 +1,35 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: glances_web_1
+      APP_PORT: 61208
+
+  web:
+    image: nicolargo/glances:4.5.5@sha256:9ac5de7debffb1e5746654585daaf1d23179ea91fbdfd4c25a7a17945d9c74bf
+    user: "1000:1000"
+    hostname: ${DEVICE_HOSTNAME}
+    init: true
+    restart: on-failure
+    pid: host
+    read_only: true
+    environment:
+      USER: glances
+      HOME: /tmp
+      GLANCES_OPT: "-w --disable-plugin containers"
+      PYTHONPYCACHEPREFIX: /tmp/py_caches
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:61208/api/4/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    tmpfs:
+      - /tmp
+    volumes:
+      # Glances needs read-only host visibility to report the Umbrel device's
+      # filesystems. The Docker socket is deliberately not exposed.
+      - /:/rootfs:ro
+      - /etc/os-release:/etc/os-release:ro
+      - ${APP_DATA_DIR}/glances.conf:/etc/glances/glances.conf:ro
