@@ -2,7 +2,7 @@ manifestVersion: 1
 id: hashrate-autopilot
 category: bitcoin
 name: Hashrate Autopilot
-version: "1.17.4"
+version: "1.17.5"
 tagline: Autopilot for renting hashrate to mine on Ocean Mining
 
 description: >-
@@ -73,25 +73,13 @@ defaultPassword: ""
 submitter: Remco Douma
 submission: https://github.com/getumbrel/umbrel-apps/pull/5685
 releaseNotes: >-
-  v1.17.4 - a daemon-stability fix, corrected Lightning payout amounts, and a new FAQ (everything since v1.17.2).
+  v1.17.5 - security maintenance: eight dependency advisories closed.
 
 
-  Fixed: The daemon no longer crash-loops when your Electrum server (electrs, Fulcrum, or ElectrumX) restarts or drops an idle connection while it is mid-request - previously that could crash the daemon and restart it in a loop, spamming Telegram. It now handles a dropped connection cleanly and retries.
+  Security: Eight published security advisories are closed across the libraries the app is built on, covering the web server's static-file handling and request routing, the dashboard's router, and several supporting parsers. None of these were known to be reachable through the autopilot itself, but they are cleared now rather than left to age.
 
 
-  Fixed: Removed a misleading "Telegram 2FA tap required" note shown after placing a bid - the autopilot bids through Braiins' API with your owner token, which needs no Telegram confirmation (that step exists only in Braiins' own web interface).
-
-
-  Fixed: Deduced Lightning payouts no longer overcount a partial sweep - when Ocean credits a freshly found block and then pays out only the older balance, the payout is now recorded as the actual balance decrease rather than the full pre-drop reading, and any amounts already stored self-correct on the next scan.
-
-
-  Fixed: The Bitaxe miners card now respects your number-format locale instead of a hard-coded decimal point.
-
-
-  New: A short, plain-language FAQ covering setup and topology (including what to put in the Stratum host field), payouts and Profit & Loss, bidding, and what you need running: https://github.com/rdouma/hashrate-autopilot/blob/main/FAQ.md
+  Nothing in the dashboard or the daemon behaves differently in this release, and there are no new migrations. Safe to upgrade from any 1.17.x release.
 
 
   Migrating from the community-store version (rdouma-hashrate-autopilot)? One-time five-minute guide: https://github.com/rdouma/hashrate-autopilot/blob/main/docs/migrating-from-community-store.md
-
-
-  Full release notes: https://github.com/rdouma/hashrate-autopilot/releases/tag/v1.17.4
