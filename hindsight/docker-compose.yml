@@ -1,0 +1,29 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: hindsight_server_1
+      APP_PORT: 9999
+
+  server:
+    image: ghcr.io/vectorize-io/hindsight:0.8.4@sha256:2c60f233eaba8f51db31adb920a560735aaf6f314e4b63c36c73159742dfa1a7
+    restart: on-failure
+    stop_grace_period: 1m
+    user: "1000:1000"
+    volumes:
+      # Embedded PostgreSQL (pgvector) data. The image pre-creates this path for
+      # UID 1000, so a fresh Umbrel volume is seeded with correct ownership and
+      # memories persist across app updates and restarts.
+      - ${APP_DATA_DIR}/data:/home/hindsight/.pg0
+    environment:
+      # Embeddings and reranking run locally on-device (no external calls).
+      - HINDSIGHT_API_EMBEDDINGS_PROVIDER=local
+      - HINDSIGHT_API_RERANKER_PROVIDER=local
+      # Use the local Ollama app as the LLM backend (declared as a dependency).
+      # ${APP_OLLAMA_URL} is exported by the Ollama app; append /v1 for its
+      # OpenAI-compatible endpoint. No API key is needed for a local model.
+      # Pull the model below in the Ollama app before storing memories.
+      - HINDSIGHT_API_LLM_PROVIDER=ollama
+      - HINDSIGHT_API_LLM_BASE_URL=${APP_OLLAMA_URL}/v1
+      - HINDSIGHT_API_LLM_MODEL=llama3.1:8b
