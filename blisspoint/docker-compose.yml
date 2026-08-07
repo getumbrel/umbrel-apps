@@ -1,0 +1,13 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: blisspoint_web_1
+      APP_PORT: 80
+
+  web:
+    image: ghcr.io/heatpunk/blisspoint:0.5.4
+    restart: on-failure
+    init: true
+    stop_grace_period: 1m
