@@ -178,13 +178,14 @@ process.stdin.on('data', (chunk) => {
 });
 
 test('Codex stays on stdio and owns its browser-created credential privately', async () => {
-  const [source, entrypoint, compose] = await Promise.all([
+  const [source, entrypoint, compose, dockerfile] = await Promise.all([
     readFile(new URL('../server.mjs', import.meta.url), 'utf8'),
     readFile(new URL('../entrypoint.sh', import.meta.url), 'utf8'),
     readFile(new URL('../docker-compose.yml', import.meta.url), 'utf8'),
+    readFile(new URL('../Dockerfile', import.meta.url), 'utf8'),
   ]);
   assert.match(source, /\['app-server', '--stdio'\]/);
-  assert.match(source, /Umbrel Codex Agent Bridge', version: '0\.3\.6'/);
+  assert.match(source, /Umbrel Codex Agent Bridge', version: '0\.3\.7'/);
   assert.match(source, /\['login', '-c', 'cli_auth_credentials_store="file"', '--device-auth'\]/);
   assert.match(source, /rememberAuthenticationFailure/);
   assert.match(source, /reconnecting/);
@@ -197,4 +198,5 @@ test('Codex stays on stdio and owns its browser-created credential privately', a
   assert.doesNotMatch(entrypoint, /test -r "\$CODEX_AUTH_FILE"/);
   assert.match(compose, /runtime-secrets:\/run\/secrets\/codex:ro/);
   assert.doesNotMatch(compose, /codex_agent_private/);
+  assert.match(dockerfile, /apt-get install --yes --no-install-recommends ca-certificates/);
 });
