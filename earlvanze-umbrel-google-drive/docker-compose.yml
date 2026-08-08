@@ -1,0 +1,32 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: earlvanze-umbrel-google-drive_app_1
+      APP_PORT: 8478
+
+  app:
+    image: python:3.12-alpine@sha256:6d43704baacd1bfbe7c295d7f13079d5d8104ed33568873133f8fc69980419df
+    restart: on-failure
+    user: "1000:1000"
+    init: true
+    stop_grace_period: 30s
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+      # Local bisync mirror (path 2) - same absolute path as on the host so
+      # rclone bisync invocations are identical inside the container.
+      - /home/umbrel/umbrel/home/GoogleDrive:/home/umbrel/umbrel/home/GoogleDrive
+      # Host rclone config, bisync workdir + log, and service-account secrets.
+      - /home/umbrel/.config/rclone:/home/umbrel/.config/rclone
+      - /home/umbrel/.secrets:/home/umbrel/.secrets
+      # Static rclone binary + app source from the host (no image build needed).
+      - /home/umbrel/bin/rclone:/usr/local/bin/rclone:ro
+      - /home/umbrel/umbrel-google-drive/app:/app:ro
+    environment:
+      - GDC_CONFIG=/data/config.json
+      - GDC_PORT=8478
+      - GDC_RCLONE=/usr/local/bin/rclone
+      - GDC_ROOT=/home/umbrel/umbrel/home/GoogleDrive
+      - PYTHONDONTWRITEBYTECODE=1
+    command: ["python3", "/app/server.py"]
