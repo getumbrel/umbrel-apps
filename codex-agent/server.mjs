@@ -13,6 +13,7 @@ const maxRequestBytes = 1024 * 1024;
 const maxConcurrentTurns = 4;
 let activeTurns = 0;
 let deviceLogin = null;
+let authFailure = null;
 
 function securityHeaders() {
   return {
@@ -51,10 +52,12 @@ function codexAuthenticated() {
 }
 
 function deviceLoginStatus() {
-  if (codexAuthenticated()) return { status: 'authenticated' };
-  if (!deviceLogin) return { status: 'unauthenticated' };
-  const { status, verificationUrl, userCode, startedAt, error } = deviceLogin;
-  return { status, ...(verificationUrl ? { verificationUrl } : {}), ...(userCode ? { userCode } : {}), ...(error ? { error } : {}), startedAt };
+  if (deviceLogin) {
+    const { status, verificationUrl, userCode, startedAt, error } = deviceLogin;
+    return { status, ...(verificationUrl ? { verificationUrl } : {}), ...(userCode ? { userCode } : {}), ...(error ? { error } : {}), startedAt };
+  }
+  if (!authFailure && codexAuthenticated()) return { status: 'authenticated' };
+  return { status: 'unauthenticated', ...(authFailure ? { error: authFailure } : {}) };
 }
 
 function parseDeviceInstructions(output) {
@@ -63,9 +66,10 @@ function parseDeviceInstructions(output) {
   return { verificationUrl, userCode };
 }
 
-function startDeviceLogin() {
-  if (codexAuthenticated()) return { status: 'authenticated' };
+function startDeviceLogin({ force = false } = {}) {
+  if (!force && !authFailure && codexAuthenticated()) return { status: 'authenticated' };
   if (deviceLogin?.status === 'pending') return deviceLoginStatus();
+  authFailure = null;
   const state = { status: 'pending', startedAt: new Date().toISOString(), verificationUrl: undefined, userCode: undefined, error: undefined, output: '' };
   const child = spawn(codexBin, ['login', '-c', 'cli_auth_credentials_store="file"', '--device-auth'], { env: codexEnvironment(), stdio: ['ignore', 'pipe', 'pipe'] });
   state.child = child;
@@ -87,6 +91,8 @@ function startDeviceLogin() {
         // The login succeeded; report it even if an unusual volume rejects chmod.
       }
       state.status = 'authenticated';
+      authFailure = null;
+      deviceLogin = null;
     } else if (state.status === 'pending') {
       state.status = code === 0 ? 'expired' : 'failed';
       state.error = code === 0 ? 'The device code expired before authentication completed.' : 'Codex device login did not complete. Start a new login and try again.';
@@ -95,6 +101,14 @@ function startDeviceLogin() {
     state.output = '';
   });
   return deviceLoginStatus();
+}
+
+function rememberAuthenticationFailure(error) {
+  const message = String(error?.message || '');
+  if (/log in again|sign in again|refresh token|access token.*refreshed|session has ended/i.test(message)) {
+    authFailure = 'Codex needs you to reconnect your ChatGPT account. Start a new device login below.';
+    deviceLogin = null;
+  }
 }
 
 function contentToText(content) {
@@ -195,7 +209,7 @@ function runCodexTurn(payload, onDelta, onDone, onError) {
       try { handle(JSON.parse(line)); } catch { finish(new Error('Codex returned malformed JSON-RPC output')); }
     }
   });
-  writeRpc(child, { method: 'initialize', id: 1, params: { clientInfo: { name: 'umbrel_codex_agent_bridge', title: 'Umbrel Codex Agent Bridge', version: '0.3.3' } } });
+  writeRpc(child, { method: 'initialize', id: 1, params: { clientInfo: { name: 'umbrel_codex_agent_bridge', title: 'Umbrel Codex Agent Bridge', version: '0.3.4' } } });
   writeRpc(child, { method: 'initialized', params: {} });
   writeRpc(child, { method: 'thread/start', id: 2, params: {} });
   return () => finish(new Error('Client disconnected'));
@@ -207,7 +221,7 @@ function sse(response, value) { response.write(`data: ${JSON.stringify(value)}\n
 
 async function handleCompletion(request, response) {
   if (!authorized(request)) return unauthorized(response);
-  if (!codexAuthenticated()) return json(response, 503, { error: { message: 'Codex authentication is not ready. Complete setup in the Codex Agent app.', type: 'service_unavailable' } });
+  if (authFailure || !codexAuthenticated()) return json(response, 503, { error: { message: 'Codex authentication is not ready. Complete setup in the Codex Agent app.', type: 'service_unavailable' } });
   let payload;
   try { payload = await readJson(request); } catch (error) { return json(response, error.status || 400, { error: { message: error.message, type: 'invalid_request_error' } }); }
   if (!Array.isArray(payload.messages) || payload.messages.length === 0) return json(response, 400, { error: { message: 'messages must be a non-empty array', type: 'invalid_request_error' } });
@@ -227,6 +241,7 @@ async function handleCompletion(request, response) {
       sse(response, { id, object: 'chat.completion.chunk', created, model: payload.model || 'codex-agent', choices: [{ index: 0, delta: {}, finish_reason: 'stop' }] });
       response.end('data: [DONE]\n\n'); settle();
     }, (error) => {
+      rememberAuthenticationFailure(error);
       sse(response, { error: { message: error.message, type: 'server_error' } });
       response.end('data: [DONE]\n\n'); settle();
     });
@@ -237,7 +252,7 @@ async function handleCompletion(request, response) {
   runCodexTurn(payload, (delta) => { text += delta; }, () => {
     settle();
     json(response, 200, { id, object: 'chat.completion', created, model: payload.model || 'codex-agent', choices: [{ index: 0, message: { role: 'assistant', content: text }, finish_reason: 'stop' }] });
-  }, (error) => { settle(); json(response, 500, { error: { message: error.message, type: 'server_error' } }); });
+  }, (error) => { rememberAuthenticationFailure(error); settle(); json(response, 500, { error: { message: error.message, type: 'server_error' } }); });
 }
 
 const server = http.createServer((request, response) => {
@@ -245,10 +260,13 @@ const server = http.createServer((request, response) => {
   if (request.method === 'GET' && pathname === '/healthz') {
     const codex = spawnSync(codexBin, ['--version'], { stdio: 'ignore', timeout: 2000 });
     const running = Boolean(bridgeApiKey) && codex.status === 0;
-    return json(response, running ? 200 : 503, { status: running ? (codexAuthenticated() ? 'ok' : 'needs-authentication') : 'not-ready' });
+    return json(response, running ? 200 : 503, { status: running ? (!authFailure && codexAuthenticated() ? 'ok' : 'needs-authentication') : 'not-ready' });
   }
   if (request.method === 'GET' && pathname === '/api/auth/status') return json(response, 200, deviceLoginStatus());
-  if (request.method === 'POST' && pathname === '/api/auth/device/start') return json(response, 202, startDeviceLogin());
+  if (request.method === 'POST' && pathname === '/api/auth/device/start') {
+    const force = new URL(request.url, 'http://localhost').searchParams.get('force') === '1';
+    return json(response, 202, startDeviceLogin({ force }));
+  }
   if (request.method === 'POST' && pathname === '/api/auth/device/cancel') {
     if (deviceLogin?.child) deviceLogin.child.kill('SIGTERM');
     deviceLogin = null;

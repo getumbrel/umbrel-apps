@@ -78,6 +78,7 @@ process.stdin.on('data', (chunk) => {
       await new Promise((resolve) => setTimeout(resolve, 20));
     }
     assert.equal(JSON.parse((await request(port, 'GET', '/api/auth/status')).body).status, 'authenticated');
+    assert.equal(JSON.parse((await request(port, 'POST', '/api/auth/device/start?force=1')).body).status, 'pending');
     assert.equal((await request(port, 'GET', '/v1/models')).status, 401);
     const models = await request(port, 'GET', '/v1/models', undefined, { Authorization: 'Bearer test-bridge-key' });
     assert.equal(models.status, 200);
@@ -117,6 +118,47 @@ test('Umbrel exposes browser setup and protects the shared-network bridge with a
   assert.match(setupPage, /Open WebUI URL: http:\/\/codex-agent_app_1:8080\/v1/);
 });
 
+test('a revoked Codex session returns to the device-login gate without exposing credentials', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'codex-agent-expired-'));
+  const persistentAuth = join(directory, 'auth.json');
+  const mockCodex = join(directory, 'mock-codex.mjs');
+  const port = 19080 + Math.floor(Math.random() * 500);
+  await writeFile(persistentAuth, '{}');
+  await writeFile(mockCodex, `#!/usr/bin/env node
+import { existsSync } from 'node:fs';
+if (process.argv.includes('--version')) process.exit(0);
+if (process.argv.includes('login')) {
+  if (process.argv.includes('status')) process.exit(existsSync(process.env.CODEX_PERSISTENT_AUTH_FILE) ? 0 : 1);
+  if (process.argv.includes('--device-auth')) { console.error('Open https://auth.openai.com/device and enter code: TEST-CODE'); process.stdin.resume(); }
+}
+let buffer = '';
+process.stdin.on('data', (chunk) => {
+  buffer += chunk;
+  for (;;) {
+    const newline = buffer.indexOf('\\n'); if (newline < 0) break;
+    const message = JSON.parse(buffer.slice(0, newline)); buffer = buffer.slice(newline + 1);
+    if (message.id === 1) console.log(JSON.stringify({ id: 1, result: {} }));
+    if (message.id === 2) console.log(JSON.stringify({ id: 2, result: { thread: { id: 'thread-expired' } } }));
+    if (message.id === 3) console.log(JSON.stringify({ id: 3, error: { message: 'Your access token could not be refreshed. Please log in again.' } }));
+  }
+});
+`);
+  await chmod(mockCodex, 0o755);
+  const server = spawn(process.execPath, ['server.mjs'], { cwd: root, env: { ...process.env, PORT: String(port), CODEX_BIN: mockCodex, CODEX_PERSISTENT_AUTH_FILE: persistentAuth, BRIDGE_API_KEY: 'test-bridge-key', CODEX_WORKSPACE: directory }, stdio: 'ignore' });
+  try {
+    await waitForHealth(port);
+    const completion = await request(port, 'POST', '/v1/chat/completions', JSON.stringify({ messages: [{ role: 'user', content: 'Hello' }] }), { Authorization: 'Bearer test-bridge-key' });
+    assert.equal(completion.status, 500);
+    const status = JSON.parse((await request(port, 'GET', '/api/auth/status')).body);
+    assert.equal(status.status, 'unauthenticated');
+    assert.match(status.error, /reconnect your ChatGPT account/);
+    assert.equal(JSON.parse((await request(port, 'POST', '/api/auth/device/start')).body).status, 'pending');
+  } finally {
+    server.kill('SIGTERM');
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
 test('Codex stays on stdio and owns its browser-created credential privately', async () => {
   const [source, entrypoint, compose] = await Promise.all([
     readFile(new URL('../server.mjs', import.meta.url), 'utf8'),
@@ -124,8 +166,11 @@ test('Codex stays on stdio and owns its browser-created credential privately', a
     readFile(new URL('../docker-compose.yml', import.meta.url), 'utf8'),
   ]);
   assert.match(source, /\['app-server', '--stdio'\]/);
-  assert.match(source, /Umbrel Codex Agent Bridge', version: '0\.3\.3'/);
+  assert.match(source, /Umbrel Codex Agent Bridge', version: '0\.3\.4'/);
   assert.match(source, /\['login', '-c', 'cli_auth_credentials_store="file"', '--device-auth'\]/);
+  assert.match(source, /rememberAuthenticationFailure/);
+  assert.match(source, /searchParams\.get\('force'\) === '1'/);
+  assert.match(entrypoint, /Migrate existing host-local credentials once/);
   assert.doesNotMatch(source, /--listen/);
   assert.match(source, /crypto\.timingSafeEqual/);
   assert.match(entrypoint, /Migrate existing host-local credentials once/);
