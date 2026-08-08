@@ -129,6 +129,7 @@ test('Umbrel exposes browser setup and protects the shared-network bridge with a
   assert.match(librechatConfig, /apiKey: "user_provided"/);
   assert.match(librechatConfig, /baseURL: "http:\/\/codex-agent_app_1:8080\/v1"/);
   assert.match(setupPage, /http:\/\/codex-agent_app_1:8080\/v1/);
+  assert.match(setupPage, /Umbrel password as the API key/);
   assert.match(setupPage, /<script src="\/app\.js" defer><\/script>/);
   assert.match(setupPage, /<link rel="stylesheet" href="\/app\.css">/);
   const uiScript = await readFile(new URL('../public/app.js', import.meta.url), 'utf8');
@@ -183,7 +184,7 @@ test('Codex stays on stdio and owns its browser-created credential privately', a
     readFile(new URL('../docker-compose.yml', import.meta.url), 'utf8'),
   ]);
   assert.match(source, /\['app-server', '--stdio'\]/);
-  assert.match(source, /Umbrel Codex Agent Bridge', version: '0\.3\.5'/);
+  assert.match(source, /Umbrel Codex Agent Bridge', version: '0\.3\.6'/);
   assert.match(source, /\['login', '-c', 'cli_auth_credentials_store="file"', '--device-auth'\]/);
   assert.match(source, /rememberAuthenticationFailure/);
   assert.match(source, /reconnecting/);
