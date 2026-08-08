@@ -1,0 +1,33 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: ziit_app_1
+      APP_PORT: 3000
+      PROXY_AUTH_ADD: "false"
+
+  app:
+    image: ghcr.io/0pandadev/ziit:v1.0.2@sha256:ad8d23ea1a5927f85b0ab36f77c0891f1490794e1baf1c719d8cdf18ca8594f5
+    environment:
+      NUXT_DATABASE_URL: "postgresql://postgres:umbrelziit@ziit_postgres_1:5432/ziit" # change the password for production use
+      NUXT_PASETO_KEY: ${APP_ZIIT_PASTEO_KEY}
+    env_file:
+      - ${APP_DATA_DIR}/settings.env
+    restart: on-failure
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    image: timescale/timescaledb:latest-pg17@sha256:c9a5107ed594445a5d1ab581711c22de5fd8ca42b1a0d6844e85507b18166bf8
+    restart: on-failure
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: umbrelziit
+      POSTGRES_DB: ziit
+    volumes:
+      - ${APP_DATA_DIR}/data/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
