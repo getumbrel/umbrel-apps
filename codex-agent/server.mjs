@@ -3,6 +3,7 @@ import { spawn, spawnSync } from 'node:child_process';
 import { chmodSync, createReadStream, existsSync } from 'node:fs';
 import http from 'node:http';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const port = Number(process.env.PORT || 8080);
 const workspace = process.env.CODEX_WORKSPACE || '/projects';
@@ -11,13 +12,14 @@ const bridgeApiKey = process.env.BRIDGE_API_KEY || '';
 const codexBin = process.env.CODEX_BIN || 'codex';
 const maxRequestBytes = 1024 * 1024;
 const maxConcurrentTurns = 4;
+const publicDirectory = path.join(path.dirname(fileURLToPath(import.meta.url)), 'public');
 let activeTurns = 0;
 let deviceLogin = null;
 let authFailure = null;
 
 function securityHeaders() {
   return {
-    'Content-Security-Policy': "default-src 'self'; connect-src 'self'; style-src 'self'; base-uri 'none'; frame-ancestors 'none'",
+    'Content-Security-Policy': "default-src 'self'; connect-src 'self'; style-src 'self'; script-src 'self'; base-uri 'none'; frame-ancestors 'none'",
     'Referrer-Policy': 'no-referrer',
     'X-Content-Type-Options': 'nosniff',
     'X-Frame-Options': 'DENY',
@@ -193,7 +195,14 @@ function runCodexTurn(payload, onDelta, onDone, onError) {
       if (turn?.status === 'completed') return finish();
       return finish(new Error(turn?.error?.message || `Codex turn ${turn?.status || 'failed'}`));
     }
-    if (message.method === 'error') return finish(new Error(message.params?.error?.message || 'Codex request failed'));
+    if (message.method === 'error') {
+      const errorMessage = message.params?.error?.message || 'Codex request failed';
+      // app-server can announce a transient reconnect while it restores its
+      // upstream session. It is not a failed turn and is followed by normal
+      // JSON-RPC responses when the connection returns.
+      if (/^reconnecting(?:\.\.\.|…)?\s+\d+\/\d+$/i.test(errorMessage)) return;
+      return finish(new Error(errorMessage));
+    }
   };
   child.once('error', (error) => finish(error));
   child.once('exit', (code) => { if (!finished) finish(new Error(`Codex exited before completing the turn (code ${code ?? 'unknown'})`)); });
@@ -209,7 +218,7 @@ function runCodexTurn(payload, onDelta, onDone, onError) {
       try { handle(JSON.parse(line)); } catch { finish(new Error('Codex returned malformed JSON-RPC output')); }
     }
   });
-  writeRpc(child, { method: 'initialize', id: 1, params: { clientInfo: { name: 'umbrel_codex_agent_bridge', title: 'Umbrel Codex Agent Bridge', version: '0.3.4' } } });
+  writeRpc(child, { method: 'initialize', id: 1, params: { clientInfo: { name: 'umbrel_codex_agent_bridge', title: 'Umbrel Codex Agent Bridge', version: '0.3.5' } } });
   writeRpc(child, { method: 'initialized', params: {} });
   writeRpc(child, { method: 'thread/start', id: 2, params: {} });
   return () => finish(new Error('Client disconnected'));
@@ -277,9 +286,16 @@ const server = http.createServer((request, response) => {
     return json(response, 200, { object: 'list', data: [{ id: 'codex-agent', object: 'model', created: 0, owned_by: 'openai' }] });
   }
   if (request.method === 'POST' && pathname === '/v1/chat/completions') return handleCompletion(request, response);
-  if (request.method === 'GET' && (pathname === '/' || pathname === '/index.html')) {
-    response.writeHead(200, { ...securityHeaders(), 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
-    return createReadStream(path.join('/app', 'index.html')).pipe(response);
+  const staticFiles = {
+    '/': ['index.html', 'text/html; charset=utf-8'],
+    '/index.html': ['index.html', 'text/html; charset=utf-8'],
+    '/app.css': ['app.css', 'text/css; charset=utf-8'],
+    '/app.js': ['app.js', 'text/javascript; charset=utf-8'],
+  };
+  if (request.method === 'GET' && staticFiles[pathname]) {
+    const [file, contentType] = staticFiles[pathname];
+    response.writeHead(200, { ...securityHeaders(), 'Content-Type': contentType, 'Cache-Control': 'no-store' });
+    return createReadStream(path.join(publicDirectory, file)).pipe(response);
   }
   return json(response, 404, { error: { message: 'Not found', type: 'invalid_request_error' } });
 });

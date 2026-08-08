@@ -54,6 +54,7 @@ process.stdin.on('data', (chunk) => {
     if (message.id === 1) console.log(JSON.stringify({ id: 1, result: {} }));
     if (message.id === 2) console.log(JSON.stringify({ id: 2, result: { thread: { id: 'thread-test' } } }));
     if (message.id === 3) {
+      console.log(JSON.stringify({ method: 'error', params: { error: { message: 'Reconnecting... 2/5' } } }));
       console.log(JSON.stringify({ method: 'item/agentMessage/delta', params: { delta: 'Bridge works.' } }));
       console.log(JSON.stringify({ method: 'turn/completed', params: { turn: { status: 'completed' } } }));
     }
@@ -64,6 +65,18 @@ process.stdin.on('data', (chunk) => {
   const server = spawn(process.execPath, ['server.mjs'], { cwd: root, env: { ...process.env, PORT: String(port), CODEX_BIN: mockCodex, CODEX_AUTH_FILE: legacyAuth, CODEX_PERSISTENT_AUTH_FILE: persistentAuth, BRIDGE_API_KEY: 'test-bridge-key', CODEX_WORKSPACE: directory }, stdio: 'ignore' });
   try {
     await waitForHealth(port);
+    const page = await request(port, 'GET', '/');
+    assert.equal(page.status, 200);
+    assert.match(page.headers['content-security-policy'], /script-src 'self'/);
+    assert.doesNotMatch(page.headers['content-security-policy'], /unsafe-inline/);
+    assert.match(page.body, /<script src="\/app\.js" defer><\/script>/);
+    const script = await request(port, 'GET', '/app.js');
+    assert.equal(script.status, 200);
+    assert.match(script.headers['content-type'], /text\/javascript/);
+    assert.match(script.body, /fetch\('\.\/api\/auth\/device\/start'/);
+    const stylesheet = await request(port, 'GET', '/app.css');
+    assert.equal(stylesheet.status, 200);
+    assert.match(stylesheet.headers['content-type'], /text\/css/);
     assert.deepEqual(JSON.parse((await request(port, 'GET', '/api/auth/status')).body), { status: 'unauthenticated' });
     let deviceLogin = JSON.parse((await request(port, 'POST', '/api/auth/device/start')).body);
     assert.equal(deviceLogin.status, 'pending');
@@ -115,7 +128,11 @@ test('Umbrel exposes browser setup and protects the shared-network bridge with a
   assert.match(librechatConfig, /name: "Codex Agent"/);
   assert.match(librechatConfig, /apiKey: "user_provided"/);
   assert.match(librechatConfig, /baseURL: "http:\/\/codex-agent_app_1:8080\/v1"/);
-  assert.match(setupPage, /Open WebUI URL: http:\/\/codex-agent_app_1:8080\/v1/);
+  assert.match(setupPage, /http:\/\/codex-agent_app_1:8080\/v1/);
+  assert.match(setupPage, /<script src="\/app\.js" defer><\/script>/);
+  assert.match(setupPage, /<link rel="stylesheet" href="\/app\.css">/);
+  const uiScript = await readFile(new URL('../public/app.js', import.meta.url), 'utf8');
+  assert.match(uiScript, /fetch\('\.\/api\/auth\/device\/start'/);
 });
 
 test('a revoked Codex session returns to the device-login gate without exposing credentials', async () => {
@@ -166,9 +183,10 @@ test('Codex stays on stdio and owns its browser-created credential privately', a
     readFile(new URL('../docker-compose.yml', import.meta.url), 'utf8'),
   ]);
   assert.match(source, /\['app-server', '--stdio'\]/);
-  assert.match(source, /Umbrel Codex Agent Bridge', version: '0\.3\.4'/);
+  assert.match(source, /Umbrel Codex Agent Bridge', version: '0\.3\.5'/);
   assert.match(source, /\['login', '-c', 'cli_auth_credentials_store="file"', '--device-auth'\]/);
   assert.match(source, /rememberAuthenticationFailure/);
+  assert.match(source, /reconnecting/);
   assert.match(source, /searchParams\.get\('force'\) === '1'/);
   assert.match(entrypoint, /Migrate existing host-local credentials once/);
   assert.doesNotMatch(source, /--listen/);

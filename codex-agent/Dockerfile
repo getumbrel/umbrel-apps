@@ -7,7 +7,8 @@ WORKDIR /app
 RUN npm install --global --omit=dev "@openai/codex@${CODEX_VERSION}" \
     && npm cache clean --force
 
-COPY --chown=node:node server.mjs healthcheck.mjs configure-remnic.mjs entrypoint.sh public/ /app/
+COPY --chown=node:node server.mjs healthcheck.mjs configure-remnic.mjs entrypoint.sh /app/
+COPY --chown=node:node public/ /app/public/
 RUN chmod 0555 /app/entrypoint.sh \
     && chmod -R a+rX /app
 
