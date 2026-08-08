@@ -33,19 +33,37 @@ gallery:
 path: ""
 defaultUsername: ""
 defaultPassword: ""
-releaseNotes: >-
-  BTCPay Server 2.4.2 fixes a critical TOTP two-factor authentication bypass through Greenfield Basic authentication that is being actively exploited. Update as soon as possible.
+releaseNotes: |-
+  ⚠️ Critical security update. Updating alone is not enough — complete every step below immediately.
 
+  All BTCPay Server versions before 2.4.2 are affected by a vulnerability that is being actively exploited. An unauthenticated remote attacker could steal the credentials for your Lightning Node and use them to move funds. Update immediately.
 
-  Greenfield Basic authentication is now disabled by default five minutes after account creation, with opt-in available through account settings and the API. Most integrations use API keys and are not affected.
+  After updating, rotate your Lightning Node credentials:
 
+  1. On the umbrelOS home screen, right-click BTCPay Server and select **Stop**.
+  2. Right-click Lightning Node and select **Stop**. Wait until both apps have stopped before continuing.
+  3. Open Files and go to `Apps` → `lightning` → `data` → `lnd` → `data` → `chain` → `bitcoin` → `mainnet`.
+  4. In that folder, delete:
 
-  If you're updating from a pre-2.4 version and use the Boltcards Extension or Shopify v2 plugins, upgrade those plugins to their latest versions for BTCPay Server 2.4 compatibility.
+     - Every file whose name ends in `.macaroon`
+     - `macaroons.db`
 
+     The exact `.macaroon` filenames vary between installations. It is normal to have more or fewer of them. Delete all files ending in `.macaroon`.
 
-  This release also improves multisig PSBT signing and finalization, adds wallet transaction column controls, improves store settings, fixes right-to-left stylesheets, and updates the NBXplorer companion image to 2.6.10.
+     ⚠️ Do not delete anything else. Keep `wallet.db`, `channel.backup`, the `chan-backup-archives` folder, and every other file or folder. Never delete `channel.db`.
 
+  5. Return to the umbrelOS home screen and click Lightning Node to start it. Wait for it to finish starting.
+  6. Return to the same folder and confirm that new `admin.macaroon` and `macaroons.db` files have appeared.
+  7. Click BTCPay Server to start it.
+  8. Right-click and restart any other Umbrel apps connected to Lightning Node.
+  9. Reconnect external Lightning wallets and services. Their old credentials will no longer work.
 
-  Full BTCPay Server release notes can be found at https://github.com/btcpayserver/btcpayserver/releases/tag/v2.4.2
+  Check your Lightning payments, channel closures, peers, on-chain balance, and channel balance for anything you do not recognize.
+
+  This release also fixes a TOTP two-factor authentication bypass, disables Greenfield Basic authentication by default five minutes after account creation, and updates NBXplorer to 2.6.10.
+
+  Official security advisory: https://x.com/BtcpayServer/status/2085865561137831938
+
+  Full release notes: https://github.com/btcpayserver/btcpayserver/releases/tag/v2.4.2
 submitter: Umbrel
 submission: https://github.com/getumbrel/umbrel/pull/353
