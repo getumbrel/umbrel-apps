@@ -218,7 +218,7 @@ function runCodexTurn(payload, onDelta, onDone, onError) {
       try { handle(JSON.parse(line)); } catch { finish(new Error('Codex returned malformed JSON-RPC output')); }
     }
   });
-  writeRpc(child, { method: 'initialize', id: 1, params: { clientInfo: { name: 'umbrel_codex_agent_bridge', title: 'Umbrel Codex Agent Bridge', version: '0.3.7' } } });
+  writeRpc(child, { method: 'initialize', id: 1, params: { clientInfo: { name: 'umbrel_codex_agent_bridge', title: 'Umbrel Codex Agent Bridge', version: '0.3.6' } } });
   writeRpc(child, { method: 'initialized', params: {} });
   writeRpc(child, { method: 'thread/start', id: 2, params: {} });
   return () => finish(new Error('Client disconnected'));
