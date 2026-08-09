@@ -18,8 +18,6 @@ const publicDirectory = path.join(path.dirname(fileURLToPath(import.meta.url)), 
 let activeTurns = 0;
 let deviceLogin = null;
 let authFailure = null;
-let trustedProxyAddresses = new Set();
-let trustedProxyAddressesExpireAt = 0;
 
 function securityHeaders() {
   return {
@@ -54,17 +52,12 @@ function normalizeAddress(address) {
 
 async function fromTrustedProxy(request) {
   if (!trustedProxyHostname) return false;
-  if (Date.now() >= trustedProxyAddressesExpireAt) {
-    try {
-      const addresses = await lookup(trustedProxyHostname, { all: true });
-      trustedProxyAddresses = new Set(addresses.map(({ address }) => normalizeAddress(address)));
-      trustedProxyAddressesExpireAt = Date.now() + 30_000;
-    } catch {
-      trustedProxyAddresses = new Set();
-      trustedProxyAddressesExpireAt = Date.now() + 5_000;
-    }
+  try {
+    const addresses = await lookup(trustedProxyHostname, { all: true });
+    return addresses.some(({ address }) => normalizeAddress(address) === normalizeAddress(request.socket.remoteAddress));
+  } catch {
+    return false;
   }
-  return trustedProxyAddresses.has(normalizeAddress(request.socket.remoteAddress));
 }
 
 function hasJsonContentType(request) {
