@@ -12,8 +12,10 @@ services:
     entrypoint: >-
       /bin/sh -c '
         apk add --no-cache envsubst &&
-        envsubst < /config/ckpool.conf.template > /config/ckpool.conf &&
-        chown 1000:1000 /config/ckpool.conf
+        if [ ! -f /config/ckpool.conf ]; then
+          envsubst < /config/ckpool.conf.template > /config/ckpool.conf &&
+          chown 1000:1000 /config/ckpool.conf
+        fi
       '
     volumes:
       - ${APP_DATA_DIR}/data/config:/config
