@@ -15,10 +15,12 @@ experimental Codex network transport or a raw host port.
    the browser or included in the image.
    If Codex later reports that its session has expired, return to Codex Agent
    and select **Reconnect ChatGPT** to start a fresh device-code login.
-4. In either chat client's own settings, add an OpenAI-compatible connection using
-   `http://codex-agent_app_1:8080/v1`, model `codex-agent`, and Codex Agent's
-   Umbrel-generated password as its API key. The hostname is intentionally
-   internal to Umbrel's Docker network; it is not a browser URL.
+4. For LibreChat, restart the app once, choose **Codex Agent** in its model
+   picker, and enter Codex Agent's Umbrel-generated password when it requests
+   the endpoint API key. For Open WebUI, open **Admin Settings → Connections**
+   and add an OpenAI-compatible connection using
+   `http://codex-agent_app_1:8080/v1`, model `codex-agent`, and the same app
+   password. The hostname is internal to Umbrel; it is not a browser URL.
 
 An existing pre-0.3.0 host-local credential at
 `${APP_DATA_DIR}/runtime-secrets/auth.json` is migrated automatically at first

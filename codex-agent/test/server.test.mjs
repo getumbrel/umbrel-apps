@@ -110,11 +110,15 @@ process.stdin.on('data', (chunk) => {
 });
 
 test('Umbrel exposes browser setup and protects the shared-network bridge with a derived key', async () => {
-  const [compose, exportsFile, manifest, setupPage] = await Promise.all([
+  const [compose, exportsFile, manifest, setupPage, librechatConfig, librechatHook, librechatManifest, openWebuiManifest] = await Promise.all([
     readFile(new URL('../docker-compose.yml', import.meta.url), 'utf8'),
     readFile(new URL('../exports.sh', import.meta.url), 'utf8'),
     readFile(new URL('../umbrel-app.yml', import.meta.url), 'utf8'),
     readFile(new URL('../public/index.html', import.meta.url), 'utf8'),
+    readFile(new URL('../../librechat/data/api/librechat.yaml', import.meta.url), 'utf8'),
+    readFile(new URL('../../librechat/hooks/pre-start', import.meta.url), 'utf8'),
+    readFile(new URL('../../librechat/umbrel-app.yml', import.meta.url), 'utf8'),
+    readFile(new URL('../../open-webui/umbrel-app.yml', import.meta.url), 'utf8'),
   ]);
   assert.doesNotMatch(compose, /ports:/);
   assert.match(compose, /BRIDGE_API_KEY: \$\{APP_PASSWORD\}/);
@@ -126,8 +130,16 @@ test('Umbrel exposes browser setup and protects the shared-network bridge with a
   assert.doesNotMatch(manifest, /must be placed at/);
   assert.match(setupPage, /http:\/\/codex-agent_app_1:8080\/v1/);
   assert.match(setupPage, /Umbrel password as the API key/);
+  assert.match(setupPage, /Admin Settings → Connections/);
+  assert.match(setupPage, /Choose <em>Codex Agent<\/em>/);
   assert.match(setupPage, /<script src="\/app\.js" defer><\/script>/);
   assert.match(setupPage, /<link rel="stylesheet" href="\/app\.css">/);
+  assert.match(librechatConfig, /name: "Codex Agent"/);
+  assert.match(librechatConfig, /apiKey: "user_provided"/);
+  assert.match(librechatConfig, /baseURL: "http:\/\/codex-agent_app_1:8080\/v1"/);
+  assert.match(librechatHook, /added optional Codex Agent endpoint configuration/);
+  assert.match(librechatManifest, /version: "0\.8\.7-build-1"/);
+  assert.doesNotMatch(openWebuiManifest, /implements:\n  - librechat/);
   const uiScript = await readFile(new URL('../public/app.js', import.meta.url), 'utf8');
   assert.match(uiScript, /fetch\('\.\/api\/auth\/device\/start'/);
 });
