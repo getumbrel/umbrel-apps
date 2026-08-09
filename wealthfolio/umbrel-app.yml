@@ -3,7 +3,7 @@ id: wealthfolio
 name: Wealthfolio
 tagline: Private investment portfolio tracking
 category: finance
-version: "3.6.2"
+version: "3.6.3"
 port: 8880
 description: >-
   Wealthfolio is an open source investment portfolio tracker for monitoring holdings, accounts, performance,
@@ -24,19 +24,22 @@ gallery:
   - 3.webp
   - 4.webp
 releaseNotes: >-
-  Wealthfolio 3.6.2 is a correctness release for portfolio returns, tax, split, dividend, and Health Center calculations.
+  Wealthfolio 3.6.3 is a stability release focused on faster, lighter portfolio calculations for large histories.
 
 
-  Holding returns now exclude FX movement, split-adjusted valuations are shared across accounts, and tax/fee activity balances handle more cash activity types correctly.
+  First launch after updating may take longer than usual while Wealthfolio rebuilds derived data and rewrites the SQLite database to reclaim disk space. Let it finish before closing the app.
 
 
-  MarketData.app dividend-adjusted history no longer double-counts separately booked dividend cash activities. If you use MarketData.app, run a full market-data backfill to correct stored history.
+  Valuation now uses a sparse keyframe timeline with batched quotes to avoid memory spikes, and performance statistics avoid repeated cold calculations that could time out.
 
 
-  Add-on sandbox storage/import handling, localization, non-Latin category creation, price precision, symbol search, and market-data API key entry also received fixes.
+  Database snapshots no longer duplicate full lot data, SQLite tuning was improved, imports are validated before they are applied, and unsupported dates or skipped accounts are handled more safely.
 
 
-  Full release notes can be found at https://github.com/wealthfolio/wealthfolio/releases/tag/v3.6.2
+  This release also fixes holdings-mode gains, quote-gap dashboards, rebalance target sizing, CSV currency backfills, bulk activity validation, cash dividend/interest edits, TWR edge cases, BRL custom provider prices, add-on navigation layout issues, and clears most open Dependabot advisories.
+
+
+  Full release notes can be found at https://github.com/wealthfolio/wealthfolio/releases/tag/v3.6.3
 dependencies: []
 path: ""
 defaultUsername: ""
