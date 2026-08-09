@@ -7,8 +7,7 @@ experimental Codex network transport or a raw host port.
 
 ## First launch
 
-1. Install Codex Agent and select LibreChat or Open WebUI in Umbrel's
-   dependency prompt.
+1. Install Codex Agent alongside LibreChat, Open WebUI, or both.
 2. Open Codex Agent through Umbrel. Its page starts Codex's device-code login
    and displays only the temporary verification URL and code.
 3. Complete sign-in in a browser. Codex saves its normal file-backed auth cache
@@ -16,8 +15,7 @@ experimental Codex network transport or a raw host port.
    the browser or included in the image.
    If Codex later reports that its session has expired, return to Codex Agent
    and select **Reconnect ChatGPT** to start a fresh device-code login.
-4. In LibreChat, choose **Codex Agent** and model `codex-agent`. In Open WebUI,
-   add an OpenAI-compatible connection using
+4. In either chat client's own settings, add an OpenAI-compatible connection using
    `http://codex-agent_app_1:8080/v1`, model `codex-agent`, and Codex Agent's
    Umbrel-generated password as its API key. The hostname is intentionally
    internal to Umbrel's Docker network; it is not a browser URL.
@@ -30,6 +28,8 @@ start. It is a compatibility path, not a requirement for new installs.
 
 - Umbrel's authenticated `app_proxy` is the only browser route. Keep its
   default authentication enabled; do not add a host port or Tailscale Funnel.
+- The app remains reachable to chat clients on Umbrel's internal Docker
+  network. The Codex agent subprocess cannot make outbound network requests.
 - The bridge uses the normal `Authorization: Bearer` header and a per-install
   key derived from the Umbrel app password. It is needed because installed chat
   clients reach the bridge over Umbrel's shared Docker network.
@@ -43,7 +43,7 @@ start. It is a compatibility path, not a requirement for new installs.
 ## Verification
 
 Run `npm test` from this directory. From the repository root, run
-`npm run lint:apps -- codex-agent open-webui librechat --check-images` and
+`npm run lint:apps -- codex-agent --check-images` and
 `git diff --check`.
 
 For App Store readiness, test a fresh Umbrel install through the Umbrel UI:

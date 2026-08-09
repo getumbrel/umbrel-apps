@@ -1,5 +1,6 @@
 import crypto from 'node:crypto';
 import { spawn, spawnSync } from 'node:child_process';
+import { lookup } from 'node:dns/promises';
 import { chmodSync, createReadStream, existsSync } from 'node:fs';
 import http from 'node:http';
 import path from 'node:path';
@@ -10,12 +11,15 @@ const workspace = process.env.CODEX_WORKSPACE || '/projects';
 const persistentAuthFile = process.env.CODEX_PERSISTENT_AUTH_FILE || '/data/codex-home/auth.json';
 const bridgeApiKey = process.env.BRIDGE_API_KEY || '';
 const codexBin = process.env.CODEX_BIN || 'codex';
+const trustedProxyHostname = process.env.TRUSTED_PROXY_HOSTNAME || '';
 const maxRequestBytes = 1024 * 1024;
 const maxConcurrentTurns = 4;
 const publicDirectory = path.join(path.dirname(fileURLToPath(import.meta.url)), 'public');
 let activeTurns = 0;
 let deviceLogin = null;
 let authFailure = null;
+let trustedProxyAddresses = new Set();
+let trustedProxyAddressesExpireAt = 0;
 
 function securityHeaders() {
   return {
@@ -36,6 +40,37 @@ function unauthorized(response) {
   response.end(JSON.stringify({ error: { message: 'Invalid API key', type: 'authentication_error', code: 'invalid_api_key' } }));
 }
 
+function forbidden(response) {
+  return json(response, 403, { error: { message: 'This route is available only through Umbrel app_proxy.', type: 'authentication_error' } });
+}
+
+function unsupportedMediaType(response) {
+  return json(response, 415, { error: { message: 'Content-Type must be application/json.', type: 'invalid_request_error' } });
+}
+
+function normalizeAddress(address) {
+  return String(address || '').replace(/^::ffff:/, '');
+}
+
+async function fromTrustedProxy(request) {
+  if (!trustedProxyHostname) return false;
+  if (Date.now() >= trustedProxyAddressesExpireAt) {
+    try {
+      const addresses = await lookup(trustedProxyHostname, { all: true });
+      trustedProxyAddresses = new Set(addresses.map(({ address }) => normalizeAddress(address)));
+      trustedProxyAddressesExpireAt = Date.now() + 30_000;
+    } catch {
+      trustedProxyAddresses = new Set();
+      trustedProxyAddressesExpireAt = Date.now() + 5_000;
+    }
+  }
+  return trustedProxyAddresses.has(normalizeAddress(request.socket.remoteAddress));
+}
+
+function hasJsonContentType(request) {
+  return String(request.headers['content-type'] || '').split(';', 1)[0].trim().toLowerCase() === 'application/json';
+}
+
 function authorized(request) {
   const header = request.headers.authorization;
   if (!bridgeApiKey || typeof header !== 'string' || !header.startsWith('Bearer ')) return false;
@@ -45,7 +80,9 @@ function authorized(request) {
 }
 
 function codexEnvironment() {
-  return { ...process.env, HOME: '/data/codex-home', CODEX_HOME: '/data/codex-home' };
+  const childEnvironment = { ...process.env };
+  delete childEnvironment.BRIDGE_API_KEY;
+  return { ...childEnvironment, HOME: '/data/codex-home', CODEX_HOME: '/data/codex-home' };
 }
 
 function codexAuthenticated() {
@@ -129,7 +166,7 @@ function buildPrompt(messages) {
     const role = ['system', 'user', 'assistant', 'tool'].includes(message.role) ? message.role : 'user';
     return `${role.toUpperCase()}: ${contentToText(message.content)}`;
   }).filter((line) => !line.endsWith(': ')).join('\n\n');
-  return `Continue this LibreChat conversation as Codex. Work in the configured workspace, use tools when useful, and give the user a clear final answer.\n\n${transcript}`;
+  return `Continue this chat conversation as Codex. Work in the configured workspace, use tools when useful, and give the user a clear final answer.\n\n${transcript}`;
 }
 
 function readJson(request) {
@@ -179,7 +216,7 @@ function runCodexTurn(payload, onDelta, onDone, onError) {
         input: [{ type: 'text', text: buildPrompt(payload.messages) }],
         cwd: workspace,
         approvalPolicy: process.env.CODEX_APPROVAL_POLICY || 'never',
-        sandboxPolicy: { type: 'workspaceWrite', writableRoots: [workspace], networkAccess: true },
+        sandboxPolicy: { type: 'workspaceWrite', writableRoots: [workspace], networkAccess: false },
       };
       if (payload.model && payload.model !== 'codex-agent') params.model = payload.model;
       writeRpc(child, { method: 'turn/start', id: 3, params });
@@ -218,7 +255,7 @@ function runCodexTurn(payload, onDelta, onDone, onError) {
       try { handle(JSON.parse(line)); } catch { finish(new Error('Codex returned malformed JSON-RPC output')); }
     }
   });
-  writeRpc(child, { method: 'initialize', id: 1, params: { clientInfo: { name: 'umbrel_codex_agent_bridge', title: 'Umbrel Codex Agent Bridge', version: '0.3.7' } } });
+  writeRpc(child, { method: 'initialize', id: 1, params: { clientInfo: { name: 'umbrel_codex_agent_bridge', title: 'Umbrel Codex Agent Bridge', version: '0.3.8' } } });
   writeRpc(child, { method: 'initialized', params: {} });
   writeRpc(child, { method: 'thread/start', id: 2, params: {} });
   return () => finish(new Error('Client disconnected'));
@@ -264,19 +301,23 @@ async function handleCompletion(request, response) {
   }, (error) => { rememberAuthenticationFailure(error); settle(); json(response, 500, { error: { message: error.message, type: 'server_error' } }); });
 }
 
-const server = http.createServer((request, response) => {
+const server = http.createServer(async (request, response) => {
   const pathname = new URL(request.url, 'http://localhost').pathname;
   if (request.method === 'GET' && pathname === '/healthz') {
-    const codex = spawnSync(codexBin, ['--version'], { stdio: 'ignore', timeout: 2000 });
+    const codex = spawnSync(codexBin, ['--version'], { env: codexEnvironment(), stdio: 'ignore', timeout: 2000 });
     const running = Boolean(bridgeApiKey) && codex.status === 0;
     return json(response, running ? 200 : 503, { status: running ? (!authFailure && codexAuthenticated() ? 'ok' : 'needs-authentication') : 'not-ready' });
   }
+  const isAdminRoute = pathname === '/' || pathname === '/index.html' || pathname === '/app.css' || pathname === '/app.js' || pathname.startsWith('/api/auth/');
+  if (isAdminRoute && !(await fromTrustedProxy(request))) return forbidden(response);
   if (request.method === 'GET' && pathname === '/api/auth/status') return json(response, 200, deviceLoginStatus());
   if (request.method === 'POST' && pathname === '/api/auth/device/start') {
+    if (!hasJsonContentType(request)) return unsupportedMediaType(response);
     const force = new URL(request.url, 'http://localhost').searchParams.get('force') === '1';
     return json(response, 202, startDeviceLogin({ force }));
   }
   if (request.method === 'POST' && pathname === '/api/auth/device/cancel') {
+    if (!hasJsonContentType(request)) return unsupportedMediaType(response);
     if (deviceLogin?.child) deviceLogin.child.kill('SIGTERM');
     deviceLogin = null;
     return json(response, 200, { status: codexAuthenticated() ? 'authenticated' : 'unauthenticated' });

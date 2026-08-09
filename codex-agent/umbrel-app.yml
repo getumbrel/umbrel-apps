@@ -2,24 +2,29 @@ manifestVersion: 1
 id: codex-agent
 category: developer
 name: Codex Agent
-version: "0.3.7"
-tagline: Connect Codex to LibreChat on your private Umbrel
+version: "0.3.8"
+tagline: Connect Codex to your private Umbrel chat clients
 description: >-
   Codex Agent is a private, OpenAI-compatible bridge for LibreChat or Open WebUI.
-  Select your preferred chat client during installation, then add this app's
-  internal endpoint and enter this app's Umbrel password as its API key. Codex
-  runs inside this app, with its projects and tools confined to the persistent app
-  workspace.
+  Add this app's internal endpoint in LibreChat or Open WebUI and enter this
+  app's Umbrel password as its API key. Codex runs inside this app, with its
+  projects and tools confined to the persistent app workspace. The app does not
+  rewrite either chat client's configuration.
 
 
   On first launch, authenticate safely from this app with Codex's device-code
   flow. Existing host-local credentials are migrated automatically when present.
-  Projects are restricted to the app's persistent `projects` directory.
-releaseNotes: ""
-developer: OpenAI
+  Projects are restricted to the app's persistent `projects` directory. Codex
+  can modify files there automatically, while agent-tool network access is
+  disabled. The internal HTTP bridge remains available to Umbrel chat clients.
+releaseNotes: >-
+  Keeps LibreChat and Open WebUI configuration user-managed, restricts browser
+  setup to Umbrel's authenticated app proxy, prevents the bridge API key from
+  reaching Codex subprocesses, and disables agent-tool network access while
+  retaining the private OpenAI-compatible endpoint for chat clients.
+developer: Earl Co
 website: https://developers.openai.com/codex
-dependencies:
-  - librechat
+dependencies: []
 repo: https://github.com/earlvanze/umbrel-apps/tree/add-codex-agent/codex-agent
 support: https://github.com/earlvanze/umbrel-apps/issues
 port: 8137
