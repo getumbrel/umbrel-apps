@@ -185,7 +185,7 @@ test('Codex stays on stdio and owns its browser-created credential privately', a
     readFile(new URL('../Dockerfile', import.meta.url), 'utf8'),
   ]);
   assert.match(source, /\['app-server', '--stdio'\]/);
-  assert.match(source, /Umbrel Codex Agent Bridge', version: '0\.3\.6'/);
+  assert.match(source, /Umbrel Codex Agent Bridge', version: '0\.3\.7'/);
   assert.match(source, /\['login', '-c', 'cli_auth_credentials_store="file"', '--device-auth'\]/);
   assert.match(source, /rememberAuthenticationFailure/);
   assert.match(source, /reconnecting/);
