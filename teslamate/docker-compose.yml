@@ -72,3 +72,25 @@ services:
     volumes:
       - ${APP_DATA_DIR}/data/mosquitto/config:/mosquitto/config
       - ${APP_DATA_DIR}/data/mosquitto/data:/mosquitto/data
+
+  # TeslaMateApi — JSON REST API over TeslaMate data (read-only; vehicle commands disabled)
+  # Docs: https://github.com/tobiasehlert/teslamateapi
+  api:
+    image: tobiasehlert/teslamateapi:1.25.0@sha256:6f7eea55c6475c2bc4639ee582dfec01d5cf618d30b0c7444020274a4786704e
+    restart: on-failure
+    environment:
+      ENCRYPTION_KEY: ${APP_TESLAMATE_ENCRYPTION_KEY}
+      DATABASE_USER: teslamate
+      DATABASE_PASS: ${APP_TESLAMATE_DB_PASSWORD}
+      DATABASE_NAME: teslamate
+      DATABASE_HOST: database
+      MQTT_HOST: mosquitto
+      TESLAMATE_HOST: web
+      TESLAMATE_PORT: 4000
+    ports:
+      - "4071:8080"
+    depends_on:
+      database:
+        condition: service_healthy
+      mosquitto:
+        condition: service_started
