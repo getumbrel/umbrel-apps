@@ -7,7 +7,7 @@ services:
   # Pi-hole and Tailscale are packaged the same way, and umbrelOS opens the app
   # on the manifest `port` directly.
   server:
-    image: ghcr.io/wealthwallet/deviceshelf-server:1.9.4
+    image: ghcr.io/wealthwallet/deviceshelf-server:1.9.4@sha256:481b6f57569672fff9f4f28934cd1d4d527d2a1787c5873654bbbabdd683b54b
     restart: on-failure
     network_mode: host
     cap_add:
@@ -22,9 +22,11 @@ services:
       # Store Standard rules out.
       DEVICESHELF_API_TOKEN: ${APP_PASSWORD}
       # 8088 is the product default but element already claims it in this store,
-      # and manifest ports must be unique across the App Store. 8097 was free
-      # against all 390 port declarations in the repo at the time of writing.
-      DEVICESHELF_API_PORT: "8097"
+      # and manifest ports must be unique across the App Store. 8097 looked free
+      # against the 390 manifest ports but the linter caught it in
+      # blockstream-blind-oracle/exports.sh — the check reads every file, not
+      # just the manifests. 8104 appears in no file of the repository.
+      DEVICESHELF_API_PORT: "8104"
       DEVICESHELF_INTERVAL: "5m"
       DEVICESHELF_PORTSCAN: "true"
     volumes:
