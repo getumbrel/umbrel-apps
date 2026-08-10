@@ -1,22 +1,24 @@
-#docker-compose.yml für die Nodesignal Podcast Manager Umbrel-App.
+#docker-compose.yml for the Nodesignal Podcast Manager Umbrel app.
 #
-#Services (alle images sind prebuilt, multi-arch amd64+arm64 und digest-gepinnt —
-#die @sha256:-Digests sichern reproducible Pulls über Neustarts/Updates):
-#  app_proxy        – Umbrel-Browser-Proxy vor dem Web-Service.
-#  db               – gebündelter PostgreSQL-Sidecar (Postgres).
-#  secret-init      – einmalig: erzeugt den Fernet-Schlüssel nach data/secret.
-#  migrator         – einmalig: wendet die Postgres-Migrationen an.
-#  admin-init       – einmalig: legt den Admin "admin" aus ${APP_PASSWORD} an.
-#  web              – Quart-Web (Hypercorn, Port 2100), primäre Oberfläche.
-#  worker           – unified_worker (Transkription/YouTube/TTS), CPU, schweres Image.
-#  boosting-monitor – Release-Boosting, holt Wallet aus der DB (idlet bis konfiguriert).
-#  wallet-accounting– NWC-Invoice-Monitor, holt Wallets aus der DB (idlet bis konfiguriert).
-#  telegram-bot     – Community-Bot. Rendert telegram_bot_config.conf beim Start
-#                     selbst aus app_configuration (idlet bis Bot Token + Lightning
-#                     Address + NWC URL in der App-Konfiguration hinterlegt sind).
+#Services (all images are prebuilt, multi-arch amd64+arm64 and digest-pinned —
+#the @sha256: digests ensure reproducible pulls across restarts/updates):
+#  app_proxy        – Umbrel browser proxy in front of the web service.
+#  db               – bundled PostgreSQL sidecar (Postgres).
+#  secret-init      – one-shot: generates the Fernet key into data/secret.
+#  migrator         – one-shot: applies the Postgres migrations.
+#  admin-init       – one-shot: creates the "admin" user from ${APP_PASSWORD}.
+#  web              – Quart web app (Hypercorn, port 2100), primary UI.
+#  worker           – unified_worker (transcription/YouTube/TTS), CPU, heavy image.
+#  backup-scheduler – nightly backup (the VPS's systemd timer as a process):
+#                     .nsbk archive + retention prune + optional Drive upload.
+#  boosting-monitor – release boosting, gets the wallet from the DB (idles until configured).
+#  wallet-accounting– NWC invoice monitor, gets wallets from the DB (idles until configured).
+#  telegram-bot     – community bot. Renders telegram_bot_config.conf itself at
+#                     startup from app_configuration (idles until a bot token +
+#                     Lightning address + NWC URL are set in the app configuration).
 
-# Gemeinsame Env für alle App-Services (DB-Anbindung + Fernet-Datei).
-# Der Entrypoint jedes Containers rendert daraus shared-db-library/database_config.conf.
+# Shared env for all app services (DB connection + Fernet file).
+# Each container's entrypoint renders shared-db-library/database_config.conf from this.
 x-common-env: &common-env
   DB_MODE: postgresql
   POSTGRES_HOST: db
@@ -28,19 +30,19 @@ x-common-env: &common-env
 
 services:
   app_proxy:
-    # KEIN image: — umbreld injiziert das getumbrel/app-proxy-Image selbst zur
-    # Laufzeit (version-passend, multi-arch). Ein eigener Pin bricht den Pull
-    # (früher 404 "manifest unknown" wegen veraltetem Digest). So machen es auch
-    # die offiziellen Umbrel-Apps und die Community-Stores (z.B. denny-*).
+    # NO image: — umbreld injects the getumbrel/app-proxy image itself at
+    # runtime (version-matched, multi-arch). Pinning it ourselves breaks the pull
+    # (previously caused a 404 "manifest unknown" from a stale digest). The
+    # official Umbrel apps and community stores (e.g. denny-*) do it the same way.
     environment:
       APP_HOST: nodesignal-podcast-manager_web_1   # Umbrel-injected container name: <app-id>_<service>_1
-      APP_PORT: "2100"                   # interner Port des web-Service
-    # Kein PROXY_AUTH_WHITELIST: alle Integrationen sind outbound, keine Inbound-Webhooks.
+      APP_PORT: "2100"                   # internal port of the web service
+    # No PROXY_AUTH_WHITELIST: all integrations are outbound, no inbound webhooks.
 
   db:
-    # postgres:16-alpine ist multi-arch (amd64+arm64), Digest gepinnt.
-    # Postgres offizielles Image läuft mit Root-Entrypoint (chown'ed PGDATA selbst) —
-    # bewusst KEIN user: "1000:1000" erzwingen (siehe umbrel-package-app Permissions).
+    # postgres:16-alpine is multi-arch (amd64+arm64), digest pinned.
+    # The official Postgres image runs with a root entrypoint (chowns PGDATA itself) —
+    # deliberately NOT forcing user: "1000:1000" (see umbrel-package-app Permissions).
     image: postgres:16-alpine@sha256:57c72fd2a128e416c7fcc499958864df5301e940bca0a56f58fddf30ffc07777
     restart: on-failure
     environment:
@@ -57,10 +59,10 @@ services:
       start_period: 20s
 
   secret-init:
-    # Einmalig: erzeugt einen gültigen Fernet-Schlüssel (32 Bytes urlsafe-base64)
-    # nach data/secret/fernet.key, falls noch nicht vorhanden. Idempotent.
-    # Braucht keine DB — nur Schreibzugriff auf data/secret.
-    image: ghcr.io/altbierjupp/sovereigncast:0.3.4@sha256:07d0f9979611c857f690597513bb44e29943c994081f2b2f786e618a2e833869
+    # One-shot: generates a valid Fernet key (32 bytes urlsafe-base64)
+    # into data/secret/fernet.key, if it doesn't already exist. Idempotent.
+    # Needs no DB — only write access to data/secret.
+    image: ghcr.io/altbierjupp/sovereigncast:0.3.5@sha256:9b66735d5a42c50e42d3d1b3bdc23b0b42b650946c2bed3f5826b1f54dc9a803
     restart: on-failure
     user: "1000:1000"
     volumes:
@@ -72,62 +74,70 @@ services:
         mkdir -p /data/secret
         if [ ! -f /data/secret/fernet.key ]; then
           python -c "from cryptography.fernet import Fernet; open('/data/secret/fernet.key','w').write(Fernet.generate_key().decode())"
-          echo "fernet.key erzeugt."
+          echo "fernet.key generated."
         fi
         chmod 600 /data/secret/fernet.key
 
   fix-data-perms:
-    # Einmalig beim Start: schreibbare Daten-Verzeichnisse für uid 1000 sicher-
-    # stellen. MUSS als root laufen (chown). Grund: auf einem Umbrel-UPDATE legt
-    # Docker einen neu hinzugekommenen Bind-Mount (hier data/state — kam nach der
-    # Erstauslieferung dazu) als root:root an, weil Umbrel beim Update neue Bind-
-    # Quellen nicht vorab anlegt/chowned. Die Web-App läuft als uid 1000 (USER app)
-    # und könnte sonst /data/state nicht schreiben: .restore-pending (Restore-
-    # Staging), .first-run-done (Login-Seiten-Restore-Karte) und .app_version
-    # („Was hat sich geändert"-Changelog-Ansicht) — Permission denied. chown ist
-    # idempotent; bestehende 1000:1000-Verzeichnisse bleiben unberührt. /data/backups
-    # nur auf Verzeichnis-Ebene (kann viele/large Backups enthalten — nicht -R);
-    # Dateien darin werden von der Web-App (uid 1000) selbst 1000-owned angelegt.
-    image: ghcr.io/altbierjupp/sovereigncast:0.3.4@sha256:07d0f9979611c857f690597513bb44e29943c994081f2b2f786e618a2e833869
+    # One-shot at startup: ensures the data directories are writable for uid 1000.
+    # MUST run as root (chown). Reason: on an Umbrel UPDATE, Docker creates a
+    # newly added bind mount (here data/state — added after the initial release)
+    # as root:root, because Umbrel doesn't pre-create/chown new bind sources on
+    # update. The web app runs as uid 1000 (USER app) and would otherwise be
+    # unable to write to /data/state: .restore-pending (restore staging),
+    # .first-run-done (login-page restore card), and .app_version (the "what
+    # changed" changelog view) — permission denied. chown is idempotent; existing
+    # 1000:1000 directories are left untouched. /data/backups is only chowned at
+    # directory level (it can hold many/large backups — not -R); files inside it
+    # are created 1000-owned by the web app (uid 1000) itself.
+    image: ghcr.io/altbierjupp/sovereigncast:0.3.5@sha256:9b66735d5a42c50e42d3d1b3bdc23b0b42b650946c2bed3f5826b1f54dc9a803
     restart: on-failure
     user: "0:0"
     volumes:
       - ${APP_DATA_DIR}/data/state:/data/state
       - ${APP_DATA_DIR}/data/backups:/data/backups
-      # Neue Self-Hosted-Asset-Bind-Mounts (web/worker) — beim Update legt Docker
-      # diese als root:root an; hier als root chown'bar und auf uid 1000 gesetzt.
+      # New self-hosted asset bind mounts (web/worker) — on update Docker
+      # creates these as root:root; chowned here to uid 1000 as root.
+      # All five ASSET_KINDS (db_backup.py) are listed: a .nsbk restore
+      # extracts into every one of them from the restore-init one-shot,
+      # which runs as uid 1000 and would otherwise hit permission denied
+      # on a directory Docker had just created as root:root.
       - ${APP_DATA_DIR}/data/episode_audio:/app/podcast_manager/episode_audio
       - ${APP_DATA_DIR}/data/episode_images:/app/podcast_manager/episode_images
       - ${APP_DATA_DIR}/data/show_images:/app/podcast_manager/show_images
       - ${APP_DATA_DIR}/data/cover_templates:/app/podcast_manager/cover_templates
+      - ${APP_DATA_DIR}/data/audio_assets:/app/podcast_manager/audio_assets
     command:
       - sh
       - -c
       - |
         mkdir -p /data/state /data/backups \
           /app/podcast_manager/episode_audio /app/podcast_manager/episode_images \
-          /app/podcast_manager/show_images /app/podcast_manager/cover_templates
+          /app/podcast_manager/show_images /app/podcast_manager/cover_templates \
+          /app/podcast_manager/audio_assets
         chown 1000:1000 /data/state /data/backups \
           /app/podcast_manager/episode_audio /app/podcast_manager/episode_images \
-          /app/podcast_manager/show_images /app/podcast_manager/cover_templates
+          /app/podcast_manager/show_images /app/podcast_manager/cover_templates \
+          /app/podcast_manager/audio_assets
         chmod 755 /data/state /data/backups \
           /app/podcast_manager/episode_audio /app/podcast_manager/episode_images \
-          /app/podcast_manager/show_images /app/podcast_manager/cover_templates
-        echo "fix-data-perms: /data/state + /data/backups + Asset-Verzeichnisse für uid 1000 ensured."
+          /app/podcast_manager/show_images /app/podcast_manager/cover_templates \
+          /app/podcast_manager/audio_assets
+        echo "fix-data-perms: /data/state + /data/backups + asset directories ensured for uid 1000."
 
   restore-init:
-    # Einmalig: wendet einen gestagten/hinterlegten DB-Dump an, BEVOR migrator/
-    # admin-init/web anbinden (Stop-and-Restart per App-Neustart). Quellen:
-    #   1. Marker /data/state/.restore-pending + /data/backups/.restore-staged
-    #      (von der Web-App über /api/backups/<name>/restore gesetzt).
-    #   2. $RESTORE_FROM (per Volume hinterlegter Dump).
-    #   3. /data/backups/restore.dump (headless Erststart).
-    # Ist ein No-op (Exit 0), wenn nichts zu restoren ist — verzögert einen
-    # normalen Start nicht. Schlägt der Restore fehl, beendet sich der Service
-    # non-zero → migrator/web starten nicht (lieber down als auf halb-restored DB).
-    # Setzt bei Erfolg /data/secret/.admin-seeded, falls die DB schon Benutzer
-    # enthält, damit admin-init das wiederhergestellte Passwort nicht überschreibt.
-    image: ghcr.io/altbierjupp/sovereigncast:0.3.4@sha256:07d0f9979611c857f690597513bb44e29943c994081f2b2f786e618a2e833869
+    # One-shot: applies a staged/pending DB dump BEFORE migrator/admin-init/web
+    # connect (stop-and-restart via app restart). Sources:
+    #   1. Markers /data/state/.restore-pending + /data/backups/.restore-staged
+    #      (set by the web app via /api/backups/<name>/restore).
+    #   2. $RESTORE_FROM (a dump provided via volume).
+    #   3. /data/backups/restore.dump (headless first start).
+    # A no-op (exit 0) when there's nothing to restore — doesn't delay a
+    # normal start. If the restore fails, the service exits non-zero →
+    # migrator/web don't start (better down than on a half-restored DB).
+    # On success, sets /data/secret/.admin-seeded if the DB already contains
+    # users, so admin-init doesn't overwrite the restored password.
+    image: ghcr.io/altbierjupp/sovereigncast:0.3.5@sha256:9b66735d5a42c50e42d3d1b3bdc23b0b42b650946c2bed3f5826b1f54dc9a803
     restart: on-failure
     user: "1000:1000"
     depends_on:
@@ -137,26 +147,38 @@ services:
         condition: service_healthy
     environment:
       <<: *common-env
-      # RESTORE_FROM: optionaler Pfad zu einem Dump, der beim Start eingespielt
-      # wird (z. B. per Volume hinterlegt). Leer = diese Quelle wird ignoriert.
+      # RESTORE_FROM: optional path to a dump applied at startup (e.g. provided
+      # via a volume). Empty = this source is ignored.
       RESTORE_FROM: ${APP_PODCAST_MANAGER_RESTORE_FROM:-}
     working_dir: /app/podcast_manager
     volumes:
       - ${APP_DATA_DIR}/data/secret:/data/secret
       - ${APP_DATA_DIR}/data/backups:/data/backups
       - ${APP_DATA_DIR}/data/state:/data/state
+      # Same five asset bind mounts as `web` below — a .nsbk unified archive
+      # contains the DB AND these directories, and restore_cli.py (this
+      # service's whole job) extracts them to /app/podcast_manager/<kind>.
+      # Without the mounts the extraction silently writes into this one-shot's
+      # own container layer and is discarded on exit, so every restore on a
+      # containerized deployment lost all audio/images/templates while
+      # reporting success.
+      - ${APP_DATA_DIR}/data/episode_audio:/app/podcast_manager/episode_audio
+      - ${APP_DATA_DIR}/data/episode_images:/app/podcast_manager/episode_images
+      - ${APP_DATA_DIR}/data/show_images:/app/podcast_manager/show_images
+      - ${APP_DATA_DIR}/data/cover_templates:/app/podcast_manager/cover_templates
+      - ${APP_DATA_DIR}/data/audio_assets:/app/podcast_manager/audio_assets
     command: ["/app/docker/restore-init.sh"]
 
   migrator:
-    # Einmalig: bootstrapped das Schema auf der leeren Postgres-DB. Ruft
-    # PostgreSQLConnection.create_tables() — das legt ALLE Basistabellen per
-    # CREATE TABLE IF NOT EXISTS an, wendet DANACH die inkrementellen Migrationen
-    # an und erzeugt Views + Defaults (idempotent, pg_advisory_lock-gesichert).
-    # WICHTIG: nicht apply_migrations.py nehmen — das läuft nur die MIGRATIONS
-    # (reine ALTER TABLE ADD COLUMN) und setzt die Basistabellen VORAUSS. Auf
-    # einer frischen DB failt das sofort an "relation episodes does not exist"
-    # und restart: on-failure bringt es in einen Endlos-Loop.
-    image: ghcr.io/altbierjupp/sovereigncast:0.3.4@sha256:07d0f9979611c857f690597513bb44e29943c994081f2b2f786e618a2e833869
+    # One-shot: bootstraps the schema on the empty Postgres DB. Calls
+    # PostgreSQLConnection.create_tables() — that creates ALL base tables via
+    # CREATE TABLE IF NOT EXISTS, THEN applies the incremental migrations
+    # and creates views + defaults (idempotent, pg_advisory_lock-guarded).
+    # IMPORTANT: don't use apply_migrations.py — that only runs the MIGRATIONS
+    # (plain ALTER TABLE ADD COLUMN) and ASSUMES the base tables already exist.
+    # On a fresh DB it fails immediately with "relation episodes does not exist"
+    # and restart: on-failure puts it into an endless loop.
+    image: ghcr.io/altbierjupp/sovereigncast:0.3.5@sha256:9b66735d5a42c50e42d3d1b3bdc23b0b42b650946c2bed3f5826b1f54dc9a803
     restart: on-failure
     user: "1000:1000"
     depends_on:
@@ -185,11 +207,11 @@ services:
         "
 
   admin-init:
-    # Einmalig: legt den Admin-User "admin" mit ${APP_PASSWORD} an (Marker-Datei
-    # .admin-seeded verhindert, dass ein vom Nutzer geändertes Passwort bei jedem
-    # Start zurückgesetzt wird). create_admin.py nutzt den Env-Fallback, wenn keine
-    # CLI-Args gesetzt sind — daher keine ${...}-Interpolation im command nötig.
-    image: ghcr.io/altbierjupp/sovereigncast:0.3.4@sha256:07d0f9979611c857f690597513bb44e29943c994081f2b2f786e618a2e833869
+    # One-shot: creates the "admin" user with ${APP_PASSWORD} (marker file
+    # .admin-seeded prevents a password the user changed later from being
+    # reset on every start). create_admin.py uses the env fallback when no
+    # CLI args are set — so no ${...} interpolation is needed in the command.
+    image: ghcr.io/altbierjupp/sovereigncast:0.3.5@sha256:9b66735d5a42c50e42d3d1b3bdc23b0b42b650946c2bed3f5826b1f54dc9a803
     restart: on-failure
     user: "1000:1000"
     depends_on:
@@ -207,14 +229,14 @@ services:
       - -c
       - |
         if [ -f /data/secret/.admin-seeded ]; then
-          echo "Admin bereits angelegt — überspringe."
+          echo "Admin already created — skipping."
           exit 0
         fi
         python create_admin.py
         touch /data/secret/.admin-seeded
 
   web:
-    image: ghcr.io/altbierjupp/sovereigncast:0.3.4@sha256:07d0f9979611c857f690597513bb44e29943c994081f2b2f786e618a2e833869
+    image: ghcr.io/altbierjupp/sovereigncast:0.3.5@sha256:9b66735d5a42c50e42d3d1b3bdc23b0b42b650946c2bed3f5826b1f54dc9a803
     restart: on-failure
     user: "1000:1000"
     depends_on:
@@ -230,36 +252,36 @@ services:
       <<: *common-env
       PODCAST_MANAGER_SECRET_KEY: ${APP_PODCAST_MANAGER_SECRET_KEY}
       DB_BACKUP_DIR: /data/backups
-      # Signalisiert dem Web, dass es in einem verwalteten Container läuft: die
-      # in-app git-pull-Update-Karte wird ausgeblendet und stattdessen die
-      # Software-Version (PODCAST_MANAGER_VERSION) angezeigt. Updates kommen
-      # über den Umbrel App Store / Image-Release, nicht per git pull. Beim
-      # Image-Bump muss diese Version mit dem Image-Tag/Manifest synchron gehalten werden.
+      # Signals to the web app that it's running in a managed container: the
+      # in-app git-pull update card is hidden and the software version
+      # (PODCAST_MANAGER_VERSION) is shown instead. Updates come via the
+      # Umbrel App Store / image release, not via git pull. On an image bump,
+      # this version must be kept in sync with the image tag/manifest.
       PODCAST_MANAGER_DEPLOYMENT: umbrel
-      PODCAST_MANAGER_VERSION: "0.3.2"
+      PODCAST_MANAGER_VERSION: "0.3.5"
     working_dir: /app/podcast_manager
     volumes:
       - ${APP_DATA_DIR}/data/secret:/data/secret:ro
       - ${APP_DATA_DIR}/data/backups:/data/backups
       - ${APP_DATA_DIR}/data/audio_assets:/app/podcast_manager/audio_assets
-      # Self-Hosted-Assets (Audio/Cover) liegen sonst nur im Container-Image-Ver-
-      # zeichnis und wären bei jedem Update/Recreation weg. Persistente Bind-
-      # Mounts auf den Host, damit ein Einheits-Backup-Restore sie auch dauerhaft
-      # wiederherstellt. fix-data-perms stellt uid-1000-Ownership sicher.
+      # Self-hosted assets (audio/cover) would otherwise live only in the
+      # container image directory and be lost on every update/recreation.
+      # Persistent bind mounts to the host so a unified backup restore also
+      # restores them permanently. fix-data-perms ensures uid-1000 ownership.
       - ${APP_DATA_DIR}/data/episode_audio:/app/podcast_manager/episode_audio
       - ${APP_DATA_DIR}/data/episode_images:/app/podcast_manager/episode_images
       - ${APP_DATA_DIR}/data/show_images:/app/podcast_manager/show_images
-      # Cover-Marken-Vorlagen + YouTube-Waveform-Hintergrundvideo (App
-      # Configuration → Cover Templates). Auch auf worker gemountet (unten) —
-      # der Worker braucht Lesezugriff für YouTube-Thumbnail/Waveform-Erzeugung,
-      # anders als audio_assets (Intro/Outro läuft nur synchron im web-Prozess).
+      # Cover-branding templates + YouTube waveform background video (App
+      # Configuration → Cover Templates). Also mounted on worker (below) —
+      # the worker needs read access for YouTube thumbnail/waveform generation,
+      # unlike audio_assets (intro/outro only runs synchronously in the web process).
       - ${APP_DATA_DIR}/data/cover_templates:/app/podcast_manager/cover_templates
-      # Dauerhafter App-State, der ein Container-Update (Recreation) überlebt:
-      # hier liegt .app_version (Last-Seen-Version), damit die Startup-Logic
-      # beim Umbrel-Update einen Versionswechsel erkennt und auf die "Was hat
-      # sich geändert"-Changelog-Ansicht verlinkt. Schreibbar (uid 1000) — der
-      # fix-data-perms-One-Shot stellt das Ownership sicher (auf einem Umbrel-
-      # Update legt Docker diesen Bind-Mount sonst als root:root an).
+      # Persistent app state that survives a container update (recreation):
+      # this is where .app_version (last-seen version) lives, so the startup
+      # logic can detect a version change on an Umbrel update and link to the
+      # "what changed" changelog view. Writable (uid 1000) — the
+      # fix-data-perms one-shot ensures ownership (on an Umbrel update Docker
+      # would otherwise create this bind mount as root:root).
       - ${APP_DATA_DIR}/data/state:/data/state
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://127.0.0.1:2100/"]
@@ -269,9 +291,9 @@ services:
       start_period: 30s
 
   worker:
-    # Schweres Image (ffmpeg + faster-whisper + pyannote + torch, CPU-only).
-    # Rein DB-gesteuert (pollt processing_queue) — idlet, wenn keine Aufträge.
-    image: ghcr.io/altbierjupp/sovereigncast-worker:0.3.4@sha256:fa5ead383508731134cf6ec498c2e7c29ca0649ec8afe4de1bec2ca3299bc86a
+    # Heavy image (ffmpeg + faster-whisper + pyannote + torch, CPU-only).
+    # Purely DB-driven (polls processing_queue) — idles when there are no jobs.
+    image: ghcr.io/altbierjupp/sovereigncast-worker:0.3.5@sha256:72f46fcdadb810a6f89fc379cc5d9d64a500d292da4c76d93a735a631a420e32
     restart: on-failure
     user: "1000:1000"
     depends_on:
@@ -281,21 +303,65 @@ services:
       <<: *common-env
     volumes:
       - ${APP_DATA_DIR}/data/secret:/data/secret:ro
-      - ${APP_DATA_DIR}/data/cache:/data/cache   # Whisper-/Pyannote-Modelle (backupIgnore)
-      # Self-Hosted-Assets, die der Worker schreibt (TTS-Recap/Migrate-Audio →
-      # episode_audio, store_episode_image_file → episode_images). Dieselben
-      # Host-Pfade wie der web-Service, damit beide dieselben Dateien sehen.
+      # Der über die Oberfläche importierte Fernet-Schlüssel liegt in
+      # /data/state und hat Vorrang vor /data/secret. Ohne diesen Mount
+      # liefe dieser Dienst nach einem Schlüsselimport weiter mit dem alten
+      # Schlüssel und schriebe Daten, die die Weboberfläche nicht mehr lesen
+      # kann. Nur lesend — geschrieben wird der Schlüssel allein vom web-Dienst.
+      - ${APP_DATA_DIR}/data/state:/data/state:ro
+      - ${APP_DATA_DIR}/data/cache:/data/cache   # Whisper/Pyannote models (backupIgnore)
+      # Self-hosted assets the worker writes (TTS recap/migrate-audio →
+      # episode_audio, store_episode_image_file → episode_images). Same
+      # host paths as the web service, so both see the same files.
       - ${APP_DATA_DIR}/data/episode_audio:/app/podcast_manager/episode_audio
       - ${APP_DATA_DIR}/data/episode_images:/app/podcast_manager/episode_images
-      # Cover-Marken-Vorlagen + Waveform-Hintergrundvideo — gelesen für YouTube-
-      # Thumbnail-/Video-Erzeugung (siehe unified_worker.py Config.get_template_path).
+      # Cover-branding templates + waveform background video — read for YouTube
+      # thumbnail/video generation (see unified_worker.py Config.get_template_path).
       - ${APP_DATA_DIR}/data/cover_templates:/app/podcast_manager/cover_templates
 
+  backup-scheduler:
+    # The nightly backup. On a VPS this is a systemd timer; containers have
+    # neither systemd nor cron, so this long-running process is the equivalent:
+    # it sleeps until backup_schedule_time (App Configuration → Backup, default
+    # 03:30) and then runs exactly what backup_cli.py runs — .nsbk archive,
+    # retention prune, and the optional encrypted Google Drive upload. That last
+    # one is the reason this service exists: cloud backups were configurable in
+    # the UI but nothing ever triggered them here.
+    # Needs /data/backups writable (that is where the archives go) and the
+    # asset directories readable, since a .nsbk bundles them with the database.
+    image: ghcr.io/altbierjupp/sovereigncast:0.3.5@sha256:9b66735d5a42c50e42d3d1b3bdc23b0b42b650946c2bed3f5826b1f54dc9a803
+    restart: on-failure
+    user: "1000:1000"
+    depends_on:
+      web:
+        condition: service_healthy
+    environment:
+      <<: *common-env
+      DB_BACKUP_DIR: /data/backups
+    working_dir: /app/podcast_manager
+    volumes:
+      - ${APP_DATA_DIR}/data/secret:/data/secret:ro
+      # Siehe boosting-monitor: importierter Fernet-Schlüssel, nur lesend.
+      # Für diesen Dienst besonders wichtig — die Cloud-Kopie wird mit einem
+      # aus dem Fernet-Schlüssel abgeleiteten Schlüssel verschlüsselt, und der
+      # Fingerprint im Manifest muss zum tatsächlich aktiven Schlüssel passen.
+      - ${APP_DATA_DIR}/data/state:/data/state:ro
+      - ${APP_DATA_DIR}/data/backups:/data/backups
+      # Dieselben Asset-Pfade wie beim web-Dienst: ein .nsbk enthält sie mit.
+      # Ohne sie entstünden stillschweigend Backups, die nur die Datenbank
+      # enthalten — der Fehler würde erst beim Wiederherstellen auffallen.
+      - ${APP_DATA_DIR}/data/episode_audio:/app/podcast_manager/episode_audio:ro
+      - ${APP_DATA_DIR}/data/episode_images:/app/podcast_manager/episode_images:ro
+      - ${APP_DATA_DIR}/data/show_images:/app/podcast_manager/show_images:ro
+      - ${APP_DATA_DIR}/data/cover_templates:/app/podcast_manager/cover_templates:ro
+      - ${APP_DATA_DIR}/data/audio_assets:/app/podcast_manager/audio_assets:ro
+    command: ["python", "backup_scheduler.py"]
+
   boosting-monitor:
-    # Holt sein Wallet aus der DB (db.get_wallet_by_usecase('releaseboosting'));
-    # boosting_monitor.conf wird nicht gebraucht (alle Settings haben Fallbacks).
-    # Idlet, bis in der App-Konfiguration ein Release-Boosting-Wallet hinterlegt ist.
-    image: ghcr.io/altbierjupp/sovereigncast:0.3.4@sha256:07d0f9979611c857f690597513bb44e29943c994081f2b2f786e618a2e833869
+    # Gets its wallet from the DB (db.get_wallet_by_usecase('releaseboosting'));
+    # boosting_monitor.conf isn't needed (all settings have fallbacks).
+    # Idles until a release-boosting wallet is set in the app configuration.
+    image: ghcr.io/altbierjupp/sovereigncast:0.3.5@sha256:9b66735d5a42c50e42d3d1b3bdc23b0b42b650946c2bed3f5826b1f54dc9a803
     restart: on-failure
     user: "1000:1000"
     depends_on:
@@ -306,12 +372,18 @@ services:
     working_dir: /app/boosting_monitor
     volumes:
       - ${APP_DATA_DIR}/data/secret:/data/secret:ro
+      # Der über die Oberfläche importierte Fernet-Schlüssel liegt in
+      # /data/state und hat Vorrang vor /data/secret. Ohne diesen Mount
+      # liefe dieser Dienst nach einem Schlüsselimport weiter mit dem alten
+      # Schlüssel und schriebe Daten, die die Weboberfläche nicht mehr lesen
+      # kann. Nur lesend — geschrieben wird der Schlüssel allein vom web-Dienst.
+      - ${APP_DATA_DIR}/data/state:/data/state:ro
     command: ["python", "boosting_monitor.py"]
 
   wallet-accounting:
-    # Holt NWC-URLs aus der DB (db.get_wallets_by_wallet_type('lightning'));
-    # wallet_accounting_config.conf nicht nötig (Defaults). Idlet bis Wallets konfiguriert.
-    image: ghcr.io/altbierjupp/sovereigncast:0.3.4@sha256:07d0f9979611c857f690597513bb44e29943c994081f2b2f786e618a2e833869
+    # Gets NWC URLs from the DB (db.get_wallets_by_wallet_type('lightning'));
+    # wallet_accounting_config.conf not needed (defaults). Idles until wallets are configured.
+    image: ghcr.io/altbierjupp/sovereigncast:0.3.5@sha256:9b66735d5a42c50e42d3d1b3bdc23b0b42b650946c2bed3f5826b1f54dc9a803
     restart: on-failure
     user: "1000:1000"
     depends_on:
@@ -322,22 +394,28 @@ services:
     working_dir: /app/wallet_accounting
     volumes:
       - ${APP_DATA_DIR}/data/secret:/data/secret:ro
+      # Der über die Oberfläche importierte Fernet-Schlüssel liegt in
+      # /data/state und hat Vorrang vor /data/secret. Ohne diesen Mount
+      # liefe dieser Dienst nach einem Schlüsselimport weiter mit dem alten
+      # Schlüssel und schriebe Daten, die die Weboberfläche nicht mehr lesen
+      # kann. Nur lesend — geschrieben wird der Schlüssel allein vom web-Dienst.
+      - ${APP_DATA_DIR}/data/state:/data/state:ro
     command: ["python", "wallet_accounting.py"]
 
   telegram-bot:
-    # Aktiv: der Container rendert telegram_bot_config.conf beim Start selbst aus
-    # der app_configuration-Tabelle (die telegram_bot_*-Keys sind in der App-
-    # Konfigurations-UI im Browser editierbar; Token/NWC sind Fernet-verschlüsselt
-    # und werden hier über DB_ENCRYPTION_KEY_FILE entschlüsselt). Der Bot-Container
-    # holt sich die Werte also selbst aus der DB — kein Render-Schritt der Web-App,
-    # kein shared Volume nötig (uid 1000 besitzt /app, kann die .conf schreiben).
-    # Idlet (60s-Poll), bis Bot Token + Lightning Address + NWC URL hinterlegt sind;
-    # dann exec des Bots. Fällt der Bot, restartet der Container und re-rendert
-    # (holt aktuelle Config-Änderungen). Verhält sich damit wie boosting-monitor /
-    # wallet-accounting ("idlet bis konfiguriert"). NWC URL ist praktisch immer
-    # Pflicht, weil read_config() NostrWalletConnectUri.parse(nwc_url) bedingungs-
-    # los ruft (auch im lightning_address-Modus).
-    image: ghcr.io/altbierjupp/sovereigncast:0.3.4@sha256:07d0f9979611c857f690597513bb44e29943c994081f2b2f786e618a2e833869
+    # Active: the container renders telegram_bot_config.conf itself at startup
+    # from the app_configuration table (the telegram_bot_* keys are editable
+    # in the App Configuration UI in the browser; token/NWC are Fernet-encrypted
+    # and decrypted here via DB_ENCRYPTION_KEY_FILE). So the bot container
+    # fetches the values itself from the DB — no rendering step by the web app,
+    # no shared volume needed (uid 1000 owns /app, can write the .conf).
+    # Idles (60s poll) until bot token + Lightning address + NWC URL are set;
+    # then execs the bot. If the bot crashes, the container restarts and re-renders
+    # (picking up current config changes). Behaves like boosting-monitor /
+    # wallet-accounting ("idles until configured"). NWC URL is practically always
+    # required because read_config() calls NostrWalletConnectUri.parse(nwc_url)
+    # unconditionally (even in lightning_address mode).
+    image: ghcr.io/altbierjupp/sovereigncast:0.3.5@sha256:9b66735d5a42c50e42d3d1b3bdc23b0b42b650946c2bed3f5826b1f54dc9a803
     restart: on-failure
     user: "1000:1000"
     depends_on:
@@ -348,6 +426,12 @@ services:
     working_dir: /app/telegram_bot
     volumes:
       - ${APP_DATA_DIR}/data/secret:/data/secret:ro
+      # Der über die Oberfläche importierte Fernet-Schlüssel liegt in
+      # /data/state und hat Vorrang vor /data/secret. Ohne diesen Mount
+      # liefe dieser Dienst nach einem Schlüsselimport weiter mit dem alten
+      # Schlüssel und schriebe Daten, die die Weboberfläche nicht mehr lesen
+      # kann. Nur lesend — geschrieben wird der Schlüssel allein vom web-Dienst.
+      - ${APP_DATA_DIR}/data/state:/data/state:ro
     command:
       - sh
       - -c
@@ -388,6 +472,6 @@ services:
             return True
         sys.exit(0 if asyncio.run(main()) else 1)
         " && exec python telegram_bot_nodesignal.py
-          echo "Telegram-Bot noch nicht konfiguriert (App Configuration -> Telegram: Bot Token, Lightning Address, NWC URL) - warte 60s."
+          echo "Telegram bot not configured yet (App Configuration -> Telegram: Bot Token, Lightning Address, NWC URL) - waiting 60s."
           sleep 60
         done
