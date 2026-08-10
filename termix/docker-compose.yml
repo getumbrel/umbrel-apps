@@ -7,7 +7,21 @@ services:
       APP_PORT: 8080
 
   web:
-    image: ghcr.io/lukegus/termix:release-2.4.1@sha256:7f738766485363f45d559ba26ba4ee6ff8ca0362aeb7071c610a401b05cc765b
+    image: ghcr.io/lukegus/termix:release-2.6.1@sha256:7d7b9e7c86107f21c824b4a7f0b47d626214754117b18dc46364851a8c42c17e
     restart: on-failure
+    depends_on:
+      - guacd
+    environment:
+      GUACD_HOST: guacd
+      GUACD_TUNNEL_HOST: web
+      GUACD_RECORDING_PATH: /termix-data/session_recordings/guacamole
+      POSTHOG_API_KEY: ""
+      ENABLE_TELEMETRY: "false"
     volumes:
       - ${APP_DATA_DIR}/data:/app/data
+
+  guacd:
+    image: guacamole/guacd:1.6.0@sha256:8974eaa9ba32f713daf311e7cc8cd7e4cdfba1edea39eed75524e78ef4b08f4f
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data:/termix-data

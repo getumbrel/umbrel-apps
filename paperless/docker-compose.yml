@@ -24,7 +24,7 @@ services:
       POSTGRES_PASSWORD: paperless
 
   webserver:
-    image: ghcr.io/paperless-ngx/paperless-ngx:2.20.15@sha256:6c86cad803970ea782683a8e80e7403444c5bf3cf70de63b4d3c8e87500db92f
+    image: ghcr.io/paperless-ngx/paperless-ngx:3.0.5@sha256:65a4cabf0169ea7fbd90ab7bb28ba3f8b5909613635acda1a03ad606f34b456b
     restart: on-failure
     depends_on:
       - db
@@ -34,7 +34,8 @@ services:
     volumes:
       - ${APP_DATA_DIR}/data/data:/usr/src/paperless/data
       - ${APP_DATA_DIR}/data/media:/usr/src/paperless/media
-      # TODO: move these inside the paperless app data dir once umbrelOS supports navigating to it via the UI
+      # TODO(#1466): default these to Paperless app data once users can remap app
+      # folders to shared storage, preserving network-share workflows.
       - ${UMBREL_ROOT}/data/storage/paperless/export:/usr/src/paperless/export
       - ${UMBREL_ROOT}/data/storage/paperless/consume:/usr/src/paperless/consume
     environment:
@@ -45,6 +46,7 @@ services:
       PAPERLESS_TIKA_ENDPOINT: http://paperless_tika_1:9998
       PAPERLESS_ADMIN_USER: admin
       PAPERLESS_ADMIN_PASSWORD: $APP_PASSWORD
+      PAPERLESS_SECRET_KEY: $APP_SEED
 
   gotenberg:
     image: docker.io/gotenberg/gotenberg:7.10@sha256:d03b8a04c6e6c5e568b38f57352266dee4674849b71818774025f8f48d869a9a

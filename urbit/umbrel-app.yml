@@ -2,7 +2,7 @@ manifestVersion: 1
 id: urbit
 category: networking
 name: Urbit
-version: "v4.3"
+version: "v4.6"
 tagline: Run Urbit on your Umbrel
 description: >-
   Urbit is a personal server for self-sovereign personal & networked
@@ -35,10 +35,19 @@ torOnly: false
 submitter: ~mopfel-winrux
 submission: https://github.com/getumbrel/umbrel/pull/1246
 releaseNotes: >-
-  vere-v4.3 is a minor release with the following highlighted fixes and features:
-    - The runtime now supports gzip compression of http responses, causing significant speedups for the tlon app.
-    - The windows build would immediately crash when receiving a directed messaging packet because of an improperly vendored libblake3 dependency.
-    - The lmdb version used by vere-v4.2 and below did not support sparse files on windows, causing the event log to balloon to 63 GB immediately on boot.
+  vere-v4.6 is a minor release aimed at fixing several issues that were
+  discovered during the 408k pre-release testing process:
+  
+  -   A directed messaging driver bug caused sporadic crashes, mainly on
+      busy distribution ships.
+  -   The spin hint kubernetes fix in vere-v4.6 caused the spin hint to be
+      unavailable on macos.
+  -   The directed messaging packet queue was uncapped, causing
+      bufferbloat on heavy traffic.
+  -   Each directed messaging flow in the driver had nine retries once
+      every second until the first response packet was heard, this caused
+      unnecessary amplification on the receiver. We have reduced the retry
+      count to two.
 
 
-  Full release notes here: https://github.com/urbit/vere/releases/tag/vere-v4.3
+  Full release notes here: https://github.com/urbit/vere/releases/tag/vere-v4.6

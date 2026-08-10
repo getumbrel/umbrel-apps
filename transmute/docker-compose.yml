@@ -1,0 +1,19 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: transmute_web_1
+      APP_PORT: 3313
+      PROXY_AUTH_WHITELIST: "/api/*"
+      # Keep first-admin creation behind Umbrel auth.
+      PROXY_AUTH_BLACKLIST: "/api/users"
+
+  web:
+    image: ghcr.io/transmute-app/transmute:2.0.0@sha256:51a32b28e0cb84cde624ca41570f069d91ee7e83fac5c9d0b970e7a583b3abde
+    restart: on-failure
+    environment:
+      # Keep JWT signing stable across restarts.
+      AUTH_SECRET_KEY: ${APP_SEED}
+    volumes:
+      - ${APP_DATA_DIR}/data:/app/data

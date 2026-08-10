@@ -3,12 +3,39 @@ id: bolt12-pay
 name: BOLT12 Pay
 tagline: Self-hosted Lightning payments and identity with BOLT12, BIP353, LNURL, and Nostr
 category: bitcoin
-version: 0.2.111
+version: 0.3.0.7
 port: 8367
 description: >-
   BOLT12 Pay is a self-hosted Lightning payments and identity app for LND nodes.
   It supports BOLT12 Offers, Lightning Address (BIP353), LNURL, and BOLT11 fallback,
   with optional Nostr identity features such as NIP-05 and Zaps.
+
+  ## 🚀 Before you install
+
+  To get the most out of BOLT12 Pay you should ideally own a domain name.
+
+  Recommended setup:
+
+  - Your own domain (for example: example.com)
+
+  - DNS managed through Cloudflare, you can also import domains from other providers for DNS management to cloudflare
+
+  - A public HTTPS endpoint (Cloudflare Tunnel works well on Umbrel)
+
+  This enables:
+
+  - Human-readable Lightning Addresses
+  - BIP353 Lightning Addresses
+  - Automatic DNS management
+  - Public payment pages
+  - Nostr NIP-05 identities
+
+  🔥 BOLT12 Offers can still be paid, created and stored without a real domain by using the suggested placeholder values during setup,
+  but Lightning Addresses, BIP353 and public payment identities require a real domain.
+
+  Domain setup guide:
+
+  https://github.com/Alex71btc/lndk-pay/blob/main/README.md#-domain-configuration-bip353-vs-lnurl
 
 
   ## ⚠️ LND Compatibility Notice
@@ -125,44 +152,24 @@ repo: https://github.com/Alex71btc/lndk-pay
 support: https://github.com/Alex71btc/lndk-pay/issues
 releaseNotes: |
 
-  Native Onion Messaging Release
+  Highlights:
 
-   - Added support for LND v0.21 native onion messaging
-   - Removed dependency on custom-message transport when using LND v0.21
-   - BOLT12 Offer creation verified on LND v0.21
-   - BOLT12 Offer payments verified on LND v0.21
-   - BIP353 payment flow verified on LND v0.21
-   - Improved future compatibility with upcoming Lightning releases
+  - Fixes BIP353 resolution on recent StartOS releases
+  - Restores Lightning Address payments on StartOS 0.4.x
+  - Improves Lightning Address fallback behaviour during temporary DNS transport failures
+  - Uses the system DNS resolver for improved compatibility across platforms
 
+  Compatibility:
 
-  REST API compatibility:
+  - Verified on Docker deployments
+  - Verified on Umbrel
+  - Verified on StartOS 0.4.x
+  - Preserves existing DNSSEC behaviour and interoperability
 
-   - Added automatic fallback for LND v0.21 payment APIs
-   - Maintains compatibility with both LND v0.20.x and LND v0.21.x
-   - Uses legacy REST payment endpoint on LND v0.20.x
-   - Automatically switches to RouterRPC payment endpoint on LND v0.21 when required
-   - Fixes LNURL, Lightning Address, BOLT11 and NWC payment flows on LND v0.21
+  Notes:
 
-  Upgrade notes:
-
-  - LND v0.20.x users should keep their existing custom protocol configuration.
-  - LND v0.21.x users should remove all legacy custom protocol settings from lnd.conf before upgrading Lightning.
-
-  This release maintains compatibility with existing BOLT12 Pay installations while preparing for the transition to native onion messaging in LND.
-
-
-  Bugfix release for the v0.2.108 Privacy Mode update.
-
-  - Improved reliability of BOLT12 offer creation
-  - Automatically retries transient LNDK TLS connection failures
-  - Prevents occasional first-attempt offer creation errors observed on some Umbrel systems
-
-  Includes all features from v0.2.108:
-
-  - Privacy Mode
-  - Private BIP353 Lightning Addresses
-  - Offer History BIP353 Publishing
-  - Automatic DNS Cleanup
+  - No configuration changes are required.
+  - Existing Lightning Addresses, BIP353 addresses and BOLT12 Offers continue to work as before.
 
 dependencies:
   - lightning
