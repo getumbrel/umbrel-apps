@@ -15,10 +15,9 @@ services:
       # Raise if large libraries cause OutOfMemoryException, e.g. "-Xmx4g".
       # JAVA_TOOL_OPTIONS: "-Xmx2g"
     volumes:
-      # Database and app config. Komga's docs warn against network filesystems here.
       - ${APP_DATA_DIR}/config:/config
-      # Point your libraries at subfolders of this directory from within Komga.
       - ${APP_DATA_DIR}/data:/data
+      - ${UMBREL_ROOT}/home/Downloads:/downloads
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:25600/actuator/health"]
       interval: 30s
