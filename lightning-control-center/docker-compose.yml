@@ -1,10 +1,9 @@
 version: "3.7"
 services:
   app:
-    image: sparkielabs/lightning-control-center:latest
+    image: sparkielabs/lightning-control-center:latest@sha256:ea7a7c360e4ca20ad994c2522c76954e4d70bd849edb4669489cd21db73d49fe
     restart: on-failure
-    ports:
-      - "8765:8765"
+    network_mode: host
     environment:
       - RPC_USER=${APP_BITCOIN_RPC_USER}
       - RPC_PASS=${APP_BITCOIN_RPC_PASS}
