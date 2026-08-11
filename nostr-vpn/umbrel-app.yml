@@ -2,19 +2,19 @@ manifestVersion: 1
 id: nostr-vpn
 category: networking
 name: Nostr VPN
-version: "v4.0.67"
-tagline: Invite-only mesh VPN over Nostr
+version: "v4.1.7"
+tagline: Admin-approved mesh VPN over Nostr
 description: >-
   Nostr VPN turns your Umbrel into a private mesh VPN node for your own devices
-  and trusted groups. Create invite-only networks, approve join requests, share
-  QR invites, manage peers, and route traffic through trusted exit nodes without
-  relying on a hosted VPN provider or a central control server.
+  and trusted groups. Approve signed join-request QRs, manage peers, and route
+  traffic through trusted exit nodes without relying on a hosted VPN provider
+  or a central control server.
 
 
-  To connect a device, open Nostr VPN on your Umbrel and create an invite. Then import that
-  invite in the Nostr VPN app or CLI on the device you want to connect. Once you
-  accept the join request on your Umbrel, your devices can reach each other
-  using their private Nostr VPN IPs.
+  To connect a device, choose Join on the device you want to add so it displays
+  its signed QR code or link. On your Umbrel, scan or paste that request, review
+  it, and accept it. The joining device then receives the signed network roster
+  and your devices can reach each other using their private Nostr VPN IPs.
 developer: mmalmi and contributors
 website: https://github.com/mmalmi/nostr-vpn
 repo: https://github.com/mmalmi/nostr-vpn
@@ -31,10 +31,9 @@ gallery:
   - 2.webp
   - 3.webp
 releaseNotes: >-
-  Changes since v4.0.58:
-    - Keeps VPN traffic flowing over mesh fallback when direct UDP is marked link-dead, while direct probing continues and can recover.
-    - Fixes stale or freshly reconnected UDP paths suppressing better fallback routes after hotspot/NAT changes.
-    - Prevents fallback transit loops after direct-path loss.
-    - Warms established sessions after fresh fallback discovery, reducing stalls after liveness timeouts.
+  Changes since v4.0.67:
+    - Updates Umbrel to the signed join-request flow used by current clients: the joining device displays a QR code or link and the Umbrel admin scans or pastes it.
+    - Improves VPN reliability, fallback recovery, and performance across platforms.
+    - Fixes paid-exit discovery, provider links, connection status, pricing, and settlement.
 submitter: mmalmi
 submission: https://github.com/getumbrel/umbrel-apps/pull/5678
