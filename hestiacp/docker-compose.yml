@@ -1,0 +1,76 @@
+version: "3.7"
+
+services:
+  # HestiaCP serves a self-signed HTTPS panel on 8083. Umbrel's app_proxy
+  # validates upstream TLS and can't skip it, so a tiny socat sidecar tunnels
+  # plain HTTP to TLS to the panel. PROXY_AUTH_ADD is off (HestiaCP has its
+  # own login).
+  app_proxy:
+    # Don't report the app ready (and don't route to it) until Hestia's own
+    # healthcheck passes - otherwise the launch URL 502s / shows a broken
+    # panel while services are still starting.
+    depends_on:
+      hestia:
+        condition: service_healthy
+    environment:
+      APP_HOST: hestiacp_sslproxy_1
+      APP_PORT: 8081
+      PROXY_AUTH_ADD: "false"
+
+  sslproxy:
+    image: alpine/socat:1.8.0.0@sha256:a6be4c0262b339c53ddad723cdd178a1a13271e1137c65e27f90a08c16de02b8
+    restart: on-failure
+    command:
+      - "TCP-LISTEN:8081,fork,reuseaddr"
+      - "OPENSSL-CONNECT:hestiacp_hestia_1:8083,verify=0"
+
+  hestia:
+    # Non-privileged, multi-arch HestiaCP (github.com/ptrinh/hestiacp-docker).
+    image: ghcr.io/ptrinh/hestiacp:build-29554312819@sha256:8dfb7ef8ee70df7364d36683f18797a93dad7e43daff46a93054bec5c079c640
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      - TZ=UTC
+      # The image entrypoint sets HestiaCP's admin password to this on first
+      # start (once), before the app is reported ready.
+      - APP_PASSWORD=${APP_PASSWORD}
+    volumes:
+      - ${APP_DATA_DIR}/data/home:/home
+      - ${APP_DATA_DIR}/data/mysql:/var/lib/mysql
+      - ${APP_DATA_DIR}/data/postgresql:/var/lib/postgresql
+      - ${APP_DATA_DIR}/data/hestia:/usr/local/hestia/data
+      - ${APP_DATA_DIR}/data/hestia-conf:/usr/local/hestia/conf
+      - ${APP_DATA_DIR}/data/exim-spool:/var/spool/exim4
+      - ${APP_DATA_DIR}/data/backup:/backup
+    # Hosted sites on alternate host ports so HestiaCP never claims Umbrel's
+    # 80/443. The panel itself is reached through app_proxy, not these.
+    # Mail/DNS/FTP are published on their standard ports (unused on umbrelOS).
+    # Note: receiving mail from other servers requires inbound 25 reachable
+    # from the internet, and most residential ISPs block OUTBOUND 25, so
+    # sending may require a smarthost (configurable in HestiaCP).
+    ports:
+      - "9088:80"
+      - "9448:443"
+      - "25:25"                  # SMTP (receive)
+      - "587:587"                # mail submission
+      - "465:465"                # SMTPS
+      - "143:143"                # IMAP
+      - "993:993"                # IMAPS
+      - "110:110"                # POP3
+      - "995:995"                # POP3S
+      - "53:53/tcp"              # DNS (authoritative, for zones you host)
+      - "53:53/udp"
+      - "21:21"                  # FTP control
+      - "12000-12100:12000-12100"  # FTP passive data range
+    # Only report healthy once the panel really works: the admin password has
+    # been applied (sentinel), the login UI renders (a plain request to /
+    # still 302s even when the PHP UI is broken), AND the hosted-sites web
+    # server answers on the container IP (any HTTP response counts). This
+    # avoids both "ready but can't log in yet" and "ready but hosted sites
+    # are down" after install/restart.
+    healthcheck:
+      test: ["CMD-SHELL", "test -f /usr/local/hestia/data/.admin-password-set && curl -k -fs https://localhost:8083/login/ | grep -q 'name=.user.' && curl -s -o /dev/null --max-time 5 http://$$(hostname -i | awk '{print $$1}'):80/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 5m
