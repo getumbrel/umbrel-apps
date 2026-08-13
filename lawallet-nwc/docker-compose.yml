@@ -8,14 +8,26 @@ services:
       PROXY_AUTH_ADD: "false"
 
   web:
-    image: masize/lawallet-nwc:1.4.0@sha256:257ea2f6ea96e2d45ee10f6cd97591e3c6e4b648a9b19d30d0c6c6cb730471d7
+    image: masize/lawallet-nwc:2.5.1@sha256:058234bc3e4e793c1ffd7d720bb22d6e94be45178c5118268d0514dfc2b2188d
     environment:
-      DATABASE_URL: postgresql://lawallet:${APP_LAWALLET_NWC_POSTGRES_PASSWORD}@postgres:5432/lawallet
-      JWT_SECRET: ${APP_LAWALLET_NWC_JWT_SECRET}
-      LISTENER_URL: http://lawallet-nwc_listener_1:4100
-      LISTENER_AUTH_SECRET: ${APP_LAWALLET_NWC_LISTENER_AUTH_SECRET}
       NODE_ENV: production
       PORT: 2288
+      DATABASE_URL: postgresql://lawallet:${APP_LAWALLET_NWC_POSTGRES_PASSWORD}@postgres:5432/lawallet
+      JWT_SECRET: ${APP_LAWALLET_NWC_JWT_SECRET}
+      # NWC listener pairing — pre-wired so the integration works out of the
+      # box. The web app keeps working if the listener container is down.
+      LISTENER_URL: http://lawallet-nwc_listener_1:4100
+      LISTENER_AUTH_SECRET: ${APP_LAWALLET_NWC_LISTENER_AUTH_SECRET}
+      LISTENER_REQUEST_AUTH_SECRET: ${APP_LAWALLET_NWC_LISTENER_REQUEST_AUTH_SECRET}
+      # Encrypts RemoteWallet NWC connection strings, the settings-managed
+      # LUD-16 proxy credentials and the NIP-57 receipt signer. Required since
+      # 2.1.0: the app refuses to boot without it once any NWC wallet exists.
+      # Web and listener MUST agree on this value byte for byte — the envelopes
+      # are AES-256-GCM and only this exact secret decrypts them.
+      NWC_VAULT_SECRET: ${APP_LAWALLET_NWC_NWC_VAULT_SECRET}
+      # Encrypts server-custodied Nostr keys created during passkey signup.
+      # Without it the passkey signup path stays disabled.
+      KEY_VAULT_SECRET: ${APP_LAWALLET_NWC_KEY_VAULT_SECRET}
     depends_on:
       postgres:
         condition: service_healthy
@@ -30,11 +42,15 @@ services:
       start_period: 90s
 
   listener:
-    image: masize/lawallet-nwc-listener:1.4.0@sha256:f323914b5f5db3cdca602889a9cee1af73df79944ce68fd3df5d9f62dea6302a
+    image: masize/lawallet-nwc-listener:2.5.1@sha256:fcafcb465ba0ea0f8843b539b115557c3ed97ef3af19771198e26a4411741e34
     environment:
       DATABASE_URL: postgresql://lawallet:${APP_LAWALLET_NWC_POSTGRES_PASSWORD}@postgres:5432/lawallet
       LISTENER_PORT: 4100
       LISTENER_AUTH_SECRET: ${APP_LAWALLET_NWC_LISTENER_AUTH_SECRET}
+      LISTENER_REQUEST_AUTH_SECRET: ${APP_LAWALLET_NWC_LISTENER_REQUEST_AUTH_SECRET}
+      # Must match the web service byte for byte — the listener decrypts the
+      # NWC envelopes web wrote.
+      NWC_VAULT_SECRET: ${APP_LAWALLET_NWC_NWC_VAULT_SECRET}
       WEB_ORIGIN: http://lawallet-nwc_web_1:2288
       NODE_ENV: production
     depends_on:
@@ -53,14 +69,15 @@ services:
   postgres:
     image: postgres:15.18-alpine3.24@sha256:3d0f7584ed7d04e27fa050d6683a74746608faf21f202be78460d679cc56461f
     environment:
-      POSTGRES_DB: lawallet
       POSTGRES_USER: lawallet
       POSTGRES_PASSWORD: ${APP_LAWALLET_NWC_POSTGRES_PASSWORD}
+      POSTGRES_DB: lawallet
     volumes:
       - ${APP_DATA_DIR}/data/postgres:/var/lib/postgresql/data
     restart: on-failure
+    stop_grace_period: 1m
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
-      interval: 5s
+      test: ["CMD-SHELL", "pg_isready -U lawallet -d lawallet"]
+      interval: 10s
       timeout: 5s
       retries: 10
