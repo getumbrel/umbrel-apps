@@ -1,0 +1,23 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: ppq-private-mode_web_1
+      APP_PORT: 8787
+      # API endpoints are used by OpenAI/Anthropic SDK clients that cannot send
+      # Umbrel auth cookies. The status/setup page (/) and the key-saving
+      # endpoint (/setup/*) stay behind Umbrel auth.
+      PROXY_AUTH_WHITELIST: "/v1,/v1/*,/health"
+
+  web:
+    # Image runs as the bundled `node` user (uid/gid 1000), matching Umbrel's
+    # app-data ownership.
+    image: ghcr.io/payperq/ppq-private-mode:0.4.0@sha256:5c675673e0e2cd1e73fa9b0a09d2792b2b59399fc49852511da3b5de09273d38
+    environment:
+      HOST: "0.0.0.0"
+      PORT: "8787"
+      PPQ_DATA_DIR: "/data"
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+    restart: on-failure
