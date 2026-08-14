@@ -1,6 +1,44 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Preserve user-managed configuration while adding the optional Codex Agent
+# endpoint to existing LibreChat installs. Fresh installs receive the same
+# entry from the packaged librechat.yaml.
+LIBRECHAT_CONFIG="${APP_DATA_DIR}/data/api/librechat.yaml"
+if [[ -f "$LIBRECHAT_CONFIG" ]] && ! grep -Fq 'name: "Codex Agent"' "$LIBRECHAT_CONFIG"; then
+  config_tmp="$(mktemp "${LIBRECHAT_CONFIG}.tmp.XXXXXX")"
+  cleanup_config_tmp() { rm -f "$config_tmp"; }
+  trap cleanup_config_tmp EXIT
+
+  if awk '
+    /^  custom:[[:space:]]*$/ {
+      print
+      print "    - name: \"Codex Agent\""
+      print "      apiKey: \"user_provided\""
+      print "      baseURL: \"http://codex-agent_app_1:8080/v1\""
+      print "      models:"
+      print "        default: [\"codex-agent\"]"
+      print "        fetch: false"
+      print "      titleConvo: false"
+      print "      summarize: false"
+      print "      forcePrompt: false"
+      print "      modelDisplayLabel: \"Codex\""
+      inserted = 1
+      next
+    }
+    { print }
+    END { exit inserted ? 0 : 1 }
+  ' "$LIBRECHAT_CONFIG" > "$config_tmp"; then
+    chmod --reference="$LIBRECHAT_CONFIG" "$config_tmp"
+    chown --reference="$LIBRECHAT_CONFIG" "$config_tmp"
+    mv "$config_tmp" "$LIBRECHAT_CONFIG"
+    trap - EXIT
+    echo "LibreChat: added optional Codex Agent endpoint configuration."
+  else
+    echo "LibreChat: custom-endpoints section not found; preserving existing configuration."
+  fi
+fi
+
 # sentinel file to check if user was already initialised
 USER_SENTINEL="${APP_DATA_DIR}/.user_created"
 

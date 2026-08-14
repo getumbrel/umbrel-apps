@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <title>Codex Agent</title>
+  <link rel="stylesheet" href="/app.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <main class="page">
+    <header class="topbar"><div class="brand"><i class="mark" aria-hidden="true"></i>Codex Agent</div><div class="privacy">Private Umbrel integration</div></header>
+    <div class="layout">
+      <section class="intro" aria-labelledby="title">
+        <span class="eyebrow">Local coding assistant</span>
+        <h1 id="title">Your Codex session, <span>ready in chat.</span></h1>
+        <p class="lead">Connect once, then work through LibreChat or Open WebUI. Your account stays in this Umbrel's private app data.</p>
+        <section class="card auth-card" aria-labelledby="auth-title">
+          <div class="section-head"><div><h2 id="auth-title">ChatGPT connection</h2><p id="auth-copy">Checking this Umbrel's Codex session.</p></div><span id="state" class="state">Checking</span></div>
+          <p class="auth-copy" id="auth-detail">A browser sign-in authorizes Codex without sharing a password with your chat client.</p>
+          <div class="actions"><button id="start" type="button">Connect ChatGPT</button><span class="help" id="help">Takes about a minute</span></div>
+          <div class="instructions hidden" id="instructions"><p>Open the secure link, sign in, then enter the temporary code.</p><code class="details" id="details"></code></div>
+          <p id="error" class="error hidden" role="alert"></p>
+        </section>
+      </section>
+      <aside class="side" aria-label="Chat client setup">
+        <section class="card"><h2>Use Codex in chat</h2><p>Connect ChatGPT above first, then finish setup in either chat client.</p><div class="client-list"><div class="client"><strong>LibreChat</strong><span>Restart LibreChat once after installing this app. Choose <em>Codex Agent</em> in its model picker, then enter this app's Umbrel password when LibreChat requests the API key.</span></div><div class="client"><strong>Open WebUI</strong><span>Open Admin Settings → Connections and add an OpenAI-compatible connection with this app's Umbrel password as the API key.</span><code>URL: http://codex-agent_app_1:8080/v1<br>Model: codex-agent</code></div><div class="client"><strong>Important</strong><span>The URL is internal to Umbrel. Enter it in the chat client; do not open it in your browser.</span></div></div></section>
+        <section class="card security"><i class="lock" aria-hidden="true"></i><div><h2>Private by design</h2><p>No public port, no Funnel, and no account credential is shown to LibreChat, Open WebUI, or this page.</p></div></section>
+      </aside>
+    </div>
+  </main>
+</body>
+</html>
