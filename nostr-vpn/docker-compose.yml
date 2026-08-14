@@ -34,6 +34,12 @@ services:
     stop_grace_period: 1m
     depends_on:
       - daemon
+    command:
+      - --listen
+      - 0.0.0.0:38080
+      - --behind-trusted-proxy
+      - --config
+      - /data/config/nvpn/config.toml
     environment:
       HOME: /data/home
       XDG_CONFIG_HOME: /data/config
