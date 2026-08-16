@@ -8,7 +8,7 @@ services:
       PROXY_AUTH_ADD: "false"
 
   web:
-    image: outlinewiki/outline:1.7.1@sha256:361df7040e6f0d7abac768b99f40122197921626a7e69501aabb5fcb496fc1b4
+    image: outlinewiki/outline:1.8.1@sha256:e224dcbe34670bdae8835c32d5abc692d3560dfa262b72fb7232f4d87185aebd
     user: "1000:1000"
     restart: on-failure
     depends_on:
@@ -22,7 +22,7 @@ services:
       DATABASE_URL: postgres://outline:outlinepass@outline_db_1:5432/outline
       PGSSLMODE: disable
       REDIS_URL: redis://outline_redis_1:6379
-      URL: "http://${DEVICE_DOMAIN_NAME}:${APP_OUTLINE_PORT}"
+      URL: "https://${DEVICE_DOMAIN_NAME}:${APP_OUTLINE_PORT}"
       PORT: 3000
       FILE_STORAGE: local
       FILE_STORAGE_LOCAL_ROOT_DIR: /var/lib/outline/data
