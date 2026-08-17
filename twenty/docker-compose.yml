@@ -8,7 +8,7 @@ services:
       PROXY_AUTH_ADD: "false"
 
   server:
-    image: twentycrm/twenty:v2.23.2@sha256:76330f4f302a734e8babb888deb9ce27442bbaea74850d5761b15471b07a3e52
+    image: twentycrm/twenty:v2.31.1@sha256:49555f596be6ef5b03e96692c9692b170645bc601097a499307cd79ae2406d30
     user: "1000:1000"
     volumes:
       - ${APP_DATA_DIR}/data/server-local-data:/app/packages/twenty-server/.local-storage
@@ -17,6 +17,7 @@ services:
       NODE_PORT: 3000
       PG_DATABASE_URL: postgres://postgres:postgres@twenty_db_1:5432/default
       SERVER_URL: http://${DEVICE_DOMAIN_NAME}:2020
+      FRONT_AUTO_BASE_URL: "true"
       REDIS_URL: redis://twenty_redis_1:6379
       APP_SECRET: 2Gn5puuVCH0SI386E9RqOqHm0hGIAyrB
     depends_on:
@@ -33,7 +34,7 @@ services:
     restart: on-failure
 
   worker:
-    image: twentycrm/twenty:v2.23.2@sha256:76330f4f302a734e8babb888deb9ce27442bbaea74850d5761b15471b07a3e52
+    image: twentycrm/twenty:v2.31.1@sha256:49555f596be6ef5b03e96692c9692b170645bc601097a499307cd79ae2406d30
     user: "1000:1000"
     volumes:
       - ${APP_DATA_DIR}/data/server-local-data:/app/packages/twenty-server/.local-storage

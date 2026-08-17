@@ -6,7 +6,7 @@ services:
       PROXY_AUTH_ADD: "false"
 
   app:
-    image: solidtime/solidtime:0.18.0@sha256:e6c510be7da6d33f3949021d44f53585a9e34c2d76d115b3ed262ef44aa85c1c
+    image: solidtime/solidtime:0.19.1@sha256:419ae59a806bcd6b15e9b637b5cee4800f7eb8f4941e20f4c5416d71acd5f1dd
     user: "1000:1000"
     restart: on-failure
     volumes:
@@ -21,6 +21,7 @@ services:
       APP_URL: "http://${DEVICE_DOMAIN_NAME}:8770"
       APP_FORCE_HTTPS: "false"
       TRUSTED_PROXIES: "0.0.0.0/0,2000:0:0:0:0:0:0:0/3"
+      TRUSTED_HOSTS: "${DEVICE_DOMAIN_NAME},${DEVICE_HOSTNAME},${APP_DOMAIN},${APP_HIDDEN_SERVICE},${APP_SOLIDTIME_LOCAL_IPS}"
 
       # Authentication
       SUPER_ADMINS: "umbrel@umbrel.local"
@@ -66,7 +67,7 @@ services:
         condition: service_healthy
 
   scheduler:
-    image: solidtime/solidtime:0.18.0@sha256:e6c510be7da6d33f3949021d44f53585a9e34c2d76d115b3ed262ef44aa85c1c
+    image: solidtime/solidtime:0.19.1@sha256:419ae59a806bcd6b15e9b637b5cee4800f7eb8f4941e20f4c5416d71acd5f1dd
     user: "1000:1000"
     restart: on-failure
     volumes:
@@ -80,6 +81,7 @@ services:
       APP_URL: "http://${DEVICE_DOMAIN_NAME}:8770"
       APP_FORCE_HTTPS: "false"
       TRUSTED_PROXIES: "0.0.0.0/0,2000:0:0:0:0:0:0:0/3"
+      TRUSTED_HOSTS: "${DEVICE_DOMAIN_NAME},${DEVICE_HOSTNAME},${APP_DOMAIN},${APP_HIDDEN_SERVICE},${APP_SOLIDTIME_LOCAL_IPS}"
 
       # Authentication
       SUPER_ADMINS: "umbrel@umbrel.local"
@@ -125,7 +127,7 @@ services:
         condition: service_healthy
 
   queue:
-    image: solidtime/solidtime:0.18.0@sha256:e6c510be7da6d33f3949021d44f53585a9e34c2d76d115b3ed262ef44aa85c1c
+    image: solidtime/solidtime:0.19.1@sha256:419ae59a806bcd6b15e9b637b5cee4800f7eb8f4941e20f4c5416d71acd5f1dd
     user: "1000:1000"
     restart: on-failure
     volumes:
@@ -140,6 +142,7 @@ services:
       APP_URL: "http://${DEVICE_DOMAIN_NAME}:8770"
       APP_FORCE_HTTPS: "false"
       TRUSTED_PROXIES: "0.0.0.0/0,2000:0:0:0:0:0:0:0/3"
+      TRUSTED_HOSTS: "${DEVICE_DOMAIN_NAME},${DEVICE_HOSTNAME},${APP_DOMAIN},${APP_HIDDEN_SERVICE},${APP_SOLIDTIME_LOCAL_IPS}"
 
       # Authentication
       SUPER_ADMINS: "umbrel@umbrel.local"

@@ -7,7 +7,7 @@ services:
       APP_PORT: 8080
 
   web:
-    image: secondark/bark-web:0.4.0@sha256:b384b374555f7a7776fb664311782069111f3d372bf35a65e75c9d5f78b49e9f
+    image: secondark/bark-web:0.6.0@sha256:7f4b482e1680ef8ae0462b7420d7849dff0a176f96476de596ab41a74015d5b3
     restart: on-failure
     stop_grace_period: 1m
     depends_on:
@@ -15,7 +15,7 @@ services:
       - barkd
 
   api:
-    image: secondark/bark-web-api:0.4.0@sha256:17e8b8b09a0ef8d9d75c84685b4fe049fe4c2cdbe4caec33c8c3eb4fa8b50c96
+    image: secondark/bark-web-api:0.6.0@sha256:159c5da6d8be50ef8e5c0b85a1b25cd64131150e05302d32109277fa2d2f44c1
     restart: on-failure
     stop_grace_period: 1m
     volumes:
@@ -33,14 +33,16 @@ services:
       - barkd
 
   barkd:
-    image: secondark/bark:0.4.0@sha256:0a5db82c0e3a82d8d7cd438f4dfbbd42fea686d4c25ab6271752b0d5872fbc1b
+    image: secondark/bark:0.6.0@sha256:caa7f3981bf400933642ac0fdcefe936556289603ff6b2c67e4fc7eccdc69ca2
     # Fix bind mount ownership, then drop to UID 1000 so the API can read barkd's auth token.
     user: "0:0"
     restart: on-failure
     stop_grace_period: 1m
+    # Enable the mnemonic endpoint for Bark Web's seed reveal flow.
+    # User-facing access is gated by Umbrel authentication.
     command: >
       sh -c "mkdir -p /data/.bark
       && chown -R 1000:1000 /data
-      && exec setpriv --reuid 1000 --regid 1000 --clear-groups /usr/local/bin/barkd --port 4000 --host 0.0.0.0 --datadir /data/.bark"
+      && exec setpriv --reuid 1000 --regid 1000 --clear-groups /usr/local/bin/barkd --port 4000 --host 0.0.0.0 --datadir /data/.bark --expose-mnemonic"
     volumes:
       - ${APP_DATA_DIR}/data/wallet:/data

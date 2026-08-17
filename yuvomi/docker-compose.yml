@@ -7,7 +7,7 @@ services:
       APP_PORT: 3000
 
   web:
-    image: ghcr.io/ulsklyc/yuvomi:1.45.0@sha256:13533b3587c24becce3b25c6b09cceb252c6745787799a510fd567a6048e19b1
+    image: ghcr.io/ulsklyc/yuvomi:2.16.1@sha256:ef038c3eab85c29c39f216f21086a64083f47e710ca1f78a2bc55f80b280600d
     restart: on-failure
     stop_grace_period: 1m
     # No `user:` override: the image entrypoint starts as root only to chown the
@@ -22,5 +22,7 @@ services:
       - BACKUP_DIR=/backups
       # SESSION_SECRET is required; Umbrel injects a deterministic per-app secret.
       - SESSION_SECRET=${APP_SEED}
+      # DB_ENCRYPTION_KEY enables Yuvomi's SQLite encryption and must stay stable.
+      - DB_ENCRYPTION_KEY=${APP_SEED}
       # Umbrel serves apps over plain HTTP on the LAN, so secure cookies stay off.
       - SESSION_SECURE=false

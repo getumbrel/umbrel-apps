@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: bffless
 category: developer
 name: BFFless
-version: '0.2.10'
+version: '0.4.15'
 tagline: Self-hosted static site hosting platform
 description: >-
   BFFless is a self-hosted platform for hosting static websites and build artifacts from CI/CD pipelines.
@@ -33,44 +33,55 @@ gallery:
   - 2.jpg
   - 3.jpg
 releaseNotes: >-
-  Updates BFFless CE from v0.1.90 to v0.2.10.
+  Updates BFFless CE from v0.2.10 to v0.4.15.
 
 
-  Proxy rules as code:
-    - New bffless CLI: manage proxy rule sets as TypeScript files in your repo — compile, decompile, publish, and live sync
-    - Rule set revisions with rollback (accepts the short revision ids shown in the CLI table)
-    - Write pipeline handlers in TypeScript with a local rules dev workflow
+  App catalog — 1-click app install:
+    - Browse and install self-hosted apps directly from the admin dashboard
+    - Installs deploy under the real upstream source commit
+    - Registry store metadata and per-app setup notes render on the app cards
+    - Reachability gates only install apps that can actually be served over HTTPS
 
 
-  Traffic monitoring & blocklists:
-    - Live traffic tail in the admin UI, with unmatched-request history and per-IP rollups
-    - IP blocklists: reusable blocklist library, per-domain attachment, and inline add-to-blocklist
-    - Enforcement at both the application and nginx edge
-
-
-  Pipelines:
-    - Pipeline schedules (cron) with a full admin UI
-    - New handlers: xml_feed_parse and data_upsert_many (with optional update-on-conflict)
-    - ai_handler attachments (multi-part image/file content)
-    - New "in" (array-membership) filter operator; data_delete supports the full filter operator set
-    - file_serve_handler cacheability supports expressions; verbatim keyStrategy for presigned uploads
+  Onboarding & setup:
+    - New welcome walkthrough (with video) and an app-install callout as the primary first-login path
+    - Onboarding and day-2 settings now link out to the docs site
+    - Claim-token links go straight to the setup wizard and prefill the claim form
+    - Replay the onboarding modal any time with ?onboarding=1
 
 
   Storage:
-    - Edit provider credentials in place without migrating
-    - Presigned download URLs can sign Content-Disposition for friendly filenames
+    - Presigned uploads now work on local filesystem storage
+    - Same-SHA republish serves fresh bytes instead of stale cached content
+    - Served content types resolve from storage, with the correct charset
 
 
-  Fixes:
-    - Users with the "user" global role can create projects again
-    - Copying a proxy rule set re-encrypts header secrets
-    - Auth-proxy rules work through the visibility gate on private deployments
-    - Large JSON pipeline responses are sent verbatim to avoid out-of-memory
-    - data_query consistently returns arrays unless single/recordId is set
-    - Custom content types allowed in the response_handler UI
+  Pipelines & groups:
+    - Pipelines can read user.groups, plus a member-accessible group directory
+    - New now_ms() helper; data-write values are coerced to schema field types
+    - Null-safe "ne" filter operator (IS DISTINCT FROM)
 
 
-  Full release notes can be found at https://github.com/bffless/ce/releases/tag/v0.2.10
+  CLI:
+    - New bffless login credential store and auth commands
+    - rules init --schema scaffold command
+
+
+  Frontend & polish:
+    - Per-route document titles and a real favicon
+    - Fixed mobile viewport overflow and crashes across admin pages
+    - Traffic-splitting tools (weights + routing rules) added to the MCP server
+
+
+  Fixes (including for proxied setups like Cloudflare Tunnel):
+    - Auth and presigned uploads are excepted from the subdomain-alias rewrite
+    - Presigned local uploads serve correctly on externally-proxied vhosts
+    - App-serving vhosts share a consistent request-body ceiling
+    - Blocklists never enforce a half-loaded or stale rule set
+    - Alias visibility / required-role overrides persist and read back correctly
+
+
+  Full release notes can be found at https://github.com/bffless/ce/releases/tag/v0.4.15
 path: ''
 defaultUsername: ''
 deterministicPassword: false

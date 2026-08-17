@@ -34,7 +34,7 @@ services:
   # extra download, and it is the only place root is used. This is NOT privileged
   # mode; the app containers themselves stay non-root.
   init_perms:
-    image: encryptedenergy/ee-gateway-worker:0.7.7@sha256:678688523b9357b87308aae532b8f57a0a5769eb43ad33911ad0c345220eb17b
+    image: encryptedenergy/ee-gateway-worker:0.8.0@sha256:816e236ff47052e5d081cc4a99f56c40434df33aba1b0efd0badc4d30902ae04
     user: "0:0"
     entrypoint: ["sh", "-c", "chown -R 1000:1000 /data"]
     restart: on-failure
@@ -58,7 +58,7 @@ services:
     environment:
       EE_DATA_DIR: /data
       EE_UI_PORT: 8080
-      EE_GATEWAY_VERSION: "0.10.6"
+      EE_GATEWAY_VERSION: "0.10.7"
 
   # BLE scan + GPS-stamped cloud ingest worker. It reaches the host's
   # Bluetooth radio through bluetoothd over the D-Bus system bus, talks to
@@ -67,7 +67,7 @@ services:
   # Python process runs as uid 1000; gpsd starts as root only to open the
   # serial device, then drops to user nobody.
   worker:
-    image: encryptedenergy/ee-gateway-worker:0.7.7@sha256:678688523b9357b87308aae532b8f57a0a5769eb43ad33911ad0c345220eb17b
+    image: encryptedenergy/ee-gateway-worker:0.8.0@sha256:816e236ff47052e5d081cc4a99f56c40434df33aba1b0efd0badc4d30902ae04
     init: true
     restart: on-failure
     depends_on:
