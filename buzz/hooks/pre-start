@@ -1,0 +1,247 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+APP_DIR="${APP_DATA_DIR:-$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")}"
+SECRETS_DIR="${APP_DIR}/data/relay"
+SECRETS_FILE="${SECRETS_DIR}/relay.env"
+COMMUNITY_FILE="${SECRETS_DIR}/community.env"
+OWNER_FILE="${SECRETS_DIR}/owner.env"
+SETTINGS_FILE="${SECRETS_DIR}/settings.env"
+STATUS_DIR="${APP_DIR}/data/setup-status"
+SETUP_DIR="${APP_DIR}/data/setup"
+FUNNEL_STATUS_FILE="${SETUP_DIR}/funnel-status.env"
+TAILSCALE_CONTAINER="tailscale_web_1"
+
+mkdir -p "${SECRETS_DIR}"
+mkdir -p "${STATUS_DIR}"
+mkdir -p "${SETUP_DIR}"
+
+write_funnel_status() {
+  local state="$1"
+  local relay_url="${2:-}"
+  local approval_url="${3:-}"
+  local temporary_file="${FUNNEL_STATUS_FILE}.tmp"
+
+  umask 077
+  {
+    printf 'FUNNEL_STATE=%s\n' "${state}"
+    printf 'FUNNEL_RELAY_URL=%s\n' "${relay_url}"
+    printf 'FUNNEL_APPROVAL_URL=%s\n' "${approval_url}"
+  } >"${temporary_file}"
+  mv "${temporary_file}" "${FUNNEL_STATUS_FILE}"
+  chown 1000:1000 "${FUNNEL_STATUS_FILE}"
+}
+
+configure_public_funnel() {
+  local expected_relay_url="${1:-}"
+  local node_status=""
+  local compact_node_status=""
+  local dns_name=""
+  local discovered_relay_url=""
+  local funnel_status=""
+  local compact_status=""
+  local approval_url=""
+  local output_file=""
+
+  if ! docker inspect -f '{{.State.Running}}' "${TAILSCALE_CONTAINER}" 2>/dev/null | grep -Fxq true; then
+    write_funnel_status "needs-login"
+    return
+  fi
+
+  node_status="$(
+    docker exec "${TAILSCALE_CONTAINER}" sh -lc \
+      'timeout 8s tailscale status --json --peers=false' 2>/dev/null || true
+  )"
+  compact_node_status="$(printf '%s' "${node_status}" | tr -d '[:space:]')"
+  if [[ "${compact_node_status}" != *'"BackendState":"Running"'* ]]; then
+    write_funnel_status "needs-login"
+    return
+  fi
+  if [[ "${compact_node_status}" != *'"Online":true'* ]] ||
+    { [[ "${compact_node_status}" != *'"Health":null'* ]] && [[ "${compact_node_status}" != *'"Health":[]'* ]]; }; then
+    write_funnel_status "error"
+    return
+  fi
+
+  dns_name="$(
+    printf '%s' "${node_status}" |
+      sed -n 's/^[[:space:]]*"DNSName"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' |
+      head -n 1 |
+      sed 's/[.]$//'
+  )"
+  if [[ ! "${dns_name}" =~ ^[a-z0-9][a-z0-9.-]*\.ts\.net$ ]]; then
+    write_funnel_status "error"
+    return
+  fi
+  discovered_relay_url="wss://${dns_name}"
+  if [[ -n "${expected_relay_url}" && "${expected_relay_url}" != "${discovered_relay_url}" ]]; then
+    write_funnel_status "error"
+    return
+  fi
+
+  funnel_status="$(
+    docker exec "${TAILSCALE_CONTAINER}" sh -lc \
+      'timeout 8s tailscale funnel status --json' 2>/dev/null || true
+  )"
+  compact_status="$(printf '%s' "${funnel_status}" | tr -d '[:space:]')"
+  if [[ "${compact_status}" == *"127.0.0.1:3023"* ]] &&
+    printf '%s' "${compact_status}" | grep -Eq '"AllowFunnel":\{[^}]*:443":true'; then
+    write_funnel_status "ready" "${discovered_relay_url}"
+    return
+  fi
+  if [[ "${compact_status}" == *":443"* ]]; then
+    write_funnel_status "conflict"
+    return
+  fi
+
+  output_file="$(mktemp)"
+  if docker exec "${TAILSCALE_CONTAINER}" sh -lc \
+    'timeout 20s tailscale funnel --bg --yes http://127.0.0.1:3023' \
+    >"${output_file}" 2>&1; then
+    funnel_status="$(
+      docker exec "${TAILSCALE_CONTAINER}" sh -lc \
+        'timeout 8s tailscale funnel status --json' 2>/dev/null || true
+    )"
+    compact_status="$(printf '%s' "${funnel_status}" | tr -d '[:space:]')"
+    if [[ "${compact_status}" == *"127.0.0.1:3023"* ]] &&
+      printf '%s' "${compact_status}" | grep -Eq '"AllowFunnel":\{[^}]*:443":true'; then
+      write_funnel_status "ready" "${discovered_relay_url}"
+    else
+      write_funnel_status "error"
+    fi
+  else
+    approval_url="$(grep -Eo 'https://login[.]tailscale[.]com/[^[:space:]]+' "${output_file}" | head -n 1 | sed 's/[]),.;]*$//' || true)"
+    if [[ "${approval_url}" =~ ^https://login\.tailscale\.com/ ]]; then
+      write_funnel_status "needs-approval" "" "${approval_url}"
+    else
+      write_funnel_status "error"
+    fi
+  fi
+  rm -f "${output_file}"
+}
+
+if [[ -f "${SECRETS_FILE}" ]]; then
+  if grep -Eq '^BUZZ_RELAY_PRIVATE_KEY=[0-9a-f]{64}$' "${SECRETS_FILE}"; then
+    :
+  else
+    echo "Buzz relay identity file is invalid: ${SECRETS_FILE}" >&2
+    exit 1
+  fi
+else
+  umask 077
+  relay_private_key="$(od -An -N32 -tx1 /dev/urandom | tr -d ' \n')"
+  temporary_file="${SECRETS_FILE}.tmp"
+
+  printf 'BUZZ_RELAY_PRIVATE_KEY=%s\n' "${relay_private_key}" >"${temporary_file}"
+  mv "${temporary_file}" "${SECRETS_FILE}"
+fi
+
+write_default_settings() {
+  local temporary_file="${SETTINGS_FILE}.tmp"
+  umask 077
+  cat >"${temporary_file}" <<'EOF'
+BUZZ_HUDDLE_AUDIO_AVAILABLE=true
+BUZZ_AUDIT_ENABLED=true
+BUZZ_MAX_CONNECTIONS=10000
+BUZZ_RATE_LIMIT_HUMAN_MESSAGES_PER_MIN=60
+BUZZ_RATE_LIMIT_HUMAN_API_CALLS_PER_MIN=300
+BUZZ_RATE_LIMIT_HUMAN_WS_EVENTS_PER_SEC=10
+BUZZ_RATE_LIMIT_AGENT_STANDARD_MESSAGES_PER_MIN=120
+BUZZ_RATE_LIMIT_AGENT_STANDARD_API_CALLS_PER_MIN=600
+BUZZ_RATE_LIMIT_AGENT_ELEVATED_MESSAGES_PER_MIN=300
+BUZZ_RATE_LIMIT_AGENT_PLATFORM_MESSAGES_PER_MIN=600
+BUZZ_MAX_IMAGE_BYTES=52428800
+BUZZ_MAX_GIF_BYTES=10485760
+BUZZ_MAX_VIDEO_BYTES=524288000
+BUZZ_MAX_FILE_BYTES=104857600
+BUZZ_MEDIA_MAX_CONCURRENT_UPLOADS=8
+BUZZ_MEDIA_MAX_CONCURRENT_UPLOADS_PER_PUBKEY=2
+BUZZ_MEDIA_UPLOADS_PER_MINUTE=30
+BUZZ_GIT_MAX_PACK_BYTES=524288000
+BUZZ_GIT_MAX_REPO_BYTES=1073741824
+BUZZ_GIT_PACK_CACHE_MAX_BYTES=5368709120
+BUZZ_GIT_MAX_REPOS_PER_PUBKEY=100
+BUZZ_GIT_MAX_CONCURRENT_OPS=20
+EOF
+  mv "${temporary_file}" "${SETTINGS_FILE}"
+}
+
+validate_settings() {
+  [[ "$(wc -l <"${SETTINGS_FILE}" | tr -d ' ')" = "22" ]] || return 1
+  grep -Eq '^BUZZ_HUDDLE_AUDIO_AVAILABLE=(true|false)$' "${SETTINGS_FILE}" || return 1
+  grep -Eq '^BUZZ_AUDIT_ENABLED=(true|false)$' "${SETTINGS_FILE}" || return 1
+  local key
+  for key in \
+    BUZZ_MAX_CONNECTIONS \
+    BUZZ_RATE_LIMIT_HUMAN_MESSAGES_PER_MIN \
+    BUZZ_RATE_LIMIT_HUMAN_API_CALLS_PER_MIN \
+    BUZZ_RATE_LIMIT_HUMAN_WS_EVENTS_PER_SEC \
+    BUZZ_RATE_LIMIT_AGENT_STANDARD_MESSAGES_PER_MIN \
+    BUZZ_RATE_LIMIT_AGENT_STANDARD_API_CALLS_PER_MIN \
+    BUZZ_RATE_LIMIT_AGENT_ELEVATED_MESSAGES_PER_MIN \
+    BUZZ_RATE_LIMIT_AGENT_PLATFORM_MESSAGES_PER_MIN \
+    BUZZ_MAX_IMAGE_BYTES \
+    BUZZ_MAX_GIF_BYTES \
+    BUZZ_MAX_VIDEO_BYTES \
+    BUZZ_MAX_FILE_BYTES \
+    BUZZ_MEDIA_MAX_CONCURRENT_UPLOADS \
+    BUZZ_MEDIA_MAX_CONCURRENT_UPLOADS_PER_PUBKEY \
+    BUZZ_MEDIA_UPLOADS_PER_MINUTE \
+    BUZZ_GIT_MAX_PACK_BYTES \
+    BUZZ_GIT_MAX_REPO_BYTES \
+    BUZZ_GIT_PACK_CACHE_MAX_BYTES \
+    BUZZ_GIT_MAX_REPOS_PER_PUBKEY \
+    BUZZ_GIT_MAX_CONCURRENT_OPS; do
+    grep -Eq "^${key}=[0-9]+$" "${SETTINGS_FILE}" || return 1
+  done
+}
+
+if [[ ! -f "${SETTINGS_FILE}" ]]; then
+  write_default_settings
+elif ! validate_settings; then
+  echo "Buzz relay settings file is invalid: ${SETTINGS_FILE}" >&2
+  exit 1
+fi
+
+relay_url=""
+if [[ -f "${COMMUNITY_FILE}" ]]; then
+  relay_url="$(sed -n 's/^RELAY_URL=//p' "${COMMUNITY_FILE}")"
+  if [[ ! "${relay_url}" =~ ^wss?://[a-zA-Z0-9][a-zA-Z0-9.-]*(:[0-9]{1,5})?$ ]]; then
+    echo "Buzz relay community file is invalid: ${COMMUNITY_FILE}" >&2
+    exit 1
+  fi
+
+  case "${relay_url}" in
+    ws://*) http_origin="http://${relay_url#ws://}" ;;
+    wss://*) http_origin="https://${relay_url#wss://}" ;;
+  esac
+
+  if ! grep -Fxq "BUZZ_CORS_ORIGINS=${http_origin},tauri://localhost,http://localhost:1420" "${COMMUNITY_FILE}" ||
+    ! grep -Fxq "BUZZ_MEDIA_BASE_URL=${http_origin}/media" "${COMMUNITY_FILE}"; then
+    echo "Buzz relay community origins are invalid: ${COMMUNITY_FILE}" >&2
+    exit 1
+  fi
+fi
+
+# Fresh installs use the installed Tailscale dependency to create one stable
+# public WSS endpoint. Configured Funnel relays re-check that same Tailscale
+# identity on every Buzz restart so a stale/offline Funnel is never presented
+# as connectable. Non-Tailscale legacy addresses keep their canonical URL.
+# Funnel only exposes the relay's protocol listener on port 3023. The owner
+# /setup page remains behind Umbrel auth on the separate manifest port.
+if ! grep -Eq '^RELAY_OWNER_PUBKEY=[0-9a-f]{64}$' "${OWNER_FILE}" 2>/dev/null; then
+  configure_public_funnel
+elif [[ "${relay_url}" =~ ^wss://[a-zA-Z0-9][a-zA-Z0-9.-]*\.ts\.net$ ]]; then
+  configure_public_funnel "${relay_url}"
+else
+  write_funnel_status "ready" "${relay_url}"
+fi
+
+# The setup and relay containers run as Umbrel's unprivileged app user and
+# access this bind-mounted file directly. Hooks run as root, so hand ownership
+# to that user after creating or validating the persisted configuration.
+chmod 600 "${SETTINGS_FILE}"
+if [[ -f "${COMMUNITY_FILE}" ]]; then
+  chown 1000:1000 "${COMMUNITY_FILE}"
+fi
+chown 1000:1000 "${SETTINGS_FILE}" "${STATUS_DIR}" "${SETUP_DIR}"
