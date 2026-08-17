@@ -1,0 +1,52 @@
+manifestVersion: 1
+id: momentbackup-hub
+category: files
+name: MomentBackup Hub
+version: "1.0.6"
+tagline: One page showing whether each computer's backups are current
+description: >-
+  Open the app and create the owner account straight away. Until that account exists, anyone who
+  can reach the app can create it and take the Hub.
+
+
+  umbrelOS reaches apps over plain HTTP on your local network, so this package runs the Hub
+  without its own TLS and puts it behind Umbrel's app proxy. The dashboard is protected by your
+  Umbrel login. The four paths enrolled computers post to bypass Umbrel auth, because those
+  computers cannot send an Umbrel session cookie; each request carries its own token, which the
+  Hub checks. Those requests and the Hub's own sign-in travel unencrypted on your network, as
+  every other umbrelOS app does.
+
+
+  MomentBackup Hub is a free, self-hosted overview of MomentBackup backups. It shows whether each
+  computer is protected, when it last backed up and verified, and which computers need attention.
+  It is a companion to MomentBackup, the paid personal backup and recovery app for Windows,
+  macOS, and Linux.
+
+
+  There is no account with the vendor, no telemetry, no licence check, and no update check. The
+  Hub stores no backup data, and it never holds a backup encryption key, passphrase, or
+  destination credential. Notifications by ntfy, webhook, or SMTP are the only outbound
+  connections it makes, and it makes none until you configure one.
+
+
+  It runs in heartbeat mode: each MomentBackup app posts its own signed status report to the Hub,
+  so the Hub needs no access to the backup destinations. MomentBackup 1.0.13 or later is required
+  to join a Hub.
+
+
+  Everything the Hub knows lives in its app data: its signing identity, your sign-ins, which
+  signing key each computer is trusted under, and its audit history. Losing it means enrolling
+  every computer again, so keep Umbrel backups on for this app.
+releaseNotes: ""
+developer: Watari Labs Pty Ltd
+website: https://momentbackup.com
+dependencies: []
+repo: https://github.com/MomentBackup/momentbackup-hub/pkgs/container/momentbackup-hub
+support: https://momentbackup.com/support/
+port: 8677
+gallery: []
+path: ""
+defaultUsername: ""
+defaultPassword: ""
+submitter: Watari Labs Pty Ltd
+submission: https://github.com/getumbrel/umbrel-apps/pull/SUBMISSION_PR

@@ -1,0 +1,41 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: momentbackup-hub_server_1
+      APP_PORT: 8675
+      # Enrolled MomentBackup computers post to these four paths and cannot send an Umbrel
+      # session cookie, so they have to bypass Umbrel auth. Each request carries its own
+      # bearer token or Ed25519-signed body, which the Hub verifies. Everything a browser
+      # touches — the dashboard, /setup, /login — stays behind Umbrel auth.
+      PROXY_AUTH_WHITELIST: "/api/heartbeat,/api/poll,/api/poll/result,/api/enroll/claim"
+
+  server:
+    image: ghcr.io/momentbackup/momentbackup-hub:1.0.6@sha256:105fdd243ef9df29cfda71f8a9b0ab0a7eef35512646a609452b634ebf49b234
+    user: "1000:1000"
+    restart: on-failure
+    init: true
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    stop_grace_period: 1m
+    volumes:
+      - ${APP_DATA_DIR}/data/hub:/data
+    environment:
+      # umbrelOS terminates nothing and serves apps over plain HTTP, so the Hub's own TLS is
+      # off and app_proxy is the only front door. The Hub refuses sign-in, enrollment,
+      # heartbeats, and command polls over plaintext unless this is set, and it prints what
+      # that exposes at every boot.
+      MBHUB_INSECURE: "1"
+      # The exact origin enrolled computers use. Changing it later means enrolling every
+      # computer again.
+      MBHUB_PUBLIC_URL: "http://${DEVICE_DOMAIN_NAME}:${APP_PROXY_PORT}"
+      # Empty means heartbeat mode: each MomentBackup app posts its own signed status report,
+      # and the Hub needs no access to the backup destinations.
+      MBHUB_SCAN_PATHS: ""
+      MBHUB_HEARTBEAT: "on"
