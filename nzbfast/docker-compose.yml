@@ -1,0 +1,32 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: nzbfast_web_1
+      APP_PORT: 6789
+      # The SABnzbd-compatible API, the Newznab search endpoint and the NZBGet
+      # JSON-RPC facade are what Sonarr/Radarr/Prowlarr and the mobile remotes
+      # talk to, and none of them can present an Umbrel session cookie. They
+      # authenticate with nzbfast's own API key instead, which the container
+      # generates on first run and refuses to start without.
+      PROXY_AUTH_WHITELIST: "/api*,/newznab/api*,/jsonrpc*" # leakcheck-allow-synthetic - URL paths, not a secret
+
+  web:
+    image: nzbfast/nzbfast:1.1.2@sha256:f427069f3ef33b9e7837ed84f8b7429d3d762099c9404e92d1216303c9f7a6ba
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      # The image runs its entrypoint as root so it can adopt the ownership of
+      # the bind mounts, then drops to this uid/gid before exec'ing the daemon.
+      # 1000:1000 is what Umbrel creates app data as.
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
+    volumes:
+      # /config IS the install: settings, the API key, the queue, history and
+      # the index database. It has to be a bind mount that outlives the
+      # container, or every update looks like a wipe.
+      - ${APP_DATA_DIR}/data/config:/config
+      - ${APP_DATA_DIR}/data/watch:/watch
+      - ${UMBREL_ROOT}/data/storage/downloads:/downloads
