@@ -6,9 +6,9 @@ services:
       PROXY_AUTH_ADD: "false"
 
   server:
-    image: quay.io/jupyter/base-notebook:lab-4.6.2@sha256:50d8c29bb555af7ba18e956c97734c31ada26ee12d7e6dc77927608cb730d108
+    image: quay.io/jupyter/base-notebook:lab-4.6.3@sha256:5fe2f811217b1d35448ef2e94ea5515914e894aa9f41688b8fac55ddd0b82640
     user: "1000:1000"
     volumes:
       - ${APP_DATA_DIR}/data:/home/jovyan/work
-    command: start-notebook.py --NotebookApp.token=${APP_PASSWORD}
+    command: start-notebook.py --IdentityProvider.token=${APP_PASSWORD}
     restart: on-failure
