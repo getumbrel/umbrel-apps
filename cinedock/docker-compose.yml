@@ -1,0 +1,11 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: cinedock_cinedock_1
+      APP_PORT: 8945
+
+  cinedock:
+    image: ghcr.io/cinedock/cinedock:4.1.6@sha256:0a1d8e9c1316a2a72a0accafc52ae92be8f3edc99017137e0c9d5ebbeb94bc39
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data/config:/config
