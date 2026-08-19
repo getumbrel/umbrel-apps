@@ -1,0 +1,32 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: lx-family-planner_server_1
+      APP_PORT: 3001
+      PROXY_AUTH_ADD: "false"
+
+  server:
+    image: ghcr.io/laxxx-lab/lx-family-planner:1.18.3@sha256:39e3931d7d80a8a63a30bf0546bb28eb187e7324c9808d5abd3adc7e6b1d250e
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 15s
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      TZ: Europe/Berlin
+      APP_SECRET: "${APP_SEED}"
+      SESSION_COOKIE_SECURE: auto
+      DATABASE_FILE: /app/data/family_planner.sqlite
+      LEGACY_DATABASE_FILE: /app/data/family_db.json
+    volumes:
+      - "${APP_DATA_DIR}/data:/app/data"
+      - "${APP_DATA_DIR}/backups:/app/backups"
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
