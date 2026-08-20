@@ -2,7 +2,7 @@ manifestVersion: 1
 id: hashrate-autopilot
 category: bitcoin
 name: Hashrate Autopilot
-version: "1.17.6"
+version: "1.18.0"
 tagline: Autopilot for renting hashrate to mine on Ocean Mining
 
 description: >-
@@ -73,16 +73,19 @@ defaultPassword: ""
 submitter: Remco Douma
 submission: https://github.com/getumbrel/umbrel-apps/pull/5685
 releaseNotes: >-
-  v1.17.6 - phantom Lightning payouts removed from Profit & Loss, and the dashboard API is locked to the dashboard itself.
+  v1.18.0 - choose which Ocean chain you mine on: full support for miners on Ocean's BIP110 endpoint.
 
 
-  Fixed: Profit & Loss no longer invents Lightning payouts you never received. A brief glitch in Ocean's reported unpaid balance could be read as a payout, inflating your "collected" total and understating your loss rate - and because the entry was recalculated from your history on every scan, even the Profit & Loss hard reset could not remove it. Impossible readings are now discarded rather than stored, and a drop only counts as a payout if the balance stays down: if it climbs back near its previous level within half an hour, it is treated as a reporting glitch. Existing false entries are deleted on upgrade and cannot come back. Genuine payouts, and any personal notes you attached to them, are left untouched.
+  New: Ocean chain selector (Config, Pool & Payout). Since the August 8 chain split, Ocean mines two chains with separate accounting, and miners on the BIP110 endpoint saw their Ocean stats stuck at zero because the dashboard read the mainstream chain's API. Declare which chain you mine on and the app adapts; mainstream (the default) is unchanged, and switching takes effect within a minute with no restart.
 
 
-  Fixed: The dashboard API now only answers browser requests coming from the dashboard itself. It previously told browsers that any website could make requests to it using your saved login, so a page in another tab could have acted on your behalf while you had the dashboard open. Nothing changes about how you reach the dashboard - a local address, a .local name, dynamic DNS, a VPN or a reverse proxy all keep working - and scripts or monitoring that call the API directly are unaffected.
+  On the BIP110 chain, Ocean provides no API (confirmed by Ocean support - none exists, none is planned, and scraping is not supported), so the app is honest about the gap instead of showing misleading zeros: the Ocean panel explains why hashrate, share log, and unpaid earnings can't be shown, and your collected earnings are derived directly from on-chain payouts seen by your own Bitcoin node. Lightning payouts can't be tracked there, and the panel says so. An Electrum server pointed at a node following the BIP110 chain is recommended.
 
 
-  Also includes routine dependency maintenance. No new settings. Safe to upgrade from any 1.17.x release.
+  No hashprice exists on the BIP110 chain, so the hashprice-based dynamic price cap and cheap mode are disabled there with a clear explanation - your fixed Maximum bid remains the only price ceiling and the autopilot keeps bidding. Stats tiles and chart options that need Ocean data are marked "n/a on BIP110" instead of showing dashes, and anything recorded before you switched chains still plots.
+
+
+  A new README chapter, "Mining on Ocean's BIP110 chain", walks through setup and summarizes exactly what changes. Also includes routine dependency maintenance (including a js-yaml security pin). Safe to upgrade from any 1.17.x release; if you mine mainstream Ocean, nothing changes.
 
 
   Migrating from the community-store version (rdouma-hashrate-autopilot)? One-time five-minute guide: https://github.com/rdouma/hashrate-autopilot/blob/main/docs/migrating-from-community-store.md
