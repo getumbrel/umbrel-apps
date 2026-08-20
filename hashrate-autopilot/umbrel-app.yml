@@ -2,7 +2,7 @@ manifestVersion: 1
 id: hashrate-autopilot
 category: bitcoin
 name: Hashrate Autopilot
-version: "1.18.0"
+version: "1.18.1"
 tagline: Autopilot for renting hashrate to mine on Ocean Mining
 
 description: >-
@@ -73,6 +73,12 @@ defaultPassword: ""
 submitter: Remco Douma
 submission: https://github.com/getumbrel/umbrel-apps/pull/5685
 releaseNotes: >-
+  v1.18.1 - the v1.18.0 feature release plus an emergency fix that protects and restores unpaid-earnings history.
+
+
+  Fixed: a boot-time data cleanup could wipe the entire unpaid-earnings chart history if the unpaid balance ever legitimately climbed above 1.5M sats (larger hashrate targets, or an Ocean payout landing late). The cleanup is now strictly fenced to the old spring-2026 data problem it was written for, the daemon heals previously wiped history automatically on startup from its own decision log, and operators holding an old database copy can merge the remainder back via an ocean-unpaid-import.json drop-in. Recovery runs automatically after the update.
+
+
   v1.18.0 - choose which Ocean chain you mine on: full support for miners on Ocean's BIP110 endpoint.
 
 
