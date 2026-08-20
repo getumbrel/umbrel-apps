@@ -1,0 +1,16 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: bitgarth_web_1
+      APP_PORT: 8080
+
+  web:
+    image: bitgarth/bitgarth:0.3.0@sha256:5bbedf1754ba98297fc4f71f5195d99b852f1b36379636164aad182cef7a443c
+    restart: on-failure
+    stop_grace_period: 1m
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+    environment:
+      BITGARTH_CHANNEL: umbrel
