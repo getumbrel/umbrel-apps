@@ -2,7 +2,7 @@ manifestVersion: 1
 id: mailflow
 category: networking
 name: MailFlow
-version: "3.1.1"
+version: "3.1.3"
 tagline: Unified self-hosted webmail client
 description: >-
   MailFlow is a self-hosted unified webmail client. Connect multiple IMAP/SMTP
@@ -14,21 +14,20 @@ description: >-
   multiple themes, user management, SSO/OIDC support, and Microsoft 365 OAuth2
   support.
 releaseNotes: >-
-  MailFlow 3.1.1 improves reliability for users with many accounts or difficult
-  network paths.
+  MailFlow 3.1.3 improves Gmail and multi-account reliability.
 
 
-  Message lists no longer show duplicate copies of the same email after a message
-  is re-synced, and background snippet indexing now backs off cleanly when a mail
-  server limits simultaneous IMAP connections.
+  Sent-message import now self-heals for some Gmail accounts where a saved folder
+  mapping pointed at a non-selectable parent folder.
 
 
-  MailFlow can now automatically retry over IPv4 when a broken IPv6 path stalls an
-  IMAP TLS handshake.
+  Startup connection bursts across multiple accounts on the same provider are now
+  smoothed out, and IPv4 fallback avoids extra retries when a mail server is
+  refusing connections because of provider limits.
 
 
-  This release also adds an optional per-host persistent IMAP connection limit for
-  providers that cap the number of always-on connections.
+  This release also continues improving duplicate-message cleanup in unified
+  message lists.
 developer: maathimself
 website: https://mailflow.sh
 repo: https://github.com/maathimself/mailflow
