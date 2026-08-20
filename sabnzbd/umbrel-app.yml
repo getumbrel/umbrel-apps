@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: sabnzbd
 category: networking
 name: SABnzbd
-version: "5.1.0"
+version: "5.1.1"
 tagline: The automated Usenet download tool
 description: >-
   SABnzbd makes Usenet as simple and streamlined as possible by automating everything we can. All you have to do is add an .nzb.
@@ -30,10 +30,13 @@ repo: https://github.com/sabnzbd/sabnzbd
 support: https://forums.sabnzbd.org/
 port: 9876
 releaseNotes: >-
-  This update refreshes the interface, improves Retry so only missing articles are fetched again, stores RSS items in the database with a new Age rule, adds Cleanup List pattern matching and .tar unpacking support, and includes fixes for cleanup behavior, disk-space handling, article cache memory use, shutdown, SFV verification, and path traversal in orphaned job APIs.
+  This update fixes a critical SABnzbd authentication-bypass vulnerability that could expose the web interface when SABnzbd's own login page is reachable by untrusted parties. If you relied on SABnzbd's username and password for network or internet access, rotate sensitive credentials after updating, including the SABnzbd username/password, API key, Usenet server passwords, RSS indexer API keys, and notification credentials.
 
 
-  Full release notes are available at https://github.com/sabnzbd/sabnzbd/releases/tag/5.1.0
+  It also fixes styling cache issues after updates, RSS items being removed too eagerly from history, and the RSS-feed Clear Downloaded button.
+
+
+  Full release notes are available at https://github.com/sabnzbd/sabnzbd/releases/tag/5.1.1
 permissions:
   - STORAGE_DOWNLOADS
   - GPU
