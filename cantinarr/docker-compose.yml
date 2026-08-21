@@ -11,13 +11,13 @@ services:
       PROXY_AUTH_ADD: "false"
 
   server:
-    image: ghcr.io/windoze95/cantinarr:0.2.0@sha256:87fea4db9ce2278842c9b33a2276b199ca767021e61d4c345027ea15c02cf36d
+    image: ghcr.io/windoze95/cantinarr:0.3.0@sha256:d49dd64daf7f7b0c90dd56989b565783130b9ddf24603a4ec8317c55d6bd1797
     restart: on-failure
     environment:
       CANTINARR_PUSH_GATEWAY_URL: "https://push.julian.codes"
       # Origin the Radarr/Sonarr/Chaptarr containers POST webhooks back to.
       # Cross-app container DNS works on Umbrel, so point them at this container.
-      CANTINARR_PUBLIC_URL: "http://cantinarr_server_1:8585"
+      CANTINARR_ARR_CALLBACK_URL: "http://cantinarr_server_1:8585"
     volumes:
       - ${APP_DATA_DIR}/data/config:/config
     healthcheck:
