@@ -68,10 +68,11 @@ services:
         if [ ! -s /secrets/mastodon.env ]; then
           bundle exec rake mastodon:webpush:generate_vapid_key > /secrets/mastodon.env
         fi
-        if bin/rails runner "exit 0 if User.exists?(email: ENV['ADMIN_EMAIL'])"; then
+        if bin/rails runner "exit 1 unless User.exists?(email: ENV['ADMIN_EMAIL'])"; then
           echo admin-exists
         else
-          bin/tootctl accounts create admin --email=$ADMIN_EMAIL --confirmed --role Owner
+          echo creating-admin
+          bin/tootctl accounts create admin --email="$$ADMIN_EMAIL" --confirmed --role Owner
         fi
         bin/rails runner "u = User.find_by(email: ENV['ADMIN_EMAIL']); exit 0 unless u; unless u.valid_password?(ENV['ADMIN_PASSWORD']); u.password = ENV['ADMIN_PASSWORD']; u.password_confirmation = ENV['ADMIN_PASSWORD']; u.save!; end"
         echo password-synced
