@@ -2,24 +2,27 @@ manifestVersion: 1
 id: n8n
 category: automation
 name: n8n
-version: "2.35.5"
+version: "2.35.7"
 releaseNotes: >-
-  ⚠️ If you're updating from n8n 2.27.3 or earlier, this update includes the database index migration for workflow executions introduced in 2.27.4. Large n8n instances may take several minutes to finish the migration.
+  Updates n8n from 2.35.5 to 2.35.7.
 
 
-  This update fixes task-runner handling so slow runners are not restarted unnecessarily.
+  Fixes included:
 
 
-  Test webhook teardown is now handled more cleanly, and the expression engine only starts for commands that need it.
+  - Environment values are normalized before schema-based parsing, so configs that previously misparsed now behave predictably.
+
+  - End-user credentials resolve correctly when loading node parameters.
+
+  - A trigger's closeFunction is wrapped in an expression isolate at creation time.
+
+  - The AI Assistant model verification token limit was raised.
 
 
-  The editor's Edit Fields type selector styles have been restored.
+  No migration or manual action is needed for this update; existing workflows and credentials are preserved.
 
 
-  Public Form Trigger paths (`/form/*`, `/form-test/*`, `/form-waiting/*`) remain available without Umbrel login, while the n8n editor remains protected by your Umbrel login.
-
-
-  Full release notes can be found at https://github.com/n8n-io/n8n/releases/tag/n8n%402.35.5
+  Full upstream release notes: https://github.com/n8n-io/n8n/releases/tag/n8n%402.35.7
 tagline: Build complex workflows, really fast
 description: >-
   n8n is an extendable workflow automation tool. With a fair-code distribution model, n8n will always have visible source code, 
