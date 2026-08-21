@@ -1,0 +1,72 @@
+# Umbrel app manifest. Field order and rules verified against Umbrel's own
+# app-store packaging guidance (getumbrel/umbrel-apps .claude/skills/
+# umbrel-package-app, as of 2026-08) plus a real shipped manifest
+# (getumbrel/umbrel-apps/mempool/umbrel-app.yml) as a field-shape reference.
+#
+# This file targets an OFFICIAL App Store submission (a PR to
+# getumbrel/umbrel-apps), which is why `icon` is omitted and `gallery` is
+# empty — see the notes on each below. If instead self-publishing this app
+# through a personal Umbrel Community App Store
+# (github.com/getumbrel/umbrel-community-app-store), add `icon:` and
+# `gallery:` back in as plain hosted URLs (that template's apps reference
+# externally-hosted images, not files bundled in the package) and prefix
+# `id` with your store's id.
+#
+# Official-submission notes:
+#   - Omit `icon`. Official icons are hosted with the App Store's other
+#     image assets outside the package repo; icon.svg (repo root, 1024px
+#     Click Miner mark) is submitted via the PR body instead, as source art.
+#   - Use `gallery: []`. The Umbrel team adds gallery images before merge
+#     from screenshots attached to the PR body — see docs/screenshots/ in
+#     this repo. Do not commit gallery images to the package itself.
+#   - `port: 3019` was picked by cross-checking both manifest `port:`
+#     values and raw docker-compose host-published ports across every app
+#     in a clone of getumbrel/umbrel-apps (as of 2026-08) — the linter
+#     catches manifest-vs-manifest collisions but not manifest-vs-raw-port
+#     ones, so both had to be checked by hand. Re-verify before submitting
+#     if much time has passed.
+#   - `docker-compose.yml`'s `build: .` must become a pinned, multi-arch,
+#     publicly pullable image (registry/repo:version@sha256:<digest>)
+#     before this is submission-ready. See
+#     .github/workflows/docker-publish.yml, which builds and pushes one.
+
+manifestVersion: 1
+id: click-miner
+category: bitcoin
+name: Click Miner
+version: "0.1.0"
+tagline: The world's least efficient Bitcoin miner
+description: >-
+  A free, open-source, educational manual Bitcoin miner. Click a button and
+  the app assembles one real block header from your own node's live data,
+  computes a single SHA256d hash against the current network target, and
+  shows you exactly what mining does — one hash at a time.
+
+
+  Requires an installed Bitcoin node app (Bitcoin Core or Bitcoin Knots) —
+  RPC connection details are filled in automatically from it. After
+  install, open the Settings tab and enter only your payout address (any
+  address type works); that's the only setup step. On the (nearly
+  impossible) chance you find a block, the reward pays out there directly.
+
+
+  Not a pool, not competitive, not financial advice — just you against
+  2^256.
+releaseNotes: "Initial release."
+
+developer: Click Miner Contributors
+website: "https://github.com/owencoles/Click-Miner"
+dependencies:
+  - bitcoin
+repo: "https://github.com/owencoles/Click-Miner"
+support: "https://github.com/owencoles/Click-Miner/issues"
+
+port: 3019
+gallery: []
+path: ""
+
+defaultUsername: ""
+defaultPassword: ""
+
+submitter: owencoles
+submission: ""
