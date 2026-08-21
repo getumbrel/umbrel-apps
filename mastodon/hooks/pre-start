@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+APP_DIR="${APP_DATA_DIR:-$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")}"
+DATA_DIR="${APP_DIR}/data"
+
+# mastodon image runs as uid/gid 991; ensure writable dirs
+mkdir -p "${DATA_DIR}/uploads" "${DATA_DIR}/secrets" "${DATA_DIR}/postgres" "${DATA_DIR}/redis"
+chown -R 991:991 "${DATA_DIR}/uploads" "${DATA_DIR}/secrets"
+# ensure the secrets env_file exists before compose parses it
+touch "${DATA_DIR}/secrets/mastodon.env"
