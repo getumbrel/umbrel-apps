@@ -57,25 +57,18 @@ services:
       EMAIL_DOMAIN_ALLOWLIST: umbrel.local
       ADMIN_EMAIL: admin@umbrel.local
       ADMIN_PASSWORD: mastodon-umbrel
-    volumes:
-      - ${APP_DATA_DIR}/data/secrets:/secrets
     entrypoint: ["bash", "-c"]
     command:
       - |
         set -e
         until (exec 3<>/dev/tcp/db/5432) 2>/dev/null; do sleep 2; done
         bin/rails db:prepare
-        if [ ! -s /secrets/mastodon.env ]; then
-          bundle exec rake mastodon:webpush:generate_vapid_key > /secrets/mastodon.env
-        fi
         if bin/rails runner "exit 1 unless User.exists?(email: ENV['ADMIN_EMAIL'])"; then
           echo admin-exists
         else
           echo creating-admin
           bin/tootctl accounts create admin --email="$$ADMIN_EMAIL" --confirmed --role Owner
         fi
-        bin/rails runner "u = User.find_by(email: ENV['ADMIN_EMAIL']); exit 0 unless u; unless u.valid_password?(ENV['ADMIN_PASSWORD']); u.password = ENV['ADMIN_PASSWORD']; u.password_confirmation = ENV['ADMIN_PASSWORD']; u.save!; end"
-        echo password-synced
         echo init-done
     user: "991:991"
 
@@ -102,8 +95,6 @@ services:
       ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY: ${APP_MASTODON_AR_PRIMARY}
       LOCAL_DOMAIN: ${APP_DOMAIN}
       WEB_DOMAIN: ${APP_DOMAIN}
-    env_file:
-      - ${APP_DATA_DIR}/data/secrets/mastodon.env
     volumes:
       - ${APP_DATA_DIR}/data/uploads:/mastodon/public/system
     command: ["bundle", "exec", "puma", "-p", "3000"]
@@ -131,8 +122,6 @@ services:
       ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY: ${APP_MASTODON_AR_PRIMARY}
       LOCAL_DOMAIN: ${APP_DOMAIN}
       WEB_DOMAIN: ${APP_DOMAIN}
-    env_file:
-      - ${APP_DATA_DIR}/data/secrets/mastodon.env
     command: ["node", "./streaming/index.js"]
   sidekiq:
     image: tootsuite/mastodon:v4.7.0@sha256:207fbb6199e7bc6edb59dad30e55f398f9a4b165c7d757e3f781a15cd85093c4
@@ -156,8 +145,6 @@ services:
       ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY: ${APP_MASTODON_AR_PRIMARY}
       LOCAL_DOMAIN: ${APP_DOMAIN}
       WEB_DOMAIN: ${APP_DOMAIN}
-    env_file:
-      - ${APP_DATA_DIR}/data/secrets/mastodon.env
     volumes:
       - ${APP_DATA_DIR}/data/uploads:/mastodon/public/system
     command: ["bundle", "exec", "sidekiq"]
