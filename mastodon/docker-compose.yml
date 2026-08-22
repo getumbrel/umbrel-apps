@@ -69,6 +69,8 @@ services:
           echo creating-admin
           bin/tootctl accounts create admin --email="$$ADMIN_EMAIL" --confirmed --role Owner
         fi
+        bin/rails runner "u = User.find_by(email: ENV['ADMIN_EMAIL']); exit 0 unless u; unless u.valid_password?(ENV['ADMIN_PASSWORD']); u.password = ENV['ADMIN_PASSWORD']; u.password_confirmation = ENV['ADMIN_PASSWORD']; u.save!; end"
+        echo password-synced
         echo init-done
     user: "991:991"
 
@@ -96,8 +98,19 @@ services:
       LOCAL_DOMAIN: ${APP_DOMAIN}
       WEB_DOMAIN: ${APP_DOMAIN}
     volumes:
-      - ${APP_DATA_DIR}/data/uploads:/mastodon/public/system
-    command: ["bundle", "exec", "puma", "-p", "3000"]
+      - ${APP_DATA_DIR}/data/uploads:/opt/mastodon/public/system
+    user: "0:0"
+    command:
+      - bash
+      - -c
+      - |
+        # Umbrel serves apps over LAN HTTP behind app_proxy; Mastodon 4.7
+        # hardcodes config.force_ssl = true in production.rb, which would
+        # redirect every page to unreachable https://<device>.local URLs.
+        # The image runs as uid 991 but config/initializers is root-owned,
+        # so this service starts as root, installs the override, and serves.
+        printf 'Rails.application.config.force_ssl = false\n' > /opt/mastodon/config/initializers/zz_force_ssl_off.rb
+        exec bundle exec puma -p 3000
 
   streaming:
     image: ghcr.io/mastodon/mastodon-streaming:v4.7.0@sha256:5f5c6fee47c3cd39fe15b6bf968b36dfcc778c58e78788e1bce04df5d4b29284
@@ -146,7 +159,7 @@ services:
       LOCAL_DOMAIN: ${APP_DOMAIN}
       WEB_DOMAIN: ${APP_DOMAIN}
     volumes:
-      - ${APP_DATA_DIR}/data/uploads:/mastodon/public/system
+      - ${APP_DATA_DIR}/data/uploads:/opt/mastodon/public/system
     command: ["bundle", "exec", "sidekiq"]
 
   nginx:
