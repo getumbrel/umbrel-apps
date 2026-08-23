@@ -2,7 +2,7 @@ manifestVersion: 1
 id: hashrate-autopilot
 category: bitcoin
 name: Hashrate Autopilot
-version: "1.18.1"
+version: "1.18.2"
 tagline: Autopilot for renting hashrate to mine on Ocean Mining
 
 description: >-
@@ -73,25 +73,19 @@ defaultPassword: ""
 submitter: Remco Douma
 submission: https://github.com/getumbrel/umbrel-apps/pull/5685
 releaseNotes: >-
-  v1.18.1 - the v1.18.0 feature release plus an emergency fix that protects and restores unpaid-earnings history.
+  v1.18.2 - the autopilot now protects your account from marketplace penalties, and the dashboard always tells you why bidding stopped.
 
 
-  Fixed: a boot-time data cleanup could wipe the entire unpaid-earnings chart history if the unpaid balance ever legitimately climbed above 1.5M sats (larger hashrate targets, or an Ocean payout landing late). The cleanup is now strictly fenced to the old spring-2026 data problem it was written for, the daemon heals previously wiped history automatically on startup from its own decision log, and operators holding an old database copy can merge the remainder back via an ocean-unpaid-import.json drop-in. Recovery runs automatically after the update.
+  Fixed: when a bid action fails, the dashboard shows the marketplace's own error message next to the FAILED badge instead of leaving you guessing, and an alert fires after repeated failures with the reason in the Telegram message.
 
 
-  v1.18.0 - choose which Ocean chain you mine on: full support for miners on Ocean's BIP110 endpoint.
+  New protections against the failure chain that got one operator's pool target temporarily blacklisted by the marketplace: the autopilot stops re-creating bids after three create/cancel cycles that delivered nothing (resume manually once the cause is fixed), a marketplace blacklist is detected and waited out automatically with a countdown instead of a failing attempt every minute, and when your Bitcoin node goes unresponsive the autopilot cancels active bids and holds new ones - rented hashrate never burns against a pool that cannot produce work.
 
 
-  New: Ocean chain selector (Config, Pool & Payout). Since the August 8 chain split, Ocean mines two chains with separate accounting, and miners on the BIP110 endpoint saw their Ocean stats stuck at zero because the dashboard read the mainstream chain's API. Declare which chain you mine on and the app adapts; mainstream (the default) is unchanged, and switching takes effect within a minute with no restart.
+  Periods where bidding was held or kept failing now draw a hatched band across the charts and appear on the Timeline; long-lived conditions no longer falsely show "Recovered" after six hours; and gaps in the unpaid-earnings history left by the v1.18.1 recovery are filled by interpolating strictly between adjacent real readings, never across a payout.
 
 
-  On the BIP110 chain, Ocean provides no API (confirmed by Ocean support - none exists, none is planned, and scraping is not supported), so the app is honest about the gap instead of showing misleading zeros: the Ocean panel explains why hashrate, share log, and unpaid earnings can't be shown, and your collected earnings are derived directly from on-chain payouts seen by your own Bitcoin node. Lightning payouts can't be tracked there, and the panel says so. An Electrum server pointed at a node following the BIP110 chain is recommended.
-
-
-  No hashprice exists on the BIP110 chain, so the hashprice-based dynamic price cap and cheap mode are disabled there with a clear explanation - your fixed Maximum bid remains the only price ceiling and the autopilot keeps bidding. Stats tiles and chart options that need Ocean data are marked "n/a on BIP110" instead of showing dashes, and anything recorded before you switched chains still plots.
-
-
-  A new README chapter, "Mining on Ocean's BIP110 chain", walks through setup and summarizes exactly what changes. Also includes routine dependency maintenance (including a js-yaml security pin). Safe to upgrade from any 1.17.x release; if you mine mainstream Ocean, nothing changes.
+  Project note: the README now carries a maintenance-mode notice for the project's current SHA-256 form. Everything keeps working and this update is safe from any 1.17.x or 1.18.x release; read the notice before planning around future feature work.
 
 
   Migrating from the community-store version (rdouma-hashrate-autopilot)? One-time five-minute guide: https://github.com/rdouma/hashrate-autopilot/blob/main/docs/migrating-from-community-store.md
