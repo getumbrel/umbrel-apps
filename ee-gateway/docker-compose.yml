@@ -34,7 +34,7 @@ services:
   # extra download, and it is the only place root is used. This is NOT privileged
   # mode; the app containers themselves stay non-root.
   init_perms:
-    image: encryptedenergy/ee-gateway-worker:0.8.0@sha256:816e236ff47052e5d081cc4a99f56c40434df33aba1b0efd0badc4d30902ae04
+    image: encryptedenergy/ee-gateway-worker:0.8.1@sha256:cd0aa7400fedf314e826e00c6152025c1fe60d5a5c7594cafc49a7f3ddaa6258
     user: "0:0"
     entrypoint: ["sh", "-c", "chown -R 1000:1000 /data"]
     restart: on-failure
@@ -47,7 +47,7 @@ services:
   # Runs as uid 1000 (set in the image). init: true so SIGTERM reaches Flask
   # for a clean shutdown.
   ui:
-    image: encryptedenergy/ee-gateway-ui:0.6.4@sha256:c30e4b2a2bd640005499e4fe564a04f6650b920c0726b15e2437eaa41ffb25eb
+    image: encryptedenergy/ee-gateway-ui:0.6.5@sha256:cdfb8866e677ab206549c5ffab6bff7e9055969997230601ac098e2778ff0b5f
     init: true
     restart: on-failure
     depends_on:
@@ -67,7 +67,7 @@ services:
   # Python process runs as uid 1000; gpsd starts as root only to open the
   # serial device, then drops to user nobody.
   worker:
-    image: encryptedenergy/ee-gateway-worker:0.8.0@sha256:816e236ff47052e5d081cc4a99f56c40434df33aba1b0efd0badc4d30902ae04
+    image: encryptedenergy/ee-gateway-worker:0.8.1@sha256:cd0aa7400fedf314e826e00c6152025c1fe60d5a5c7594cafc49a7f3ddaa6258
     init: true
     restart: on-failure
     depends_on:
