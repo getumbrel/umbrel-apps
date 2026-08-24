@@ -7,9 +7,13 @@ services:
       APP_PORT: 8000
 
   web:
-    image: ghcr.io/quad4-software/meshchatx:4.8.4@sha256:6d49275cd66d1b7c97a4bddf6dcb5fd122191fd678a2f8edb18f25aa2226e75a
+    image: ghcr.io/quad4-software/meshchatx:4.8.5@sha256:ab9d73028f9da1c15274a08a8fe2d937f7f613e68289cdc28931af0df0c2cb63
     restart: on-failure
     user: "1000:1000"
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/status')"]
       interval: 30s
