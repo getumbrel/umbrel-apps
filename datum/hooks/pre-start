@@ -1,35 +1,67 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
-# This pre-start script updates the datum_gateway_config.json file with the user's Knots RPC configuration
+# This pre-start script updates datum_gateway_config.json with the selected Bitcoin node's RPC configuration.
 
-APP_DATA_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")"
-DATUM_CONFIG_FILE="${APP_DATA_DIR}/data/settings/datum_gateway_config.json"
+APP_DIR="${APP_DATA_DIR:-$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")}"
+APP_SETTINGS_FILE="${APP_DIR}/settings.yml"
+DATUM_CONFIG_FILE="${APP_DIR}/data/settings/datum_gateway_config.json"
+KNOTS_APP_DIR="${UMBREL_ROOT}/app-data/bitcoin-knots"
 DESIRED_OWNER="1000:1000"
+migrate_to_knots=false
 
-if [ -f "${DATUM_CONFIG_FILE}" ]; then
+if [[ -f "${DATUM_CONFIG_FILE}" ]]; then
   echo "Checking DATUM configuration file."
-  
-  # Check if Knots environment variables are set
-  if [ -z "${APP_BITCOIN_KNOTS_RPC_USER}" ] || [ -z "${APP_BITCOIN_KNOTS_RPC_PASS}" ] || [ -z "${APP_BITCOIN_KNOTS_NODE_IP}" ] || [ -z "${APP_BITCOIN_KNOTS_INTERNAL_RPC_PORT}" ]; then
-    echo "Missing Bitcoin Knots environment variables. Exiting."
-    exit 1
-  fi
-  
-  echo "Initializing DATUM config with Bitcoin Knots RPC settings."
-    
-  # Update the configuration
-  jq --arg user "$APP_BITCOIN_KNOTS_RPC_USER" \
-     --arg pass "$APP_BITCOIN_KNOTS_RPC_PASS" \
-     --arg url "${APP_BITCOIN_KNOTS_NODE_IP}:${APP_BITCOIN_KNOTS_INTERNAL_RPC_PORT}" \
-     '.bitcoind.rpcuser = $user | 
-      .bitcoind.rpcpassword = $pass | 
-      .bitcoind.rpcurl = $url' \
-     "$DATUM_CONFIG_FILE" > "${DATUM_CONFIG_FILE}.tmp" && mv "${DATUM_CONFIG_FILE}.tmp" "$DATUM_CONFIG_FILE"
 
-  # reset permissions
-  chown "${DESIRED_OWNER}" "$DATUM_CONFIG_FILE"
-    
-  echo "DATUM configuration updated successfully."
+  selected_bitcoin="$(yq e '.dependencies.bitcoin // ""' "${APP_SETTINGS_FILE}" 2>/dev/null || true)"
+  legacy_selection="$(yq e '.dependencies["bitcoin-knots"] // ""' "${APP_SETTINGS_FILE}" 2>/dev/null || true)"
+  configured_rpc_url="$(jq -r '.bitcoind.rpcurl // ""' "${DATUM_CONFIG_FILE}" 2>/dev/null || true)"
+
+  if [[ -z "${selected_bitcoin}" ]]; then
+    if [[ "${legacy_selection}" == "bitcoin-knots" ]]; then
+      migrate_to_knots=true
+    elif [[ -d "${KNOTS_APP_DIR}" ]] && [[ -n "${configured_rpc_url}" ]] && [[ "${configured_rpc_url}" != "auto-configure-on-install" ]]; then
+      # Older installs predate saved dependency selections. A configured DATUM
+      # instance with Bitcoin Knots installed is an existing Knots-backed install.
+      migrate_to_knots=true
+    fi
+  fi
+
+  if [[ "${migrate_to_knots}" == true ]]; then
+    if [[ -f "${APP_SETTINGS_FILE}" ]]; then
+      yq -i '.dependencies.bitcoin = "bitcoin-knots" | del(.dependencies["bitcoin-knots"])' "${APP_SETTINGS_FILE}"
+    else
+      printf 'dependencies:\n  bitcoin: bitcoin-knots\n' > "${APP_SETTINGS_FILE}"
+    fi
+    echo "Migrated existing DATUM dependency selection to Bitcoin Knots."
+
+    # Dependencies were sourced before this hook ran, so this invocation may
+    # have RPC variables from the new default rather than the saved legacy
+    # selection. Keep the existing Knots RPC config for this transitional start.
+    echo "Keeping the existing RPC configuration for this start."
+  else
+    bitcoin_rpc_user="${APP_BITCOIN_RPC_USER:-${APP_BITCOIN_KNOTS_RPC_USER:-}}"
+    bitcoin_rpc_pass="${APP_BITCOIN_RPC_PASS:-${APP_BITCOIN_KNOTS_RPC_PASS:-}}"
+    bitcoin_node_ip="${APP_BITCOIN_NODE_IP:-${APP_BITCOIN_KNOTS_NODE_IP:-}}"
+    bitcoin_rpc_port="${APP_BITCOIN_RPC_PORT:-${APP_BITCOIN_KNOTS_INTERNAL_RPC_PORT:-${APP_BITCOIN_KNOTS_RPC_PORT:-}}}"
+
+    if [[ -z "${bitcoin_rpc_user}" ]] || [[ -z "${bitcoin_rpc_pass}" ]] || [[ -z "${bitcoin_node_ip}" ]] || [[ -z "${bitcoin_rpc_port}" ]]; then
+      echo "Missing selected Bitcoin node RPC environment variables. Exiting."
+      exit 1
+    fi
+
+    echo "Initializing DATUM config with the selected Bitcoin node's RPC settings."
+
+    jq --arg user "${bitcoin_rpc_user}" \
+       --arg pass "${bitcoin_rpc_pass}" \
+       --arg url "${bitcoin_node_ip}:${bitcoin_rpc_port}" \
+       '.bitcoind.rpcuser = $user |
+        .bitcoind.rpcpassword = $pass |
+        .bitcoind.rpcurl = $url' \
+       "$DATUM_CONFIG_FILE" > "${DATUM_CONFIG_FILE}.tmp" && mv "${DATUM_CONFIG_FILE}.tmp" "$DATUM_CONFIG_FILE"
+
+    echo "DATUM configuration updated successfully."
+  fi
 
   if jq -e '.mining.pool_address | select(. == "enter your bitcoin address")' "$DATUM_CONFIG_FILE" > /dev/null; then
 
@@ -51,6 +83,8 @@ if [ -f "${DATUM_CONFIG_FILE}" ]; then
   else
     echo "Admin password already set"
   fi
+
+  chown "${DESIRED_OWNER}" "${DATUM_CONFIG_FILE}"
 
 else
   echo "DATUM configuration file not found. Installation incomplete."
