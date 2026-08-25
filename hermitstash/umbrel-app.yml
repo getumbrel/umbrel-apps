@@ -2,7 +2,7 @@ manifestVersion: 1
 id: hermitstash
 category: files
 name: HermitStash
-version: "1.14.2"
+version: "1.15.3"
 tagline: Post-quantum encrypted self-hosted file sharing
 description: >-
   HermitStash is a self-hosted file upload server with post-quantum encryption. Every file and database field is sealed with an ML-KEM-1024 + ECDH P-384 hybrid envelope and XChaCha20-Poly1305 before touching disk; passwords use Argon2id. Nothing is stored in plaintext, including database fields the operator never thinks of as sensitive.
@@ -31,16 +31,19 @@ defaultPassword: ""
 submitter: dotCooCoo
 submission: https://github.com/getumbrel/umbrel-apps/pull/5378
 releaseNotes: >-
-  This release moves the mutual-TLS certificate authority for sync clients to post-quantum ML-DSA-87 (FIPS 204), migrates existing installs to it automatically, and lands a broad round of security hardening across the upload, authentication, admin, and audit surfaces.
+  Everything since 1.14.2. Four of these fix things that only went wrong on umbrel, because the app is reached over plain HTTP through the app proxy here rather than over a domain of its own.
 
-  - The sync certificate authority now signs with post-quantum ML-DSA-87 (FIPS 204) by default. An existing classical authority migrates itself automatically at startup on a capable runtime; the migration is crash-safe and keeps existing sync certificates verifying through a 30-day grace window while their owners re-enroll.
-  - The certificates people import into a browser or OS keystore stay on a separate classical ECDSA P-384 authority so they remain universally importable, while machine sync certificates go post-quantum. The certificate engine moves to the zero-dependency @blamejs/pki toolkit.
-  - In the admin panel, the mutual-TLS certificate-authority view reflects the split between the post-quantum sync authority and the classical browser authority, shows each authority's algorithm and generation, and surfaces the auto-migration grace window on the Danger Zone card.
-  - File and bundle changes now enforce the API key's certificate binding and its stash and bundle confinement, so a bearer token presented without its client certificate can no longer reach another key's resources.
-  - Chunked-upload reassembly memory is bounded even under a no-limit policy, and the shared bundle behind a public sync stash can no longer be overwritten by an unauthenticated request.
-  - The tamper-evident audit chain no longer interleaves retention cleanup with encrypted archival, outbound webhooks are signed under the Standard Webhooks scheme for replay protection, and account-enumeration timing is closed on password-reset, email-verification, and access-code requests.
-  - Authentication is tightened: the soft mTLS gate validates a presented bearer token, passkey verification runs before any account-status check, repeated second-factor failures count against the pending sign-in, and operator-supplied legal-policy text is HTML-sanitized before rendering.
-  - Reliability fixes: an oversized request on an encrypted session returns a Payload Too Large response instead of resetting the connection, a negative numeric setting falls back to its default, access-code attempts are counted atomically, and a storage error mid-download no longer crashes the process. The container base image is also refreshed to clear a high-severity npm advisory (CVE-2026-14257).
+  - The image carries a fix for a high-severity OpenSSL flaw, a denial of service through unbounded memory. It was disclosed after the previous image was built, so that image scanned clean when it shipped and does not now. Updating is the whole of the fix. Nothing you have configured changes.
+  - Anything you host publicly can be found again. The bot filter refused any request that omitted an Accept-Language header, and every major search-engine crawler omits it. Google documents that Googlebot does. A browser was served normally, so the refusal was invisible unless you looked at what a crawler received. Uptime monitors and link previewers were turned away the same way. A request carrying no user agent at all is still refused.
+  - This app told the server to trust the proxy in front of it using a value the server does not accept. The setting was discarded, so every request was attributed to the app proxy rather than to whoever made it: one rate limit shared by everyone, the proxy's address in the audit log, and the admin network fence matched against the proxy. It now names umbrel's own network, and all three work per-client again.
+  - Signing out clears the session cookie. The cookie that ends a session was marked HTTPS-only, and a browser refuses one of those over plain HTTP, so it was discarded and the old cookie stayed. The session itself was always destroyed, so nothing remained usable. The cookie still lingered and was sent on every later request.
+  - Setting a timezone no longer reports it as invalid. The container checked the value against files the base image does not carry, so every timezone failed, including the Etc/UTC this app sets by default. The zone was applied correctly throughout. Only the warning was wrong.
+  - The app can answer on more than one hostname now, a tailnet name alongside the local one. Reached on a second name it used to refuse every sign-in, upload and settings change while ordinary pages kept loading. Additional origins can be declared, and one that has not been declared is still refused.
+  - Putting the app into maintenance mode no longer trips the health check, so umbrel stops restarting the container underneath you while you work.
+  - Verifying a two-factor backup code or a passkey compares every stored credential, so the time the check takes no longer reveals which one matched. Client certificates keep verifying across a renewal, and the certificate toolkit picks up a signature-forgery fix.
+  - Switching public uploads off now also holds back a bundle staged just before the switch. It could previously still publish, minting its share link and mailing the uploader.
+  - Uploads are screened before anything is written, archives are opened and inspected rather than taken at their word, and the cost of screening stays in proportion to the size of what was sent. Outgoing email escapes link URLs and rate limits verification links. Filenames and CSV exports have invisible characters stripped, so two entries cannot look identical on screen while differing in storage.
+  - A corrupt vault key is reported as corrupt rather than as an old one, which is the difference between restoring a backup and chasing a migration that was never needed.
 
-  Full release notes can be found at https://github.com/dotCooCoo/hermitstash/releases/tag/v1.14.2
+  Per-version notes: https://github.com/dotCooCoo/hermitstash/releases
 dependencies: []

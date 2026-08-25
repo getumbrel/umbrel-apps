@@ -7,7 +7,7 @@ services:
       APP_PORT: 3000
 
   web:
-    image: ghcr.io/dotcoocoo/hermitstash:1.14.2@sha256:46f5c4ba6ed9ddeff93963cf60084c4c9b531918dec9f7b9eea56193786cf9f8
+    image: ghcr.io/dotcoocoo/hermitstash:1.15.3@sha256:9069415e620760d860275f25b6e2ac0069a624a7552119df0dfd8d33faae0dcd
     user: "1000:1000"
     init: true
     restart: on-failure
@@ -35,7 +35,14 @@ services:
       UMASK: "022"
       TZ: "Etc/UTC"
       NODE_ENV: production
-      TRUST_PROXY: "true"
+      # The addresses app_proxy connects from, as a CIDR. The app rejects
+      # "true" and discards the setting, which attributes every request to
+      # app_proxy: one rate-limit bucket shared by all clients, the proxy's
+      # address in the audit log, and the admin network fence matched against
+      # the proxy rather than the admin. 10.21.0.0/16 is umbrel_main_network,
+      # declared in umbrel's own compose as `subnet: $NETWORK_IP/16` with
+      # NETWORK_IP=10.21.0.0.
+      TRUST_PROXY: "10.21.0.0/16"
       # Public origin — used to build share URLs in upload responses and to
       # pin the WebAuthn relying-party origin. ${DEVICE_DOMAIN_NAME} is the
       # umbrel-supplied hostname (e.g. umbrel.local); the app reaches it
