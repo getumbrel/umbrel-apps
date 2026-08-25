@@ -2,7 +2,7 @@ manifestVersion: 1
 id: yuvomi
 category: files
 name: Yuvomi
-version: "2.39.0"
+version: "2.44.0"
 tagline: Self-hosted family planner — calendar, tasks, shopping, meals & budget
 description: >-
   Yuvomi is a self-hosted, privacy-focused family planner that bundles everything
@@ -51,31 +51,39 @@ description: >-
   Open Yuvomi from your Umbrel dashboard and create the first account — that
   account becomes the family admin and can invite the rest of the household.
 releaseNotes: >-
-  Dragging your task categories into the order you want now actually changes the
-  order you see. Until this release the tasks page ignored it and sorted the
-  groups alphabetically instead, so a category you had pulled to the top stayed
-  wherever the alphabet put it. The order you set in "Manage categories" is now
-  the order the groups appear in, in every language.
+  The Tasks module now keeps a history of what was completed. Until now a task
+  simply carried the state "done", and nothing recorded when that happened or
+  who did it - so questions like "what did I get through today", "when did we
+  last clean the bathroom" or "who took the bins out" had no answer anywhere. A
+  third view sits beside List and Board: what was ticked off, grouped by day,
+  newest first, with the household member and the time. You can narrow it to one
+  person, and tapping an entry opens the task itself.
 
 
-  If you sign in to Yuvomi through your own identity provider, you can now
-  decide whether it may create accounts. Until now anyone who could sign in at
-  your provider got a Yuvomi account on their first attempt, which is fine when
-  you run that provider for this household alone and rather less so when you do
-  not. Setting OIDC_ALLOW_SIGNUP to false turns that off: people who already
-  have an account still sign in as before, and an account you created by hand is
-  still matched up on their first sign-in, but an unfamiliar login is turned
-  away with a message saying so instead of quietly becoming a new member of your
-  household.
+  A repeating task also shows when it was last done, going back through the
+  whole series rather than just the copy currently open. That is the question a
+  weekly chore actually raises, and it is the one the old "done" flag could
+  never answer, because completing a repeating task creates a fresh copy each
+  time.
 
 
-  Nothing needs configuring and nothing changes about your data. The new setting
-  only takes effect if you set it yourself, so an existing installation behaves
-  exactly as it did before.
+  The history starts empty, and that is expected. Recording begins with this
+  update - what your household ticked off before it was never written down
+  anywhere, so there is nothing to show yet. It fills up from the first task you
+  complete after updating.
+
+
+  The list respects who may see what, exactly as the task list does. A task kept
+  private stays out of everyone else's history, including after the fact: set a
+  task to private later, and it disappears from the history too.
+
+
+  Nothing needs configuring and there is nothing to do after the update - the
+  new table is created automatically on first start.
 
 
   Full release notes are available at
-  https://github.com/ulsklyc/yuvomi/releases/tag/v2.39.0
+  https://github.com/ulsklyc/yuvomi/releases/tag/v2.44.0
 backupIgnore:
   - data/app/yuvomi.db.plaintext-backup*
   - data/backups/*.db
