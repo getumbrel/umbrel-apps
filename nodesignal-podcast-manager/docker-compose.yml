@@ -65,7 +65,7 @@ services:
     # One-shot: generates a valid Fernet key (32 bytes urlsafe-base64)
     # into data/secret/fernet.key, if it doesn't already exist. Idempotent.
     # Needs no DB — only write access to data/secret.
-    image: ghcr.io/altbierjupp/sovereigncast:0.3.6@sha256:f6788c75400823d9e9190e79669f781055bde1a04766a3d61ef0b3f85c58295f
+    image: ghcr.io/altbierjupp/sovereigncast:0.4.0@sha256:86536cf2131f261273ca9a0cfbffb6dc8406146c8c677d031616ca7d12ea40e7
     restart: on-failure
     user: "1000:1000"
     volumes:
@@ -93,7 +93,7 @@ services:
     # 1000:1000 directories are left untouched. /data/backups is only chowned at
     # directory level (it can hold many/large backups — not -R); files inside it
     # are created 1000-owned by the web app (uid 1000) itself.
-    image: ghcr.io/altbierjupp/sovereigncast:0.3.6@sha256:f6788c75400823d9e9190e79669f781055bde1a04766a3d61ef0b3f85c58295f
+    image: ghcr.io/altbierjupp/sovereigncast:0.4.0@sha256:86536cf2131f261273ca9a0cfbffb6dc8406146c8c677d031616ca7d12ea40e7
     restart: on-failure
     user: "0:0"
     volumes:
@@ -140,7 +140,7 @@ services:
     # migrator/web don't start (better down than on a half-restored DB).
     # On success, sets /data/secret/.admin-seeded if the DB already contains
     # users, so admin-init doesn't overwrite the restored password.
-    image: ghcr.io/altbierjupp/sovereigncast:0.3.6@sha256:f6788c75400823d9e9190e79669f781055bde1a04766a3d61ef0b3f85c58295f
+    image: ghcr.io/altbierjupp/sovereigncast:0.4.0@sha256:86536cf2131f261273ca9a0cfbffb6dc8406146c8c677d031616ca7d12ea40e7
     restart: on-failure
     user: "1000:1000"
     depends_on:
@@ -181,7 +181,7 @@ services:
     # (plain ALTER TABLE ADD COLUMN) and ASSUMES the base tables already exist.
     # On a fresh DB it fails immediately with "relation episodes does not exist"
     # and restart: on-failure puts it into an endless loop.
-    image: ghcr.io/altbierjupp/sovereigncast:0.3.6@sha256:f6788c75400823d9e9190e79669f781055bde1a04766a3d61ef0b3f85c58295f
+    image: ghcr.io/altbierjupp/sovereigncast:0.4.0@sha256:86536cf2131f261273ca9a0cfbffb6dc8406146c8c677d031616ca7d12ea40e7
     restart: on-failure
     user: "1000:1000"
     depends_on:
@@ -214,7 +214,7 @@ services:
     # .admin-seeded prevents a password the user changed later from being
     # reset on every start). create_admin.py uses the env fallback when no
     # CLI args are set — so no ${...} interpolation is needed in the command.
-    image: ghcr.io/altbierjupp/sovereigncast:0.3.6@sha256:f6788c75400823d9e9190e79669f781055bde1a04766a3d61ef0b3f85c58295f
+    image: ghcr.io/altbierjupp/sovereigncast:0.4.0@sha256:86536cf2131f261273ca9a0cfbffb6dc8406146c8c677d031616ca7d12ea40e7
     restart: on-failure
     user: "1000:1000"
     depends_on:
@@ -239,7 +239,7 @@ services:
         touch /data/secret/.admin-seeded
 
   web:
-    image: ghcr.io/altbierjupp/sovereigncast:0.3.6@sha256:f6788c75400823d9e9190e79669f781055bde1a04766a3d61ef0b3f85c58295f
+    image: ghcr.io/altbierjupp/sovereigncast:0.4.0@sha256:86536cf2131f261273ca9a0cfbffb6dc8406146c8c677d031616ca7d12ea40e7
     restart: on-failure
     # Hypercorn ends itself within --graceful-timeout (30s, see
     # docker/web-bots.Dockerfile) after SIGTERM, well before this deadline.
@@ -264,7 +264,7 @@ services:
       # Umbrel App Store / image release, not via git pull. On an image bump,
       # this version must be kept in sync with the image tag/manifest.
       PODCAST_MANAGER_DEPLOYMENT: umbrel
-      PODCAST_MANAGER_VERSION: "0.3.6"
+      PODCAST_MANAGER_VERSION: "0.4.0"
     working_dir: /app/podcast_manager
     volumes:
       - ${APP_DATA_DIR}/data/secret:/data/secret:ro
@@ -299,7 +299,7 @@ services:
   worker:
     # Heavy image (ffmpeg + faster-whisper + pyannote + torch, CPU-only).
     # Purely DB-driven (polls processing_queue) — idles when there are no jobs.
-    image: ghcr.io/altbierjupp/sovereigncast-worker:0.3.6@sha256:40900b8ee27a93a5342377897b02156fbdde9b66f368200ce9d15e53369c38e9
+    image: ghcr.io/altbierjupp/sovereigncast-worker:0.4.0@sha256:ee266f29d7fc00493804919cdc5e2dfc991e1ba09d312a327340e54ef1fcc913
     restart: on-failure
     # Only spent when a job is actually running: after SIGTERM the worker claims no
     # further tasks and exits once the current one is done. Idle, it exits at once.
@@ -338,7 +338,7 @@ services:
     # the UI but nothing ever triggered them here.
     # Needs /data/backups writable (that is where the archives go) and the
     # asset directories readable, since a .nsbk bundles them with the database.
-    image: ghcr.io/altbierjupp/sovereigncast:0.3.6@sha256:f6788c75400823d9e9190e79669f781055bde1a04766a3d61ef0b3f85c58295f
+    image: ghcr.io/altbierjupp/sovereigncast:0.4.0@sha256:86536cf2131f261273ca9a0cfbffb6dc8406146c8c677d031616ca7d12ea40e7
     restart: on-failure
     # Lets an in-progress .nsbk archive (database + assets) finish writing instead
     # of leaving a truncated file behind.
@@ -368,12 +368,16 @@ services:
       - ${APP_DATA_DIR}/data/cover_templates:/app/podcast_manager/cover_templates:ro
       - ${APP_DATA_DIR}/data/audio_assets:/app/podcast_manager/audio_assets:ro
     command: ["python", "backup_scheduler.py"]
-
+    # This service runs a scheduler, not a web server — disable the image's
+    # web healthcheck (curl localhost:2100) which would otherwise mark it
+    # permanently unhealthy (issue #15).
+    healthcheck:
+      disable: true
   boosting-monitor:
     # Gets its wallet from the DB (db.get_wallet_by_usecase('releaseboosting'));
     # boosting_monitor.conf isn't needed (all settings have fallbacks).
     # Idles until a release-boosting wallet is set in the app configuration.
-    image: ghcr.io/altbierjupp/sovereigncast:0.3.6@sha256:f6788c75400823d9e9190e79669f781055bde1a04766a3d61ef0b3f85c58295f
+    image: ghcr.io/altbierjupp/sovereigncast:0.4.0@sha256:86536cf2131f261273ca9a0cfbffb6dc8406146c8c677d031616ca7d12ea40e7
     restart: on-failure
     # Short polling cycle, nothing long-running to wait for.
     stop_grace_period: 30s
@@ -393,11 +397,14 @@ services:
       # kann. Nur lesend — geschrieben wird der Schlüssel allein vom web-Dienst.
       - ${APP_DATA_DIR}/data/state:/data/state:ro
     command: ["python", "boosting_monitor.py"]
+    # No web server — disable the image's web healthcheck (issue #15).
+    healthcheck:
+      disable: true
 
   wallet-accounting:
     # Gets NWC URLs from the DB (db.get_wallets_by_wallet_type('lightning'));
     # wallet_accounting_config.conf not needed (defaults). Idles until wallets are configured.
-    image: ghcr.io/altbierjupp/sovereigncast:0.3.6@sha256:f6788c75400823d9e9190e79669f781055bde1a04766a3d61ef0b3f85c58295f
+    image: ghcr.io/altbierjupp/sovereigncast:0.4.0@sha256:86536cf2131f261273ca9a0cfbffb6dc8406146c8c677d031616ca7d12ea40e7
     restart: on-failure
     # Lets a started accounting cycle finish booking its invoices.
     stop_grace_period: 60s
@@ -417,6 +424,9 @@ services:
       # kann. Nur lesend — geschrieben wird der Schlüssel allein vom web-Dienst.
       - ${APP_DATA_DIR}/data/state:/data/state:ro
     command: ["python", "wallet_accounting.py"]
+    # No web server — disable the image's web healthcheck (issue #15).
+    healthcheck:
+      disable: true
 
   telegram-bot:
     # Active: the container renders telegram_bot_config.conf itself at startup
@@ -431,7 +441,7 @@ services:
     # wallet-accounting ("idles until configured"). NWC URL is practically always
     # required because read_config() calls NostrWalletConnectUri.parse(nwc_url)
     # unconditionally (even in lightning_address mode).
-    image: ghcr.io/altbierjupp/sovereigncast:0.3.6@sha256:f6788c75400823d9e9190e79669f781055bde1a04766a3d61ef0b3f85c58295f
+    image: ghcr.io/altbierjupp/sovereigncast:0.4.0@sha256:86536cf2131f261273ca9a0cfbffb6dc8406146c8c677d031616ca7d12ea40e7
     restart: on-failure
     # python-telegram-bot shuts its own polling loop down.
     stop_grace_period: 30s
