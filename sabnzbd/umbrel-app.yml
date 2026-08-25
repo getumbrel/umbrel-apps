@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: sabnzbd
 category: networking
 name: SABnzbd
-version: "5.1.1"
+version: "5.1.2"
 tagline: The automated Usenet download tool
 description: >-
   SABnzbd makes Usenet as simple and streamlined as possible by automating everything we can. All you have to do is add an .nzb.
@@ -30,13 +30,16 @@ repo: https://github.com/sabnzbd/sabnzbd
 support: https://forums.sabnzbd.org/
 port: 9876
 releaseNotes: >-
-  This update fixes a critical SABnzbd authentication-bypass vulnerability that could expose the web interface when SABnzbd's own login page is reachable by untrusted parties. If you relied on SABnzbd's username and password for network or internet access, rotate sensitive credentials after updating, including the SABnzbd username/password, API key, Usenet server passwords, RSS indexer API keys, and notification credentials.
+  This update fixes a critical remote code execution vulnerability and a high-severity path traversal vulnerability. If untrusted parties can reach your SABnzbd web interface or if SABnzbd processes NZBs from sources you do not fully trust, update promptly.
 
 
-  It also fixes styling cache issues after updates, RSS items being removed too eagerly from history, and the RSS-feed Clear Downloaded button.
+  It also includes the authentication-bypass fix from SABnzbd 5.1.1 for anyone updating from an older version. If you relied on SABnzbd's username and password for network or internet access, rotate sensitive credentials after updating, including the SABnzbd username/password, API key, Usenet server passwords, RSS indexer API keys, and notification credentials.
 
 
-  Full release notes are available at https://github.com/sabnzbd/sabnzbd/releases/tag/5.1.1
+  Other fixes include RSS filters not being applied directly.
+
+
+  Full release notes are available at https://github.com/sabnzbd/sabnzbd/releases/tag/5.1.2
 permissions:
   - STORAGE_DOWNLOADS
   - GPU
