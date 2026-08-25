@@ -5,7 +5,7 @@ services:
       APP_PORT: 8080
 
   app:
-    image: dedicatedcode/reitti:5.2.1@sha256:cccfa70d73bf54cb142869b8e80e30555166d3552bd65eab55cb48698dd59420
+    image: dedicatedcode/reitti:5.3.0@sha256:e77626abdb50dfc1af24f93ab76e55e8a6ae66a1c7a35520ac05c854430188cc
     restart: on-failure
     depends_on:
       postgis:
@@ -52,7 +52,7 @@ services:
       retries: 5
 
   tile-cache:
-    image: dedicatedcode/reitti-tile-cache:5.2.1@sha256:2fee3744b928e95e72723476418f1465060fe24a381531bdcf0ed5a66963549a
+    image: dedicatedcode/reitti-tile-cache:5.3.0@sha256:1e3f0486201d82f38f047e7d606c293c27aae728ba93e2a205f630938050c421
     restart: on-failure
     healthcheck:
       test: ["CMD-SHELL", "curl -f -s -o /dev/null -H \"X-Reitti-Upstream-Url: https://tiles.dedicatedcode.com\" http://localhost/custom/planet/latest/0/0/0.pbf || exit 1"]
