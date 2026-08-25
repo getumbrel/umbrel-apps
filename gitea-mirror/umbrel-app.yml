@@ -3,7 +3,7 @@ id: gitea-mirror
 name: Gitea Mirror
 tagline: Mirror your GitHub repositories to a Gitea instance automatically
 category: developer
-version: "3.27.1"
+version: "3.27.2"
 port: 4322
 description: >-
   Gitea Mirror automatically mirrors your GitHub repositories to a self-hosted Gitea instance. It supports mirroring public and private repositories, organizations, starred repos, issues, wikis, and pull requests.
@@ -42,14 +42,14 @@ defaultUsername: ""
 defaultPassword: ""
 dependencies: []
 releaseNotes: >-
-  Gitea Mirror 3.27.1 fixes access to Mirror Options on mobile repository cards, adding the same three-dot menu used elsewhere and showing the Custom badge when repository settings override the defaults.
+  Gitea Mirror 3.27.2 restores SSO sign-in with identity providers hosted on your home network, including split-DNS setups. The login page now also shows an error when SSO sign-in fails instead of silently returning to the sign-in button.
 
 
-  This release also fixes the Organizations page so Mirror Options are available from the desktop dropdown.
+  Repository cleanup is now safer by default. When the original repository is no longer found on GitHub, cleanup only updates its entry in Gitea Mirror and leaves the copy in Gitea or Forgejo untouched. If you previously relied on cleanup to archive or delete those copies, that will no longer happen automatically after this update.
 
 
-  If you're updating from a pre-3.17 version and use OAuth provider clients registered in Gitea Mirror, rotate the client secret for each client after upgrading because OAuth application secrets are stored hashed after migration.
+  If you're updating from a version older than 3.17 and use OAuth provider clients registered in Gitea Mirror, rotate the client secret for each client after upgrading because OAuth application secrets are stored hashed after migration.
 
 
-  Full release notes can be found at https://github.com/RayLabsHQ/gitea-mirror/releases/tag/v3.27.1
+  Full release notes can be found at https://github.com/RayLabsHQ/gitea-mirror/releases/tag/v3.27.2
 path: ""
