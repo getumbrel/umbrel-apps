@@ -3,7 +3,7 @@ id: bolt12-pay
 name: BOLT12 Pay
 tagline: Self-hosted Lightning payments and identity with BOLT12, BIP353, LNURL, and Nostr
 category: bitcoin
-version: 0.3.0.7
+version: 0.3.1
 port: 8367
 description: >-
   BOLT12 Pay is a self-hosted Lightning payments and identity app for LND nodes.
@@ -154,22 +154,51 @@ releaseNotes: |
 
   Highlights:
 
-  - Fixes BIP353 resolution on recent StartOS releases
-  - Restores Lightning Address payments on StartOS 0.4.x
-  - Improves Lightning Address fallback behaviour during temporary DNS transport failures
-  - Uses the system DNS resolver for improved compatibility across platforms
+  - Introduces Contacts for reusable Lightning payment destinations
+  - Supports Lightning Address, BOLT12 Offer, LNURL, BIP353, Nostr and Node ID contacts
+  - Contacts are automatically matched in Lightning Activity
+  - Multiple payment targets can be stored per contact with a selectable default
+  - Contacts can be created, edited, searched and deleted directly from the Pay interface
 
-  Compatibility:
+  Keysend:
 
-  - Verified on Docker deployments
-  - Verified on Umbrel
-  - Verified on StartOS 0.4.x
-  - Preserves existing DNSSEC behaviour and interoperability
+  - Adds outgoing Keysend payments directly from BOLT12 Pay
+  - Node IDs are automatically detected as Keysend payment targets
+  - Optional Keysend messages are supported
+  - Incoming and outgoing Keysend payments are correctly classified in Lightning Activity
+  - Existing contacts are automatically matched by Node ID
 
-  Notes:
+  Lightning Activity:
 
-  - No configuration changes are required.
-  - Existing Lightning Addresses, BIP353 addresses and BOLT12 Offers continue to work as before.
+  - Adds full-text search across the complete transaction history
+  - Search supports contact names, Lightning Addresses, BIP353 addresses, Node IDs, comments, payment hashes and payment methods
+  - Transaction history is loaded in efficient 50-payment pages
+  - "Load more" allows browsing arbitrarily old Lightning transactions without loading the entire history at once
+  - Closing Lightning Activity resets the view back to the latest 50 transactions
+  - Improved display of long BOLT12 Offers, Node IDs and technical payment data
+  - Improved contact, payment method and comment presentation
+
+  Payment Handling:
+
+  - Improved BOLT12, BIP353, Lightning Address, LNURL and BOLT11 history classification
+  - BIP353 payments preserve the original human-readable address in Lightning Activity
+  - BOLT11 invoices are not offered as reusable contacts
+  - Existing contacts can still be matched from BOLT11 destination Node IDs
+  - Improved preservation of payment metadata during LND history synchronization
+
+  User Interface:
+
+  - Complete German and English translations for Contacts and Keysend
+  - Dynamic Contacts, Lightning Activity and NWC elements update correctly when switching language
+  - Improved Lightning Activity layout and handling of long payment identifiers
+  - Numerous UI refinements and bug fixes
+
+  Upgrade Notes:
+
+  - Existing application data and payment history are preserved.
+  - No manual migration is required.
+  - Contacts are stored locally in the BOLT12 Pay database.
+  - LND v0.20.x and v0.21.x compatibility remains unchanged.
 
 dependencies:
   - lightning
