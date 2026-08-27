@@ -21,7 +21,9 @@ services:
       LIGHTNING_TOR_HOST: ${APP_CORE_LIGHTNING_HIDDEN_SERVICE}
       LIGHTNING_WS_HOST: ${APP_CORE_LIGHTNING_DAEMON_IP}
       LIGHTNING_WS_TOR_HOST: ${APP_CORE_LIGHTNING_HIDDEN_SERVICE}
-      APP_CONNECT: COMMANDO
+      # --offline disables CLN's WebSocket listener, so connect the UI through
+      # CLN's authenticated internal REST interface instead.
+      APP_CONNECT: REST
       APP_MODE: ${APP_MODE}
       LIGHTNING_DATA_DIR: ${CORE_LIGHTNING_PATH}
       APP_CONFIG_FILE: ${APP_CONFIG_DIR}/config.json
@@ -32,7 +34,7 @@ services:
       LIGHTNING_WS_CLIENT_CERT_FILE: ${CORE_LIGHTNING_PATH}/${APP_CORE_LIGHTNING_BITCOIN_NETWORK}/client.pem
       LIGHTNING_WS_CA_CERT_FILE: ${CORE_LIGHTNING_PATH}/${APP_CORE_LIGHTNING_BITCOIN_NETWORK}/ca.pem
       LIGHTNING_REST_PROTOCOL: https
-      LIGHTNING_REST_HOST: ${DEVICE_DOMAIN_NAME}
+      LIGHTNING_REST_HOST: cln
       LIGHTNING_REST_TOR_HOST: ${APP_CORE_LIGHTNING_HIDDEN_SERVICE}
       LIGHTNING_REST_PORT: ${CORE_LIGHTNING_REST_PORT}
       LIGHTNING_REST_CLIENT_KEY_FILE: ${CORE_LIGHTNING_PATH}/${APP_CORE_LIGHTNING_BITCOIN_NETWORK}/client-key.pem
@@ -75,11 +77,19 @@ services:
       - --grpc-port=${APP_CORE_LIGHTNING_DAEMON_GRPC_PORT}
       - --clnrest-host=${APP_CORE_LIGHTNING_DAEMON_IP}
       - --clnrest-port=${CORE_LIGHTNING_REST_PORT}
+      # Temporary security containment per upstream guidance:
+      # https://x.com/Core_LN/status/2092755509510283423
+      # Keep chain monitoring active while disabling peer connections until the
+      # signed upstream fix is packaged.
+      - --offline
     volumes:
       - "${APP_CORE_LIGHTNING_DATA_DIR}:${CORE_LIGHTNING_PATH}"
     networks:
       default:
         ipv4_address: ${APP_CORE_LIGHTNING_DAEMON_IP}
+        # CLN's generated REST certificate is valid for this internal hostname.
+        aliases:
+          - cln
   tor:
     image: ghcr.io/getumbrel/tor:0.4.9.11@sha256:e382b8629c0dfef6ceb396b062622d4e4e955b19d6f16b883fd2c0723ad5671a
     user: "1000:1000"

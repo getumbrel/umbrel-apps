@@ -2,9 +2,12 @@ manifestVersion: 1.1
 id: core-lightning
 category: bitcoin
 name: Core Lightning
-version: "26.06.6"
+version: "26.06.6-patch.1"
 tagline: Run your personal Core Lightning node
 description: >-
+  **Important security notice:** This version starts Core Lightning in temporary offline mode, following [guidance from the Core Lightning maintainers](https://x.com/Core_LN/status/2092755509510283423). Your node will stay running and continue watching the Bitcoin blockchain, but it will not be able to send, receive, or route Lightning payments. Leave the app running and do not uninstall it. Another Core Lightning update will appear in Umbrel as usual when the fix is ready. Install that update to reconnect your node and re-enable Lightning payments.
+
+
   Get started with the Lightning network today with Core Lightning - a
   Lightning Network implementation focusing on spec compliance and performance.
 
@@ -32,12 +35,19 @@ defaultPassword: ""
 submitter: Blockstream
 submission: https://github.com/getumbrel/umbrel-apps/pull/475
 releaseNotes: >-
-  If Core Lightning asks for a password after updating, don’t worry—this is a browser session bug and does not affect your node or funds. Core Lightning does not require a separate password on Umbrel; open the app in a private/incognito window or clear your Umbrel’s site data in the browser.
+  🚨 **Important security update**
 
 
-  **What's changed:**
-    - Rejects channel openings that reuse an existing funding outpoint, avoiding channel ID collisions.
-    - Handles unexpected duplicate peer connections more gracefully.
+  Core Lightning developers have advised node operators to keep their nodes running but temporarily disconnect them from other Lightning nodes while they prepare a security fix. This update applies that change automatically.
+
+
+  Your node will keep running and continue watching the Bitcoin blockchain, but it will not be able to send, receive, or route Lightning payments for now.
+
+
+  Please leave Core Lightning running and do not uninstall it. Another Core Lightning update will appear in Umbrel as usual when the fix is ready. Install that update to reconnect your node and re-enable Lightning payments.
+
+
+  [Read the security announcement from Core Lightning](https://x.com/Core_LN/status/2092755509510283423)
 
 backupIgnore:
   - data/lightningd/bitcoin/lightningd.sqlite3
