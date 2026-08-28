@@ -2,9 +2,12 @@ version: "3.7"
 
 services:
   web:
-    image: ghcr.io/music-assistant/server:2.9.13@sha256:5ded610a2804fb7a973d2cbe390df09ceb67f0d7f603bcacd21ebaaa5a8a9b62
+    image: ghcr.io/music-assistant/server:2.10.0@sha256:c3790e837cfb9d5618026c36e36117d5c482711c88a3747a957123cb01c1d101
     restart: on-failure
     user: "1000:1000"
+    environment:
+      XDG_CACHE_HOME: /data/.cache
+      TORCH_HOME: /data/.cache/torch
     # Network mode must be set to host for MA to work correctly
     network_mode: host
     # UI at data/settings.json defined port 8896
