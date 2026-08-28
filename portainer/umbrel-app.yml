@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: portainer
 category: developer
 name: Portainer
-version: "2.39.6"
+version: "2.45.0"
 tagline: Run custom Docker containers on your Umbrel
 description: >-
   ⚠️ Make sure to only use named Docker volumes for your stacks and containers. Data in bind-mounted volumes
@@ -51,18 +51,19 @@ path: ""
 defaultUsername: "admin"
 defaultPassword: "changeme"
 releaseNotes: >-
-  Portainer 2.39.6 LTS adds new security protections and includes fixes for Docker, Swarm, Kubernetes, and Edge environments. This package keeps the Docker runtime rollback from 2.39.4-1 that fixes a networking issue affecting other Umbrel apps.
+  Portainer 2.45.0 LTS rolls up improvements from the 2.40 to 2.44 STS releases and includes the latest LTS security fixes. This package keeps the Docker runtime rollback that fixes a networking issue affecting other Umbrel apps.
 
 
   Highlights include:
-    - Added SSRF protection settings with off, audit, and enforce modes
-    - Fixed path traversal in Swarm compose deploys where config or secret paths could escape the project root
-    - Fixed Swarm stack and private-registry image build/deploy issues
-    - Fixed Kubernetes UI and port-forwarding issues
-    - Updated Go, go-git, ORAS, OpenTelemetry, containerd, and other dependencies to address CVEs
+    - Added advanced Kubernetes node drain options with agent failover
+    - Added native Kubernetes APIs for secrets, configmaps, deployments, persistent volume claims, and manifest dry runs
+    - Fixed critical Docker proxy authorization bypass and broadened bind-mount restrictions for non-admin users
+    - Strengthened Kubernetes authorization for namespaces, secrets, registries, and shell access
+    - Fixed Edge stack, Helm stack removal, Azure Blob backup settings, team-sync, API key metadata, and browser title bar issues
+    - Updated Go, go-git, ORAS, OpenTelemetry, kubectl-shell dependencies, and other components to address CVEs
 
 
-  Full release notes can be found at https://github.com/portainer/portainer/releases/tag/2.39.6.
+  Full release notes can be found at https://github.com/portainer/portainer/releases/tag/2.45.0.
 permissions:
   - GPU
 developer: Portainer
