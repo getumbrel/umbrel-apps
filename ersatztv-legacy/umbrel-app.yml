@@ -2,7 +2,7 @@ manifestVersion: 1
 id: ersatztv-legacy
 category: media
 name: ErsatzTV Legacy
-version: "26.8.0"
+version: "26.8.1"
 tagline: Build your own live TV channels
 description: >-
   ErsatzTV Legacy transforms your personal media library into custom live TV channels with IPTV, XMLTV guide data, channel scheduling, and browser playback.
@@ -16,12 +16,12 @@ description: >-
 
   This package uses the ErsatzTV Legacy release stream, which upstream continues to maintain for security updates while ErsatzTV Next remains an experimental rewrite.
 releaseNotes: >-
-  - Adds streaming engine selection to the playback troubleshooter.
-  - Improves the Next streaming engine with multiple watermarks, image graphics, better QSV audio sync, anamorphic scaling fixes, and on-demand channel progress fixes.
-  - Fixes Jellyfin and Emby external sidecar subtitles being removed or missing after scans; affected subtitles are restored on the next library scan.
-  - Updates the Docker Mesa driver to improve hevc_vaapi encoding with radeonsi.
+  - Fixes a security issue affecting linked Plex and Emby media servers; after updating, Plex and Emby users should rotate their ErsatzTV credentials as upstream recommends.
+  - Adds a Re-authenticate with Plex button so Plex credentials can be refreshed without recreating media sources.
+  - Requires the X-Etv-Api-Key header for all /api requests; custom scripted schedule/API clients must send the key, while the bundled scripted schedule entrypoint handles it automatically.
+  - Improves Plex server handling and fixes mirror channels falling out of sync when using the Next streaming engine.
 
-  Full release notes can be found at https://github.com/ErsatzTV/legacy/releases/tag/v26.8.0
+  Full release notes can be found at https://github.com/ErsatzTV/legacy/releases/tag/v26.8.1
 developer: ErsatzTV
 website: https://ersatztv.org
 dependencies: []
