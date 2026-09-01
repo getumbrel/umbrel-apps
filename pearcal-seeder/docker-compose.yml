@@ -1,0 +1,23 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: pearcal-seeder_app_1
+      APP_PORT: 8731
+
+  app:
+    # Published, public, multi-arch (amd64 + arm64), pinned by manifest-list digest.
+    image: ghcr.io/peerloomllc/pearcal-seeder:1.0.34@sha256:6273ea9b8bb34a841768598587b601ef02a7b066625952633f08b24bb76111c6
+    restart: on-failure
+    stop_grace_period: 1m
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      SEEDER_HOST: 0.0.0.0
+      SEEDER_PORT: "8731"
+      SEEDER_NO_AUTH: "1"
+      SEEDER_NO_UPDATE_CHECK: "1"
+    volumes:
+      # Seeder identity, per-group enrollments, retention state, logs.
+      - ${APP_DATA_DIR}/data:/data
