@@ -1,0 +1,17 @@
+server.host: 0.0.0.0
+server.port: 5601
+opensearch.hosts: https://wazuh.indexer:9200
+opensearch.ssl.verificationMode: certificate
+opensearch.requestHeadersWhitelist: ["securitytenant","Authorization"]
+opensearch_security.multitenancy.enabled: false
+opensearch_security.readonly_mode.roles: ["kibana_read_only"]
+# Umbrel's app_proxy gates access behind the Umbrel account password and
+# expects a plain-HTTP upstream, so TLS is disabled on the dashboard itself.
+# (Dashboard <-> indexer traffic below stays encrypted over HTTPS.)
+server.ssl.enabled: false
+opensearch.ssl.certificateAuthorities: ["/usr/share/wazuh-dashboard/certs/root-ca.pem"]
+uiSettings.overrides.defaultRoute: /app/wz-home
+# Session expiration settings
+opensearch_security.cookie.ttl: 900000
+opensearch_security.session.ttl: 900000
+opensearch_security.session.keepalive: true
