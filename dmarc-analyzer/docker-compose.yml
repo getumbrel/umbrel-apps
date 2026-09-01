@@ -1,0 +1,43 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: dmarc-analyzer_server_1
+      APP_PORT: 8080
+
+  server:
+    image: ghcr.io/dmarc-analyzer-net/dmarc-analyzer:0.2.2@sha256:aa0ef8f1a366933f986b1362c98d56848b75bdb8e0d2d6e0693227e48a8620cb
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      # Console and report ingestion in one process; the loop takes a Postgres
+      # advisory lock, so only ever run one of these against the database.
+      APP_MODE: all
+      ConnectionStrings__Default: Host=dmarc-analyzer_db_1;Port=5432;Database=dmarc_analyzer;Username=dmarc;Password=${APP_DMARC_ANALYZER_DB_PASSWORD}
+      Database__MigrateOnStartup: "true"
+      # Encrypts stored mailbox passwords at rest. Derived in exports.sh rather
+      # than taken from APP_SEED directly, because the app requires base64 that
+      # decodes to exactly 32 bytes and refuses to start otherwise.
+      Security__CredentialEncryptionKey: ${APP_DMARC_ANALYZER_ENCRYPTION_KEY}
+    depends_on:
+      db:
+        # The app migrates on boot; waiting for Postgres to accept connections
+        # avoids a first-run failure and restart.
+        condition: service_healthy
+
+  db:
+    image: postgres:17-alpine@sha256:742f40ea20b9ff2ff31db5458d127452988a2164df9e17441e191f3b72252193
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      POSTGRES_DB: dmarc_analyzer
+      POSTGRES_USER: dmarc
+      POSTGRES_PASSWORD: ${APP_DMARC_ANALYZER_DB_PASSWORD}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dmarc -d dmarc_analyzer"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    volumes:
+      - ${APP_DATA_DIR}/data/postgres:/var/lib/postgresql/data
