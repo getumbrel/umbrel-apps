@@ -2,7 +2,7 @@ manifestVersion: 1
 id: yuvomi
 category: files
 name: Yuvomi
-version: "2.62.0"
+version: "2.64.0"
 tagline: Self-hosted family planner — calendar, tasks, shopping, meals & budget
 description: >-
   Yuvomi is a self-hosted, privacy-focused family planner that bundles everything
@@ -51,48 +51,29 @@ description: >-
   Open Yuvomi from your Umbrel dashboard and create the first account — that
   account becomes the family admin and can invite the rest of the household.
 releaseNotes: >-
-  An invitation now decides what the new member can see, before they first sign
-  in. Until now anyone you invited started with access to every module and you
-  could only take things away afterwards, which is the wrong way round: access
-  can be widened later, but somebody who has already seen something cannot
-  un-see it. The invitation form has a new "starting permissions" field, and it
-  starts on the narrow option, which leaves Health, Budget and Documents locked.
-  Underneath, the form tells you what your choice means right now. Nothing
-  changes for the people already in your household, for invitations you have
-  already sent, or for the permissions you have configured.
+  This release fixes something the budget plan got wrong about the past. Your
+  plan is one steady amount per category, and nothing recorded what it said in
+  earlier months - so lowering a budget today could turn a month that closed
+  long ago red, for spending that was well inside the plan you actually had at
+  the time. From now on Yuvomi only calls a month over or under budget while
+  that month is still running. For every earlier month it still shows what was
+  planned and what was spent, and says plainly that it is measuring against your
+  current plan instead of declaring a winner.
 
 
-  Each person can now choose what their own new health entries start as, per
-  measurement. The request was to make blood pressure visible to the family by
-  default, so that in an emergency somebody knows the usual values. Changing
-  that for everyone would have shared readings that people expected to stay
-  private, so the choice sits with you instead: under Settings, Personal, Health
-  you set it for blood pressure, blood sugar, weight and the rest separately,
-  plus medications, lab reports and activities. Entries you have already
-  recorded keep their current visibility, and after a change the page offers to
-  move them along. Sharing your blood pressure does not share your mood, and the
-  private/family switch on each individual entry is unchanged.
+  The project also now publishes what it will not build. If you have ever
+  wondered whether a direct bank connection or a particular third-party
+  integration is coming, there is a short document that answers it, says which
+  parts are still open, and explains the reasoning - so an idea gets the same
+  answer no matter where you ask it.
 
 
-  The changelog opens with what has changed in your app since you last looked.
-  Releases arrive quickly here, and following them meant reading a long list.
-  Now the view starts with a short, scannable summary of the changes between the
-  version you last saw and the one you are running, each line expandable if you
-  want the reasoning. Two things are worth knowing after this update: what you
-  have seen is now remembered on your account rather than in the browser, so a
-  phone and a tablet no longer show you the same news twice, and the summary
-  will be empty the first time you open it, because there is no earlier mark to
-  compare against yet. From your next update onwards it will be filled.
-
-
-  Yuvomi also links to a user guide now, written and maintained by a member of
-  the community in their own repository. You will find it in the app under Help,
-  in the README and on yuvomi.cloud, marked as community-maintained so nobody
-  mistakes it for an official reference: it can lag behind a release.
+  Nothing changes in the database with this update, so it is a plain container
+  swap with no migration to wait for.
 
 
   Full release notes are available at
-  https://github.com/ulsklyc/yuvomi/releases/tag/v2.62.0
+  https://github.com/ulsklyc/yuvomi/releases/tag/v2.64.0
 backupIgnore:
   - data/app/yuvomi.db.plaintext-backup*
   - data/backups/*.db
