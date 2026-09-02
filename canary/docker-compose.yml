@@ -8,7 +8,7 @@ services:
       PROXY_AUTH_WHITELIST: "/api/*"
 
   backend:
-    image: schjonhaug/canary-backend:v1.5.2@sha256:a927448e881d6e1060736a844439dd57b84e4e3f8b89aeaf3dea48367c40fa55
+    image: schjonhaug/canary-backend:v1.6.0@sha256:f7df6bc424b78734c5d05626c806975ab546aadc0862c9b0cf77714e9b937763
     user: "1000:1000"
     restart: on-failure
     stop_grace_period: 1m
@@ -19,6 +19,7 @@ services:
       CANARY_DATA_DIR: /app/data
       CANARY_MODE: "self-hosted"
       CANARY_SYNC_INTERVAL: 60
+      FRONTEND_URL: http://${DEVICE_DOMAIN_NAME}:${APP_PROXY_PORT}
       CANARY_MEMPOOL_PORT: ${APP_CANARY_MEMPOOL_PORT:-}
       CANARY_TX_EXPLORER_PLATFORM: umbrel
       CANARY_UMBREL_NTFY_URL: ${APP_CANARY_UMBREL_NTFY_URL:-}
@@ -28,7 +29,7 @@ services:
       - ${APP_DATA_DIR}/data:/app/data
 
   web:
-    image: schjonhaug/canary-frontend:v1.5.2@sha256:72ecf65fcdc80613974c2ea603524b2edc053026fc9f93ba3198be9f89711a6c
+    image: schjonhaug/canary-frontend:v1.6.0@sha256:635be0978c8e158191f4e8e5ec26482c428744cf6cf35140785c54bcdc11f733
     user: "1000:1000"
     restart: on-failure
     stop_grace_period: 1m
