@@ -7,7 +7,7 @@ services:
       APP_PORT: 8178 # ui
 
   gatewayd:
-    image: fedimint/gatewayd:v0.11.1@sha256:65365fceb2e85dfb01837553be53a3372f118e094a23f672ef52bc38baf28ddf
+    image: fedimint/gatewayd:v0.12.0@sha256:6533b149d413157948660d33fb0a97d38fcd64bb131bce94ad26f16b4c9893d7
     restart: on-failure
     ports:
       - 8177:8177/udp # iroh
@@ -30,4 +30,13 @@ services:
       FM_BITCOIND_USERNAME: ${APP_BITCOIN_RPC_USER}
       FM_BITCOIND_PASSWORD: ${APP_BITCOIN_RPC_PASS}
       FM_BITCOIND_URL: "http://${APP_BITCOIN_NODE_IP}:${APP_BITCOIN_RPC_PORT}"
-    entrypoint: /data/entrypoint.sh
+    # Bcrypt-hash the app password before handing it to gatewayd. `$$` escapes a
+    # literal `$` for Compose interpolation, so the container's shell sees a single `$`.
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        set -e
+        FM_GATEWAY_BCRYPT_PASSWORD_HASH=$$(gateway-cli create-password-hash "$$APP_PASSWORD" | tr -d '"')
+        export FM_GATEWAY_BCRYPT_PASSWORD_HASH
+        exec gatewayd lnd
