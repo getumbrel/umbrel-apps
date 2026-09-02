@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: localai
 category: ai
 name: LocalAI
-version: "v4.9.0"
+version: "v4.9.0-patch.1"
 tagline: Drop-in OpenAI replacement
 description: >-
   LocalAI is the free, Open Source OpenAI alternative. LocalAI act as a drop-in replacement REST API that's compatible with OpenAI API specifications for local inferencing.
@@ -14,17 +14,10 @@ description: >-
   ⚠️ Note
 
   Before running a model, make sure your device has enough free RAM to support it. Attempting to run a model that exceeds your available memory could cause your device to crash or become unresponsive. Always check the model requirements before downloading or starting it.
+permissions:
+  - GPU
 releaseNotes: >-
-  If you installed a backend in a LocalAI version before backend persistence was added, you may need to reinstall it once after updating.
-
-
-  This update makes authentication deny-by-default when LocalAI auth or API keys are enabled, protecting routes unless they are explicitly public.
-
-
-  It also adds opt-in chat context compression, streamlines model and backend management into one page each, and improves backend tracing, global admission control, parallel Hugging Face downloads, and vllm-cpp video/audio support.
-
-
-  Full release notes can be found at https://github.com/mudler/LocalAI/releases/tag/v4.9.0
+  Adds GPU support. LocalAI now detects NVIDIA, AMD, and Intel GPUs and offers the matching CUDA, ROCm, and SYCL backends in its Backends gallery. Install a GPU backend there to accelerate your models. Using an AMD or NVIDIA GPU requires umbrelOS 2.0 Beta or later.
 backupIgnore:
   - data/models/*
   - data/backends/*
