@@ -1,0 +1,24 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: drivenest_app_1
+      APP_PORT: 8478
+
+  app:
+    image: ghcr.io/earlvanze/drivenest:v0.2.0@sha256:432c889b22cfd6583d1c7213962528c03571522ec7845855d88481a98b90f2fb
+    restart: on-failure
+    user: "1000:1000"
+    init: true
+    stop_grace_period: 30s
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+    environment:
+      - GDC_CONFIG=/data/config.json
+      - GDC_DATA=/data
+      - GDC_PORT=8478
+      - GDC_RCLONE=/usr/local/bin/rclone
+      - GDC_ROOT=/data/sync
+      - RCLONE_CONFIG=/data/rclone/rclone.conf
+      - PYTHONDONTWRITEBYTECODE=1
