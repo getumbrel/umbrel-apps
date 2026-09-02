@@ -8,15 +8,9 @@ services:
       PROXY_AUTH_ADD: "false"
 
   server:
-    image: ghcr.io/paperclipai/paperclip:sha-8e6edcd@sha256:bdc256b2b289c4085d27625d8915b665c509297b526201bfcea5114634ce2548
+    image: ghcr.io/paperclipai/paperclip:sha-65ec059@sha256:f58ff8e28757eaaf1f58b7ae608e56f2a473fd0688aaab2dbade8c392fad0758
     user: "1000:1000"
     restart: on-failure
-    entrypoint:
-      - node
-    command:
-      - --import
-      - ./server/node_modules/tsx/dist/loader.mjs
-      - server/dist/index.js
     environment:
       HOST: "0.0.0.0"
       PAPERCLIP_HOME: "/paperclip"
