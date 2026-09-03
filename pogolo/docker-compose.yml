@@ -7,7 +7,7 @@ services:
       APP_PORT: 5663
 
   pogolo:
-    image: 0xf0xx0/pogolo:v1.1.4-hotfix@sha256:0fb1d4696d4456ad4d5f44dae8f75fe959ea1200aac5af88ceefe289f7dfba4a
+    image: 0xf0xx0/pogolo:testing
     restart: on-failure
     user: "1000:1000"
     stop_grace_period: 30s
@@ -28,13 +28,13 @@ services:
     command: ["/pogolo", "--conf", "/data/pogolo.toml", "--logfile", "/data/pogolo.log"]
 
   webui:
-    image: 0xf0xx0/umbrel-pogolo-webui:v1.0.0@sha256:TODO
+    image: 0xf0xx0/pogolo-umbrel-webui:testing
     restart: on-failure
     user: "1000:1000"
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
     environment:
       POGOLO_API_URL: "http://pogolo_pogolo_1:5662"
       POGOLO_LOG: /data/pogolo.log # log file we tail for the live log stream
       POGOLO_DIR: /data # where pogolo.toml lives
       DEVICE_DOMAIN_NAME: "${DEVICE_DOMAIN_NAME}"
-    volumes:
-      - ${APP_DATA_DIR}/data:/data
