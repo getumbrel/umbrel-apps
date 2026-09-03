@@ -8,20 +8,13 @@ services:
       PROXY_AUTH_WHITELIST: "/mcp,/engram/v1/*,/remnic/v1/*"
 
   server:
-    image: node:22-alpine@sha256:ab07539e0988b63558ff621f5fbe1077054c39d9809112974fb79993949d41cd
+    image: ghcr.io/joshuaswarren/remnic:sha-e17302c@sha256:cd6c1b1bfb948ffa114ba641192d8b8f331735fa58f602d851f081deb057e3f5
     user: "1000:1000"
     init: true
     restart: on-failure
     stop_grace_period: 1m
-    working_dir: /data
-    command:
-      - sh
-      - -c
-      - |
-        npm install --prefix /data/remnic-runtime --omit=dev --no-audit --no-fund @remnic/server@9.3.640 && exec /data/remnic-runtime/node_modules/.bin/remnic-server
     environment:
       HOME: /data
-      NPM_CONFIG_CACHE: /data/.npm
       REMNIC_HOME: /data
       REMNIC_HOST: 0.0.0.0
       REMNIC_PORT: "4318"
