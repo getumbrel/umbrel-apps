@@ -1,0 +1,55 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: kaspa-stratum-manager_web_1
+      APP_PORT: 8080
+
+  web:
+    image: ghcr.io/noillion-labs/kaspa-stratum-manager:1.3.0@sha256:fe7075cd5897c2cb20291728213f59b9c325912f48ffce2268b0bbb439ef8fd7
+    command: ["npm", "run", "start", "--", "--hostname", "0.0.0.0", "--port", "8080"]
+    restart: on-failure
+    stop_grace_period: 30s
+    depends_on:
+      - manager
+    environment:
+      MANAGER_INTERNAL_URL: http://manager:8081
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8080/').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  manager:
+    image: ghcr.io/noillion-labs/kaspa-stratum-manager:1.3.0@sha256:fe7075cd5897c2cb20291728213f59b9c325912f48ffce2268b0bbb439ef8fd7
+    command: ["node", "server/manager.mjs"]
+    restart: on-failure
+    stop_grace_period: 30s
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "5555:5555/tcp"
+    volumes:
+      - "${APP_DATA_DIR}/data:/data"
+    environment:
+      APP_VERSION: "1.3.0"
+      BRIDGE_VERSION: "2.0.1"
+      APP_PROFILE: umbrel
+      MANAGER_HOST: 0.0.0.0
+      MANAGER_PORT: 8081
+      KASPA_NODE_GRPC: host.docker.internal:16110
+      BRIDGE_API_URL: http://127.0.0.1:3030
+      BRIDGE_COMMAND: /usr/local/bin/stratum-bridge
+      BRIDGE_ARGS_JSON: '["--config","/data/config.yaml","--node-mode","external","--kaspad-address","host.docker.internal:16110","--web-dashboard-port",":3030"]'
+      BRIDGE_WORKING_DIRECTORY: /data
+      RKSTRATUM_ALLOW_CONFIG_WRITE: "0"
+      DATA_DIR: /data
+      UMBREL_LOCAL_IPS: ${APP_KASPA_STRATUM_MANAGER_LOCAL_IPS:-}
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8081/api/manager/status').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
