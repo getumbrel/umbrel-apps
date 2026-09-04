@@ -10,12 +10,13 @@ services:
     restart: on-failure
     environment:
       - DOCS_ADDRESS=http://$DEVICE_DOMAIN_NAME:$DOCSERVER_PORT
-      - DOCS_INTERNAL_ADDRESS=http://onlyoffice-nextcloud_documentserver_1
+      - DOCS_INTERNAL_ADDRESS=http://onlyoffice-nextcloud-documentserver-1
       - NEXTCLOUD_INTERNAL_ADDRESS=http://nextcloud_web_1
       - NEXTCLOUD_WEB_URL=http://$DEVICE_DOMAIN_NAME:$APP_NEXTCLOUD_PORT
 
   documentserver:
     image: onlyoffice/documentserver:9.4.0@sha256:e3da62a847b9a5d51a11f73cfea1d9c13c3be3809614490d4edddcf01dcf919b
+    container_name: onlyoffice-nextcloud-documentserver-1 # Avoid underscores in the hostname: Document Server percent-escapes them in the signed URLs it returns
     restart: on-failure
     stop_grace_period: 1m
     ports:
