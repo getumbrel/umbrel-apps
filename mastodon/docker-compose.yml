@@ -1,0 +1,149 @@
+version: "3.7"
+
+x-mastodon-image: &mastodon_image ghcr.io/mastodon/mastodon:v4.5.9@sha256:2f4930e3f84a2f6b90b49c4e58329e9abc8bd354344cbd0607484514decff99f
+x-mastodon-streaming-image: &mastodon_streaming_image ghcr.io/mastodon/mastodon-streaming:v4.5.9@sha256:f118e0b14e271db534795c9cccdb1dc2dbf1bc32e8a9827d445238ab5d6b6303
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: mastodon_proxy_1
+      APP_PORT: 80
+      PROXY_AUTH_ADD: "false"
+
+  proxy:
+    image: nginx:alpine3.23@sha256:5616878291a2eed594aee8db4dade5878cf7edcb475e59193904b198d9b830de
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      web:
+        condition: service_started
+      streaming:
+        condition: service_started
+
+  web:
+    image: *mastodon_image
+    user: "991:991"
+    restart: on-failure
+    stop_grace_period: 1m
+    command:
+      [
+        "sh",
+        "-c",
+        'if [ "$${MASTODON_SETUP_READY}" != "true" ]; then echo "mastodon: waiting for LOCAL_DOMAIN and WEB_DOMAIN in mastodon.env"; while true; do sleep 3600; done; fi; exec bundle exec puma -C config/puma.rb',
+      ]
+    env_file:
+      - ${APP_DATA_DIR}/mastodon.env
+    volumes:
+      - ${APP_DATA_DIR}/data/system:/mastodon/public/system
+      - ${APP_DATA_DIR}/force-http.rb:/opt/mastodon/config/initializers/99_umbrel_force_http.rb:ro
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+  streaming:
+    image: *mastodon_streaming_image
+    user: "991:991"
+    restart: on-failure
+    stop_grace_period: 1m
+    command:
+      [
+        "sh",
+        "-c",
+        'if [ "$${MASTODON_SETUP_READY}" != "true" ]; then echo "mastodon: waiting for LOCAL_DOMAIN and WEB_DOMAIN in mastodon.env"; while true; do sleep 3600; done; fi; exec node ./streaming/index.js',
+      ]
+    env_file:
+      - ${APP_DATA_DIR}/mastodon.env
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  sidekiq:
+    image: *mastodon_image
+    user: "991:991"
+    restart: on-failure
+    stop_grace_period: 1m
+    command:
+      [
+        "sh",
+        "-c",
+        'if [ "$${MASTODON_SETUP_READY}" != "true" ]; then echo "mastodon: waiting for LOCAL_DOMAIN and WEB_DOMAIN in mastodon.env"; while true; do sleep 3600; done; fi; exec bundle exec sidekiq',
+      ]
+    env_file:
+      - ${APP_DATA_DIR}/mastodon.env
+    volumes:
+      - ${APP_DATA_DIR}/data/system:/mastodon/public/system
+      - ${APP_DATA_DIR}/force-http.rb:/opt/mastodon/config/initializers/99_umbrel_force_http.rb:ro
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+  migrate:
+    image: *mastodon_image
+    user: "991:991"
+    restart: on-failure
+    command:
+      [
+        "sh",
+        "-c",
+        'if [ "$${MASTODON_SETUP_READY}" != "true" ]; then echo "mastodon: skipping migrations until LOCAL_DOMAIN and WEB_DOMAIN are configured"; exit 0; fi; exec bundle exec rails db:migrate',
+      ]
+    env_file:
+      - ${APP_DATA_DIR}/mastodon.env
+    volumes:
+      - ${APP_DATA_DIR}/data/system:/mastodon/public/system
+      - ${APP_DATA_DIR}/force-http.rb:/opt/mastodon/config/initializers/99_umbrel_force_http.rb:ro
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  db:
+    image: postgres:17.9-alpine@sha256:c7526c0f6c3f30260a563d7bcf8ad778effac59a44f8ffa86678c35418338609
+    user: "1000:1000"
+    restart: on-failure
+    env_file:
+      - ${APP_DATA_DIR}/mastodon.env
+    environment:
+      POSTGRES_USER: mastodon
+      POSTGRES_DB: mastodon_production
+    volumes:
+      - ${APP_DATA_DIR}/data/db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mastodon -d mastodon_production"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:8.4.2-alpine@sha256:e1b6db24cb4fdd89f4bc9be09f671ea3bec92fbd7042554f76c34aa2be9b59ad
+    user: "1000:1000"
+    restart: on-failure
+    env_file:
+      - ${APP_DATA_DIR}/mastodon.env
+    command:
+      [
+        "sh",
+        "-c",
+        'exec redis-server --save 60 1 --loglevel warning --requirepass "$${REDIS_PASSWORD}"',
+      ]
+    volumes:
+      - ${APP_DATA_DIR}/data/redis:/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          'redis-cli --no-auth-warning -a "$${REDIS_PASSWORD}" ping | grep PONG',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
