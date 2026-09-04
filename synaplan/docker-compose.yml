@@ -1,0 +1,249 @@
+# Synaplan on umbrelOS.
+#
+# Derived from deploy/compose.yaml in github.com/metadist/synaplan, which is the
+# portable production contract for this stack. Differences are Umbrel-specific
+# and listed in deploy/umbrel/README.md.
+#
+# Every app on a device shares one Docker network, so bare service names such as
+# `db` or `redis` are ambiguous between apps. All internal addresses therefore
+# use the container names umbrelOS injects (`synaplan_<service>_1`).
+
+x-app-environment: &app-environment
+  APP_ENV: prod
+  APP_DEBUG: "0"
+  # Selects the update guide the admin UI links to. An unknown value means the
+  # self-hosted guide, which is close enough: Umbrel updates arrive through the
+  # App Store, not through a manual pull.
+  SYNAPLAN_PLATFORM: umbrel
+  # Maintained by CI: publishing a release opens a pull request that raises this
+  # (together with the image pin below and umbrel-app.yml) to the version whose
+  # image was just published. Do not edit by hand —
+  # scripts/set-release-version.mjs owns these three lines.
+  APP_VERSION: "4.6.0"
+
+  # umbrelOS serves apps over plain HTTP on the device's .local domain. Synaplan
+  # derives the auth cookies' Secure flag from this scheme, so the session
+  # survives; AUTH_COOKIE_SECURE stays unset on purpose.
+  APP_URL: "http://${DEVICE_DOMAIN_NAME}:${APP_PROXY_PORT}"
+  FRONTEND_URL: "http://${DEVICE_DOMAIN_NAME}:${APP_PROXY_PORT}"
+
+  APP_SECRET: "${APP_SYNAPLAN_APP_SECRET}"
+  TOKEN_SECRET: "${APP_SYNAPLAN_TOKEN_SECRET}"
+
+  # First administrator, created once while no administrator exists. Umbrel
+  # shows this password to the user because the manifest sets
+  # deterministicPassword.
+  BOOTSTRAP_ADMIN_EMAIL: admin@umbrel.local
+  BOOTSTRAP_ADMIN_PASSWORD: "${APP_PASSWORD}"
+
+  DB_HOST: synaplan_db_1
+  DB_PORT: "3306"
+  DB_NAME: synaplan
+  DB_USER: synaplan
+  DB_PASSWORD: "${APP_SYNAPLAN_DB_PASSWORD}"
+  DB_SERVER_VERSION: mariadb-12.3.2
+
+  REDIS_DSN: redis://synaplan_redis_1:6379
+  LOCK_DSN: redis://synaplan_redis_1:6379
+
+  REALTIME_ENABLED: "true"
+  REALTIME_API_URL: http://synaplan_centrifugo_1:8000/api
+  REALTIME_API_KEY: "${APP_SYNAPLAN_REALTIME_API_KEY}"
+  REALTIME_TOKEN_SECRET: "${APP_SYNAPLAN_REALTIME_TOKEN_SECRET}"
+  # Empty means the browser dials /connection/websocket on the same origin, so
+  # the WebSocket travels through app_proxy like every other request.
+  REALTIME_PUBLIC_WS_URL: ""
+  REALTIME_ALLOWED_ORIGINS: "http://${DEVICE_DOMAIN_NAME}:${APP_PROXY_PORT}"
+  # Upstream Caddy proxies /connection/* to. Overridden because the bundled
+  # default (`centrifugo:8000`) is not addressable on a shared network.
+  REALTIME_UPSTREAM_ADDR: synaplan_centrifugo_1:8000
+
+  QDRANT_URL: http://synaplan_qdrant_1:6333
+  TIKA_BASE_URL: http://synaplan_tika_1:9998
+  # The worker and scheduler block until the web role serves this endpoint. The
+  # built-in default addresses the web role as `backend`, which is the service
+  # name of the reference deployment, not of this package.
+  SYNAPLAN_WEB_HEALTH_URL: http://synaplan_web_1/api/health
+
+  # Cloud AI only. Local inference would pull models far beyond what a
+  # Raspberry Pi class device can serve, so the local-ai services of the
+  # reference deployment are left out entirely.
+  OLLAMA_BASE_URL: ""
+  AUTO_DOWNLOAD_MODELS: "false"
+  ENABLE_LOCAL_GPT_OSS: "false"
+  WHISPER_ENABLED: "false"
+  FFMPEG_BINARY: /usr/bin/ffmpeg
+  AI_DEFAULT_PROVIDER: groq
+
+  MAILER_DSN: "null://null"
+  APP_SENDER_NAME: Synaplan
+  PHP_MAX_FILE_UPLOADS: "100"
+  LOG_FORMAT: json
+
+# The three app roles share one image and differ only by SYNAPLAN_ROLE. It runs
+# as root because its entrypoint repairs ownership of the upload directory and
+# then hands over to Caddy/FrankenPHP, which binds port 80 inside the container.
+# Tag and digest are maintained by CI together with APP_VERSION above —
+# scripts/set-release-version.mjs owns this line.
+x-app-image: &app-image ghcr.io/metadist/synaplan:4.6.0@sha256:34dbfc762651366050eff6dd39e121bd9937766c553d57ea276e1f02351bfae6
+
+# Uploaded and generated files. The web role writes them, the worker reads them
+# back while processing a job, so all three app roles share the directory.
+x-app-volumes: &app-volumes
+  - ${APP_DATA_DIR}/data/uploads:/var/www/backend/var/uploads
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: synaplan_web_1
+      APP_PORT: 80
+      # Synaplan has its own multi-user accounts and issues its own session
+      # cookies. Umbrel auth in front of it would also break the endpoints that
+      # cannot carry an Umbrel cookie: the embeddable chat widget served to
+      # third-party websites, the MCP endpoint and its OAuth discovery
+      # documents, and mobile clients authenticating with a bearer token.
+      PROXY_AUTH_ADD: "false"
+
+  web:
+    image: *app-image
+    environment:
+      <<: *app-environment
+      SYNAPLAN_ROLE: web
+    volumes: *app-volumes
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      centrifugo:
+        condition: service_healthy
+      tika:
+        condition: service_healthy
+      qdrant:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/container-healthcheck"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      # The first start applies database migrations and seeds the model
+      # catalog, which is slow on low-powered hardware.
+      start_period: 300s
+    restart: on-failure
+
+  worker:
+    image: *app-image
+    environment:
+      <<: *app-environment
+      SYNAPLAN_ROLE: worker
+    volumes: *app-volumes
+    depends_on:
+      web:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/container-healthcheck"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 120s
+    restart: on-failure
+
+  scheduler:
+    image: *app-image
+    environment:
+      <<: *app-environment
+      SYNAPLAN_ROLE: scheduler
+    volumes: *app-volumes
+    depends_on:
+      web:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/container-healthcheck"]
+      interval: 60s
+      timeout: 5s
+      retries: 3
+      start_period: 120s
+    restart: on-failure
+
+  db:
+    image: mariadb:12.3.3@sha256:dd9b303aed4f4890ed09f766d8ca9ddfd176c0c6f6267feff53b3192ec65a979
+    command: --max-allowed-packet=256M --innodb-buffer-pool-size=512M
+    environment:
+      MARIADB_DATABASE: synaplan
+      MARIADB_USER: synaplan
+      MARIADB_PASSWORD: "${APP_SYNAPLAN_DB_PASSWORD}"
+      MARIADB_ROOT_PASSWORD: "${APP_SYNAPLAN_DB_ROOT_PASSWORD}"
+    volumes:
+      - ${APP_DATA_DIR}/data/mariadb:/var/lib/mysql
+    healthcheck:
+      # The password is expanded by the container's shell, so it MUST stay
+      # quoted: an unquoted expansion splits a password containing whitespace
+      # into several arguments and the database never turns healthy.
+      test: ["CMD-SHELL", "mariadb-admin ping -h 127.0.0.1 -uroot -p\"$$MARIADB_ROOT_PASSWORD\" --silent"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+    restart: on-failure
+
+  redis:
+    image: redis:7.4-alpine@sha256:ff02b58f971e7d7d156a1267e283fcbbeee91773b6aa36c49dac28ecfe28eadf
+    command: redis-server --appendonly yes --appendfsync everysec --maxmemory 256mb --maxmemory-policy allkeys-lru
+    user: "1000:1000"
+    volumes:
+      - ${APP_DATA_DIR}/data/redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    restart: on-failure
+
+  centrifugo:
+    image: centrifugo/centrifugo:v6.9.3@sha256:017d0a3d39757f94a09efa657b6ad7e68222564dd9ba7dd7193981d75cd8a025
+    command: ["centrifugo", "-c", "/centrifugo/config.json"]
+    user: "1000:1000"
+    environment:
+      CENTRIFUGO_CLIENT_TOKEN_HMAC_SECRET_KEY: "${APP_SYNAPLAN_REALTIME_TOKEN_SECRET}"
+      CENTRIFUGO_HTTP_API_KEY: "${APP_SYNAPLAN_REALTIME_API_KEY}"
+      CENTRIFUGO_CLIENT_ALLOWED_ORIGINS: "http://${DEVICE_DOMAIN_NAME}:${APP_PROXY_PORT}"
+    volumes:
+      - ${APP_DATA_DIR}/centrifugo-config.json:/centrifugo/config.json:ro
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "centrifugo", "checkconfig", "-c", "/centrifugo/config.json"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: on-failure
+
+  tika:
+    image: apache/tika:3.3.1.0@sha256:90b7fa1dc018434075fce9e1d9b88b1e3d0ea6979d0cf86e116c79a8073ae973
+    command: -h 0.0.0.0 -p 9998
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/9998 && printf 'GET /version HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n' >&3 && read -r status <&3 && [[ $$status == *'200 OK'* ]]"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: on-failure
+
+  qdrant:
+    image: qdrant/qdrant:v1.19.0@sha256:057ee3a8da769fe7310dd3537b4dc7583bf87a95ce8ac43c0af5a46bc580d1fc
+    volumes:
+      - ${APP_DATA_DIR}/data/qdrant:/qdrant/storage
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/6333 && printf 'GET /readyz HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n' >&3 && read -r status <&3 && [[ $$status == *'200 OK'* ]]"]
+      interval: 20s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: on-failure
