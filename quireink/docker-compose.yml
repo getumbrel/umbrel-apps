@@ -1,0 +1,22 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: quireink_web_1
+      APP_PORT: 3000
+      # A blog is intentionally public, and the admin has its own password + TOTP door.
+      PROXY_AUTH_ADD: "false"
+
+  web:
+    image: quireink/quireink:2.2.1@sha256:9e5ba8fb23b0ffbb6630bbcca44cdafafce975844370a11b1237c7c52d126b09
+    restart: on-failure
+    environment:
+      SITE_URL: http://${DEVICE_DOMAIN_NAME}:3477
+      # The image's entrypoint starts as root only to adopt these and chown the bind
+      # mounts when needed, then drops privileges; the app itself runs unprivileged.
+      PUID: "1000"
+      PGID: "1000"
+    volumes:
+      - ${APP_DATA_DIR}/data/quire:/var/lib/quire/data:rw
+      - ${APP_DATA_DIR}/data/uploads:/var/lib/quire/uploads:rw
