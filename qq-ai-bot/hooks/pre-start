@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+APP_DIR="${APP_DATA_DIR:-$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")}"
+DATA_DIR="${APP_DIR}/data"
+NAPCAT_CONFIG_DIR="${DATA_DIR}/napcat/config"
+NAPCAT_QQ_DIR="${DATA_DIR}/napcat/QQ"
+BOT_DATA_DIR="${DATA_DIR}/qq-ai-bot"
+
+mkdir -p "${NAPCAT_CONFIG_DIR}" "${NAPCAT_QQ_DIR}" "${BOT_DATA_DIR}"
+chown -R 1000:1000 "${DATA_DIR}/napcat" 2>/dev/null || true
+
+if [[ ! -f "${NAPCAT_CONFIG_DIR}/onebot11.json" ]]; then
+  cat > "${NAPCAT_CONFIG_DIR}/onebot11.json" <<EOF
+{
+  "network": {
+    "httpServers": [],
+    "httpSseServers": [],
+    "httpClients": [],
+    "websocketServers": [],
+    "websocketClients": [
+      {
+        "enable": true,
+        "name": "qq-ai-bot-reverse-ws",
+        "url": "ws://bot:16700/onebot/v11/ws",
+        "reportSelfMessage": false,
+        "messagePostFormat": "array",
+        "token": "${APP_QQ_AI_BOT_ONEBOT_TOKEN}",
+        "debug": false,
+        "heartInterval": 30000,
+        "reconnectInterval": 30000
+      }
+    ],
+    "plugins": []
+  },
+  "musicSignUrl": "",
+  "enableLocalFile2Url": false,
+  "parseMultMsg": false
+}
+EOF
+fi
