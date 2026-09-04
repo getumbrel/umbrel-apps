@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: lightning
 category: bitcoin
 name: Lightning Node
-version: "0.21.2-beta"
+version: "0.21.3-beta"
 tagline: Run your personal Lightning Network node
 description: >-
   Run your personal Lightning Network node, and join the future of Bitcoin today.
@@ -22,19 +22,13 @@ description: >-
 
   An official app from Umbrel.
 releaseNotes: >-
-  This update upgrades Lightning Node to LND v0.21.2-beta. It fixes issues affecting payment and database migrations, invoice updates, cooperative channel closes, blinded route forwarding, on-chain HTLC resolution, and channel graph sync memory usage.
+  This update upgrades Lightning Node to LND v0.21.3-beta with reliability and security improvements. It fixes issues that could interrupt channel opening or cooperative closing, improves payment and transaction handling, prevents excessive resource use by misbehaving peers, and makes connections from wallets and other Lightning apps more reliable.
 
 
-  Power users also get package relay support through the new `walletrpc.SubmitPackage` RPC and `lncli wallet submitpackage` command.
+  Reminder for advanced users upgrading from a version before LND v0.21: If you manually added `protocol.custom-nodeann=39` or `protocol.custom-init=39` to your LND configuration for BOLT 12 or LNDK, remove those lines before updating or Lightning Node may not start. LND v0.21 also removed deprecated payment APIs and support for manually configured Tor v2 addresses, so please review the full release notes if you use custom scripts, integrations, or LND settings.
 
 
-  If you manually added `protocol.custom-nodeann=39` or `protocol.custom-init=39` to your LND config for BOLT 12 or LNDK integrations before LND v0.21, remove those lines first. LND now advertises onion messaging itself, and those old settings can prevent it from starting.
-
-
-  Power users: LND v0.21 removes deprecated payment RPCs and rejects manually configured Tor v2 onion addresses. Lightning Node on Umbrel already uses Tor v3 by default. Review the upstream release notes if you use custom scripts, external integrations, or custom LND settings.
-
-
-  Full LND release notes: https://github.com/lightningnetwork/lnd/blob/v0.21.2-beta/docs/release-notes/release-notes-0.21.2.md
+  Full LND release notes: https://github.com/lightningnetwork/lnd/blob/v0.21.3-beta/docs/release-notes/release-notes-0.21.3.md
 developer: Umbrel
 website: https://umbrel.com
 dependencies:
