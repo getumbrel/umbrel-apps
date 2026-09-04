@@ -48,51 +48,13 @@ defaultPassword: ""
 submitter: Fedimint Developers
 submission: https://github.com/getumbrel/umbrel-apps/pull/4554
 releaseNotes: >-
+  This release updates Fedimint Lightning Gateway to v0.12.0 with the following improvements:
+    - Adds full on-chain wallet sweeps with fee-aware maximum send amounts
+    - Adds channel fee controls, persistent peer connections, and improved liquidity information
+    - Speeds up LNv2 payments and improves payment status reporting
+    - Hardens HTLC, invoice, fee-limit, and outgoing-contract handling
+    - Fixes gateway shutdown, amountless invoice, and UI authentication issues
+    - Includes the security fixes previously released in v0.11.2
 
- - On-chain sweep of the full gateway balance, accounting for module and on-chain fees
 
- - Max affordable send amount computation, with fast startup
-
- - Edit channel fees from the gateway UI, and set feerate and routing fees when opening a channel
-
- - Connect-peer action in the gateway UI; manually connected peers are persisted across restarts
-
- - Total inbound/outbound liquidity shown in the gateway UI
-
- - List all hold invoices
-
- - Federation-scoped capability health reporting
-
- - Custom LND routing timeout and time preference
-
- - LND route hints built from the remote peer's fee policy
-
- - Cancel unmatched federation HTLCs instead of forwarding them; serialize same-circuit LNv1 HTLC handling; make HTLC interception idempotent on replay
-
- - Outgoing contracts are bound to the invoice being paid; outgoing claims deduplicated in the gateway's global database
-
- - Stricter fee limit verification on payment paths
-
- - Gateway disconnects a federation when its LNv1/LNv2 tasks exit unexpectedly
-
- - Fixed a deadlock on gateway shutdown, a panic on amountless invoices, and gateway UI auth issues
-
- - LNv2 preimage returned to the sender without waiting for the gateway's claim to settle (faster payments)
-
- - LNv2: only a single payment attempt per invoice; send status and preimage exposed to integrators; invoice amount and fee reported in payment events
-
- - LNv2 decryption key share endpoint long-polled; LNURL receive no longer holds a database transaction across the long-poll
-
- - LNv1: manual reclaim of stuck receives; pay idempotency checked before invoice expiry
-
- - LNURL: invoice amount verified against the requested amount
-
- - recurringd: selects available, vetted gateways sorted by fees, caches the selection, and repairs consecutive orphaned invoices
-
- - Removed LDK bolt11 payment polling; LDK logs redirected into the gateway log
-
- - Gateway verify endpoint handled correctly over Iroh; liquidity manager route prefix handling fixed
-
- - Corrected Lagrange multiplier in threshold decryption with a single share
-
-  Full release notes can be found at https://github.com/fedimint/fedimint/releases
+  Full release notes can be found at https://github.com/fedimint/fedimint/releases/tag/v0.12.0
