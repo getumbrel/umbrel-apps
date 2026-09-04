@@ -5,7 +5,7 @@ name: Fedimint
 version: "v0.12.0"
 tagline: Federated Chaumian E-Cash Mint for Bitcoin
 description: >-
-  Fedimint is a federated Chaumian E-Cash Mint to custody and transact bitcoin in a community. It allows groups of trusted individuals, 
+  Fedimint is a federated Chaumian E-Cash Mint to custody and transact bitcoin in a community. It allows groups of trusted individuals,
   called guardians, to jointly operate a multi-signature e-cash mint.
 
   # Setting Up a Federation
@@ -23,11 +23,11 @@ description: >-
   1. Install & Launch this Fedimint app (fedimintd) on your Umbrel
      Each participating guardian runs their own instance of fedimintd.
 
-  2. Set a Password
-     When starting fedimintd for the first time, each guardian must create a secure password.
+  2. Get Your Guardian Password
+     Umbrel generates the guardian admin password. Open "Show password" for the app in the Umbrel dashboard, then use it to sign in.
 
   3. Generate Setup Code
-     After entering the password, a unique setup code is generated for each guardian.
+     After signing in, a unique setup code is generated for each guardian.
 
   4. Exchange Setup Codes
      All guardians must share their setup codes with each other (every guardian needs every other guardian's code).
@@ -47,7 +47,7 @@ description: >-
 
   2. Use an existing Lightning Gateway. [Reach out on Discord to get setup](https://chat.fedimint.org).
 
-  
+
 developer: Fedimint Developers
 website: https://fedimint.org/
 dependencies:
@@ -65,32 +65,18 @@ deterministicPassword: true
 submitter: Fedimint Developers
 submission: https://github.com/getumbrel/umbrel-apps/pull/3371
 releaseNotes: >-
+  ⚠️ Guardians in an existing Iroh-based federation must coordinate this update. Iroh 1.0 guardian P2P is not wire-compatible with earlier releases, so consensus may pause until the upgraded guardians reach quorum. Rolling back after the new Iroh identity is advertised is unsupported. Review the full upstream upgrade notes with the other guardians before updating.
 
- - ⚠️ Your guardian UI password has changed.
-   The guardian password is now supplied by Umbrel instead of being chosen during setup. Find it under the app's "Show password" in the Umbrel dashboard. Your federation, funds and guardian config are unaffected — in v0.12.0 this password is only an admin credential and no longer encrypts anything. The same password authenticates fedimint-cli admin commands against your guardian.
 
- - V2 modules are now the default.
-   Freshly set up federations run the lnv2, mintv2 and walletv2 modules by default instead of the v1 module set; the v1 modules are now labeled "legacy" in the setup UI. Existing federations keep their configured module set and are unaffected.
+  ⚠️ Your guardian admin password has changed. Umbrel now supplies it under the app's "Show password" option instead of asking you to choose one during setup. This password is used for both the guardian UI and fedimint-cli admin commands; it no longer encrypts the guardian configuration.
 
- - Iroh 1.0
-   Guardian P2P and the client API migrated to Iroh 1.0, with clients running dual-stack so older federations keep working. New federations set up in production now default to the iroh networking stack. Plus many robustness fixes: idle connection reaping, request timeouts, stalled connection eviction, explicit QUIC keep-alive, and a pkarr resolver fallback. 
 
- - Recovery without downtime
-   Client modules that support it (notably mintv2) stay usable while they recover, failed recoveries are reported instead of blocking forever, and recovery no longer stalls on an unresponsive guardian.
+  Highlights in this release:
+    - New federations use the lnv2, mintv2, and walletv2 modules by default; existing federations keep their configured modules
+    - Setup codes now detect guardian version and Bitcoin network mismatches
+    - Adds guardian restore support and improves recovery behavior
+    - Improves Lightning payment latency, fee handling, consensus reliability, and Iroh connectivity
+    - Includes the security fixes previously released in v0.11.2
 
- - Faster Lightning payments
-   A concerted push to drive down LNv2 payment latency: transaction submission now long-polls the federation until consensus acceptance instead of retrying with backoff, decryption key shares are long-polled as well, and the payment preimage is returned to the sender as soon as it is available rather than only after the gateway's claim settles.
 
- - UniFFI bindings for the client
-   The client and the ln/mint/wallet/meta client modules can now be consumed from Kotlin, Swift and other languages via a feature-gated uniffi build, replacing the previous standalone bindings crate.
-
- - Fee transparency and full sweeps
-   New fee quote and per-operation fee APIs let clients know costs up front, and the gateway can now sweep a wallet completely on-chain, correctly accounting for module and on-chain fees.
-
- - Simple guardian setup
-   The guardian password no longer encrypts config files and is purely an admin API/UI credential, setup codes embed the release version and Bitcoin network to catch mismatched guardians early, and the setup UI gained a guardian restore flow.
-
- - Security fixes
-   This release contains the coordinated set of security hardening fixes across the server, Lightning modules, wallet, backup and DKG that was already shipped to guardians in v0.11.2/v0.10.1 and communicated separately, plus a few follow-ups landed since. All federations should run v0.11.2 or later. 
-
-  Full release notes can be found at https://github.com/fedimint/fedimint/releases
+  Full release notes can be found at https://github.com/fedimint/fedimint/releases/tag/v0.12.0
