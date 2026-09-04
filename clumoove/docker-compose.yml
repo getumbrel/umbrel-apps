@@ -1,0 +1,66 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: clumoove_frontend_1
+      APP_PORT: 3000
+      PROXY_AUTH_ADD: "false"
+
+  postgres-db:
+    image: postgres:15-alpine@sha256:fe0737ba566a2c5b2a28f34433c0a423261900ec17b9bf7ad115e1aae7e57f1b
+    restart: on-failure
+    command: ["postgres", "-c", "max_connections=300"]
+    environment:
+      POSTGRES_USER: clumoove
+      POSTGRES_PASSWORD: ${APP_PASSWORD}
+      POSTGRES_DB: cloud_migration_db
+    volumes:
+      - ${APP_DATA_DIR}/data/postgres:/var/lib/postgresql/data
+
+  redis-queue:
+    image: redis:7-alpine@sha256:ff02b58f971e7d7d156a1267e283fcbbeee91773b6aa36c49dac28ecfe28eadf
+    restart: on-failure
+    command: redis-server --appendonly yes --requirepass "${APP_PASSWORD}" --bind 0.0.0.0
+    volumes:
+      - ${APP_DATA_DIR}/data/redis:/data
+
+  api-backend:
+    image: ghcr.io/xxroxxerxx/clumoove-api:v0.16.0@sha256:e089bb8ef0268bfc6b53337ad3e0f5ca3d2d22bcc56fc2940242be99005a2fc1
+    restart: on-failure
+    environment:
+      - DATABASE_URL=postgres://clumoove:${APP_PASSWORD}@postgres-db:5432/cloud_migration_db?sslmode=disable
+      - REDIS_URL=redis://:${APP_PASSWORD}@redis-queue:6379
+      - PORT=8000
+      - ENCRYPTION_SECRET_KEY=enc_${APP_PASSWORD}_clumoove_encryption_key_v1
+      - JWT_SECRET_KEY=jwt_${APP_PASSWORD}_clumoove_jwt_signing_key_32bytes_v1
+      - TRUSTED_PROXY=1
+      - LOCAL_STORAGE_ROOT=/clumoove
+    volumes:
+      - ${APP_DATA_DIR}/data/storage:/clumoove
+    depends_on:
+      - postgres-db
+      - redis-queue
+
+  migration-worker:
+    image: ghcr.io/xxroxxerxx/clumoove-worker:v0.16.0@sha256:a8d2a17ed3250684a7a6e4514b17f0a949b28dbfd193766c401e90e549e5de85
+    restart: on-failure
+    command: ["/app/worker"]
+    environment:
+      - DATABASE_URL=postgres://clumoove:${APP_PASSWORD}@postgres-db:5432/cloud_migration_db?sslmode=disable
+      - REDIS_URL=redis://:${APP_PASSWORD}@redis-queue:6379
+      - ENCRYPTION_SECRET_KEY=enc_${APP_PASSWORD}_clumoove_encryption_key_v1
+      - LOCAL_STORAGE_ROOT=/clumoove
+    volumes:
+      - ${APP_DATA_DIR}/data/storage:/clumoove
+    depends_on:
+      - postgres-db
+      - redis-queue
+
+  frontend:
+    image: ghcr.io/xxroxxerxx/clumoove-frontend:v0.16.0@sha256:16ea89b67068b49d5413d5eb354520da717418da823d13553756ab176c549f70
+    restart: on-failure
+    environment:
+      - CLUMOOVE_API_URL=
+    depends_on:
+      - api-backend
