@@ -1,0 +1,50 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: uchiyomi_server_1
+      APP_PORT: 3000
+      # Clients that cannot carry the Umbrel login: OPDS readers (HTTP Basic with a per-user token, and the
+      # image routes those readers load covers and pages from) and scripts using a personal API token. Each
+      # of those paths is protected by the app's own authentication. First-run setup stays behind Umbrel.
+      PROXY_AUTH_WHITELIST: "/opds,/opds/*,/img,/img/*,/api,/api/*"
+      PROXY_AUTH_BLACKLIST: "/api/setup,/api/setup/*"
+
+  server:
+    image: ghcr.io/angelosha/uchiyomi:v0.19.0@sha256:3ef240fe2074e860546c0adfccd17b3f97116b96ec0badbe339af2fb946b0743
+    restart: on-failure
+    # The app finishes the chapter it is writing on stop, then the embedded Postgres checkpoints.
+    stop_grace_period: 40s
+    environment:
+      # The image's entrypoint starts as root, takes ownership of the app-owned paths, and drops to this uid.
+      PUID: 1000
+      PGID: 1000
+      NODE_ENV: production
+      PORT: "3000"
+      # No DATABASE_URL: Postgres runs inside the container, on a unix socket, in /data.
+      LIBRARY_BACKEND: owned
+      PUBLIC_ORIGIN: http://${DEVICE_DOMAIN_NAME}:${APP_PROXY_PORT}
+      JWT_SECRET: ${APP_UCHIYOMI_JWT_SECRET}
+      FLARESOLVERR_URL: http://uchiyomi_flaresolverr_1:8191
+      SOURCES_DIR: /sources
+      CUSTOM_SITES_FILE: /config/sites.json
+      BACKUP_KEEP: "14"
+    volumes:
+      - ${UMBREL_ROOT}/data/storage/downloads/manga:/library
+      - ${APP_DATA_DIR}/data/db:/data
+      - ${APP_DATA_DIR}/data/config:/config
+      - ${APP_DATA_DIR}/data/downloads:/library-dl
+      - ${APP_DATA_DIR}/data/cache:/cache
+      - ${APP_DATA_DIR}/data/backups:/backups
+
+  # Cloudflare solver: most manga aggregators sit behind Cloudflare, so the fetching half needs it. It is
+  # only contacted when a source needs it. Chrome writes to shared memory, and Docker's default 64 MB makes
+  # it crash mid-challenge; a memory cap turns its slow leak into a clean restart.
+  flaresolverr:
+    image: ghcr.io/flaresolverr/flaresolverr:v3.5.0@sha256:139dfee1c6f89249c8d665d1333a42e8ec74ec0a86bc6bb1c8461e10d3a66a47
+    restart: on-failure
+    shm_size: 1gb
+    mem_limit: 2g
+    environment:
+      LOG_LEVEL: warning
