@@ -3,7 +3,7 @@ id: opencode
 name: OpenCode
 tagline: The open source AI coding agent
 category: ai
-version: "1.18.26"
+version: "1.18.27"
 port: 4096
 description: >-
   OpenCode is an open source AI coding agent designed to enhance your development
@@ -33,16 +33,19 @@ gallery:
   - 3.jpg
   - 4.jpg
 releaseNotes: >-
-  This update improves reliability for Claude, Bedrock, Azure, and tool-call workflows.
+  This update improves reliability for slow model responses and Anthropic thinking-block workflows.
 
 
-  Claude 5 sessions now tolerate stale thinking blocks after prompt or tool changes, and Bedrock reasoning/replay handling is more reliable.
+  Provider header and streamed chunk timeouts now default to five minutes, with streamed chunk timeouts configurable to be disabled when needed.
 
 
-  Azure CLI sign-in now asks for the resource name directly instead of querying Azure management APIs, tool-call timing stays accurate when metadata changes, and apply_patch permission metadata no longer includes empty move paths.
+  Anthropic thinking block binding can now be opted out of in config and is limited to Claude 5.1+ models so older deployments do not reject requests.
 
 
-  Full release notes can be found at https://github.com/anomalyco/opencode/releases/tag/v1.18.26
+  Timed-out SSE reads now cancel more safely without unhandled errors.
+
+
+  Full release notes can be found at https://github.com/anomalyco/opencode/releases/tag/v1.18.27
 dependencies: []
 submitter: besoeasy
 submission: https://github.com/getumbrel/umbrel-apps/pull/4718
