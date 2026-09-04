@@ -2,10 +2,10 @@ manifestVersion: 1
 id: fedimintd
 category: bitcoin
 name: Fedimint
-version: "v0.11.1"
+version: "v0.12.0"
 tagline: Federated Chaumian E-Cash Mint for Bitcoin
 description: >-
-  Fedimint is a federated Chaumian E-Cash Mint to custody and transact bitcoin in a community. It allows groups of trusted individuals, 
+  Fedimint is a federated Chaumian E-Cash Mint to custody and transact bitcoin in a community. It allows groups of trusted individuals,
   called guardians, to jointly operate a multi-signature e-cash mint.
 
   # Setting Up a Federation
@@ -23,11 +23,11 @@ description: >-
   1. Install & Launch this Fedimint app (fedimintd) on your Umbrel
      Each participating guardian runs their own instance of fedimintd.
 
-  2. Set a Password
-     When starting fedimintd for the first time, each guardian must create a secure password.
+  2. Find Your Guardian Password
+     Umbrel provides a unique guardian admin password for the app. It is shown when you first open the app and can be found again through the app's settings or credentials menu.
 
   3. Generate Setup Code
-     After entering the password, a unique setup code is generated for each guardian.
+     After signing in, a unique setup code is generated for each guardian.
 
   4. Exchange Setup Codes
      All guardians must share their setup codes with each other (every guardian needs every other guardian's code).
@@ -47,7 +47,7 @@ description: >-
 
   2. Use an existing Lightning Gateway. [Reach out on Discord to get setup](https://chat.fedimint.org).
 
-  
+
 developer: Fedimint Developers
 website: https://fedimint.org/
 dependencies:
@@ -61,36 +61,31 @@ gallery:
   - 3.jpg
 path: ""
 defaultUsername: ""
-defaultPassword: ""
+deterministicPassword: true
 submitter: Fedimint Developers
 submission: https://github.com/getumbrel/umbrel-apps/pull/3371
 releaseNotes: >-
-  This release includes major improvements to the Gateway experience, guardian discovery, and overall reliability:
+  ⚠️ **Important: Please read both notices before updating.**
 
 
-  Gateway improvements:
-    - New first-boot mnemonic setup and recovery flow for gateways
-    - Export and import federation invite codes for easier recovery
-    - BOLT12 send/receive support in the gateway UI
-    - Balance display toggle between msats, sats, and BTC
-    - One-click channel opens to existing peers
-    - Payment event filtering in the payment log
-    - Peers and Notes tabs added to the gateway UI
-    - Parallelized HTLC handling for better payment throughput
-
-  Guardian & Federation improvements:
-    - Guardians now publish their identity to the decentralized Pkarr DNS system for easier peer discovery
-    - Modernized setup and dashboard UI with Material-style design
-    - QR code display and scanning for setup codes
-    - Network connectivity indicator in setup and dashboard UI
-    - Setup code now embeds federation size for verification
-    - Maximum guardian limit raised to 19
-
-  Performance & reliability:
-    - Drastically lower memory usage — fixed a backtrace caching issue that reduced gatewayd memory from ~1.6GB to under 200MB
-    - RocksDB defaults tuned for lower memory usage in constrained environments
-    - Expanded Prometheus metrics for networking, iroh connections, HTLC handling, and Bitcoin RPC calls
-    - Fixed DB migration issue
+  **1. Coordinate with the other guardians**
 
 
-  Full release notes can be found at https://github.com/fedimint/fedimint/releases
+  If this guardian is part of an existing multi-guardian federation, coordinate the update. The Iroh networking change is incompatible with older releases, so consensus may pause until enough guardians upgrade. Rolling back after the new Iroh identity is published is unsupported.
+
+
+  **2. Your guardian admin password will change**
+
+
+  After updating, use the unique password provided by Umbrel—your previous password will no longer work. Find it when opening the app or in the app's settings or credentials menu.
+
+
+  Highlights in this release:
+    - New federations use the lnv2, mintv2, and walletv2 modules by default; existing federations keep their configured modules
+    - Setup codes now detect guardian version and Bitcoin network mismatches
+    - Adds guardian restore support and improves recovery behavior
+    - Improves Lightning payment latency, fee handling, consensus reliability, and Iroh connectivity
+    - Includes the security fixes previously released in v0.11.2
+
+
+  Full release notes can be found at https://github.com/fedimint/fedimint/releases/tag/v0.12.0
