@@ -1,0 +1,28 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: cantinarr_server_1
+      APP_PORT: 8585
+      # Cantinarr is multi-user with its own auth: household members join via
+      # connect links and the companion phone apps talk REST/WebSocket to this
+      # server, none of which can carry Umbrel auth cookies.
+      PROXY_AUTH_ADD: "false"
+
+  server:
+    image: ghcr.io/windoze95/cantinarr:0.9.0@sha256:7e1d148ec4ae90ed1ac194cfd715294867cbc807b2c32193ef96deaf66a4d154
+    restart: on-failure
+    environment:
+      CANTINARR_PUSH_GATEWAY_URL: "https://push.cantinarr.com"
+      # Origin the Radarr/Sonarr/Chaptarr containers POST webhooks back to.
+      # Cross-app container DNS works on Umbrel, so point them at this container.
+      CANTINARR_ARR_CALLBACK_URL: "http://cantinarr_server_1:8585"
+    volumes:
+      - ${APP_DATA_DIR}/data/config:/config
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider http://localhost:8585/api/health || exit 1
+      start_period: 20s
+      timeout: 5s
+      interval: 30s
+      retries: 3
