@@ -1,0 +1,85 @@
+manifestVersion: 1
+id: litecoin-core
+category: bitcoin
+name: Litecoin Node
+version: "0.21.5.6-gui.0.3.2"
+tagline: Run your personal Litecoin node
+
+description: >-
+  Run a Litecoin node on your Umbrel. It keeps a copy of the Litecoin blockchain
+  and checks transactions for itself.
+
+
+  Connect your wallet or other apps to your own node instead of a public service.
+  Your activity stays on your own hardware.
+
+
+  Use the built-in dashboard to check sync progress, peers, network activity, and
+  node settings.
+
+releaseNotes: ""
+
+developer: Litecoin Project and Rylea Stark
+website: https://litecoin.org
+dependencies: []
+repo: https://github.com/RyleaStark/umbrel-litecoin-core-gui
+support: https://github.com/RyleaStark/umbrel-litecoin-core-gui/issues
+
+port: 2111
+gallery: []
+path: ""
+
+defaultUsername: ""
+defaultPassword: ""
+
+widgets:
+  - id: "stats"
+    type: "four-stats"
+    refresh: "5s"
+    endpoint: "app:3000/api/widget/stats"
+    link: ""
+    example:
+      type: "four-stats"
+      link: ""
+      items:
+        - title: "Connections"
+          text: "11"
+          subtext: "peers"
+        - title: "Mempool"
+          text: "24"
+          subtext: "MB"
+        - title: "Hashrate"
+          text: "2"
+          subtext: "PH/s"
+        - title: "Blockchain size"
+          text: "140"
+          subtext: "GB"
+  - id: "sync"
+    type: "text-with-progress"
+    refresh: "2s"
+    endpoint: "app:3000/api/widget/sync"
+    link: ""
+    example:
+      type: "text-with-progress"
+      link: ""
+      title: "Blockchain sync"
+      text: "83%"
+      progressLabel: "In progress"
+      progress: 0.83
+
+backupIgnore:
+  - data/litecoin/blocks
+  - data/litecoin/chainstate
+  - data/litecoin/indexes
+  - data/litecoin/testnet4/blocks
+  - data/litecoin/testnet4/chainstate
+  - data/litecoin/testnet4/indexes
+  - data/litecoin/signet/blocks
+  - data/litecoin/signet/chainstate
+  - data/litecoin/signet/indexes
+  - data/litecoin/regtest/blocks
+  - data/litecoin/regtest/chainstate
+  - data/litecoin/regtest/indexes
+
+submitter: Rylea Stark
+submission: https://github.com/getumbrel/umbrel-apps/pull/5970
