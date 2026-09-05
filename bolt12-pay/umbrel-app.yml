@@ -3,146 +3,77 @@ id: bolt12-pay
 name: BOLT12 Pay
 tagline: Self-hosted Lightning payments and identity with BOLT12, BIP353, LNURL, and Nostr
 category: bitcoin
-version: 0.3.2
+version: 0.3.4
 port: 8367
-description: >-
+description: |-
   BOLT12 Pay is a self-hosted Lightning payments and identity app for LND nodes.
-  It supports BOLT12 Offers, Lightning Address (BIP353), LNURL, and BOLT11 fallback,
-  with optional Nostr identity features such as NIP-05 and Zaps.
+  It supports BOLT12 Offers, BIP353 and LNURL Lightning Addresses, optional BOLT11 fallback invoices, Nostr identities, NIP-05 and Zaps.
 
   ## 🚀 Before you install
 
-  To get the most out of BOLT12 Pay you should ideally own a domain name.
+  - Your LND node must be fully synced and have at least one active channel.
+  - LND v0.21 and newer need no manual BOLT12 configuration.
+  - Direct BOLT12 Offers work without a domain.
+  - Lightning Addresses and public payment pages require your own domain.
+  - Cloudflare DNS automation and a Cloudflare Tunnel are optional.
 
-  Recommended setup:
+  ## 🔒 UmbrelOS 2.0
 
-  - Your own domain (for example: example.com)
+  Open BOLT12 Pay at:
 
-  - DNS managed through Cloudflare, you can also import domains from other providers for DNS management to cloudflare
+  https://umbrel.local:8367
 
-  - A public HTTPS endpoint (Cloudflare Tunnel works well on Umbrel)
+  On first launch, the setup screen opens automatically.
 
-  This enables:
+  UmbrelOS 2.0 uses local HTTPS. Install Umbrel's Local HTTPS CA on every computer that opens the app. Allow camera access for the address including port 8367 if you want to use the QR scanner.
 
-  - Human-readable Lightning Addresses
-  - BIP353 Lightning Addresses
-  - Automatic DNS management
-  - Public payment pages
-  - Nostr NIP-05 identities
+  For a Cloudflare Tunnel, use https://umbrel.local:8367 as the origin and copy the HTTPS settings from the full guide. Keep TLS verification enabled.
 
-  🔥 BOLT12 Offers can still be paid, created and stored without a real domain by using the suggested placeholder values during setup,
-  but Lightning Addresses, BIP353 and public payment identities require a real domain.
+  [Full UmbrelOS 2.0 and Cloudflare guide](https://github.com/Alex71btc/lndk-pay/blob/main/README.md#-umbrel-setup)
 
-  Domain setup guide:
+  ## 🌍 Domain and public access
 
-  https://github.com/Alex71btc/lndk-pay/blob/main/README.md#-domain-configuration-bip353-vs-lnurl
+  Enter your root domain, for example example.com, as the Cloudflare Zone Domain. Do not enter a subdomain such as pay.example.com in that field.
 
+  Use your public Tunnel address as the LNURL Base URL. Wallets need this public address to find you and complete payments. Do not protect the entire public domain with an interactive Cloudflare Access login, because wallets cannot pass it.
 
-  ## ⚠️ LND Compatibility Notice
+  [Domain setup guide](https://github.com/Alex71btc/lndk-pay/blob/main/README.md#-domain-configuration-bip353-vs-lnurl)
 
+  ## 🦄 Nostr identity and Zaps
 
-   BOLT12 Pay now supports both:
+  A Nostr Identity connects an alias to a Nostr public key. NIP-05 publishes `alias@domain` as a verifiable Nostr identity. **Zap / Nostr** makes the alias's LNURL Lightning Address able to receive NIP-57 Zaps. BIP353 addresses alone cannot receive Nostr Zaps.
 
+  1. Create a Lightning Address alias in the Console, for example `zap`.
+  2. Open **Nostr / Identity** under `/pay`.
+  3. Enter the same alias, the receiving Nostr profile's npub and its relays.
+  4. Save the identity.
+  5. Enter the resulting Lightning Address in your Nostr client's Lightning or Zap address field.
 
-   * LND v0.20.1 beta with the legacy custom-message transport
-   * LND v0.21.0 with native onion messaging support
+  To edit an identity later, enter its alias again and then select **Load identity**.
 
+  ## 🔔 Zap notifications
 
-   ### ⚠️  Upgrading from LND v0.20.x to LND v0.21.x
+  To receive encrypted Zap notifications by Nostr direct message, enter the `nsec` of the same Nostr profile and select **Initialize Zap Notifications**. BOLT12 Pay encrypts this `nsec` and creates a separate internal signer key pair automatically.
 
+  BOLT12 Pay sends each notification as an encrypted NIP-04 self-DM from that same Nostr profile through the relays saved with the Identity. This keeps Zap notifications in the familiar private-message flow without introducing a second visible sender profile. The public Zap receipt still uses the relays requested by the paying client.
 
-   If you previously used BOLT12 Pay with LND v0.20.1 beta, you likely added custom protocol settings to your `lnd.conf`:
+  LND unlocks both encrypted keys automatically after app or node restarts. The private app-signer `nsec` is never displayed. **Show app signer** reveals only its public `npub`. Existing plaintext Nostr keys are encrypted during this update.
 
+  The saved notification `nsec` is never loaded back into the input field. To replace it, enter a new `nsec` and select **Save new notification nsec**. **Regenerate app signer** replaces only the internal signer key pair.
 
-   [protocol]
-   protocol.custom-message=513
-   protocol.custom-nodeann=39
-   protocol.custom-init=39
+  Keep every `nsec` secret. Never share it in support messages, logs or screenshots.
 
+  [Full Nostr setup guide](https://github.com/Alex71btc/lndk-pay/blob/main/README.md#-nostr)
 
-   ### ⚠️   IMPORTANT
+  ## ⚠️ Older LND versions
 
+  Only LND v0.20.1 and older versions need the legacy custom-message settings from the full guide. Remove the complete custom protocol block before upgrading to LND v0.21 or newer. Restart LND before performing the update.
 
-   Before upgrading your Lightning node to LND v0.21.x, remove the entire custom protocol section from your `lnd.conf`. 
-   In your LND configuration file (Go to Files: Apps → lightning → data → lnd → lnd.conf), remove 
+  BOLT12 support is still evolving and wallet compatibility may vary.
 
-   [protocol]
-   protocol.custom-message=513
-   protocol.custom-nodeann=39
-   protocol.custom-init=39
-
-
-   Save and restart LND, then you may savely update the Lightning Node app on umbrel.
-
-
-   Native onion messaging support is now built directly into LND v0.21 and these legacy settings are no longer required.
-
-   ⚠️  Leaving old custom protocol settings in place may cause unexpected behaviour after upgrading and may result in Lightning Node crash.
-
-   Once the custom protocol entries are removed, LND will work again.
-
-
-   ### LND v0.20.1 beta Users
-
-
-   If you remain on LND v0.20.x, the custom protocol settings above are still required for BOLT12 functionality.
-
-
-   ### LND v0.21.x Users
-
-
-   No custom protocol configuration is required.
-
-   BOLT12 Pay will automatically use LND's native onion messaging support.
-
-
-
-  This app currently depends on custom LND protocol changes in LND versions <=0.20.1 beta with BOLT12-related custom
-  message support enabled.
-
-
-  🛠️  SET-UP INSTRUCTIONS:
-
-
-  ## LND v0.21.0 beta and newer
-
-
-  No custom protocol configuration is required.
-
-  BOLT12 Pay automatically uses LND's native onion messaging support.
-
-
-  ## LND v0.20.1 beta and older LND implementations
-
-  In your LND configuration file (Go to Files: Apps → lightning → data → lnd → lnd.conf), add:
-
-    [protocol]
-    protocol.custom-message=513
-    protocol.custom-nodeann=39
-    protocol.custom-init=39
-
-
-  Save and restart Lightning afterwards. Without this, BOLT12 functionality will not work.
-
-
-  Domain setup guide:
-
-
-  https://github.com/Alex71btc/lndk-pay/blob/main/README.md#-domain-configuration-bip353-vs-lnurl
-
-
-  BOLT12 support on LND is still evolving, wallet compatibility may vary,
-  and this app uses cutting-edge Lightning features.
-
-
-  Support ongoing development by donating to this project:
-
-
-  https://geyser.fund/project/bolt12pay
-
+  [Support ongoing development](https://geyser.fund/project/bolt12pay)
 
   Made for sovereign Bitcoin users.
-
 
 developer: Alex71btc
 website: https://github.com/Alex71btc
@@ -151,6 +82,20 @@ submission: https://github.com/getumbrel/umbrel-apps/pull/5429
 repo: https://github.com/Alex71btc/lndk-pay
 support: https://github.com/Alex71btc/lndk-pay/issues
 releaseNotes: |
+  Security and Nostr:
+
+  - Encrypts the Notification nsec and private app signer with AES-256-GCM
+  - Uses LND to unlock the keys automatically after app or node restarts
+  - Migrates existing plaintext Nostr keys without manual setup
+  - Adds safe replacement of the Notification nsec and emergency signer regeneration
+  - Sends encrypted NIP-04 self-DMs through the relays saved with the Nostr Identity
+
+  Alias Pages:
+
+  - Stops creating a BOLT11 fallback invoice whenever an Alias page is opened or refreshed
+  - Adds an optional button that creates one BOLT11 fallback invoice only when requested
+  - Clearly identifies these invoices in Lightning Activity and limits repeated public requests
+
   BIP353:
 
   - Automatically detects missing public BIP353 TXT records in Cloudflare-managed setups
@@ -162,12 +107,17 @@ releaseNotes: |
 
   DNS:
 
+  - Retries failed BIP353 TXT lookups through Cloudflare DNS-over-HTTPS on port 443
   - Fixes parsing of long BIP353 TXT records split into multiple quoted DNS strings
   - Prevents valid Cloudflare TXT records from being incorrectly reported as containing a different offer
   - Guided repair leaves existing invalid or unrelated TXT records untouched
 
   User Interface:
 
+  - Enlarges the mobile camera preview and QR target for dense BOLT12 Offer codes
+  - Adds smooth two-finger pinch-to-zoom, a visible zoom slider and tap-to-focus where supported
+  - Keeps the QR scanner compact on desktop
+  - Shows understandable errors when a proxy returns HTML instead of JSON
   - Fixes Contacts modal scrolling and usability on mobile screens
   - Adds German and English BIP353 verification and repair messages
   - Adds BIP353 verification controls to Alias Manager and Generated Offers
