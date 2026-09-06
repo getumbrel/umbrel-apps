@@ -1,0 +1,55 @@
+manifestVersion: 1
+id: solo-pool-rs
+category: bitcoin
+name: Solo Pool RS
+version: "0.6.8"
+tagline: Solo-mine Bitcoin over Stratum V1 and V2, 100% of every block to your address
+description: >-
+  A self-contained solo Bitcoin mining pool for your own ASICs. Point any
+  Stratum V1 miner, or a Noise-encrypted Stratum V2 device such as the
+  NerdQAxe++, at port 4334 on your Umbrel and every block found pays out
+  entirely to the address you configure. The protocol is auto-detected per
+  connection, so V1 and V2 hardware share the same port. It is the only solo
+  pool in the App Store that speaks Stratum V2 to miners directly.
+
+
+  First run: open the app and set your payout address on the Settings page.
+  No SSH needed. The pool stays paused, with the dashboard reachable, until a
+  valid address for your node's network is saved. Every block reward goes to
+  that address and nowhere else.
+
+
+  Highlights:
+
+  - Stratum V1 and Noise-encrypted Stratum V2 on a single port, with optional
+  pool-identity pinning for SV2 miners
+
+  - Loss-proof block submission: every found block is archived to disk and
+  submitted with automatic retries, and any block whose acceptance the pool
+  never saw is resubmitted on the next start
+
+  - Per-miner vardiff, a live dashboard with round effort, blocks found,
+  hashrate history, per-worker stats and node health, plus Prometheus
+  metrics
+
+  - One Rust binary using your Umbrel's Bitcoin node over RPC with instant ZMQ
+  block notifications; the block-acceptance path is proven on regtest in CI
+  on every change
+releaseNotes: ""
+
+developer: Chuck Byam
+website: https://github.com/cbyam/solo-pool-rs
+dependencies:
+  - bitcoin
+repo: https://github.com/cbyam/solo-pool-rs
+support: https://github.com/cbyam/solo-pool-rs/issues
+
+port: 4333
+gallery: []
+path: ""
+
+defaultUsername: ""
+defaultPassword: ""
+
+submitter: Chuck Byam
+submission: https://github.com/getumbrel/umbrel-apps/pull/PENDING
