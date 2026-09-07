@@ -2,10 +2,18 @@ manifestVersion: 1
 id: hashrate-autopilot
 category: bitcoin
 name: Hashrate Autopilot
-version: "1.17.4"
+version: "1.18.2"
 tagline: Autopilot for renting hashrate to mine on Ocean Mining
 
 description: >-
+  PROJECT STATUS (August 2026): this app is in maintenance mode in its
+  current SHA-256 form. It keeps working, and fixes may still ship, but the
+  developer has personally stepped back from SHA-256 mining and no new
+  SHA-256 features are planned - read this before building your setup around
+  future feature work. Full reasoning:
+  https://github.com/rdouma/hashrate-autopilot/discussions/377
+
+
   ALREADY RUNNING THE COMMUNITY-STORE VERSION? This official-store app has a
   different app id than the community-store one (rdouma-hashrate-autopilot),
   so it installs as a separate app with an empty database. A one-time
@@ -73,25 +81,19 @@ defaultPassword: ""
 submitter: Remco Douma
 submission: https://github.com/getumbrel/umbrel-apps/pull/5685
 releaseNotes: >-
-  v1.17.4 - a daemon-stability fix, corrected Lightning payout amounts, and a new FAQ (everything since v1.17.2).
+  v1.18.2 - the autopilot now protects your account from marketplace penalties, and the dashboard always tells you why bidding stopped.
 
 
-  Fixed: The daemon no longer crash-loops when your Electrum server (electrs, Fulcrum, or ElectrumX) restarts or drops an idle connection while it is mid-request - previously that could crash the daemon and restart it in a loop, spamming Telegram. It now handles a dropped connection cleanly and retries.
+  Fixed: when a bid action fails, the dashboard shows the marketplace's own error message next to the FAILED badge instead of leaving you guessing, and an alert fires after repeated failures with the reason in the Telegram message.
 
 
-  Fixed: Removed a misleading "Telegram 2FA tap required" note shown after placing a bid - the autopilot bids through Braiins' API with your owner token, which needs no Telegram confirmation (that step exists only in Braiins' own web interface).
+  New protections against the failure chain that got one operator's pool target temporarily blacklisted by the marketplace: the autopilot stops re-creating bids after three create/cancel cycles that delivered nothing (resume manually once the cause is fixed), a marketplace blacklist is detected and waited out automatically with a countdown instead of a failing attempt every minute, and when your Bitcoin node goes unresponsive the autopilot cancels active bids and holds new ones - rented hashrate never burns against a pool that cannot produce work.
 
 
-  Fixed: Deduced Lightning payouts no longer overcount a partial sweep - when Ocean credits a freshly found block and then pays out only the older balance, the payout is now recorded as the actual balance decrease rather than the full pre-drop reading, and any amounts already stored self-correct on the next scan.
+  Periods where bidding was held or kept failing now draw a hatched band across the charts and appear on the Timeline; long-lived conditions no longer falsely show "Recovered" after six hours; and gaps in the unpaid-earnings history left by the v1.18.1 recovery are filled by interpolating strictly between adjacent real readings, never across a payout.
 
 
-  Fixed: The Bitaxe miners card now respects your number-format locale instead of a hard-coded decimal point.
-
-
-  New: A short, plain-language FAQ covering setup and topology (including what to put in the Stratum host field), payouts and Profit & Loss, bidding, and what you need running: https://github.com/rdouma/hashrate-autopilot/blob/main/FAQ.md
+  Project note: the README now carries a maintenance-mode notice for the project's current SHA-256 form. Everything keeps working and this update is safe from any 1.17.x or 1.18.x release; read the notice before planning around future feature work.
 
 
   Migrating from the community-store version (rdouma-hashrate-autopilot)? One-time five-minute guide: https://github.com/rdouma/hashrate-autopilot/blob/main/docs/migrating-from-community-store.md
-
-
-  Full release notes: https://github.com/rdouma/hashrate-autopilot/releases/tag/v1.17.4

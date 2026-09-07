@@ -83,14 +83,8 @@ streams:
       # Routines (templates excluded)
       - SELECT * FROM manager_routine WHERE CAST(user_id AS TEXT) = auth.user_id() AND is_template = FALSE
 
-      # Measurements
+      # Measurement categories (the measurements themselves are HOT, see below)
       - SELECT * FROM measurements_category WHERE CAST(user_id AS TEXT) = auth.user_id()
-      - |
-        SELECT measurements_measurement.*
-        FROM measurements_measurement
-        INNER JOIN measurements_category
-          ON measurements_measurement.category_id = measurements_category.id
-        WHERE CAST(measurements_category.user_id AS TEXT) = auth.user_id()
 
       # Nutrition plan structure (not the log items)
       - SELECT * FROM nutrition_nutritionplan WHERE CAST(user_id AS TEXT) = auth.user_id()
@@ -115,8 +109,13 @@ streams:
   user_activity:
     auto_subscribe: true
     queries:
-      # Weight tracking
-      - SELECT uuid AS id, weight, date, user_id FROM weight_weightentry WHERE CAST(user_id AS TEXT) = auth.user_id()
+      # Measurements, including body weight entries, so typically one or more new rows per day
+      - |
+        SELECT measurements_measurement.*
+        FROM measurements_measurement
+        INNER JOIN measurements_category
+          ON measurements_measurement.category_id = measurements_category.id
+        WHERE CAST(measurements_category.user_id AS TEXT) = auth.user_id()
 
       # Workout sessions and per-set logs
       - SELECT * FROM manager_workoutsession WHERE CAST(user_id AS TEXT) = auth.user_id()

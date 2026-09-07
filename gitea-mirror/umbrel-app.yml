@@ -3,7 +3,7 @@ id: gitea-mirror
 name: Gitea Mirror
 tagline: Mirror your GitHub repositories to a Gitea instance automatically
 category: developer
-version: "3.21.0"
+version: "3.32.1"
 port: 4322
 description: >-
   Gitea Mirror automatically mirrors your GitHub repositories to a self-hosted Gitea instance. It supports mirroring public and private repositories, organizations, starred repos, issues, wikis, and pull requests.
@@ -42,17 +42,20 @@ defaultUsername: ""
 defaultPassword: ""
 dependencies: []
 releaseNotes: >-
-  Gitea Mirror 3.21.0 adds an Auto/12-hour/24-hour time-format toggle and now follows your browser locale by default.
+  Gitea Mirror 3.32.1 rebuilds the container image with hardened permissions so the runner no longer ships setuid or setgid binaries, and documents why the Debian util-linux scan alerts do not affect this image.
 
 
-  Settings saves now preserve env-only mirror options such as GITEA_MIRROR_INTERVAL, repositories left stuck as "Syncing" recover automatically after a restart, and bulk "Mirror Organization" jobs now honor destination overrides.
+  The bundled git-lfs binary was rebuilt with updated Go crypto/networking dependencies to address upstream security advisories. There are no application changes and no new migration for users already on 3.32.0.
 
 
-  This release also includes security and dependency updates, including a better-auth update that fixes a high-severity stored XSS issue in auth-server redirect handling.
+  If you're updating from a version older than 3.32.0, back up `data/gitea-mirror.db` and your Gitea or Forgejo instance before using the mirror-move flow added in 3.32.0. The 3.31.0 startup migration records each repository's destination host.
 
 
-  If you're updating from a pre-3.17 version and use OAuth provider clients registered in Gitea Mirror, rotate the client secret for each client after upgrading because OAuth application secrets are stored hashed after migration.
+  Reminder for users updating from 3.27.1 or older: repository cleanup no longer archives or deletes copies in Gitea or Forgejo automatically when the original GitHub repository is no longer found.
 
 
-  Full release notes can be found at https://github.com/RayLabsHQ/gitea-mirror/releases/tag/v3.21.0
+  If you're updating from a version older than 3.17 and use OAuth provider clients registered in Gitea Mirror, rotate the client secret for each client after upgrading because OAuth application secrets are stored hashed after migration.
+
+
+  Full release notes can be found at https://github.com/RayLabsHQ/gitea-mirror/releases/tag/v3.32.1
 path: ""

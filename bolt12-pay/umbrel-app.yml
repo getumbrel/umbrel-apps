@@ -3,7 +3,7 @@ id: bolt12-pay
 name: BOLT12 Pay
 tagline: Self-hosted Lightning payments and identity with BOLT12, BIP353, LNURL, and Nostr
 category: bitcoin
-version: 0.3.0.2
+version: 0.3.2
 port: 8367
 description: >-
   BOLT12 Pay is a self-hosted Lightning payments and identity app for LND nodes.
@@ -151,34 +151,38 @@ submission: https://github.com/getumbrel/umbrel-apps/pull/5429
 repo: https://github.com/Alex71btc/lndk-pay
 support: https://github.com/Alex71btc/lndk-pay/issues
 releaseNotes: |
+  BIP353:
 
-  Highlights:
+  - Automatically detects missing public BIP353 TXT records in Cloudflare-managed setups
+  - Adds a guided repair flow before recreating a missing public BIP353 record
+  - Adds manual verification of published Alias Manager TXT records
+  - Adds manual verification of BIP353 addresses published from Offer History
+  - Verification distinguishes correct, missing, invalid and mismatched TXT records
+  - Draft and unpublished aliases are skipped during verification
 
-  - Introduces Transaction History for incoming and outgoing Lightning payments
-  - Automatically synchronizes payment history from LND
-  - Preserves payment metadata including BOLT12, Lightning Address, LNURL, NWC, Zaps and Keysend
-  - Live synchronization keeps transaction history up to date
-  - Improved NWC wallet integration and payment handling
-  - Numerous UI improvements and bug fixes
+  DNS:
 
-  Native Onion Messaging:
+  - Fixes parsing of long BIP353 TXT records split into multiple quoted DNS strings
+  - Prevents valid Cloudflare TXT records from being incorrectly reported as containing a different offer
+  - Guided repair leaves existing invalid or unrelated TXT records untouched
 
-  - Automatic detection of native Onion Messaging support in LND v0.21+
-  - Native Onion Messaging status is displayed during setup
-  - Legacy custom-message configuration is automatically hidden when no longer required
-  - Full compatibility with both LND v0.20.x and LND v0.21.x
+  User Interface:
 
-  Payment Compatibility:
+  - Fixes Contacts modal scrolling and usability on mobile screens
+  - Adds German and English BIP353 verification and repair messages
+  - Adds BIP353 verification controls to Alias Manager and Generated Offers
+  - Keeps the configured public BOLT12 address and QR code usable while its DNS record is missing
 
-  - Automatic fallback between LND v0.20 and v0.21 payment APIs
-  - Automatically switches to RouterRPC on LND v0.21 when required
-  - Improved Lightning Address, LNURL, BOLT11, BOLT12 and NWC payment compatibility
-  - Added default routing fee limits for better interoperability with wallets and Lightning Address providers
+  Diagnostics:
+
+  - Improves NWC logging while reducing exposure of long cryptographic identifiers
+  - Redacts BIP353 domains in logs while keeping useful troubleshooting context
 
   Upgrade Notes:
 
-  - LND v0.20.x users should keep their existing custom protocol configuration.
-  - LND v0.21.x users should remove legacy custom protocol settings from lnd.conf after upgrading to native Onion Messaging support.
+  - Existing application data and payment history are preserved
+  - No manual migration is required
+  - LND v0.20.x and v0.21.x compatibility remains unchanged
 
 dependencies:
   - lightning

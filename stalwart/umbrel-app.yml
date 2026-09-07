@@ -3,7 +3,7 @@ id: stalwart
 name: Stalwart
 tagline: All-in-one Mail & Collaboration server
 category: files
-version: "v0.16.15"
+version: "v0.16.21"
 port: 8745
 description: >-
   📧 Stalwart is a fast, secure, and scalable open-source server for email, calendars, contacts, and file sharing, built in Rust for top-tier performance and safety.
@@ -51,18 +51,16 @@ gallery:
   - 4.jpg
   - 5.jpg
 releaseNotes: >-
-  ⚠️ If updating from Stalwart v0.15.x or earlier, make sure to have a backup before updating. Umbrel runs the v0.16 migration automatically, but it's recommended to review the upgrading guide: https://github.com/stalwartlabs/stalwart/blob/main/UPGRADING/v0_16.md
+  If updating from Stalwart v0.15.x or earlier, Umbrel runs the v0.16 migration automatically as part of the update. Make sure you have a backup and leave Stalwart running until it comes back online. Upgrading guide: https://github.com/stalwartlabs/stalwart/blob/main/UPGRADING/v0_16.md
 
 
-  Changes since v0.16.14 include:
-    - Fixes JMAP Email/copy behavior, calendar event timestamps, valid-recipient handling, and escaped method names
-    - Fixes an MTA panic when MTA-STS is disabled
-    - Fixes scoped credential permission handling
-    - Fixes Web Push VAPID key parsing and encryption-at-rest behavior for appended messages
-    - Fixes cache rebuilds, registry reference lookups, search reindexing, migration safeguards, and cluster broadcasts
+  Changes in v0.16.21 include:
+    - Sieve-generated messages are now DKIM signed through the new dkimSignDomain setting, which defaults to the account's own domain
+    - Fixes JMAP calendar/contact responses, EventSource ping timing, recurrence IDs, and calendar scheduling authorization handling
+    - Fixes pipelined IMAP STATUS/FETCH completion handling, WebDAV quota reporting, duplicate inbound DMARC/TLS aggregate report imports, spam-filter blocklist lookups, iTIP detached occurrence messages, LDAP unauthenticated-bind handling, IPv6 listener fallback, and OpenTelemetry log-export attributes
 
 
-  Full release notes can be found at https://github.com/stalwartlabs/stalwart/releases/tag/v0.16.15
+  Full release notes can be found at https://github.com/stalwartlabs/stalwart/releases/tag/v0.16.21
 dependencies: []
 path: "/admin"
 deterministicPassword: true

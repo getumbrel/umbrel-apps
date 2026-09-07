@@ -2,7 +2,7 @@ manifestVersion: 1
 id: joinstr
 category: bitcoin
 name: Joinstr
-version: "0.1.0"
+version: "0.1.2"
 tagline: Decentralized coinjoin over Nostr
 description: >-
   Joinstr is a coordinator-less coinjoin that uses Nostr relays to find peers
@@ -11,7 +11,18 @@ description: >-
 
   The app runs the Joinstr web UI against your Umbrel's Bitcoin node, which it
   connects to automatically.
-releaseNotes: ""
+releaseNotes: >-
+  Fixes a bug where joining a pool showed a blank page and the join never
+  completed. The credentials page had a malformed title tag, which made the
+  browser render the page empty, and the pool creator stopped answering join
+  requests after the first attempt, so retrying never worked.
+
+
+  Also a security release. A joiner now bounds what a coinjoin can cost it and
+  will not sign a registration transaction that could be broadcast on its own,
+  pool credentials are accepted only from the pool that was actually joined,
+  pool announcements must be signed by the key they name, and nostr events are
+  verified before use rather than trusted from the relay.
 developer: Invincible Privacy
 website: https://joinstr.xyz
 dependencies:
