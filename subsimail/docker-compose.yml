@@ -1,0 +1,13 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: subsimail_web_1
+      APP_PORT: 3000
+
+  web:
+    image: subsimail/subsimail:2.0.0@sha256:aa825794bd2a171a2f663cdcc9ea56943a90b2200c4e94459f5a8dcc7523edc5
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data:/app/data
+    environment:
+      DATABASE_URL: sqlite:///app/data/subsimail.db
