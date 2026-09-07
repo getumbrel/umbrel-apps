@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ELECTRUMX_DATA_DIR="${APP_DATA_DIR}/data/electrumx"
+mkdir -p "${ELECTRUMX_DATA_DIR}"
+chown -R 1000:1000 "${ELECTRUMX_DATA_DIR}"
+find "${ELECTRUMX_DATA_DIR}" -type d -exec chmod u+rwx {} +
+find "${ELECTRUMX_DATA_DIR}" -type f -exec chmod u+rw {} +
+
+HIDDEN_SERVICE_FILE="${TOR_DATA_DIR}/app-${APP_ID}-rpc/hostname"
+if [[ ! -f "${HIDDEN_SERVICE_FILE}" ]]; then
+  "${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" up --detach electrumx
+  "${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" up --detach tor
+  echo "App: ${APP_ID} - Generating Tor hidden service..."
+  for _ in $(seq 1 100); do
+    [[ -f "${HIDDEN_SERVICE_FILE}" ]] && break
+    sleep 0.1
+  done
+fi
