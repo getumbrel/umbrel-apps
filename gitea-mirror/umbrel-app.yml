@@ -3,7 +3,7 @@ id: gitea-mirror
 name: Gitea Mirror
 tagline: Mirror your GitHub repositories to a Gitea instance automatically
 category: developer
-version: "3.32.0"
+version: "3.32.1"
 port: 4322
 description: >-
   Gitea Mirror automatically mirrors your GitHub repositories to a self-hosted Gitea instance. It supports mirroring public and private repositories, organizations, starred repos, issues, wikis, and pull requests.
@@ -42,19 +42,13 @@ defaultUsername: ""
 defaultPassword: ""
 dependencies: []
 releaseNotes: >-
-  Gitea Mirror 3.32.0 adds an in-app flow for moving existing Gitea or Forgejo mirrors to another owner when you change a repository or organization's destination. The move keeps history, issues, and mirror settings where the host supports it, and does not delete repositories.
+  Gitea Mirror 3.32.1 rebuilds the container image with hardened permissions so the runner no longer ships setuid or setgid binaries, and documents why the Debian util-linux scan alerts do not affect this image.
 
 
-  Sync and retry now look for mirrors that were moved directly in Gitea or Forgejo before creating a duplicate, and Reconcile can record the new location.
+  The bundled git-lfs binary was rebuilt with updated Go crypto/networking dependencies to address upstream security advisories. There are no application changes and no new migration for users already on 3.32.0.
 
 
-  This update also includes the 3.31.0 changes: beta GitHub and GitLab push destinations, a "Reconcile with destination" cleanup action, destination-host tracking for pull mirrors, first-push retries for newly created GitHub and GitLab repositories, and image/dependency security updates.
-
-
-  The 3.32.0 transfer path was built against Gitea's API and covered by unit tests, but upstream notes that it has not yet been run against a live Gitea instance. Back up `data/gitea-mirror.db` and your Gitea instance before moving mirrors.
-
-
-  A 3.31.0 database migration runs on startup to record each repository's destination host. As with any update, back up `data/gitea-mirror.db` before upgrading.
+  If you're updating from a version older than 3.32.0, back up `data/gitea-mirror.db` and your Gitea or Forgejo instance before using the mirror-move flow added in 3.32.0. The 3.31.0 startup migration records each repository's destination host.
 
 
   Reminder for users updating from 3.27.1 or older: repository cleanup no longer archives or deletes copies in Gitea or Forgejo automatically when the original GitHub repository is no longer found.
@@ -63,5 +57,5 @@ releaseNotes: >-
   If you're updating from a version older than 3.17 and use OAuth provider clients registered in Gitea Mirror, rotate the client secret for each client after upgrading because OAuth application secrets are stored hashed after migration.
 
 
-  Full release notes can be found at https://github.com/RayLabsHQ/gitea-mirror/releases/tag/v3.32.0
+  Full release notes can be found at https://github.com/RayLabsHQ/gitea-mirror/releases/tag/v3.32.1
 path: ""
