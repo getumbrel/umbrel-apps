@@ -1,0 +1,42 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: deepseek-harness_proxy_1
+      APP_PORT: 8091
+
+  proxy:
+    # Token-aware reverse proxy: supplies dsh's per-process launch token so
+    # users authenticated by Umbrel never copy it from logs.
+    image: docker.io/library/python:3.13-slim@sha256:9d2e5553305c7c7b0097999bb17187c69b921ccd6bc9d40e4bb5ebe652c00285
+    command: ["python3", "/app/proxy.py"]
+    restart: on-failure
+    user: "1000:1000"
+    init: true
+    environment:
+      PROXY_PORT: "8091"
+      DSH_HOST: app
+      DSH_PORT: "3080"
+      DSH_LOG_FILE: /logs/dsh.log
+    volumes:
+      - ${APP_DATA_DIR}/proxy.py:/app/proxy.py:ro
+      - ${APP_DATA_DIR}/data/logs:/logs:ro
+
+  app:
+    image: ghcr.io/mauricewipf/deepseek-harness-umbrel:0.1.2-rc.1@sha256:f1a0521e569e4245b2c704bd58b03dc8896577453f63d24128f83da5a0ae067d
+    restart: on-failure
+    user: "1000:1000"
+    init: true
+    environment:
+      DSH_HOME: /data/.dsh
+      DSH_WORKSPACE: /data/workspace
+      DSH_PORT: "3080"
+      DSH_PATCH_FILE: /app/umbrel.patch.yml
+      DSH_LOG_FILE: /logs/dsh.log
+    volumes:
+      - ${APP_DATA_DIR}/umbrel.patch.yml:/app/umbrel.patch.yml:ro
+      - ${APP_DATA_DIR}/umbrel-loopback-override.mjs:/app/umbrel-loopback-override.mjs:ro
+      - ${APP_DATA_DIR}/data/dsh-home:/data/.dsh
+      - ${APP_DATA_DIR}/data/workspace:/data/workspace
+      - ${APP_DATA_DIR}/data/logs:/logs

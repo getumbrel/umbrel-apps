@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# pre-start: ensure runtime-writable data dirs exist with app ownership.
+# umbrelOS creates missing bind-mount sources as root; the app runs as
+# 1000:1000 and must write its home, workspace, and shared log dir.
+set -euo pipefail
+
+APP_DIR="${APP_DATA_DIR:-$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")}"
+DATA_DIR="${APP_DIR}/data"
+
+mkdir -p "${DATA_DIR}/dsh-home" "${DATA_DIR}/workspace" "${DATA_DIR}/logs"
+chown -R 1000:1000 "${DATA_DIR}/dsh-home" "${DATA_DIR}/workspace" "${DATA_DIR}/logs"
