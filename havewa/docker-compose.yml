@@ -1,0 +1,39 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: havewa_server_1
+      APP_PORT: 3000
+
+  server:
+    image: ghcr.io/fgilde/hausverwaltung:sha-53d22ce@sha256:5d0388c8bc288bbd95ca0ad9d8ed09de451bbfa29db71b6daa4a5ff2fb9cec0c
+    restart: on-failure
+    stop_grace_period: 1m
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: "postgresql://havewa:${APP_POSTGRES_PASSWORD}@havewa_db_1:5432/havewa?schema=public"
+      AUTH_SECRET: "${APP_AUTH_SECRET}"
+      AUTH_TRUST_HOST: "true"
+    volumes:
+      # Documents, generated statements and the logo.
+      - ${APP_DATA_DIR}/data/storage:/app/storage
+
+  db:
+    image: postgres:16.10-alpine@sha256:029660641a0cfc575b14f336ba448fb8a75fd595d42e1fa316b9fb4378742297
+    restart: on-failure
+    stop_grace_period: 1m
+    user: "1000:1000"
+    environment:
+      POSTGRES_USER: havewa
+      POSTGRES_PASSWORD: "${APP_POSTGRES_PASSWORD}"
+      POSTGRES_DB: havewa
+    volumes:
+      - ${APP_DATA_DIR}/data/db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U havewa"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
