@@ -10,12 +10,19 @@ services:
     restart: on-failure
     environment:
       - DOCS_ADDRESS=http://$DEVICE_DOMAIN_NAME:$DOCSERVER_PORT
-      - DOCS_INTERNAL_ADDRESS=http://onlyoffice-nextcloud_documentserver_1
+      - DOCS_INTERNAL_ADDRESS=http://onlyoffice-nextcloud-documentserver
       - NEXTCLOUD_INTERNAL_ADDRESS=http://nextcloud_web_1
       - NEXTCLOUD_WEB_URL=http://$DEVICE_DOMAIN_NAME:$APP_NEXTCLOUD_PORT
 
   documentserver:
     image: onlyoffice/documentserver:9.4.0@sha256:e3da62a847b9a5d51a11f73cfea1d9c13c3be3809614490d4edddcf01dcf919b
+    # ONLYOFFICE escapes hostname underscores as %5f, rejected by Guzzle since 7.15.2 (2026-07-26).
+    # https://github.com/guzzle/guzzle/releases/tag/7.15.2
+    # Use an alias to preserve Umbrel's generated container name.
+    networks:
+      default:
+        aliases:
+          - onlyoffice-nextcloud-documentserver
     restart: on-failure
     stop_grace_period: 1m
     ports:
