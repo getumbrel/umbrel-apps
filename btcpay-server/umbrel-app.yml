@@ -2,7 +2,7 @@ manifestVersion: 1
 id: btcpay-server
 category: bitcoin
 name: BTCPay Server
-version: "2.4.3"
+version: "2.4.4"
 tagline: Accept Bitcoin payments with 0 fees & no 3rd party
 description: >-
   BTCPay Server is a payment processor that allows you to receive
@@ -34,9 +34,7 @@ path: ""
 defaultUsername: ""
 defaultPassword: ""
 releaseNotes: |-
-  ⚠️ Security update. Updating is recommended for servers shared with many users.
-
-  If you have not already updated to 2.4.2 and rotated your Lightning Node credentials, complete every step below immediately. All BTCPay Server versions before 2.4.2 are affected by a vulnerability that was being actively exploited. An unauthenticated remote attacker could steal the credentials for your Lightning Node and use them to move funds.
+  ⚠️ Security reminder for skipped-version updates. If you used BTCPay Server before 2.4.2 and have not rotated your Lightning Node credentials since updating to 2.4.2 or later, update first, then complete every step below immediately. Updating alone does not invalidate credentials that may have been exposed.
 
   After updating, rotate your Lightning Node credentials:
 
@@ -60,10 +58,19 @@ releaseNotes: |-
 
   Check your Lightning payments, channel closures, peers, on-chain balance, and channel balance for anything you do not recognize.
 
-  This release includes additional security fixes and updates NBXplorer to 2.6.11.
-
   Prior security advisory: https://x.com/BtcpayServer/status/2085865561137831938
 
-  Full release notes: https://github.com/btcpayserver/btcpayserver/releases/tag/v2.4.3
+  This release changes several existing workflows:
+
+  - Legacy BitPay Basic-auth API keys are removed. Update integrations that use them before upgrading.
+  - Greenfield API clients must use the API key's ID, rather than its secret, when revoking a key by identifier. Existing Greenfield API keys continue to work for authentication.
+  - Point of Sale invoices no longer accept a per-request `notificationUrl`. Configure the notification URL in the Point of Sale app instead.
+  - NFC checkout payments are disabled by default, a change introduced in 2.4.3. Enable them under Store Settings → Checkout Experience if needed.
+  - Zero-amount invoices are blocked unless enabled in the store's settings, and invited users must accept before joining a store.
+  - Desktop smartcard setup for Boltcards has been replaced by the Boltcard app.
+
+  This release also improves invoice permissions, exchange-rate rules, support-link security, account-email changes, and plugin discovery. API keys are now stored as hashes, and NBXplorer is updated to 2.6.13.
+
+  Full release notes: https://github.com/btcpayserver/btcpayserver/releases/tag/v2.4.4
 submitter: Umbrel
 submission: https://github.com/getumbrel/umbrel/pull/353
