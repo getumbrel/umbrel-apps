@@ -16,7 +16,9 @@ services:
 
   documentserver:
     image: onlyoffice/documentserver:9.4.0@sha256:e3da62a847b9a5d51a11f73cfea1d9c13c3be3809614490d4edddcf01dcf919b
-    # Avoid underscores in signed URLs while preserving Umbrel's generated container name.
+    # ONLYOFFICE escapes hostname underscores as %5f, rejected by Guzzle since 7.15.2 (2026-07-26).
+    # https://github.com/guzzle/guzzle/releases/tag/7.15.2
+    # Use an alias to preserve Umbrel's generated container name.
     networks:
       default:
         aliases:
