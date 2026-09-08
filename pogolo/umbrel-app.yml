@@ -1,7 +1,7 @@
 manifestVersion: 1.1
 name: pogolo
 id: pogolo
-version: "1.1.4-hotfix"
+version: "1.1.5"
 category: bitcoin
 dependencies:
   - bitcoin
@@ -16,7 +16,24 @@ description: >-
 
   think of this as public-pool but minimal and for self-sovereign nerds
 releaseNotes: |-
-  - Fixes improper share version validation
+  # New
+
+  - Umbrel only: Web UI! Forked from the Bitcoin Core app and stripped down for my use uwu
+
+  ## api
+
+  - new `/gophers` endpoint to return detailed stats on all connected gophers
+
+  - api now returns the height, difficulty, extranonce2, nonce, version, timestamp, and gopher alongside the hash of found blocks
+
+  - openapi.yaml is now served at `/openapi.yaml`
+
+  # Changed
+
+  - the `/gopher/:idOrNickname` endpoint has been moved to `/gophers/:idOrNickname`
+
+  - lots of small performance optimizations, pogolo goes toe-to-toe with the biggest without all the memory use :3
+
 developer: 0xf0xx0
 website: https://github.com/0xf0xx0/pogolo
 repo: https://github.com/0xf0xx0/pogolo
@@ -33,7 +50,7 @@ widgets:
   - id: "pogolo-stats"
     type: "four-stats"
     refresh: "30s"
-    endpoint: "widget-server:3000/widgets/pool"
+    endpoint: "webui:5663/api/widget/pool"
     link: ""
     example:
       type: "four-stats"
