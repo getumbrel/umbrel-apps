@@ -2,7 +2,7 @@ manifestVersion: 1
 id: yuvomi
 category: files
 name: Yuvomi
-version: "2.64.1"
+version: "2.65.0"
 tagline: Self-hosted family planner — calendar, tasks, shopping, meals & budget
 description: >-
   Yuvomi is a self-hosted, privacy-focused family planner that bundles everything
@@ -51,29 +51,57 @@ description: >-
   Open Yuvomi from your Umbrel dashboard and create the first account — that
   account becomes the family admin and can invite the rest of the household.
 releaseNotes: >-
-  This is a security release, and it changes nothing about how Yuvomi looks or
-  works day to day. Four reports from security researchers are fixed: a family
-  member could edit or delete another member's private calendar event; the
-  Webhook, Gotify and ntfy notification channels could be pointed at addresses
-  inside your own network; a redirect could steer a calendar feed fetch to an
-  internal address; and a shared expense could be attributed to someone outside
-  its group, while a paid housekeeping visit could be changed by anyone.
+  This is the first of the Tuesday interface releases, and it is a large one:
+  everything the interface gathered over the last week ships together here. Take
+  a backup before you update. On its first start the app runs sixteen database
+  migrations; let it finish on its own and wait until it answers again before
+  you open it. Migrations only run forward, so the way back is the backup you
+  took before the update, not an older image.
 
 
-  One thing to check after updating: if your Gotify or ntfy server, or a webhook
-  target such as Home Assistant, runs in the same Docker network or on your LAN,
-  notification delivery to it now stops until you set
-  NOTIFICATION_ALLOW_PRIVATE_NETWORK=true in the app's environment. The channel
-  shows the reason in its status, and the setting is described in the
-  installation guide.
+  The Schedule module grew the most. A shift type can carry its own icon and
+  custom fields such as a room or a client, a member can be on call alongside a
+  regular shift, a weekly-hours target flags overtime and prints, a personal
+  read-only calendar feed lets you subscribe to your own shifts from any
+  calendar app, and an optional reminder can fire before a shift starts. A new
+  Overview tab puts several household members side by side for a week or a day,
+  and the quick start now offers work, school and university templates, which an
+  admin can hide per household.
 
 
-  Nothing changes in the database with this update, so it is a plain container
-  swap with no migration to wait for.
+  Health follows the caregiver rule through: a caregiver an admin has entered
+  for a person now receives that person's medication reminders too, with the
+  name in front of the medication, and can correct the person's medication log.
+  The cycle tracker gains optional period and log-today reminders, graded
+  symptoms, basal body temperature with ovulation confirmation, a trends
+  section, symptom predictions on the calendar and a personal read-only feed of
+  predicted cycles.
+
+
+  Around the house: the shopping list is more compact and its categories fold
+  away and remember it. Documents can be shared from the viewer through the
+  device's own share sheet, whole folders can be uploaded in one go, and
+  deleting a folder can be undone for five seconds or take its documents with it
+  on purpose. The phone's month view can show event titles instead of dots,
+  recurring events carry a repeat icon, a deleted calendar entry no longer
+  reappears while its Undo is pending, and the person filter now applies to
+  shifts as well. Tasks can be filtered by category on the Board and in the
+  List, the add-subtask button stays put, a person can have a name day beside
+  the birthday, notes take personal and household categories, and the countdown
+  tile's grace period for overdue dates is now a household setting.
+
+
+  Two fixes are worth knowing about if you use the budget: a recurring entry now
+  keeps its account from the second month on, and months you already opened are
+  repaired once during this update; editing a series for all future occurrences
+  updates them in place instead of rebuilding them. The desktop sidebar has its
+  scrollbar back, Inventory and Schedule are properly translated in all 24
+  languages, and an older Yuvomi started on a newer database now says so instead
+  of running silently.
 
 
   Full release notes are available at
-  https://github.com/ulsklyc/yuvomi/releases/tag/v2.64.1
+  https://github.com/ulsklyc/yuvomi/releases/tag/v2.65.0
 backupIgnore:
   - data/app/yuvomi.db.plaintext-backup*
   - data/backups/*.db
