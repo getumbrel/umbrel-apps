@@ -1,0 +1,92 @@
+<?php
+require_once __DIR__ . '/auth.php';
+if (!isAuthenticated()) {
+    header('Location: login.php?redirect=umbrel-mcp.php');
+    exit;
+}
+requireAdmin();
+requireActiveAccountOwner();
+
+header('Cache-Control: no-store');
+header('Referrer-Policy: no-referrer');
+header('X-Content-Type-Options: nosniff');
+header("Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'");
+
+// Umbrel renders this template on install, update and start. Use a separate
+// credential for inbound clients, never Poznote's internal data/.mcp_token.
+define('UMBREL_MCP_TOKEN', '${APP_POZNOTE_MCP_AUTH_TOKEN}');
+if (!preg_match('/\A[a-f0-9]{64}\z/', UMBREL_MCP_TOKEN)) {
+    http_response_code(503);
+    exit('MCP setup is unavailable. Restart Poznote from Umbrel and try again.');
+}
+?>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Connect an AI assistant · Poznote</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 32px 20px; font: 16px/1.6 system-ui, sans-serif; background: #f5f7fa; color: #182333; }
+    main { max-width: 680px; margin: 24px auto; padding: 32px; border: 1px solid #dce2e9; border-radius: 16px; background: #fff; }
+    a { color: #0865bc; }
+    h1 { margin: 24px 0 12px; font-size: 28px; line-height: 1.25; }
+    h2 { margin: 28px 0 8px; font-size: 18px; }
+    p { margin: 8px 0 16px; }
+    label { display: block; margin: 16px 0 6px; font-weight: 600; }
+    input { width: 100%; padding: 12px; border: 1px solid #aebccc; border-radius: 8px; font: 14px/1.5 ui-monospace, monospace; color: inherit; background: #f5f7fa; }
+    input:focus-visible, summary:focus-visible, a:focus-visible { outline: 3px solid #1684e7; outline-offset: 3px; }
+    details { margin: 20px 0; }
+    summary { cursor: pointer; font-weight: 600; }
+    code { font: 14px ui-monospace, monospace; overflow-wrap: anywhere; }
+    .hint { color: #526174; font-size: 14px; }
+    @media (max-width: 480px) { main { padding: 24px 18px; } h1 { font-size: 24px; } }
+    @media (prefers-color-scheme: dark) {
+      body { background: #141a22; color: #e8edf4; }
+      main { background: #1e2632; border-color: #394657; }
+      input { background: #141a22; border-color: #607186; }
+      a { color: #77bbff; }
+      .hint { color: #afbdcf; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <a href="index.php">← Back to Poznote</a>
+    <h1>Connect an AI assistant</h1>
+    <p>Connect an external MCP client, such as Claude or VS Code, to your Poznote notes.</p>
+
+    <label for="mcp-url">MCP server URL</label>
+    <input id="mcp-url" type="text" readonly value="http://${DEVICE_DOMAIN_NAME}:8340/mcp" spellcheck="false" autocomplete="off">
+    <p class="hint">Use this address on your local network. For remote connections, use a VPN or an HTTPS proxy.</p>
+
+    <details>
+      <summary>Show access token</summary>
+      <label for="mcp-token">Bearer token</label>
+      <input id="mcp-token" type="text" readonly value="<?php echo htmlspecialchars(UMBREL_MCP_TOKEN, ENT_QUOTES, 'UTF-8'); ?>" spellcheck="false" autocomplete="off">
+      <p class="hint">This token grants access to notes in all profiles, including editing and deleting them. Give it only to clients you trust.</p>
+    </details>
+
+    <h2>Configure your client</h2>
+    <p>Add an HTTP MCP server using the URL above. Choose bearer-token authentication and paste the token. If your client asks for a header, use <code>Authorization</code> with the value <code>Bearer YOUR_TOKEN</code>.</p>
+    <p>Existing connections also need this token after the update. The URL and port stay the same, and the token stays the same across app restarts and updates on this Umbrel.</p>
+    <p class="hint">Poznote's built-in AI assistant does not need this token.</p>
+  </main>
+  <script>
+    // Match the address used to open Poznote, including custom hostnames and
+    // IPv6 literals. Only the local MCP port and path differ.
+    const endpoint = new URL(window.location.href);
+    endpoint.protocol = 'http:';
+    endpoint.port = '8340';
+    endpoint.pathname = '/mcp';
+    endpoint.search = '';
+    endpoint.hash = '';
+    document.getElementById('mcp-url').value = endpoint.href;
+    document.querySelectorAll('input[readonly]').forEach(input => {
+      input.addEventListener('click', () => input.select());
+    });
+  </script>
+</body>
+</html>
