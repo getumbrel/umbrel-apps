@@ -1,0 +1,68 @@
+# Solo Pool RS — Umbrel configuration.
+#
+# ┌─────────────────────────────────────────────────────────────────────────┐
+# │ REQUIRED: set coinbase_address below to YOUR Bitcoin address, then      │
+# │ restart the app. 100% of every block found pays out to this address.   │
+# │ The pool will not produce work until it is valid.                      │
+# └─────────────────────────────────────────────────────────────────────────┘
+#
+# Bitcoin node connection details (RPC credentials, ZMQ endpoint) are injected
+# by Umbrel through SOLO_POOL_* environment variables in docker-compose.yml —
+# the placeholder values in [bitcoin_rpc] and [zmq] below are overridden at
+# startup and need no editing.
+
+[pool]
+listen_addr = "0.0.0.0:4334"
+
+# ▼▼▼ EDIT THIS ▼▼▼
+coinbase_address = "REPLACE-WITH-YOUR-BITCOIN-ADDRESS"
+# ▲▲▲ EDIT THIS ▲▲▲
+
+coinbase_tag = "/solo-pool-rs/"
+# ~1 TH/s at 15 s/share; vardiff adjusts from here. Raise for bigger fleets.
+initial_difficulty = 4096
+extranonce1_size = 4
+extranonce2_size = 4
+max_connections = 256
+idle_timeout_secs = 300
+found_block_dir = "/app/data/found-blocks"
+
+[sv2]
+enabled = true
+
+[bitcoin_rpc]
+# Overridden by SOLO_POOL_BITCOIN_RPC__* env vars (Umbrel's Bitcoin app).
+url = "http://10.21.21.8:8332"
+user = ""
+password = ""
+timeout_secs = 10
+
+[zmq]
+# Overridden by SOLO_POOL_ZMQ__HASHBLOCK_ENDPOINT.
+hashblock_endpoint = "tcp://10.21.21.8:28334"
+poll_fallback = true
+poll_interval_ms = 1000
+
+[vardiff]
+target_share_time_secs = 15
+retarget_interval_secs = 60
+min_difficulty = 4096
+max_difficulty = 65536
+max_retarget_factor = 4.0
+
+[security]
+max_connections_per_ip = 5
+max_shares_per_sec = 500
+ban_duration_secs = 300
+max_invalid_shares = 5
+max_message_bytes = 4096
+max_worker_name_len = 128
+max_authorizations_per_session = 8
+
+[metrics]
+prometheus_addr = "0.0.0.0:9090"
+stats_db_path = "/app/data/pool_stats.sqlite"
+
+[logging]
+level = "info"
+json = false
