@@ -1,0 +1,39 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: grimmory_web_1
+      APP_PORT: 6060
+      # OPDS catalog access and KOReader progress sync.
+      PROXY_AUTH_WHITELIST: "/api/v1/opds,/api/v1/opds/*,/api/koreader/*"
+
+  web:
+    image: grimmory/grimmory:v3.3.3@sha256:fffd0ae0bfccd64ca00441e8fa58a14e286b9115e5df1cb47eecf294ad09e6ff
+    # does not work rootless
+    #user: "1000:1000"
+    restart: on-failure
+    environment:
+      DATABASE_URL: jdbc:mariadb://grimmory_db_1:3306/grimmory
+      DATABASE_USERNAME: grimmoryuser
+      DATABASE_PASSWORD: grimmorypass
+    depends_on:
+      db:
+        condition: service_started
+    volumes:
+      - ${APP_DATA_DIR}/data/app:/app/data
+      - ${APP_DATA_DIR}/data/books:/books
+      # BookDrop watched-import folder
+      - ${APP_DATA_DIR}/data/bookdrop:/bookdrop
+
+  db:
+    image: mariadb:12.0.2@sha256:b30cc65b57a11a2e791ad5c06284e599fe9f1bf3fe9081a88d85bcf36389be4a
+    user: "1000:1000"
+    restart: on-failure
+    environment:
+      MARIADB_DATABASE: grimmory
+      MARIADB_USER: grimmoryuser
+      MARIADB_PASSWORD: grimmorypass
+      MARIADB_ROOT_PASSWORD: rootpass
+    volumes:
+      - ${APP_DATA_DIR}/data/db:/var/lib/mysql
