@@ -4,7 +4,8 @@ export APP_BITCOIN_TOR_PROXY_IP="10.21.22.10"
 export APP_BITCOIN_I2P_DAEMON_IP="10.21.22.11"
 
 # DATA DIR
-export APP_BITCOIN_DATA_DIR="${EXPORTS_APP_DIR}/data/bitcoin"
+EXPORTS_DATA_ROOT="${EXPORTS_APP_DATA_DIR:-${EXPORTS_APP_DIR}/data}"
+export APP_BITCOIN_DATA_DIR="${EXPORTS_DATA_ROOT}/bitcoin"
 
 # PORTS
 export APP_BITCOIN_RPC_PORT="8332"
@@ -35,7 +36,7 @@ export APP_BITCOIN_IPC_SOCKET_RELATIVE_PATH="node.sock"
 
 # Check for an existing settings.json file to override exports with the user's saved settings
 {
-	BITCOIN_APP_CONFIG_FILE="${EXPORTS_APP_DIR}/data/app/settings.json"
+	BITCOIN_APP_CONFIG_FILE="${EXPORTS_DATA_ROOT}/app/settings.json"
 	if [[ -f "${BITCOIN_APP_CONFIG_FILE}" ]]
 	then
 		bitcoin_app_network=$(jq -r '.chain' "${BITCOIN_APP_CONFIG_FILE}")
