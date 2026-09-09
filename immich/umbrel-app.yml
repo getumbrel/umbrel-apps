@@ -1,8 +1,18 @@
 manifestVersion: 1.1
 id: immich
+storage:
+  dataRoot: data
+folderAccess:
+  - id: external-library
+    name: External Library
+    note: Select a folder containing photos or videos, then configure /mnt/external-library as an import path for an External Library in Immich. Access is read-only to protect the original files.
+    mounts:
+      - service: server
+        targetPath: /mnt/external-library
+        readOnly: true
 category: files
 name: Immich
-version: "v3.1.0"
+version: "v3.1.0-patch.1"
 tagline: High-performance photo and video backup solution
 description: >-
   An open-source and high-performance self-hosted backup solution for the videos and photos on your mobile device
@@ -45,6 +55,12 @@ description: >-
 
   - User-defined storage structure
 releaseNotes: >-
+  This update adds support for new storage management and configuration options being introduced with umbrelOS 2.0, including optional read-only access to an existing photo or video library.
+
+
+  Previous Immich v3.1.0 release notes:
+
+
   ⚠️ Immich v3 includes breaking API changes, mostly affecting third-party tools that integrate with Immich. If you're updating from a pre-v3 version, check that your mobile app and any Immich integrations are compatible with this release.
 
 
