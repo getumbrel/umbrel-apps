@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+CACHE_DIR="${APP_DATA_DIR}/data"
+DATABASE_DIR="${APP_DATA_DIR}/mysql/data"
+
+# All Litecoin Space containers run as uid/gid 1000.
+mkdir -p "${CACHE_DIR}" "${DATABASE_DIR}"
+chown -R 1000:1000 "${CACHE_DIR}" "${DATABASE_DIR}"
+find "${CACHE_DIR}" "${DATABASE_DIR}" -type d -exec chmod u+rwx {} +
+find "${CACHE_DIR}" "${DATABASE_DIR}" -type f -exec chmod u+rw {} +
+
+# The RBF cache is disposable and parsed as one JSON document during startup.
+# Remove a corrupted or excessively large copy before it can crash the backend.
+max_bytes=67108864
+for file in "${CACHE_DIR}/rbfcache.json" "${CACHE_DIR}/tmp-rbfcache.json"; do
+  if [[ -f "${file}" ]]; then
+    size="$(wc -c < "${file}" | tr -d '[:space:]')"
+    if [[ "${size}" =~ ^[0-9]+$ ]] && (( size > max_bytes )); then
+      rm -f -- "${file}"
+      echo "App: ${APP_ID} - Removed oversized cache ${file} (${size} bytes)"
+    fi
+  fi
+done
