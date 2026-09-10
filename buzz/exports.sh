@@ -1,0 +1,5 @@
+export APP_BUZZ_POSTGRES_PASSWORD="$(derive_entropy "${app_entropy_identifier}-postgres-password")"
+export APP_BUZZ_REDIS_PASSWORD="$(derive_entropy "${app_entropy_identifier}-redis-password")"
+export APP_BUZZ_S3_ACCESS_KEY="$(derive_entropy "${app_entropy_identifier}-s3-access-key")"
+export APP_BUZZ_S3_SECRET_KEY="$(derive_entropy "${app_entropy_identifier}-s3-secret-key")"
+export APP_BUZZ_GIT_HOOK_HMAC_SECRET="$(derive_entropy "${app_entropy_identifier}-git-hook-hmac-secret")"
