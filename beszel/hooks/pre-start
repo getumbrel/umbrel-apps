@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+APP_DIR="${APP_DATA_DIR:-$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")}"
+DATA_DIR="${APP_DIR}/data"
+KEY_FILE="${DATA_DIR}/id_ed25519"
+
+mkdir -p "${DATA_DIR}"
+
+# Generate the SSH keypair the Beszel hub uses to connect to its agent,
+# so local monitoring works without manual key copying. Idempotent.
+if [ ! -s "${KEY_FILE}" ] && command -v ssh-keygen >/dev/null 2>&1; then
+  ssh-keygen -t ed25519 -N "" -C "beszel-umbrel" -f "${KEY_FILE}" >/dev/null
+fi
