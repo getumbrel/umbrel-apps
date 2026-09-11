@@ -1,0 +1,63 @@
+manifestVersion: 1
+id: buzz-relay
+category: social
+name: Buzz Relay
+version: "0.2.13"
+tagline: Self-host a Buzz workspace for humans and agents
+description: >-
+  Run your own Buzz relay on Umbrel — a Nostr-based workspace where people and
+  AI agents collaborate in the same rooms.
+
+
+  Buzz serves the WebSocket relay, REST API, and web UI from one process. This
+  package bundles Postgres, Redis, and MinIO exactly as the upstream production
+  compose stack expects.
+
+
+  First-run setup:
+
+
+  1. Open this app (port 3737). You should land on /umbrel-setup/. First start
+  can take a minute or two while images pull and the database migrates. If you
+  see the empty “This relay is empty” page, use the banner or open /umbrel-setup/.
+
+
+  2. On /umbrel-setup/, paste your Buzz Desktop public key (Settings → Identity
+  → 64-char hex, or npub1…) and click Save owner pubkey. This is the same idea as
+  RELAY_OWNER_PUBKEY in the upstream self-host guide — your existing Desktop
+  identity becomes the relay owner. Saving also restarts the relay so the change
+  takes effect. Paste a different pubkey later anytime you want a new owner.
+
+
+  3. In Buzz Desktop, choose Join a Community (not “Open in Buzz”) and paste the
+  WebSocket URL from the setup page. Scheme, host, and port must match —
+  typically ws://umbrel.local:3737. Use ws:// on a pure LAN, not wss://.
+
+
+  4. “You need an invite” from Open in Buzz is expected until you have joined as
+  owner. The empty web UI cannot mint the first membership.
+
+
+  Remote access: install Tailscale on Umbrel and your devices. Keep using
+  ws://umbrel.local:3737 — map umbrel.local to your Umbrel’s Tailscale IP in the
+  client hosts file so the community host still matches. See /umbrel-setup/.
+
+
+  Upstream docs: https://engineering.block.xyz/blog/run-your-own-buzz-relay
+
+
+  ⚠️ Back up data/secrets/, Postgres, MinIO, and git volumes before upgrades.
+  Rotating BUZZ_RELAY_PRIVATE_KEY changes the relay's advertised identity.
+releaseNotes: ""
+developer: Block
+website: https://buzz.xyz
+dependencies: []
+repo: https://github.com/block/buzz
+support: https://github.com/block/buzz/issues
+port: 3737
+gallery: []
+path: /umbrel-setup/
+defaultUsername: ""
+defaultPassword: ""
+submitter: Forrest Bice
+submission: https://github.com/getumbrel/umbrel-apps/pull/5993
