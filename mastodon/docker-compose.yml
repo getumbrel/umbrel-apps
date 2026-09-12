@@ -1,0 +1,172 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: mastodon_nginx_1
+      APP_PORT: 80
+
+  db:
+    image: postgres:16.4@sha256:e62fbf9d3e2b49816a32c400ed2dba83e3b361e6833e624024309c35d334b412
+    restart: on-failure
+    environment:
+      POSTGRES_DB: mastodon
+      POSTGRES_USER: mastodon
+      POSTGRES_PASSWORD: ${APP_MASTODON_DB_PASS}
+    volumes:
+      - ${APP_DATA_DIR}/data/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mastodon"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7.4@sha256:91d0f7e8c748ec7a4c2b4fb2c4f84edab794dd91d01e095e38dc906db9d684ab
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data/redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  init:
+    image: tootsuite/mastodon:v4.7.0@sha256:207fbb6199e7bc6edb59dad30e55f398f9a4b165c7d757e3f781a15cd85093c4
+    restart: on-failure
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      RAILS_ENV: production
+      NODE_ENV: production
+      DB_HOST: db
+      DB_NAME: mastodon
+      DB_USER: mastodon
+      DB_PASS: ${APP_MASTODON_DB_PASS}
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      SECRET_KEY_BASE: ${APP_MASTODON_SECRET_KEY_BASE}
+      OTP_SECRET: ${APP_MASTODON_OTP_SECRET}
+      ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY: ${APP_MASTODON_AR_DETERMINISTIC}
+      ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT: ${APP_MASTODON_AR_DERIVATION}
+      ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY: ${APP_MASTODON_AR_PRIMARY}
+      LOCAL_DOMAIN: ${APP_DOMAIN}
+      WEB_DOMAIN: ${APP_DOMAIN}
+      EMAIL_DOMAIN_ALLOWLIST: umbrel.local
+      ADMIN_EMAIL: admin@umbrel.local
+      ADMIN_PASSWORD: mastodon-umbrel
+    entrypoint: ["bash", "-c"]
+    command:
+      - |
+        set -e
+        until (exec 3<>/dev/tcp/db/5432) 2>/dev/null; do sleep 2; done
+        bin/rails db:prepare
+        if bin/rails runner "exit 1 unless User.exists?(email: ENV['ADMIN_EMAIL'])"; then
+          echo admin-exists
+        else
+          echo creating-admin
+          bin/tootctl accounts create admin --email="$$ADMIN_EMAIL" --confirmed --role Owner
+        fi
+        bin/rails runner "u = User.find_by(email: ENV['ADMIN_EMAIL']); exit 0 unless u; unless u.valid_password?(ENV['ADMIN_PASSWORD']); u.password = ENV['ADMIN_PASSWORD']; u.password_confirmation = ENV['ADMIN_PASSWORD']; u.save!; end"
+        echo password-synced
+        echo init-done
+    user: "991:991"
+
+  web:
+    image: tootsuite/mastodon:v4.7.0@sha256:207fbb6199e7bc6edb59dad30e55f398f9a4b165c7d757e3f781a15cd85093c4
+    restart: on-failure
+    depends_on:
+      init:
+        condition: service_completed_successfully
+    environment:
+      RAILS_ENV: production
+      NODE_ENV: production
+      PORT: "3000"
+      DB_HOST: db
+      DB_NAME: mastodon
+      DB_USER: mastodon
+      DB_PASS: ${APP_MASTODON_DB_PASS}
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      SECRET_KEY_BASE: ${APP_MASTODON_SECRET_KEY_BASE}
+      OTP_SECRET: ${APP_MASTODON_OTP_SECRET}
+      ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY: ${APP_MASTODON_AR_DETERMINISTIC}
+      ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT: ${APP_MASTODON_AR_DERIVATION}
+      ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY: ${APP_MASTODON_AR_PRIMARY}
+      LOCAL_DOMAIN: ${APP_DOMAIN}
+      WEB_DOMAIN: ${APP_DOMAIN}
+    volumes:
+      - ${APP_DATA_DIR}/data/uploads:/opt/mastodon/public/system
+    user: "0:0"
+    command:
+      - bash
+      - -c
+      - |
+        # Umbrel serves apps over LAN HTTP behind app_proxy; Mastodon 4.7
+        # hardcodes config.force_ssl = true in production.rb, which would
+        # redirect every page to unreachable https://<device>.local URLs.
+        # The image runs as uid 991 but config/initializers is root-owned,
+        # so this service starts as root, installs the override, and serves.
+        printf 'Rails.application.config.force_ssl = false\n' > /opt/mastodon/config/initializers/zz_force_ssl_off.rb
+        exec bundle exec puma -p 3000
+
+  streaming:
+    image: ghcr.io/mastodon/mastodon-streaming:v4.7.0@sha256:5f5c6fee47c3cd39fe15b6bf968b36dfcc778c58e78788e1bce04df5d4b29284
+    restart: on-failure
+    depends_on:
+      init:
+        condition: service_completed_successfully
+    environment:
+      RAILS_ENV: production
+      NODE_ENV: production
+      PORT: "4000"
+      DB_HOST: db
+      DB_NAME: mastodon
+      DB_USER: mastodon
+      DB_PASS: ${APP_MASTODON_DB_PASS}
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      SECRET_KEY_BASE: ${APP_MASTODON_SECRET_KEY_BASE}
+      OTP_SECRET: ${APP_MASTODON_OTP_SECRET}
+      ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY: ${APP_MASTODON_AR_DETERMINISTIC}
+      ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT: ${APP_MASTODON_AR_DERIVATION}
+      ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY: ${APP_MASTODON_AR_PRIMARY}
+      LOCAL_DOMAIN: ${APP_DOMAIN}
+      WEB_DOMAIN: ${APP_DOMAIN}
+    command: ["node", "./streaming/index.js"]
+  sidekiq:
+    image: tootsuite/mastodon:v4.7.0@sha256:207fbb6199e7bc6edb59dad30e55f398f9a4b165c7d757e3f781a15cd85093c4
+    restart: on-failure
+    depends_on:
+      init:
+        condition: service_completed_successfully
+    environment:
+      RAILS_ENV: production
+      NODE_ENV: production
+      DB_HOST: db
+      DB_NAME: mastodon
+      DB_USER: mastodon
+      DB_PASS: ${APP_MASTODON_DB_PASS}
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      SECRET_KEY_BASE: ${APP_MASTODON_SECRET_KEY_BASE}
+      OTP_SECRET: ${APP_MASTODON_OTP_SECRET}
+      ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY: ${APP_MASTODON_AR_DETERMINISTIC}
+      ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT: ${APP_MASTODON_AR_DERIVATION}
+      ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY: ${APP_MASTODON_AR_PRIMARY}
+      LOCAL_DOMAIN: ${APP_DOMAIN}
+      WEB_DOMAIN: ${APP_DOMAIN}
+    volumes:
+      - ${APP_DATA_DIR}/data/uploads:/opt/mastodon/public/system
+    command: ["bundle", "exec", "sidekiq"]
+
+  nginx:
+    image: nginx:1.27-alpine@sha256:65645c7bb6a0661892a8b03b89d0743208a18dd2f3f17a54ef4b76fb8e2f2a10
+    restart: on-failure
+    depends_on:
+      - web
+      - streaming
+    volumes:
+      - ./nginx.conf.template:/etc/nginx/templates/default.conf.template:ro
