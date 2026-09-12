@@ -2,7 +2,7 @@ manifestVersion: 1
 id: hermitstash
 category: files
 name: HermitStash
-version: "1.15.3"
+version: "1.15.5"
 tagline: Post-quantum encrypted self-hosted file sharing
 description: >-
   HermitStash is a self-hosted file upload server with post-quantum encryption. Every file and database field is sealed with an ML-KEM-1024 + ECDH P-384 hybrid envelope and XChaCha20-Poly1305 before touching disk; passwords use Argon2id. Nothing is stored in plaintext, including database fields the operator never thinks of as sensitive.
@@ -31,19 +31,7 @@ defaultPassword: ""
 submitter: dotCooCoo
 submission: https://github.com/getumbrel/umbrel-apps/pull/5378
 releaseNotes: >-
-  Everything since 1.14.2. Four of these fix things that only went wrong on umbrel, because the app is reached over plain HTTP through the app proxy here rather than over a domain of its own.
+  This release fixes the broken v1.15.4 container image by refreshing the runtime base image so it starts correctly with the current Node runtime. Umbrel is updating from v1.15.3, so no data or configuration migration is required.
 
-  - The image carries a fix for a high-severity OpenSSL flaw, a denial of service through unbounded memory. It was disclosed after the previous image was built, so that image scanned clean when it shipped and does not now. Updating is the whole of the fix. Nothing you have configured changes.
-  - Anything you host publicly can be found again. The bot filter refused any request that omitted an Accept-Language header, and every major search-engine crawler omits it. Google documents that Googlebot does. A browser was served normally, so the refusal was invisible unless you looked at what a crawler received. Uptime monitors and link previewers were turned away the same way. A request carrying no user agent at all is still refused.
-  - This app told the server to trust the proxy in front of it using a value the server does not accept. The setting was discarded, so every request was attributed to the app proxy rather than to whoever made it: one rate limit shared by everyone, the proxy's address in the audit log, and the admin network fence matched against the proxy. It now names umbrel's own network, and all three work per-client again.
-  - Signing out clears the session cookie. The cookie that ends a session was marked HTTPS-only, and a browser refuses one of those over plain HTTP, so it was discarded and the old cookie stayed. The session itself was always destroyed, so nothing remained usable. The cookie still lingered and was sent on every later request.
-  - Setting a timezone no longer reports it as invalid. The container checked the value against files the base image does not carry, so every timezone failed, including the Etc/UTC this app sets by default. The zone was applied correctly throughout. Only the warning was wrong.
-  - The app can answer on more than one hostname now, a tailnet name alongside the local one. Reached on a second name it used to refuse every sign-in, upload and settings change while ordinary pages kept loading. Additional origins can be declared, and one that has not been declared is still refused.
-  - Putting the app into maintenance mode no longer trips the health check, so umbrel stops restarting the container underneath you while you work.
-  - Verifying a two-factor backup code or a passkey compares every stored credential, so the time the check takes no longer reveals which one matched. Client certificates keep verifying across a renewal, and the certificate toolkit picks up a signature-forgery fix.
-  - Switching public uploads off now also holds back a bundle staged just before the switch. It could previously still publish, minting its share link and mailing the uploader.
-  - Uploads are screened before anything is written, archives are opened and inspected rather than taken at their word, and the cost of screening stays in proportion to the size of what was sent. Outgoing email escapes link URLs and rate limits verification links. Filenames and CSV exports have invisible characters stripped, so two entries cannot look identical on screen while differing in storage.
-  - A corrupt vault key is reported as corrupt rather than as an old one, which is the difference between restoring a backup and chasing a migration that was never needed.
-
-  Per-version notes: https://github.com/dotCooCoo/hermitstash/releases
+  Full release notes can be found at https://github.com/dotCooCoo/hermitstash/releases/tag/v1.15.5
 dependencies: []
