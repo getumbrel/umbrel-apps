@@ -5,6 +5,12 @@ services:
     environment:
       APP_HOST: bitcoin-regtest-dashboard_dashboard_1
       APP_PORT: 3000
+      # The dashboard UI stays behind umbrelOS authentication. The HTTP API is
+      # exempt so scripts, test suites and agents running on other machines can
+      # reach it without umbrelOS credentials, which is the point of the API.
+      # Both rules are needed: "/api/*" does not match the bare /api index.
+      # Set API_TOKEN on the dashboard service below to require a bearer token.
+      PROXY_AUTH_WHITELIST: "/api,/api/*"
 
   # Bitcoin Core in regtest mode (self-contained, no dependencies)
   bitcoin:
