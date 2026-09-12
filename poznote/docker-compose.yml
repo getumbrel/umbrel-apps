@@ -7,14 +7,14 @@ services:
       APP_PORT: 80
 
   app:
-    image: ghcr.io/timothepoznanski/poznote:6.80.0@sha256:045035db3a207e246781f38d2623dc2fdc73d09ad9084c1708c2a7efaf4a2646
+    image: ghcr.io/timothepoznanski/poznote:6.81.5@sha256:965788dacd29b37517772a1cd18ce54d259383152e3256179a75ee92cda3cf66
     restart: on-failure
     environment:
       SQLITE_DATABASE: /var/www/html/data/database/poznote.db
       HTTP_WEB_PORT: 80
     volumes:
       - ${APP_DATA_DIR}/data:/var/www/html/data
-      - ${APP_DATA_DIR}/umbrel-mcp.php:/var/www/html/umbrel-mcp.php:ro
+      - ${APP_DATA_DIR}/umbrel-mcp.php:/var/www/html/public/umbrel-mcp.php:ro
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--timeout=5", "-O", "/dev/null", "http://127.0.0.1/api/health"]
       interval: 30s
@@ -23,7 +23,7 @@ services:
       start_period: 10s
 
   mcp:
-    image: ghcr.io/timothepoznanski/poznote-mcp:6.80.0@sha256:f0efc00e499bb8e8d07f3a9cdea4416be964069a8306be6757136bde52b6c8f5
+    image: ghcr.io/timothepoznanski/poznote-mcp:6.81.5@sha256:17973420216920828b5eb0a67eff4edc6e2a2de9793785c6b04c0a52386c07a8
     restart: on-failure
     environment:
       POZNOTE_API_URL: http://poznote_app_1:80/api/v1
