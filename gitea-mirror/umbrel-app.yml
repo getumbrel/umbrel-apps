@@ -3,7 +3,7 @@ id: gitea-mirror
 name: Gitea Mirror
 tagline: Mirror your GitHub repositories to a Gitea instance automatically
 category: developer
-version: "3.34.0"
+version: "3.35.1"
 port: 4322
 description: >-
   Gitea Mirror automatically mirrors your GitHub repositories to a self-hosted Gitea instance. It supports mirroring public and private repositories, organizations, starred repos, issues, wikis, and pull requests.
@@ -42,16 +42,16 @@ defaultUsername: ""
 defaultPassword: ""
 dependencies: []
 releaseNotes: >-
-  Gitea Mirror 3.34.0 lets multi-source installs choose which source an organization imports and mirrors from. The Add Organization dialog now includes a Source picker, organization cards get an inline source editor, and repository counts, mirror jobs, and deletion are scoped to the selected source. Single-source setups are unchanged.
+  Gitea Mirror 3.35.1 includes the 3.35.0 public-organization mirroring update and a follow-up security rebuild. You can now add public GitHub, GitLab, or Gitea/Forgejo organizations without configuring a source account, then later attach credentials to the generated source if needed.
 
 
-  This release also preserves manually chosen organization source pins during bulk import, and fixes organization mirror jobs so another user's repositories with the same organization name are not picked up.
+  Public-only sources can sync, schedule, and recover mirror jobs with only the destination token, and issue, pull request, label, and milestone mirroring now uses the repository's own source client. Public-only mirroring only covers public repositories and is rate-limited by unauthenticated provider limits; private repositories, starred lists, and personal discovery still need a token.
 
 
-  Migration note: 3.34.0 runs migration 0020 on first start. It adds `organizations.source_id` and fills it only for organizations whose repositories all come from one source; organizations spanning multiple sources, or with no repositories, stay unpinned. Back up `data/gitea-mirror.db` and your Gitea or Forgejo instance before upgrading.
+  The 3.35.1 image raises security-related dependency floors for Astro, @xmldom/xmldom, sharp, svgo, and js-yaml. Upstream reports no migration or configuration change is required beyond pulling the new image.
 
 
-  If you're updating from a version older than 3.33.0, Gitea Mirror also creates the sources table, backfills repository source IDs, and widens repository uniqueness rules for multi-source support. Back up before upgrading, especially if you use repository move or cleanup flows.
+  If you're updating from a version older than 3.34.0, Gitea Mirror also adds organization source pins and earlier multi-source database migrations. Back up `data/gitea-mirror.db` and your Gitea or Forgejo instance before upgrading.
 
 
   Reminder for users updating from 3.27.1 or older: repository cleanup no longer archives or deletes copies in Gitea or Forgejo automatically when the original GitHub repository is no longer found.
@@ -60,5 +60,8 @@ releaseNotes: >-
   If you're updating from a version older than 3.17 and use OAuth provider clients registered in Gitea Mirror, rotate the client secret for each client after upgrading because OAuth application secrets are stored hashed after migration.
 
 
-  Full release notes can be found at https://github.com/RayLabsHQ/gitea-mirror/releases/tag/v3.34.0
+  Full release notes can be found at https://github.com/RayLabsHQ/gitea-mirror/releases/tag/v3.35.1
+
+
+  Release notes for the included 3.35.0 update can be found at https://github.com/RayLabsHQ/gitea-mirror/releases/tag/v3.35.0
 path: ""
