@@ -1,0 +1,22 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: libredb-studio_server_1
+      APP_PORT: 3000
+
+  server:
+    image: libredb/libredb-studio:0.14.1@sha256:ea8852c7ce61f479b3b177ef2dc04e19809117a5054d0652f4367688729b6871
+    restart: on-failure
+    user: "1000:1000"
+    environment:
+      PORT: "3000"
+      STORAGE_PROVIDER: sqlite
+      STORAGE_SQLITE_PATH: /app/data/libredb-storage.db
+      ADMIN_EMAIL: admin@libredb.org
+      ADMIN_PASSWORD: $APP_PASSWORD
+      JWT_SECRET: $APP_LIBREDB_STUDIO_JWT_SECRET
+      AUTH_COOKIE_SECURE: "false"
+    volumes:
+      - ${APP_DATA_DIR}/data:/app/data
