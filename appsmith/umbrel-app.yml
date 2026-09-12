@@ -3,7 +3,7 @@ id: appsmith
 name: Appsmith
 tagline: Platform to build admin panels, internal tools, and dashboards
 category: developer
-version: "v2.3"
+version: "v2.4"
 port: 8654
 description: >-
   Appsmith is an open-source, low-code development platform designed to help developers and teams build internal tools and business applications quickly and efficiently. Whether you need dashboards, admin panels, database GUIs, or approval workflows, Appsmith provides a powerful yet flexible environment to create robust applications without the overhead of traditional software development.
@@ -34,16 +34,20 @@ defaultUsername: ""
 defaultPassword: ""
 dependencies: []
 releaseNotes: >-
-  Appsmith 2.3 keeps the automatic migration for older Umbrel installs, so Appsmith may take some time to come back online while the migration finishes. Please leave Appsmith running until it has started.
+  Appsmith 2.4 keeps the automatic migration for older Umbrel installs, so Appsmith may take some time to come back online while the migration finishes. Please leave Appsmith running until it has started.
 
-  Appsmith AI datasource connections are being retired: after upgrading, new Appsmith AI datasources and queries can no longer be created, while existing ones continue to work until September 30, 2026.
+  Appsmith AI datasource connections are being retired: existing Appsmith AI datasources stop working on September 30, 2026 whether or not you upgrade. Migrate remaining AI queries to a direct provider datasource before then.
+
+  Important upgrade notes:
+    - Admin Settings now masks sensitive values returned by the admin environment API, and MongoDB/Redis URL fields are replaced with read-only connection status.
+    - OpenAI, Anthropic, and Google AI datasource model lists were refreshed; saved Anthropic queries using manually entered modern model IDs may need binding updates.
 
   Highlights include:
-    - Added Ask AI to Community Edition and AI Copilot support for Custom Widgets.
-    - Added the Card widget, Button label styling options, widget tab-order controls, and configurable HTML language attributes.
-    - Fixed multiple security issues covering datasource authorization, Git imports, permission group boundaries, anonymous tenant responses, login redirects, frame ancestors, SMTP TLS verification, rate limiting, and dependency CVEs.
-    - Improved Git error messages and Git import behavior.
-    - Fixed several UI and widget issues, including application theme permissions, copy-to-application scrolling, table menu button widths, and link handling in Text widgets.
+    - Added the opt-in Appsmith MCP Server beta with per-user keys, expiry controls, permission-scoped actions, and human approval for destructive changes.
+    - Added MSSQL read-only connections and readable-secondary routing for SQL Server Always On deployments.
+    - Improved the evaluated value helper, widget-event lint clearing, Custom ECharts and Custom Widget stability, required-field markers, and form-login labels.
+    - Improved datasource, SMTP, SSH, Git synchronization, and MongoDB URI reliability.
+    - Fixed multiple security issues around custom JavaScript library access, export/fork credential handling, Git route permissions, OAuth redirects, restricted-host checks, and dependency CVEs.
 
-  Full release notes can be found at https://github.com/appsmithorg/appsmith/releases/tag/v2.3
+  Full release notes can be found at https://github.com/appsmithorg/appsmith/releases/tag/v2.4
 path: ""
