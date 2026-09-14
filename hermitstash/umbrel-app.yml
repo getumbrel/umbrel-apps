@@ -2,7 +2,7 @@ manifestVersion: 1
 id: hermitstash
 category: files
 name: HermitStash
-version: "1.15.5"
+version: "1.15.6"
 tagline: Post-quantum encrypted self-hosted file sharing
 description: >-
   HermitStash is a self-hosted file upload server with post-quantum encryption. Every file and database field is sealed with an ML-KEM-1024 + ECDH P-384 hybrid envelope and XChaCha20-Poly1305 before touching disk; passwords use Argon2id. Nothing is stored in plaintext, including database fields the operator never thinks of as sensitive.
@@ -31,7 +31,7 @@ defaultPassword: ""
 submitter: dotCooCoo
 submission: https://github.com/getumbrel/umbrel-apps/pull/5378
 releaseNotes: >-
-  This release fixes the broken v1.15.4 container image by refreshing the runtime base image so it starts correctly with the current Node runtime. Umbrel is updating from v1.15.3, so no data or configuration migration is required.
+  This release fixes an authenticated rename validation issue that could let very long file or bundle names stall the server, which is especially relevant for public instances that allow open registration. It also fixes startup cleanup so overlapping instances sharing a temporary directory do not delete each other's live plaintext database files and lose recent writes. No data or configuration migration is required.
 
-  Full release notes can be found at https://github.com/dotCooCoo/hermitstash/releases/tag/v1.15.5
+  Full release notes can be found at https://github.com/dotCooCoo/hermitstash/releases/tag/v1.15.6
 dependencies: []
