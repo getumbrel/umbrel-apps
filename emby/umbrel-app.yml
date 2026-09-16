@@ -1,9 +1,25 @@
 manifestVersion: 1
 id: emby
+storage:
+  dataRoot: data
+folderAccess:
+  - id: umbrel-downloads
+    name: Downloads
+    note: Media files for your Emby libraries. Available inside Emby at /downloads.
+    mounts:
+      - service: server
+        targetPath: /downloads
+  - id: media-library
+    name: Media Library
+    note: Select an additional folder containing media, then add /media as a folder in an Emby library. Access is read-only to protect the original files.
+    mounts:
+      - service: server
+        targetPath: /media
+        readOnly: true
 name: Emby
 tagline: A personal media server
 category: media
-version: "4.9.5.0-1"
+version: "4.10.0.40-patch.1"
 port: 8103
 description: >-
   ▶️ Emby is a powerful media server software designed to help users manage, stream, and enjoy their personal collection of movies, TV shows, music, photos, and home videos across a wide range of devices. It acts as a central hub for all your digital media, automatically organizing content and enriching it with metadata like cover art, descriptions, and ratings. Emby provides a clean and intuitive interface that allows users to easily browse and play their media, whether they are at home or on the go.
@@ -34,10 +50,19 @@ gallery:
   - 6.jpg
   - 7.jpg
 releaseNotes: >-
-  Fixes a port conflict that could prevent Emby from running alongside Blockstream Blind Oracle.
+  This update adds support for new storage management and configuration options being introduced with umbrelOS 2.0, including access to additional media folders.
 
 
-  Opening Emby from Umbrel will use the new address automatically. If you use a saved bookmark or configured Emby clients with your Umbrel's old Emby address, update them to use port 8103.
+  Emby 4.10.0.40 release notes:
+
+
+  This update includes Emby 4.10 improvements and fixes, including better search performance, refreshed home screen section options, HLS codec improvements, and fixes for startup wizard, transcoding, subtitle rendering, live TV, Chromecast playback, SMB libraries, and DVD/Blu-ray folders with dots in their names.
+
+
+  The Umbrel package still uses Emby's newer port, 8103. Opening Emby from Umbrel will use the correct address automatically. If you use a saved bookmark or configured Emby clients with your Umbrel's old Emby address, update them to use port 8103.
+
+
+  Full release notes can be found at https://github.com/MediaBrowser/Emby.Releases/releases/tag/4.10.0.40
 dependencies: []
 path: ""
 defaultUsername: ""
