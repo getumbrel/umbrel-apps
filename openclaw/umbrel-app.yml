@@ -3,9 +3,10 @@ id: openclaw
 name: OpenClaw
 tagline: The AI that actually does things
 category: ai
-version: "2026.9.2"
+version: "2026.9.2-1"
 port: 18789
 path: ""
+deterministicPassword: true
 description: >-
   Clears your inbox, sends emails, manages your calendar, checks you in for flights.
   All from WhatsApp, Telegram, or any chat app you already use.
@@ -20,6 +21,21 @@ description: >-
 
 
   OpenClaw is also running behind the umbrelOS app proxy, so only you can securely access your OpenClaw instance.
+
+
+  ## Connect desktop apps and nodes
+
+    - In the client, choose **Remote (another host) → Direct (ws/wss)**.
+
+    - Use `ws://umbrel.local:18791`, `ws://<LAN-IP>:18791`, or `ws://<Tailscale-IP>:18791`.
+
+    - Copy the password from OpenClaw's app settings in Umbrel and enter it in the client's **Gateway token** field.
+
+    - Approve the new device or node in OpenClaw.
+
+
+  Port 18791 is intended for a trusted private LAN or Tailnet. Do not forward it directly to the public internet;
+  use a properly configured `wss://` endpoint over untrusted networks.
 
 
   ## What It Does
@@ -39,20 +55,19 @@ gallery:
   - 2.jpg
   - 3.jpg
 releaseNotes: >-
-  This update adds support for GPT-6 Astra, faster chat and dashboard loading,
-  and easier switching between connected accounts. Agents can work on tasks in
-  parallel with live progress, and dashboards offer more flexible layouts.
+  This package update adds an authenticated connection endpoint for OpenClaw
+  desktop apps and nodes while keeping browser access protected by umbrelOS.
 
 
-  It also improves scheduled automations, messaging reliability, and recovery
-  of in-progress replies after restarts.
+  Connect over a trusted local network or Tailnet using
+  `ws://umbrel.local:18791` and the password shown in OpenClaw's app settings.
+  New clients must be approved in OpenClaw before they can connect.
 
 
-  If you use OpenProse, its bundled plugin and /prose command have been removed.
-  Your existing .prose source files are kept. To continue using OpenProse as a
-  skill, follow the migration guide at https://docs.openclaw.ai/prose
+  Do not forward port 18791 directly to the public internet because `ws://` is
+  unencrypted. Use a properly configured `wss://` endpoint over untrusted networks.
 
 
-  Full release notes can be found at https://github.com/openclaw/openclaw/releases/tag/v2026.9.2
+  Existing OpenClaw settings and provider credentials are preserved.
 submitter: Umbrel
 submission: https://github.com/getumbrel/umbrel-apps/pull/4649
