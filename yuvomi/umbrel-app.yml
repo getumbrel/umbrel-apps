@@ -4,7 +4,7 @@ storage:
   dataRoot: data
 category: files
 name: Yuvomi
-version: "2.65.2-patch.1"
+version: "2.67.0"
 tagline: Self-hosted family planner — calendar, tasks, shopping, meals & budget
 description: >-
   Yuvomi is a self-hosted, privacy-focused family planner that bundles everything
@@ -53,33 +53,39 @@ description: >-
   Open Yuvomi from your Umbrel dashboard and create the first account — that
   account becomes the family admin and can invite the rest of the household.
 releaseNotes: >-
-  This update adds support for new storage management and configuration options being introduced with umbrelOS 2.0.
+  This release adds a new optional module and a good deal of work on Health.
+  Waste collection keeps track of your household's pickup days: define your
+  waste types and their weekly or monthly rhythm, or subscribe to your
+  municipality's calendar file and let it refresh itself. It stays off until you
+  turn it on in Settings, and from there it can also appear on the dashboard and
+  in the calendar.
 
 
-  Previous Yuvomi 2.65.2 release notes:
+  In Health, the cycle tab has grown into a full tracker, with flow strength
+  shown on the calendar, feelings, more fertility signals, and a daily bubble
+  that answers what today means for you. Some of what you note there stays yours
+  alone, even on days the rest is shared with the family. Next to it, a fasting
+  journal records your timers and the fasts you have already finished.
 
 
-  This is a security release, and it changes nothing about how Yuvomi looks or
-  works day to day. It concerns API tokens that are limited to single modules,
-  such as a token handed to an AI assistant or an MCP client. A token allowed to
-  use the global search could read matching notes, contacts and medications
-  through it, and a token allowed to read the dashboard received the data of
-  every tile, although neither had been given those modules. Both now leave out
-  every module the token was not given. Browser sessions and tokens without
-  module limits see no change.
+  One change is worth knowing before you update: housekeeping staff and
+  shared-expense guests no longer turn up in the lists where you pick a person,
+  such as assignees or reminder recipients. Anything already assigned to them
+  stays as it is.
 
 
-  One thing to check after updating: a token that was given only the search or
-  the dashboard scope now returns empty results until you add the modules it
-  should be able to read.
+  The rest is everyday polish. Form fields, set-aside cards and checked-off
+  shopping items are easier to read in both light and dark themes, a shopping
+  list can be duplicated and follows what the rest of the household does while
+  it is open, and the Schedule module had a full pass for clarity.
 
 
-  Nothing changes in the database with this update, so it is a plain container
-  swap with no migration to wait for.
+  This release applies database migrations. They run by themselves the first
+  time the new version starts, and on a large household that can take a moment.
 
 
   Full release notes are available at
-  https://github.com/ulsklyc/yuvomi/releases/tag/v2.65.2
+  https://github.com/ulsklyc/yuvomi/releases/tag/v2.67.0
 backupIgnore:
   - data/app/yuvomi.db.plaintext-backup*
   - data/backups/*.db
