@@ -1,8 +1,24 @@
 manifestVersion: 1
 id: plex
+storage:
+  dataRoot: data
+folderAccess:
+  - id: umbrel-downloads
+    name: Downloads
+    note: Media files for your Plex libraries. Available inside Plex at /downloads.
+    mounts:
+      - service: server
+        targetPath: /downloads
+  - id: media-library
+    name: Media Library
+    note: Select an additional folder containing media, then add /media as a folder in a Plex library. Access is read-only to protect the original files.
+    mounts:
+      - service: server
+        targetPath: /media
+        readOnly: true
 category: media
 name: Plex
-version: "1.43.4.10903"
+version: "1.43.4.10903-patch.1"
 tagline: Stream Movies & TV Shows
 description: >-
   Stream movies and TV shows, plus 300+ channels of live TV, instantly, without a subscription. Watch live TV and movies anywhere, from any device, with Plex.
@@ -30,6 +46,12 @@ permissions:
   - STORAGE_DOWNLOADS
   - GPU
 releaseNotes: >-
+  This update adds support for new storage management and configuration options being introduced with umbrelOS 2.0, including access to additional media folders.
+
+
+  Previous Plex 1.43.4.10903 release notes:
+
+
   This update includes several improvements and bug fixes:
     - Adds HDR10+ filtering and metadata detection.
     - Adds HEVC transcode support for devices with 8-bit HEVC encoding support.

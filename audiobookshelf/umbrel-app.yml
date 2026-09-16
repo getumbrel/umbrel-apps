@@ -1,9 +1,24 @@
 manifestVersion: 1
 id: audiobookshelf
+storage:
+  dataRoot: data
+folderAccess:
+  - id: umbrel-downloads:audiobooks
+    name: Audiobooks
+    note: Audiobook files for your libraries. Available inside Audiobookshelf at /audiobooks.
+    mounts:
+      - service: web
+        targetPath: /audiobooks
+  - id: umbrel-downloads:podcasts
+    name: Podcasts
+    note: Podcast files and downloaded episodes. Available inside Audiobookshelf at /podcasts.
+    mounts:
+      - service: web
+        targetPath: /podcasts
 name: Audiobookshelf
 tagline: Audiobook and podcast server
 category: media
-version: "2.36.0"
+version: "2.36.0-patch.3"
 port: 13378
 description: >-
   Features:
@@ -63,6 +78,12 @@ path: ""
 defaultUsername: ""
 defaultPassword: ""
 releaseNotes: >-
+  This update adds support for new storage management and configuration options being introduced with umbrelOS 2.0, including selectable audiobook and podcast folders.
+
+
+  Previous Audiobookshelf 2.36.0 release notes:
+
+
   This update adds account session management, including a sessions table and controls to log out individual devices or all devices.
 
   It also includes security fixes for OIDC callback validation, refresh-token authentication paths, root account deletion, and bulk library item download access checks.
