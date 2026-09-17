@@ -1,9 +1,11 @@
 manifestVersion: 1
 id: ollama
+storage:
+  dataRoot: data
 name: Ollama
 tagline: Self-host open source AI models like DeepSeek-R1, Llama, and more
 category: ai
-version: "0.34.0"
+version: "0.34.1-patch.1"
 port: 11434
 description: >-
   Ollama allows you to download and run advanced AI models directly on your own hardware. Self-hosting AI models ensures full control over your data and protects your privacy.
@@ -40,10 +42,16 @@ dependencies: []
 permissions:
   - GPU
 releaseNotes: >-
+  This update adds support for new storage management and configuration options being introduced with umbrelOS 2.0.
+
+
+  Previous Ollama 0.34.1 release notes:
+
+
   Key highlights in this release:
-    - Adds support for using Ollama models from ChatGPT Desktop.
-    - Improves structured output performance on Apple Silicon.
-    - Adds support for OpenAI-compatible client tool search and response compaction.
+    - Improves `/api/tags` performance on large model libraries and reports model capabilities more consistently.
+    - Improves MLX memory handling on Apple Silicon and makes MLX safetensors model creation generally available.
+    - Reduces false positives in runaway repeat token detection, which helps OCR and other repeat-heavy workloads.
 
 
   Full release notes are available at https://github.com/ollama/ollama/releases/
