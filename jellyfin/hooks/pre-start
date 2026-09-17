@@ -3,13 +3,13 @@
 
 set -euo pipefail
 
-APP_DIR="$(readlink -f $(dirname "${BASH_SOURCE[0]}")/..)"
-APP_DATA_DIR="${APP_DIR}/data"
+APP_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")"
+DATA_ROOT="${APP_DATA_ROOT:-${APP_DIR}/data}"
 APP_COMPOSE_FILE="${APP_DIR}/docker-compose.yml"
-JELLYFIN_SYSTEM_FILE="${APP_DATA_DIR}/config/system.xml"
-JELLYFIN_UPDATE_FLAG_FILE="${APP_DATA_DIR}/POST_1_10_VERSION"
-MIGRATION_IN_PROGRESS_FILE="${APP_DATA_DIR}/MIGRATION_IN_PROGRESS"
-MIGRATION_FIX_FLAG="${APP_DATA_DIR}/MIGRATION_20250618_FIXED"
+JELLYFIN_SYSTEM_FILE="${DATA_ROOT}/config/system.xml"
+JELLYFIN_UPDATE_FLAG_FILE="${DATA_ROOT}/POST_1_10_VERSION"
+MIGRATION_IN_PROGRESS_FILE="${DATA_ROOT}/MIGRATION_IN_PROGRESS"
+MIGRATION_FIX_FLAG="${DATA_ROOT}/MIGRATION_20250618_FIXED"
 
 # If database files do not yet exist
 # Then it's likely a new install
@@ -108,7 +108,7 @@ echo "Stopping Jellyfin v1.10.7..."
 # 10.11.5's MigrateLibraryDb migration will rename library.db to library.db.old
 # Then MigrateLibraryUserData will try to read UserDatas from library.db.old
 # So we add the table to library.db now, before it gets renamed
-LIBRARY_DB="${APP_DATA_DIR}/config/data/data/library.db"
+LIBRARY_DB="${DATA_ROOT}/config/data/data/library.db"
 if [[ -f "${LIBRARY_DB}" && ! -f "${MIGRATION_FIX_FLAG}" ]]; then
     echo "Applying UserDatas table fix to library.db (before 10.11.5 renames it)..."
     
