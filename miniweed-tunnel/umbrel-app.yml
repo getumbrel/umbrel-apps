@@ -2,13 +2,13 @@ manifestVersion: 1
 id: miniweed-tunnel
 category: networking
 name: Tunnel
-version: "1.6.50"
+version: "1.7.0"
 tagline: Expose your services to the world without touching your router
 description: >-
   Connect your Umbrel to your own VPS and expose services to the internet without
   opening ports on your router. A 100% self-hosted alternative to Cloudflare Tunnel.
   Works behind CGNAT. Uses WireGuard for end-to-end encryption and Caddy for
-  automatic HTTPS with Let's Encrypt.
+  automatic public HTTPS with Let's Encrypt on your own domain.
 releaseNotes: ""
 developer: miniweed
 website: https://github.com/miniweed/umbrel-app-store
@@ -20,5 +20,27 @@ gallery: []
 path: ""
 defaultUsername: ""
 defaultPassword: ""
+backupIgnore:
+  - caddy/data/*
+  - data/health.json
+widgets:
+  - id: "status"
+    type: "three-stats"
+    refresh: "30s"
+    endpoint: "web:3016/api/widget"
+    link: ""
+    example:
+      type: "three-stats"
+      link: ""
+      items:
+        - icon: "route"
+          text: "Connected"
+          subtext: "handshake 42s ago"
+        - icon: "server-2"
+          text: "2/3"
+          subtext: "services healthy"
+        - icon: "world"
+          text: "example.com"
+          subtext: "public domain"
 submitter: miniweed
 submission: https://github.com/getumbrel/umbrel-apps/pull/5758
