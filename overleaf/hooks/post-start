@@ -1,0 +1,87 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# This post-start hook automatically checks and installs any custom TeX Live
+# packages listed in data/texlive-packages.txt so they persist across updates.
+
+APP_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")"
+DATA_ROOT="${APP_DATA_ROOT:-${APP_DIR}/data}"
+PACKAGES_FILE="${DATA_ROOT}/texlive-packages.txt"
+LOG_FILE="${DATA_ROOT}/texlive-install.log"
+
+# Ensure default essential packages exist in PACKAGES_FILE even if it was previously created
+mkdir -p "${DATA_ROOT}"
+touch "${PACKAGES_FILE}"
+
+for def_pkg in babel-spanish hyphen-spanish titlesec verse collection-latexrecommended collection-fontsrecommended; do
+	if ! grep -Fxq "${def_pkg}" "${PACKAGES_FILE}" 2>/dev/null; then
+		echo "${def_pkg}" >> "${PACKAGES_FILE}"
+	fi
+done
+
+# Detect running server container (supports Compose v1 and v2 naming conventions)
+CONTAINER_NAME="$(docker ps --filter "name=overleaf.*server" --format "{{.Names}}" | head -n 1)"
+if [[ -z "${CONTAINER_NAME}" ]]; then
+	CONTAINER_NAME="overleaf_server_1"
+fi
+
+install_packages() {
+	local container="${1}"
+	local pkg_file="${2}"
+	local log="${3}"
+
+	echo "[$(date '+%Y-%m-%d %H:%M:%S')] Checking TeX Live packages for Overleaf..." >> "${log}"
+
+	# Wait up to 60 seconds for the container and tlmgr to be ready
+	local attempts=0
+	while ! docker exec "${container}" tlmgr --version > /dev/null 2>&1; do
+		sleep 2
+		attempts=$((attempts + 1))
+		if [[ ${attempts} -ge 30 ]]; then
+			echo "[$(date '+%Y-%m-%d %H:%M:%S')] Container ${container} not ready after 60s. Skipping." >> "${log}"
+			return 1
+		fi
+	done
+
+	# Check if any requested packages are missing
+	local missing_pkgs=()
+	while IFS= read -r pkg || [[ -n "${pkg}" ]]; do
+		pkg="$(echo "${pkg}" | tr -d '\r' | xargs)"
+		[[ -z "${pkg}" || "${pkg}" =~ ^# ]] && continue
+
+		# Check if package is installed in container
+		if ! docker exec "${container}" tlmgr info "${pkg}" 2>&1 | grep -q "installed:[[:space:]]*Yes"; then
+			missing_pkgs+=("${pkg}")
+		fi
+	done < "${pkg_file}"
+
+	if [[ ${#missing_pkgs[@]} -eq 0 ]]; then
+		echo "[$(date '+%Y-%m-%d %H:%M:%S')] All packages from ${pkg_file} are already installed." >> "${log}"
+		return 0
+	fi
+
+	echo "[$(date '+%Y-%m-%d %H:%M:%S')] Missing packages detected: ${missing_pkgs[*]}. Updating tlmgr..." >> "${log}"
+	docker exec "${container}" tlmgr update --self >> "${log}" 2>&1 || true
+
+	echo "[$(date '+%Y-%m-%d %H:%M:%S')] Installing missing packages: ${missing_pkgs[*]}..." >> "${log}"
+	if docker exec "${container}" tlmgr install "${missing_pkgs[@]}" >> "${log}" 2>&1; then
+		echo "[$(date '+%Y-%m-%d %H:%M:%S')] Successfully installed packages: ${missing_pkgs[*]}" >> "${log}"
+	else
+		echo "[$(date '+%Y-%m-%d %H:%M:%S')] Batch installation had issues; falling back to individual installs..." >> "${log}"
+		for pkg in "${missing_pkgs[@]}"; do
+			echo "[$(date '+%Y-%m-%d %H:%M:%S')] Installing ${pkg}..." >> "${log}"
+			if docker exec "${container}" tlmgr install "${pkg}" >> "${log}" 2>&1; then
+				echo "[$(date '+%Y-%m-%d %H:%M:%S')] Successfully installed ${pkg}" >> "${log}"
+			else
+				echo "[$(date '+%Y-%m-%d %H:%M:%S')] Warning: Failed to install ${pkg}" >> "${log}"
+			fi
+		done
+	fi
+
+	echo "[$(date '+%Y-%m-%d %H:%M:%S')] Refreshing TeX Live paths and font maps..." >> "${log}"
+	docker exec "${container}" tlmgr path add >> "${log}" 2>&1 || true
+	echo "[$(date '+%Y-%m-%d %H:%M:%S')] TeX Live package setup complete." >> "${log}"
+}
+
+# Run in background so the hook returns immediately and does not block or timeout
+install_packages "${CONTAINER_NAME}" "${PACKAGES_FILE}" "${LOG_FILE}" & disown
