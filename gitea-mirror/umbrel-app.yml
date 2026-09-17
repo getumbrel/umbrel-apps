@@ -5,7 +5,7 @@ storage:
 name: Gitea Mirror
 tagline: Mirror your GitHub repositories to a Gitea instance automatically
 category: developer
-version: "3.36.1-patch.1"
+version: "3.36.2"
 port: 4322
 description: >-
   Gitea Mirror automatically mirrors your GitHub repositories to a self-hosted Gitea instance. It supports mirroring public and private repositories, organizations, starred repos, issues, wikis, and pull requests.
@@ -44,19 +44,19 @@ defaultUsername: ""
 defaultPassword: ""
 dependencies: []
 releaseNotes: >-
-  This update adds support for new storage management and configuration options being introduced with umbrelOS 2.0.
+  This update fixes several scheduling, organization, and destination display issues in Gitea Mirror.
 
 
-  Previous Gitea Mirror 3.36.1 release notes:
+  Key highlights:
+    - Fixed the automation card so it shows the schedule that is actually running, including interval-based schedules from existing configuration.
+    - Ignoring an organization now also ignores its repositories until the organization is included again.
+    - Fixed organization cards incorrectly saying Gitea when the destination is Forgejo.
 
 
-  Gitea Mirror 3.36.1 fixes several mirror job edge cases and includes a security dependency update. Crash recovery no longer starts a second pass for a job that is still running, progress checkpoints are written more consistently, and duplicate discovery rows from two sources pointing at the same host are skipped during scheduling/import.
+  Upgrade notes: existing configurations are not touched. New configurations now start with scheduling off unless `SCHEDULE_ENABLED=true`, `SCHEDULE_INTERVAL`, or `GITEA_MIRROR_INTERVAL` enables it.
 
 
-  The included 3.36.0 update fixes organization mirror destination overrides that matched the source organization name and prevents duplicate release assets when overlapping mirror jobs target the same release. It also updates the server adapter used by Nix and bare-metal installs; Docker installs were not affected by that startup issue.
-
-
-  Upgrade notes: existing duplicate repository rows are not deleted automatically; check the scheduler log for repositories that are tracked more than once and remove the unwanted row from the Repositories page. After updating, set any organization destination override that did not stick again, and manually remove older duplicate release assets that are outside the configured asset-sync window.
+  If you're updating from a version older than 3.36.1, Gitea Mirror also includes fixes for duplicate release assets, organization destination overrides, crash recovery, duplicate source-row scheduling/import behavior, and progress checkpoint handling.
 
 
   If you're updating from a version older than 3.34.0, Gitea Mirror also adds organization source pins and earlier multi-source database migrations. Back up `data/gitea-mirror.db` and your Gitea or Forgejo instance before upgrading.
@@ -68,8 +68,5 @@ releaseNotes: >-
   If you're updating from a version older than 3.17 and use OAuth provider clients registered in Gitea Mirror, rotate the client secret for each client after upgrading because OAuth application secrets are stored hashed after migration.
 
 
-  Full release notes can be found at https://github.com/RayLabsHQ/gitea-mirror/releases/tag/v3.36.1
-
-
-  Release notes for the included 3.36.0 update can be found at https://github.com/RayLabsHQ/gitea-mirror/releases/tag/v3.36.0
+  Full release notes can be found at https://github.com/RayLabsHQ/gitea-mirror/releases/tag/v3.36.2
 path: ""
