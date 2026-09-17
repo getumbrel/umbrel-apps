@@ -3,11 +3,11 @@ name: pogolo
 id: pogolo
 storage:
   dataRoot: data
-version: "1.1.5-patch.1"
+version: "1.1.6"
 category: bitcoin
 dependencies:
   - bitcoin
-tagline: Local Go-based solo pool
+tagline: Local Go-based SV1+SV2 solo pool
 description: >-
   solo db-less bitcoin-only mining pool,
   meant for lan swarms, not the internet;
@@ -18,27 +18,41 @@ description: >-
 
   think of this as public-pool but minimal and for self-sovereign nerds
 releaseNotes: |-
-  This update adds support for new storage management and configuration options being introduced with umbrelOS 2.0.
-
-  Previous pogolo 1.1.5 release notes:
-
   # New
 
-  - Umbrel only: Web UI! Forked from the Bitcoin Core app and stripped down for my use uwu
+  - native SV2 support! same great port uwu
 
-  ## api
-
-  - new `/gophers` endpoint to return detailed stats on all connected gophers
-
-  - api now returns the height, difficulty, extranonce2, nonce, version, timestamp, and gopher alongside the hash of found blocks
-
-  - openapi.yaml is now served at `/openapi.yaml`
+    just switch your miners over to SV2 and disable certificate authentication, it's unneeded on the LAN
 
   # Changed
 
-  - the `/gopher/:idOrNickname` endpoint has been moved to `/gophers/:idOrNickname`
+  - pogolo will accept a provided extranonce1 in a `mining.configure` message, truncating any data to 4 bytes
 
-  - lots of small performance optimizations, pogolo goes toe-to-toe with the biggest without all the memory use :3
+  - `mining.extranonce.subscribe` now gets a dummy `true` response
+
+  ## Web UI
+
+  - font sizing is now based on the browser font size
+
+  - some text is italic now
+
+  - fixed "reset to defaults" cancel button color in settings
+
+  ## API
+
+  - add version and active chain to /info endpoint
+
+  # Fix
+
+  - the share delta initial value was set wrong, diff changes should be stabler
+
+  - antminer/bOS firmwares are able to connect now (thanks BlackHole on discord)
+
+  # Notes
+
+  - whatsminers dont seem to work :\ if you own one test and send me logs plss, im in the osmu discord @Hexfox
+
+  - testnet4 blocks `000000000000000079a9aeebf8ab51a6448b0db1a556eca26cbedf1d6f55b67b` and `000000000000000175e11bb8c8acac417d290746a798bff7c3f53c36aa9cef3c` validate reward generation :3 the second was mined with the sv2 path!
 
 developer: 0xf0xx0
 website: https://github.com/0xf0xx0/pogolo
@@ -55,7 +69,7 @@ submission: https://github.com/getumbrel/umbrel-apps/pull/4622
 widgets:
   - id: "pogolo-stats"
     type: "four-stats"
-    refresh: "30s"
+    refresh: "5s"
     endpoint: "webui:5663/api/widget/pool"
     link: ""
     example:
