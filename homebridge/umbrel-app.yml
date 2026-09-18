@@ -4,7 +4,7 @@ storage:
   dataRoot: data
 category: automation
 name: Homebridge
-version: "2.0.2-2026-05-10-patch.1"
+version: "2.4.0-2026-09-02"
 tagline: "HomeKit support for the impatient"
 description: >-
   Bringing HomeKit support where there is none. Homebridge allows you to integrate with smart home devices that do not natively support HomeKit.
@@ -43,24 +43,15 @@ torOnly: false
 permissions:
   - GPU
 releaseNotes: >-
-  This update adds support for new storage management and configuration options being introduced with umbrelOS 2.0.
+  ⚠️ Major update reminder: If you are upgrading from a pre-2.x Homebridge release, check plugin readiness indicators and update outdated plugins before upgrading. Older plugins that use removed Homebridge or HAP-NodeJS APIs may fail until updated.
 
 
-  Previous Homebridge 2.0.2-2026-05-10 release notes:
+  This update includes Homebridge 2.4.0, Homebridge UI 5.29.0, and Node.js 24.20.0. It improves Matter accessory handling, including feature-map reporting for UI controls, dimmable light commands, cache restore/state updates, Matter bridge startup reliability, additional Matter device/cluster support, and several plugin/config validation fixes.
 
 
-  ⚠️ Major update: Check Homebridge's plugin readiness indicators and update any outdated plugins before upgrading to Homebridge 2. Most plugins should continue to work, but older plugins that use removed Homebridge or HAP-NodeJS APIs may fail until updated.
+  HAP-NodeJS now uses a built-in file storage replacement for node-persist. Saved Homebridge data is not migrated or rewritten, but rare plugins that call removed storage methods may need plugin updates.
 
 
-  If an incompatible plugin is running outside a child bridge, Homebridge may restart until that plugin is disabled or updated. Plugins in child bridges are isolated, so the Homebridge UI should remain accessible while the affected child bridge restarts.
-
-
-  Homebridge 2 changes the default mDNS advertiser to Avahi when available. If your HomeKit devices show "No Response" after updating, open Homebridge Settings → mDNS Advertiser and switch back to Bonjour HAP.
-
-
-  This release logs the Matter.js version at bridge and child bridge startup, updates dependencies, and includes Homebridge UI 5.22.0 with Node.js 24.15.0.
-
-
-  Full release notes can be found at https://github.com/homebridge/homebridge/releases/tag/v2.0.2
+  Full release notes can be found at https://github.com/homebridge/homebridge/releases/tag/v2.4.0
 submitter: Umbrel
 submission: https://github.com/getumbrel/umbrel-apps/pull/606
