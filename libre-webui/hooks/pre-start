@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+APP_DIR="${APP_DATA_DIR:-$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")}"
+
+# The upstream image always runs as a fixed non-root user (uid/gid 1001) and
+# has no PUID/PGID or permission-fixing entrypoint. Umbrel creates package
+# directories as 1000:1000, so make sure the bind-mounted data and temp
+# directories are writable by the container's fixed user before it starts.
+chown -R 1001:1001 "${APP_DIR}/data" "${APP_DIR}/temp"
