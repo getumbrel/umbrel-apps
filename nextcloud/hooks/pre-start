@@ -1,181 +1,306 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -Eeuo pipefail
+trap 'echo "Nextcloud migration stopped at line $LINENO. Restart the app to retry this checkpoint." >&2' ERR
+
+# This file is also mounted into the containers. Always check admission before
+# either upstream entrypoint can change the database or Nextcloud's code.
+# Update this and the final checkpoint image together with docker-compose.yml.
+NEXTCLOUD_VERSION="35.0.0"
+LAST_MAJOR="${NEXTCLOUD_VERSION%%.*}"
+TARGET="${NEXTCLOUD_VERSION}-mariadb10.11-v1"
+if [[ "${1:-}" == --guard ]]; then
+    service="$2"
+    shift 2
+    if [[ "$(cat /umbrel-migration/ready 2>/dev/null || true)" != "$TARGET" || -e /umbrel-migration/progress.json ]]; then
+        echo "Nextcloud migration has not completed. Restart the app to retry." >&2
+        exit 1
+    fi
+    case "$service" in
+        db) exec docker-entrypoint.sh "$@" ;;
+        web) exec /entrypoint.sh "$@" ;;
+        cron) exec /cron.sh ;;
+    esac
+    exit 1
+fi
+
+if [[ "${1:-}" == --upgrade ]]; then
+    # NEXTCLOUD_UPDATE makes the official entrypoint synchronize code and perform
+    # its normal upgrade, then execute this finite command instead of Apache.
+    rm -f /var/www/html/config/zz-umbrel-migration.config.php
+    if [[ "${UMBREL_NEXTCLOUD_FRESH:-false}" == true ]]; then
+        if [[ ! -e /var/www/html/config/config.php && ! -L /var/www/html/config/config.php ]]; then
+            # The image copies version.php before installation. With no install
+            # config yet, replay its initialization after an interrupted copy.
+            # Never change Nextcloud's authoritative config version or data.
+            rm -f /var/www/html/version.php
+        elif ! php -r 'require "/var/www/html/config/config.php"; exit(empty($CONFIG["installed"]) ? 1 : 0);'; then
+            echo 'Nextcloud initialization stopped after creating configuration. Automatic retry is unsafe; existing data has been preserved.' >&2
+            exit 1
+        fi
+    fi
+    export NEXTCLOUD_UPDATE=1
+    exec /entrypoint.sh bash /umbrel-migration-hook --verify
+fi
+
+if [[ "${1:-}" == --verify ]]; then
+    cd /var/www/html
+    occ() { su -s /bin/sh www-data -c 'exec php /var/www/html/occ "$@"' -- sh "$@"; }
+    # A failed previous entrypoint may have copied version.php already. Explicitly
+    # retry the schema upgrade at this same checkpoint, even when code matches.
+    upgrade_result=0
+    occ upgrade --no-interaction || upgrade_result=$?
+    # Exit 2 means the schema is current but maintenance mode is still enabled.
+    # Any other upgrade error must keep the app blocked.
+    [[ "$upgrade_result" == 0 || "$upgrade_result" == 2 ]] || exit "$upgrade_result"
+    verify() {
+        occ status --output=json > /tmp/umbrel-nextcloud-status.json
+        php -r '
+            require "/usr/src/nextcloud/version.php";
+            require "/var/www/html/config/config.php";
+            $status = json_decode(file_get_contents("/tmp/umbrel-nextcloud-status.json"), true);
+            $expected = implode(".", $OC_Version);
+            if (empty($status["installed"]) || $status["version"] !== $expected ||
+                ($CONFIG["version"] ?? "") !== $expected || !empty($status["needsDbUpgrade"]) ||
+                ($argv[1] === "complete" && (!empty($CONFIG["maintenance"]) || !empty($status["maintenance"])))) { exit(1); }
+        ' "$1"
+    }
+    # Upstream preserves pre-existing maintenance mode on a successful retry.
+    # Only release it after checking the completed schema and image version.
+    verify schema
+    occ maintenance:mode --off
+    verify complete
+    # Upstream recommends 2–3 cron passes between major versions. Do not let a
+    # configured overnight maintenance window defer these migration jobs.
+    override=/var/www/html/config/zz-umbrel-migration.config.php
+    trap 'rm -f "$override"' EXIT
+    printf '%s\n' '<?php $CONFIG = ["maintenance_window_start" => 100];' > "$override"
+    chmod 644 "$override"
+    for pass in 1 2 3; do
+        echo "Running background migration pass $pass..."
+        su -s /bin/sh www-data -c 'php -f /var/www/html/cron.php'
+    done
+    exit
+fi
 
 APP_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")"
 DATA_ROOT="${APP_DATA_ROOT:-${APP_DIR}/data}"
 UMBREL_ROOT="${UMBREL_ROOT:-${APP_DIR}/../..}"
+STATE="${DATA_ROOT}/migration"
+CONFIG="${DATA_ROOT}/nextcloud/config/config.php"
+mkdir -p "$STATE"
+chmod 755 "$STATE"
+exec 9> "$STATE/lock"
+# Serialize overlapping starts before inspecting or changing migration state.
+flock 9
 
-CONFIG_PHP_FILE="${DATA_ROOT}/nextcloud/config/config.php"
+fail() { echo "Nextcloud migration: $*" >&2; exit 1; }
+# The host has no PHP runtime. Use this only to choose a checkpoint; the worker
+# verifies the real PHP configuration and installed schema before advancing.
+installed=$(sed -n "s/^[[:space:]]*'version'[[:space:]]*=>[[:space:]]*'\([^']*\)'.*/\1/p" "$CONFIG" 2>/dev/null || true)
+db_version=$(cat "$DATA_ROOT/db/mariadb_upgrade_info" 2>/dev/null || cat "$DATA_ROOT/db/mysql_upgrade_info" 2>/dev/null || true)
+if [[ "$(cat "$STATE/ready" 2>/dev/null || true)" == "$TARGET" &&
+      "$installed" == "$NEXTCLOUD_VERSION".* && "$db_version" == 10.11.* && ! -f "$STATE/progress.json" ]]; then
+    exit
+fi
+rm -f "$STATE/ready"
 
-APP_COMPOSE_FILE="${APP_DIR}/docker-compose.yml"
-APP_COMPOSE_BACKUP_FILE="${APP_DIR}/docker-compose.yml.bak"
+# Latest maintenance checkpoints, pinned for both supported architectures.
+# https://docs.nextcloud.com/server/stable/admin_manual/maintenance/upgrade.html
+IMAGES=(
+    "nextcloud:22.2.10-apache@sha256:71c4fb75d7c035ea2c840ebc1adf0da144b0c69e39ce925f4a2ea84b7c06db18"
+    "nextcloud:23.0.12-apache@sha256:4f2b9eec723a2a33139165ae02602bcd8233372457261c636dbea11fdd8894a5"
+    "nextcloud:24.0.12-apache@sha256:e4373d17ce6b625c673e9bc36f90368da306329a36de5c182bd0c8c0a7a0ab71"
+    "nextcloud:25.0.13-apache@sha256:5cec71ac9d7815400913df3a520701d84d582505ab2b25072e2e926a3f1af416"
+    "nextcloud:26.0.13-apache@sha256:2b06de3ec10c53c6a812e509c9dd38609086438e2568a4030d638368d72113e8"
+    "nextcloud:27.1.11-apache@sha256:cbbe16adf3df9246c49d1faade9788b6c792d64b09a76c3372ee2b49294ac6a7"
+    "nextcloud:28.0.14-apache@sha256:48b5cc1237da4886d0222098b7252316e141bebde37f37268771518d092e7ad4"
+    "nextcloud:29.0.16-apache@sha256:a7fbfcd4759bdd19b8fb8b1044b47ee3a9471d2e2c8bc68d56a2e671f86cebd2"
+    "nextcloud:30.0.17-apache@sha256:fb966733647ea03f0446b0c22eac9733c8eb616d37b960caca9d4c3010e14a08"
+    "nextcloud:31.0.14-apache@sha256:07ec73cc816e58d6f45a162cd53ef886462c29271a23fc68d0124cec276e3767"
+    "nextcloud:32.0.15-apache@sha256:d327f7cbd131726f11058e6021f393867dd5c8c17d097af719c773c771f6c26c"
+    "nextcloud:33.0.9-apache@sha256:29eed78ab5152c9fef2e89cf742f8b10f1fb20d4acdd5e4224fdd93625e6f114"
+    "nextcloud:34.0.4-apache@sha256:de4ad938938636f2f616b07cfac5f355a82f44edb88acd297d6931fa5d39bac7"
+    "nextcloud:35.0.0-apache@sha256:901b85afe28df992d7b310b8f5dbea12648640b1e162d6b87d2cba37984c0b29"
+)
+DB_105="mariadb:10.5.29@sha256:a530aeeefd82f4fa5150f391b6c75462140904780338766f6b03acecb1cca3ce"
+DB_106="mariadb:10.6.28@sha256:40153feb479c0da88b5cfe3f50f44c91f7baf05a1b7bcc5beb7eb37a890a8f16"
+DB_1011="mariadb:10.11.19@sha256:7f22313fc130a377a44999965bcb0a08dd5b21e8502824c1b864f792f9bc66ab"
 
-# Supported list of Nextcloud major version migrations
-VERSIONS=()
-VERSIONS+=( "22" )
-VERSIONS+=( "23" )
-VERSIONS+=( "24" )
-VERSIONS+=( "25" )
-VERSIONS+=( "26" )
-VERSIONS+=( "27" )
-VERSIONS+=( "28" )
-VERSIONS+=( "29" )
-VERSIONS+=( "30" )
-VERSIONS+=( "31" )
-VERSIONS+=( "32" )
-VERSIONS+=( "33" )
-VERSIONS+=( "34" )
-
-# List of Nextcloud major version images to migrate to
-IMAGES=()
-IMAGES+=( "nextcloud:22.2.10-apache@sha256:71c4fb75d7c035ea2c840ebc1adf0da144b0c69e39ce925f4a2ea84b7c06db18" )
-IMAGES+=( "nextcloud:23.0.11-apache@sha256:671ed70c7b204c63cb56d5c0d5dd624abec5eadeacd492191e65e834ddffef26" )
-IMAGES+=( "nextcloud:24.0.7-apache@sha256:f95a21b598b7470b788251db5b0bbe9516992fdb865e7a8978980585e36eb715" )
-IMAGES+=( "nextcloud:25.0.1-apache@sha256:a200319b132c01ec3486e0dcaf052092b560ec30ac9b78115607696dd201f704" )
-IMAGES+=( "nextcloud:26.0.9-apache@sha256:23180fbe8169d428ce0058bfc8d47793628a16e00e40b495d82e4504a124b3fa" )
-IMAGES+=( "nextcloud:27.0.2-apache@sha256:3c8040278bdc991cbc025278eaffc4978a9c2fd4ac34e95b10f646dcadb7c3fb" )
-IMAGES+=( "nextcloud:28.0.3-apache@sha256:ed07f89119dcca2a3711897c48a8ac969542d96d69384445d8fcdc7804ca946f" )
-IMAGES+=( "nextcloud:29.0.7-apache@sha256:3bcd2afa9d02fccc52251712bee1afc4f5891beaf353af47881b7662cd1308f7" )
-IMAGES+=( "nextcloud:30.0.5-apache@sha256:02441f524c6fab3aadbf7157f6e0484927e231d685b248dc0734fa2941b4445e" )
-IMAGES+=( "nextcloud:31.0.9-apache@sha256:11f158050216614d585886600445e0a1b75ee224d6a6dddc5eba996cc9499fa6" )
-IMAGES+=( "nextcloud:32.0.6-apache@sha256:0e1084cc59df77bec7d6bb29d9ac6939da8372512237a9c51f74ff0a970524f2" )
-IMAGES+=( "nextcloud:33.0.5-apache@sha256:4c8bf9140e07ad0293e32500de47a97647677cd4cace358db3ecdc225dff9856" )
-IMAGES+=( "nextcloud:34.0.4-apache@sha256:de4ad938938636f2f616b07cfac5f355a82f44edb88acd297d6931fa5d39bac7" )
-
-find_index() {
-	local -r value="${1}"
-	shift
-	local -r array=("$@")
-
-	for i in "${!array[@]}"; do
-		if [[ "${array[$i]}" == "${value}" ]]; then
-			echo $i
-			exit
-		fi
-	done
-
-	echo -1
+fresh=false
+save_progress() {
+    jq -n --argjson checkpoint "$checkpoint" --arg database "$database" --argjson fresh "$fresh" \
+        '{checkpoint: $checkpoint, database: $database, fresh: $fresh}' > "$STATE/progress.tmp"
+    mv "$STATE/progress.tmp" "$STATE/progress.json"
+    sync "$STATE/progress.json" "$STATE"
 }
 
-wait_for_value_in_file () {
-	local -r file="${1}"
-	local -r str="${2}"
-	local -r max_seconds="${3}"
-
-	echo "Searching for '${str}' inside: ${file}"
-
-	for i in $(seq 1 "${max_seconds}"); do
-		echo "Attempt: ${i}"
-		if cat "${file}" | grep --quiet "${str}"; then
-			return
-		fi
-		sleep 1
-	done
-
-	echo "Failed after ${max_seconds} seconds to find '${str}' inside: ${file}"
-	exit 1
-}
-
-check_compose_file () {
-	local -r image="${1}"
-
-	web_image=$(cat "${APP_COMPOSE_FILE}" 2> /dev/null | yq '.services.web.image' || true)
-	cron_image=$(cat "${APP_COMPOSE_FILE}" 2> /dev/null | yq '.services.cron.image' || true)
-
-	if [[ "${web_image}" != "${image}" ]] || [[ "${cron_image}" != "${image}" ]]; then
-		echo "The docker-compose.yml now looks bad. Restoring..."
-
-		mv "${APP_COMPOSE_BACKUP_FILE}" "${APP_COMPOSE_FILE}"
-
-		exit
-	fi
-}
-
-get_version() {
-	cat "${CONFIG_PHP_FILE}" | grep "'version'[[:space:]]=>[[:space:]]" | awk -F"'" '{print $4}'
-}
-
-get_major_version() {
-	echo "${1%%.*}"
-}
-
-# If a Nextcloud config file does not yet exist
-# Then it's likely a new install
-# Therefore there is nothing to do
-if [[ ! -f "${CONFIG_PHP_FILE}" ]]; then
-	exit
+if [[ -f "$STATE/progress.json" ]]; then
+    checkpoint=$(jq -er --argjson last "$LAST_MAJOR" '.checkpoint | select(type == "number" and . >= 22 and . <= $last and floor == .)' "$STATE/progress.json")
+    database=$(jq -er '.database' "$STATE/progress.json")
+    fresh=$(jq -r 'if has("fresh") then .fresh else false end | if type == "boolean" then . else error("Invalid fresh-install marker") end' "$STATE/progress.json")
+    [[ "$fresh" == false || ( "$checkpoint" == "$LAST_MAJOR" && "$database" == 10.11 ) ]] || fail 'Invalid fresh-install checkpoint.'
+    case "$database" in 10.5|10.6|10.11) ;; *) fail 'Unknown recorded database version.' ;; esac
+else
+    if [[ -z "$installed" ]]; then
+        for directory in "$DATA_ROOT/db" "$DATA_ROOT/nextcloud"; do
+            if [[ -e "$directory" || -L "$directory" ]]; then
+                [[ -d "$directory" ]] || fail 'Existing data is not a directory.'
+                remaining=$(find -H "$directory" -mindepth 1 -maxdepth 1 ! -name .gitkeep -print -quit)
+                [[ -z "$remaining" ]] || fail 'Existing installation has no readable version.'
+            fi
+        done
+        checkpoint="$LAST_MAJOR"
+        database=10.11
+        fresh=true
+    else
+        [[ "$installed" =~ ^([0-9]+)\.[0-9]+\.[0-9]+\.[0-9]+(-patch)?$ ]] || fail 'Unrecognized installed version.'
+        checkpoint="${BASH_REMATCH[1]}"
+        # An older hook may have copied the next major before its schema upgrade
+        # failed. Resume that code's major instead of attempting a code downgrade.
+        code_major=$(sed -n 's/^\$OC_Version = array(\([0-9]*\),.*/\1/p' "$DATA_ROOT/nextcloud/version.php" 2>/dev/null || true)
+        if [[ -n "$code_major" ]]; then
+            [[ "$code_major" =~ ^[0-9]+$ ]] && (( code_major >= checkpoint && code_major <= checkpoint + 1 )) || fail 'Code and installed versions are inconsistent.'
+            checkpoint="$code_major"
+        fi
+        (( checkpoint >= 22 && checkpoint <= LAST_MAJOR )) || fail 'Installed version is outside the supported migration path.'
+        case "$db_version" in
+            10.5.*) database=10.5 ;;
+            10.6.*) database=10.6 ;;
+            10.11.*) database=10.11 ;;
+            *)
+                # The originally shipped 10.5.12 image wrote no upgrade_info.
+                # Its redo header identifies the legacy engine (32 bytes at 16).
+                # Only use it for untouched legacy packages, never to guess
+                # across an interrupted old hook (its creator field can be stale).
+                # https://github.com/MariaDB/server/blob/mariadb-10.5.12/storage/innobase/include/log0log.h
+                creator=$(dd if="$DATA_ROOT/db/ib_logfile0" bs=1 skip=16 count=32 2>/dev/null | tr -d '\000' || true)
+                if (( checkpoint <= 30 )) && [[ ! -e "$DATA_ROOT/db/mariadb_upgrade_info" &&
+                    ! -e "$DATA_ROOT/db/mysql_upgrade_info" && ! -e "$APP_DIR/docker-compose.yml.bak" &&
+                    "$installed" != *-patch && "$creator" =~ ^MariaDB\ 10\.5\.[0-9]+$ ]]; then
+                    database=10.5
+                else
+                    fail 'Cannot identify the existing database version.'
+                fi
+                ;;
+        esac
+    fi
+    save_progress
 fi
 
-nextcloud_version=$(get_version)
-nextcloud_major_version=$(get_major_version "$nextcloud_version")
+# Ask Umbrel to resolve its own network, storage and user settings. Do not edit
+# the installed Compose file or recursively call app start/stop from this hook.
+umask 077
+work=$(mktemp -d "$APP_DIR/.migration.XXXXXX")
+compose() { docker compose --project-name nextcloud --file "$work/compose.json" "$@"; }
+cleanup() {
+    result=$?
+    trap - EXIT
+    if [[ -f "$work/compose.json" ]]; then
+        docker rm --force nextcloud-migration-worker >/dev/null 2>&1 || true
+        compose stop --timeout 120 db redis >/dev/null 2>&1 || true
+    fi
+    rm -rf "$work"
+    exit "$result"
+}
+trap cleanup EXIT
+# Umbrel rewrites this literal path to its current compatibility script.
+"${UMBREL_ROOT}/scripts/app" compose nextcloud config --format json > "$work/base.json"
+jq -e '.services.web and .services.db and .services.redis' "$work/base.json" >/dev/null
 
-echo "Active Nextcloud Version: ${nextcloud_version}"
-echo "Active Nextcloud Major Version: ${nextcloud_major_version}"
+render() {
+    image="${IMAGES[$((checkpoint - 22))]}"
+    case "$database" in
+        10.5) db_image="$DB_105" ;;
+        10.6) db_image="$DB_106" ;;
+        10.11) db_image="$DB_1011" ;;
+    esac
+    jq --arg image "$image" --arg db "$db_image" --arg fresh "$fresh" '
+        .services = {db: .services.db, redis: .services.redis, "migration-worker": .services.web} |
+        .services.db.image = $db |
+        .services.db.entrypoint = ["docker-entrypoint.sh"] |
+        .services.db.restart = "no" |
+        .services.redis.restart = "no" |
+        .services["migration-worker"].image = $image |
+        .services["migration-worker"].entrypoint = ["bash", "/umbrel-migration-hook", "--upgrade"] |
+        .services["migration-worker"].command = [] |
+        .services["migration-worker"].environment.UMBREL_NEXTCLOUD_FRESH = $fresh |
+        .services["migration-worker"].restart = "no" |
+        del(.services["migration-worker"].container_name, .services["migration-worker"].ports,
+            .services["migration-worker"].depends_on, .services["migration-worker"].healthcheck) |
+        walk(if type == "string" then gsub("\\$"; "$$") else . end)
+    ' "$work/base.json" > "$work/compose.json"
+}
 
-# check if active version has "-patch" appended to it and exit if it does so we allow the migration to complete
-# we add "-patch" to the version below during migration
-if [[ "${nextcloud_version}" == *"-patch"* ]]; then
-	echo "Active Nextcloud version is undergoing migration. Exiting..."
-	exit
+ensure_image() { docker image inspect "$1" >/dev/null 2>&1 || docker pull "$1"; }
+
+sql() { compose exec -T db sh -c 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" exec mariadb --protocol=tcp -h127.0.0.1 -uroot --batch --skip-column-names -e "$1"' sh "$1"; }
+start_database() {
+    compose up --detach --no-deps db redis
+    for ((attempt = 0; attempt < 120; attempt++)); do
+        if actual=$(sql 'SELECT VERSION()' 2>/dev/null); then
+            [[ "$actual" == "$database".* ]] || fail 'Unexpected database server version.'
+            compose exec -T db sh -c 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" exec mariadb-check -uroot --silent --check-upgrade "$MYSQL_DATABASE"'
+            return
+        fi
+        sleep 2
+    done
+    fail 'Database did not become ready. Its logs contain the failure details.'
+}
+stop_database() {
+    sql 'SET GLOBAL innodb_fast_shutdown=1'
+    container=$(compose ps -q db)
+    compose stop --timeout 120 db
+    exit_code=$(docker wait "$container")
+    [[ "$exit_code" == 0 && "$(docker inspect --format '{{.State.OOMKilled}}' "$container")" == false ]] || fail 'Database did not shut down cleanly.'
+}
+
+# A killed hook can leave its one-off container behind. It must stop before a
+# second worker touches the same files or database.
+if docker container inspect nextcloud-migration-worker >/dev/null 2>&1; then
+    [[ "$(docker inspect --format '{{index .Config.Labels "com.docker.compose.project"}}' nextcloud-migration-worker)" == nextcloud ]] || fail 'Unexpected migration container.'
+    docker stop --time 120 nextcloud-migration-worker
+    docker rm nextcloud-migration-worker >/dev/null 2>&1 || true
 fi
-
-# Check if active major version is in migration list
-active_version_idx=$(find_index "${nextcloud_major_version}" "${VERSIONS[@]}")
-if [[ "${active_version_idx}" == "-1" ]]; then
-	echo "Active major version is not supported in the list of migrations"
-	exit
-fi
-
-# Check if already up to date
-if [[ "${VERSIONS[-1]}" == "${nextcloud_major_version}" ]]; then
-	echo "Nextcloud is already on the latest major version. No migration needed."
-	exit
-fi
-
-# Loop through versions, ignoring past versions
-for i in "${!VERSIONS[@]}"; do
-	[[ "${i}" -le "${active_version_idx}" ]] && continue
-
-	version="${VERSIONS[$i]}"
-	image="${IMAGES[$i]}"
-
-	echo "Migrating to major version: ${version} (${image})"
-	echo
-
-	cp --archive "${APP_COMPOSE_FILE}" "${APP_COMPOSE_BACKUP_FILE}"
-
-	yq -i ".services.web.image = \"${image}\"" "${APP_COMPOSE_FILE}"
-	yq -i ".services.cron.image = \"${image}\"" "${APP_COMPOSE_FILE}"
-
-	check_compose_file "${image}"
-
-	nextcloud_version=$(get_version)
-	sed -i "s/${nextcloud_version}/${nextcloud_version}-patch/" "${CONFIG_PHP_FILE}"
-
-	"${UMBREL_ROOT}/scripts/app" start nextcloud
-
-	echo "Waiting for update to complete..."
-
-	# Wait for Nextcloud to enter maintenance mode
-	# Indicating their update process has started
-	wait_for_value_in_file "${CONFIG_PHP_FILE}" "'maintenance'[[:space:]]=>[[:space:]]true" 300
-
-	# Wait for Nextcloud to exit maintenance mode
-	# Indicating their update process has finished
-	wait_for_value_in_file "${CONFIG_PHP_FILE}" "'maintenance'[[:space:]]=>[[:space:]]false" 300
-
-	"${UMBREL_ROOT}/scripts/app" stop nextcloud
-
-	# Delete image of intermediate version
-	# Unless it's the latest image
-	# Otherwise it will have to be re-downloaded
-	if [[ "${version}" != "${VERSIONS[-1]}" ]]; then
-		echo "Deleting intermediary image: ${image}"
-
-		docker rmi "${image}" || true
-	fi
+"${UMBREL_ROOT}/scripts/app" compose nextcloud stop --timeout 120 web cron db redis
+upgrade_database() {
+    stop_database
+    database="$1"
+    # Record the new engine before it touches the datadir; never downgrade after
+    # an interrupted upgrade, even if upgrade_info still names the old engine.
+    save_progress
+    render
+    ensure_image "$db_image"
+    start_database
+}
+while :; do
+    (( checkpoint != 22 )) || [[ "$database" == 10.5 ]] || fail 'Nextcloud 22 requires the legacy database.'
+    (( checkpoint >= 28 )) || [[ "$database" != 10.11 ]] || fail 'This historical Nextcloud version does not support MariaDB 10.11.'
+    echo "Preparing Nextcloud $checkpoint with MariaDB $database..."
+    render
+    ensure_image "$image"
+    ensure_image "$db_image"
+    start_database
+    # The previous Nextcloud checkpoint is still on disk during these changes.
+    # Also repair older packages that already paired Nextcloud 30 with MariaDB
+    # 10.5: upgrade the database before starting any Nextcloud code.
+    if (( checkpoint >= 30 )) && [[ "$database" == 10.5 ]]; then upgrade_database 10.6; fi
+    if (( checkpoint >= 35 )) && [[ "$database" == 10.6 ]]; then upgrade_database 10.11; fi
+    compose run --name nextcloud-migration-worker --no-deps migration-worker
+    docker rm nextcloud-migration-worker
+    if [[ "$checkpoint" == "$LAST_MAJOR" ]]; then
+        [[ "$database" == 10.11 ]] || fail 'Nextcloud 35 requires MariaDB 10.11.'
+        stop_database
+        printf '%s\n' "$TARGET" > "$STATE/ready.tmp"
+        chmod 644 "$STATE/ready.tmp"
+        mv "$STATE/ready.tmp" "$STATE/ready"
+        rm "$STATE/progress.json"
+        sync "$STATE/ready" "$STATE"
+        echo 'Nextcloud migration completed successfully.'
+        exit
+    fi
+    stop_database
+    checkpoint=$((checkpoint + 1))
+    save_progress
+    # Avoid retaining every historical image on small Umbrel disks.
+    docker image rm "$image" >/dev/null 2>&1 || true
 done
-
-rm -rf "${APP_COMPOSE_BACKUP_FILE}"
-
-echo "Migration completed successfully"
