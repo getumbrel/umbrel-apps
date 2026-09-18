@@ -3,19 +3,41 @@ version: '3.7'
 services:
   app_proxy:
     environment:
-      APP_HOST: openreader_web_1
-      APP_PORT: 3003
+      APP_HOST: openreader_gateway_1
+      APP_PORT: 8080
+
+  # OpenReader v5 returns absolute URLs for its separate audio worker. Route the
+  # UI and signed audio through app_proxy so playback uses the browser's origin
+  # without publishing a separate worker port. This is an Umbrel workaround;
+  # upstream support for relative playback URLs would let us drop the response
+  # rewriting in nginx.conf.template and keep only the proxy routing.
+  gateway:
+    image: nginx:1.30.5-alpine@sha256:615b06367e419b29d378b4abc498563db191380469007e5b0153f4387470bff4
+    user: "1000:1000"
+    entrypoint: ["nginx", "-g", "daemon off;"]
+    restart: on-failure
+    depends_on:
+      - web
+    volumes:
+      - ${APP_DATA_DIR}/nginx.conf:/etc/nginx/nginx.conf:ro
 
   web:
-    image: ghcr.io/richardr1126/openreader:4.4.0@sha256:2e3ec184dac71082646995a17309add008405827d81a020fb6d264360f7c1a49
+    image: ghcr.io/richardr1126/openreader:5.0.0@sha256:32741787d4926af502b2835438a635698664ce60c5124458cbb48ee1a640987e
     user: "1000:1000"
     environment:
       - API_BASE=http://kokoro_web_1:8880/v1 #Set the TTS API_BASE URL and/or API_KEY as the default for all devices. These values can also be overridden in the UI.
+      - API_MODEL_NAME=kokoro
       - BASE_URL=http://${DEVICE_DOMAIN_NAME}:3391
       - AUTH_SECRET=${APP_SEED}
       # Allows auth requests from the primary .local URL, device hostname, Tailscale FQDNs, and host IP URLs.
       - AUTH_TRUSTED_ORIGINS=http://${DEVICE_DOMAIN_NAME}:3391,http://${DEVICE_HOSTNAME}:3391,http://*.ts.net:3391,https://*.ts.net:3391,${APP_OPENREADER_LOCAL_URLS}
       - USE_ANONYMOUS_AUTH_SESSIONS=true
+      - TTS_PLAYBACK_TOKEN_SECRET=${APP_OPENREADER_PLAYBACK_SECRET}
+      - COMPUTE_WORKER_HOST=0.0.0.0
+      # Deliberate placeholder: the gateway replaces this origin in the session
+      # response with a relative audio path. Keep it in sync with the sub_filter
+      # in nginx.conf.template; browsers must never receive the placeholder.
+      - COMPUTE_WORKER_PUBLIC_URL=http://openreader-playback.invalid
     restart: on-failure
     volumes:
       - ${APP_DATA_DIR}/data/docstore:/app/docstore
