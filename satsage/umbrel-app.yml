@@ -1,0 +1,81 @@
+manifestVersion: 1
+id: satsage
+category: bitcoin
+name: SatSage
+version: "0.9.7"
+tagline: Know your sats — on-chain holding periods for tax and overview
+description: >-
+  SatSage analyses your XPUB wallets and reconstructs when your sats entered or
+  left them, so you can read off the on-chain holding period.
+
+
+  Umbrel shows the SatSage password in this app's details. You need it once
+  after opening the app.
+
+
+  SatSage uses the Bitcoin node and Electrum server already installed on your
+  Umbrel, so wallet addresses are never revealed to a third-party explorer. If
+  the mempool app is installed, SatSage uses it for prices and block links as
+  well. These connection settings are preconfigured and locked; everything else
+  is configured in the app.
+
+
+  Features:
+
+
+  - Multiple wallets: zpub, xpub, ypub, Taproot and multisig descriptors
+
+
+  - Provenance tracing by transaction ID, UTXO or address
+
+
+  - Tax year view with a configurable holding period, chart and export
+
+
+  - Receive view with the next unused address as a locally generated QR code
+
+
+  - Exchange CSV import that labels deposits and withdrawals in the provenance view
+
+
+  - Sanctions screening against OFAC, OpenSanctions and scam lists
+
+
+  - Dust consolidation via PSBT
+
+
+  What it is not: SatSage reconstructs on-chain history. It does not replace
+  exchange records, purchase receipts or bank statements, and it does not decide
+  which tax rules apply to you.
+
+
+  Outbound connections: wallet lookups always stay on your own node. Prices come
+  from the bundled history first and then from your own mempool app, so no
+  public price service is contacted. Sanctions screening downloads its lists
+  from the public sources listed above. Public fallbacks for prices, e-mail
+  notifications and the optional LLM assistant are switched off by default.
+releaseNotes: ""
+
+developer: Juniormind1
+website: https://github.com/Juniormind1/SatSage
+dependencies:
+  - electrs
+repo: https://github.com/Juniormind1/SatSage
+support: https://github.com/Juniormind1/SatSage/issues
+
+port: 8732
+gallery: []
+path: ""
+
+defaultUsername: ""
+defaultPassword: ""
+deterministicPassword: true
+
+submitter: Juniormind1
+submission: https://github.com/getumbrel/umbrel-apps/pull/PENDING
+
+backupIgnore:
+  - data/utxo_cache/*
+  - data/immutable_cache/*
+  - data/sanctioned_cache/*
+  - data/label_cache/*
