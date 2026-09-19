@@ -1,0 +1,15 @@
+version: '3.7'
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: actual_web_1
+      APP_PORT: 5006
+      PROXY_AUTH_ADD: "false"
+
+  web:
+    user: 1000:1000
+    image: ghcr.io/actualbudget/actual:26.9.0@sha256:552beab3dec8c93d46b8b9245612d63c3f123b8a45063a474f53e229b17621d3
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
