@@ -12,7 +12,7 @@ services:
     user: "1000:1000"
     entrypoint: ["bash", "/umbrel-migration-hook", "--guard", "db"]
     stop_grace_period: 2m
-    command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
+    command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW --slow-query-log=ON --long-query-time=2 --innodb-log-file-size=256M
     restart: on-failure
     volumes:
       - ${APP_DATA_DIR}/data/db:/var/lib/mysql
