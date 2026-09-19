@@ -14,8 +14,9 @@
 #  boosting-monitor – release boosting, gets the wallet from the DB (idles until configured).
 #  wallet-accounting– NWC invoice monitor, gets wallets from the DB (idles until configured).
 #  telegram-bot     – community bot. Renders telegram_bot_config.conf itself at
-#                     startup from app_configuration (idles until a bot token +
-#                     Lightning address + NWC URL are set in the app configuration).
+#                     startup from the Telegram connection in the database
+#                     (idles until that connection carries a bot token and a way
+#                     to be paid — wallet or Lightning address).
 
 # Shared env for all app services (DB connection + Fernet file).
 # Each container's entrypoint renders shared-db-library/database_config.conf from this.
@@ -65,7 +66,7 @@ services:
     # One-shot: generates a valid Fernet key (32 bytes urlsafe-base64)
     # into data/secret/fernet.key, if it doesn't already exist. Idempotent.
     # Needs no DB — only write access to data/secret.
-    image: ghcr.io/altbierjupp/sovereigncast:0.4.0@sha256:86536cf2131f261273ca9a0cfbffb6dc8406146c8c677d031616ca7d12ea40e7
+    image: ghcr.io/altbierjupp/sovereigncast:0.5.0@sha256:8223c163fe768f3818ec9d2cecdf1364e2d6f065ca06293f948693c906d35f31
     restart: on-failure
     user: "1000:1000"
     volumes:
@@ -93,7 +94,7 @@ services:
     # 1000:1000 directories are left untouched. /data/backups is only chowned at
     # directory level (it can hold many/large backups — not -R); files inside it
     # are created 1000-owned by the web app (uid 1000) itself.
-    image: ghcr.io/altbierjupp/sovereigncast:0.4.0@sha256:86536cf2131f261273ca9a0cfbffb6dc8406146c8c677d031616ca7d12ea40e7
+    image: ghcr.io/altbierjupp/sovereigncast:0.5.0@sha256:8223c163fe768f3818ec9d2cecdf1364e2d6f065ca06293f948693c906d35f31
     restart: on-failure
     user: "0:0"
     volumes:
@@ -140,7 +141,7 @@ services:
     # migrator/web don't start (better down than on a half-restored DB).
     # On success, sets /data/secret/.admin-seeded if the DB already contains
     # users, so admin-init doesn't overwrite the restored password.
-    image: ghcr.io/altbierjupp/sovereigncast:0.4.0@sha256:86536cf2131f261273ca9a0cfbffb6dc8406146c8c677d031616ca7d12ea40e7
+    image: ghcr.io/altbierjupp/sovereigncast:0.5.0@sha256:8223c163fe768f3818ec9d2cecdf1364e2d6f065ca06293f948693c906d35f31
     restart: on-failure
     user: "1000:1000"
     depends_on:
@@ -181,7 +182,7 @@ services:
     # (plain ALTER TABLE ADD COLUMN) and ASSUMES the base tables already exist.
     # On a fresh DB it fails immediately with "relation episodes does not exist"
     # and restart: on-failure puts it into an endless loop.
-    image: ghcr.io/altbierjupp/sovereigncast:0.4.0@sha256:86536cf2131f261273ca9a0cfbffb6dc8406146c8c677d031616ca7d12ea40e7
+    image: ghcr.io/altbierjupp/sovereigncast:0.5.0@sha256:8223c163fe768f3818ec9d2cecdf1364e2d6f065ca06293f948693c906d35f31
     restart: on-failure
     user: "1000:1000"
     depends_on:
@@ -214,7 +215,7 @@ services:
     # .admin-seeded prevents a password the user changed later from being
     # reset on every start). create_admin.py uses the env fallback when no
     # CLI args are set — so no ${...} interpolation is needed in the command.
-    image: ghcr.io/altbierjupp/sovereigncast:0.4.0@sha256:86536cf2131f261273ca9a0cfbffb6dc8406146c8c677d031616ca7d12ea40e7
+    image: ghcr.io/altbierjupp/sovereigncast:0.5.0@sha256:8223c163fe768f3818ec9d2cecdf1364e2d6f065ca06293f948693c906d35f31
     restart: on-failure
     user: "1000:1000"
     depends_on:
@@ -239,7 +240,7 @@ services:
         touch /data/secret/.admin-seeded
 
   web:
-    image: ghcr.io/altbierjupp/sovereigncast:0.4.0@sha256:86536cf2131f261273ca9a0cfbffb6dc8406146c8c677d031616ca7d12ea40e7
+    image: ghcr.io/altbierjupp/sovereigncast:0.5.0@sha256:8223c163fe768f3818ec9d2cecdf1364e2d6f065ca06293f948693c906d35f31
     restart: on-failure
     # Hypercorn ends itself within --graceful-timeout (30s, see
     # docker/web-bots.Dockerfile) after SIGTERM, well before this deadline.
@@ -264,7 +265,7 @@ services:
       # Umbrel App Store / image release, not via git pull. On an image bump,
       # this version must be kept in sync with the image tag/manifest.
       PODCAST_MANAGER_DEPLOYMENT: umbrel
-      PODCAST_MANAGER_VERSION: "0.4.0"
+      PODCAST_MANAGER_VERSION: "0.5.0"
     working_dir: /app/podcast_manager
     volumes:
       - ${APP_DATA_DIR}/data/secret:/data/secret:ro
@@ -299,7 +300,7 @@ services:
   worker:
     # Heavy image (ffmpeg + faster-whisper + pyannote + torch, CPU-only).
     # Purely DB-driven (polls processing_queue) — idles when there are no jobs.
-    image: ghcr.io/altbierjupp/sovereigncast-worker:0.4.0@sha256:ee266f29d7fc00493804919cdc5e2dfc991e1ba09d312a327340e54ef1fcc913
+    image: ghcr.io/altbierjupp/sovereigncast-worker:0.5.0@sha256:f59975b19ffd1b17be7eec372b52b9cf9bd8bb355be92a4b5543c4e8c05d91c5
     restart: on-failure
     # Only spent when a job is actually running: after SIGTERM the worker claims no
     # further tasks and exits once the current one is done. Idle, it exits at once.
@@ -338,7 +339,7 @@ services:
     # the UI but nothing ever triggered them here.
     # Needs /data/backups writable (that is where the archives go) and the
     # asset directories readable, since a .nsbk bundles them with the database.
-    image: ghcr.io/altbierjupp/sovereigncast:0.4.0@sha256:86536cf2131f261273ca9a0cfbffb6dc8406146c8c677d031616ca7d12ea40e7
+    image: ghcr.io/altbierjupp/sovereigncast:0.5.0@sha256:8223c163fe768f3818ec9d2cecdf1364e2d6f065ca06293f948693c906d35f31
     restart: on-failure
     # Lets an in-progress .nsbk archive (database + assets) finish writing instead
     # of leaving a truncated file behind.
@@ -377,7 +378,7 @@ services:
     # Gets its wallet from the DB (db.get_wallet_by_usecase('releaseboosting'));
     # boosting_monitor.conf isn't needed (all settings have fallbacks).
     # Idles until a release-boosting wallet is set in the app configuration.
-    image: ghcr.io/altbierjupp/sovereigncast:0.4.0@sha256:86536cf2131f261273ca9a0cfbffb6dc8406146c8c677d031616ca7d12ea40e7
+    image: ghcr.io/altbierjupp/sovereigncast:0.5.0@sha256:8223c163fe768f3818ec9d2cecdf1364e2d6f065ca06293f948693c906d35f31
     restart: on-failure
     # Short polling cycle, nothing long-running to wait for.
     stop_grace_period: 30s
@@ -404,7 +405,7 @@ services:
   wallet-accounting:
     # Gets NWC URLs from the DB (db.get_wallets_by_wallet_type('lightning'));
     # wallet_accounting_config.conf not needed (defaults). Idles until wallets are configured.
-    image: ghcr.io/altbierjupp/sovereigncast:0.4.0@sha256:86536cf2131f261273ca9a0cfbffb6dc8406146c8c677d031616ca7d12ea40e7
+    image: ghcr.io/altbierjupp/sovereigncast:0.5.0@sha256:8223c163fe768f3818ec9d2cecdf1364e2d6f065ca06293f948693c906d35f31
     restart: on-failure
     # Lets a started accounting cycle finish booking its invoices.
     stop_grace_period: 60s
@@ -429,19 +430,24 @@ services:
       disable: true
 
   telegram-bot:
-    # Active: the container renders telegram_bot_config.conf itself at startup
-    # from the app_configuration table (the telegram_bot_* keys are editable
-    # in the App Configuration UI in the browser; token/NWC are Fernet-encrypted
-    # and decrypted here via DB_ENCRYPTION_KEY_FILE). So the bot container
-    # fetches the values itself from the DB — no rendering step by the web app,
-    # no shared volume needed (uid 1000 owns /app, can write the .conf).
-    # Idles (60s poll) until bot token + Lightning address + NWC URL are set;
-    # then execs the bot. If the bot crashes, the container restarts and re-renders
-    # (picking up current config changes). Behaves like boosting-monitor /
-    # wallet-accounting ("idles until configured"). NWC URL is practically always
-    # required because read_config() calls NostrWalletConnectUri.parse(nwc_url)
-    # unconditionally (even in lightning_address mode).
-    image: ghcr.io/altbierjupp/sovereigncast:0.4.0@sha256:86536cf2131f261273ca9a0cfbffb6dc8406146c8c677d031616ca7d12ea40e7
+    # Active: the container renders telegram_bot_config.conf itself at startup,
+    # from the Telegram CONNECTION in the database — the one editable in the
+    # browser under Telegram Connections. Nobody has a shell here, so this is
+    # the only way to set the bot up at all; render_config.py does it (one
+    # place, shared with the Docker/VPS/StartOS installs, which used to carry
+    # their own copy of this snippet).
+    #
+    # Token and wallet string are Fernet-encrypted in the database and decrypted
+    # here via DB_ENCRYPTION_KEY_FILE, so the bot container fetches its own
+    # values — no rendering step by the web app, no shared volume (uid 1000
+    # owns /app and can write the .conf).
+    #
+    # Idles (60s poll) until the connection carries a bot token and a way to be
+    # paid — a wallet for the nwc mode, a Lightning address for the other; then
+    # execs the bot. If the bot crashes the container restarts and re-renders,
+    # picking up whatever the connection says now. Behaves like
+    # boosting-monitor / wallet-accounting ("idles until configured").
+    image: ghcr.io/altbierjupp/sovereigncast:0.5.0@sha256:8223c163fe768f3818ec9d2cecdf1364e2d6f065ca06293f948693c906d35f31
     restart: on-failure
     # python-telegram-bot shuts its own polling loop down.
     stop_grace_period: 30s
@@ -465,41 +471,10 @@ services:
       - -c
       - |
         while true; do
-          python -c "
-        import asyncio, sys, configparser
-        sys.path.insert(0, '/app/shared-db-library')
-        sys.path.insert(0, '/app')
-        from db_manager import DatabaseManager
-        async def main():
-            db = DatabaseManager(config_file='/app/shared-db-library/database_config.conf')
-            await db._initialize_connection()
-            try:
-                async def val(key):
-                    row = await db.get_app_configuration(key)
-                    return (row.value if row else '') or ''
-                token = await val('telegram_bot_token')
-                nwc = await val('telegram_bot_nwc_url')
-                addr = await val('telegram_bot_lightning_address')
-                mode = (await val('telegram_bot_invoice_creation_mode')) or 'nwc'
-                adm = (await val('telegram_bot_auto_delete_minutes')).strip()
-            finally:
-                await db.close()
-            if not (token and addr and nwc):
-                return False
-            cfg = configparser.ConfigParser()
-            cfg['general'] = {
-                'bot_token': token,
-                'invoice_creation_mode': mode if mode in ('nwc', 'lightning_address') else 'nwc',
-                'lightning_address': addr,
-                'nwc_url': nwc,
-            }
-            if adm.isdigit():
-                cfg['general']['auto_delete_minutes'] = adm
-            with open('/app/telegram_bot/telegram_bot_config.conf', 'w') as f:
-                cfg.write(f)
-            return True
-        sys.exit(0 if asyncio.run(main()) else 1)
-        " && exec python telegram_bot_nodesignal.py
-          echo "Telegram bot not configured yet (App Configuration -> Telegram: Bot Token, Lightning Address, NWC URL) - waiting 60s."
+          python render_config.py && exec python telegram_bot_nodesignal.py
+          echo "Telegram bot not configured yet (Telegram Connections -> open the connection) - waiting 60s."
           sleep 60
         done
+    # No web server — disable the image's web healthcheck (issue #15).
+    healthcheck:
+      disable: true
