@@ -1,0 +1,27 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: manifold-fedimint-guardian_app_1
+      APP_PORT: 8181
+  app:
+    image: ghcr.io/fedibtc/manifold-fman:0d31e0b738ed91b628194458a99c306356e60327@sha256:415dc8fd17df110ad5c30eb2116dd7fbefbbb2c8f1736cea1773449bc9c843d7
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      FLEET_MANAGER_MANIFOLD_ENVIRONMENT: production
+      FLEET_MANAGER_ESPLORA_URL: https://mempool.space/api
+      FLEET_MANAGER_BITCOIND_URL: http://${APP_BITCOIN_NODE_IP}:${APP_BITCOIN_RPC_PORT}
+      FLEET_MANAGER_BITCOIND_USERNAME: ${APP_BITCOIN_RPC_USER}
+      FLEET_MANAGER_BITCOIND_PASSWORD: ${APP_BITCOIN_RPC_PASS}
+      FLEET_MANAGER_ADMIN_HTTP_BIND: 0.0.0.0:8181
+      # Other apps share Umbrel's network; the daemon must authenticate them too.
+      FLEET_MANAGER_ADMIN_HTTP_AUTH: password
+      FLEET_MANAGER_ADMIN_HTTP_PASSWORD_FILE: /admin-password
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+      - ${APP_DATA_DIR}/admin-password:/admin-password:ro
+    ports:
+      # Direct guardian connections; later seat ordinals can still use relays.
+      - "32000-32031:30000-30031/udp"
