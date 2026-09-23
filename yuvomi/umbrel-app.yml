@@ -4,7 +4,7 @@ storage:
   dataRoot: data
 category: files
 name: Yuvomi
-version: "2.67.0"
+version: "2.69.1"
 tagline: Self-hosted family planner — calendar, tasks, shopping, meals & budget
 description: >-
   Yuvomi is a self-hosted, privacy-focused family planner that bundles everything
@@ -53,39 +53,31 @@ description: >-
   Open Yuvomi from your Umbrel dashboard and create the first account — that
   account becomes the family admin and can invite the rest of the household.
 releaseNotes: >-
-  This release adds a new optional module and a good deal of work on Health.
-  Waste collection keeps track of your household's pickup days: define your
-  waste types and their weekly or monthly rhythm, or subscribe to your
-  municipality's calendar file and let it refresh itself. It stays off until you
-  turn it on in Settings, and from there it can also appear on the dashboard and
-  in the calendar.
+  This is a security update and updating is recommended. It closes two places
+  where an ordinary household member could reach further than their role allows.
 
 
-  In Health, the cycle tab has grown into a full tracker, with flow strength
-  shown on the calendar, feelings, more fertility signals, and a daily bubble
-  that answers what today means for you. Some of what you note there stays yours
-  alone, even on days the rest is shared with the family. Next to it, a fasting
-  journal records your timers and the fasts you have already finished.
+  Only admins can manage CardDAV contact accounts now. Until this release, a
+  member could change the server address of a household CardDAV account, and the
+  next sync sent the stored credentials to that server. Members keep reading and
+  editing contacts as before.
 
 
-  One change is worth knowing before you update: housekeeping staff and
-  shared-expense guests no longer turn up in the lists where you pick a person,
-  such as assignees or reminder recipients. Anything already assigned to them
-  stays as it is.
+  The first single sign-on of a household member can no longer be steered by
+  another member through their own profile email address. If you use SSO: a
+  member whose account has a password and is not yet linked to SSO is no longer
+  linked by email address. Their first SSO sign-in shows a message asking them
+  to sign in with their password and link SSO under Settings, Account.
+  Alternatively, an admin can switch the account to "SSO sign-in only" under
+  Settings, Administration, Family. Accounts that are already linked are not
+  affected.
 
 
-  The rest is everyday polish. Form fields, set-aside cards and checked-off
-  shopping items are easier to read in both light and dark themes, a shopping
-  list can be duplicated and follows what the rest of the household does while
-  it is open, and the Schedule module had a full pass for clarity.
-
-
-  This release applies database migrations. They run by themselves the first
-  time the new version starts, and on a large household that can take a moment.
+  There are no database changes in this update.
 
 
   Full release notes are available at
-  https://github.com/ulsklyc/yuvomi/releases/tag/v2.67.0
+  https://github.com/ulsklyc/yuvomi/releases/tag/v2.69.1
 backupIgnore:
   - data/app/yuvomi.db.plaintext-backup*
   - data/backups/*.db
