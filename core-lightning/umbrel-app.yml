@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: core-lightning
 category: bitcoin
 name: Core Lightning
-version: "26.06.6"
+version: "26.06.7-patch.1"
 tagline: Run your personal Core Lightning node
 description: >-
   Get started with the Lightning network today with Core Lightning - a
@@ -32,12 +32,19 @@ defaultPassword: ""
 submitter: Blockstream
 submission: https://github.com/getumbrel/umbrel-apps/pull/475
 releaseNotes: >-
-  If Core Lightning asks for a password after updating, don’t worry—this is a browser session bug and does not affect your node or funds. Core Lightning does not require a separate password on Umbrel; open the app in a private/incognito window or clear your Umbrel’s site data in the browser.
+  🚨 **Important security update**
 
 
-  **What's changed:**
-    - Rejects channel openings that reuse an existing funding outpoint, avoiding channel ID collisions.
-    - Handles unexpected duplicate peer connections more gracefully.
+  Please update Core Lightning as soon as possible, even if you already installed version 26.06.7.
+
+
+  Umbrel has rebuilt the Core Lightning 26.06.7 app from the official signed release binaries to ensure the security fixes are included.
+
+
+  Your node will restart and reconnect automatically. No further action is required.
+
+
+  [Core Lightning release notes](https://github.com/ElementsProject/lightning/releases/tag/v26.06.7) · [Umbrel image build](https://github.com/getumbrel/docker-core-lightning/tree/v26.06.7-umbrel.1)
 
 backupIgnore:
   - data/lightningd/bitcoin/lightningd.sqlite3

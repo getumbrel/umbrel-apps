@@ -1,8 +1,24 @@
 manifestVersion: 1
 id: plex
+storage:
+  dataRoot: data
+folderAccess:
+  - id: umbrel-downloads
+    name: Downloads
+    note: Media files for your Plex libraries. Available inside Plex at /downloads.
+    mounts:
+      - service: server
+        targetPath: /downloads
+  - id: media-library
+    name: Media Library
+    note: Select an additional folder containing media, then add /media as a folder in a Plex library. Access is read-only to protect the original files.
+    mounts:
+      - service: server
+        targetPath: /media
+        readOnly: true
 category: media
 name: Plex
-version: "1.43.3.10828"
+version: "1.43.4.10903-patch.2"
 tagline: Stream Movies & TV Shows
 description: >-
   Stream movies and TV shows, plus 300+ channels of live TV, instantly, without a subscription. Watch live TV and movies anywhere, from any device, with Plex.
@@ -18,6 +34,8 @@ dependencies: []
 repo: ""
 support: https://www.plex.tv/
 port: 32400
+nativeTlsHostnameSuffixes:
+  - plex.direct
 gallery:
   - 1.jpg
   - 2.jpg
@@ -30,11 +48,21 @@ permissions:
   - STORAGE_DOWNLOADS
   - GPU
 releaseNotes: >-
+  This update fixes secure connections from Plex clients on umbrelOS 2.0 beta 2 and later by allowing Plex to serve its own TLS certificate for plex.direct connections.
+
+
+  This update adds support for new storage management and configuration options being introduced with umbrelOS 2.0, including access to additional media folders.
+
+
+  Previous Plex 1.43.4.10903 release notes:
+
+
   This update includes several improvements and bug fixes:
-    - Added an audio codec filter for music tracks, support for IPv6-only networks, and DVB Teletext subtitle support.
-    - Updated Plex Web to 4.160.0 and renamed the HEVC encoding option to cover AV1 sources too.
-    - Improved download decision titles, HDR/Dolby Vision/Atmos filters, NFO metadata parsing, local metadata handling, and related collection query performance.
-    - Fixed issues with smart collection and playlist URI validation, unmatched PlexMatch episodes, filename cleanup, DASH manifest content types, and a macOS server crash.
+    - Adds HDR10+ filtering and metadata detection.
+    - Adds HEVC transcode support for devices with 8-bit HEVC encoding support.
+    - Fixes crashes caused by malformed WebP images, some POST/timeline/HTTP requests, and some metadata rematches.
+    - Fixes a corrupt search index issue that could fail database integrity checks and block backups.
+    - Improves metadata validation, ID3 year handling, and search results for items with missing parents.
 
   Full release notes are available at https://www.videohelp.com/software/Plex
 submitter: Umbrel

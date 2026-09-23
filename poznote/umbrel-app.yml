@@ -1,12 +1,17 @@
 manifestVersion: 1
 id: poznote
+storage:
+  dataRoot: data
 name: Poznote
 tagline: A powerful app for taking notes
 category: files
-version: "6.54.0"
+version: "6.93.0"
 port: 8389
 description: >-
   📝 Poznote is a clean and focused application designed to help users capture, structure, and refine information in a flexible workspace. It combines a rich text editor with Markdown formatting to support both quick jotting and long form writing, allowing thoughts to grow and change without friction.
+
+
+  External MCP clients require an access token. Sign in to Poznote as an administrator, then open http://umbrel.local:8389/umbrel-mcp.php to get your connection URL and token. If your Umbrel uses a different address, use that address instead of umbrel.local.
 
 
   The interface encourages fluid organization through tags, search, and customizable workspaces so ideas remain easy to find even as the collection expands. Poznote supports attachments for images, documents, and other files, making it possible to keep related material together within a single note.
@@ -28,19 +33,21 @@ gallery:
   - 3.jpg
   - 4.jpg
 releaseNotes: |-
-  Poznote 6.54.0 adds a new tasks experience and optional S3 attachment storage:
+  Poznote 6.93.0 adds two-factor authentication and related account recovery guidance:
 
-  - Added a Tasks page that gathers tasks from task-list notes in one place.
-  - Added task due dates, reminders, task menus, task-list progress bars, and task-list links.
-  - Added optional S3-compatible attachment storage, including settings, quotas, storage statistics, and local-to-S3 migration tools.
-  - Expanded tenant-isolation controls for SaaS mode, including admin controls for user webhooks.
-  - Improved reminder date/time pickers, dashboard navigation customization, and graph display preferences.
+  - Adds optional TOTP two-factor authentication from Settings > Two-factor authentication.
+  - After enabling two-factor authentication, logins require a 6-digit code from an authenticator app after the password.
+  - Adds help entries for lost administrator passwords and administrators locked out of two-factor authentication.
+  - Improves modal button styling and folder action handling.
+  - Fixes snapshot-window action buttons being cut off in some languages.
+
+  ⚠️ MCP clients require authentication. If you have not updated since Poznote 6.81.5, your existing MCP URL and port 8340 stay the same, but connections will fail until you add an access token. Sign in to Poznote as an administrator, then open http://umbrel.local:8389/umbrel-mcp.php to get your token and setup instructions. Replace umbrel.local with your Umbrel's address if needed. Configure your client with an Authorization header of Bearer YOUR_TOKEN. The token stays the same across app restarts and updates. The built-in AI assistant does not need this token.
 
   If you're updating from before Poznote 6.51.0, you may need to log in again because of the remember-me cookie security changes.
 
   If you're updating from before Poznote 6.21.0, existing Excalidraw diagrams may need to be opened, slightly modified, and saved again before their generated images match the current dark/light theme.
 
-  Full release notes can be found at https://github.com/timothepoznanski/poznote/releases/tag/6.54.0
+  Full release notes can be found at https://github.com/timothepoznanski/poznote/releases/tag/6.93.0
 dependencies: []
 path: "/login.php"
 defaultUsername: "admin_change_me"

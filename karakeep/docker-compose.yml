@@ -8,7 +8,7 @@ services:
       PROXY_AUTH_ADD: "false"
 
   web:
-    image: ghcr.io/karakeep-app/karakeep:0.33.1@sha256:5467873df817ab3aa837f2b06bd7f2b0974132ba1ae5bce0b7e2fd134abc269b
+    image: ghcr.io/karakeep-app/karakeep:0.33.2@sha256:b069e4307dec06ea06d16989c6861c30a1ff208568be44ed5fb5d422cd3e950c
     user: 1000:1000
     restart: on-failure
     environment:
@@ -28,15 +28,12 @@ services:
       - meilisearch
 
   chrome:
-    image: zenika/alpine-chrome:124@sha256:31758da502f606986ab6d229694d7953741a89f106715d7fa5f2c939b247deeb
-    user: 1000:1000
+    image: ghcr.io/karakeep-app/karakeep-chrome:151.0.7922.47-r1@sha256:5b19bbb160e9ff60681a3abd97e1c4ec9f64212301410de658c3900ab7ef31e7
     restart: on-failure
+    init: true
     command:
-      - --no-sandbox
       - --disable-gpu
       - --disable-dev-shm-usage
-      - --remote-debugging-address=0.0.0.0
-      - --remote-debugging-port=9222
       - --hide-scrollbars
       - --disable-blink-features=AutomationControlled
       - --window-size=1440,900

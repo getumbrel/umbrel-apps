@@ -8,7 +8,7 @@ services:
       PROXY_AUTH_WHITELIST: "/allauth,/allauth/*,/api/v2,/api/v2/*,/ps,/ps/*,/media/exercise-images/*,/media/exercise-video/*,/media/ingredients/*"
 
   web:
-    image: wger/server:2.6@sha256:997ead43aabdcd67d054f933e07d2b23875f01bf43271a267cb7796925ca27c4
+    image: wger/server:2.7@sha256:eb6e30666ae3058f3094b6030ab661fa3062c9e2ab33c72b554031acf37a3104
     user: "1000:1000"
     depends_on:
       db:
@@ -31,7 +31,7 @@ services:
       - ${APP_DATA_DIR}/data/static:/home/wger/static
       - ${APP_DATA_DIR}/data/media:/home/wger/media
     healthcheck:
-      test: wget --no-verbose --tries=1 --spider http://localhost:8000
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "-O", "/dev/null", "http://localhost:8000/api/v2/version/"]
       interval: 10s
       timeout: 5s
       start_period: 300s
@@ -39,7 +39,7 @@ services:
     restart: on-failure
 
   powersync_setup:
-    image: wger/server:2.6@sha256:997ead43aabdcd67d054f933e07d2b23875f01bf43271a267cb7796925ca27c4
+    image: wger/server:2.7@sha256:eb6e30666ae3058f3094b6030ab661fa3062c9e2ab33c72b554031acf37a3104
     user: "1000:1000"
     command: ./manage.py setup-powersync-storage
     depends_on:
@@ -138,7 +138,7 @@ services:
     restart: on-failure
 
   celery_worker:
-    image: wger/server:2.6@sha256:997ead43aabdcd67d054f933e07d2b23875f01bf43271a267cb7796925ca27c4
+    image: wger/server:2.7@sha256:eb6e30666ae3058f3094b6030ab661fa3062c9e2ab33c72b554031acf37a3104
     user: "1000:1000"
     command: /start-worker
     environment:
@@ -161,7 +161,7 @@ services:
     restart: on-failure
 
   celery_beat:
-    image: wger/server:2.6@sha256:997ead43aabdcd67d054f933e07d2b23875f01bf43271a267cb7796925ca27c4
+    image: wger/server:2.7@sha256:eb6e30666ae3058f3094b6030ab661fa3062c9e2ab33c72b554031acf37a3104
     user: "1000:1000"
     command: /start-beat
     environment:

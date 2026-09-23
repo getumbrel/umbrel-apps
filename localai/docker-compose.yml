@@ -7,7 +7,7 @@ services:
       APP_PORT: 8080
       PROXY_AUTH_WHITELIST: "/v1/*"
   api:
-    image: localai/localai:v4.8.1@sha256:e50fc4a9bf1a34455ba75be9ed34dfa329a05ec75456db86424f72334ca052be
+    image: localai/localai:v4.10.0@sha256:0632c21ddbe440bb71bc7aa744796c227a51658641b216290e86d6894e1c705b
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/readyz"]
       interval: 1m
@@ -17,6 +17,11 @@ services:
       - MODELS_PATH=/models
       - LOCALAI_BACKENDS_PATH=/backends
       - LOCALAI_EXTERNAL_BACKENDS=cpu-llama-cpp
+      # The image pins its backend capability to CPU; point the override file at a missing path so
+      # LocalAI detects the host GPU and offers matching CUDA/ROCm/SYCL backends in its gallery
+      - LOCALAI_FORCE_META_BACKEND_CAPABILITY_RUN_FILE=/nonexistent
+      # The image bakes a malformed NVIDIA_REQUIRE_CUDA that the NVIDIA container runtime rejects
+      - NVIDIA_DISABLE_REQUIRE=true
     volumes:
       - ${APP_DATA_DIR}/data/models:/models:cached
       - ${APP_DATA_DIR}/data/backends:/backends:cached

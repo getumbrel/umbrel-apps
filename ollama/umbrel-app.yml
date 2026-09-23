@@ -1,9 +1,11 @@
 manifestVersion: 1
 id: ollama
+storage:
+  dataRoot: data
 name: Ollama
 tagline: Self-host open source AI models like DeepSeek-R1, Llama, and more
 category: ai
-version: "0.32.6"
+version: "0.34.2"
 port: 11434
 description: >-
   Ollama allows you to download and run advanced AI models directly on your own hardware. Self-hosting AI models ensures full control over your data and protects your privacy.
@@ -37,12 +39,13 @@ gallery:
 defaultUsername: ""
 defaultPassword: ""
 dependencies: []
+permissions:
+  - GPU
 releaseNotes: >-
   Key highlights in this release:
-    - Improved OpenAI-compatible streaming responses for chat completions and truncated responses.
-    - Added faster Qwen3.5 inference on Apple GPUs and updated the MLX and llama.cpp engines.
-    - Improved CLI/TUI behavior for file completions, prompts, and pipe-delimited text.
-    - Temporarily removed experimental image generation; use Ollama 0.32.5 if you still need that feature.
+    - Adds a first-run setup flow when running the `ollama` CLI, with options to sign in or continue locally.
+    - Adds support for opening the desktop app's Apps page directly with `ollama://apps` on macOS and Windows.
+    - Fixes excessive memory growth during long generations with MLX speculative decoding and updates llama.cpp.
 
 
   Full release notes are available at https://github.com/ollama/ollama/releases/

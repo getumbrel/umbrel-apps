@@ -1,8 +1,24 @@
 manifestVersion: 1.1
 id: jellyfin
+storage:
+  dataRoot: data
+folderAccess:
+  - id: umbrel-downloads
+    name: Downloads
+    note: Media files for your Jellyfin libraries. Available inside Jellyfin at /downloads.
+    mounts:
+      - service: server
+        targetPath: /downloads
+  - id: media-library
+    name: Media Library
+    note: Select an additional folder containing media, then add /media as a library folder in Jellyfin. Access is read-only to protect the original files.
+    mounts:
+      - service: server
+        targetPath: /media
+        readOnly: true
 category: media
 name: Jellyfin
-version: "10.11.11"
+version: "10.11.11-patch.3"
 tagline: The Free Software Media System
 description: >-
   Jellyfin is the volunteer-built media solution that puts you in control of your media. Stream to any device from your own server, with no strings attached. Your media, your server, your way.
@@ -32,6 +48,12 @@ path: ""
 defaultUsername: ""
 defaultPassword: ""
 releaseNotes: >-
+  This update adds support for new storage management and configuration options being introduced with umbrelOS 2.0, including access to additional media folders.
+
+
+  Previous Jellyfin 10.11.11 release notes:
+
+
   This bugfix release improves Jellyfin server reliability.
 
 

@@ -7,7 +7,7 @@ services:
       APP_PORT: 8175 # ui
 
   fedimintd:
-    image: fedimint/fedimintd:v0.11.1@sha256:ba23a29ae5b71cf7685c0a4f6594ac92dc9fd6c8915fccc09c8100710177283e
+    image: fedimint/fedimintd:v0.12.0@sha256:f95630927a8ac902723fca1d7824ba76b3b80156599395c73d9bce7c92bf177d
     ports:
       - 8173:8173/tcp # p2p tls
       - 8173:8173/udp # p2p iroh
@@ -22,4 +22,18 @@ services:
       FM_BITCOIND_PASSWORD: ${APP_BITCOIN_RPC_PASS}
       FM_BITCOIND_URL: "http://${APP_BITCOIN_NODE_IP}:${APP_BITCOIN_RPC_PORT}"
       FM_BIND_UI: 0.0.0.0:8175
+      # Guardian admin credentials, split in two since v0.12.0.
+      #
+      # FM_PASSWORD_UI gates the web UI. When unset, fedimintd falls back to the
+      # legacy password.private file, and if that is absent too it serves the UI
+      # with no login form. Upstream treats that as safe only for the default
+      # loopback bind, but we bind 0.0.0.0 above.
+      #
+      # FM_PASSWORD_API gates admin RPCs on the public API (WS on bind-api and
+      # iroh on 8174/udp) and is what fedimint-cli admin authenticates with.
+      # It never falls back to disk; unset means admin RPCs return 401. Public
+      # client endpoints are unaffected either way. Same value as the UI so the
+      # guardian can read it from Umbrel's "Show password".
+      FM_PASSWORD_UI: "${APP_PASSWORD}"
+      FM_PASSWORD_API: "${APP_PASSWORD}"
     restart: on-failure

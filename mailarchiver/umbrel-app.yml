@@ -3,7 +3,7 @@ id: mailarchiver
 name: Mail Archiver
 tagline: A comprehensive solution for archiving, searching, and exporting emails
 category: files
-version: "2607.5"
+version: "2608.1"
 port: 5006
 description: >-
   Mail Archiver delivers automated archiving of incoming and outgoing emails from multiple accounts. All email content and attachments are synchronized based on a schedule. The responsive UI is optimized for mobile and desktop use, is multilingual and responsive with dark mode.
@@ -60,26 +60,24 @@ releaseNotes: >-
   temporarily increase storage usage.
 
 
-  New features and improvements:
-    - Added an optional Model Context Protocol (MCP) server for AI-agent access
-      to archived mail.
-    - Added support for preserving calendar invites as .ics attachments with a
-      readable summary.
-    - Added an Acknowledge Failures action for completed sync jobs with failed
-      emails.
+  New features:
+    - Added date-windowed account offload into another mailbox with duplicate
+      detection, dry-run reporting, and resumable locking.
+    - Added a read-only stats API endpoint for aggregate archive statistics with
+      account-scoped results for restricted API keys.
 
 
   Improvements and fixes:
-    - Added clearer full-sync and pending-sync indicators instead of showing an
-      epoch timestamp.
-    - Added retention deletion logging and hardened email search sorting and
-      pagination against SQL injection.
-    - Fixed retention edge cases for malformed Message-ID headers and
-      non-compliant IMAP date filtering.
-    - Fixed clipping of the Mail Accounts actions menu on desktop.
+    - Improved nested archive folder rendering, IMAP folder discovery, and
+      clickable Archive rows.
+    - Reduced offload memory usage and tightened ownership/scoping for job
+      cancellation, stats, and self-manager access.
+    - Fixed import, export, restore, retention, Message-ID, M365/Graph, and
+      Outlook folder-discovery edge cases, including better handling of
+      malformed or headerless messages.
 
 
-  Full release notes can be found at https://github.com/s1t5/mail-archiver/releases/tag/2607.5
+  Full release notes can be found at https://github.com/s1t5/mail-archiver/releases/tag/2608.1
 dependencies: []
 path: ""
 submitter: dirstel

@@ -49,7 +49,9 @@ services:
       default:
         ipv4_address: ${APP_CORE_LIGHTNING_IP}
   lightningd:
-    image: elementsproject/lightningd:v26.06.6@sha256:094be3630f865c795649d6063a8796afa0f78e82a0c311bb34f2b0bd570c819a
+    # Temporary Umbrel image built from the signed v26.06.7 release binaries.
+    # See: https://github.com/ElementsProject/lightning/releases/tag/v26.06.7
+    image: ghcr.io/getumbrel/docker-core-lightning:v26.06.7-umbrel.1@sha256:824cb64898d4e3d24bff7d2f3099b66ca1b28cb282a1b3a92b42e86bad6fe536
     restart: on-failure
     ports:
       - ${APP_CORE_LIGHTNING_DAEMON_PORT}:9735

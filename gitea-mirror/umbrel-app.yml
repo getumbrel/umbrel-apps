@@ -1,9 +1,11 @@
 manifestVersion: 1
 id: gitea-mirror
+storage:
+  dataRoot: data
 name: Gitea Mirror
 tagline: Mirror your GitHub repositories to a Gitea instance automatically
 category: developer
-version: "3.26.0"
+version: "3.36.2"
 port: 4322
 description: >-
   Gitea Mirror automatically mirrors your GitHub repositories to a self-hosted Gitea instance. It supports mirroring public and private repositories, organizations, starred repos, issues, wikis, and pull requests.
@@ -42,14 +44,29 @@ defaultUsername: ""
 defaultPassword: ""
 dependencies: []
 releaseNotes: >-
-  Gitea Mirror 3.26.0 reduces GitHub API rate-limit usage by reusing cached ETags between syncs. Unchanged GitHub responses now use cached data, improving reliability for large mirror sets and frequent sync schedules. No configuration changes or migrations are required.
+  This update fixes several scheduling, organization, and destination display issues in Gitea Mirror.
 
 
-  This update also moves the in-app documentation to a new website with improved navigation, mobile support, dark mode, and expanded guidance for notifications, header authentication, and force-push protection. Existing documentation links now redirect to the new website.
+  Key highlights:
+    - Fixed the automation card so it shows the schedule that is actually running, including interval-based schedules from existing configuration.
+    - Ignoring an organization now also ignores its repositories until the organization is included again.
+    - Fixed organization cards incorrectly saying Gitea when the destination is Forgejo.
 
 
-  If you're updating from a pre-3.17 version and use OAuth provider clients registered in Gitea Mirror, rotate the client secret for each client after upgrading because OAuth application secrets are stored hashed after migration.
+  Upgrade notes: existing configurations are not touched. New configurations now start with scheduling off unless `SCHEDULE_ENABLED=true`, `SCHEDULE_INTERVAL`, or `GITEA_MIRROR_INTERVAL` enables it.
 
 
-  Full release notes for 3.25.0 and 3.26.0 can be found at https://github.com/RayLabsHQ/gitea-mirror/releases/tag/v3.25.0 and https://github.com/RayLabsHQ/gitea-mirror/releases/tag/v3.26.0
+  If you're updating from a version older than 3.36.1, Gitea Mirror also includes fixes for duplicate release assets, organization destination overrides, crash recovery, duplicate source-row scheduling/import behavior, and progress checkpoint handling.
+
+
+  If you're updating from a version older than 3.34.0, Gitea Mirror also adds organization source pins and earlier multi-source database migrations. Back up `data/gitea-mirror.db` and your Gitea or Forgejo instance before upgrading.
+
+
+  Reminder for users updating from 3.27.1 or older: repository cleanup no longer archives or deletes copies in Gitea or Forgejo automatically when the original GitHub repository is no longer found.
+
+
+  If you're updating from a version older than 3.17 and use OAuth provider clients registered in Gitea Mirror, rotate the client secret for each client after upgrading because OAuth application secrets are stored hashed after migration.
+
+
+  Full release notes can be found at https://github.com/RayLabsHQ/gitea-mirror/releases/tag/v3.36.2
 path: ""

@@ -1,8 +1,18 @@
 manifestVersion: 1.1
 id: immich
+storage:
+  dataRoot: data
+folderAccess:
+  - id: external-library
+    name: External Library
+    note: Select a folder containing photos or videos, then configure /mnt/external-library as an import path for an External Library in Immich. Access is read-only to protect the original files.
+    mounts:
+      - service: server
+        targetPath: /mnt/external-library
+        readOnly: true
 category: files
 name: Immich
-version: "v3.1.0"
+version: "v3.2.2"
 tagline: High-performance photo and video backup solution
 description: >-
   An open-source and high-performance self-hosted backup solution for the videos and photos on your mobile device
@@ -45,16 +55,16 @@ description: >-
 
   - User-defined storage structure
 releaseNotes: >-
-  ⚠️ Immich v3 includes breaking API changes, mostly affecting third-party tools that integrate with Immich. If you're updating from a pre-v3 version, check that your mobile app and any Immich integrations are compatible with this release.
+  This update keeps the new umbrelOS storage-management options introduced in the previous package, including optional read-only access to an existing photo or video library.
 
 
-  This release adds web upload wakelock support, undo for archive actions, workflow filters for server file paths and EXIF metadata, and quicker navigation to the maintenance page. It also improves OIDC role-claim syncing, adds an option to invalidate sessions when resetting the admin password, and fixes many web, mobile, upload, and media-viewer issues.
+  ⚠️ If you're updating from a pre-v3 version, Immich v3 includes breaking API changes mostly affecting third-party tools. Check that your mobile app and any Immich integrations are compatible with this release; the Immich mobile app no longer supports iOS 14.
 
 
-  Note: the new web upload wakelock feature requires HTTPS, and the Immich mobile app no longer supports iOS 14.
+  Immich v3.2.2 fixes an issue where reassigning faces could include faces from other users.
 
 
-  Full release notes can be found at https://github.com/immich-app/immich/releases/tag/v3.1.0
+  Full release notes can be found at https://github.com/immich-app/immich/releases/tag/v3.2.2
 developer: Alex Tran
 website: https://www.immich.app
 dependencies: []

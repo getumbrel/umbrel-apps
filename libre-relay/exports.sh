@@ -3,7 +3,8 @@ export APP_LIBRE_RELAY_NODE_IP="10.21.21.20"
 export APP_LIBRE_RELAY_TOR_PROXY_IP="10.21.22.21"
 export APP_LIBRE_RELAY_I2P_DAEMON_IP="10.21.22.22"
 
-export APP_LIBRE_RELAY_DATA_DIR="${EXPORTS_APP_DIR}/data/bitcoin"
+EXPORTS_DATA_ROOT="${EXPORTS_APP_DATA_DIR:-${EXPORTS_APP_DIR}/data}"
+export APP_LIBRE_RELAY_DATA_DIR="${EXPORTS_DATA_ROOT}/bitcoin"
 # Keep the Bitcoin Core port pattern while moving to the 845x range to avoid conflicts with other apps
 export APP_LIBRE_RELAY_RPC_PORT="8452"
 export APP_LIBRE_RELAY_P2P_PORT="8453"
@@ -17,7 +18,7 @@ BITCOIN_CHAIN="main"
 BITCOIN_ENV_FILE="${EXPORTS_APP_DIR}/.env"
 
 {
-	BITCOIN_APP_CONFIG_FILE="${EXPORTS_APP_DIR}/data/app/bitcoin-config.json"
+	BITCOIN_APP_CONFIG_FILE="${EXPORTS_DATA_ROOT}/app/bitcoin-config.json"
 	if [[ -f "${BITCOIN_APP_CONFIG_FILE}" ]]
 	then
 		bitcoin_app_network=$(jq -r '.network' "${BITCOIN_APP_CONFIG_FILE}")
