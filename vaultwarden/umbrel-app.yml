@@ -1,49 +1,29 @@
-manifestVersion: 1
+manifestVersion: 2.0
 id: vaultwarden
 storage:
   dataRoot: data
 category: files
 name: Vaultwarden
-version: "1.37.3-patch.1"
+version: "1.37.3-patch.2"
 tagline: Unofficial Bitwarden® compatible server
 description: >-
   Vaultwarden is an unofficial Bitwarden-compatible server for self-hosting your encrypted password vault on Umbrel. It works with many official Bitwarden clients and provides a lightweight alternative to the official Bitwarden server.
 
 
-  🛠️ **SET-UP REQUIRED**
-
-  Vaultwarden needs to be opened through HTTPS or Tor Browser for account creation. Many Bitwarden clients also require an HTTPS server URL. The easiest private HTTPS option is Tailscale Serve, which gives Vaultwarden an HTTPS URL that only devices in your Tailscale network can access.
+  **Connecting your devices**
 
 
-  **Option 1: Set up with Tailscale Serve**
-
-  - Install and sign in to the Tailscale app on your Umbrel.
-
-  - In the Tailscale admin console, enable MagicDNS and HTTPS Certificates.
-
-  - On your Umbrel, go to Settings > Advanced settings > Terminal and select the Tailscale app.
-
-  - Run `tailscale serve --bg --https=443 http://127.0.0.1:8089`.
-
-  - Open the HTTPS URL shown by Tailscale and create your Vaultwarden account.
-
-  - Use that same HTTPS URL as the self-hosted server URL in Bitwarden clients.
-
-  > **Note:** Clicking the Vaultwarden app icon in the Umbrel dashboard may still show a Tor access warning. When using Tailscale Serve, open the Tailscale HTTPS URL directly instead.
+  Some Bitwarden clients require a secure HTTPS connection. Options include:
 
 
-  **Option 2: Set up with Tor**
+  - **Tailscale Serve:** A private HTTPS address that works at home and away, with Tailscale connected on your devices.
 
-  - Ensure your Umbrel is accessible over Tor by going to Settings > Advanced settings and toggling "Remote Tor access" to enabled. You will need to restart your Umbrel if Remote Tor access was previously disabled.
+  - **Local HTTPS:** Available on umbrelOS 2.0 or later for connections on your local network. This requires installing and trusting Umbrel's certificate on each device, following the instructions under **Settings → Advanced settings**.
 
-  - Access your Umbrel through Tor Browser using the .onion address shown in Settings under "Remote Tor access".
-
-  - In Tor Browser, open the Vaultwarden app and create an account.
+  - **Another HTTPS reverse proxy:** Connect through an HTTPS address you've configured for Vaultwarden.
 
 
-  🔐 **CONNECTING BITWARDEN CLIENTS**
-
-  Official Bitwarden clients may reject plain HTTP URLs, including http://umbrel.local, plain Tailscale IP addresses, and onion HTTP URLs. Use the Tailscale Serve HTTPS URL or another HTTPS reverse proxy URL for client connections.
+  Use your chosen HTTPS address as the self-hosted server URL in your Bitwarden client.
 
 
   **Features:** Vaultwarden supports personal vaults, organizations, attachments, Bitwarden Send, website icons, two-factor authentication, emergency access, and the Vaultwarden admin backend.
@@ -52,24 +32,10 @@ description: >-
   **Disclaimer:** Vaultwarden is not associated with Bitwarden or 8bit Solutions LLC. For Vaultwarden issues, contact Vaultwarden/Umbrel support rather than Bitwarden's official support channels.
 
 releaseNotes: >-
-  This update adds support for new storage management and configuration options being introduced with umbrelOS 2.0.
+  On umbrelOS 2.0 or later, Vaultwarden now opens directly from your Umbrel dashboard over HTTPS, so Tor Browser is no longer needed to create an account.
 
 
-  Previous Vaultwarden 1.37.3 release notes:
-
-
-  Important: Bitwarden clients generally require an HTTPS server URL. If you use desktop, mobile, or browser extension clients, use Tailscale Serve or another HTTPS reverse proxy URL instead of http://umbrel.local, a plain Tailscale IP address, or an onion HTTP URL. See the app description for setup steps.
-
-
-  This release includes:
-    - Fixes password changes with newer Web Vault versions
-    - Improves password reset handling when email is disabled
-    - Fixes organization imports when group fields are missing
-    - Adds admin reset 2FA support and a new SSO signup control
-    - Improves security by revoking remembered 2FA tokens after credential or 2FA changes and rate limiting prelogin/auth request endpoints
-    - Fixes iOS registration token responses and archive date updates
-
-  Full release notes are available at https://github.com/dani-garcia/vaultwarden/releases/tag/1.37.3
+  If you haven't upgraded to umbrelOS 2.0 yet, your existing Bitwarden clients will still work. You can also keep using Tor or an HTTPS connection you've already set up, such as Tailscale Serve.
 developer: Daniel García
 website: https://github.com/dani-garcia
 dependencies: []
@@ -83,6 +49,6 @@ gallery:
 path: ""
 defaultUsername: ""
 defaultPassword: ""
-torOnly: true
+requiresHttps: true
 submitter: Umbrel
 submission: https://github.com/getumbrel/umbrel/commit/44c842bddafffa558569f730cb0d5442ee073bf5
