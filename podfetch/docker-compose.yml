@@ -1,0 +1,26 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: podfetch_server_1
+      APP_PORT: 8000
+      # PodFetch has its own login (basic auth) which mobile podcast clients
+      # like AntennaPod use for GPodder sync, so Umbrel auth is disabled.
+      PROXY_AUTH_ADD: "false"
+
+  server:
+    image: samuel19982/podfetch:v5.2.2@sha256:b6473cc2fef5a3f1cbebab18ba56e198ee95fe8b3524e57c54d1d1e012c4045f
+    user: "1000:1000"
+    init: true
+    restart: on-failure
+    environment:
+      - DATABASE_URL=sqlite:///app/db/podcast.db
+      - POLLING_INTERVAL=300
+      - BASIC_AUTH=true
+      - USERNAME=umbrel
+      - PASSWORD=${APP_PASSWORD}
+      - GPODDER_INTEGRATION_ENABLED=true
+    volumes:
+      - ${APP_DATA_DIR}/data/db:/app/db
+      - ${APP_DATA_DIR}/data/podcasts:/app/podcasts
