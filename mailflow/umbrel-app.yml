@@ -4,7 +4,7 @@ storage:
   dataRoot: data
 category: networking
 name: MailFlow
-version: "3.5.4"
+version: "3.5.7"
 tagline: Unified self-hosted webmail client
 description: >-
   MailFlow is a self-hosted unified webmail client. Connect multiple IMAP/SMTP
@@ -16,17 +16,18 @@ description: >-
   multiple themes, user management, SSO/OIDC support, and Microsoft 365 OAuth2
   support.
 releaseNotes: >-
-  This update improves MailFlow's IMAP connection handling so slow message loads
-  or provider refusals are less likely to stall syncing, deleting mail, folder
-  checks, or other account work.
+  This update improves MailFlow's behavior with connection-limited mail providers
+  such as Yahoo, including more polite IMAP session use for message bodies, flag
+  changes, folder checks, and retry backoff.
 
 
-  It also improves backoff for rejected credentials and background connection
-  refusals, avoids repeated retries for messages a server lists but will not send,
-  and shows clearer mail-server error details in logs.
+  It also fixes duplicate-message handling when the same email is delivered to
+  multiple connected accounts, improves cache safety for providers that return
+  inconsistent folder listings, adds keyboard triage shortcuts, and unwraps
+  genuine 33Mail alias-forwarded messages so the original sender is shown.
 
 
-  Full release notes can be found at https://github.com/maathimself/mailflow/releases/tag/v3.5.4
+  Full release notes can be found at https://github.com/maathimself/mailflow/releases/tag/v3.5.7
 
 developer: maathimself
 website: https://mailflow.sh
