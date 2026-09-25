@@ -7,7 +7,7 @@ storage:
   dataRoot: data
 category: finance
 name: Lightning Mate
-version: "0.7.0-patch.1"
+version: "0.7.7"
 tagline: Profit-aware management & autopilot for your Lightning node
 description: >-
   Lightning Mate manages your Lightning node so you don't have to babysit it.
@@ -42,40 +42,64 @@ description: >-
   (shown when you open the app), so no other app on your server can read your
   node or move your funds.
 releaseNotes: |-
-  This update adds support for new storage management and configuration options being introduced with umbrelOS 2.0.
+  Magma selling rebuilt around what buyers actually pay, the Autopilot can now
+  size your offer as well as price it, and channel peers gained a trust signal.
+  This bundles everything since 0.7.0.
 
-  Previous Lightning Mate 0.7.0 release notes:
+  Offer sizing
+  - New switch: let the Autopilot keep your Magma offer's size range and lease
+    length in step with the market, up to a maximum order size you set. Size
+    decides whether a buyer can be matched with you at all; price only decides
+    what you earn once they are. Sizing never touches your price: unless you
+    also delegate pricing, the price stays exactly what you set, and the
+    smallest order admitted is worked out from that price so it cannot let in
+    orders that would lose money.
+  - The caps now tell you what they are worth: the share of real Magma orders you
+    can serve today, and what each larger maximum would unlock. If your on-chain
+    balance rather than your setting is the limit, the app says so instead of
+    letting you tune the wrong knob.
 
-  A major upgrade — the Autopilot is now volume-first and profit-aware, and the
-  node can act as a Lightning Service Provider.
+  Magma
+  - Offers are now priced against Amboss's real completed orders instead of the
+    prices other sellers are asking. Listed prices are wishes; this is what money
+    changed hands at.
+  - Removed a feedback loop that quietly ruined offers. The Autopilot used to cut
+    the price a little more for every day without a sale, which sounds like price
+    discovery but is not: a Magma purchase carries no offer id, so Amboss picks
+    the seller. Being cheapest wins nothing and only gives away the margin.
+    Offers already driven to the floor are lifted back.
+  - Fixed a bug where the fee rate hit its minimum and the real price silently
+    became whatever the base fee happened to be, often a fraction of the price
+    the app believed it had set.
+  - New: "your size window reaches X% of real orders". This is usually the true
+    reason an offer sits unsold, because a window that misses the median order
+    size cannot be matched at any price. The app shows what a larger maximum
+    channel size would unlock, and the Autopilot now keeps an offer's size range
+    and lease length in step with the market, not just its price.
+  - Available liquidity on the market page subtracts each offer's committed
+    orders, so a fully booked seller no longer looks wide open.
+  - Buying: pick a specific seller from the ranked list and the order goes to
+    them.
+  - An expired Amboss key now shows you why nothing is selling instead of an
+    empty page, and is called out in Settings rather than failing silently.
 
-  - LSP mode (beta): sell inbound channels directly to wallets speaking the open
-    LSPS1 standard (bLIP-51) — priced by the same profit-aware engine, paid via
-    a hold invoice that settles only once the channel is opening (automatic
-    refunds on any failure), guarded by shared capital caps. Off by default.
-  - More completed forwards: an optional autopilot pass keeps each channel's max
-    HTLC just under its spendable balance so senders skip depleted channels, and
-    a new "Unserved demand" panel shows the forwards refused for lack of
-    liquidity — where a rebalance pays for itself.
-  - Reworked pricing engine: low, competitive channel pricing by default (and a
-    zero base rate) to win forwards, with profit floors so a channel never routes
-    below its refill cost; a channel that stops routing is automatically priced
-    cheaper until flow returns — and the engine remembers the price at which flow
-    came back, returning straight to it next time.
-  - One-click Strategy — Max routing / Balanced / Max profit — tunes pricing,
-    rebalancing, channel-opening and Magma together, and applies instantly.
-  - Paced, self-correcting adjustments: raises wait days, cuts step once a day,
-    protection ramps gradually; rebalancing is profit-gated with a daily budget
-    and backs off failing routes.
-  - Amboss Magma, built in: buy inbound liquidity, sell your own with adaptive
-    auto-pricing and a market-aware slider, optional Autopilot fulfilment — plus
-    market fill telemetry that watches the order book around the clock and prices
-    your offer toward what actually sells, and a seller-score coach.
-  - Channels: on-chain close dialog with a chosen confirmation speed; channels
-    stay visible as "pending open" / "pending close" until they confirm.
-  - Dashboard: a "today" digest (what the autopilot last did, next run, alerts),
-    routing at a glance (24h / 7d), yield on capital vs the market lease
-    benchmark, a Profit & Loss overview, and a node health score. Mobile-friendly.
+  Channel peers
+  - Peer suggestions now include reputation from lightningnetwork.plus: rank,
+    Prime status and the ratings real operators gave each other. A network graph
+    can show that a node is well connected; it cannot tell you whether people who
+    opened channels to it would do it again. Peers without an LN+ profile are
+    never penalised, and the reputation only refines the ranking rather than
+    driving it.
+  - New LN+ view under Market: browse Liquidity Pool nodes and open Swaps, with
+    an upfront check of whether your node actually qualifies for each swap.
+
+  Rebalancing and analytics
+  - The rebalance autopilot no longer gets stuck raising a busy channel's price
+    forever instead of refilling it, and the daily budget goes to the most
+    profitable moves first.
+  - New Routing view with per-channel flow direction, routing corridors and the
+    forwards that were refused for lack of liquidity.
+  - Cleaner Performance tab with the eight metrics that matter.
 developer: opensourceminers.de
 website: https://opensourceminers.de
 dependencies:
