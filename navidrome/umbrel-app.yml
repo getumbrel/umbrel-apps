@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: navidrome
 category: media
 name: Navidrome
-version: "0.64.1"
+version: "0.64.2"
 tagline: Your personal streaming service
 description: >-
   Navidrome is an open source web-based music collection server and streamer.
@@ -51,16 +51,16 @@ path: ""
 permissions:
   - STORAGE_DOWNLOADS
 releaseNotes: >-
-  This security release fixes vulnerabilities affecting Subsonic API login rate limiting, playlist artwork fetching, player ownership, and per-user library filtering.
+  This bug fix and security release reduces database lock contention during library scans, especially on slower storage, and fixes scan failures on 32-bit systems with invalid track, disc, or BPM metadata.
 
 
   Highlights include:
-    - Improved Jellyfin client support, including Quick Connect sign-in and better library sync compatibility
-    - Smart playlists can now reference another playlist by path
-    - The web UI now formats dates using your selected Personal settings language
-    - Artwork, scanner, scrobbling, and packaging fixes, including repair for root-owned artwork/plugin folders on upgrade
+    - Sanitizes download filenames generated from user-controlled music and playlist names
+    - Prevents failed first-admin creation from leaving the server marked as already set up
+    - Fixes invalid JSON in some delete responses and missing content type on shared playlist downloads
+    - Honors Jellyfin playlist visibility when playlists are created through the Jellyfin API
 
 
-  Full release notes can be found at https://github.com/navidrome/navidrome/releases/tag/v0.64.1
+  Full release notes can be found at https://github.com/navidrome/navidrome/releases/tag/v0.64.2
 submitter: owmsoton
 submission: https://github.com/getumbrel/umbrel-apps/pull/1232
