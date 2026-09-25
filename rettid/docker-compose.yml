@@ -1,0 +1,21 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: rettid_web_1
+      APP_PORT: 8080
+
+  web:
+    image: gab360/rettid:0.1.2@sha256:91c01f55056cccc7a3a9acab6e8c66cedf01f68e6013ef7fee6ba3090a0ee852
+    restart: on-failure
+    stop_grace_period: 1m
+    init: true
+    user: nobody
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    healthcheck:
+      disable: true
