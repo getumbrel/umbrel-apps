@@ -1,0 +1,24 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: romarr_web_1
+      APP_PORT: 6868
+
+  web:
+    image: ghcr.io/blizzhacker/romarr:0.7.0@sha256:106b336bf174813e1f2a6f610b567f9b384efba2ac2563ccc415015703786cbe
+    restart: on-failure
+    stop_grace_period: 1m
+    volumes:
+      # Settings, history and indexer configuration.
+      - ${APP_DATA_DIR}/data/config:/config
+      # Where finished ROMs are filed.
+      - ${UMBREL_ROOT}/data/storage/downloads:/downloads
+      - ${APP_DATA_DIR}/data/roms:/roms
+    environment:
+      PUID: "1000"
+      PGID: "1000"
+      TZ: ${TZ}
+      LIBRARY_KIND: romm
+      LIBRARY_PATH: /roms
