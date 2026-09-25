@@ -1,0 +1,17 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: seerrng_server_1
+      APP_PORT: 5055
+      PROXY_AUTH_WHITELIST: "/api/*"
+
+  server:
+    image: docker.io/snapetech/seerrng:v3.27.1@sha256:1d66bbaff5d1e7e4216f1e36edfd55afba89b81bccdb3705e2bb0bf04ea05b9b
+    environment:
+      LOG_LEVEL: info
+      PORT: 5055
+    volumes:
+      - ${APP_DATA_DIR}/data/config:/app/config
+    restart: on-failure
