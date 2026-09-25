@@ -1,0 +1,31 @@
+# Umbrel overlay over the shipped dsh Web composition.
+# Applied via `dsh --patch /app/umbrel.patch.yml` (see DSH_PATCH_FILE).
+#
+# A patch replaces the targeted row's whole `config`, so every key the row
+# owns is restated here. `inject` is preserved from the original row, so
+# `ctx.webStartup` (CLI flags) stays available inside `!!js` expressions.
+#
+# This file is a variable-free template (not a plain .yml) so umbrelOS
+# refreshes it on install/update/start like the rest of the package.
+
+# Bind all interfaces so Docker bridge networking and Umbrel's app_proxy can
+# reach the server. The CLI layer intentionally rejects `--host 0.0.0.0`, so
+# this patch is the supported path: the webserver schema itself allows both
+# loopback and all-interfaces binds.
+- id: webserver
+  config:
+    host: '0.0.0.0'
+    port: !!js ctx.webStartup.port ?? Number(process.env.DSH_PORT ?? 3080)
+    compression: gzip
+    compressionLevel: 1
+    compressionThresholdBytes: 1024
+
+# The served Web UI keeps its settings surfaces (Models, Plugins, General
+# documents) loopback-only on the client. On umbrelOS the browser arrives
+# through the authenticated app_proxy on the device domain, so the packaging
+# shim opts the authenticated page into the privileged surface. Server-side
+# gates (Host trust fence, browser-session cookie) are unchanged. Resolved
+# relative to this patch file, which is bind-mounted beside the shim.
+- insert:
+    - id: umbrel-loopback-override
+      name: './umbrel-loopback-override.mjs'
