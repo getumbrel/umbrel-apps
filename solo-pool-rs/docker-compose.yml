@@ -1,0 +1,45 @@
+# Solo Pool RS on umbrelOS.
+#
+# Wiring:
+#  - The dashboard (container port 9090) is served through Umbrel's app_proxy
+#    on the manifest port 4333, behind umbrelOS auth.
+#  - Stratum is raw TCP and bypasses the proxy: published straight to the host
+#    on 4334 (3333 belongs to another App Store app). The pool listens on 4334
+#    inside the container too, so its Connect dialog shows the port miners
+#    actually use. Miners connect to <umbrel-ip>:4334 (SV1 and SV2
+#    auto-detected).
+#  - Bitcoin node access comes from the Bitcoin app's exported env vars (RPC
+#    credentials and the ZMQ hashblock endpoint), injected into the shipped
+#    config through solo-pool-rs's SOLO_POOL_* env overrides. No cookie mount.
+#  - data/ (installed to ${APP_DATA_DIR}/data) holds config.toml, the stats
+#    database, the found-block archive and the SV2 authority key.
+services:
+  app_proxy:
+    environment:
+      APP_HOST: solo-pool-rs_pool_1
+      APP_PORT: 9090
+
+  pool:
+    image: ghcr.io/cbyam/solo-pool-rs:0.6.8@sha256:a41cbb69087f6859e0d409df2c06e16fd76e9df8a899176ced6f523a7d558fcb
+    restart: on-failure
+    # A block found seconds before a stop must reach the node; the pool waits
+    # for an in-flight submitblock on shutdown.
+    stop_grace_period: 1m
+    # The image's built-in user is 10001, but Umbrel's app-data dirs are owned
+    # by 1000. The binary needs no particular uid (RPC auth is user/password,
+    # not the cookie file), so run as 1000 to keep the data volume writable.
+    user: "1000:1000"
+    ports:
+      - "4334:4334/tcp"
+    volumes:
+      - ${APP_DATA_DIR}/data:/app/data
+    command: ["/app/data/config.toml"]
+    environment:
+      - SOLO_POOL_BITCOIN_RPC__URL=http://${APP_BITCOIN_NODE_IP}:${APP_BITCOIN_RPC_PORT}
+      - SOLO_POOL_BITCOIN_RPC__USER=${APP_BITCOIN_RPC_USER}
+      - SOLO_POOL_BITCOIN_RPC__PASSWORD=${APP_BITCOIN_RPC_PASS}
+      - SOLO_POOL_ZMQ__HASHBLOCK_ENDPOINT=tcp://${APP_BITCOIN_NODE_IP}:${APP_BITCOIN_ZMQ_HASHBLOCK_PORT}
+      # The pool persists its SV2 authority key (miner identity pinning) and
+      # refuses to start if it cannot create the file. Keep it in the data
+      # volume so the pool's identity survives container re-creates.
+      - SOLO_POOL_SV2__AUTHORITY_KEY_FILE=/app/data/sv2-authority.key
