@@ -1,0 +1,23 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: oniondrop_web_1
+      APP_PORT: 8080
+      PROXY_AUTH_ADD: "false"
+
+  web:
+    image: dennysubke/oniondrop:0.2.0@sha256:9b58a7c56fb116f7617f81ea90251e4afa833e14d650997e9de00ca9746253d8
+    restart: on-failure
+    stop_grace_period: 30s
+    environment:
+      PUID: "1000"
+      PGID: "1000"
+      ONIONDROP_DATA_DIR: /data
+      ONIONDROP_PORT: "8080"
+      ONIONDROP_AUTH_MODE: setup
+      ONIONDROP_DEFAULT_LANGUAGE: en
+      ONIONSHARE_VERSION: "2.6.4"
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
