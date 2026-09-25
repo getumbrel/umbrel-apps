@@ -1,0 +1,83 @@
+# Bitcoin Cash Explorer (mempool-style) for Umbrel
+# Images built from source in YOUR ghcr (see .github/workflows/build-explorer.yml).
+# Backend reads blocks/txs from the BCH Node (RPC) and address history from Fulcrum (Electrum).
+services:
+  app_proxy:
+    environment:
+      APP_HOST: bch-explorer_web_1
+      APP_PORT: 8080
+
+  # ---- Frontend (Angular served by nginx) ----
+  web:
+    image: ghcr.io/danhaus93-ops/bch-explorer-frontend:a882733329df5bd80b5db9708b445c17de9925c5@sha256:a504ba81ce5246073939023a6f5d6a9120ec0f88926308ae72712aec890c836b
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      FRONTEND_HTTP_PORT: "8080"
+      BACKEND_MAINNET_HTTP_HOST: "bch-explorer_api_1"
+      BACKEND_MAINNET_HTTP_PORT: "8999"
+      MAINNET_ENABLED: "true"
+    command: "./wait-for bch-explorer_db_1:3306 --timeout=720 -- nginx -g 'daemon off;'"
+    depends_on:
+      - api
+
+  # ---- Backend (Node API + indexer, includes Rust gbt) ----
+  api:
+    image: ghcr.io/danhaus93-ops/bch-explorer-backend:a882733329df5bd80b5db9708b445c17de9925c5@sha256:97324c7580ef5aa706ae01c184bd9197fe3d8d890939f156ff124fe4da2ded81
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      EXPLORER_BACKEND: "electrum"
+      EXPLORER_NETWORK: "mainnet"
+      EXPLORER_OFFICIAL: "false"
+      EXPLORER_POOLS_SOURCE: "github"
+      EXPLORER_POOLS_JSON_URL: "https://raw.githubusercontent.com/danhaus93-ops/umbrel-bch-apps/master/pools-v2.json"
+      EXPLORER_POOLS_JSON_TREE_URL: "https://api.github.com/repos/danhaus93-ops/umbrel-bch-apps/git/trees/master"
+      EXPLORER_INDEXING_BLOCKS_AMOUNT: "11000"
+      EXPLORER_USE_SECOND_NODE_FOR_MINFEE: "false"
+      # Your Bitcoin Cash Node (RPC)
+      CORE_RPC_HOST: "${APP_BITCOIN_CASH_NODE_NODE_IP}"
+      CORE_RPC_PORT: "${APP_BITCOIN_CASH_NODE_RPC_PORT}"
+      CORE_RPC_USERNAME: ${APP_BITCOIN_CASH_NODE_RPC_USER}
+      CORE_RPC_PASSWORD: "${APP_BITCOIN_CASH_NODE_RPC_PASS}"
+      # Your Fulcrum (Electrum) — plaintext TCP
+      ELECTRUM_HOST: "${APP_FULCRUM_BCH_NODE_IP}"
+      ELECTRUM_PORT: "${APP_FULCRUM_BCH_NODE_PORT}"
+      ELECTRUM_TLS_ENABLED: "false"
+      # Bundled database
+      DATABASE_ENABLED: "true"
+      DATABASE_HOST: "bch-explorer_db_1"
+      DATABASE_DATABASE: "explorer"
+      DATABASE_USERNAME: "explorer"
+      DATABASE_PASSWORD: "explorer"
+      STATISTICS_ENABLED: "true"
+    command: "./wait-for-it.sh bch-explorer_db_1:3306 --timeout=720 --strict -- ./start.sh"
+    volumes:
+      - ${APP_DATA_DIR}/data/cache:/backend/cache
+    depends_on:
+      - db
+    ulimits:
+      nofile:
+        soft: 165535
+        hard: 500000
+
+  # ---- Database (MariaDB) ----
+  db:
+    image: mariadb:11.8.2@sha256:2bcbaec92bd9d4f6591bc8103d3a8e6d0512ee2235506e47a2e129d190444405
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      MYSQL_DATABASE: "explorer"
+      MYSQL_USER: "explorer"
+      MYSQL_PASSWORD: "explorer"
+      MYSQL_ROOT_PASSWORD: "explorer_root_local_pw"
+      MARIADB_AUTO_UPGRADE: "1"
+    volumes:
+      - ${APP_DATA_DIR}/data/mysql:/var/lib/mysql
+    ulimits:
+      nofile:
+        soft: 165535
+        hard: 500000
