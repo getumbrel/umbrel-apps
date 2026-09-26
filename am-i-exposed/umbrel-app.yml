@@ -2,7 +2,7 @@ manifestVersion: 1
 id: am-i-exposed
 category: bitcoin
 name: "am-i.exposed"
-version: "0.35.7"
+version: "0.36.0"
 tagline: Bitcoin privacy scanner - see what the blockchain reveals about you
 description: >-
   Paste a Bitcoin address or transaction ID and get a privacy score from 0 to 100
@@ -15,7 +15,18 @@ description: >-
   All analysis runs client-side in the browser. API calls go directly to the local
   Umbrel mempool instance, no data leaves the network. No tracking, no logging, no
   third-party analytics.
-releaseNotes: ""
+releaseNotes: >-
+  A full audit release: more accurate grades, more reliable scans and better
+  privacy. Chain and entity findings now count toward the grade, several noisy
+  or inverted heuristics were fixed (change detection, fee and low-R
+  fingerprints, single-owner transactions no longer scored as CoinJoins,
+  Lightning close detection), and entropy merges same-address coins. Failed
+  API requests are no longer scored or cached as empty data, wallet scans
+  report partial results, Boltzmann jobs no longer hang, and no request leaves
+  for Cloudflare or public mempool.space before your node is detected. PSBT
+  and descriptor parsing were corrected (BIP-380 checksums), every finding is
+  translated in all six languages, and the Chainalysis check handles rate
+  limits clearly on Tor and Umbrel.
 developer: Copexit
 website: https://am-i.exposed
 dependencies:
