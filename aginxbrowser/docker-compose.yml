@@ -1,0 +1,30 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: aginxbrowser_web_1
+      APP_PORT: 8089
+
+  web:
+    # Pinned multi-arch (amd64+arm64) manifest digest — assembled per release
+    # tag by the repo's docker workflow. Same digest is mirrored to
+    # docker.io/yinnho/aginxbrowser for plain docker pulls.
+    image: ghcr.io/yinnho/aginxbrowser:0.5.11@sha256:5ab8d893544ab7408e3a5f24010295c854f0d3c77c308f3bdc7be740549420a3
+    environment:
+      AGINXBROWSER_COOKIE_STORE_DIR: /data/cookies
+      AGINXBROWSER_DOWNLOAD_DIR: /data/downloads
+    # Agents and MCP clients on the LAN cannot perform Umbrel cookie auth, so
+    # the HTTP/MCP API is published on its own host port. The web UI (status
+    # page) stays behind app_proxy. Internal listen port stays 8089.
+    ports:
+      - "8189:8089"
+    volumes:
+      - ${APP_DATA_DIR}/data/cookies:/data/cookies
+      - ${APP_DATA_DIR}/data/downloads:/data/downloads
+    user: "1000:1000"
+    restart: on-failure
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8089/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
