@@ -131,7 +131,7 @@ services:
         # replacers. index()/substr() treats the replacement as an opaque
         # literal. Tmp file + atomic mv so ckpool never reads a half-written conf.
         TMP=$$(mktemp)
-        awk \
+          awk \
           -v rpc_host="$${BITCOIN_RPC_HOST}" \
           -v rpc_port="$${BITCOIN_RPC_PORT}" \
           -v rpc_user="$${BITCOIN_RPC_USER}" \
@@ -226,7 +226,7 @@ services:
     # new release: rebuild, push, capture the new digest with
     # `docker inspect <image>:latest --format='{{index .RepoDigests 0}}'`,
     # and replace below.
-    image: ghcr.io/danhaus93-ops/solostrike-stunnel:v3.7.5@sha256:57df7a2cc7f7eb3a7fd10063e726ad91186a4a8a3d81fcd68aac321a0d2cbc70
+    image: ghcr.io/danhaus93-ops/solostrike-stunnel:v3.7.6@sha256:408c8d029404fed02013431ee46ddd57f62f76314fd3f1e79528d62e0d46c96d
     restart: on-failure
     security_opt:
       - no-new-privileges:true
@@ -246,7 +246,7 @@ services:
       - ${APP_DATA_DIR}/data/stunnel:/certs
 
   api:
-    image: ghcr.io/danhaus93-ops/solostrike-api:v3.7.5@sha256:3ccf03cb1c8d06b1c146ffdbbfd3ae81d5f9257df2e6e6cca77812d03d093549
+    image: ghcr.io/danhaus93-ops/solostrike-api:v3.7.6@sha256:7098a4726cbf7560de60712820f4a941b260a1c685ec8a4f7c54ba599415ee84
     restart: on-failure
     security_opt:
       - no-new-privileges:true
@@ -293,7 +293,7 @@ services:
       - STRATUM_PORT_TLS=32224
 
   ui:
-    image: ghcr.io/danhaus93-ops/solostrike-ui:v3.7.5@sha256:7ff1634126ec05bcf07d58f066cd9e4a6ffd6abbe11bdb13a708a9decea85309
+    image: ghcr.io/danhaus93-ops/solostrike-ui:v3.7.6@sha256:be99981206f0a67dc4b7dc016f9225fe176b4a5a3c997bd34e4808155ca6b440
     restart: on-failure
     security_opt:
       - no-new-privileges:true
