@@ -1,0 +1,43 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: satsage_web_1
+      APP_PORT: 8730
+
+  web:
+    image: ghcr.io/juniormind1/satsage:0.9.7@sha256:d2e8d62bb488f3baa3a2eb5d666ae4ddf4a3ba072921834d66fa13d4e8daff5d
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      # Locks the data-source fields in the UI and makes SatSage read the
+      # addresses below from process env instead of its own .env file.
+      SATSAGE_MANAGED_BY: umbrel
+      SATSAGE_DATA_DIR: /data
+      SATSAGE_BIND: "0.0.0.0"
+      SATSAGE_PORT: "8730"
+      # Umbrel displays this value as the app password (deterministicPassword).
+      # SatSage hashes it once and keeps requiring its own login behind
+      # app_proxy, because the shared Docker network is not a trust boundary.
+      SATSAGE_BOOTSTRAP_PASSWORD: $APP_PASSWORD
+      # Browser requests arrive through app_proxy with the original Host, e.g.
+      # umbrel.local:8732, a LAN IP, or the Tor hidden service.
+      SATSAGE_HOST_ALLOWLIST: "$DEVICE_DOMAIN_NAME,*.local,.onion,192.168.*.*,10.*.*.*,172.16.*.*"
+      # Electrum protocol from the electrs dependency (or an app implementing it).
+      FULCRUM_HOST: $APP_ELECTRS_NODE_IP
+      FULCRUM_PORT: $APP_ELECTRS_NODE_PORT
+      FULCRUM_SSL: "false"
+      # Bitcoin Core RPC, sourced transitively via the electrs dependency.
+      NODE_IP: $APP_BITCOIN_NODE_IP
+      RPCPORT: $APP_BITCOIN_RPC_PORT
+      RPCUSER: $APP_BITCOIN_RPC_USER
+      RPCPASSWORD: $APP_BITCOIN_RPC_PASS
+      # Empty unless the mempool app is installed; see exports.sh.
+      MEMPOOL_URL: $APP_SATSAGE_MEMPOOL_URL
+      # Everything SatSage needs is on this Umbrel, so keep public egress for
+      # wallet lookups off by default.
+      SATSAGE_OUTBOUND_PUBLIC_OPT_IN: "0"
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
