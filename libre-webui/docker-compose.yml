@@ -1,0 +1,28 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: libre-webui_app_1
+      APP_PORT: 3001
+
+  app:
+    image: librewebui/libre-webui:0.38.0@sha256:649f29eb5e86e05576eaa7a02582307ed6aedb30353801bdd33afa37cb746b47
+    restart: on-failure
+    environment:
+      NODE_ENV: production
+      DOCKER_ENV: "true"
+      PORT: 3001
+      DATA_DIR: /app/backend/data
+      PLATFORM_PREFLIGHT_TMP_DIR: /app/backend/temp/preflight
+      JWT_SECRET: ${APP_LIBRE_WEBUI_JWT_SECRET}
+      JWT_EXPIRES_IN: 7d
+      ENABLE_SIGNUP: "false"
+      CORS_ORIGIN: "*"
+      # Default UmbrelOS address of the official Ollama app. Works out of the
+      # box if Ollama is installed; otherwise connection attempts fail
+      # gracefully and Libre WebUI still runs with cloud model providers.
+      OLLAMA_BASE_URL: http://ollama_ollama_1:11434
+    volumes:
+      - ${APP_DATA_DIR}/data:/app/backend/data
+      - ${APP_DATA_DIR}/temp:/app/backend/temp
