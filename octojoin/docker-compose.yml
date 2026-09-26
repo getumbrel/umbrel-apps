@@ -1,0 +1,24 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: octojoin_web_1
+      APP_PORT: 3000
+
+  web:
+    # Multi-arch (amd64+arm64) image pinned by digest, required by umbrel-apps.
+    image: ghcr.io/1440000bytes/octojoin:0.1.1@sha256:d2b4d5723de579238892a1c2626275aaaf1d611b3e0b941d6b5794233ee1b2bd
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      OCTOJOIN_MANAGED: "1"
+      OCTOJOIN_WALLET: octojoin
+      OCTOJOIN_DATA_DIR: /app/data
+      BITCOIN_RPC_HOST: $APP_BITCOIN_NODE_IP
+      BITCOIN_RPC_PORT: $APP_BITCOIN_RPC_PORT
+      BITCOIN_RPC_USER: $APP_BITCOIN_RPC_USER
+      BITCOIN_RPC_PASS: $APP_BITCOIN_RPC_PASS
+    volumes:
+      - ${APP_DATA_DIR}/data:/app/data
