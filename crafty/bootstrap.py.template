@@ -1,0 +1,35 @@
+"""Seed upstream's supported first-run credentials, then use its launcher."""
+import json
+import os
+from pathlib import Path
+import shutil
+import sys
+
+config = Path("/crafty/app/config")
+defaults = Path("/crafty/app/config_original")
+
+# Initialize an empty bind mount before adding default.json; otherwise the
+# upstream launcher sees a nonempty directory and skips copying its defaults.
+for source in defaults.iterdir():
+    if source.name == "default.json":
+        continue
+    destination = config / source.name
+    if not destination.exists():
+        if source.is_dir():
+            shutil.copytree(source, destination)
+        else:
+            shutil.copy2(source, destination)
+
+# Only bootstrap new databases. Existing accounts and changed passwords survive
+# restarts and image updates. Crafty consumes default.json on a fresh install.
+if not (config / "db" / "crafty.sqlite").exists():
+    password = os.environ["UMBREL_CRAFTY_PASSWORD"]
+    if len(password) < 8:
+        raise ValueError("Umbrel app password must contain at least 8 characters")
+    credentials = config / "default.json"
+    descriptor = os.open(credentials, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    os.chmod(credentials, 0o600)
+    with os.fdopen(descriptor, "w") as output:
+        json.dump({"username": "admin", "password": password}, output)
+
+os.execv("/crafty/docker_launcher.sh", ["/crafty/docker_launcher.sh", *sys.argv[1:]])
