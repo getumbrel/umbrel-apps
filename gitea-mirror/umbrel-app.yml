@@ -5,7 +5,7 @@ storage:
 name: Gitea Mirror
 tagline: Mirror your GitHub repositories to a Gitea instance automatically
 category: developer
-version: "3.40.1"
+version: "3.40.3"
 port: 4322
 description: >-
   Gitea Mirror automatically mirrors your GitHub repositories to a self-hosted Gitea instance. It supports mirroring public and private repositories, organizations, starred repos, issues, wikis, and pull requests.
@@ -44,33 +44,26 @@ defaultUsername: ""
 defaultPassword: ""
 dependencies: []
 releaseNotes: >-
-  This update improves GitHub rate-limit handling, adds an organizations list view, and reduces issue and pull request sync API usage.
-
+  This update improves large repository sync reliability and fixes an Activity Log summary issue.
 
   Key highlights:
-    - Pauses GitHub requests while a source is rate-limited instead of continuing queued requests and retries.
-    - Adds a compact list view for the Organizations page with inline destination editing, repository counts, status, and source/destination links.
-    - Uses incremental scheduled issue and pull request sync after the first full pass, reducing GitHub API requests for large trackers.
-    - Adds a follow-up security hardening for saved source and destination URLs, redirect handling, and upstream error messages.
+    - Continues issue and pull request syncs across GitHub rate-limit resets instead of restarting each pass from the beginning.
+    - Reduces weekly full-pass API usage for unchanged issues and pull requests.
+    - Shows completed quick syncs correctly in the Activity Log summary instead of leaving repositories marked as syncing.
 
+  Upgrade notes: existing installs need no action. A repository that was part way through an issue or pull request pass picks up the new continuation behavior on its next sync.
 
-  Upgrade notes: existing installs need no action. The first scheduled sync after updating performs a full issue and pull request pass, then later syncs are incremental. If your GitHub account was suspended for abuse detection, that must be resolved by GitHub Support.
-
+  If you're updating from a version older than 3.40.1, Gitea Mirror also includes improved GitHub rate-limit handling, an organizations list view, incremental scheduled issue and pull request syncs, and saved URL/security hardening.
 
   If you're updating from a version older than 3.36.2, Gitea Mirror also includes scheduling, organization ignore/include, and destination display fixes. Existing configurations are not touched. New configurations start with scheduling off unless `SCHEDULE_ENABLED=true`, `SCHEDULE_INTERVAL`, or `GITEA_MIRROR_INTERVAL` enables it.
 
-
   If you're updating from a version older than 3.36.1, Gitea Mirror also includes fixes for duplicate release assets, organization destination overrides, crash recovery, duplicate source-row scheduling/import behavior, and progress checkpoint handling.
-
 
   If you're updating from a version older than 3.34.0, Gitea Mirror also adds organization source pins and earlier multi-source database migrations. Back up `data/gitea-mirror.db` and your Gitea or Forgejo instance before upgrading.
 
-
   Reminder for users updating from 3.27.1 or older: repository cleanup no longer archives or deletes copies in Gitea or Forgejo automatically when the original GitHub repository is no longer found.
-
 
   If you're updating from a version older than 3.17 and use OAuth provider clients registered in Gitea Mirror, rotate the client secret for each client after upgrading because OAuth application secrets are stored hashed after migration.
 
-
-  Full release notes can be found at https://github.com/RayLabsHQ/gitea-mirror/releases/tag/v3.40.1
+  Full release notes can be found at https://github.com/RayLabsHQ/gitea-mirror/releases/tag/v3.40.3
 path: ""
