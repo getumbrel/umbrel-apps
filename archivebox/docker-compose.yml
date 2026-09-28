@@ -4,13 +4,15 @@ services:
   app_proxy:
     environment:
       APP_HOST: archivebox_archivebox_1
-      APP_PORT: 8000
+      APP_PORT: 5797
+      # First-run setup probes this endpoint without cookies; it only returns OK.
+      PROXY_AUTH_WHITELIST: "/health/"
 
   archivebox:
-    image: archivebox/archivebox:0.7.4@sha256:1a5a37331091d9df865ead2b9c231aa5a892fc26fe0422ce6140d9e2d9532327
+    image: archivebox/archivebox:0.9.36@sha256:87bdb24068eabd140695c2c1333dc4952f3f76ba176f4b5028d07031c67a31fd
     restart: on-failure
     stop_grace_period: 1m
-    # The image's default command is `archivebox server --quick-init 0.0.0.0:8000`,
+    # The image's default command is `archivebox server --init 0.0.0.0:5797`,
     # which runs DB init/migrations on every boot and binds to all interfaces so the
     # app_proxy can reach it. No manual `archivebox init` step is needed.
     shm_size: "1gb" # headless Chrome needs a decent shared-memory pool while archiving
@@ -24,8 +26,9 @@ services:
       PUBLIC_ADD_VIEW: "False" # ...but only logged-in admins can add new URLs
     volumes:
       - ${APP_DATA_DIR}/data:/data
+      - ${APP_DATA_DIR}/tmp:/tmp/archivebox
     healthcheck:
-      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8000/public/ || exit 1"]
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:5797/public/ || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 5
