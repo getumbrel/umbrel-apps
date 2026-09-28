@@ -26,7 +26,7 @@ x-appwrite-env: &appwrite-env
   _APP_OPTIONS_ROUTER_PROTECTION: "disabled"
   _APP_OPTIONS_FORCE_HTTPS: "disabled"
   _APP_OPTIONS_ROUTER_FORCE_HTTPS: "disabled"
-  _APP_OPENSSL_KEY_V1: "b9f7a6d84e3c4a12a6c2f58e91d73b0f4a8e39d76c1b42e7a5f2c8d90e6b3a41"
+  _APP_OPENSSL_KEY_V1: "${APP_APPWRITE_OPENSSL_KEY}"
   _APP_DOMAIN: "${DEVICE_DOMAIN_NAME}"
   _APP_DOMAIN_TARGET_CNAME: "${DEVICE_DOMAIN_NAME}"
   _APP_DOMAIN_TARGET_AAAA: ""
@@ -35,16 +35,24 @@ x-appwrite-env: &appwrite-env
   _APP_DNS: "1.1.1.1"
   _APP_DOMAIN_FUNCTIONS: "functions.${DEVICE_DOMAIN_NAME}"
   _APP_DOMAIN_SITES: "sites.${DEVICE_DOMAIN_NAME}"
-  _APP_REDIS_HOST: "redis"
+  _APP_REDIS_HOST: "appwrite_redis_1"
   _APP_REDIS_PORT: "6379"
   _APP_REDIS_USER: ""
-  _APP_REDIS_PASS: ""
+  _APP_REDIS_PASS: "${APP_APPWRITE_REDIS_PASSWORD}"
   _APP_DB_ADAPTER: "mongodb"
-  _APP_DB_HOST: "mongodb"
+  _APP_DB_HOST: "appwrite_mongodb_1"
   _APP_DB_PORT: "27017"
   _APP_DB_SCHEMA: "appwrite"
   _APP_DB_USER: "appwrite"
-  _APP_DB_PASS: "appwrite-user-MongoDB-F4h8Mq2Xt9La"
+  _APP_DB_PASS: "${APP_APPWRITE_MONGODB_PASSWORD}"
+  _APP_DB_ADAPTER_DOCUMENTSDB: "mongodb"
+  _APP_DB_HOST_DOCUMENTSDB: "appwrite_mongodb_1"
+  _APP_DB_PORT_DOCUMENTSDB: "27017"
+  # 1.9.5 uses the main DB credentials for its fallback vectors connection.
+  # An explicit DSN lets PostgreSQL have its own per-install password.
+  _APP_CONNECTIONS_DATABASE_VECTORSDB: "db_main=postgresql://appwrite:${APP_APPWRITE_POSTGRES_PASSWORD}@appwrite_postgresql_1:5432/appwrite"
+  _APP_EMBEDDING_ENDPOINT: "http://appwrite_appwrite-embedding_1:3000/embed"
+  _APP_EMBEDDING_TIMEOUT: "30000"
   _APP_SMTP_HOST: ""
   _APP_SMTP_PORT: ""
   _APP_SMTP_SECURE: ""
@@ -84,14 +92,14 @@ x-appwrite-env: &appwrite-env
   _APP_COMPUTE_MEMORY: "0"
   _APP_COMPUTE_INACTIVE_THRESHOLD: "60"
   _APP_COMPUTE_MAINTENANCE_INTERVAL: "3600"
-  _APP_COMPUTE_RUNTIMES_NETWORK: "bridge"
+  _APP_COMPUTE_RUNTIMES_NETWORK: "appwrite-runtimes"
   _APP_FUNCTIONS_TIMEOUT: "900"
   _APP_SITES_TIMEOUT: "900"
   _APP_FUNCTIONS_RUNTIMES: "node-22.0,node-21.0,node-20.0,node-18.0,python-3.12,python-3.11,php-8.3,ruby-3.3"
   _APP_SITES_RUNTIMES: "static-1"
-  _APP_EXECUTOR_SECRET: "appwrite-executor-secret-Q9v6Lm3Rx8Nc2Zd5Wp7Ts4Hy"
-  _APP_EXECUTOR_HOST: "http://openruntimes-executor/v1"
-  _APP_BROWSER_HOST: "http://browser/v1"
+  _APP_EXECUTOR_SECRET: "${APP_APPWRITE_EXECUTOR_SECRET}"
+  _APP_EXECUTOR_HOST: "http://appwrite_docker_1:3000/v1"
+  _APP_BROWSER_HOST: "http://appwrite_browser_1/v1"
   _APP_LOGGING_CONFIG: ""
   _APP_MAINTENANCE_INTERVAL: "86400"
   _APP_MAINTENANCE_DELAY: "0"
@@ -121,7 +129,7 @@ x-appwrite-env: &appwrite-env
   _APP_DOCKER_HUB_USERNAME: ""
   _APP_DOCKER_HUB_PASSWORD: ""
   _APP_OPEN_RUNTIMES_NFT: "false"
-  _APP_MIGRATION_HOST: "http://appwrite/v1"
+  _APP_MIGRATION_HOST: "http://appwrite_appwrite_1/v1"
   _APP_DATABASE_SHARED_TABLES: ""
   _APP_STATS_RESOURCES_INTERVAL: "30"
   _APP_USAGE_AGGREGATION_INTERVAL: "30"
@@ -134,42 +142,40 @@ services:
       APP_PORT: 80
       PROXY_AUTH_ADD: "false"
 
+  # Functions and Sites require a nested daemon. It has no host Docker socket
+  # or host networking; published nested ports stay inside this container.
   docker:
     image: docker:27.2.0-dind@sha256:f9f72ad901a78f27be922b2d320bbc263174f12919c1b37e6a01f828fa904565
+    <<: *logging
     privileged: true
-    network_mode: host
     stop_grace_period: 1m
     restart: on-failure
-    environment:
-      DOCKER_ENSURE_BRIDGE: "appwrite-dind0:10.33.0.1/16"
-    entrypoint: /entrypoint.sh
-    command: >
-      dockerd
-      --bridge appwrite-dind0
-      --data-root /data/data
-      --exec-root /data/exec
-      --host unix:///data/docker.sock
-      --pidfile /data/docker.pid
+    entrypoint: ["/bin/sh", "-ec"]
+    command:
+      - |
+        rm -f /data/docker.pid /data/run/docker.sock
+        exec dockerd-entrypoint.sh dockerd \
+          --data-root /data/data \
+          --exec-root /data/exec \
+          --host unix:///data/run/docker.sock \
+          --pidfile /data/docker.pid \
+          --bip 10.33.0.1/24 \
+          --default-address-pool base=10.34.0.0/16,size=24
     volumes:
-      - ${APP_DATA_DIR}/entrypoint.sh:/entrypoint.sh
       - ${APP_DATA_DIR}/data/docker:/data
       - ${APP_DATA_DIR}/data/builds:/storage/builds:rw
       - ${APP_DATA_DIR}/data/functions:/storage/functions:rw
       - ${APP_DATA_DIR}/data/sites:/storage/sites:rw
       - ${APP_DATA_DIR}/data/tmp:/tmp:rw
     healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "docker --host unix:///data/docker.sock info >/dev/null 2>&1 || exit 1"
-        ]
+      test: ["CMD", "docker", "--host", "unix:///data/run/docker.sock", "info"]
       interval: 10s
       timeout: 10s
       retries: 12
       start_period: 30s
 
   web:
-    image: nginx:alpine@sha256:54f2a904c251d5a34adf545a72d32515a15e08418dae0266e23be2e18c66fefa
+    image: nginx:1.31.2-alpine@sha256:54f2a904c251d5a34adf545a72d32515a15e08418dae0266e23be2e18c66fefa
     <<: *logging
     restart: on-failure
     depends_on:
@@ -198,33 +204,33 @@ services:
             proxy_http_version 1.1;
             proxy_set_header Upgrade $$http_upgrade;
             proxy_set_header Connection $$connection_upgrade;
-            proxy_set_header Host $$host;
+            proxy_set_header Host $$http_host;
             proxy_set_header X-Real-IP $$remote_addr;
             proxy_set_header X-Forwarded-For $$proxy_add_x_forwarded_for;
             proxy_set_header X-Forwarded-Proto $$scheme;
-            proxy_pass http://realtime;
+            proxy_pass http://appwrite_realtime_1;
           }
 
           location /console {
             proxy_http_version 1.1;
             proxy_set_header Upgrade $$http_upgrade;
             proxy_set_header Connection $$connection_upgrade;
-            proxy_set_header Host $$host;
+            proxy_set_header Host $$http_host;
             proxy_set_header X-Real-IP $$remote_addr;
             proxy_set_header X-Forwarded-For $$proxy_add_x_forwarded_for;
             proxy_set_header X-Forwarded-Proto $$scheme;
-            proxy_pass http://console;
+            proxy_pass http://appwrite_console_1;
           }
 
           location / {
             proxy_http_version 1.1;
             proxy_set_header Upgrade $$http_upgrade;
             proxy_set_header Connection $$connection_upgrade;
-            proxy_set_header Host $$host;
+            proxy_set_header Host $$http_host;
             proxy_set_header X-Real-IP $$remote_addr;
             proxy_set_header X-Forwarded-For $$proxy_add_x_forwarded_for;
             proxy_set_header X-Forwarded-Proto $$scheme;
-            proxy_pass http://appwrite;
+            proxy_pass http://appwrite_appwrite_1;
           }
         }
         EOF
@@ -235,9 +241,13 @@ services:
     <<: *logging
     restart: on-failure
     depends_on:
+      openruntimes-executor:
+        condition: service_healthy
       redis:
         condition: service_healthy
       mongodb:
+        condition: service_healthy
+      postgresql:
         condition: service_healthy
     volumes:
       - ${APP_DATA_DIR}/data/uploads:/storage/uploads:rw
@@ -265,6 +275,8 @@ services:
         condition: service_healthy
       mongodb:
         condition: service_healthy
+      postgresql:
+        condition: service_healthy
     environment: *appwrite-env
 
   worker-audits:
@@ -276,6 +288,8 @@ services:
       redis:
         condition: service_healthy
       mongodb:
+        condition: service_healthy
+      postgresql:
         condition: service_healthy
     environment: *appwrite-env
 
@@ -289,6 +303,8 @@ services:
         condition: service_healthy
       mongodb:
         condition: service_healthy
+      postgresql:
+        condition: service_healthy
     environment: *appwrite-env
 
   worker-deletes:
@@ -300,6 +316,8 @@ services:
       redis:
         condition: service_healthy
       mongodb:
+        condition: service_healthy
+      postgresql:
         condition: service_healthy
     volumes:
       - ${APP_DATA_DIR}/data/uploads:/storage/uploads:rw
@@ -320,6 +338,8 @@ services:
         condition: service_healthy
       mongodb:
         condition: service_healthy
+      postgresql:
+        condition: service_healthy
     environment: *appwrite-env
 
   worker-builds:
@@ -328,9 +348,13 @@ services:
     <<: *logging
     restart: on-failure
     depends_on:
+      openruntimes-executor:
+        condition: service_healthy
       redis:
         condition: service_healthy
       mongodb:
+        condition: service_healthy
+      postgresql:
         condition: service_healthy
     volumes:
       - ${APP_DATA_DIR}/data/functions:/storage/functions:rw
@@ -349,6 +373,8 @@ services:
         condition: service_healthy
       mongodb:
         condition: service_healthy
+      postgresql:
+        condition: service_healthy
     volumes:
       - ${APP_DATA_DIR}/data/uploads:/storage/uploads:rw
     environment: *appwrite-env
@@ -363,6 +389,8 @@ services:
         condition: service_healthy
       mongodb:
         condition: service_healthy
+      postgresql:
+        condition: service_healthy
     volumes:
       - ${APP_DATA_DIR}/data/config:/storage/config:rw
       - ${APP_DATA_DIR}/data/certificates:/storage/certificates:rw
@@ -374,9 +402,13 @@ services:
     <<: *logging
     restart: on-failure
     depends_on:
+      openruntimes-executor:
+        condition: service_healthy
       redis:
         condition: service_healthy
       mongodb:
+        condition: service_healthy
+      postgresql:
         condition: service_healthy
     environment: *appwrite-env
 
@@ -390,8 +422,10 @@ services:
         condition: service_healthy
       mongodb:
         condition: service_healthy
+      postgresql:
+        condition: service_healthy
       openruntimes-executor:
-        condition: service_started
+        condition: service_healthy
     environment: *appwrite-env
 
   worker-mails:
@@ -403,6 +437,8 @@ services:
       redis:
         condition: service_healthy
       mongodb:
+        condition: service_healthy
+      postgresql:
         condition: service_healthy
     environment: *appwrite-env
 
@@ -416,6 +452,8 @@ services:
         condition: service_healthy
       mongodb:
         condition: service_healthy
+      postgresql:
+        condition: service_healthy
     volumes:
       - ${APP_DATA_DIR}/data/uploads:/storage/uploads:rw
     environment: *appwrite-env
@@ -427,6 +465,8 @@ services:
     restart: on-failure
     depends_on:
       mongodb:
+        condition: service_healthy
+      postgresql:
         condition: service_healthy
     volumes:
       - ${APP_DATA_DIR}/data/imports:/storage/imports:rw
@@ -442,6 +482,8 @@ services:
         condition: service_healthy
       mongodb:
         condition: service_healthy
+      postgresql:
+        condition: service_healthy
     environment: *appwrite-env
 
   task-interval:
@@ -451,6 +493,8 @@ services:
     restart: on-failure
     depends_on:
       mongodb:
+        condition: service_healthy
+      postgresql:
         condition: service_healthy
       redis:
         condition: service_healthy
@@ -466,6 +510,8 @@ services:
         condition: service_healthy
       mongodb:
         condition: service_healthy
+      postgresql:
+        condition: service_healthy
     environment: *appwrite-env
 
   worker-stats-resources:
@@ -477,6 +523,8 @@ services:
       redis:
         condition: service_healthy
       mongodb:
+        condition: service_healthy
+      postgresql:
         condition: service_healthy
     environment: *appwrite-env
 
@@ -490,6 +538,8 @@ services:
         condition: service_healthy
       mongodb:
         condition: service_healthy
+      postgresql:
+        condition: service_healthy
     environment: *appwrite-env
 
   task-scheduler-functions:
@@ -499,6 +549,8 @@ services:
     restart: on-failure
     depends_on:
       mongodb:
+        condition: service_healthy
+      postgresql:
         condition: service_healthy
       redis:
         condition: service_healthy
@@ -512,6 +564,8 @@ services:
     depends_on:
       mongodb:
         condition: service_healthy
+      postgresql:
+        condition: service_healthy
       redis:
         condition: service_healthy
     environment: *appwrite-env
@@ -523,6 +577,8 @@ services:
     restart: on-failure
     depends_on:
       mongodb:
+        condition: service_healthy
+      postgresql:
         condition: service_healthy
       redis:
         condition: service_healthy
@@ -540,35 +596,61 @@ services:
     <<: *logging
     restart: on-failure
 
+  # This service supervises the real Executor INSIDE the nested daemon.
+  # Executor looks up its own hostname there before creating runtime networks.
   openruntimes-executor:
-    image: openruntimes/executor:0.25.1@sha256:f638aacd3627b39b5c398480a0f72f8cefa1f1b0591cf4d7eabee924f492ce6a
-    hostname: exc1
+    image: docker:27.2.0-cli@sha256:b0d5aafe0208821bdbe683e141cac9dac1a4ff30e5f56c7ae1359cbbeeb1d43f
     <<: *logging
     restart: on-failure
     stop_signal: SIGINT
+    stop_grace_period: 45s
     depends_on:
       docker:
         condition: service_healthy
     volumes:
-      - ${APP_DATA_DIR}/data/docker:/var/run
-      - ${APP_DATA_DIR}/data/builds:/storage/builds:rw
-      - ${APP_DATA_DIR}/data/functions:/storage/functions:rw
-      - ${APP_DATA_DIR}/data/sites:/storage/sites:rw
-      - ${APP_DATA_DIR}/data/tmp:/tmp:rw
+      - ${APP_DATA_DIR}/data/docker/run:/var/run
     environment:
       DOCKER_HOST: "unix:///var/run/docker.sock"
-      OPR_EXECUTOR_INACTIVE_TRESHOLD: "60"
-      OPR_EXECUTOR_MAINTENANCE_INTERVAL: "3600"
-      OPR_EXECUTOR_NETWORK: "bridge"
-      OPR_EXECUTOR_DOCKER_HUB_USERNAME: ""
-      OPR_EXECUTOR_DOCKER_HUB_PASSWORD: ""
+      EXECUTOR_IMAGE: "openruntimes/executor:0.25.1@sha256:f638aacd3627b39b5c398480a0f72f8cefa1f1b0591cf4d7eabee924f492ce6a"
       OPR_EXECUTOR_ENV: "production"
-      OPR_EXECUTOR_RUNTIMES: "node-22.0,node-21.0,node-20.0,node-18.0,python-3.12,python-3.11,php-8.3,ruby-3.3,static-1"
-      OPR_EXECUTOR_SECRET: "appwrite-executor-secret-Q9v6Lm3Rx8Nc2Zd5Wp7Ts4Hy"
-      OPR_EXECUTOR_RUNTIME_VERSIONS: "v5"
-      OPEN_RUNTIMES_NFT: "false"
-      OPR_EXECUTOR_LOGGING_CONFIG: ""
+      OPR_EXECUTOR_SECRET: "${APP_APPWRITE_EXECUTOR_SECRET}"
+      OPR_EXECUTOR_NETWORK: "appwrite-runtimes"
+      OPR_EXECUTOR_INACTIVE_THRESHOLD: "60"
+      OPR_EXECUTOR_MAINTENANCE_INTERVAL: "3600"
       OPR_EXECUTOR_STORAGE_DEVICE: "local"
+    entrypoint: ["/bin/sh", "-ec"]
+    command:
+      - |
+        docker image inspect "$$EXECUTOR_IMAGE" >/dev/null 2>&1 || docker pull "$$EXECUTOR_IMAGE"
+        if docker container inspect appwrite-executor >/dev/null 2>&1; then
+          docker stop --time 30 appwrite-executor
+          docker rm -f appwrite-executor >/dev/null 2>&1 || true
+        fi
+        exec docker run --rm --pull=never \
+          --name appwrite-executor --hostname appwrite-executor \
+          --stop-signal SIGINT \
+          --log-driver json-file --log-opt max-file=5 --log-opt max-size=10m \
+          --publish 3000:80 \
+          --volume /data/run/docker.sock:/var/run/docker.sock \
+          --volume /storage/builds:/storage/builds \
+          --volume /storage/functions:/storage/functions \
+          --volume /storage/sites:/storage/sites \
+          --volume /tmp:/tmp \
+          --env OPR_EXECUTOR_ENV --env OPR_EXECUTOR_SECRET \
+          --env OPR_EXECUTOR_NETWORK --env OPR_EXECUTOR_INACTIVE_THRESHOLD \
+          --env OPR_EXECUTOR_MAINTENANCE_INTERVAL --env OPR_EXECUTOR_STORAGE_DEVICE \
+          --health-cmd='curl -fsS -H "Authorization: Bearer $$OPR_EXECUTOR_SECRET" http://127.0.0.1/v1/health >/dev/null' \
+          --health-interval=10s --health-timeout=5s --health-retries=12 \
+          --health-start-period=30s \
+          "$$EXECUTOR_IMAGE"
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - 'test "$$(docker inspect --format "{{.State.Running}} {{.State.Health.Status}}" appwrite-executor 2>/dev/null)" = "true healthy"'
+      interval: 10s
+      timeout: 10s
+      retries: 60
+      start_period: 30s
 
   mongodb:
     image: mongo:8.2.5@sha256:60aa240412f473f672ec8b282fd5651aa156dcc7a220f81f5381ce768ccc3167
@@ -579,62 +661,92 @@ services:
       - ${APP_DATA_DIR}/data/mongodb-keyfile:/data/keyfile
     environment:
       MONGO_INITDB_ROOT_USERNAME: "root"
-      MONGO_INITDB_ROOT_PASSWORD: "appwrite-root-MongoDB-7b9dJp4Qw2Ns"
+      MONGO_INITDB_ROOT_PASSWORD: "${APP_APPWRITE_MONGODB_ROOT_PASSWORD}"
       MONGO_INITDB_DATABASE: "appwrite"
       MONGO_INITDB_USERNAME: "appwrite"
-      MONGO_INITDB_PASSWORD: "appwrite-user-MongoDB-F4h8Mq2Xt9La"
+      MONGO_INITDB_PASSWORD: "${APP_APPWRITE_MONGODB_PASSWORD}"
     entrypoint:
       - /bin/bash
-      - -c
+      - -ec
       - |
-        set -e
         KEYFILE_PATH="/data/keyfile/mongo-keyfile"
-        INIT_FLAG="/data/db/.mongodb_initialized"
-
-        if [ ! -f "$$KEYFILE_PATH" ]; then
-          mkdir -p /data/keyfile
+        if [ ! -s "$$KEYFILE_PATH" ]; then
+          umask 077
           openssl rand -base64 756 > "$$KEYFILE_PATH"
         fi
-
         chmod 400 "$$KEYFILE_PATH"
-        chown mongodb:mongodb "$$KEYFILE_PATH" 2>/dev/null || chown 999:999 "$$KEYFILE_PATH"
-
-        if [ ! -f "$$INIT_FLAG" ]; then
-          mongod --replSet rs0 --bind_ip_all --fork --logpath /var/log/mongodb/mongod.log --dbpath /data/db
-          sleep 5
-          mongosh --eval "rs.initiate({_id: 'rs0', members: [{_id: 0, host: 'mongodb:27017'}]})"
-          sleep 5
-          mongosh admin --eval "db.createUser({user: '$$MONGO_INITDB_ROOT_USERNAME', pwd: '$$MONGO_INITDB_ROOT_PASSWORD', roles: ['root']})"
-          mongosh admin --eval "db.createUser({user: '$$MONGO_INITDB_USERNAME', pwd: '$$MONGO_INITDB_PASSWORD', roles: [{role: 'readWrite', db: '$$MONGO_INITDB_DATABASE'}]})"
-          mongod --dbpath /data/db --shutdown
-          touch "$$INIT_FLAG"
-        fi
-
-        exec mongod --replSet rs0 --bind_ip_all --auth --keyFile "$$KEYFILE_PATH"
+        chown mongodb:mongodb "$$KEYFILE_PATH"
+        cat > /docker-entrypoint-initdb.d/10-appwrite.js <<'JS'
+        db.getSiblingDB('admin').createUser({
+          user: process.env.MONGO_INITDB_USERNAME,
+          pwd: process.env.MONGO_INITDB_PASSWORD,
+          roles: [{role: 'readWrite', db: process.env.MONGO_INITDB_DATABASE}]
+        });
+        JS
+        # The official entrypoint creates users on a loopback-only temporary
+        # server, fixes data ownership and drops privileges before serving.
+        exec docker-entrypoint.sh mongod --replSet rs0 --bind_ip_all \
+          --auth --keyFile "$$KEYFILE_PATH"
     healthcheck:
       test:
-        [
-          "CMD-SHELL",
-          "mongosh -u root -p \"$${MONGO_INITDB_ROOT_PASSWORD}\" --authenticationDatabase admin --quiet --eval \"rs.status().ok\" | grep -q 1"
-        ]
+        - CMD-SHELL
+        - >-
+          mongosh --quiet -u "$${MONGO_INITDB_ROOT_USERNAME}"
+          -p "$${MONGO_INITDB_ROOT_PASSWORD}" --authenticationDatabase admin
+          --eval 'try { const hello = db.hello();
+          if (hello.setName === "rs0" && hello.isWritablePrimary) quit(0);
+          rs.status(); } catch (e) { if (e.code === 94)
+          rs.initiate({_id: "rs0", members: [{_id: 0, host: "appwrite_mongodb_1:27017"}]}); }
+          quit(1);'
       interval: 10s
       timeout: 10s
-      retries: 10
+      retries: 12
       start_period: 60s
+
+  postgresql:
+    image: appwrite/postgres:0.1.0@sha256:77156232a16d80f5830d914edb44f52a0853058939f2365cc3301d08db9d05e9
+    <<: *logging
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data/postgresql:/var/lib/postgresql
+    environment:
+      POSTGRES_DB: "appwrite"
+      POSTGRES_USER: "appwrite"
+      POSTGRES_PASSWORD: "${APP_APPWRITE_POSTGRES_PASSWORD}"
+    healthcheck:
+      test: ["CMD-SHELL", 'pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+  appwrite-embedding:
+    image: appwrite/embedding:0.1.0@sha256:0ba6942b5a7d560523ae1ef8673e41da47468fa85f5d3992badaa5abe9714b54
+    <<: *logging
+    restart: on-failure
+    user: "1000:1000"
+    environment:
+      EMBEDDING_MODELS: "nomic-embed-text"
+      EMBEDDING_CACHE_DIR: "/home/embedder/models"
+    volumes:
+      - ${APP_DATA_DIR}/data/models:/home/embedder/models
 
   redis:
     image: redis:7.4.7-alpine@sha256:02f2cc4882f8bf87c79a220ac958f58c700bdec0dfb9b9ea61b62fb0e8f1bfcf
     <<: *logging
     restart: on-failure
+    environment:
+      REDISCLI_AUTH: "${APP_APPWRITE_REDIS_PASSWORD}"
     command: >
       redis-server
+      --requirepass ${APP_APPWRITE_REDIS_PASSWORD}
       --maxmemory 512mb
       --maxmemory-policy allkeys-lru
       --maxmemory-samples 5
     volumes:
       - ${APP_DATA_DIR}/data/redis:/data:rw
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD-SHELL", 'test "$$(redis-cli ping)" = PONG']
       interval: 10s
       timeout: 5s
       retries: 5

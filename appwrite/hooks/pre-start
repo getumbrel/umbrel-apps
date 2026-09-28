@@ -1,16 +1,10 @@
 #!/usr/bin/env bash
-
 set -euo pipefail
 
-APP_DATA_DIR="$(readlink -f $(dirname "${BASH_SOURCE[0]}")/..)/data"
-DOCKER_DIR="${APP_DATA_DIR}/docker"
+APP_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")"
+DOCKER_DIR="${APP_DIR}/data/docker"
 
-# Remove stale Docker-in-Docker runtime state that can survive power loss,
-# crashes, restarts, or updates and prevent the nested Docker daemon from
-# starting.
-#
-# Keep ${DOCKER_DIR}/data intact. It is the nested Docker graph root and may
-# contain downloaded runtime images, containers, volumes, and build caches.
-rm -f "${DOCKER_DIR}/docker.pid"
-rm -f "${DOCKER_DIR}/docker.sock"
+# Only disposable nested-daemon state is removed. Keep images, runtime
+# containers, build caches and all Appwrite user data intact.
+rm -f "${DOCKER_DIR}/docker.pid" "${DOCKER_DIR}/docker.sock" "${DOCKER_DIR}/run/docker.sock"
 rm -rf "${DOCKER_DIR}/exec"
