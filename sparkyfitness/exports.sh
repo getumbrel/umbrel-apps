@@ -20,3 +20,18 @@ export APP_SPARKYFITNESS_API_ENCRYPTION_KEY="$(derive_entropy "${app_entropy_ide
 # Better Auth session/2FA secret. The server base64-decodes this value; a
 # 64-character hex string is valid base64 and decodes to 48 bytes.
 export APP_SPARKYFITNESS_BETTER_AUTH_SECRET="$(derive_entropy "${app_entropy_identifier}-better-auth-secret")"
+
+# APP_HIDDEN_SERVICE is never actually empty: umbrelOS fills it with a
+# placeholder such as "not-enabled.onion" or "notyetset.onion" before a real
+# hidden service exists. A Compose ${VAR:+...} guard can only test "set and
+# non-empty", so it can't tell a placeholder from a real address and would
+# trust http://not-enabled.onion on every install. Only bash can make that
+# comparison, hence computing it here rather than inline in docker-compose.yml.
+case "${APP_HIDDEN_SERVICE:-}" in
+  ''|not-enabled.onion|notyetset.onion)
+    export APP_SPARKYFITNESS_TOR_ORIGIN=""
+    ;;
+  *)
+    export APP_SPARKYFITNESS_TOR_ORIGIN=",http://${APP_HIDDEN_SERVICE}"
+    ;;
+esac
