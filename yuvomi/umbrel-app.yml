@@ -4,7 +4,7 @@ storage:
   dataRoot: data
 category: files
 name: Yuvomi
-version: "2.67.0"
+version: "2.71.0"
 tagline: Self-hosted family planner — calendar, tasks, shopping, meals & budget
 description: >-
   Yuvomi is a self-hosted, privacy-focused family planner that bundles everything
@@ -53,39 +53,36 @@ description: >-
   Open Yuvomi from your Umbrel dashboard and create the first account — that
   account becomes the family admin and can invite the rest of the household.
 releaseNotes: >-
-  This release adds a new optional module and a good deal of work on Health.
-  Waste collection keeps track of your household's pickup days: define your
-  waste types and their weekly or monthly rhythm, or subscribe to your
-  municipality's calendar file and let it refresh itself. It stays off until you
-  turn it on in Settings, and from there it can also appear on the dashboard and
-  in the calendar.
+  This update adds Brazilian Portuguese and fixes several things people ran into
+  after 2.70.0.
 
 
-  In Health, the cycle tab has grown into a full tracker, with flow strength
-  shown on the calendar, feelings, more fertility signals, and a daily bubble
-  that answers what today means for you. Some of what you note there stays yours
-  alone, even on days the rest is shared with the family. Next to it, a fasting
-  journal records your timers and the fasts you have already finished.
+  Brazilian Portuguese is now its own language in the app, next to the existing
+  Portuguese. A browser set to Brazilian Portuguese picks it on its own.
 
 
-  One change is worth knowing before you update: housekeeping staff and
-  shared-expense guests no longer turn up in the lists where you pick a person,
-  such as assignees or reminder recipients. Anything already assigned to them
-  stays as it is.
+  Changing a recurring budget payment for all future months no longer rewrites
+  its first booking, which could lie years back and move old amounts to another
+  account. Members who may edit the meal plan can now edit and delete recipes
+  that someone else added; before, saving failed with "Not authorized", even for
+  an admin.
 
 
-  The rest is everyday polish. Form fields, set-aside cards and checked-off
-  shopping items are easier to read in both light and dark themes, a shopping
-  list can be duplicated and follows what the rest of the household does while
-  it is open, and the Schedule module had a full pass for clarity.
+  When the weather service cannot be reached, the weather tile now stays on the
+  overview and says the weather is currently unavailable, instead of
+  disappearing without a trace. In the app added to an iPhone home screen, the
+  dark strip below the tab bar is gone. Switches that are off are easier to see,
+  and in Arabic and Persian "on" sits on the left.
 
 
-  This release applies database migrations. They run by themselves the first
-  time the new version starts, and on a large household that can take a moment.
+  The update runs one database migration on first start. It gives every
+  recurring budget payment a definition of its own, without changing any
+  existing entry. No action is needed; as always, a backup before updating is a
+  good idea.
 
 
   Full release notes are available at
-  https://github.com/ulsklyc/yuvomi/releases/tag/v2.67.0
+  https://github.com/ulsklyc/yuvomi/releases/tag/v2.71.0
 backupIgnore:
   - data/app/yuvomi.db.plaintext-backup*
   - data/backups/*.db
