@@ -1,0 +1,149 @@
+version: "3.8"
+
+services:
+  db:
+    image: postgres:14-alpine@sha256:4073599c1d9ba7fa7d6cbe9dd7ac42790e7658e80966ee38e9f3cde139e51e03
+    restart: on-failure
+    shm_size: 256mb
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+    environment:
+      POSTGRES_HOST_AUTH_METHOD: trust
+    volumes:
+      - ${APP_DATA_DIR}/data/postgres:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine@sha256:b1addbe72465a718643cff9e60a58e6df1841e29d6d7d60c9a85d8d72f08d1a7
+    restart: on-failure
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+    volumes:
+      - ${APP_DATA_DIR}/data/redis:/data
+
+  web:
+    image: ghcr.io/mastodon/mastodon:v4.6.3
+    restart: on-failure
+    command: >
+      bash -c "bundle exec rails db:prepare &&
+               bundle exec rails mastodon:webpush:generate_vapid_key &&
+               bundle exec puma -C config/puma.rb"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ${APP_DATA_DIR}/data/system:/mastodon/public/system
+    environment:
+      LOCAL_DOMAIN: ${DEVICE_DOMAIN_NAME}:${APP_PROXY_PORT}
+      WEB_DOMAIN:
+      REDIS_HOST: mastodon_redis_1
+      REDIS_PORT: 6379
+      DB_HOST: mastodon_db_1
+      DB_USER: mastodon
+      DB_NAME: mastodon_production
+      DB_PASS: ""
+      DB_PORT: 5432
+      ES_ENABLED: "false"
+      SECRET_KEY_BASE: ${APP_MASTODON_SECRET_KEY_BASE}
+      OTP_SECRET: ${APP_MASTODON_OTP_SECRET}
+      VAPID_PRIVATE_KEY: ${APP_MASTODON_VAPID_PRIVATE_KEY}
+      VAPID_PUBLIC_KEY: ${APP_MASTODON_VAPID_PUBLIC_KEY}
+      ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY: ${APP_MASTODON_ENCRYPTION_PRIMARY_KEY}
+      ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY: ${APP_MASTODON_ENCRYPTION_DETERMINISTIC_KEY}
+      ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT: ${APP_MASTODON_ENCRYPTION_DERIVATION_SALT}
+      SMTP_SERVER: ""
+      SMTP_PORT: 587
+      SMTP_LOGIN: ""
+      SMTP_PASSWORD: ""
+      SMTP_FROM_ADDRESS: notifications@${DEVICE_DOMAIN_NAME}
+      IP_RETENTION_PERIOD: 31556952
+      SESSION_RETENTION_PERIOD: 31556952
+      RAILS_ENV: production
+      RAILS_SERVE_STATIC_FILES: "true"
+      RAILS_LOG_TO_STDOUT: "true"
+      PORT: 3000
+      NODE_ENV: production
+      PAPERCLIP_ROOT_PATH: /mastodon/public/system
+      PAPERCLIP_ROOT_URL: /system
+      STREAMING_API_BASE_URL: ws://${DEVICE_DOMAIN_NAME}:${APP_PROXY_PORT}
+
+  streaming:
+    image: ghcr.io/mastodon/mastodon-streaming:v4.6.3
+    restart: on-failure
+    command: node ./streaming/index.js
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      web:
+        condition: service_started
+    environment:
+      LOCAL_DOMAIN: ${DEVICE_DOMAIN_NAME}:${APP_PROXY_PORT}
+      REDIS_HOST: mastodon_redis_1
+      REDIS_PORT: 6379
+      DB_HOST: mastodon_db_1
+      DB_USER: mastodon
+      DB_NAME: mastodon_production
+      DB_PASS: ""
+      DB_PORT: 5432
+      ES_ENABLED: "false"
+      SECRET_KEY_BASE: ${APP_MASTODON_SECRET_KEY_BASE}
+      OTP_SECRET: ${APP_MASTODON_OTP_SECRET}
+      STREAMING_API_BASE_URL: ws://${DEVICE_DOMAIN_NAME}:${APP_PROXY_PORT}
+      RAILS_ENV: production
+      NODE_ENV: production
+      PORT: 4000
+
+  sidekiq:
+    image: ghcr.io/mastodon/mastodon:v4.6.3
+    restart: on-failure
+    command: >
+      bash -c "until bundle exec rails db:exists; do sleep 5; done;
+               bundle exec sidekiq"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ${APP_DATA_DIR}/data/system:/mastodon/public/system
+    environment:
+      LOCAL_DOMAIN: ${DEVICE_DOMAIN_NAME}:${APP_PROXY_PORT}
+      REDIS_HOST: mastodon_redis_1
+      REDIS_PORT: 6379
+      DB_HOST: mastodon_db_1
+      DB_USER: mastodon
+      DB_NAME: mastodon_production
+      DB_PASS: ""
+      DB_PORT: 5432
+      ES_ENABLED: "false"
+      SECRET_KEY_BASE: ${APP_MASTODON_SECRET_KEY_BASE}
+      OTP_SECRET: ${APP_MASTODON_OTP_SECRET}
+      VAPID_PRIVATE_KEY: ${APP_MASTODON_VAPID_PRIVATE_KEY}
+      VAPID_PUBLIC_KEY: ${APP_MASTODON_VAPID_PUBLIC_KEY}
+      ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY: ${APP_MASTODON_ENCRYPTION_PRIMARY_KEY}
+      ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY: ${APP_MASTODON_ENCRYPTION_DETERMINISTIC_KEY}
+      ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT: ${APP_MASTODON_ENCRYPTION_DERIVATION_SALT}
+      SMTP_SERVER: ""
+      SMTP_PORT: 587
+      SMTP_LOGIN: ""
+      SMTP_PASSWORD: ""
+      SMTP_FROM_ADDRESS: notifications@${DEVICE_DOMAIN_NAME}
+      IP_RETENTION_PERIOD: 31556952
+      SESSION_RETENTION_PERIOD: 31556952
+      RAILS_ENV: production
+      RAILS_LOG_TO_STDOUT: "true"
+      NODE_ENV: production
+      PAPERCLIP_ROOT_PATH: /mastodon/public/system
+      PAPERCLIP_ROOT_URL: /system
+
+  app_proxy:
+    image: ghcr.io/getumbrel/umbrel-app-proxy:latest
+    restart: on-failure
+    environment:
+      APP_HOST: mastodon_web_1
+      APP_PORT: 3000
+      PROXY_AUTH_ADD: "true"
+      PROXY_AUTH_WHITELIST: "/api/*,/api/v1/*,/api/v2/*,/well-known/*,/nodeinfo,/manifest.json,/system/*,/emoji/*,/packs/*"
