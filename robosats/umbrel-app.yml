@@ -1,4 +1,4 @@
-manifestVersion: 1
+manifestVersion: 2
 id: robosats
 category: bitcoin
 name: RoboSats
@@ -34,38 +34,39 @@ description: >-
   You can join other cool Robots and get community support at https://t.me/robosats telegram group.
   
 releaseNotes: >-
+  ⚠️ Back up your robot tokens before updating. Open RoboSats and click the download button beside “Robot Garage”. Repeat this in each browser or device where you have saved robots, and keep the downloaded file private.
+
+
+  This update requires umbrelOS 2.0 or later and opens RoboSats over HTTPS.
+
+
+  If you previously used RoboSats over HTTP, your saved robots will not appear automatically at the HTTPS address. Open RoboSats over HTTPS and use Recovery to restore each robot with its saved token. The garage download contains a list of these tokens.
+
+
   After updating, hard-refresh RoboSats once (Ctrl/Cmd + Shift + R) to load the new client.
 
-  TL;DR
-  Security hardening across the full stack, live coordinator ranking by DevFund donations, federation consensus mechanism, image upload in encrypted chat, 3 new payment methods, and new coordinators (Eleuteria, Freeport, Ammanaya).
 
-  For Users
+  Highlights:
 
-    - New coordinators joined the federation: Eleuteria, Freeport, Ammanaya — FreedomSats removed
-    - Image uploads in encrypted chat — Users can now upload E2E encrypted images in the order chat via Blossom. Only available on coordinators that opt in.
-    - Federation consensus mechanism
-    - Live coordinator ranking — coordinators are now sorted by their actual real-time DevFund donation value (devfund% × fee rate), falling back to the static federation.json value when unreachable
+  - Added encrypted image uploads in chat on coordinators that support them.
 
-  New payment methods
+  - Added federation consensus and live coordinator ranking by DevFund donations.
 
-    - eBay Gift Card
-    - MobilePay
-    - PYUSD
+  - Added Eleuteria, Freeport, and Ammanaya coordinators; removed FreedomSats.
 
-  Bugs
+  - Added eBay Gift Card, MobilePay, and PYUSD payment methods.
 
-    - Fixed PGP armor blank line being stripped when escaping robot key headers, which broke PGP verification
-    - Fixed null premium default blocking order creation in the maker form
-    - Fixed sensitive data exposure on password-protected orders — location and description are now redacted from non-participants; password-protected orders are also excluded from the public order book
-    - Fixed Server-Side Request Forgery vector in the Android WebView interface
-    - Fixed Redis 8.x channel layer timeout causing WebSocket disconnections
+  - Fixed PGP verification, order creation with a blank premium, and sensitive information appearing on password-protected orders.
 
+
+  Full release notes are available at https://github.com/RoboSats/robosats/releases/tag/v0.8.7-alpha
 developer: RoboSats
 website: https://learn.robosats.org
 dependencies: []
 repo: https://github.com/RoboSats/robosats
 support: https://t.me/robosats
 port: 12596
+requiresHttps: true
 gallery:
   - 1.jpg
   - 2.jpg
