@@ -5,7 +5,7 @@ storage:
 name: OpenReader
 tagline: A document reader with Text-to-Speech capabilities
 category: ai
-version: "5.0.0"
+version: "5.1.0"
 port: 3391
 description: >-
   OpenReader WebUI is a web-based document reader that integrates text-to-speech (TTS) functionality, allowing users to listen to text from various document formats, including PDF and EPUB. Designed to enhance accessibility and improve the reading experience, it features synchronized text highlighting, ensuring that the currently read portion of the document is visually emphasized as the speech engine narrates the content. This makes it particularly useful for individuals with visual impairments, reading difficulties, or those who simply prefer an auditory learning style.
@@ -33,19 +33,22 @@ gallery:
   - 3.jpg
   - 4.jpg
 releaseNotes: >-
-  ⚠️ Before updating, download any generated audio or audiobooks you want to keep and make a complete backup of your OpenReader app data. Version 5 permanently removes old generated audio and audiobooks. They can be generated again, but changing back to the previous app version will not restore deleted data.
+  ⚠️ Before updating from a version before 5.0.0, download any generated audio or audiobooks you want to keep and make a complete backup of your OpenReader app data. Version 5 permanently removes old generated audio and audiobooks. They can be generated again, but changing back to a pre-5.0.0 app version will not restore deleted data.
 
 
-  When updating from 4.4.0, server-stored documents, folders, accounts, settings, and reading progress are retained. If you are updating from an older version, first download your original documents from the existing app in the browser you used to upload them. Older browser-only data and legacy document storage are not automatically migrated by v5; you may need to upload your documents again, and browser-only folders, preferences, and reading progress may reset. A server backup does not include browser-only data.
+  When updating from 4.4.0 or older, server-stored documents, folders, accounts, settings, and reading progress are retained. If you are updating from an older version, first download your original documents from the existing app in the browser you used to upload them. Older browser-only data and legacy document storage are not automatically migrated by v5; you may need to upload your documents again, and browser-only folders, preferences, and reading progress may reset. A server backup does not include browser-only data.
 
 
-  This release adds progressive background playback with a new seekable player, worker-backed audiobook/account exports, unified compute rate limiting, user administration, account self-service, email/password recovery support, and improved upload/storage handling.
+  This release adds optional OIDC single sign-on support, resumable audiobook exports with per-chapter downloads, an admin system check for deployment issues, clearer startup configuration checks, library multi-select controls, and improved export/playback recovery after worker restarts, background tabs, or network drops.
+
+
+  It also fixes document operations getting stuck on "Opening document", chapter download and request handling issues, and Docker playback problems caused by the embedded worker binding to loopback.
 
 
   User-supplied TTS provider API keys remain unsupported on Umbrel. OpenReader continues to use the shared Kokoro provider configured by the Umbrel package.
 
 
-  Full release notes can be found at https://github.com/richardr1126/openreader/releases/tag/v5.0.0
+  Full release notes can be found at https://github.com/richardr1126/openreader/releases/tag/v5.1.0
 dependencies:
   - kokoro
 path: ""
