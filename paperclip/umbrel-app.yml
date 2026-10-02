@@ -5,7 +5,7 @@ storage:
 name: Paperclip
 tagline: A team of AI agents for every person
 category: ai
-version: "2026.916.1"
+version: "2026.1001.0"
 port: 8860
 description: >-
   Paperclip is a self-hosted control center for running AI agents like a team.
@@ -40,9 +40,13 @@ gallery:
   - 4.webp
   - 5.webp
 releaseNotes: |-
-  - Fixes the task conversation composer so desktop users can send messages while the pause-status check is still loading.
-  - Restores retryable conflict handling for duplicate document inserts wrapped by the ORM.
-  - No migrations, configuration changes, or API changes are required.
+  - Adds agent personas across the app, a refreshed onboarding character, GitHub review-bot setup, Railway connector support, routine webhooks, and a rebuilt Slack setup flow.
+  - Improves native runner and chat reliability, including approval/Stop races, session continuity, sandbox reconnection and cleanup, question/approval continuations, and connection recovery.
+  - Adds governed skills-from-work support, plugin image catalogs, Actions tools for GitHub MCP connections, and experimental MCP aggregator connectors.
+  - Legacy Composio broker integrations stop working, with no automatic migration. Enable Settings > Experimental > MCP aggregators, create and authorize a new Composio Connect MCP connection, reselect its access rules, and remove retired connection records.
+  - Execution defaults now use full auto, including existing agents without explicit settings. Codex may bypass provider approvals and sandboxing; OpenCode may override underlying tool permission rules. Configure explicit restrictive modes in Paperclip before updating if you rely on these protections.
+  - Fixes local agents being unable to reach Paperclip's API when the Umbrel hostname is not resolvable inside the app.
+  - Runs database migrations 0280-0283; no other configuration or API changes require action.
 dependencies: []
 path: ""
 defaultUsername: ""
