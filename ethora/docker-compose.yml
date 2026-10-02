@@ -9,6 +9,7 @@ services:
       APP_PORT: 80
       PROXY_AUTH_WHITELIST: /v1,/v1/*,/v2,/v2/*,/api-docs,/api-docs/*,/ws,/ws/*,/bosh,/bosh/*,/connection/*,/files/*
   config:
+    restart: on-failure
     image: docker.io/dappros/ethora-compose-init:2610.10@sha256:a9400ac6cd14779c0f90977cb57ddb98ac2babcafdb7c7ed126ffe490a6c993d
     user: "0:0"
     entrypoint: ["/bin/sh", "/ethora/scripts/render-config.sh"]
@@ -58,6 +59,7 @@ services:
         max-size: "20m"
         max-file: "5"
   mongo-init:
+    restart: on-failure
     image: docker.io/library/mongo:6.0.8@sha256:7769474cddc634e5a90b078f437dabc8816b8a3900cb1710219d1179b805bb8e
     entrypoint: ["bash", "/ethora/config/scripts/mongo-init.sh"]
     volumes:
@@ -228,6 +230,7 @@ services:
     healthcheck:
       disable: true
   init:
+    restart: on-failure
     image: docker.io/dappros/ethora-api:2610.10@sha256:16d056daac2e8f3959eeecb0342a67e944838e4878f34b2ca6dfaa1c1a015679
     entrypoint: ["tini", "--", "bash", "/ethora/config/scripts/api-entrypoint.sh"]
     volumes:
