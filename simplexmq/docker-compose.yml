@@ -1,0 +1,33 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: simplexmq_smp-server_1
+      APP_PORT: 8000
+      PROXY_AUTH_ADD: "false"
+
+  smp-server:
+    image: escaping/smp-server:v6.2.0@sha256:9e47e381e75fa84a45aa2a0ccf37ceb00f5dc0d06ff2acb438b4d74fb0a780be
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      ADDR: ${DEVICE_HOSTNAME}
+      PASS: ${APP_PASSWORD}
+    volumes:
+      - ${APP_DATA_DIR}/data/smp/config:/etc/opt/simplex:z
+      - ${APP_DATA_DIR}/data/smp/logs:/var/opt/simplex:z
+      
+  xftp-server:
+    image: escaping/xftp-server:v6.2.0@sha256:00cfb9b40a85d95754ee097665c8dca57ac90a33a1debcafcc747a913e476092
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      ADDR: ${DEVICE_HOSTNAME}
+      QUOTA: "2GB"
+    volumes:
+      - ${APP_DATA_DIR}/data/xftp/config:/etc/opt/simplex-xftp:z
+      - ${APP_DATA_DIR}/data/xftp/logs:/var/opt/simplex-xftp:z
+      - ${APP_DATA_DIR}/data/xftp/files:/srv/xftp:z

@@ -1,0 +1,89 @@
+#!/bin/bash
+
+APP_DATA_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")/data"
+SMP_CONFIG_DIR="${APP_DATA_DIR}/smp/config"
+XFTP_CONFIG_DIR="${APP_DATA_DIR}/xftp/config"
+
+# File from which to read a value (example)
+SMP_FINGERPRINT_FILE="${SMP_CONFIG_DIR}/fingerprint"
+XFTP_FINGERPRINT_FILE="${XFTP_CONFIG_DIR}/fingerprint"
+
+# Maximum number of checks before giving up
+MAX_CHECKS=10
+
+# Time to wait between checks (in seconds)
+WAIT_TIME=5
+
+# Counter for checks
+CHECK_COUNT=0
+
+while [ ! -f "$SMP_FINGERPRINT_FILE" ] && [ $CHECK_COUNT -lt $MAX_CHECKS ]; do
+    echo "File $SMP_FINGERPRINT_FILE does not exist. Waiting $WAIT_TIME seconds..."
+    sleep $WAIT_TIME
+    ((CHECK_COUNT++))
+done
+
+# Maximum number of checks before giving up
+MAX_CHECKS=10
+
+# Time to wait between checks (in seconds)
+WAIT_TIME=5
+
+# Counter for checks
+CHECK_COUNT=0
+
+while [ ! -f "$XFTP_FINGERPRINT_FILE" ] && [ $CHECK_COUNT -lt $MAX_CHECKS ]; do
+    echo "File $XFTP_FINGERPRINT_FILE does not exist. Waiting $WAIT_TIME seconds..."
+    sleep $WAIT_TIME
+    ((CHECK_COUNT++))
+done
+
+# Read the value from VALUE_FILE into a variable
+SMP_FINGERPRINT=$(cat "$SMP_FINGERPRINT_FILE")
+XFTP_FINGERPRINT=$(cat "$XFTP_FINGERPRINT_FILE")
+
+SMP_ADDR="smp://${SMP_FINGERPRINT}:${APP_PASSWORD}@${DEVICE_HOSTNAME}:${APP_SIMPLEX_SERVER_SMP_PORT}"
+XFTP_ADDR="xftp://${XFTP_FINGERPRINT}@${DEVICE_HOSTNAME}:${APP_SIMPLEX_SERVER_XFTP_PORT}"
+
+# Path to your ini file
+INI_FILE="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")/smp-server.ini"
+
+# Check if the INI file exists
+if [ ! -f "$INI_FILE" ]; then
+    echo "Error: $INI_FILE does not exist."
+    exit 1
+fi
+
+# Temporary file to write changes
+TEMP_FILE=$(mktemp)
+
+# Read each line of the INI file
+while IFS= read -r line
+do
+    # Replace placeholders with their environment variables if they exist
+    if [[ $line =~ \$\{([A-Za-z0-9_]+)\} ]]; then
+        var_name="${BASH_REMATCH[1]}"
+        if [[ -v "$var_name" ]]; then
+            new_value="${!var_name}"
+            echo "${line/\$\{${var_name}\}/$new_value}" >> "$TEMP_FILE"
+        else
+            echo "Warning: Environment variable $var_name not set. Line unchanged." >&2
+            echo "$line" >> "$TEMP_FILE"
+        fi
+    else
+        echo "$line" >> "$TEMP_FILE"
+    fi
+done < "$INI_FILE"
+
+# Replace the original file with the modified one
+mv "$TEMP_FILE" "$INI_FILE"
+
+# Change ownership of the INI file to user ID 1000 and group ID 1000
+chown 1000:1000 "$INI_FILE"
+
+# Move the modified INI file to CONFIG_DIR
+mv "$INI_FILE" "$SMP_CONFIG_DIR/"
+
+"${UMBREL_ROOT}/scripts/app" restart "${APP_ID}" &
+
+echo "Environment variables in $INI_FILE have been replaced."
