@@ -4,7 +4,7 @@ storage:
   dataRoot: data
 category: bitcoin
 name: Lightning Terminal
-version: "0.17.5-alpha"
+version: "0.17.6"
 tagline: The easiest way to manage channel liquidity
 description: >-
   Lightning Terminal is the easiest way to manage inbound and
@@ -60,8 +60,8 @@ deterministicPassword: true
 releaseNotes: >-
   ⚠️ Please update your Lightning Node app to the latest version available in the app store to ensure compatibility with Lightning Terminal.
 
-  This version of Lightning Terminal (LiT) ships lnd v0.21.3-beta, loop v0.35.0-beta, faraday v0.2.19-alpha,
-  pool v0.7.1-beta and tapd v0.8.4.
+  This version of Lightning Terminal (LiT) ships LND v0.21.4-beta, Taproot Assets Daemon v0.8.5,
+  Loop v0.35.0-beta, Pool v0.7.1-beta, and Faraday v0.2.19-alpha.
 
 
   IMPORTANT NOTE: To avoid loss of funds, it's imperative that you read the
@@ -85,21 +85,16 @@ releaseNotes: >-
   breaking changes in the future and that assets minted with v0.3.0 will be
   compatible with later versions.
 
-  ## Breaking changes
-  
-  The configuration value (taproot-assets.universe.public-access) and command line 
-  flag (--taproot-assets.universe.public-access) now needs a value and is no longer a boolean. The value now controls 
-  whether the node's universe database can be accessed over RPC and either read (value r) or written to (value w) or 
-  both (value rw). So existing nodes with the configuration file value taproot-assets.universe.public-access=true need 
-  to change the value to taproot-assets.universe.public-access=rw. Users specifying the command line flag 
-  --taproot-assets.universe.public-access just need to append a value, for example 
-  --taproot-assets.universe.public-access=rw.
+  ## Database migration reminder
+
+  Lightning Terminal 0.17.x includes the bbolt-to-SQL database migration introduced in v0.17.0-alpha.
+  Umbrel automatically approves this migration for non-interactive app updates. After the migration succeeds,
+  downgrading Lightning Terminal to a version before v0.17.0-alpha is not supported.
 
   We'll be continuously working to improve the user experience based on
   feedback from the community.
 
 
-  This release packages LND v0.21.3-beta, Taproot Assets Daemon v0.8.4,
-  Loop v0.35.0-beta, Pool v0.7.1-beta and Faraday v0.2.19-alpha.
+  Full release notes can be found at https://github.com/lightninglabs/lightning-terminal/releases/tag/v0.17.6
 submitter: Umbrel
 submission: https://github.com/getumbrel/umbrel/pull/348
