@@ -1,0 +1,19 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: lively_web_1
+      APP_PORT: 8080
+      # v1.1 (external WS clients): PROXY_AUTH_WHITELIST: "/rooms/*"
+
+  web:
+    image: ghcr.io/ryanwaits/lively:0.2.0@sha256:bbd7a5f3c664c7507ac794f1a4f2fdd5b739775ed81982a3abd8d4f3196c487b
+    restart: on-failure
+    stop_grace_period: 30s
+    user: "1000:1000"
+    environment:
+      PORT: 8080
+      DATA_DIR: /data
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
