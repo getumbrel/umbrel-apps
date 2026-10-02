@@ -1,0 +1,29 @@
+version: '3.7'
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: windows_web_1
+      APP_PORT: 8006
+
+  web:
+    image: dockurr/windows:6.05@sha256:0cff9eb0e7aee9953e55bc682852ca4fdca233145a58ae1ec94f0b0c01a2ed30
+    environment:
+      VERSION: "11"
+      USERNAME: "Docker"
+      PASSWORD: $APP_PASSWORD
+      CPU_CORES: "2"
+      RAM_SIZE: "4G"
+      DISK_SIZE: "64G"
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/kvm:/dev/kvm
+      - /dev/net/tun:/dev/net/tun
+    restart: on-failure
+    stop_grace_period: 2m
+    ports:
+      - "3389:3389/tcp"
+      - "3389:3389/udp"
+    volumes:
+      - ${APP_DATA_DIR}/data:/storage
