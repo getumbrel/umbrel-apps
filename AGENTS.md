@@ -1,6 +1,6 @@
 # Umbrel Apps Agent Guide
 
-Use the relevant repo-local skill in `.claude/skills/`.
+Use the relevant repo-local skill in `.agents/skills/`.
 
 - Package an existing upstream app for the App Store: `umbrel-package-app`
 - Update an existing App Store package: `umbrel-update-app`
