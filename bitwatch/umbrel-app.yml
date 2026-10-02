@@ -4,7 +4,7 @@ storage:
   dataRoot: data
 category: bitcoin
 name: Bitwatch
-version: "1.7.2-patch.1"
+version: "1.8.0"
 tagline: Monitor Bitcoin addresses in real-time
 description: >-
   Monitor Bitcoin addresses in the mempool and on-chain using the mempool.space API and websocket.
@@ -19,8 +19,10 @@ description: >-
     - Double checks data against mempool.space (or locally hosted) API on a configured interval
     - Track both on-chain and mempool activity
     - Configure auto-acceptance or alert mode of changes (chain_in, chain_out, mempool_in, mempool_out)
-      - by default, incoming transactions are auto-accepted, outgoing transactions are alerted
-      - all activity is alerted to a configured telegram connection once (even when auto-accepted)
+      - by default, all activity is alerted (new installs); switch directions to auto-accept as needed
+      - alerted changes are sent to telegram once and wait for acceptance; auto-accepted changes update silently
+    - Route telegram alerts to different chats per collection or address
+    - Manage Bitwatch from telegram with bot commands (status, accept, add address, backup)
     - Option to use your own local node for privacy
 
 
@@ -31,15 +33,14 @@ gallery:
   - 2.jpg
   - 3.jpg
 releaseNotes: >-
-  This update adds support for new storage management and configuration options being introduced with umbrelOS 2.0.
+  Telegram controls, per-recipient alerts, and hardened xpub support:
 
-
-  Previous Bitwatch 1.7.2 release notes:
-
-
-  This release addresses privacy concerns:
-
-    - when a local mempool instance is configured, address links open to that service url
+    - route telegram alerts to different chats per collection, extended key, descriptor, or address
+    - new telegram bot commands from the main chat: /status, /address, /accept, /addaddress, /refresh, /backup
+    - choose where alert address links point (local mempool, public mempool.space, or plain text) and toggle link previews
+    - support account-level xpubs with hardened origin paths (e.g. m/84'/0'/0')
+    - new installs alert on all balance directions by default, so spends reported by Fulcrum-backed mempool instances are not missed
+    - fix collection not auto-expanding when its first address is added
 
 website: https://github.com/zapomatic/bitwatch
 repo: https://github.com/zapomatic/bitwatch
