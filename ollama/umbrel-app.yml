@@ -1,9 +1,11 @@
 manifestVersion: 1
 id: ollama
+storage:
+  dataRoot: data
 name: Ollama
 tagline: Self-host open source AI models like DeepSeek-R1, Llama, and more
 category: ai
-version: "0.7.0"
+version: "0.35.0"
 port: 11434
 description: >-
   Ollama allows you to download and run advanced AI models directly on your own hardware. Self-hosting AI models ensures full control over your data and protects your privacy.
@@ -22,6 +24,8 @@ description: >-
   If you want to connect Ollama to other apps or devices, here's how:
     - Apps running on UmbrelOS: Use ollama_ollama_1 as the host and 11434 as the port when configuring other apps to connect to Ollama. For example, the API Base URL would be: http://ollama_ollama_1:11434.
     - Custom Integrations: Connect Ollama to third-party apps or your own code using your UmbrelOS local domain (e.g., http://umbrel.local:11434) or your device's IP address, which you can find in the UmbrelOS Settings page (e.g., http://192.168.4.74:11434).
+backupIgnore:
+  - data/*
 developer: Ollama
 website: https://ollama.com/
 submitter: al-lac
@@ -35,15 +39,14 @@ gallery:
 defaultUsername: ""
 defaultPassword: ""
 dependencies: []
+permissions:
+  - GPU
 releaseNotes: >-
-  Ollama now supports multimodal models via Ollama's new engine, starting with new vision multimodal models like Meta Llama 4, Google Gemma 3, Qwen 2.5 VL, Mistral Small 3.1, and more.
-
-
   Key highlights in this release:
-    - Added support for WebP images as input to multimodal models
-    - Improved performance of importing safetensors models
-    - Improved API responses for unsupported methods
+    - Adds support for decision models through the new /v1/systemone API.
+    - Settings now opens without waiting for model discovery.
+    - Fixes stalled MLX model downloads hanging indefinitely.
 
 
-  Full release notes are available at https://github.com/ollama/ollama/releases
+  Full release notes are available at https://github.com/ollama/ollama/releases/
 path: ""

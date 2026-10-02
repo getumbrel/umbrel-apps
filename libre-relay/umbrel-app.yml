@@ -2,9 +2,11 @@ manifestVersion: 1.1
 id: libre-relay
 implements:
   - bitcoin
+storage:
+  dataRoot: data
 category: bitcoin
 name: Libre Relay
-version: "28.0"
+version: "30.2-patch.3"
 tagline: Run your personal node powered by Libre Relay
 description: >-
   > "[Bitcoin] takes advantage of the nature of information being easy to spread but hard to stifle." - Satoshi Nakamoto
@@ -33,7 +35,20 @@ gallery:
   - 3.jpg
 path: ""
 defaultPassword: ""
-releaseNotes: ""
+releaseNotes: >-
+  This update adds support for new storage management and configuration options being introduced with umbrelOS 2.0.
+
+
+  Previous Libre Relay 30.2-patch.2 release notes:
+
+
+  This security update upgrades the bundled Tor sidecar to 0.4.9.11, restoring Tor connectivity and including the latest Tor security fixes. The primary app version is unchanged.
+
+
+  Fixes a port conflict that could prevent Libre Relay from running alongside Mattermost.
+
+
+  Libre Relay now uses ports 8452, 8453, and 8454 for RPC, P2P, and Tor. Most users do not need to do anything manually, but restart any apps connected to Libre Relay so they pick up the new settings. If you manually configured clients, firewall rules, or port forwarding with the previous Libre Relay ports, update them to the new ports.
 widgets:
   - id: "stats"
     type: "four-stats"
@@ -70,3 +85,19 @@ widgets:
       progress: 0.83
 submitter: Peter Todd
 submission: https://github.com/getumbrel/umbrel-apps/pull/1815
+backupIgnore:
+  - data/bitcoin/blocks
+  - data/bitcoin/chainstate
+  - data/bitcoin/indexes
+  - data/bitcoin/testnet3/blocks
+  - data/bitcoin/testnet3/chainstate
+  - data/bitcoin/testnet3/indexes
+  - data/bitcoin/testnet4/blocks
+  - data/bitcoin/testnet4/chainstate
+  - data/bitcoin/testnet4/indexes
+  - data/bitcoin/signet/blocks
+  - data/bitcoin/signet/chainstate
+  - data/bitcoin/signet/indexes
+  - data/bitcoin/regtest/blocks
+  - data/bitcoin/regtest/chainstate
+  - data/bitcoin/regtest/indexes

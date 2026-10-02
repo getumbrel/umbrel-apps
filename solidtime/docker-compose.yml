@@ -6,7 +6,7 @@ services:
       PROXY_AUTH_ADD: "false"
 
   app:
-    image: solidtime/solidtime:0.7.0@sha256:064c78939b0ff4e1e6b9105f5ff0483370a1a70c11cbeb9341cf80d41fecd0f1
+    image: solidtime/solidtime:0.21.0@sha256:30ab1ede2a28d782c1cc2f5407bb3e20798d717b3e9acc7a8d734fdc8258cb9e
     user: "1000:1000"
     restart: on-failure
     volumes:
@@ -21,6 +21,7 @@ services:
       APP_URL: "http://${DEVICE_DOMAIN_NAME}:8770"
       APP_FORCE_HTTPS: "false"
       TRUSTED_PROXIES: "0.0.0.0/0,2000:0:0:0:0:0:0:0/3"
+      TRUSTED_HOSTS: "${DEVICE_DOMAIN_NAME},${DEVICE_HOSTNAME},${APP_DOMAIN},${APP_HIDDEN_SERVICE},${APP_SOLIDTIME_LOCAL_IPS}"
 
       # Authentication
       SUPER_ADMINS: "umbrel@umbrel.local"
@@ -66,7 +67,7 @@ services:
         condition: service_healthy
 
   scheduler:
-    image: solidtime/solidtime:0.7.0@sha256:064c78939b0ff4e1e6b9105f5ff0483370a1a70c11cbeb9341cf80d41fecd0f1
+    image: solidtime/solidtime:0.21.0@sha256:30ab1ede2a28d782c1cc2f5407bb3e20798d717b3e9acc7a8d734fdc8258cb9e
     user: "1000:1000"
     restart: on-failure
     volumes:
@@ -80,6 +81,7 @@ services:
       APP_URL: "http://${DEVICE_DOMAIN_NAME}:8770"
       APP_FORCE_HTTPS: "false"
       TRUSTED_PROXIES: "0.0.0.0/0,2000:0:0:0:0:0:0:0/3"
+      TRUSTED_HOSTS: "${DEVICE_DOMAIN_NAME},${DEVICE_HOSTNAME},${APP_DOMAIN},${APP_HIDDEN_SERVICE},${APP_SOLIDTIME_LOCAL_IPS}"
 
       # Authentication
       SUPER_ADMINS: "umbrel@umbrel.local"
@@ -119,13 +121,13 @@ services:
     env_file:
       - ${APP_DATA_DIR}/keys.env
     healthcheck:
-      test: [ "CMD-SHELL", "supervisorctl status scheduler:scheduler_00" ]
+      test: [ "CMD", "healthcheck" ]
     depends_on:
       db:
         condition: service_healthy
 
   queue:
-    image: solidtime/solidtime:0.7.0@sha256:064c78939b0ff4e1e6b9105f5ff0483370a1a70c11cbeb9341cf80d41fecd0f1
+    image: solidtime/solidtime:0.21.0@sha256:30ab1ede2a28d782c1cc2f5407bb3e20798d717b3e9acc7a8d734fdc8258cb9e
     user: "1000:1000"
     restart: on-failure
     volumes:
@@ -140,6 +142,7 @@ services:
       APP_URL: "http://${DEVICE_DOMAIN_NAME}:8770"
       APP_FORCE_HTTPS: "false"
       TRUSTED_PROXIES: "0.0.0.0/0,2000:0:0:0:0:0:0:0/3"
+      TRUSTED_HOSTS: "${DEVICE_DOMAIN_NAME},${DEVICE_HOSTNAME},${APP_DOMAIN},${APP_HIDDEN_SERVICE},${APP_SOLIDTIME_LOCAL_IPS}"
 
       # Authentication
       SUPER_ADMINS: "umbrel@umbrel.local"
@@ -179,7 +182,7 @@ services:
     env_file:
       - ${APP_DATA_DIR}/keys.env
     healthcheck:
-      test: [ "CMD-SHELL", "supervisorctl status worker:worker_00" ]
+      test: [ "CMD", "healthcheck" ]
     depends_on:
       db:
         condition: service_healthy

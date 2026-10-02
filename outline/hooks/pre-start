@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Generate Dex config from template
+APP_OUTLINE_PORT="${APP_OUTLINE_PORT:-8942}"
+
+# Generate bcrypt hash for APP_PASSWORD
+# Using htpasswd from apache2-utils (available in most systems)
+PASSWORD_HASH=$(docker run --rm alpine:latest sh -c "apk add --no-cache apache2-utils > /dev/null 2>&1 && htpasswd -bnBC 10 '' '${APP_PASSWORD}' | tr -d ':\n'")
+
+cat "${UMBREL_ROOT}/app-data/${APP_ID}/data/config/config.yaml.template" \
+  | sed "s/\${DEVICE_DOMAIN_NAME}/${DEVICE_DOMAIN_NAME}/g" \
+  | sed "s/\${APP_OUTLINE_PORT}/${APP_OUTLINE_PORT}/g" \
+  | sed "s|\${PASSWORD_HASH}|${PASSWORD_HASH}|g" \
+  | sed "s|\${APP_SEED}|${APP_SEED}|g" \
+  > "${UMBREL_ROOT}/app-data/${APP_ID}/data/config/config.yaml"

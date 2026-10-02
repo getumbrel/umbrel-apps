@@ -1,26 +1,22 @@
 manifestVersion: 1.1
 id: bitcoin
+storage:
+  dataRoot: data
 category: bitcoin
 name: Bitcoin Node
-version: "29.0"
+version: "1.4.0-patch.1"
 tagline: Run your personal node powered by Bitcoin Core
 description: >-
-  Run your Bitcoin node and independently store and validate
-  every single Bitcoin transaction with it. Achieve unparalleled
-  privacy by connecting your wallet directly to your node to
-  ensure that your wallet company can’t spy on your transactions,
-  or worse — lie to you.
+  Run your Bitcoin node, powered by Bitcoin Core. Independently store and validate every Bitcoin transaction.
+  Connect your wallet directly to your node for unmatched privacy so your wallet provider can't track your activity - or worse, mislead you.
 
 
-  Plus, transacting with your own node also helps keep the entire
-  Bitcoin network decentralized; win-win!
+  Transacting through your own node also helps keep the Bitcoin network decentralized — win-win.
 
 
-  With over 20 advanced settings, you can take control of your node
-  and customize it to your needs. Control how your node connects to
-  other nodes over Tor, clearnet, and I2P, adjust your daily upload
-  limit, set the maximum mempool size, fine-tune its performance,
-  and much more.
+  With over 20 advanced settings, you're in full control. Choose which version of Bitcoin Core your node runs, 
+  how your node connects to other nodes over Tor, clearnet, and I2P, adjust daily upload limits, set the maximum mempool size, 
+  fine-tune performance, and much more.
 
 
   Don't trust. Verify. On steroids.
@@ -42,13 +38,24 @@ gallery:
 path: ""
 defaultPassword: ""
 releaseNotes: >-
-  Bitcoin Core has been updated to v29.0, which includes new features, bug fixes, and performance improvements.
-  See the full Bitcoin Core release notes at https://github.com/bitcoin/bitcoin/blob/master/doc/release-notes/release-notes-29.0.md
+  This update adds support for new storage management options being introduced with umbrelOS 2.0.
+
+
+  Previous Bitcoin Node 1.4.0 release notes:
+
+
+  This update adds Bitcoin Core v31.1, v30.3, and v29.4, plus new settings on supported versions for private transaction broadcasting, improved clearnet peer diversity, and the transaction output spender index.
+
+
+  It also includes security and reliability improvements across the app.
+
+
+  Bitcoin Core v30.0 is no longer offered as a new selection due to an upstream wallet migration issue. Nodes already pinned to v30.0 will remain on it until you choose another version in Settings.
 widgets:
   - id: "stats"
     type: "four-stats"
     refresh: "5s"
-    endpoint: "server:3005/v1/bitcoind/widgets/stats"
+    endpoint: "app:3000/api/widget/stats"
     link: ""
     example:
       type: "four-stats"
@@ -69,7 +76,7 @@ widgets:
   - id: "sync"
     type: "text-with-progress"
     refresh: "2s"
-    endpoint: "server:3005/v1/bitcoind/widgets/sync"
+    endpoint: "app:3000/api/widget/sync"
     link: ""
     example:
       type: "text-with-progress"
@@ -78,5 +85,21 @@ widgets:
       text: "83%"
       progressLabel: "In progress"
       progress: 0.83
+backupIgnore:
+  - data/bitcoin/blocks
+  - data/bitcoin/chainstate
+  - data/bitcoin/indexes
+  - data/bitcoin/testnet3/blocks
+  - data/bitcoin/testnet3/chainstate
+  - data/bitcoin/testnet3/indexes
+  - data/bitcoin/testnet4/blocks
+  - data/bitcoin/testnet4/chainstate
+  - data/bitcoin/testnet4/indexes
+  - data/bitcoin/signet/blocks
+  - data/bitcoin/signet/chainstate
+  - data/bitcoin/signet/indexes
+  - data/bitcoin/regtest/blocks
+  - data/bitcoin/regtest/chainstate
+  - data/bitcoin/regtest/indexes
 submitter: Umbrel
 submission: https://github.com/getumbrel/umbrel-apps/commit/576ecd2bef8d625abceed0f67ec9c487da9b2b1b

@@ -5,8 +5,9 @@ set -euo pipefail
 # Apache instance must be configured with 'LimitRequestBody 0'
 # inside the .htaccess file
 
-APP_DATA_DIR="$(readlink -f $(dirname "${BASH_SOURCE[0]}")/..)"
-DOT_HTACCESS_FILE="${APP_DATA_DIR}/data/nextcloud/.htaccess"
+APP_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")"
+DATA_ROOT="${APP_DATA_ROOT:-${APP_DIR}/data}"
+DOT_HTACCESS_FILE="${DATA_ROOT}/nextcloud/.htaccess"
 
 echo "Waiting for file (${DOT_HTACCESS_FILE}) to exist..."
 

@@ -1,0 +1,20 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: dcrdex_web_1
+      APP_PORT: 5758
+      # Bison Wallet has its own password-based authentication
+      PROXY_AUTH_ADD: "false"
+
+  web:
+    image: decred/dcrdex:v1.0.5@sha256:5d010b92fbb452c9df6e0205d9bb0c8f8c446e011d69501c1e0a9b1fc4abd792
+    user: "1000:1000"
+    restart: on-failure
+    # When a trade is being settled, the DEX client requires time
+    # to shut down cleanly due to the time sensitive nature of atomic
+    # swaps, hence the long stop_grace_period value.
+    stop_grace_period: 15m
+    volumes:
+      - ${APP_DATA_DIR}/data:/dex/.dexc
+    # Bind to the container's private IP so bisonw stays in HTTP mode for Umbrel's app proxy.
+    entrypoint: ["/bin/sh", "-c", "exec ./bisonw --webaddr $(hostname -I|cut -d\\  -f1 ):5758"]

@@ -8,7 +8,7 @@ services:
       PROXY_AUTH_ADD: "false"
   
   app:
-    image: alexlack/mattermost-app:v10.8.0@sha256:fc71bd1b52b02707ea1f746172ce9d64c99259585232c0502cdd78aaa528c447
+    image: alexlack/mattermost-app:v11.11.1@sha256:935f4ed994120c06736ad4972beb522d6cb5a862f0c4f87636e5ad600419c7ab
     user: "1000:1000"
     restart: on-failure
     stop_grace_period: 1m
@@ -32,7 +32,7 @@ services:
         condition: service_healthy
 
   db:
-    image: alexlack/mattermost-db:v10.8.0@sha256:aa603f3d836ba1158590dd6620cab880d5fd5935b39cbfa920826f1d6380d6e8
+    image: alexlack/mattermost-db:v11.11.1@sha256:ed7ade51d12815e65eff05ded2b4264b5bca06cbf523f4c9573759a9688b2259
     user: "1000:1000"
     restart: on-failure
     stop_grace_period: 1m
@@ -44,7 +44,7 @@ services:
       - ${APP_DATA_DIR}/data/db:/var/lib/postgresql/data
       - /etc/localtime:/etc/localtime:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U admin -d mattermost"]
       interval: 10s
       timeout: 5s
       retries: 5

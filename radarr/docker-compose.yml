@@ -8,17 +8,20 @@ services:
       PROXY_AUTH_WHITELIST: "/api/*"
 
   server:
-    image: linuxserver/radarr:5.22.4@sha256:01233b9ea9435fd00eab51891f133d86c9b6293f5adb8c3bf44e7a314c9c3423
+    image: linuxserver/radarr:6.4.4@sha256:c960f2b52ec6542dbe6707c5a21e696a7c74fd8b17997454f4d10a55dacee133
     environment:
       - PUID=1000
       - PGID=1000
+      # Umbrel app_proxy handles web authentication; Radarr API access still requires an API key.
+      - RADARR__AUTH__METHOD=External
+      - RADARR__AUTH__REQUIRED=Enabled
     volumes:
       - ${APP_DATA_DIR}/data/config:/config
       - ${UMBREL_ROOT}/data/storage/downloads:/downloads
     restart: on-failure
 
   mac:
-    image: getumbrel/media-app-configurator:v1.3.0@sha256:67e75dd9f5a14402b7816119a8e20189bc2465484cea077909d164687e59742b
+    image: getumbrel/media-app-configurator:v1.3.2@sha256:9ff34bda1e36ffe5a028d2463f4aaa9f20b93e8bec4392da077137c56bea3c34
     user: "1000:1000"
     restart: on-failure
     volumes:

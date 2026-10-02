@@ -1,0 +1,45 @@
+manifestVersion: 1
+id: hermitstash
+storage:
+  dataRoot: data
+category: files
+name: HermitStash
+version: "1.15.7-patch.1"
+tagline: Post-quantum encrypted self-hosted file sharing
+description: >-
+  HermitStash is a self-hosted file upload server with post-quantum encryption. Every file and database field is sealed with an ML-KEM-1024 + ECDH P-384 hybrid envelope and XChaCha20-Poly1305 before touching disk; passwords use Argon2id. Nothing is stored in plaintext, including database fields the operator never thinks of as sensitive.
+
+
+  Generate shareable download links with optional expiry, download limits, and per-bundle passwords. Sign in with WebAuthn passkeys, mTLS browser certificates issued by the built-in CA, or password + TOTP. A separately-installable desktop sync client watches a local folder and mirrors changes back to the server over a post-quantum WebSocket channel.
+
+
+  The admin panel covers users, uploads with per-user and per-stash size limits, webhooks, API keys, branding, a tamper-evident audit log (CSV/JSON/CADF export, plus syslog or webhook forwarding to a SIEM), mutual-TLS certificate-authority management, and storage backends — local disk by default, or any S3-compatible bucket (MinIO, Cloudflare R2, Backblaze B2) for off-device archives. Retry-safe writes via the standard Idempotency-Key header. RFC 9457 problem-details on every API error response.
+
+
+  Files and database fields are sealed with post-quantum encryption at rest no matter how you reach the app. When it is served over HTTPS — a custom domain, or remote access over Tor or Tailscale — the TLS handshake also negotiates a post-quantum key exchange (X25519MLKEM768 or SecP384r1MLKEM1024), so the connection itself is quantum-resistant; over a plain local-network address the at-rest protection still applies.
+developer: dotCooCoo
+website: https://hermitstash.com
+repo: https://github.com/dotCooCoo/hermitstash
+support: https://github.com/dotCooCoo/hermitstash/issues
+port: 3081
+gallery:
+  - 1.webp
+  - 2.webp
+  - 3.webp
+  - 4.webp
+path: ""
+defaultUsername: ""
+defaultPassword: ""
+submitter: dotCooCoo
+submission: https://github.com/getumbrel/umbrel-apps/pull/5378
+releaseNotes: >-
+  This update adds support for new storage management and configuration options being introduced with umbrelOS 2.0.
+
+
+  Previous HermitStash 1.15.7 release notes:
+
+
+  This security-focused release tightens uploaded SVG validation so namespace-prefixed href links, including disguised xlink:href JavaScript URLs, are detected and refused before storage. It also refreshes vendored document-guard and certificate-toolkit dependencies. No data or configuration migration is required.
+
+  Full release notes can be found at https://github.com/dotCooCoo/hermitstash/releases/tag/v1.15.7
+dependencies: []

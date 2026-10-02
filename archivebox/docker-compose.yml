@@ -1,0 +1,35 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: archivebox_archivebox_1
+      APP_PORT: 5797
+      # First-run setup probes this endpoint without cookies; it only returns OK.
+      PROXY_AUTH_WHITELIST: "/health/"
+
+  archivebox:
+    image: archivebox/archivebox:0.9.71@sha256:56057dbe5ab387441e96c25a531d8934768bc977f94b9a91428f6913945e9b0d
+    restart: on-failure
+    stop_grace_period: 1m
+    # The image's default command is `archivebox server --init 0.0.0.0:5797`,
+    # which runs DB init/migrations on every boot and binds to all interfaces so the
+    # app_proxy can reach it. No manual `archivebox init` step is needed.
+    shm_size: "1gb" # headless Chrome needs a decent shared-memory pool while archiving
+    environment:
+      ALLOWED_HOSTS: "*"
+      # Admin user auto-created on first run only. Change the password after logging in.
+      ADMIN_USERNAME: admin
+      ADMIN_PASSWORD: "${APP_PASSWORD}"
+      PUBLIC_INDEX: "True" # anyone on your network can browse the snapshot list
+      PUBLIC_SNAPSHOTS: "True" # ...and view archived snapshot content
+      PUBLIC_ADD_VIEW: "False" # ...but only logged-in admins can add new URLs
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+      - ${APP_DATA_DIR}/tmp:/tmp/archivebox
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:5797/public/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 180s

@@ -69,15 +69,24 @@ else
   echo "Invoice-Ninja APP_KEY already exists – nothing to do."
 fi
 
-### Create default nginx configuration file for invoice-ninja
+### Create default nginx configuration file for invoice-ninja if it is not up-to-date
 
 NGINX_CONFIG_FILE="${APP_DIR}/config/nginx.conf"
 
-# We check if the nginx config file does not exist or if it exists and root is set to /var/www/app/public/, which tells us that this is a legacy invoice-ninja install that needs to be modified.
-if [ ! -f "${NGINX_CONFIG_FILE}" ] || grep -q "root /var/www/app/public/" "${NGINX_CONFIG_FILE}"; then
-  echo "Creating default configuration file for invoice-ninja nginx."
-  # We overwrite/create the nginx configuration file with new settings for invoice-ninja
-  cat >"${NGINX_CONFIG_FILE}" <<EOF
+# We use a marker at the top of the file to identify the canonical nginx.conf for invoice-ninja
+MARKER_REGEX='^# Umbrel Invoice-Ninja canonical nginx.conf 27-May-2025'
+
+# We check if the nginx config file does not exist or if it exists and the marker is not up-to-date
+if [[ ! -f "${NGINX_CONFIG_FILE}" ]] || ! grep -qx "${MARKER_REGEX}" "${NGINX_CONFIG_FILE}"; then
+  echo "Updating nginx configuration file for invoice-ninja."
+  # Overwrite the nginx configuration file
+  cat >"${NGINX_CONFIG_FILE}" <<'EOF'
+# Umbrel Invoice-Ninja canonical nginx.conf 27-May-2025
+
+# Invoice-Ninja recommended nginx.conf for Laravel
+# https://github.com/invoiceninja/dockerfiles/blob/ed9c23d9c74a2a9f47b9dcb54946726ab816b6bc/debian/nginx/laravel.conf
+
+# https://laravel.com/docs/master/deployment#nginx
 server {
     listen 80 default_server;
     server_name _;
@@ -87,21 +96,20 @@ server {
     add_header X-Content-Type-Options "nosniff";
 
     index index.php;
- 
     charset utf-8;
- 
+
     location / {
-        try_files \$uri \$uri/ /index.php?\$query_string;
+        try_files $uri $uri/ /index.php?$query_string;
     }
- 
+
     location = /favicon.ico { access_log off; log_not_found off; }
     location = /robots.txt  { access_log off; log_not_found off; }
- 
+
     error_page 404 /index.php;
 
     location ~ \.php$ {
         fastcgi_pass invoice-ninja_app_1:9000;
-        fastcgi_param SCRIPT_FILENAME \$realpath_root\$fastcgi_script_name;
+        fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
         include fastcgi_params;
     }
 
@@ -109,8 +117,57 @@ server {
         deny all;
     }
 }
+
+# Invoice-Ninja recommended global/server directives
+# https://github.com/invoiceninja/dockerfiles/blob/ed9c23d9c74a2a9f47b9dcb54946726ab816b6bc/debian/nginx/invoiceninja.conf
+
+# https://nginx.org/en/docs/http/ngx_http_core_module.html
+client_max_body_size 10M;
+client_body_buffer_size 10M;
+server_tokens off;
+
+# https://nginx.org/en/docs/http/ngx_http_fastcgi_module.html
+fastcgi_buffers 32 16K;
+
+# https://nginx.org/en/docs/http/ngx_http_gzip_module.html
+gzip on;
+gzip_comp_level 2;
+gzip_min_length 1M;
+gzip_proxied any;
+gzip_types *;
 EOF
 
-echo "Created default configuration file for invoice-ninja nginx."
+echo "Updated nginx configuration file for invoice-ninja."
 
+fi
+
+# Merge data from incorrect /data/storage mount into correct /data/storage mount for invoice-ninja
+# The incorrect storage bind mount occured due to umbrelOS Files logic for data migration:
+# https://github.com/getumbrel/umbrel/blob/93a4b1801d1141252e73ff759a4ef52d038fff92/packages/umbreld/source/modules/apps/app.ts#L113-L120
+
+INCORRECT_STORAGE_DIR="${APP_DIR}/home"
+CORRECT_STORAGE_DIR="${APP_DIR}/data/storage"
+
+# We only copy data from the ${APP_DIR}/home directory if it exists
+if [[ -d "${INCORRECT_STORAGE_DIR}" ]]; then
+  echo "Migrating invoice-ninja data from ${INCORRECT_STORAGE_DIR} to ${CORRECT_STORAGE_DIR}..."
+
+  # Ensure the destination exists (in case a user has deleted the directory)
+  mkdir -p "${CORRECT_STORAGE_DIR}"
+
+  # Copy everything from the incorrect bind mount into the correct one.
+  # -a archive (perms, times, links, dot-files)
+  # -u update-only (overwrite only if source is newer)
+  rsync -au --progress \
+        "${INCORRECT_STORAGE_DIR}/" \
+        "${CORRECT_STORAGE_DIR}/"
+
+  # Ensure the web-server user owns the merged data
+  chown -R www-data:www-data "${CORRECT_STORAGE_DIR}"
+
+  # Archive the old bind-mount so this block never triggers again
+  mv "${INCORRECT_STORAGE_DIR}" \
+     "${INCORRECT_STORAGE_DIR}_migrated_$(date +%Y%m%dT%H%M%S)"
+
+  echo "Successfully migrated invoice-ninja data from ${INCORRECT_STORAGE_DIR} to ${CORRECT_STORAGE_DIR}..."
 fi

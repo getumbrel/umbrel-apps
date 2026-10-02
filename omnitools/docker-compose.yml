@@ -1,0 +1,15 @@
+version: '3.7'
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: omnitools_app_1
+      APP_PORT: 80
+
+  app:
+    image: iib0011/omni-tools:0.6.0@sha256:3f35a17d8d81caa33c7caec0198eb561dee212a5f48d8303d8f7b182c930fb71
+    # does not work rootless
+    #user: "1000:1000"
+    security_opt:
+      - no-new-privileges:true
+    restart: on-failure

@@ -1,8 +1,10 @@
 manifestVersion: 1
 id: btcpay-server
+storage:
+  dataRoot: data
 category: bitcoin
 name: BTCPay Server
-version: "2.1.1-patch.1"
+version: "2.4.4-patch.1"
 tagline: Accept Bitcoin payments with 0 fees & no 3rd party
 description: >-
   BTCPay Server is a payment processor that allows you to receive
@@ -33,26 +35,48 @@ gallery:
 path: ""
 defaultUsername: ""
 defaultPassword: ""
-releaseNotes: >-
-  This patch release of BTCPay Server fixes a critical bug that prevented syncing block 896727. You can see the release notes for BTCPay Server 2.1.1 below:
+releaseNotes: |-
+  This update adds support for new storage management and configuration options being introduced with umbrelOS 2.0.
 
+  Previous BTCPay Server 2.4.4 release notes:
 
-  This update of BTCPay Server includes new features, improvements and bug fixes.
+  ⚠️ Security reminder for skipped-version updates. If you used BTCPay Server before 2.4.2 and have not rotated your Lightning Node credentials since updating to 2.4.2 or later, update first, then complete every step below immediately. Updating alone does not invalidate credentials that may have been exposed.
 
+  After updating, rotate your Lightning Node credentials:
 
-  ⚠️ Note: If you installed the XPub Extractor plugin, you will need to update it.
+  1. On the umbrelOS home screen, right-click BTCPay Server and select **Stop**.
+  2. Right-click Lightning Node and select **Stop**. Wait until both apps have stopped before continuing.
+  3. Open Files and go to `Apps` → `lightning` → `data` → `lnd` → `data` → `chain` → `bitcoin` → `mainnet`.
+  4. In that folder, delete:
 
+     - Every file whose name ends in `.macaroon`
+     - `macaroons.db`
 
-  Highlights:
-    - Add support for wallet policy output descriptors (BIP388, BIP389)
-    - Enable Taproot signing for hardware wallets (BIP86)
-    - Link Payment Requests to external invoices via Reference Id
-    - Add webhook triggered on full Payment Request payment
-    - Fix multiple bugs in multisig flow, QR scanning, and payout permissions
-    - Improve hardware wallet import flow and multisig compatibility
-    - Add confirmation prompts and UI improvements for Payment Requests
-    - Enhance mobile UX with numeric keypad on POS
-    
-  Full release notes can be found at https://github.com/btcpayserver/btcpayserver/releases
+     The exact `.macaroon` filenames vary between installations. It is normal to have more or fewer of them. Delete all files ending in `.macaroon`.
+
+     ⚠️ Do not delete anything else. Keep `wallet.db`, `channel.backup`, the `chan-backup-archives` folder, and every other file or folder. Never delete `channel.db`.
+
+  5. Return to the umbrelOS home screen and click Lightning Node to start it. Wait for it to finish starting.
+  6. Return to the same folder and confirm that new `admin.macaroon` and `macaroons.db` files have appeared.
+  7. Click BTCPay Server to start it.
+  8. Right-click and restart any other Umbrel apps connected to Lightning Node.
+  9. Reconnect external Lightning wallets and services. Their old credentials will no longer work.
+
+  Check your Lightning payments, channel closures, peers, on-chain balance, and channel balance for anything you do not recognize.
+
+  Prior security advisory: https://x.com/BtcpayServer/status/2085865561137831938
+
+  This release changes several existing workflows:
+
+  - Legacy BitPay Basic-auth API keys are removed. Update integrations that use them before upgrading.
+  - Greenfield API clients must use the API key's ID, rather than its secret, when revoking a key by identifier. Existing Greenfield API keys continue to work for authentication.
+  - Point of Sale invoices no longer accept a per-request `notificationUrl`. Configure the notification URL in the Point of Sale app instead.
+  - NFC checkout payments are disabled by default, a change introduced in 2.4.3. Enable them under Store Settings → Checkout Experience if needed.
+  - Zero-amount invoices are blocked unless enabled in the store's settings, and invited users must accept before joining a store.
+  - Desktop smartcard setup for Boltcards has been replaced by the Boltcard app.
+
+  This release also improves invoice permissions, exchange-rate rules, support-link security, account-email changes, and plugin discovery. API keys are now stored as hashes, and NBXplorer is updated to 2.6.13.
+
+  Full release notes: https://github.com/btcpayserver/btcpayserver/releases/tag/v2.4.4
 submitter: Umbrel
 submission: https://github.com/getumbrel/umbrel/pull/353

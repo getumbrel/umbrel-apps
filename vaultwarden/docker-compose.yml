@@ -8,8 +8,26 @@ services:
       PROXY_AUTH_ADD: "false"
 
   server:
-    image: vaultwarden/server:1.33.2@sha256:87edb99945da91bd7504ac1435495595af2e89ad2c7adc151ae5bf091ec8baf2
+    image: vaultwarden/server:1.37.3@sha256:1587c45feaa479f1f5e8af3b00eded36bff77bcf1880cf8dbf0541706dd470e0
     user: "1000:1000"
+    entrypoint: /bin/sh
+    # Bitwarden Web Vault (v2026.4.1+) rejects non-HTTPS API and notification URLs.
+    # Umbrel's Tor hidden service is served over http://*.onion, which Tor Browser
+    # treats as a secure context. Patch only the copied web vault bundle so onion
+    # access still works, while plain HTTP remains blocked for non-onion hosts.
+    command:
+      - -c
+      - |
+        set -e
+        web_vault="/tmp/web-vault-patched"
+        rm -rf "$$web_vault"
+        cp -R /web-vault "$$web_vault"
+        main_js="$$(ls "$$web_vault"/app/main.*.js)"
+        grep -Fq '&&!this.platformUtilsService.isDev()' "$$main_js"
+        sed -i 's/&&!this\.platformUtilsService\.isDev()/\&\&!this.platformUtilsService.isDev()\&\&!location.hostname.endsWith(".onion")/g' "$$main_js"
+        grep -Fq '&&!this.platformUtilsService.isDev()&&!location.hostname.endsWith(".onion")' "$$main_js"
+        export WEB_VAULT_FOLDER="$$web_vault"
+        exec /start.sh
     restart: on-failure
     stop_grace_period: 1m
     volumes:

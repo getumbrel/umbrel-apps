@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: core-lightning
 category: bitcoin
 name: Core Lightning
-version: "24.11.1-grpc"
+version: "26.06.8-patch.1"
 tagline: Run your personal Core Lightning node
 description: >-
   Get started with the Lightning network today with Core Lightning - a
@@ -32,8 +32,35 @@ defaultPassword: ""
 submitter: Blockstream
 submission: https://github.com/getumbrel/umbrel-apps/pull/475
 releaseNotes: >-
-  This update makes the gRPC interface in Core Lightning accessible for companion apps you install.
+  This updates the Core Lightning application (web UI) to v26.09. Core Lightning itself stays at v26.06.8.
+
+  **CLN Application v26.09:**
+
+  - Updated dependencies, with no known vulnerabilities
+
+  - Security hardening of authentication, sessions and request handling; logging out now also ends the session on the server
+
+  - Fixes the session being lost when Ride The Lightning is open on the same device
+
+  - Checks the amount of BOLT 12 offer invoices before paying
+
+  - Invoice runes created from the Connect Wallet screen now work with wallets; recreate any rune made with an earlier version
+
+  - Large balances are shown in millions (e.g. 1.25M sats) instead of thousands
+
+  - Commando connections now reconnect on demand instead of giving up after a few attempts
+
+  - Runs on Node 22 with a modernised build and release pipeline (pinned base images, provenance & SBOM attestations)
 
 
-  For example, as a result of this change, the newest Ride The Lightning release integrates Boltz as a service, allowing you to seamlessly swap 
-  in and out of the Lightning Network.
+  [Application release notes](https://github.com/ElementsProject/cln-application/releases/tag/v26.09)
+
+
+  **CLN v26.06.8:**
+  This update includes important security fixes and bug fixes. The Core Lightning developers recommend updating as soon as possible.
+
+
+  [Core Lightning release notes](https://github.com/ElementsProject/lightning/releases/tag/v26.06.8)
+
+backupIgnore:
+  - data/lightningd/bitcoin/lightningd.sqlite3

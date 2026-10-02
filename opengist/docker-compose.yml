@@ -1,0 +1,19 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: opengist_server_1
+      APP_PORT: 6157
+      PROXY_AUTH_ADD: "false"
+
+  server:
+    image: ghcr.io/thomiceli/opengist:1.15.2@sha256:7edc91273ee7d10a17406da8a08c803158baaff984c39b789c1313473d068f21
+    user: "1000:1000"
+    restart: on-failure
+    ports:
+      - "2224:2224"
+    volumes:
+      - ${APP_DATA_DIR}/data:/opengist
+    environment:
+      OG_SSH_PORT: "2224"

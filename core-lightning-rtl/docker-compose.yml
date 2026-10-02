@@ -7,7 +7,7 @@ services:
       APP_PORT: 3000
 
   web:
-    image: shahanafarooqui/rtl:v0.15.4@sha256:f984095949b5b6c2c0c7d983e979cd34bd32a2952d106092bad0b46e6248168e
+    image: shahanafarooqui/rtl:v0.15.12@sha256:47bc963a983aba9eb8961603fd57ce89f20c0df15438450e9639c0265c364c3b
     restart: on-failure
     environment:
       PORT: 3000
@@ -17,6 +17,7 @@ services:
       LN_SERVER_URL: "https://$APP_CORE_LIGHTNING_DAEMON_IP:$CORE_LIGHTNING_REST_PORT"
       RUNE_PATH: "/root/.lightning/.commando-env"
       RTL_CONFIG_PATH: "/data"
+      DB_DIRECTORY_PATH: "/data"
       RTL_COOKIE_PATH: "/data/.cookie"
       BLOCK_EXPLORER_URL: "${APP_CORE_RTL_BLOCK_EXPLORER_URL}"
       # Boltz
@@ -28,7 +29,7 @@ services:
       - "${APP_DATA_DIR}/data/boltz:/boltz:ro"
 
   boltz:
-    image: boltz/boltz-client:2.3.9@sha256:4de5be20d3a60399005a2ac08a058eb008f42dfd7918b50fd0c315dea7799c3e
+    image: boltz/boltz-client:2.11.3@sha256:87ebbd43e75157a86dbe7a6eba897b11edac4b240e3169931d1a1d6821c5e347
     restart: "on-failure"
     stop_grace_period: "1m"
     environment:

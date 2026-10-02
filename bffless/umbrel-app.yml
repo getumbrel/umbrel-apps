@@ -1,0 +1,89 @@
+manifestVersion: 1.1
+id: bffless
+category: developer
+name: BFFless
+version: '0.4.15'
+tagline: Self-hosted static site hosting platform
+description: >-
+  BFFless is a self-hosted platform for hosting static websites and build artifacts from CI/CD pipelines.
+
+
+  Key Features:
+    - Upload static sites via CLI, API, or GitHub Actions
+    - Instant deployments with unique URLs per commit
+    - Deployment aliases for staging, production, and custom environments
+    - Custom domain support with subdomain routing
+    - Built-in admin dashboard for managing deployments
+    - Privacy-focused: All data stays on your Umbrel
+
+
+  Perfect for developers who want full control over their static site hosting without relying on external services.
+
+
+  Note: This app requires a Cloudflare Tunnel for external domain access. Internal access shows setup instructions.
+developer: BFFless
+website: https://docs.bffless.app/deployment/umbrel/
+dependencies:
+  - cloudflared
+repo: https://github.com/bffless/ce
+support: https://github.com/bffless/ce/issues
+port: 5537
+gallery:
+  - 1.jpg
+  - 2.jpg
+  - 3.jpg
+releaseNotes: >-
+  Updates BFFless CE from v0.2.10 to v0.4.15.
+
+
+  App catalog — 1-click app install:
+    - Browse and install self-hosted apps directly from the admin dashboard
+    - Installs deploy under the real upstream source commit
+    - Registry store metadata and per-app setup notes render on the app cards
+    - Reachability gates only install apps that can actually be served over HTTPS
+
+
+  Onboarding & setup:
+    - New welcome walkthrough (with video) and an app-install callout as the primary first-login path
+    - Onboarding and day-2 settings now link out to the docs site
+    - Claim-token links go straight to the setup wizard and prefill the claim form
+    - Replay the onboarding modal any time with ?onboarding=1
+
+
+  Storage:
+    - Presigned uploads now work on local filesystem storage
+    - Same-SHA republish serves fresh bytes instead of stale cached content
+    - Served content types resolve from storage, with the correct charset
+
+
+  Pipelines & groups:
+    - Pipelines can read user.groups, plus a member-accessible group directory
+    - New now_ms() helper; data-write values are coerced to schema field types
+    - Null-safe "ne" filter operator (IS DISTINCT FROM)
+
+
+  CLI:
+    - New bffless login credential store and auth commands
+    - rules init --schema scaffold command
+
+
+  Frontend & polish:
+    - Per-route document titles and a real favicon
+    - Fixed mobile viewport overflow and crashes across admin pages
+    - Traffic-splitting tools (weights + routing rules) added to the MCP server
+
+
+  Fixes (including for proxied setups like Cloudflare Tunnel):
+    - Auth and presigned uploads are excepted from the subdomain-alias rewrite
+    - Presigned local uploads serve correctly on externally-proxied vhosts
+    - App-serving vhosts share a consistent request-body ceiling
+    - Blocklists never enforce a half-loaded or stale rule set
+    - Alias visibility / required-role overrides persist and read back correctly
+
+
+  Full release notes can be found at https://github.com/bffless/ce/releases/tag/v0.4.15
+path: ''
+defaultUsername: ''
+deterministicPassword: false
+submitter: Bffless
+submission: https://github.com/getumbrel/umbrel-apps/pull/4784

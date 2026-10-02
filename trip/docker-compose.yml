@@ -1,0 +1,15 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: trip_app_1
+      APP_PORT: 8000
+
+  app:
+    image: ghcr.io/itskovacs/trip:1.50.0@sha256:d67c2824f8c783103b85b9e0c6f318c793edca1e61d095fa032adfd3badd5e07
+    restart: on-failure
+    stop_grace_period: 1m
+    volumes:
+      - ${APP_DATA_DIR}/data/app:/app/storage
+    command: ["fastapi", "run", "/app/trip/main.py", "--host", "0.0.0.0"]

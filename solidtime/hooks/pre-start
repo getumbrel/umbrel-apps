@@ -19,7 +19,7 @@ SLEEP_SECS=5
 # Skip bootstrap entirely if admin already initialised
 # ──────────────────────────────────────────────────────────────
 if [[ -f "$ADMIN_SENTINEL" ]]; then
-  echo "Solidtime: admin already initialised – skipping bootstrap."
+  echo "Solidtime: admin already initialised - skipping bootstrap."
   exit 0
 fi
 
@@ -64,7 +64,7 @@ for ((try=1; try<=MAX_TRIES; try++)); do
     echo "Solidtime: admin user ready."
     break
   fi
-  echo "  Attempt $try/$MAX_TRIES failed – retrying in ${SLEEP_SECS}s…"
+  echo "  Attempt $try/$MAX_TRIES failed - retrying in ${SLEEP_SECS}s…"
   sleep "$SLEEP_SECS"
 done
 
@@ -89,5 +89,5 @@ fi
 # ──────────────────────────────────────────────────────────────
 # Bring down all containers and let umbrelOS start them fresh
 # ──────────────────────────────────────────────────────────────
-echo "Solidtime: bootstrap finished – stopping stack for clean start…"
+echo "Solidtime: bootstrap finished - stopping stack for clean start…"
 "${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" stop

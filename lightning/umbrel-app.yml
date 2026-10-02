@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: lightning
 category: bitcoin
 name: Lightning Node
-version: "0.18.5-beta"
+version: "0.21.3-beta"
 tagline: Run your personal Lightning Network node
 description: >-
   Run your personal Lightning Network node, and join the future of Bitcoin today.
@@ -22,11 +22,13 @@ description: >-
 
   An official app from Umbrel.
 releaseNotes: >-
-  This release updates the underlying Lightning Network Daemon (LND) to v0.18.5-beta, which includes the features required for building custom channels, alongside important bug fixes, stability enhancements, and performance improvements.
-  Notable highlights include an optimization for payment requests (invoices) that removes unnecessary size expansion, critical bug fixes for AMP invoices and erroneous invoice state transitions, and improvements for fee bump transactions.
+  This update upgrades Lightning Node to LND v0.21.3-beta with reliability and security improvements. It fixes issues that could interrupt channel opening or cooperative closing, improves payment and transaction handling, prevents excessive resource use by misbehaving peers, and makes connections from wallets and other Lightning apps more reliable.
 
 
-  Full release notes can be found at https://github.com/lightningnetwork/lnd/releases
+  Reminder for advanced users upgrading from a version before LND v0.21: If you manually added `protocol.custom-nodeann=39` or `protocol.custom-init=39` to your LND configuration for BOLT 12 or LNDK, remove those lines before updating or Lightning Node may not start. LND v0.21 also removed deprecated payment APIs and support for manually configured Tor v2 addresses, so please review the full release notes if you use custom scripts, integrations, or LND settings.
+
+
+  Full LND release notes: https://github.com/lightningnetwork/lnd/blob/v0.21.3-beta/docs/release-notes/release-notes-0.21.3.md
 developer: Umbrel
 website: https://umbrel.com
 dependencies:
@@ -102,3 +104,7 @@ widgets:
           subtext: "sats"
 submitter: Umbrel
 submission: https://github.com/getumbrel/umbrel-apps/commit/576ecd2bef8d625abceed0f67ec9c487da9b2b1b
+backupIgnore:
+  - data/lnd/data/graph/*/channel.db
+  - data/lnd/data/graph/*/wtclient.db
+  - data/lnd/data/watchtower/*/*/watchtower.db

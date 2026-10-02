@@ -9,7 +9,7 @@ services:
       PROXY_AUTH_WHITELIST: "/api/*"
 
   penpot-frontend:
-    image: penpotapp/frontend:2.6.2@sha256:5c8064551c2dd376e509b620f2ee3b835f40cb00c027458ed055d1bedf0e83f6
+    image: penpotapp/frontend:2.18.1@sha256:e1eb4756ec175eb71390f9bf0ddee819468d72f67f12cf3b1532bee8d591217e
     volumes:
       - ${APP_DATA_DIR}/data/assets:/opt/data/assets
     environment:
@@ -17,36 +17,45 @@ services:
     depends_on:
       - penpot-backend
       - penpot-exporter
+      - penpot-mcp
     restart: on-failure
 
   penpot-backend:
-    image: penpotapp/backend:2.6.2@sha256:e82c0a7ce65920e4b21fb20d644ec15dd245182a09982c2be23806ef65f1f00c
+    image: penpotapp/backend:2.18.1@sha256:3b7df71db88d7c478b6a10103acb4108fa86a17a47277de81437de3899959e9e
     # user 1000:1000 to avoid permission issues when importing libraries and templates
     user: "1000:1000"
     volumes:
       - ${APP_DATA_DIR}/data/assets:/opt/data/assets
     environment:
       - PENPOT_FLAGS=enable-registration enable-login-with-password disable-email-verification disable-smtp enable-prepl-server disable-secure-session-cookies
+      - PENPOT_SECRET_KEY=${APP_SEED}
       - PENPOT_DATABASE_URI=postgresql://penpot-postgres/penpot
       - PENPOT_DATABASE_USERNAME=penpot
       - PENPOT_DATABASE_PASSWORD=penpot
-      - PENPOT_REDIS_URI=redis://penpot-redis/0
-      - PENPOT_ASSETS_STORAGE_BACKEND=assets-fs
-      - PENPOT_STORAGE_ASSETS_FS_DIRECTORY=/opt/data/assets
+      - PENPOT_REDIS_URI=redis://penpot_penpot-valkey_1/0
+      - PENPOT_OBJECTS_STORAGE_BACKEND=fs
+      - PENPOT_OBJECTS_STORAGE_FS_DIRECTORY=/opt/data/assets
       - PENPOT_TELEMETRY_ENABLED=false
       # PENPOT_PUBLIC_URI needs to be set to in order to render thumbnails in the frontend
       - PENPOT_PUBLIC_URI=http://${DEVICE_DOMAIN_NAME}:${APP_PENPOT_UI_PORT}
     depends_on:
       - penpot-postgres
-      - penpot-redis
+      - penpot-valkey
     restart: on-failure
 
   penpot-exporter:
-    image: penpotapp/exporter:2.6.2@sha256:4b7fe240b92e79a66b833c36c4c435cfa4914769dbfae1e771d46ddcf139a597
+    image: penpotapp/exporter:2.18.1@sha256:3b6f9d808c777908e4f4e290e91458ec747678a7994e39125e4f3af4ef70ba9f
     user: "1000:1000"
     environment:
-      - PENPOT_PUBLIC_URI=http://penpot-frontend
-      - PENPOT_REDIS_URI=redis://penpot-redis/0
+      - PENPOT_SECRET_KEY=${APP_SEED}
+      - PENPOT_PUBLIC_URI=http://${DEVICE_DOMAIN_NAME}:${APP_PENPOT_UI_PORT}
+      - PENPOT_INTERNAL_URI=http://penpot-frontend:8080
+      - PENPOT_REDIS_URI=redis://penpot_penpot-valkey_1/0
+    restart: on-failure
+
+  penpot-mcp:
+    image: penpotapp/mcp:2.18.1@sha256:710505af665da0e37bd6c0d420100b62ce8a712f6050f01c3670ab11bc663e96
+    user: "1000:1000"
     restart: on-failure
 
   penpot-postgres:
@@ -62,7 +71,13 @@ services:
       - POSTGRES_PASSWORD=penpot
     restart: on-failure
 
-  penpot-redis:
-    image: redis:7@sha256:45bfd95117a171ff9c1b5304bdae80a7a61eb5bbf0793d6a86c9078526ad88fa
+  penpot-valkey:
+    image: valkey/valkey:8.1.3@sha256:facc1d2c3462975c34e10fccb167bfa92b0e0dbd992fc282c29a61c3243afb11
     user: "1000:1000"
     restart: on-failure
+    healthcheck:
+      test: ["CMD-SHELL", "valkey-cli ping | grep PONG"]
+      interval: 1s
+      timeout: 3s
+      retries: 5
+      start_period: 3s

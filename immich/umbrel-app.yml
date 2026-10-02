@@ -1,8 +1,18 @@
 manifestVersion: 1.1
 id: immich
+storage:
+  dataRoot: data
+folderAccess:
+  - id: external-library
+    name: External Library
+    note: Select a folder containing photos or videos, then configure /mnt/external-library as an import path for an External Library in Immich. Access is read-only to protect the original files.
+    mounts:
+      - service: server
+        targetPath: /mnt/external-library
+        readOnly: true
 category: files
 name: Immich
-version: "v1.132.3"
+version: "v3.2.4"
 tagline: High-performance photo and video backup solution
 description: >-
   An open-source and high-performance self-hosted backup solution for the videos and photos on your mobile device
@@ -45,19 +55,16 @@ description: >-
 
   - User-defined storage structure
 releaseNotes: >-
-  ⚠️ As usual, please check that your mobile app is compatible with this release of Immich.
+  This update keeps the new umbrelOS storage-management options introduced in the previous package, including optional read-only access to an existing photo or video library.
 
 
-  Key improvements:
-    - Opt-in web-mobile delete action synchronization now available on Android
-    - Fixed an issue where the mobile app cannot log in with an instance using Authelia for OAuth
-    - Fixed an issue where navigating to the Library page could trigger a location permission request
-    - Fixed an issue where the mobile app might rehash some of the assets
-    - Improved handling of image processing
-    - Further bug fixes and performance improvements
+  ⚠️ If you're updating from a pre-v3 version, Immich v3 includes breaking API changes mostly affecting third-party tools. Check that your mobile app and any Immich integrations are compatible with this release; the Immich mobile app no longer supports iOS 14.
 
 
-  Full release notes are found at https://github.com/immich-app/immich/releases
+  Immich v3.2.4 fixes an issue where the mobile sync status page could go blank when sync-count queries fail.
+
+
+  Full release notes can be found at https://github.com/immich-app/immich/releases/tag/v3.2.4
 developer: Alex Tran
 website: https://www.immich.app
 dependencies: []
@@ -71,5 +78,7 @@ gallery:
 path: ""
 defaultUsername: ""
 defaultPassword: ""
+permissions:
+  - GPU
 submitter: levma
 submission: https://github.com/getumbrel/umbrel-apps/pull/239

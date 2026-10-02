@@ -1,9 +1,24 @@
 manifestVersion: 1
 id: audiobookshelf
+storage:
+  dataRoot: data
+folderAccess:
+  - id: umbrel-downloads:audiobooks
+    name: Audiobooks
+    note: Audiobook files for your libraries. Available inside Audiobookshelf at /audiobooks.
+    mounts:
+      - service: web
+        targetPath: /audiobooks
+  - id: umbrel-downloads:podcasts
+    name: Podcasts
+    note: Podcast files and downloaded episodes. Available inside Audiobookshelf at /podcasts.
+    mounts:
+      - service: web
+        targetPath: /podcasts
 name: Audiobookshelf
 tagline: Audiobook and podcast server
 category: media
-version: "2.22.0"
+version: "2.37.1"
 port: 13378
 description: >-
   Features:
@@ -26,7 +41,7 @@ description: >-
   - Backup your metadata + automated daily backups
 
   - Progressive Web App (PWA)
-  
+
   - Chromecast support on the web app and android app
 
   - Fetch metadata and cover art from several sources
@@ -43,8 +58,8 @@ description: >-
   Android App (beta)
 
   - Try it out on the Google Play Store
-  
-  
+
+
   iOS App (early beta)
 
   - Available using Test Flight: https://testflight.apple.com/join/wiic7QIW
@@ -57,32 +72,18 @@ gallery:
   - 2.jpg
   - 3.jpg
 dependencies: []
+permissions:
+  - STORAGE_DOWNLOADS
 path: ""
 defaultUsername: ""
 defaultPassword: ""
 releaseNotes: >-
-  New features and improvements:
-    - Added audiobook chapter lookup support for removing Audible intro/outro branding
-    - New API endpoint for direct playing audio files using session ID
-    - Improved audiobook m4b encoder with smarter presets for codec, bitrate, and channels
-    - Enhanced file watcher to re-scan library items when non-media file updates are made
-    - Improved Year in Review display logic
+  This update fixes Debian install permission errors.
 
 
-  Fixed issues:
-    - Resolved server crash when updating the "Ignore prefixes when sorting" setting
-    - Fixed .ignore file causing ignores outside the directory
-    - Corrected issue where users without access to books in a series could still find the series in search results
-    - Resolved UI/UX issue with share audio player track bar tooltip overflowing on mobile
+  It also cleans up abandoned OIDC mobile login sessions and improves expired OIDC callback handling.
 
 
-  UI/UX enhancements:
-    - Revamped audiobook tools page
-    - Improved podcast episode table sorting
-    - Enhanced authentication config page to show "restart server" message when OIDC is enabled
-    - Updated various translations including Catalan, Finnish, German, Italian, Russian, Slovak, Slovenian, Spanish, and Ukrainian
-
-
-  Full release notes can be found at https://github.com/advplyr/audiobookshelf/releases
+  Full release notes can be found at https://github.com/advplyr/audiobookshelf/releases/tag/v2.37.1
 submitter: Jasper
 submission: https://github.com/getumbrel/umbrel-apps/pull/302

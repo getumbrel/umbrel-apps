@@ -1,9 +1,11 @@
 manifestVersion: 1
 id: duplicati
+storage:
+  dataRoot: data
 name: Duplicati
 tagline: Store securely encrypted backups in the cloud
 category: files
-version: "v2.1.0.5_stable_2025-03-04"
+version: "v2.4.0.0_stable_2026-09-03-patch.1"
 port: 38476
 description: >-
   Pick your own backend and store encrypted backups of your umbrel files anywhere!
@@ -38,19 +40,24 @@ gallery:
   - 2.jpg
   - 3.jpg
 releaseNotes: >-
-  This update fixes critical issues reported in previous versions. It is highly recommended to upgrade as soon as possible if you are running version 2.1.0.4 or earlier.
+  This update adds support for new storage management and configuration options being introduced with umbrelOS 2.0.
 
 
-  Key highlights:
-    - Fixed issue where failed uploads were ignored in certain cases
-    - Increased default timeout for large backup sets
-    - Improved handling of source URL paths
-    - Enhanced support for various zip file formats
-    - Updated icons for dark/light mode on MacOS
-    - Improved signing process for MacOS and Windows
+  Previous Duplicati v2.4.0.0_stable_2026-09-03 release notes:
 
 
-  Full release notes can be found at https://github.com/duplicati/duplicati/releases
+  This stable release hardens Duplicati's data-folder permission checks. Most Umbrel users should not need to take any action, but Duplicati can now refuse data folders with unsafe/lax permissions.
+
+
+  New in 2.4.0.0:
+    - Added sync copy mode for one-way source-to-destination file copies
+    - Added PAR2 parity/error-correction support for remote backup volumes
+    - Stores encrypted backup configurations with backup data by default to simplify recovery
+    - Improved restore reliability, missing-source detection, filter accuracy, and TLS certificate validation
+    - Added new storage backends and improved Microsoft 365 backup support, with older SharePoint/OneDrive for Business backends deprecated
+
+
+  Full release notes can be found at https://github.com/duplicati/duplicati/releases/tag/v2.4.0.0_stable_2026-09-03
 dependencies: []
 permissions:
   - STORAGE_DOWNLOADS

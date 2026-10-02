@@ -1,0 +1,28 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: yuvomi_web_1
+      APP_PORT: 3000
+
+  web:
+    image: ghcr.io/ulsklyc/yuvomi:2.71.0@sha256:77a38913e83d7f68d2211b7455718f9aa0d97130362b5bf4baf5512bb97a9177
+    restart: on-failure
+    stop_grace_period: 1m
+    # No `user:` override: the image entrypoint starts as root only to chown the
+    # app data and backup volumes, then drops to the unprivileged `node` user via gosu.
+    volumes:
+      - ${APP_DATA_DIR}/data/app:/data
+      - ${APP_DATA_DIR}/data/backups:/backups
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DB_PATH=/data/yuvomi.db
+      - BACKUP_DIR=/backups
+      # SESSION_SECRET is required; Umbrel injects a deterministic per-app secret.
+      - SESSION_SECRET=${APP_SEED}
+      # DB_ENCRYPTION_KEY enables Yuvomi's SQLite encryption and must stay stable.
+      - DB_ENCRYPTION_KEY=${APP_SEED}
+      # Umbrel serves apps over plain HTTP on the LAN, so secure cookies stay off.
+      - SESSION_SECURE=false

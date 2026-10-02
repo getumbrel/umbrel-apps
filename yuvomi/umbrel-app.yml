@@ -1,0 +1,106 @@
+manifestVersion: 1
+id: yuvomi
+storage:
+  dataRoot: data
+category: files
+name: Yuvomi
+version: "2.71.0"
+tagline: Self-hosted family planner — calendar, tasks, shopping, meals & budget
+description: >-
+  Yuvomi is a self-hosted, privacy-focused family planner that bundles everything
+  a household needs into a single fast PWA — no cloud, no tracking, no ads.
+
+
+  Everything runs on your Umbrel and stays on your Umbrel.
+
+
+  ✨ FEATURES
+
+
+  - Shared family calendar with recurring events, reminders and birthdays
+
+  - CalDAV / Google Calendar / Apple iCloud / ICS subscription sync
+
+  - Tasks with multi-assignment and due dates
+
+  - Shopping lists and a kitchen/meal planner
+
+  - Notes, contacts (CardDAV) and a household budget with recurring entries &
+    split expenses
+
+  - Housekeeping: staff, chores and supplies
+
+  - Weather widget (Open-Meteo, no API key needed)
+
+  - Optional single sign-on via OIDC
+
+  - Full-text search across every module
+
+  - Installable PWA, mobile-first, dark mode, multi-language
+
+
+  🔒 PRIVACY
+
+
+  Yuvomi keeps all data in a local SQLite database (optionally encrypted with
+  SQLCipher). Nothing leaves your device unless you explicitly enable a calendar
+  or contacts sync to a provider you choose.
+
+
+  🛠️ SET-UP
+
+
+  Open Yuvomi from your Umbrel dashboard and create the first account — that
+  account becomes the family admin and can invite the rest of the household.
+releaseNotes: >-
+  This update adds Brazilian Portuguese and fixes several things people ran into
+  after 2.70.0.
+
+
+  Brazilian Portuguese is now its own language in the app, next to the existing
+  Portuguese. A browser set to Brazilian Portuguese picks it on its own.
+
+
+  Changing a recurring budget payment for all future months no longer rewrites
+  its first booking, which could lie years back and move old amounts to another
+  account. Members who may edit the meal plan can now edit and delete recipes
+  that someone else added; before, saving failed with "Not authorized", even for
+  an admin.
+
+
+  When the weather service cannot be reached, the weather tile now stays on the
+  overview and says the weather is currently unavailable, instead of
+  disappearing without a trace. In the app added to an iPhone home screen, the
+  dark strip below the tab bar is gone. Switches that are off are easier to see,
+  and in Arabic and Persian "on" sits on the left.
+
+
+  The update runs one database migration on first start. It gives every
+  recurring budget payment a definition of its own, without changing any
+  existing entry. No action is needed; as always, a backup before updating is a
+  good idea.
+
+
+  Full release notes are available at
+  https://github.com/ulsklyc/yuvomi/releases/tag/v2.71.0
+backupIgnore:
+  - data/app/yuvomi.db.plaintext-backup*
+  - data/backups/*.db
+
+developer: Ulas Kalayci
+website: https://github.com/ulsklyc/yuvomi
+dependencies: []
+repo: https://github.com/ulsklyc/yuvomi
+support: https://github.com/ulsklyc/yuvomi/issues
+port: 8180
+gallery:
+  - 1.webp
+  - 2.webp
+  - 3.webp
+  - 4.webp
+  - 5.webp
+path: ""
+defaultUsername: ""
+defaultPassword: ""
+submitter: Ulas Kalayci
+submission: https://github.com/getumbrel/umbrel-apps/pull/5732

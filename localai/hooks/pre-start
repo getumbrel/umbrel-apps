@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# LocalAI's upstream compose persists these directories as named volumes.
+# Ensure existing Umbrel installs have matching host-side bind mount directories
+# with ownership suitable for the LocalAI container before startup.
+mkdir -p \
+  "${APP_DATA_DIR}/data/backends" \
+  "${APP_DATA_DIR}/data/data" \
+  "${APP_DATA_DIR}/data/configuration"
+
+chown -R 1000:1000 \
+  "${APP_DATA_DIR}/data/backends" \
+  "${APP_DATA_DIR}/data/data" \
+  "${APP_DATA_DIR}/data/configuration"

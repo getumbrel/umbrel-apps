@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+APP_DATA_DIR="$(readlink -f $(dirname "${BASH_SOURCE[0]}")/..)/data"
+
+DESIRED_OWNER="1000:1000"
+
+CHRONOGRAF_DATA_DIR="${APP_DATA_DIR}/chronograf"
+
+influxdb_correct_permission() {
+	local -r path="${1}"
+
+	if [[ -d "${path}" ]]; then
+		chown -R "${DESIRED_OWNER}" "${path}"
+	fi
+}
+
+influxdb_correct_permission "${CHRONOGRAF_DATA_DIR}"

@@ -7,7 +7,7 @@ services:
       APP_PORT: 3004
 
   web:
-    image: lightninglabs/lightning-terminal:v0.14.1-alpha@sha256:b9eb42c626eae23ad0d0bf1937c4b620498f2e92ed5f477f1d09a0e94b497fae
+    image: lightninglabs/lightning-terminal:v0.17.5-alpha@sha256:a349f4373708a4416c43030aaf81e503c8eda8f346c8e40e79a6430d1a7fd52c
     user: "1000:1000"
     restart: on-failure
     stop_grace_period: 1m
@@ -17,6 +17,8 @@ services:
     environment:
       HOME: "/data"
       APP_PASSWORD: "$APP_PASSWORD"
+      # Auto-approve LiT's one-time bbolt-to-SQL migration for non-interactive Umbrel updates.
+      LIT_AUTO_MIGRATE_TO_SQL: "true"
     command:
         - --uipassword_env=APP_PASSWORD
         - --insecure-httplisten=0.0.0.0:3004

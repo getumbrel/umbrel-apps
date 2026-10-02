@@ -1,0 +1,31 @@
+# Bisq 2 Node — a headless Bisq 2 node (api-app) plus a small nginx web UI that shows node
+# status and a pairing QR code for the Bisq Connect mobile app.
+#
+# The node's API binds 127.0.0.1:8090 (loopback only) for security. The `web` sidecar runs with
+# `network_mode: "service:server"` so it shares the node's network namespace — that lets it read
+# the loopback API for the status check and serve its own :8091. Because `web` has no network
+# identity of its own, `app_proxy` targets the `server` container (which owns the namespace + :8091).
+# Umbrel's authenticated app_proxy is the only ingress; PROXY_AUTH_ADD is intentionally left unset
+# so auth stays ON (the pairing code grants node access, so it must never be exposed unauthenticated).
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: bisq2-node_server_1
+      APP_PORT: 8091
+
+  server:
+    image: ghcr.io/bisq-network/bisq2-api:2.1.13.0@sha256:caeebd10b6e232ea8567941e4c6594b4000b5771c9e53cef25cf9b9766d5570d
+    restart: on-failure
+    stop_grace_period: 1m
+    mem_limit: 2g
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+
+  web:
+    image: ghcr.io/bisq-network/bisq2-api-web-ui:2.1.13.0@sha256:9f818767031aeef0ae6018dfd1c02dd0fad392207013e4a6b6a12f6161f6fd27
+    restart: on-failure
+    network_mode: "service:server"
+    volumes:
+      - ${APP_DATA_DIR}/data:/data:ro

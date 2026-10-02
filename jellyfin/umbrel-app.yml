@@ -1,8 +1,24 @@
-manifestVersion: 1
+manifestVersion: 1.1
 id: jellyfin
+storage:
+  dataRoot: data
+folderAccess:
+  - id: umbrel-downloads
+    name: Downloads
+    note: Media files for your Jellyfin libraries. Available inside Jellyfin at /downloads.
+    mounts:
+      - service: server
+        targetPath: /downloads
+  - id: media-library
+    name: Media Library
+    note: Select an additional folder containing media, then add /media as a library folder in Jellyfin. Access is read-only to protect the original files.
+    mounts:
+      - service: server
+        targetPath: /media
+        readOnly: true
 category: media
 name: Jellyfin
-version: "10.10.7"
+version: "12.1"
 tagline: The Free Software Media System
 description: >-
   Jellyfin is the volunteer-built media solution that puts you in control of your media. Stream to any device from your own server, with no strings attached. Your media, your server, your way.
@@ -32,23 +48,22 @@ path: ""
 defaultUsername: ""
 defaultPassword: ""
 releaseNotes: >-
-  This minor release brings several bugfixes and security fixes to improve your Jellyfin experience.
-
-
-  ⚠️ If you're using a reverse proxy, ensure you have explicitly configured trusted proxies before upgrading. See the Jellyfin documentation for more information.
+  Jellyfin 12 is a major upgrade. Back up your Jellyfin data before updating because the database changes cannot be rolled back without restoring a backup. Direct upgrades from Jellyfin 10.11.x are supported, but repository plugins should be removed before migrating and re-added only after compatible versions are available.
 
 
   Key improvements in this release:
-    - Fixed issues with metadata search and handling
-    - Improved support for various audio and video formats
-    - Enhanced security for API parameters and proxy configurations
-    - Better handling of ratings and premiere dates
-    - Improved system stability and performance
+    - Improves library scan performance, item cleanup, metadata handling, playlists, collections, Live TV, subtitles, and SyncPlay reliability
+    - Adds new media/library filters, recommendation and search provider support, improved language/subtitle options, and better handling of multi-version media
+    - Fixes Jellyfin 12.0 regressions in Jellyfin 12.1, including library/user-view memory use, forced subtitles, collection creation, refresh handling, EPG behavior, and database backup integrity
 
 
-  Full release notes can be found at https://github.com/jellyfin/jellyfin/releases
+  After upgrading, run a full library scan to restore alternative versions.
+
+
+  Full release notes can be found at https://github.com/jellyfin/jellyfin/releases/tag/v12.1
 torOnly: false
 permissions:
   - STORAGE_DOWNLOADS
+  - GPU
 submitter: Umbrel
 submission: https://github.com/getumbrel/umbrel-apps/commit/60878f278d544b204d8e7c96240c797f43a9b319

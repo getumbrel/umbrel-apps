@@ -1,0 +1,15 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: sikka_web_1
+      APP_PORT: 64552
+
+  web:
+    image: ghcr.io/sikkalabs/sikka:0.2.0@sha256:9472a9f214e812685bb8a6b829755bbbdb196fe8beccaad19f0d2116590af417
+    restart: on-failure
+    stop_grace_period: 1m
+    user: "1000:1000"
+    volumes:
+      - ${APP_DATA_DIR}/data:/home/sikka/data

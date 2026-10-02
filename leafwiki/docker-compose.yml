@@ -1,0 +1,17 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: leafwiki_web_1
+      APP_PORT: 8080
+
+  web:
+    image: ghcr.io/perber/leafwiki:v0.13.0@sha256:c40904dafd9db81ca2c9334e8c67fb168d175876111fc1fd9a00e3715b66775b
+    restart: on-failure
+    environment:
+      LEAFWIKI_JWT_SECRET: ${APP_SEED}
+      LEAFWIKI_ADMIN_PASSWORD: ${APP_PASSWORD}
+      LEAFWIKI_ALLOW_INSECURE: "true"
+    volumes:
+      - ${APP_DATA_DIR}/data:/app/data

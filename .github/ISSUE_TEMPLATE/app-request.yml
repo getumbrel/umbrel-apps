@@ -1,0 +1,61 @@
+name: App request
+description: Suggest an app for the Umbrel App Store
+title: "App request: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Want to see an app on Umbrel? Open a request here so Umbrel, the community, and the app's developers can see the demand.
+
+        The best path is for the app's official developers to submit or help maintain the Umbrel package. Popular requests may also be picked up by Umbrel or community contributors.
+
+        If you want to help, share this request with the app's developers or open an issue in their project asking if they'd like to submit an Umbrel package.
+  - type: input
+    id: app
+    attributes:
+      label: App name
+    validations:
+      required: true
+  - type: input
+    id: upstream
+    attributes:
+      label: Upstream project
+      description: Website, GitHub repo, or official docs.
+    validations:
+      required: true
+  - type: input
+    id: docker
+    attributes:
+      label: Official Docker image
+      description: Leave blank if unknown.
+  - type: dropdown
+    id: web-ui
+    attributes:
+      label: Does it have a browser UI or status page?
+      options:
+        - "Yes"
+        - "No"
+        - "I don't know"
+    validations:
+      required: true
+  - type: textarea
+    id: fit
+    attributes:
+      label: Why does it fit Umbrel?
+    validations:
+      required: true
+  - type: dropdown
+    id: packaging-help
+    attributes:
+      label: Who can help package or maintain this app?
+      options:
+        - I can submit a PR
+        - The app's developers may be able to help
+        - I am only suggesting the app
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Packaging notes
+      description: Known ports, persisted data, dependencies, special permissions, or architecture support.

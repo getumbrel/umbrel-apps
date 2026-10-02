@@ -6,9 +6,12 @@ services:
       APP_PORT: 3232
 
   app:
-    image: ghcr.io/besoeasy/file-drop:1.0.3@sha256:4523d107acc6c93256e26248b1b7e9dfbc1237253837a10e76a11ddbf6053cd7
+    image: ghcr.io/besoeasy/file-drop:1.4.3@sha256:f46389e22243a3a3cd6a371f9b46cd8428bcfa23030c9303509110fcd899a0b2
     user: "1000:1000"
     restart: on-failure
     stop_grace_period: 5m
     environment:
       - NODE_ENV=production
+      - IPFS_TELEMETRY=off
+    volumes:
+      - ${APP_DATA_DIR}/data:/data

@@ -4,8 +4,9 @@ set -euo pipefail
 # This script checks the Nextcloud config.php file for the presence of 'nextcloud_web_1' in the trusted_domains array and adds it if it doesn't exist. Pre-29.0.4 installs on umbrelOS will not have the domain added via `NEXTCLOUD_TRUSTED_DOMAIN`.
 # This is handled in a post-update hook to make sure we don't interfere with the Nextcloud startup process and pre-start script where config.php is being written to.
 
-APP_DATA_DIR="$(readlink -f $(dirname "${BASH_SOURCE[0]}")/..)"
-CONFIG_PHP_FILE="${APP_DATA_DIR}/data/nextcloud/config/config.php"
+APP_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")"
+DATA_ROOT="${APP_DATA_ROOT:-${APP_DIR}/data}"
+CONFIG_PHP_FILE="${DATA_ROOT}/nextcloud/config/config.php"
 
 DOMAIN_TO_ADD="nextcloud_web_1"
 

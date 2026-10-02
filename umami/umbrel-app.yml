@@ -1,9 +1,11 @@
 manifestVersion: 1
 id: umami
+storage:
+  dataRoot: data
 name: Umami
 tagline: Simple, fast, privacy-focused alternative to Google Analytics
 category: developer
-version: "2.18.1"
+version: "3.4.0"
 port: 25727
 description: >-
   Empowering insights. Preserving privacy.
@@ -48,17 +50,17 @@ defaultUsername: admin
 defaultPassword: umami
 dependencies: []
 releaseNotes: >-
-  This update introduces several new features and improvements:
-
-    - New Attribution report to trace user source origin and measure ad campaign effectiveness
-    - Distinct ID property for sessions to help identify users
-    - New data-before-send attribute for the tracker to inspect and modify payload before sending
-    - Events chart filtering by clicking on items in the events table
-    - Option to use alternative hosts for icons with the FAVICON_URL environment variable
+  This update adds annotations, API key management, MCP support, new analytics APIs, session property segments, and security and UI improvements.
 
 
-  ⚠️ Note: This release includes database migrations for handling UTM parameters. The migrations will apply the new schema automatically, but you may need to run a separate script to migrate old data.
+  Key highlights:
+    - Add dated annotations to website charts for launches, campaigns, and other events
+    - Create and revoke account API keys, with generated OpenAPI documentation and a typed API client
+    - Explore analytics with read-only MCP tools when the self-hosted MCP endpoint is explicitly enabled
+    - Save session property filters in segments, set visitor identities with data-distinct-id, and use additional revenue currencies
+    - Security hardening for two-factor tokens, password-bound sessions, deleted-team access, and report website assignment
+    - Automatic database migrations for annotations and API keys, plus fixes for time zones, session queries, regex filters, goals and funnels, mobile one-time passwords, and base-path navigation
 
 
-  Full release notes are found at https://github.com/umami-software/umami/releases
+  Full release notes are found at https://github.com/umami-software/umami/releases/tag/v3.4.0
 path: "/dashboard"

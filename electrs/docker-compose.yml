@@ -24,13 +24,13 @@ services:
         ipv4_address: $APP_ELECTRS_IP
   
   electrs:
-    image: getumbrel/electrs:v0.10.9@sha256:622657fbdc7331a69f5b3444e6f87867d51ac27d90c399c8bf25d9aab020052b
+    image: getumbrel/electrs:v0.11.1@sha256:f1d5d4e431d39e0aaa0697014d2852880183e350ffcad612edb87183f0c11b25
     restart: always
     environment:
       ELECTRS_LOG_FILTERS: "INFO"
       ELECTRS_NETWORK: "${APP_BITCOIN_NETWORK_ELECTRS}"
       ELECTRS_DAEMON_RPC_ADDR: "${APP_BITCOIN_NODE_IP}:${APP_BITCOIN_RPC_PORT}"
-      ELECTRS_DAEMON_P2P_ADDR: "${APP_BITCOIN_NODE_IP}:${APP_BITCOIN_P2P_PORT}"
+      ELECTRS_DAEMON_P2P_ADDR: "${APP_BITCOIN_NODE_IP}:${APP_BITCOIN_P2P_WHITEBIND_PORT-${APP_BITCOIN_P2P_PORT}}"
       ELECTRS_ELECTRUM_RPC_ADDR: "0.0.0.0:${APP_ELECTRS_NODE_PORT}"
       ELECTRS_SERVER_BANNER: "Umbrel Electrs (${APP_VERSION})"
       ELECTRS_DB_DIR: "/data/db"
@@ -44,7 +44,7 @@ services:
         ipv4_address: $APP_ELECTRS_NODE_IP
 
   tor:
-    image: getumbrel/tor:0.4.7.8@sha256:2ace83f22501f58857fa9b403009f595137fa2e7986c4fda79d82a8119072b6a
+    image: ghcr.io/getumbrel/tor:0.4.9.11@sha256:e382b8629c0dfef6ceb396b062622d4e4e955b19d6f16b883fd2c0723ad5671a
     user: "1000:1000"
     restart: on-failure
     volumes:

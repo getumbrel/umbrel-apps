@@ -8,10 +8,12 @@ services:
       PROXY_AUTH_ADD: "false"
 
   ollama:
-    image: ollama/ollama:0.7.0@sha256:f6699242880c38eb356dfd8204b08b7a7ba4da2645bdece55a0871bf6752a585
+    image: ollama/ollama:0.35.0@sha256:2a6e883b917fc543389599dae79918f5cac9e1438890506982f44aa4f5625d01
     environment:
       OLLAMA_ORIGINS: "*"
       OLLAMA_CONTEXT_LENGTH: 8192
+      OLLAMA_VULKAN: "1"
+      OLLAMA_IGPU_ENABLE: "1"
     volumes:
       - ${APP_DATA_DIR}/data:/root/.ollama
     restart: on-failure

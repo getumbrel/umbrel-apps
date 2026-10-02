@@ -1,8 +1,10 @@
 manifestVersion: 1
 id: homebridge
+storage:
+  dataRoot: data
 category: automation
 name: Homebridge
-version: "1.9.0-2025-02-26"
+version: "2.4.0-2026-09-25"
 tagline: "HomeKit support for the impatient"
 description: >-
   Bringing HomeKit support where there is none. Homebridge allows you to integrate with smart home devices that do not natively support HomeKit.
@@ -38,10 +40,18 @@ path: ""
 defaultUsername: ""
 defaultPassword: ""
 torOnly: false
+permissions:
+  - GPU
 releaseNotes: >-
-  This release updates the Homebridge UI to v4.71.2 and Homebridge itself to version 1.9.0.
+  ⚠️ Major update reminder: If you are upgrading from a pre-2.x Homebridge release, check plugin readiness indicators and update outdated plugins before upgrading. Older plugins that use removed Homebridge or HAP-NodeJS APIs may fail until updated.
 
 
-  Full release notes can be found at https://github.com/homebridge/homebridge/releases
+  This image refresh includes Homebridge 2.4.0, Homebridge UI 5.29.0, Node.js 24.21.0, and Homebridge APT Package 2.0.19.
+
+
+  HAP-NodeJS now uses a built-in file storage replacement for node-persist. Saved Homebridge data is not migrated or rewritten, but rare plugins that call removed storage methods may need plugin updates.
+
+
+  Full release notes can be found at https://github.com/homebridge/docker-homebridge/releases/tag/2026-09-25
 submitter: Umbrel
-submission: https://github.com/getumbrel/umbrel-apps
+submission: https://github.com/getumbrel/umbrel-apps/pull/606

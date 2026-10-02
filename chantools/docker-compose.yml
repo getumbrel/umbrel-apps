@@ -1,0 +1,24 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: chantools_chantools_1
+      APP_PORT: 7682
+
+  chantools:
+    image: guggero/chantools:v0.14.1-umbrel@sha256:8994745086ab1708205f030f70e37dcfbe57154c72f27782089b229069fd8043
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 1s
+    volumes:
+      - ${APP_DATA_DIR}/data:/chantools
+      - ${UMBREL_ROOT}/app-data/lightning/data/lnd:/lnd:ro
+    command:
+      - "ttyd"
+      - "-W"
+      - "-p"
+      - "7682"
+      - "bash"
+      - "-c"
+      - "/bash-wrapper.sh"

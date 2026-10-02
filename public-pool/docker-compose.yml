@@ -8,14 +8,17 @@ services:
       PROXY_AUTH_WHITELIST: "/api/*"
 
   web:
-    image: smolgrrr/public-pool-ui:8cd2563@sha256:95884d33475b1681cf645831aefadb0cc31a89c6f537ede643251bc874311804
+    image: ghcr.io/benjamin-wilson/public-pool-ui:5f730f4@sha256:c1eaae042ee179eca87b273c04c54c8b1fba5ceb63a03411a21ec8ac6875be3d
     restart: on-failure
     stop_grace_period: 30s
     environment:
       - DOMAIN=$DEVICE_DOMAIN_NAME
+      # Intentionally empty so the UI uses same-origin /api routes via Umbrel's proxy.
+      - PUBLIC_POOL_API_URL=
+      - PUBLIC_POOL_STRATUM_URL=${DEVICE_DOMAIN_NAME}:2018
 
   server:
-    image: sethforprivacy/public-pool:9c14003@sha256:becfe82228a4cc814da8832d0c909000a382e2b39ef8a5d5cb6a8fb0bc554850
+    image: ghcr.io/benjamin-wilson/public-pool:95565ee@sha256:3edffef3bbad23cbd46098904b22ba8a1c14c679ae90cf1e4d97ed98492bbab4
     restart: on-failure
     stop_grace_period: 30s
     ports:

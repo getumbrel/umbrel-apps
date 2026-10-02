@@ -2,12 +2,10 @@
 
 # This hack can be removed if https://github.com/docker-library/docker/pull/444 gets merged.
 
-# Remove docker pidfile if it exists to ensure Docker can start up after a bad shutdown
-pidfile="/var/run/docker.pid"
-if [[ -f "${pidfile}" ]]
-then
-    rm -f "${pidfile}"
-fi
+# Remove a stale Docker-in-Docker pidfile so dockerd can start after an
+# unclean shutdown. Keep this in sync with the --pidfile value in
+# docker-compose.yml.
+rm -f /data/docker.pid
 
 # Use nftables as the backend for iptables
 for command in iptables iptables-restore iptables-restore-translate iptables-save iptables-translate

@@ -2,51 +2,61 @@ manifestVersion: 1
 id: snort
 category: social
 name: Snort
-version: "v0.3.0"
+version: "v0.5.3"
 tagline: Fast Nostr UI
 description: >-
   Snort is a client for Nostr that is built using React, designed to be fast and lightweight while still offering a wide range of features. 
   Our focus is on providing users with an easy-to-use interface to interact with the Nostr network, making it accessible to all types of users. 
   With its clean and intuitive design, Snort makes it simple to navigate the Nostr network and access its features, allowing users to efficiently manage their data.
 releaseNotes: >-
-  # Changed
+  # Highlights
+
+  - **Security Hardening**: Comprehensive audit fixes including Schnorr signature verification, NIP-46 relay message forgery protection, PIN encryption improvements, and NIP-26 delegation trust removal
+
+  - **Performance**: Batched Schnorr verification in WASM, lazy-loaded routes, pre-compiled translations, worker-relay batch optimizations, and eliminated double verification per event
+
+  - **Stability**: Fixed multiple React render loops, hook dependency arrays, stale closures, and lifecycle/memory leaks across the app
 
 
-  - Drop NIP-04 support for DM's
+  # Added
 
-  - Notifications chart removed
+  - Comprehensive request processing path tests
 
-  - Profile link QR selector (npub/nprofile)
+  - Priority profile loader with batch loading, priority tiers, and chunking
 
-  - Re-designed relay management pages
+  - DVM kind:7000 payment-required invoice display
 
-  - Relay up time reporting (via nostr.watch NIP)
+  - Default relays fallback when pool is empty
 
-  - New note designer media attachment UI
-
-  - Media browser via NIP-96 server list
-
-  - NIP-89 support (App handlers for unknown events)
-
-  - Improved profile zaps tab to show totals
-
-  - Improved Note Rebroadcaster modal
-
-  - WoT filter for replies
-
-  - Expanded right bar with more widgets (trending people / articles)
-
-  - Drop NIP-04 support for NIP-46 bunkers (NIP-44 only) 
-
-  - NIP-55 Amber signer support
+  - Zapstore manifest migration (nap.yaml → zapstore.yaml)
 
 
   # Fixed
 
-  - NIP-06 login (HD-Key)
+  - Real Schnorr signature verification in isValid
 
-  
-  https://git.v0l.io/Kieran/snort/compare/v0.2.1...v0.3.0
+  - PIN encryption security issues
+
+  - NIP-46 hardened against forged relay messages and secret leakage
+
+  - Removed unverified NIP-26 delegation trust in getRootPubKey
+
+  - Wrapped all dangerous JSON.parse calls in try/catch
+
+  - Added timeouts to all hanging promises
+
+  - Added lifecycle management and fixed timer/memory leaks
+
+  - Render loops in NoteReaction, profile page pinned notes, notifications, and NoteContext
+
+  - React hook dependency arrays and stale closures across components
+
+  - NoteStore lazy snapshot and OutboxModel input mutation
+
+  - Queue traces for connecting relays with query system edge-case tests
+
+
+  https://github.com/v0l/snort/compare/v0.4.0...v0.5.0
 developer: Snort
 website: https://snort.social
 dependencies: []

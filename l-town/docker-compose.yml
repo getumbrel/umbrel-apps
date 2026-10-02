@@ -1,0 +1,13 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: l-town_app_1
+      APP_PORT: 30300
+      PROXY_AUTH_ADD: "false"
+
+  app:
+    image: ghcr.io/besoeasy/l-town:20260621@sha256:48d6aa09d4cdb279c512c73b5e17bd30cb40657685fb5135e6bf840abf0f36e2
+    restart: on-failure
+    user: "1000:1000"

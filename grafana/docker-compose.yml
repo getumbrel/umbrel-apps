@@ -9,8 +9,10 @@ services:
       PROXY_AUTH_WHITELIST: "/api/*"
       
   web:
-    image: grafana/grafana:12.0.0@sha256:263cbefd5d9b179893c47c415daab4da5c1f3d6770154741eca4f45c81119884
+    image: grafana/grafana:13.2.3@sha256:b28bae15e219c998fb0e0424ed724930cc61b1f61fb404d47c862f9a23f9e572
     user: 1000:1000
+    environment:
+      GF_PLUGINS_PREINSTALL_AUTO_UPDATE: "false"
     restart: on-failure
     volumes:
       - ${APP_DATA_DIR}/data:/var/lib/grafana

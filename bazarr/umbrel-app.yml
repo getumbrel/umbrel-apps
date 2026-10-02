@@ -1,8 +1,10 @@
 manifestVersion: 1
 id: bazarr
+storage:
+  dataRoot: data
 category: media
 name: Bazarr
-version: "1.5.2"
+version: "1.6.2"
 tagline: Manage and download subtitles for Sonarr and Radarr
 description: >-
   Bazarr is a companion application to Sonarr and Radarr that manages and downloads subtitles based on your requirements.
@@ -19,20 +21,19 @@ description: >-
   You will also need to input your API key for Sonarr and/or Radarr. You can find your API keys in the settings of the Sonarr and Radarr apps.
 releaseNotes: >-
   Key improvements in this release include:
-
-    - Enhanced subtitle search and matching capabilities
-    - Improved handling of embedded subtitles
-    - Better support for multiple languages and translations
-    - Added new subtitle provider options
-    - Improved series and episode management
-    - Enhanced settings organization and user interface
-    - Various performance improvements and bug fixes
+    - Fixed cutoff logic for non-HI subtitles when HI subtitles are excluded from language profiles
+    - Added the Tsukihime anime provider and hash-only mode for the napiprojekt provider
+    - Improved subtitle provider handling for napiprojekt, subssabbz, and history queries
+    - Added safer subtitle deletion checks and safer post-processing command handling
+    - Added subsync quality controls and generic webhook URL parameters
 
 
-  Full release notes are found at https://github.com/morpheus65535/bazarr/releases
+  Full release notes are found at https://github.com/morpheus65535/bazarr/releases/tag/v1.6.2
 developer: morpheus65535
 website: https://www.bazarr.media/
 dependencies: []
+permissions:
+  - STORAGE_DOWNLOADS
 repo: https://github.com/morpheus65535/bazarr
 support: https://github.com/morpheus65535/bazarr/issues
 port: 6767

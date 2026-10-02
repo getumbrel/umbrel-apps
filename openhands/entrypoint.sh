@@ -42,6 +42,14 @@ then
     bridge="${DOCKER_ENSURE_BRIDGE%%:*}"
     ip_range="${DOCKER_ENSURE_BRIDGE#*:}"
     ensure_bridge_exists "${bridge}" "${ip_range}"
+
+    # dockerd runs with --iptables=false so the nested Docker daemon does not
+    # rewrite the host Docker chains that Umbrel app_proxy relies on. Add only
+    # the scoped forwarding/NAT rules needed by the nested OpenHands sandboxes.
+    subnet="${ip_range}"
+    iptables -C FORWARD -i "${bridge}" -j ACCEPT 2>/dev/null || iptables -A FORWARD -i "${bridge}" -j ACCEPT
+    iptables -C FORWARD -o "${bridge}" -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT 2>/dev/null || iptables -A FORWARD -o "${bridge}" -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+    iptables -t nat -C POSTROUTING -s "${subnet}" ! -o "${bridge}" -j MASQUERADE 2>/dev/null || iptables -t nat -A POSTROUTING -s "${subnet}" ! -o "${bridge}" -j MASQUERADE
 fi
 
 exec dockerd-entrypoint.sh $@

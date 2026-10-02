@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: navidrome
 category: media
 name: Navidrome
-version: "0.55.2"
+version: "0.64.2"
 tagline: Your personal streaming service
 description: >-
   Navidrome is an open source web-based music collection server and streamer.
@@ -41,7 +41,7 @@ developer: Navidrome
 website: https://www.navidrome.org/
 dependencies: []
 repo: https://github.com/navidrome/navidrome
-support: https://github.com/navidrome/navidrome/discussions
+support: https://github.com/navidrome/discussions
 port: 4533
 gallery:
   - 1.jpg
@@ -51,26 +51,16 @@ path: ""
 permissions:
   - STORAGE_DOWNLOADS
 releaseNotes: >-
-  🚨 If you haven't yet updated to at least 0.55.0, please note the breaking changes below.
+  This bug fix and security release reduces database lock contention during library scans, especially on slower storage, and fixes scan failures on 32-bit systems with invalid track, disc, or BPM metadata.
 
 
-  New features and bug-fixes:
-    - Automatically load navidrome.toml file from /data if available
-    - Add Greek and Norwegian translations
-    - Add mood column to Album and Song list views
-    - Hide absolute paths from regular users
-    - Show bitDepth in song info dialog
-    - Improve embedded artwork extraction
-    - Fix issues with scanner and watcher
-    - Update various translations
-    - Correct UI and API issues
+  Highlights include:
+    - Sanitizes download filenames generated from user-controlled music and playlist names
+    - Prevents failed first-admin creation from leaving the server marked as already set up
+    - Fixes invalid JSON in some delete responses and missing content type on shared playlist downloads
+    - Honors Jellyfin playlist visibility when playlists are created through the Jellyfin API
 
 
-  ⚠️ Breaking changes from 0.55.0:
-    - Artist favourites and ratings will be lost after the upgrade
-    - Albums may change grouping due to new disambiguation logic
-
-
-  Full release notes can be found at https://github.com/navidrome/navidrome/releases
+  Full release notes can be found at https://github.com/navidrome/navidrome/releases/tag/v0.64.2
 submitter: owmsoton
 submission: https://github.com/getumbrel/umbrel-apps/pull/1232

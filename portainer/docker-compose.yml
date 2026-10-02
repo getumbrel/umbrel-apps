@@ -5,6 +5,7 @@ services:
     environment:
       APP_HOST: portainer_portainer_1
       APP_PORT: 9000
+      PROXY_AUTH_ADD: "false"
 
   docker:
     image: docker:27.2.0-dind@sha256:f9f72ad901a78f27be922b2d320bbc263174f12919c1b37e6a01f828fa904565
@@ -14,6 +15,9 @@ services:
     restart: on-failure
     environment:
       DOCKER_ENSURE_BRIDGE: "dind0:10.32.0.1/16"
+      # Keep Docker on the nftables backend selected by entrypoint.sh.
+      # An empty value disables legacy auto-selection; "false" enables it.
+      DOCKER_IPTABLES_LEGACY: ""
     entrypoint: /entrypoint.sh
     command: >
       dockerd
@@ -27,7 +31,7 @@ services:
       - ${APP_DATA_DIR}/data/docker:/data
 
   portainer:
-    image: portainer/portainer-ce:2.27.6@sha256:ebead33595e425f88b1d02a74e4cc65a6d295e96c3643bb176dca7cb64bc36b0
+    image: portainer/portainer-ce:2.45.1-alpine@sha256:4d9a99f4495c005388842b94d72377d5239eac8686543428c3ff7c9b6c0882bb
     command: --host unix:///var/run/docker.sock --admin-password-file=/default-password
     restart: on-failure
     volumes:

@@ -10,7 +10,7 @@ services:
   app:
     # currently does not work properly rootless
     #user: "1000:1000"
-    image: kimai/kimai2:apache-2.33.0@sha256:7e652a3d7d872d78bbb07b2a91e387ff7b223900c5b1ccaa24569e0502ec2c82
+    image: kimai/kimai2:2.67.0@sha256:3084f1e5ecdc10afafc193911039a06cdabda4473f3a48d62edbe460e3c154ee
     volumes:
       - ${APP_DATA_DIR}/data/app:/opt/kimai/var/data
       - ${APP_DATA_DIR}/data/app/plugins:/opt/kimai/var/plugins
@@ -35,7 +35,7 @@ services:
       MYSQL_ROOT_PASSWORD: $APP_PASSWORD
     restart: on-failure
     healthcheck:
-      test: mysqladmin -p$$MYSQL_ROOT_PASSWORD ping -h localhost
+      test: mariadb-admin -p$$MYSQL_ROOT_PASSWORD ping -h localhost
       interval: 20s
       start_period: 10s
       timeout: 10s

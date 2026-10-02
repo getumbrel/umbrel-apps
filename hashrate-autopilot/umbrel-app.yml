@@ -1,0 +1,107 @@
+manifestVersion: 1
+id: hashrate-autopilot
+storage:
+  dataRoot: data
+category: bitcoin
+name: Hashrate Autopilot
+version: "1.18.2-patch.1"
+tagline: Autopilot for renting hashrate to mine on Ocean Mining
+
+description: >-
+  PROJECT STATUS (August 2026): this app is in maintenance mode in its
+  current SHA-256 form. It keeps working, and fixes may still ship, but the
+  developer has personally stepped back from SHA-256 mining and no new
+  SHA-256 features are planned - read this before building your setup around
+  future feature work. Full reasoning:
+  https://github.com/rdouma/hashrate-autopilot/discussions/377
+
+
+  ALREADY RUNNING THE COMMUNITY-STORE VERSION? This official-store app has a
+  different app id than the community-store one (rdouma-hashrate-autopilot),
+  so it installs as a separate app with an empty database. A one-time
+  five-minute migration brings your full history across:
+  https://github.com/rdouma/hashrate-autopilot/blob/main/docs/migrating-from-community-store.md
+
+
+  Rent hashrate on the Braiins Hashpower marketplace and route it to your own
+  Ocean non-custodial mining pool, automatically. Each tick the autopilot finds
+  the cheapest available price for your target hashrate, adds a small
+  operator-chosen cushion, and bids exactly that price. You set a maximum you
+  are willing to pay, and the controller never goes above it.
+
+
+  Why this matters: Ocean is a non-custodial pool. Each Ocean block's coinbase
+  pays out to every miner whose accumulated earnings have crossed the on-chain
+  payout threshold (1,048,576 sat) - the coinbase IS the payout, in a single
+  transaction the chain itself executes when the block confirms. Most pools
+  (FPPS, PPS+, PPLNS) instead pay their own wallet first and then send miners a
+  second transaction on the pool's settlement cadence; that intermediate pool
+  wallet is bitcoin the pool custodies on your behalf, and it's what gets lost
+  when a pool goes dark. With Ocean your maximum exposure to pool failure is
+  your current unpaid balance (bounded by the threshold), and every past payout
+  is publicly verifiable on-chain forever. Ocean's Datum templates also filter
+  non-financial spam transactions. Renting hashrate to that kind of pool is a
+  small contribution to keeping Bitcoin mining decentralized.
+
+
+  Solo mining via Ocean's solo template should also work, though so far the
+  autopilot has only been tested against the regular Ocean+Datum pool setup.
+
+
+  Setup is a three-step web wizard. After setup you get a dashboard with live
+  decisions, charts, the DRY-RUN / LIVE / PAUSED switch, and a P&L panel that
+  reads spend from Braiins and earnings from your on-chain wallet.
+
+
+  This app declares a Bitcoin node, an Electrum server, and Datum Gateway as
+  dependencies, so Umbrel will prompt you to install them during setup - any of
+  Umbrel's Bitcoin node apps and any Electrum server (Electrs, Fulcrum, or
+  ElectrumX) works. Once all apps run on the same Umbrel, the autopilot's
+  dashboard auto-discovers the local Datum HTTP API, Electrum server, and
+  Bitcoin RPC across Umbrel's shared Docker network - zero copy/paste, the
+  worker-count, hashrate, P&L earnings, and BIP110 signalling panels all
+  populate on first boot. (Pointing at off-Umbrel instances is also supported -
+  just override the URLs in Config after setup.)
+
+developer: Remco Douma
+website: https://github.com/rdouma/hashrate-autopilot
+dependencies:
+  - bitcoin
+  - electrs
+  - datum
+repo: https://github.com/rdouma/hashrate-autopilot
+support: https://github.com/rdouma/hashrate-autopilot/issues
+port: 3018
+gallery:
+  - 1.webp
+  - 2.webp
+  - 3.webp
+  - 4.webp
+path: ""
+defaultUsername: ""
+defaultPassword: ""
+submitter: Remco Douma
+submission: https://github.com/getumbrel/umbrel-apps/pull/5685
+releaseNotes: >-
+  This update adds support for new storage management and configuration options being introduced with umbrelOS 2.0.
+
+
+  Previous Hashrate Autopilot 1.18.2 release notes:
+
+
+  v1.18.2 - the autopilot now protects your account from marketplace penalties, and the dashboard always tells you why bidding stopped.
+
+
+  Fixed: when a bid action fails, the dashboard shows the marketplace's own error message next to the FAILED badge instead of leaving you guessing, and an alert fires after repeated failures with the reason in the Telegram message.
+
+
+  New protections against the failure chain that got one operator's pool target temporarily blacklisted by the marketplace: the autopilot stops re-creating bids after three create/cancel cycles that delivered nothing (resume manually once the cause is fixed), a marketplace blacklist is detected and waited out automatically with a countdown instead of a failing attempt every minute, and when your Bitcoin node goes unresponsive the autopilot cancels active bids and holds new ones - rented hashrate never burns against a pool that cannot produce work.
+
+
+  Periods where bidding was held or kept failing now draw a hatched band across the charts and appear on the Timeline; long-lived conditions no longer falsely show "Recovered" after six hours; and gaps in the unpaid-earnings history left by the v1.18.1 recovery are filled by interpolating strictly between adjacent real readings, never across a payout.
+
+
+  Project note: the README now carries a maintenance-mode notice for the project's current SHA-256 form. Everything keeps working and this update is safe from any 1.17.x or 1.18.x release; read the notice before planning around future feature work.
+
+
+  Migrating from the community-store version (rdouma-hashrate-autopilot)? One-time five-minute guide: https://github.com/rdouma/hashrate-autopilot/blob/main/docs/migrating-from-community-store.md

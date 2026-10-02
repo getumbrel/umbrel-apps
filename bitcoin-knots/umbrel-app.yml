@@ -4,7 +4,7 @@ implements:
   - bitcoin
 category: bitcoin
 name: Bitcoin Knots
-version: "28.1-2"
+version: "1.2.13"
 tagline: Run your personal node powered by Bitcoin Knots
 description: >-
   Take control of your digital sovereignty by choosing Bitcoin Knots to run your node! By using Knots, you’re supporting a version of Bitcoin that prioritizes efficiency, security, and flexibility. With Bitcoin Knots’ enhanced configuration options, you can fine-tune your node to help keep the network clean and resilient, actively reducing unnecessary load from spam or parasitic transactions.
@@ -19,7 +19,7 @@ description: >-
   Here's a guide on how to move the blockchain from bitcoin core to knots: https://docs.mempool.guide/page/migrationumbrel.html
 
 
-  To forward incoming peer traffic to your device, set up the following configuration: (router) 8333 -> (device) 9333
+  To forward incoming peer traffic to your device, set up the following configuration: (router) 9333 -> (device) 9333
 
 
   Powered by Bitcoin Knots: https://bitcoinknots.org/
@@ -36,13 +36,18 @@ gallery:
 path: ""
 defaultPassword: ""
 releaseNotes: >-
-  Bug fixes.
+  Update to Bitcoin Knots v29.4.knots20260508
+
+
+  🚨 This version adds BIP 110 code directly into the Bitcoin Knots codebase 🚨
   
+  
+  In order to avoid appyling this upgrade by accident, this version requires you to accept or switch to another version directly on the Umbrel UI.
 widgets:
   - id: "stats"
     type: "four-stats"
     refresh: "5s"
-    endpoint: "server:3005/v1/bitcoind/widgets/stats"
+    endpoint: "app:3000/api/widget/stats"
     link: ""
     example:
       type: "four-stats"
@@ -63,7 +68,7 @@ widgets:
   - id: "sync"
     type: "text-with-progress"
     refresh: "2s"
-    endpoint: "server:3005/v1/bitcoind/widgets/sync"
+    endpoint: "app:3000/api/widget/sync"
     link: ""
     example:
       type: "text-with-progress"
@@ -72,5 +77,21 @@ widgets:
       text: "83%"
       progressLabel: "In progress"
       progress: 0.83
+backupIgnore:
+  - data/bitcoin/blocks
+  - data/bitcoin/chainstate
+  - data/bitcoin/indexes
+  - data/bitcoin/testnet3/blocks
+  - data/bitcoin/testnet3/chainstate
+  - data/bitcoin/testnet3/indexes
+  - data/bitcoin/testnet4/blocks
+  - data/bitcoin/testnet4/chainstate
+  - data/bitcoin/testnet4/indexes
+  - data/bitcoin/signet/blocks
+  - data/bitcoin/signet/chainstate
+  - data/bitcoin/signet/indexes
+  - data/bitcoin/regtest/blocks
+  - data/bitcoin/regtest/chainstate
+  - data/bitcoin/regtest/indexes
 submitter: Léo Haf
 submission: https://github.com/getumbrel/umbrel-apps/pull/953

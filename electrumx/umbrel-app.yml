@@ -4,7 +4,7 @@ implements:
   - electrs
 category: bitcoin
 name: ElectrumX
-version: "1.16.0"
+version: "1.16.0-patch.4"
 tagline: A lightweight Electrum server
 description: >
   Run your personal Electrum server and connect your Electrum-compatible wallet,
@@ -30,6 +30,11 @@ gallery:
   - 3.jpg
 path: ""
 defaultPassword: ""
-releaseNotes: ""
+releaseNotes: >
+  This update excludes the ElectrumX UTXO database from umbrelOS backups. The database is rebuilt from your Bitcoin node when ElectrumX resyncs and doesn't need to be backed up. Because it is rewritten frequently, including it caused backups to grow rapidly and fill up backup drives.
 submitter: Umbrel
 submission: https://github.com/getumbrel/umbrel-apps/pull/1813
+backupIgnore:
+  - data/electrumx/meta
+  - data/electrumx/hist
+  - data/electrumx/utxo

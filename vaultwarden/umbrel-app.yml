@@ -1,60 +1,41 @@
-manifestVersion: 1
+manifestVersion: 2.0
 id: vaultwarden
+storage:
+  dataRoot: data
 category: files
 name: Vaultwarden
-version: "1.33.2"
+version: "1.37.3-patch.2"
 tagline: Unofficial Bitwarden® compatible server
 description: >-
-  Vaultwarden is an alternative
-  implementation of the Bitwarden® server API that is compatible with
-  Bitwarden® clients*. Vaultwarden is perfect for self-hosting all of
-  your passwords in an encrypted vault on your Umbrel. Vaultwarden is a full
-  implementation of Bitwarden® API that includes:
+  Vaultwarden is an unofficial Bitwarden-compatible server for self-hosting your encrypted password vault on Umbrel. It works with many official Bitwarden clients and provides a lightweight alternative to the official Bitwarden server.
 
 
-  - Organizations support
-
-  - Attachments
-
-  - Vault API support
-
-  - Serving the static files for Vault interface
-
-  - Website icons API
-
-  - Authenticator and U2F support
-
-  - YubiKey and Duo support
-
-  - Emergency Access
+  **Connecting your devices**
 
 
-  🛠️ SET-UP INSTRUCTIONS
-
-  Vaultwarden's web interface is not accessible over http, meaning that to access it for initial set-up you need to use Tor. Here's how to do it:
-
-  - Ensure your Umbrel is accessible over Tor by going to Settings in your dashboard and toggling "Remote Tor access" to enabled. You will need to restart your Umbrel if Remote Tor access was previously disabled.
-  
-  - Access your umbrel through a Tor browser using the .onion address shown in Settings under "Remote Tor access". 
-
-  - In your Tor browser, open the Vaultwaden app and create an account.
-
-  - Once you've created an account, you can connect your Vaultwarden server from any Bitwarden app (mobile, desktop, browser, etc) by adding your server IP details.
-
-  - For the most robust connection from anywhere, install Tailscale on your Umbrel and your devices, and use the Tailscale IP address to connect to your Vaultwarden server.
+  Some Bitwarden clients require a secure HTTPS connection. Options include:
 
 
-  *Please note that Vaultwarden is not associated with the Bitwarden® project nor 8bit Solutions LLC. When using this app, please report any bugs or suggestions to us directly, regardless of whatever clients you are using (mobile, desktop, browser, etc), and do not use Bitwarden®'s official support channels.
+  - **Tailscale Serve:** A private HTTPS address that works at home and away, with Tailscale connected on your devices.
+
+  - **Local HTTPS:** Available on umbrelOS 2.0 or later for connections on your local network. This requires installing and trusting Umbrel's certificate on each device, following the instructions under **Settings → Advanced settings**.
+
+  - **Another HTTPS reverse proxy:** Connect through an HTTPS address you've configured for Vaultwarden.
+
+
+  Use your chosen HTTPS address as the self-hosted server URL in your Bitwarden client.
+
+
+  **Features:** Vaultwarden supports personal vaults, organizations, attachments, Bitwarden Send, website icons, two-factor authentication, emergency access, and the Vaultwarden admin backend.
+
+
+  **Disclaimer:** Vaultwarden is not associated with Bitwarden or 8bit Solutions LLC. For Vaultwarden issues, contact Vaultwarden/Umbrel support rather than Bitwarden's official support channels.
 
 releaseNotes: >-
-  Key highlights in this release:
-    - Fixed icon redirect issues affecting desktop clients
-    - Improved collection management and member editing
-    - Enhanced security with workflow updates
-    - Added bulk access functionality for collections
+  On umbrelOS 2.0 or later, Vaultwarden now opens directly from your Umbrel dashboard over HTTPS, so Tor Browser is no longer needed to create an account.
 
 
-  Full release notes are available at https://github.com/dani-garcia/vaultwarden/releases
+  If you haven't upgraded to umbrelOS 2.0 yet, your existing Bitwarden clients will still work. You can also keep using Tor or an HTTPS connection you've already set up, such as Tailscale Serve.
 developer: Daniel García
 website: https://github.com/dani-garcia
 dependencies: []
@@ -68,6 +49,6 @@ gallery:
 path: ""
 defaultUsername: ""
 defaultPassword: ""
-torOnly: true
+requiresHttps: true
 submitter: Umbrel
 submission: https://github.com/getumbrel/umbrel/commit/44c842bddafffa558569f730cb0d5442ee073bf5

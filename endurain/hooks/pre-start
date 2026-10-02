@@ -1,0 +1,114 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# This scripts checks the environment file for placeholder values and replaces them with generated keys or system variables.
+
+APP_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")"
+APP_DATA_DIR="$APP_DIR/data"
+DESIRED_OWNER="1000:1000"
+ENV_FILE="$APP_DIR/settings.env"
+
+# Check if the file exists
+if [ ! -f "$ENV_FILE" ]; then
+    echo "Error: Environment file not found at $ENV_FILE"
+    exit 1
+fi
+
+# Check if the FERNET_KEY value is set to "changeme"
+if grep -Eq '^FERNET_KEY= *changeme$' "$ENV_FILE"; then
+    echo "Placeholder value for FERNET_KEY detected. Generating a new key..."
+
+    # Generate new FERNET key
+    FERNET_KEY=$(python3 -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())")
+
+    # Replace the placeholder with the new key
+    sed -i -E 's|^FERNET_KEY= *changeme$|FERNET_KEY="'"$FERNET_KEY"'"|' "$ENV_FILE"
+
+    echo "Updated FERNET_KEY in $ENV_FILE"
+else
+    echo "FERNET_KEY is already set. No changes made."
+fi
+
+# Check if the ENDURAIN_HOST value is set to "changeme"
+if grep -Eq '^ENDURAIN_HOST= *changeme$' "$ENV_FILE"; then
+    echo "Placeholder value for ENDURAIN_HOST detected. Adding proper hostname..."
+
+    # Replace the placeholder with the hostname
+    sed -i -E 's|^ENDURAIN_HOST= *changeme$|ENDURAIN_HOST="'"http://${DEVICE_DOMAIN_NAME}:8865"'"|' "$ENV_FILE"
+
+    echo "Updated ENDURAIN_HOST in $ENV_FILE"
+else
+    echo "ENDURAIN_HOST is already set. No changes made."
+fi
+
+set_correct_permissions() {
+	local -r path="${1}"
+
+	# Check if the path exists (file or directory)
+	if [[ -e "${path}" ]]; then
+		owner=$(stat -c "%u:%g" "${path}")
+
+		if [[ "${owner}" != "${DESIRED_OWNER}" ]]; then
+			chown "${DESIRED_OWNER}" "${path}"
+			echo "Changed ownership of ${path} to ${DESIRED_OWNER}"
+		fi
+	else
+		echo "Skipping ${path} - path does not exist"
+	fi
+}
+
+# Handle directory restructuring for version 0.13.0
+restructure_directories() {
+	local -r app_dir="${APP_DATA_DIR}/app"
+	
+	# Check if we need to do the restructuring
+	if [[ -d "${app_dir}/files" && ! -d "${app_dir}/activity_files" ]]; then
+		echo "Restructuring directories for Endurain v0.13.0..."
+		
+		# Rename files directory to activity_files
+		if mv "${app_dir}/files" "${app_dir}/activity_files" 2>/dev/null; then
+			echo "Renamed ${app_dir}/files to ${app_dir}/activity_files"
+		else
+			echo "Failed to rename ${app_dir}/files to ${app_dir}/activity_files"
+		fi
+	fi
+	
+	# Create new directories if they don't exist
+	mkdir -p "${app_dir}/activity_media"
+	echo "Created ${app_dir}/activity_media directory"
+	
+	mkdir -p "${app_dir}/server_images"
+	echo "Created ${app_dir}/server_images directory"
+	
+	# Move logs directory from app/logs to logs (at root level)
+	if [[ -d "${app_dir}/logs" && ! -d "${APP_DATA_DIR}/logs" ]]; then
+		if mv "${app_dir}/logs" "${APP_DATA_DIR}/logs" 2>/dev/null; then
+			echo "Moved ${app_dir}/logs to ${APP_DATA_DIR}/logs"
+		else
+			echo "Failed to move ${app_dir}/logs to ${APP_DATA_DIR}/logs"
+		fi
+	elif [[ ! -d "${APP_DATA_DIR}/logs" ]]; then
+		# Create logs directory if it doesn't exist
+		mkdir -p "${APP_DATA_DIR}/logs"
+		echo "Created ${APP_DATA_DIR}/logs directory"
+	fi
+}
+
+# Perform directory restructuring
+if [[ -d "${APP_DATA_DIR}/app" ]]; then
+	restructure_directories
+fi
+
+# Set permissions recursively on the entire /app directory and its subdirectories
+if [[ -d "${APP_DATA_DIR}/app" ]]; then
+	chown -R "${DESIRED_OWNER}" "${APP_DATA_DIR}/app"
+	echo "Set recursive ownership of ${APP_DATA_DIR}/app to ${DESIRED_OWNER}"
+fi
+
+# Set permissions recursively on the entire /logs directory and its subdirectories
+if [[ -d "${APP_DATA_DIR}/logs" ]]; then
+	chown -R "${DESIRED_OWNER}" "${APP_DATA_DIR}/logs"
+	echo "Set recursive ownership of ${APP_DATA_DIR}/logs to ${DESIRED_OWNER}"
+fi
+
+exit 0

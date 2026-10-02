@@ -2,7 +2,7 @@ manifestVersion: 1
 id: torq
 category: bitcoin
 name: Torq
-version: "v2.1.0"
+version: "v2.2.9"
 tagline: Scalable Node Management Software
 description: >-
   Operating a Lightning node requires a lot of work. You need to monitor your channels, rebalance them, keep track of your fees and much more.
@@ -48,25 +48,12 @@ gallery:
   - 4.jpg
   - 5.jpg
 releaseNotes: >-
-  Highlights:
-    - bitcoind wallet as a node type (Torq now has on-chain wallet support for CLN, LND and bitcoind)
-    - bitcoind existing on-chain address listing
-    - management of UTXO locking 
-    - improved transaction output visualizations (and backend)
-    - improve transaction output linking to channels (funding/closing transactions)
-    - LND: sweep transaction output linking to channels
-    - Torq gRPC (BETA feature):
-      - New call SubscribeBlockHeight
-      - New call PayOnChain
-      - New call DecodeInvoice
-      - New call GetInvoiceStatus
-      - We have been streamlining our names in the proto file (so breaking changes)
-    - Various small fixes
+  This update includes fixes for Electrum service race conditions, deadlocks, and restart handling that could cause Torq to crash or block address generation.
 
-  Note 1: There are database migrations in this release so if you want to be able to roll back, you need to create a backup before updating.
+  It also fixes LND rebalance visibility, payment attempt handling, daily uptime aggregation, channel cooperative close edge cases, and adds Signet on-chain address support in the payment modal.
 
-  
-  Note 2: You get the best Torq experience if you specify bitcoind connection details in your configuration file (or command line).
+  Full release notes can be found at https://github.com/lncapital/torq/releases/tag/v2.2.9
+
 path: ""
 defaultUsername: ""
 deterministicPassword: false
