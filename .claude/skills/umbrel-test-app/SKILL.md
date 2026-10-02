@@ -56,7 +56,7 @@ Use the Umbrel UI or Umbrel's local APIs to drive testing.
 
 The UI is the best way to verify user-facing behavior: app store rendering, install/update buttons, dependency prompts, launch behavior, default credential dialogs, and the app opening from the Umbrel home screen.
 
-After SSHing into the Umbrel or local test environment, use Umbrel's `umbreld client` tRPC helper for repeatable lifecycle actions and logs:
+After SSHing into the Umbrel or local test environment, use Umbrel's `umbreld client` tRPC helper for repeatable lifecycle actions and logs. It needs root:
 
 ```sh
 ssh umbrel@umbrel.local
@@ -64,38 +64,40 @@ ssh umbrel@umbrel.local
 APP_ID=<app-id>
 
 # Confirm Umbrel sees the synced package and manifest version.
-umbreld client appStore.registry.query
+sudo umbreld client appStore.registry.query
 
 # Inspect installed app metadata, including credentials shown by Umbrel.
-umbreld client apps.list.query
+sudo umbreld client apps.list.query
 
 # Install or update through Umbrel.
-umbreld client apps.install.mutate --appId "$APP_ID"
-umbreld client apps.update.mutate --appId "$APP_ID"
+sudo umbreld client apps.install.mutate --appId "$APP_ID"
+sudo umbreld client apps.update.mutate --appId "$APP_ID"
 
 # Restart or manually control the app.
-umbreld client apps.restart.mutate --appId "$APP_ID"
-umbreld client apps.start.mutate --appId "$APP_ID"
-umbreld client apps.stop.mutate --appId "$APP_ID"
+sudo umbreld client apps.restart.mutate --appId "$APP_ID"
+sudo umbreld client apps.start.mutate --appId "$APP_ID"
+sudo umbreld client apps.stop.mutate --appId "$APP_ID"
 
 # Check lifecycle state and logs.
-umbreld client apps.state.query --appId "$APP_ID"
-umbreld client apps.logs.query --appId "$APP_ID"
+sudo umbreld client apps.state.query --appId "$APP_ID"
+sudo umbreld client apps.logs.query --appId "$APP_ID"
 ```
 
 For apps with dependencies, install the selected dependency provider before installing the dependent app. The UI enforces this; direct tRPC calls do not.
 
 ```sh
 DEPENDENCY_APP_ID=<dependency-provider-app-id>
-umbreld client apps.install.mutate --appId "$DEPENDENCY_APP_ID"
+sudo umbreld client apps.install.mutate --appId "$DEPENDENCY_APP_ID"
 ```
 
 For apps that support dependency alternatives, pass the chosen installed provider during install or change it after install:
 
 ```sh
-umbreld client apps.install.mutate --appId "$APP_ID" --alternatives '{"<dependency-id>":"<provider-app-id>"}'
-umbreld client apps.setSelectedDependencies.mutate --appId "$APP_ID" --dependencies '{"<dependency-id>":"<provider-app-id>"}'
+sudo umbreld client apps.install.mutate --appId "$APP_ID" --alternatives '{"<dependency-id>":"<provider-app-id>"}'
+sudo umbreld client apps.setSelectedDependencies.mutate --appId "$APP_ID" --dependencies '{"<dependency-id>":"<provider-app-id>"}'
 ```
+
+On umbrelOS 2.0, if the user has connected you to Umbrel's MCP server (Settings → AI agents), you can use its app tools to install, update, restart, check status and logs, and change app settings instead of `umbreld client`. Syncing the package onto the device still needs SSH.
 
 Do not treat programmatic success as full verification. A ready state, successful mutation, or clean logs only proves Umbrel completed that lifecycle step; the app still needs to open through Umbrel and perform a meaningful workflow.
 
@@ -124,13 +126,14 @@ For a new app package, or when an update changes first-run behavior, test a fres
 2. Install the app through Umbrel.
 3. Wait for Umbrel to report the app as ready.
 4. Open the app from the Umbrel home screen or `app_proxy` route, not a raw internal container port.
-5. Verify the web UI, setup page, or status page loads.
+5. Verify the web UI, setup page, or status page loads. On umbrelOS 2.0, also open it over `https://` on the same port.
 6. Verify declared default credentials, deterministic password behavior, or first-run account creation through Umbrel metadata and browser login.
 7. Verify the app's main user-facing functionality. Complete real workflows where practical, such as creating a note, uploading a test file, adding a feed, saving a setting, inviting a user, or confirming a status/API page reports correctly.
 8. If the package uses `PROXY_AUTH_WHITELIST`, `PROXY_AUTH_BLACKLIST`, or disables Umbrel auth, verify the intended public/client/API paths work and sensitive paths are still protected.
-9. Restart the app through Umbrel.
-10. Reopen the app and confirm state, login/onboarding, and the artifact/action persist.
-11. Inspect settled logs for actionable errors.
+9. If the package declares `folderAccess` or `environment`, check they appear in the app's settings, then change one and confirm the app picks it up after the automatic restart.
+10. Restart the app through Umbrel.
+11. Reopen the app and confirm state, login/onboarding, and the artifact/action persist.
+12. Inspect settled logs for actionable errors.
 
 ## Update Path
 
@@ -142,7 +145,7 @@ For existing app updates, test an actual update path:
 4. Run the update through Umbrel.
 5. Wait for Umbrel to report the app as ready.
 6. Open the app through Umbrel and verify migrations, login/onboarding, persisted state, and main user-facing functionality.
-7. If the update changes bind mounts, data paths, templates, hooks, exports, database/search/index sidecars, runtime users, permissions, dependencies, `app_proxy`, auth, or default credentials, verify that behavior specifically.
+7. If the update changes bind mounts, data paths, templates, hooks, exports, database/search/index sidecars, runtime users, permissions, dependencies, `app_proxy`, auth, default credentials, `storage`, `folderAccess`, or `environment`, verify that behavior specifically.
 8. Restart the app and verify it still opens and preserves data.
 9. Inspect settled logs for actionable errors.
 
@@ -153,7 +156,7 @@ If the update path could not be tested from the currently shipped package, state
 Record enough detail for a reviewer to understand what was proved:
 
 - app ID and version tested
-- environment: Umbrel device or local umbrelOS test environment
+- environment: Umbrel device or local umbrelOS test environment, and umbrelOS version
 - architecture tested: `amd64` or `arm64`
 - fresh install and/or update path tested
 - dependencies/providers or alternatives used, if any

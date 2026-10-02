@@ -17,7 +17,8 @@ Keep changes scoped to the requested app unless the task explicitly requires sha
 - `releaseNotes` from the app-store manifest render in the update dialog for that available update. Write them for users upgrading an existing install.
 - Changing manifest `version` makes Umbrel offer an update; changing image references in `docker-compose.yml` is what makes the installed app run new container code.
 - Do not bump manifest `version` by itself for an upstream app update. If the app code should change, update the relevant image tag/digest or package files too.
-- Do not change images, compose, templates, exports, hooks, or other runtime behavior without bumping manifest `version`. Existing installs will not see an available update unless the manifest version changes.
+- Bump manifest `version` for any change existing installs need: images, compose, templates, exports, hooks, or manifest fields that affect the installed app, such as `storage`, `folderAccess`, `environment`, or `requiresHttps`. Installed apps keep their own copy of these files and only get changes through an update.
+- Leave `version` unchanged for App Store-only changes, such as `description`, `tagline`, or `gallery`.
 
 ## Update Gate
 
@@ -34,9 +35,10 @@ Before an upstream or runtime update, prove there is a real, packageable update 
 Most upstream app updates only need `version`, `releaseNotes`, and changed image tag/digest references. Add compose, env, hook, template, permission, dependency, or persistence changes only when the upstream update requires them.
 
 - Never change `id` for a released app. It is the app identity and data path.
-- For metadata-only App Store changes, leave manifest `version` unchanged unless installed users need an available update.
 - Change `manifestVersion` only when the package requires behavior from a newer umbrelOS version; it controls install compatibility for new installs.
-- Set manifest `version` to the upstream version users recognize. If upstream has no release version, use the short commit SHA for the exact upstream commit being packaged.
+- Set manifest `version` to the upstream version users recognize. If upstream has no release version, use the short commit SHA for the exact upstream commit being packaged. For package-only changes to the same upstream version, append `-patch.N`, for example `1.2.3-patch.1`.
+- Once a package declares `storage`, keep it. Users who moved the app's data can't start a version without it.
+- Keep service names, `folderAccess` ids, and exposed `environment` names stable. umbrelOS drops users' saved choices when they no longer match.
 - Write concise Umbrel-user `releaseNotes` for existing app updates. Include user-visible features, fixes, security notes, migration or breaking-change actions, and an upstream release-notes link when available. Omit upstream CI, docs-only, build, and internal dependency churn unless it affects the Umbrel package.
 - Update image tag and digest together for every image that changes. Keep a tag that identifies the release, commit, or wrapper build, and pin the digest for that same tag.
 - Carry through upstream-required compose, env, config, data path, port, proxy, healthcheck, and migration changes.
@@ -52,11 +54,11 @@ App updates copy only `docker-compose.yml`, top-level `*.template`, `exports.sh`
 - Files outside that set are fresh-install only unless a copied file or hook creates/copies them during update.
 - Fresh installs receive newly committed package directories because umbrelOS copies the full app template into app data and strips `.gitkeep`. Keep otherwise-empty new bind-mount source directories in git with `.gitkeep`.
 - Put required update-time config in `docker-compose.yml`, a top-level `*.template`, `exports.sh`, or `hooks/`.
-- When adding a new bind-mount source directory, commit it for fresh installs and add an idempotent executable `hooks/pre-start` migration for existing installs. The hook should create the directory and `chown` it to the UID/GID the target container needs before containers start.
+- When adding a new bind-mount source directory, commit it for fresh installs and add an idempotent executable `hooks/pre-start` migration for existing installs. The hook should create the directory under `${APP_DATA_ROOT:-${APP_DIR}/data}` and `chown` it to the UID/GID the target container needs before containers start.
 - When changing a bind mount, map the old host path to the old container path before editing. If the new mount points at a different host path, write a narrow migration that preserves existing data instead of creating an empty replacement directory.
 - For file bind mounts, make sure the host file exists before `docker compose up`. On updates, create it from a top-level template or `pre-start` hook; otherwise Docker may create a directory at the file path and break the app.
 - Use `pre-start` for most update migrations because app env and templates are ready, containers are still stopped, and the hook also runs on future starts. Use `post-update` only for cleanup that is safe after the updated app has started.
-- Keep migrations idempotent with sentinel files or existence checks. Hook failures may not stop the lifecycle, so verify the app still works through the real Umbrel update path.
+- Keep migrations idempotent with sentinel files or existence checks. Hook failures do not stop the lifecycle, so verify the app still works through the real Umbrel update path.
 
 ## Lint Before Testing
 
