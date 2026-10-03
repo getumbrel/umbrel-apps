@@ -1,0 +1,23 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: brave_web_1
+      APP_PORT: 3000
+
+  web:
+    image: ghcr.io/linuxserver/brave:1.96.59-ls132@sha256:78b7bfcdce77bcb06799ff0807d21fa0f6e19af7e8029d63f4734ed94dff0210
+    restart: on-failure
+    environment:
+      PUID: "1000"
+      PGID: "1000"
+      TZ: Etc/UTC
+      CUSTOM_USER: umbrel
+      PASSWORD: ${APP_PASSWORD}
+      FILE_MANAGER_PATH: /config/Downloads
+      DISABLE_SUDO: "true"
+      DISABLE_TERMINALS: "true"
+    volumes:
+      - ${APP_DATA_DIR}/data/config:/config
+    shm_size: "1gb"
