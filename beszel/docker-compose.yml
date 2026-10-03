@@ -1,0 +1,23 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: beszel_hub_1
+      APP_PORT: 8090
+
+  hub:
+    image: henrygd/beszel:0.18.8@sha256:4c51486968efa0b0a702c1b0967966a2e06fb250b7418f3072d2488faea27c51
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data:/beszel_data
+
+  agent:
+    image: henrygd/beszel-agent:0.18.8-alpine@sha256:3781ce55ab65f605769f12aafaf9fb518f6c414ab9170e474ab14be32c264df1
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data/id_ed25519.pub:/beszel_agent_key.pub:ro
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        while [ ! -s /beszel_agent_key.pub ]; do sleep 2; done
+        export KEY="$(cat /beszel_agent_key.pub)"
+        exec /agent
