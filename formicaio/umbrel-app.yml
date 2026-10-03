@@ -5,7 +5,7 @@ storage:
 name: Formicaio
 tagline: Run nodes on the Autonomi peer-to-peer (P2P) network
 category: crypto
-version: "0.8.4-patch.1"
+version: "0.8.9"
 port: 52100
 description: >-
   ## Simplify your decentralized experience with Formicaio
@@ -133,35 +133,14 @@ gallery:
   - 2.jpg
   - 3.jpg
 releaseNotes: >-
-  This update adds support for new storage management and configuration options being introduced with umbrelOS 2.0.
+  This update brings Formicaio to v0.8.9, which adapts to recent changes in the
+  ant-node binary, fixes several issues, and upgrades dependencies:
 
-
-  Previous Formicaio 0.8.4 release notes:
-
-
-  The interface was redesigned with a fresh visual style, and a range of new
-  features were added to give users more visibility and control over their
-  nodes, earnings, and AI tooling:
-
-  - Redesigned look and feel with an updated GUI visual style
-  - Nodes view now supports both tile and list layouts, togglable by the user
-  - Disk usage reported per node and in aggregate, with a configurable polling frequency
-  - Rewards addresses panel on the dashboard listing each address and its balance
-  - Earnings analytics on the dashboard showing rewards payments and totals per period,
-    with a toggle to enable/disable monitoring
-  - New AI section with an MCP server status page, activation instructions, and a
-    dedicated Agent page for interacting with an LLM agent that can manage your nodes
-  - Agent chat displays formatted tool output and responses, with its own settings
-    and background autonomous task support
-  - Nodes can be sorted by binary version
-  - Single-node actions applied directly, bypassing the batch queue
-  - Batch failures stay in the queue until dismissed, with more detail on in-progress failures
-  - Persistent notifications history so users can review past notifications at any time
-  - Log level option when adding new nodes
-  - Clicking the "total nodes" dashboard card navigates to the nodes list
-  - Charts show an empty-state message when switching nodes instead of stale data
-  - Placeholder cards show a title while nodes are being created
-  - Various icon and styling fixes across light and dark themes
-  - A new metric collection mode can be used which doesn't rely on the node's metrics HTTP endpoint.
-  - Allow user to configure a custom node binary full download URL.
+  - Metrics now use 'System mode' by default, since current ant-node releases no longer serve the HTTP metrics endpoint. Existing installs set to HTTP are switched over automatically; a 'Disabled' setting is left unchanged
+  - Dashboard no longer shows misleading zeros for Connected Peers, kBuckets Peers, Network Size, Shunned By and Relevant Chunks; these fields are hidden and the remaining stat cards are laid out in a single row
+  - Fixed chunk counting on arm64, which now reads the correct amount from the node's chunks database
+  - Chunk counting supports ant-node's upcoming file-based chunk store
+  - Adapted to ant-node v0.14.3+ dropping the --bootstrap-cache-dir argument
+  - MCP server updated for the latest MCP SDK changes
+  - Dependencies upgraded across the board
 path: ""
