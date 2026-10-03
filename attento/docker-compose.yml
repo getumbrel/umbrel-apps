@@ -1,0 +1,42 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: attento_web_1
+      APP_PORT: 8080
+
+  agent:
+    # The Attento! home program. Host networking is needed to find the cameras
+    # on the home network: ONVIF WS-Discovery (multicast), the ARP table (each
+    # camera's MAC, so a camera keeps its identity when the router gives it a
+    # new address) and a scan of the local /24 for RTSP/ONVIF ports. It opens
+    # no port: its page is a unix socket in data/run, served by `web` below,
+    # behind Umbrel's login.
+    image: ghcr.io/claudiosperindio-sketch/attento-home:1.1.0@sha256:1c5a9524cee316d6f3fc56d3a5e099282fdd9038bacc0e1b359cf6a12803d681
+    network_mode: host
+    user: "1000:1000"
+    init: true
+    read_only: true
+    restart: on-failure
+    stop_grace_period: 20s
+    environment:
+      # encrypts the camera passwords in data/attento/config.json (exports.sh)
+      ATTENTO_SECRET_KEY: ${APP_ATTENTO_SECRET_KEY}
+    volumes:
+      - ${APP_DATA_DIR}/data/attento:/data
+      - ${APP_DATA_DIR}/data/run:/run/attento
+    tmpfs:
+      # the last 30 seconds of each camera, rewritten all the time: in memory, not on the SSD
+      - /tmp:size=1g
+
+  web:
+    # The door between app_proxy and the program's socket (bytes only).
+    image: ghcr.io/claudiosperindio-sketch/attento-home:1.1.0@sha256:1c5a9524cee316d6f3fc56d3a5e099282fdd9038bacc0e1b359cf6a12803d681
+    command: ["node", "web.mjs"]
+    user: "1000:1000"
+    init: true
+    read_only: true
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data/run:/run/attento
