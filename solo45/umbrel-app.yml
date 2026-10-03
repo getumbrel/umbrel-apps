@@ -1,0 +1,67 @@
+manifestVersion: 1
+id: solo45
+storage:
+  dataRoot: data
+category: bitcoin
+name: Solo45
+version: "0.1.26"
+tagline: Your own solo mining pool and live mining dashboard
+description: >-
+  ⚙️ Setup: open Solo45 after installing and enter your payout address. Then point your miners at your Umbrel's IP address on port 3337, for example stratum+tcp://192.168.1.50:3337 (use the IP: many miners can't look up umbrel.local). Any Stratum v1 miner works. Keep port 3337 on your home network: don't forward it to the internet. Keep a backup pool set on every miner, so they keep hashing while Solo45 or your Umbrel restarts.
+
+
+  Solo45 is a small solo-mining pool that builds work from your own Bitcoin node and pays any block you find straight to your address, with no pool fee. Every new job is checked by your node (getblocktemplate "proposal" mode), so a malformed block would show up within seconds instead of on the day you find one.
+
+
+  - Template policy: choose which kinds of transactions to leave out of your blocks (inscriptions, Runes, large OP_RETURN data, bare multisig, low fee rates). Each rule can be Off, Watch (only count what it would skip) or Filter, and the fee rule treats child-pays-for-parent packages the way your node does.
+
+  - Stall guard: if a peer holds up a new block, Solo45 disconnects it after 60 seconds (adjustable), so your miners don't spend 10 minutes on an old block.
+
+  - Live dashboard: hashrate, temperatures, best shares, how fast your miners switch to each new block, electricity cost and your odds, for Bitaxe (AxeOS), Hammer Thor and Braiins OS miners, plus a read-only tuning report for Bitaxes.
+
+  - Optional AI assistant using your own Anthropic API key, with weekly and monthly spending limits.
+releaseNotes: ""
+
+developer: race45race
+website: https://github.com/race45race/solo45
+dependencies:
+  - bitcoin
+repo: https://github.com/race45race/solo45
+support: https://github.com/race45race/solo45/issues
+
+port: 4546
+gallery: []
+path: ""
+
+defaultUsername: ""
+defaultPassword: ""
+
+widgets:
+  - id: "stats"
+    type: "four-stats"
+    refresh: "30s"
+    endpoint: "dashboard:8099/api/widget"
+    link: ""
+    example:
+      type: "four-stats"
+      link: ""
+      items:
+        - title: "Hashrate"
+          text: "230"
+          subtext: "TH/s"
+        - title: "Miners"
+          text: "12/12"
+          subtext: "online"
+        - title: "Best today"
+          text: "1.28"
+          subtext: "G"
+        - title: "Block odds"
+          text: "1/29K"
+          subtext: "per day"
+
+backupIgnore:
+  - data/pool/pool.log*
+  - data/dash/dashboard.log*
+
+submitter: race45race
+submission: https://github.com/getumbrel/umbrel-apps/pull/6153
