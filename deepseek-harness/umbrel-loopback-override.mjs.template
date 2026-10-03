@@ -1,0 +1,37 @@
+/**
+ * Umbrel packaging shim: the served dsh Web UI restricts its settings
+ * surfaces (Models, General documents, Plugins writes) to pages whose
+ * authority is loopback, because upstream assumes a shared machine
+ * otherwise. On umbrelOS the browser reaches the app through the
+ * authenticated app_proxy on the device domain, which is the operator's
+ * own session (Umbrel login + dsh browser cookie + /api trust fence all
+ * still apply server-side), so the loopback-only client gate would leave
+ * the Models page permanently unavailable.
+ *
+ * This plugin taps the served index.html and declares the page-global
+ * transport hook (`ownsHost`) before the client bundles boot, which is the
+ * client's own stand-in for "the operator's own machine". It changes no
+ * server-side authorization: every /api request still passes the Host
+ * trust fence and the browser-session cookie.
+ */
+export const name = 'umbrel-loopback-override'
+
+export const inject = ['webServer']
+
+export function apply(ctx) {
+  // NOTE: this file is rendered by envsubst on install/update, so it must
+  // not contain any dollar-brace or dollar-name sequences; build strings
+  // by concatenation.
+  ctx.effect(
+    () =>
+      ctx.webServer.tapIndex(function (html) {
+        return html.replace(
+          /<head(?:\s[^>]*)?>/i,
+          function (open) {
+            return open + '<script>window.__DSH_TRANSPORT__=Object.assign({ownsHost:true},window.__DSH_TRANSPORT__||{});</script>'
+          },
+        )
+      }),
+    'umbrel-loopback-override: index tap',
+  )
+}
