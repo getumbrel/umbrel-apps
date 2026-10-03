@@ -7,9 +7,15 @@ services:
     restart: on-failure
     stop_grace_period: 1m
     init: true
+    entrypoint:
+      - /bin/sh
+      - -c
+      - >-
+        IFACES="$$(ip route show default | sed -n 's/.* dev \([^ ]*\).*/\1/p' | head -n 1)";
+        export IFACES="$${IFACES:-eth0}";
+        exec ./WatchYourLAN
     environment:
       TZ: "UTC"                         # required: needs your TZ for correct time
-      IFACES: "eth0 wlan0 enp1s0"       # required: 1 or more interface
       HOST: "0.0.0.0"                   # optional, default: 0.0.0.0
       PORT: "8840"                      # optional, default: 8840
       # Exclude to allow custom config:
