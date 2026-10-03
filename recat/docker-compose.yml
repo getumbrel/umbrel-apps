@@ -1,0 +1,125 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: recat_server_1
+      APP_PORT: 3001
+
+      # Umbrel's dashboard auth defaults on (PROXY_AUTH_ADD defaults to true),
+      # and it only works from the dashboard origin, where the browser carries
+      # that session cookie. Behind a TLS front app_proxy 302s to
+      # http://127.0.0.1:2000, which nothing outside the box can reach.
+      # Measured on the device: 200 on loopback, 502 through Tailscale Serve,
+      # and 502 on /auth/qbo/callback — so the Intuit callback can never land
+      # and real QuickBooks cannot be connected at all.
+      #
+      # Whitelisting just the callback does not help: every UI request would
+      # still 302 to an unreachable address, leaving the app unusable through
+      # the front it needs for real books.
+      #
+      # Recat authenticates its own requests — sessions, magic links, the
+      # rate-limited local admin password, per-company roles — so Umbrel's
+      # layer is redundant here rather than protective.
+      #
+      # First-run used to be the exception: it is unauthenticated by necessity,
+      # since somebody has to create the first account. As of v0.1.3 that is
+      # closed. Creating the first administrator requires the app password this
+      # page displays, and /auth/magic-link neither bootstraps an account nor
+      # returns a sign-in link in its response while LOCAL_ADMIN_* is set —
+      # issued links reach this app's logs only (#53).
+      PROXY_AUTH_ADD: 'false'
+
+  server:
+    image: ghcr.io/tx-joshg/recat-qbo:0.1.5@sha256:b1c3d9d28d41b7f674e5f3823f5ca0e456f90196f5131d83030cf3082f28aa87
+    restart: on-failure
+    environment:
+      # The install's starting address, and the seed for origin checking — not
+      # a lock. An admin changes the public URL from the setup wizard or
+      # Settings, and the stored value then wins; see instanceSettings.appUrl.
+      #
+      # Do not remove this line. Without it the app falls back to its own
+      # localhost default, which is not an origin any Umbrel browser sends, so
+      # the CSRF check rejects the setup wizard itself and the install cannot
+      # be completed. Verified: POST /api/setup/admin returns 403.
+      #
+      # Set APP_URL_LOCKED=true instead if this deployment should pin the
+      # address and refuse edits from the UI.
+      APP_URL: http://umbrel.local:3019
+      PORT: 3001
+      DATABASE_URL: postgresql://recat:${APP_RECAT_DB_PASSWORD}@recat_db_1:5432/recat
+      SESSION_SECRET: ${APP_RECAT_SESSION_SECRET}
+      ENCRYPTION_KEY: ${APP_RECAT_ENCRYPTION_KEY}
+
+      # Local sign-in, because an Umbrel install has no outbound mail and
+      # magic links cannot deliver. The wizard must create this exact address
+      # as the first administrator; it is surfaced to the user as
+      # defaultUsername in the manifest.
+      LOCAL_ADMIN_EMAIL: admin@recat.local
+      LOCAL_ADMIN_PASSWORD: ${APP_PASSWORD}
+
+      # TRUSTED_PROXY_IPS stays unset — app_proxy's address is assigned by
+      # Docker and is not exposed as an Umbrel variable, so there is nothing to
+      # list, and a guessed CIDR would never match (compileTrustedProxy is an
+      # exact-match allowlist by design).
+      #
+      # TRUSTED_PROXY_HOP covers it instead: trust the immediate peer as a
+      # reverse proxy when that peer is on a private network. Safe here because
+      # this compose declares no `ports:` for the server, so app_proxy on the
+      # app network is the only route to it. Should that ever change, a public
+      # client's forwarded headers are ignored — the private-address check
+      # makes the failure mode "no worse than before" rather than "believes a
+      # stranger".
+      #
+      # Without it every caller shares app_proxy's address, so every rate limit
+      # is deployment-wide and anyone can lock the owner out of local sign-in
+      # indefinitely — the only way in on an install with no SMTP (#57).
+      TRUSTED_PROXY_HOP: 'true'
+
+      RECEIPT_EXTRACTOR_URL: http://recat_receipt-extractor_1:8485
+      RECEIPT_EXTRACTOR_TOKEN: ${APP_RECAT_EXTRACTOR_TOKEN}
+    depends_on:
+      db:
+        condition: service_healthy
+      receipt-extractor:
+        condition: service_healthy
+
+  db:
+    image: postgres:17-alpine@sha256:742f40ea20b9ff2ff31db5458d127452988a2164df9e17441e191f3b72252193
+    restart: on-failure
+    environment:
+      POSTGRES_USER: recat
+      POSTGRES_PASSWORD: ${APP_RECAT_DB_PASSWORD}
+      POSTGRES_DB: recat
+    volumes:
+      # Bind mount, not a named volume: Umbrel backs up and restores
+      # ${APP_DATA_DIR} and recreates containers on update.
+      - ${APP_DATA_DIR}/data/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U recat -d recat"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  receipt-extractor:
+    image: ghcr.io/tx-joshg/recat-qbo/receipt-extractor:0.1.5@sha256:e3685b43e8da0b0a1a62754976eacb4ce0bd3577bf26d1076af6dcb6e832ecb7
+    restart: on-failure
+    environment:
+      RECEIPT_EXTRACTOR_TOKEN: ${APP_RECAT_EXTRACTOR_TOKEN}
+    # Not published to the host — reachable only from the app container.
+    read_only: true
+    tmpfs:
+      - /tmp:size=256m,mode=1777
+    mem_limit: 1g
+    pids_limit: 128
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - import urllib.request; urllib.request.urlopen('http://127.0.0.1:8485/healthz')
+      interval: 10s
+      timeout: 3s
+      retries: 10
