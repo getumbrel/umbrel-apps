@@ -1,0 +1,26 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: trek_web_1
+      APP_PORT: 3000
+      PROXY_AUTH_ADD: "false"
+
+  web:
+    image: mauriceboe/trek:4.3.3@sha256:1ef1ccf41af8ae409e0435518facb5789b6adc99681ef26d1869508355455749
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      TZ: ${TZ:-UTC}
+      ENCRYPTION_KEY: ${APP_SEED}
+      ADMIN_EMAIL: umbrel@umbrel.local
+      ADMIN_PASSWORD: ${APP_PASSWORD}
+      APP_URL: http://${DEVICE_DOMAIN_NAME}:8800
+      TRUST_PROXY: 1
+      COOKIE_SECURE: "false"
+    volumes:
+      - ${APP_DATA_DIR}/data/app:/app/data
+      - ${APP_DATA_DIR}/data/uploads:/app/uploads
