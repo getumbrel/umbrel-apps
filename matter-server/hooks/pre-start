@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+APP_DIR="${APP_DATA_DIR:-$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")}"
+DATA_DIR="$(readlink -m "${APP_DATA_ROOT:-${APP_DIR}/data}")"
+mkdir -p "${DATA_DIR}"
+BACKUP_DIR="${DATA_DIR}/.matterjs-python-backup"
+[[ ! -L "${BACKUP_DIR}" ]]
+if [[ -e "${DATA_DIR}/chip.json" && ! -f "${BACKUP_DIR}/data.tar" ]]; then
+  mkdir -p "${BACKUP_DIR}"
+  chmod 0700 "${BACKUP_DIR}"
+  chown 0:0 "${BACKUP_DIR}"
+  # Keep a complete, private, immutable-by-convention snapshot before migration.
+  # tar preserves ownership/modes and does not follow symbolic links.
+  rm -f "${BACKUP_DIR}/data.tar.partial"
+  (umask 077; tar --exclude='./.matterjs-python-backup' --exclude='./.matterjs-prepared' \
+    -cf "${BACKUP_DIR}/data.tar.partial" -C "${DATA_DIR}" .)
+  tar -tf "${BACKUP_DIR}/data.tar.partial" > /dev/null
+  mv "${BACKUP_DIR}/data.tar.partial" "${BACKUP_DIR}/data.tar"
+fi
+# Do not follow symlinks or change the protected rollback snapshot.
+find -P "${DATA_DIR}" -path "${BACKUP_DIR}" -prune -o \
+  -exec chown --no-dereference 1000:1000 {} +
+find -P "${DATA_DIR}" -path "${BACKUP_DIR}" -prune -o \
+  ! -type l -exec chmod u+rwX {} +
