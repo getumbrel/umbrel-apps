@@ -1,0 +1,22 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: webdatastudio_server_1
+      APP_PORT: 8080
+
+  server:
+    image: ghcr.io/fgilde/webdatastudio:v1.7.0@sha256:0e03e1b5c00203e588f2b281ce7eeef06ef88b87d00301e538b89f64849f5c0f
+    restart: on-failure
+    stop_grace_period: 1m
+    user: "1000:1000"
+    environment:
+      # Both halves together turn the login screen on. With neither set the studio serves without
+      # one, which is the wrong default for something that holds database credentials.
+      WDS_USER: admin
+      WDS_PASSWORD: ${APP_PASSWORD}
+      WDS_TITLE: WebDataStudio
+    volumes:
+      # Saved connections, query history, layouts and the studio's own SQLite database.
+      - ${APP_DATA_DIR}/data:/data
