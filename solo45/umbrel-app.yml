@@ -4,7 +4,7 @@ storage:
   dataRoot: data
 category: bitcoin
 name: Solo45
-version: "0.1.26"
+version: "0.1.31"
 tagline: Your own solo mining pool and live mining dashboard
 description: >-
   ⚙️ Setup: open Solo45 after installing and enter your payout address. Then point your miners at your Umbrel's IP address on port 3337, for example stratum+tcp://192.168.1.50:3337 (use the IP: many miners can't look up umbrel.local). Any Stratum v1 miner works. Keep port 3337 on your home network: don't forward it to the internet. Keep a backup pool set on every miner, so they keep hashing while Solo45 or your Umbrel restarts.
@@ -14,6 +14,8 @@ description: >-
 
 
   - Template policy: choose which kinds of transactions to leave out of your blocks (inscriptions, Runes, large OP_RETURN data, bare multisig, low fee rates). Each rule can be Off, Watch (only count what it would skip) or Filter, and the fee rule treats child-pays-for-parent packages the way your node does.
+
+  - Fast block switching: on a new block Solo45 sends work for the next one within milliseconds (an empty template first, the full template after 10 s; adjustable).
 
   - Stall guard: if a peer holds up a new block, Solo45 disconnects it after 60 seconds (adjustable), so your miners don't spend 10 minutes on an old block.
 

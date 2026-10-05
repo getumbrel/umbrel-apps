@@ -7,7 +7,7 @@ services:
       APP_PORT: 8099
 
   pool:
-    image: ghcr.io/race45race/solo45:v0.1.26@sha256:751d8d824b7c0b50012b5e269b2ecdcb1473ebfcb4ed02bb69140ac68df6e898
+    image: ghcr.io/race45race/solo45:v0.1.31@sha256:1e45f166b0baac698413f5358b97d6947cb74d167e8dacd064b01c372266d502
     user: "1000:1000"
     restart: on-failure
     stop_grace_period: 30s  # the pool finishes sending a found block to the node before it stops
@@ -18,13 +18,14 @@ services:
       - ${APP_DATA_DIR}/data/pool:/data/pool
     environment:
       SOLO45_DATA_DIR: /data/pool
+      BITCOIN_ZMQ_HASHBLOCK: tcp://${APP_BITCOIN_NODE_IP}:${APP_BITCOIN_ZMQ_HASHBLOCK_PORT}  # new blocks the moment the node has them
       SOLO45_API_TOKEN: ${APP_SOLO45_API_TOKEN}
       BITCOIN_RPC_URL: http://${APP_BITCOIN_NODE_IP}:${APP_BITCOIN_RPC_PORT}/
       BITCOIN_RPC_USER: ${APP_BITCOIN_RPC_USER}
       BITCOIN_RPC_PASS: ${APP_BITCOIN_RPC_PASS}
 
   dashboard:
-    image: ghcr.io/race45race/solo45:v0.1.26@sha256:751d8d824b7c0b50012b5e269b2ecdcb1473ebfcb4ed02bb69140ac68df6e898
+    image: ghcr.io/race45race/solo45:v0.1.31@sha256:1e45f166b0baac698413f5358b97d6947cb74d167e8dacd064b01c372266d502
     user: "1000:1000"
     restart: on-failure
     stop_grace_period: 30s
