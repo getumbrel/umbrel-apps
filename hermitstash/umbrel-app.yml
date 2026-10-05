@@ -4,7 +4,7 @@ storage:
   dataRoot: data
 category: files
 name: HermitStash
-version: "1.15.7-patch.1"
+version: "1.15.9"
 tagline: Post-quantum encrypted self-hosted file sharing
 description: >-
   HermitStash is a self-hosted file upload server with post-quantum encryption. Every file and database field is sealed with an ML-KEM-1024 + ECDH P-384 hybrid envelope and XChaCha20-Poly1305 before touching disk; passwords use Argon2id. Nothing is stored in plaintext, including database fields the operator never thinks of as sensitive.
@@ -33,13 +33,14 @@ defaultPassword: ""
 submitter: dotCooCoo
 submission: https://github.com/getumbrel/umbrel-apps/pull/5378
 releaseNotes: >-
-  This update adds support for new storage management and configuration options being introduced with umbrelOS 2.0.
+  This update ships the session, password-check, upload, audit, and log fixes from HermitStash 1.15.8, plus the framework dependency update required for the upstream container image to publish.
 
 
-  Previous HermitStash 1.15.7 release notes:
+  Key improvements include automatic stale-session cleanup, stricter password-check concurrency limits, fixes for oversized sign-in addresses and upload metadata validation, safer vault-key rotation, restored audit-key retry behavior, and removal of share links and tokens from server logs.
 
 
-  This security-focused release tightens uploaded SVG validation so namespace-prefixed href links, including disguised xlink:href JavaScript URLs, are detected and refused before storage. It also refreshes vendored document-guard and certificate-toolkit dependencies. No data or configuration migration is required.
+  If you previously rotated the vault key on an older release and still have a data.old.<timestamp> directory, upstream notes that files not rewritten by that rotation may be in that retained directory.
 
-  Full release notes can be found at https://github.com/dotCooCoo/hermitstash/releases/tag/v1.15.7
+
+  Full release notes can be found at https://github.com/dotCooCoo/hermitstash/releases/tag/v1.15.9
 dependencies: []
