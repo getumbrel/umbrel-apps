@@ -5,7 +5,7 @@ storage:
 name: Paperclip
 tagline: A team of AI agents for every person
 category: ai
-version: "2026.1001.0"
+version: "2026.1005.0"
 port: 8860
 description: >-
   Paperclip is a self-hosted control center for running AI agents like a team.
@@ -40,13 +40,15 @@ gallery:
   - 4.webp
   - 5.webp
 releaseNotes: |-
-  - Adds agent personas across the app, a refreshed onboarding character, GitHub review-bot setup, Railway connector support, routine webhooks, and a rebuilt Slack setup flow.
-  - Improves native runner and chat reliability, including approval/Stop races, session continuity, sandbox reconnection and cleanup, question/approval continuations, and connection recovery.
-  - Adds governed skills-from-work support, plugin image catalogs, Actions tools for GitHub MCP connections, and experimental MCP aggregator connectors.
-  - Legacy Composio broker integrations stop working, with no automatic migration. Enable Settings > Experimental > MCP aggregators, create and authorize a new Composio Connect MCP connection, reselect its access rules, and remove retired connection records.
-  - Execution defaults now use full auto, including existing agents without explicit settings. Codex may bypass provider approvals and sandboxing; OpenCode may override underlying tool permission rules. Configure explicit restrictive modes in Paperclip before updating if you rely on these protections.
-  - Fixes local agents being unable to reach Paperclip's API when the Umbrel hostname is not resolvable inside the app.
-  - Runs database migrations 0280-0283; no other configuration or API changes require action.
+  - Adds Grok Build native-runner support, persistent agent files across tasks, GitHub-synced skills, Browser Use Cloud, Agent Chat navigation, per-message model/effort controls, and broader one-click MCP connector setup.
+  - Improves native runner, sandbox transport, Slack conversation syncing, heartbeat scheduling, model catalogs, and Codex/Claude/OpenCode runtime reliability.
+  - Fixes a crash loop caused by a permanently rejected queued run and hardens task/comment run behavior.
+  - Operator UI snippet injection is removed; move any `PAPERCLIP_CLOUD_UI_SNIPPET` integrations to a plugin UI contribution before updating.
+  - Keyboard shortcut preferences and APIs are removed; shortcuts are now always enabled for signed-in users.
+  - @-mentioning an agent in a task comment no longer starts a run. Assign the task or request review instead.
+  - Runs database migrations 0284-0320; no Umbrel package configuration changes are required.
+
+  Full release notes can be found at https://github.com/paperclipai/paperclip/releases/tag/v2026.1005.0
 dependencies: []
 path: ""
 defaultUsername: ""
