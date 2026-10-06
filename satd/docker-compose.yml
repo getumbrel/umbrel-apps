@@ -1,0 +1,142 @@
+# Derived from satd's reference stack (contrib/stack/compose.yml in
+# https://github.com/epochbtc/satd). The satd service is defined there; what
+# changes here is only what Umbrel owns: the app network, its proxy, and
+# where the data lives.
+#
+# satd-init runs first and does exactly what it does in the reference stack
+# — issues this install's CA and certificate, renders bitcoin.conf, mints
+# the MCP token. It is baked into the image, so this file needs no bind
+# mounts from a repository Umbrel has not cloned.
+version: "3.7"
+
+# One definition for both services: they must be the same build, and two
+# literals drift.
+#
+# Pinned by digest as well as tag, which the Umbrel app store requires: a tag
+# is mutable, and an app store that resolved it at install time would give two
+# users different software from the same manifest. The digest is the OCI index
+# (linux/amd64 + linux/arm64), so it still resolves per-architecture.
+#
+# The tag is the satd release, bare: the registry has never published a
+# `v`-prefixed tag. Each release image is signed with cosign.
+x-satd-image: &satd-image ghcr.io/epochbtc/satd:0.6.0@sha256:4d963e3cdfd094be26f306d85c6da68f193864ca1f91f0dd31e2df1825bed3d2
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: satd_server_1
+      # satd's status page, on the metrics listener. Plain HTTP on purpose:
+      # Umbrel's app_proxy always dials its upstream as `http://`, with no
+      # option to do otherwise, so a TLS port 502s every request. The hop is
+      # container-to-container on the app network, and the proxy terminates
+      # TLS for the browser.
+      #
+      # Umbrel's login stays in front of it (no PROXY_AUTH_ADD), which also
+      # covers /metrics on the same listener. The page is built to be safe with
+      # nothing in front of it, so this is belt and braces, not a secret.
+      APP_PORT: 9332
+
+  init:
+    image: *satd-image
+    # This one service starts as root and drops to satd itself, which the
+    # reference stack does not have to do.
+    #
+    # Umbrel gives an app a bind mount, and Docker creates the host side of a
+    # bind mount owned by root, mode 0755. uid 2121 cannot write into it, so
+    # satd-init's very first mkdir fails. The reference stack never sees this
+    # because it uses a named volume, and Docker seeds a named volume's
+    # ownership from the image's /var/lib/satd (satd:satd 0750).
+    #
+    # `chown` therefore has to happen inside the container, as root, before
+    # anything else — and then the work itself runs unprivileged, because
+    # everything satd-init writes (the CA key, the MCP token) has to be owned
+    # by the user the server runs as. The StartOS package solves the same
+    # problem the same way, with its own-volume oneshot.
+    #
+    # setpriv rather than su/runuser: this is debian-slim, which ships
+    # util-linux but not the login utilities.
+    user: "0:0"
+    entrypoint:
+      - /bin/sh
+      - -c
+      - >-
+        chown -R 2121:2121 /var/lib/satd &&
+        exec setpriv --reuid=2121 --regid=2121 --clear-groups
+        /usr/local/bin/satd-init
+    restart: on-failure
+    environment:
+      NETWORK: ${APP_SATD_NETWORK:-mainnet}
+      SATD_MCP: "1"
+      # The name clients reach this node by. Umbrel publishes <hostname>.local
+      # over mDNS, and the certificate has to carry that name or every LAN
+      # client sees a mismatch.
+      SATD_TLS_HOSTNAME: ${DEVICE_HOSTNAME:-umbrel}
+      # The status page, and the connection strings it shows. Umbrel publishes
+      # every port 1:1, so the device's name and satd's own ports are exactly
+      # what a wallet on the LAN dials.
+      SATD_STATUSPAGE: "1"
+      SATD_STATUS_ADVERTISE: >-
+        electrum=ssl://${DEVICE_DOMAIN_NAME:-umbrel.local}:${APP_SATD_ELECTRUM_TLS_PORT}
+        esplora=https://${DEVICE_DOMAIN_NAME:-umbrel.local}:${APP_SATD_ESPLORA_TLS_PORT}/api
+        rpc=https://${DEVICE_DOMAIN_NAME:-umbrel.local}:${APP_SATD_RPC_TLS_PORT}
+        mcp=https://${DEVICE_DOMAIN_NAME:-umbrel.local}:${APP_SATD_MCP_PORT}/
+      # No SATD_P2P_PORT. satd-init only accepts the chain's standard port
+      # there, and this package listens on its own (see `ports:` below); the
+      # server's --port overrides the rendered config instead.
+    volumes:
+      - ${APP_DATA_DIR}/data:/var/lib/satd
+
+  server:
+    image: *satd-image
+    depends_on:
+      init:
+        condition: service_completed_successfully
+    # The network is an argument, never a config-file line: satd accepts
+    # `signet=1` in a file and then ignores it, which silently starts a
+    # mainnet node. `--chain=` because there is no bare `--mainnet` flag,
+    # and mainnet is this package's default.
+    #
+    # The listener flags move satd onto this package's own host ports (see
+    # `ports:`). A command-line value overrides the same key in the rendered
+    # bitcoin.conf, so satd-init stays unmodified.
+    command:
+      - --datadir=/var/lib/satd
+      - --chain=${APP_SATD_NETWORK:-mainnet}
+      - --port=${APP_SATD_P2P_PORT}
+      - --rpctlsbind=0.0.0.0:${APP_SATD_RPC_TLS_PORT}
+      - --electrumtlsbind=0.0.0.0:${APP_SATD_ELECTRUM_TLS_PORT}
+      - --esploratlsbind=0.0.0.0:${APP_SATD_ESPLORA_TLS_PORT}
+      - --mcpport=${APP_SATD_MCP_PORT}
+    # No SATD_HEALTH_URL, so the image's own HEALTHCHECK probes JSON-RPC
+    # liveness rather than readiness. /readyz is 503 until the tip is within
+    # six blocks of the headers tip; in testing the container read
+    # `Up 2 hours (unhealthy)` with a failing streak of 254 while satd was
+    # answering RPC, Electrum, Esplora and MCP normally. Umbrel surfaces that
+    # state to the user, so the whole initial sync would look like a fault.
+    volumes:
+      - ${APP_DATA_DIR}/data:/var/lib/satd
+    # These are the LAN-facing surfaces, each TLS-terminated by satd itself.
+    # app_proxy fronts only the status page, so Esplora is published here
+    # rather than through it.
+    #
+    # Every one is mapped 1:1 onto a port no other app in the Umbrel store
+    # uses, and satd listens on that same number. The standard ports belong to
+    # apps satd users run beside it: 8333 to Bitcoin Node, 50002 to Fulcrum.
+    # P2P cannot be remapped instead: satd advertises the port it listens on,
+    # so `8433:8333` would send every peer that learned this address to
+    # Bitcoin Node. The numbers live in exports.sh, and satd's packaging tests check
+    # that each mapping is 1:1 and matches the flag above.
+    ports:
+      - "${APP_SATD_P2P_PORT}:${APP_SATD_P2P_PORT}"
+      - "${APP_SATD_RPC_TLS_PORT}:${APP_SATD_RPC_TLS_PORT}"
+      - "${APP_SATD_ELECTRUM_TLS_PORT}:${APP_SATD_ELECTRUM_TLS_PORT}"
+      - "${APP_SATD_ESPLORA_TLS_PORT}:${APP_SATD_ESPLORA_TLS_PORT}"
+      - "${APP_SATD_MCP_PORT}:${APP_SATD_MCP_PORT}"
+    stop_grace_period: 10m
+    restart: on-failure
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/satd-healthcheck"]
+      interval: 30s
+      timeout: 10s
+      start_period: 10m
+      retries: 3

@@ -1,0 +1,88 @@
+manifestVersion: 1.1
+id: satd
+storage:
+  dataRoot: data
+category: bitcoin
+name: satd
+version: "0.6.0"
+tagline: A Bitcoin full node in Rust, with Electrum and Esplora built in
+description: >-
+  satd is a Bitcoin Core-compatible full node written in Rust. It speaks
+  Core's JSON-RPC, config file and CLI, and serves an Electrum server and an
+  Esplora REST API from the same process — no second indexer to run, no
+  second copy of the chain to store.
+
+
+  Opening the app shows satd's status page: sync progress and its ETA,
+  whether each index is ready for wallets yet, the mempool, fee estimates,
+  peer counts, and the connection strings your wallets need.
+
+
+  This app runs satd fully indexed, with TLS on every surface it exposes to
+  your network. It generates a certificate authority for your install alone
+  on first start; export it from the app's data directory, import it once,
+  and Electrum wallets, REST clients and the MCP server are all trusted
+  together.
+
+
+  What it gives you:
+
+
+  - Electrum server on TLS, for Sparrow, Electrum, BlueWallet and Zeus.
+
+  - Esplora REST API on TLS, for anything that speaks Blockstream's API.
+
+  - Bitcoin Core-compatible JSON-RPC, plain on the app network and TLS on
+  your LAN.
+
+  - An MCP server, so an AI assistant can query your own node instead of a
+  public explorer.
+
+  - `sat-cli` and `sat-tui`, a terminal dashboard for the node.
+
+
+  This app contains satd and its own tools only. Lightning, BTCPay and
+  wallets come from the app store as separate apps.
+
+
+  Note on disk: satd here runs with the transaction and address indices on,
+  because Electrum and Esplora both require them, and pruning is not
+  compatible with that. Budget for the full chain plus roughly the same
+  again in indices.
+releaseNotes: ""
+
+developer: 20 Gauge Software
+website: https://github.com/epochbtc/satd
+dependencies: []
+repo: https://github.com/epochbtc/satd
+support: https://github.com/epochbtc/satd/issues
+
+# The host port app_proxy binds, in front of satd's status page. 8430–8439 is
+# otherwise unused in the store; the published ports in exports.sh sit in the
+# same block, and 50012 is Electrum TLS.
+port: 8430
+gallery: []
+path: "/status"
+
+defaultUsername: ""
+defaultPassword: ""
+
+# Regenerable, and hundreds of gigabytes. What stays in the backup is what
+# cannot be re-derived: tls/ (the CA clients have imported), secrets/ (the MCP
+# token), authfile.toml and bitcoin.conf. `data/` is the directory mounted at
+# /var/lib/satd. Mainnet lives at its root; every other network is a
+# subdirectory with the same layout, which the `*` entries cover.
+backupIgnore:
+  - data/blocks
+  - data/chainstate
+  - data/chainstate_background
+  - data/mempool.dat
+  - data/.cookie
+  - data/*/blocks
+  - data/*/chainstate
+  - data/*/chainstate_background
+  - data/*/mempool.dat
+  - data/*/.cookie
+
+submitter: 20 Gauge Software
+submission: https://github.com/getumbrel/umbrel-apps/pull/TBD
