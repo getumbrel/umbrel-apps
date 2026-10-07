@@ -4,7 +4,7 @@ storage:
   dataRoot: data
 category: social
 name: FreshRSS
-version: "1.30.0-patch.1"
+version: "1.30.1"
 tagline: A free, self-hostable aggregator for rss feeds
 description: >-
   FreshRSS is an RSS aggregator and reader. It enables you to seamlessly read and follow content from multiple websites at
@@ -25,23 +25,20 @@ description: >-
   
   - and more!
 releaseNotes: >-
-  This update adds support for new storage management and configuration options being introduced with umbrelOS 2.0.
+  This FreshRSS security-oriented release includes several security patches and bug fixes.
 
 
-  Previous FreshRSS 1.30.0 release notes:
-
-
-  This FreshRSS security-oriented release includes important security patches and a local-network access change.
+  If you are upgrading from a version older than 1.30.0, access to local-network feed URLs is now blocked by default. Admins can allow selected local networks in System configuration if needed.
 
 
   Key highlights:
-    - Patched several security attack scenarios, including login/register CSRFs and access-control issues
-    - Disallows access to local networks (for example 127.0.0.1) by default; admins can allow selected local networks in System configuration if needed
-    - Added feed list filtering by state/search, an option to hide unread badges, and refresh-only-current-view support
-    - Improved user label sharing, saved queries, regex/search handling, and OPML/security-related import behavior
+    - Patched additional security attack scenarios, including one-time login challenge nonces, safer session rotation, and stricter self-update mutations
+    - Rejects token access for disabled accounts and strengthens ZIP import handling against decompression bombs
+    - Fixes domain-wide Retry-After handling, muted feeds returning HTTP 410, sharing-link regressions, and HTTPS proxy TLS SNI resolution
+    - Adds an optional CLI feed argument for user feed actualization and includes UI/style improvements
 
 
-  Full release notes can be found at https://github.com/FreshRSS/FreshRSS/releases/tag/1.30.0
+  Full release notes can be found at https://github.com/FreshRSS/FreshRSS/releases/tag/1.30.1
 developer: FreshRSS Org
 website: https://freshrss.org/
 dependencies: []
