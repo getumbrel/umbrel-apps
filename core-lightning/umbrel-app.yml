@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: core-lightning
 category: bitcoin
 name: Core Lightning
-version: "26.06.8-patch.1"
+version: "26.06.9"
 tagline: Run your personal Core Lightning node
 description: >-
   Get started with the Lightning network today with Core Lightning - a
@@ -32,35 +32,21 @@ defaultPassword: ""
 submitter: Blockstream
 submission: https://github.com/getumbrel/umbrel-apps/pull/475
 releaseNotes: >-
-  This updates the Core Lightning application (web UI) to v26.09. Core Lightning itself stays at v26.06.8.
+  This updates Core Lightning from v26.06.8 to v26.06.9. The Core Lightning application (web UI) stays at v26.09.
 
-  **CLN Application v26.09:**
+  **CLN v26.06.9:**
 
-  - Updated dependencies, with no known vulnerabilities
+  - Includes important security fixes and hardening for channel reestablishment, splicing, HTLC shutdown handling, onion handling, onchaind, gossip range queries, runes, and setconfig
 
-  - Security hardening of authentication, sessions and request handling; logging out now also ends the session on the server
+  - Fixes a v26.06.8 gossip CPU throttle regression that could delay ordinary gossip, ping, onion, and channel traffic on busy nodes
 
-  - Fixes the session being lost when Ride The Lightning is open on the same device
+  - Redacts sensitive values such as wallet recovery and RPC credentials in listconfigs output
 
-  - Checks the amount of BOLT 12 offer invoices before paying
+  - Adds reproducible arm64 and armv7 binaries alongside the existing amd64 builds
 
-  - Invoice runes created from the Connect Wallet screen now work with wallets; recreate any rune made with an earlier version
+  - Nodes that have run development builds cannot downgrade to this 26.06.x release because their database schema may be newer
 
-  - Large balances are shown in millions (e.g. 1.25M sats) instead of thousands
-
-  - Commando connections now reconnect on demand instead of giving up after a few attempts
-
-  - Runs on Node 22 with a modernised build and release pipeline (pinned base images, provenance & SBOM attestations)
-
-
-  [Application release notes](https://github.com/ElementsProject/cln-application/releases/tag/v26.09)
-
-
-  **CLN v26.06.8:**
-  This update includes important security fixes and bug fixes. The Core Lightning developers recommend updating as soon as possible.
-
-
-  [Core Lightning release notes](https://github.com/ElementsProject/lightning/releases/tag/v26.06.8)
+  [Core Lightning release notes](https://github.com/ElementsProject/lightning/releases/tag/v26.06.9)
 
 backupIgnore:
   - data/lightningd/bitcoin/lightningd.sqlite3
