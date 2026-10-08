@@ -1,0 +1,93 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: securo_frontend_1
+      APP_PORT: 8080
+
+  frontend:
+    image: ghcr.io/securo-finance/securo-frontend:0.16.3@sha256:98b7a60107aeca8ca92dff6e7bca6fd77f40cd9d80d7232a3d9acd121325c7e7
+    restart: on-failure
+    environment:
+      # nginx in this image proxies /api/ to the backend, so the UI and API share one origin.
+      BACKEND_URL: http://securo_backend_1:8000
+    depends_on:
+      - backend
+
+  backend:
+    image: ghcr.io/securo-finance/securo-backend:0.16.3@sha256:32db1a9409e1b848567bd907b535ec1b2896c7d0dee5887141d1ef00c72df9e7
+    restart: on-failure
+    user: "1000:1000"
+    command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"
+    environment: &backend-env
+      DATABASE_URL: postgresql+asyncpg://securo:${APP_SECURO_DB_PASSWORD}@securo_db_1:5432/securo
+      REDIS_URL: redis://securo_redis_1:6379/0
+      # Signs login tokens and encrypts stored provider credentials. Must stay stable across restarts.
+      SECRET_KEY: ${APP_SECURO_SECRET_KEY}
+      FRONTEND_URL: http://${DEVICE_DOMAIN_NAME}:${APP_PROXY_PORT}
+      # Requests reach the backend through the bundled nginx frontend.
+      TRUSTED_PROXY_HOPS: 1
+      STORAGE_LOCAL_PATH: /app/data/attachments
+      # The AI agents feature and its MCP server are opt-in upstream and stay off here.
+      AGENTS_ENABLED: "false"
+    volumes:
+      - ${APP_DATA_DIR}/data/attachments:/app/data/attachments
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  celery-worker:
+    image: ghcr.io/securo-finance/securo-backend:0.16.3@sha256:32db1a9409e1b848567bd907b535ec1b2896c7d0dee5887141d1ef00c72df9e7
+    restart: on-failure
+    user: "1000:1000"
+    command: celery -A app.worker worker --loglevel=info --concurrency=2
+    environment: *backend-env
+    volumes:
+      - ${APP_DATA_DIR}/data/attachments:/app/data/attachments
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  celery-beat:
+    image: ghcr.io/securo-finance/securo-backend:0.16.3@sha256:32db1a9409e1b848567bd907b535ec1b2896c7d0dee5887141d1ef00c72df9e7
+    restart: on-failure
+    user: "1000:1000"
+    # The default schedule file lives in the root-owned /app directory; keep it in writable temp space.
+    command: celery -A app.worker beat --loglevel=info --schedule /tmp/celerybeat-schedule
+    environment: *backend-env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  redis:
+    image: redis:8.10.2-alpine@sha256:3811787313eba226a2ef38658c6ccb91cd5e110edc89c37767de373120a0e5a0
+    restart: on-failure
+    # Redis only carries the task queue and cache, so nothing needs to persist.
+    command: redis-server --save "" --appendonly no
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  db:
+    # pgvector is required by upstream migrations since Securo 0.11.0.
+    image: pgvector/pgvector:0.8.7-pg16@sha256:7b822b0aac60967beb1ea5e576b8602c94c300a157d187f385ae3e0da199b90a
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      POSTGRES_USER: securo
+      POSTGRES_PASSWORD: ${APP_SECURO_DB_PASSWORD}
+      POSTGRES_DB: securo
+    volumes:
+      - ${APP_DATA_DIR}/data/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U securo -d securo"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
