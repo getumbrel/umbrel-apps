@@ -1,0 +1,25 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: semaphore_web_1
+      APP_PORT: 3000
+
+  web:
+    image: semaphoreui/semaphore:v2.19.16@sha256:3707a971a57fdc5ac99a184bf83f2efb7d00cbeec8fb08a16a8028f77229e141
+    restart: on-failure
+    user: "1000:1000"
+    environment:
+      # The image defaults to MySQL; SQLite keeps everything in one file under app data.
+      SEMAPHORE_DB_DIALECT: sqlite
+      # Admin user is created on first start only. Encryption keys are generated
+      # at the same time and saved to /etc/semaphore/config.json.
+      SEMAPHORE_ADMIN: admin
+      SEMAPHORE_ADMIN_PASSWORD: ${APP_PASSWORD}
+      SEMAPHORE_ADMIN_NAME: Admin
+      SEMAPHORE_ADMIN_EMAIL: admin@localhost
+      # uid 1000 has no home directory in the image; Ansible and git need a writable one.
+      HOME: /var/lib/semaphore
+    volumes:
+      - ${APP_DATA_DIR}/data/config:/etc/semaphore
+      - ${APP_DATA_DIR}/data/db:/var/lib/semaphore
+      - ${APP_DATA_DIR}/data/repos:/tmp/semaphore
