@@ -1,0 +1,48 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: crafty_web_1
+      APP_PORT: 8080
+
+  # Crafty serves HTTPS with a self-signed certificate. Bridge it to app_proxy
+  # without exposing a second web port or requiring a browser certificate bypass.
+  web:
+    image: nginx:1.30.5-alpine@sha256:0985e772fb9f729e6fa0980da05fca5d9c468e870eed43071545afa9d2e27d94
+    user: "1000:1000"
+    entrypoint: ["nginx", "-g", "daemon off;"]
+    depends_on:
+      - server
+    volumes:
+      - ${APP_DATA_DIR}/nginx.conf:/etc/nginx/nginx.conf:ro
+    read_only: true
+    tmpfs:
+      - /tmp
+    restart: on-failure
+
+  server:
+    image: arcadiatechnology/crafty-4:4.11.0@sha256:7b6e87514259549647e15ceeaf73d238792e6d77e2c79fc744d5badc8d6e997c
+    user: "1000:1000"
+    init: true
+    entrypoint: ["python3", "/umbrel-bootstrap.py"]
+    command: ["-d", "-i"]
+    environment:
+      UMBREL_CRAFTY_PASSWORD: ${APP_PASSWORD}
+    ports:
+      - "25500-25600:25500-25600/tcp" # Minecraft Java
+      - "19132:19132/udp" # Minecraft Bedrock / Geyser
+      - "5520-5550:5520-5550/udp" # Hytale
+      - "18123:8123/tcp" # Optional Dynmap; 8123 belongs to Home Assistant
+    volumes:
+      - ${APP_DATA_DIR}/bootstrap.py:/umbrel-bootstrap.py:ro
+      - ${APP_DATA_DIR}/data/config:/crafty/app/config
+      - ${APP_DATA_DIR}/data/servers:/crafty/servers
+      - ${APP_DATA_DIR}/data/backups:/crafty/backups
+      - ${APP_DATA_DIR}/data/logs:/crafty/logs
+      - ${APP_DATA_DIR}/data/import:/crafty/import
+      - ${APP_DATA_DIR}/data/branding/login:/crafty/app/frontend/static/assets/images/auth/custom
+      - ${APP_DATA_DIR}/data/branding/embed:/crafty/app/frontend/static/assets/images/embed
+      - ${APP_DATA_DIR}/data/branding/logos:/crafty/app/frontend/static/assets/images/logos
+    stop_grace_period: 2m
+    restart: on-failure
