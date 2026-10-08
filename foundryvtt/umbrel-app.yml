@@ -3,6 +3,10 @@ id: foundryvtt
 storage:
   dataRoot: data
 environment:
+  - name: FOUNDRY_ADMIN_KEY
+    services:
+      - server
+    note: Foundry admin password for the setup screen. It starts as the password shown by Umbrel. Enter a new value to change it; it is applied on the next start. A password changed inside Foundry is also kept.
   - name: FOUNDRY_USERNAME
     services:
       - server
@@ -35,10 +39,6 @@ environment:
     services:
       - server
     note: Optional. External port of your tunnel or reverse proxy, used in invitation links. Usually 443 with HTTPS. Leave empty for access through Umbrel on port 30000.
-  - name: FOUNDRY_ADMIN_KEY
-    services:
-      - server
-    note: Optional. Sets Foundry's admin key when you save a new value here, for example to reset a forgotten key. An admin key changed later in Foundry is kept. Empty means the password shown by Umbrel.
   - name: FOUNDRY_LOCAL_HOSTNAME
     services:
       - server
