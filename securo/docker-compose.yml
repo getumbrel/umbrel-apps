@@ -24,6 +24,12 @@ services:
       # Signs login tokens and encrypts stored provider credentials. Must stay stable across restarts.
       SECRET_KEY: ${APP_SECURO_SECRET_KEY}
       FRONTEND_URL: http://${DEVICE_DOMAIN_NAME}:${APP_PROXY_PORT}
+      # Bank consent redirects back here. Enable Banking production apps require
+      # HTTPS, and Securo's login is tied to the exact origin, so default to the
+      # HTTPS address umbrelOS serves on the same port. Users can override it.
+      ENABLE_BANKING_OAUTH_REDIRECT_URI: https://${DEVICE_DOMAIN_NAME}:${APP_PROXY_PORT}/oauth/callback
+      # Only used for display; the SimpleFIN setup token carries the bridge URL.
+      SIMPLEFIN_API_URL: https://bridge.simplefin.org
       # Requests reach the backend through the bundled nginx frontend.
       TRUSTED_PROXY_HOPS: 1
       STORAGE_LOCAL_PATH: /app/data/attachments
