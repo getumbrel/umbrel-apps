@@ -38,6 +38,12 @@ services:
       # in the umbrelOS app settings always apply and the admin key keeps
       # matching the password Umbrel shows.
       CONTAINER_PRESERVE_CONFIG: "false"
+      # Without this, LAN invitation links show the container's internal Docker IP.
+      FOUNDRY_LOCAL_HOSTNAME: ${DEVICE_DOMAIN_NAME}
+      # Recommended upstream for most users; off by default in the image.
+      FOUNDRY_COMPRESS_WEBSOCKET: "true"
+      FOUNDRY_MINIFY_STATIC_FILES: "true"
+      # Set explicitly so Foundry does not ask on every launch.
       FOUNDRY_TELEMETRY: "false"
       UMBREL_SETUP_PAGE: >-
         <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Foundry Virtual Tabletop</title>

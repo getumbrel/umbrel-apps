@@ -35,6 +35,28 @@ environment:
     services:
       - server
     note: Optional. External port of your tunnel or reverse proxy, used in invitation links. Usually 443 with HTTPS. Leave empty for access through Umbrel on port 30000.
+  - name: FOUNDRY_LOCAL_HOSTNAME
+    services:
+      - server
+    default: umbrel.local
+    note: Address shown in invitation links for players on your home network. Use your Umbrel's IP address if some devices cannot open umbrel.local.
+  - name: FOUNDRY_WORLD
+    services:
+      - server
+    note: Optional. Folder name of a world to launch automatically on start, as shown under Data/worlds.
+  - name: FOUNDRY_LANGUAGE
+    services:
+      - server
+    default: en.core
+    note: Default language as language.module, such as fr.fr-core for French. Install the translation module from the setup screen first.
+  - name: FOUNDRY_TELEMETRY
+    services:
+      - server
+    default: "false"
+    options:
+      - "true"
+      - "false"
+    note: Set to true to share anonymous usage data with the Foundry developers.
 category: media
 name: Foundry VTT
 version: "14.368"
@@ -44,6 +66,9 @@ description: >-
 
 
   Foundry's admin key, which protects its setup screen, is the password shown by Umbrel for this app. Players join your game from their own browsers at the same address, without needing an Umbrel account. Set a password for each player inside your world.
+
+
+  Foundry's options are managed from the app's settings in umbrelOS and applied on every start, so changes made in Foundry's own Configuration screen are reset when the app restarts.
 
 
   Foundry Virtual Tabletop is a modern platform for running tabletop role-playing games online or around the table. Build worlds for systems such as Dungeons & Dragons 5th Edition, Pathfinder, and hundreds of community game systems, then invite your players to join.
