@@ -19,6 +19,22 @@ environment:
     services:
       - server
     note: Optional. A license key, or a number such as 2 to pick one of the keys on your account. Leave empty to use the first key or enter it in the browser.
+  - name: FOUNDRY_HOSTNAME
+    services:
+      - server
+    note: Optional. Public hostname used in invitation links when Foundry is reachable through a tunnel or reverse proxy, such as foundry.example.com. Enter the hostname only, without https://. This does not expose Foundry by itself.
+  - name: FOUNDRY_PROXY_SSL
+    services:
+      - server
+    default: "false"
+    options:
+      - "true"
+      - "false"
+    note: Set to true when players reach Foundry through an HTTPS tunnel or reverse proxy, so invitation links and audio/video work over HTTPS.
+  - name: FOUNDRY_PROXY_PORT
+    services:
+      - server
+    note: Optional. External port of your tunnel or reverse proxy, used in invitation links. Usually 443 with HTTPS. Leave empty for access through Umbrel on port 30000.
 category: media
 name: Foundry VTT
 version: "14.368"

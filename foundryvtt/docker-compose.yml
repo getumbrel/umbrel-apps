@@ -34,9 +34,10 @@ services:
       - --dataPath=/data
     environment:
       FOUNDRY_ADMIN_KEY: ${APP_PASSWORD}
-      # Keep changes made in Foundry's own Configuration screen across restarts.
-      # options.json and the admin key are only written on first start.
-      CONTAINER_PRESERVE_CONFIG: "true"
+      # Regenerate options.json and the admin key on every start, so values set
+      # in the umbrelOS app settings always apply and the admin key keeps
+      # matching the password Umbrel shows.
+      CONTAINER_PRESERVE_CONFIG: "false"
       FOUNDRY_TELEMETRY: "false"
       UMBREL_SETUP_PAGE: >-
         <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Foundry Virtual Tabletop</title>
