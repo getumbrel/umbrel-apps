@@ -1,0 +1,25 @@
+version: "3.7"
+
+services:
+  # NO app_proxy, and that is not an oversight. Devices reach the seeder by
+  # UDP holepunching over the Hyperswarm DHT, to pair and to back up. Docker's
+  # bridge adds a second NAT that stops it: measured on a real Umbrel
+  # (2026-10-05, the bridge stalled and host networking paired in under a
+  # second) and again under rootless NAT (2026-10-08, no pairing in 90 s;
+  # host networking paired in 0.7 s). app_proxy cannot front a host-networked
+  # service, so the dashboard has its own login with the app password
+  # umbrelOS shows next to the app (deterministicPassword).
+  app:
+    image: ghcr.io/peerloomllc/pearoffice-seeder:0.1.0@sha256:c760f70af60f1fece1150d2565888116f1d38c76229238909f270e31533cab58
+    restart: on-failure
+    stop_grace_period: 1m
+    network_mode: host
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      SEEDER_HOST: 0.0.0.0
+      SEEDER_PORT: "8761"
+      SEEDER_PASSWORD: ${APP_PASSWORD}
+    volumes:
+      # Seeder identity, paired devices and the encrypted files it holds.
+      - ${APP_DATA_DIR}/data:/data
