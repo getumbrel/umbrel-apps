@@ -5,7 +5,7 @@ storage:
 name: BOLT12 Pay
 tagline: Self-hosted Lightning payments and identity with BOLT12, BIP353, LNURL, and Nostr
 category: bitcoin
-version: "0.3.5-patch.1"
+version: 0.3.6
 port: 8367
 description: |-
   BOLT12 Pay is a self-hosted Lightning payments and identity app for LND nodes.
@@ -84,69 +84,13 @@ submission: https://github.com/getumbrel/umbrel-apps/pull/5429
 repo: https://github.com/Alex71btc/lndk-pay
 support: https://github.com/Alex71btc/lndk-pay/issues
 releaseNotes: |
-  This update adds support for new storage management and configuration options being introduced with umbrelOS 2.0.
+  Lightning Activity now displays the date and time for incoming and outgoing payments.
 
-  Previous BOLT12 Pay 0.3.5 release notes:
+  Dates and times follow the selected German or English interface language and use your browser's local timezone.
 
-  Release 3.4.4:
+  Older entries without a valid timestamp display a clear fallback message. The compact layout works on mobile and desktop.
 
-  Security and Nostr:
-
-  - Encrypts the Notification nsec and private app signer with AES-256-GCM
-  - Uses LND to unlock the keys automatically after app or node restarts
-  - Migrates existing plaintext Nostr keys without manual setup
-  - Adds safe replacement of the Notification nsec and emergency signer regeneration
-  - Sends encrypted NIP-04 self-DMs through the relays saved with the Nostr Identity
-
-  Alias Pages:
-
-  - Stops creating a BOLT11 fallback invoice whenever an Alias page is opened or refreshed
-  - Adds an optional button that creates one BOLT11 fallback invoice only when requested
-  - Clearly identifies these invoices in Lightning Activity and limits repeated public requests
-
-  BIP353:
-
-  - Automatically detects missing public BIP353 TXT records in Cloudflare-managed setups
-  - Adds a guided repair flow before recreating a missing public BIP353 record
-  - Adds manual verification of published Alias Manager TXT records
-  - Adds manual verification of BIP353 addresses published from Offer History
-  - Verification distinguishes correct, missing, invalid and mismatched TXT records
-  - Draft and unpublished aliases are skipped during verification
-
-  DNS:
-
-  - Retries failed BIP353 TXT lookups through Cloudflare DNS-over-HTTPS on port 443
-  - Fixes parsing of long BIP353 TXT records split into multiple quoted DNS strings
-  - Prevents valid Cloudflare TXT records from being incorrectly reported as containing a different offer
-  - Guided repair leaves existing invalid or unrelated TXT records untouched
-
-  User Interface:
-
-  - Enlarges the mobile camera preview and QR target for dense BOLT12 Offer codes
-  - Adds smooth two-finger pinch-to-zoom, a visible zoom slider and tap-to-focus where supported
-  - Keeps the QR scanner compact on desktop
-  - Shows understandable errors when a proxy returns HTML instead of JSON
-  - Fixes Contacts modal scrolling and usability on mobile screens
-  - Adds German and English BIP353 verification and repair messages
-  - Adds BIP353 verification controls to Alias Manager and Generated Offers
-  - Keeps the configured public BOLT12 address and QR code usable while its DNS record is missing
-
-  Diagnostics:
-
-  - Improves NWC logging while reducing exposure of long cryptographic identifiers
-  - Redacts BIP353 domains in logs while keeping useful troubleshooting context
-
-  Release 3.4.5:
-
-  - Adds payment-method selection when a Lightning Address supports both BOLT12 and LNURL
-  - Shows BOLT12 availability in the payment preview when BIP353 resolves successfully
-  - Fixes mobile login and admin dialog layouts on small screens and with the on-screen keyboard
-
-  Upgrade Notes:
-
-  - Existing application data and payment history are preserved
-  - No manual migration is required
-  - LND v0.20.x and v0.21.x compatibility remains unchanged
+  Existing application data and payment history are preserved. No manual migration is required.
 
 dependencies:
   - lightning
