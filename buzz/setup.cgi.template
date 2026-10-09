@@ -1,0 +1,486 @@
+#!/bin/awk -f
+
+function html_escape(value, escaped) {
+  escaped = value
+  gsub(/&/, "\&amp;", escaped)
+  gsub(/</, "\&lt;", escaped)
+  gsub(/>/, "\&gt;", escaped)
+  gsub(/\"/, "\&quot;", escaped)
+  return escaped
+}
+
+function hex_value(character) {
+  character = toupper(character)
+  return character >= "0" && character <= "9" ? character + 0 : index("ABCDEF", character) + 9
+}
+
+function url_decode(value, decoded, index_at, character, first, second) {
+  decoded = ""
+  gsub(/\+/, " ", value)
+  for (index_at = 1; index_at <= length(value); index_at++) {
+    character = substr(value, index_at, 1)
+    if (character == "%" && index_at + 2 <= length(value) && substr(value, index_at + 1, 2) !~ /[^0-9A-Fa-f]/) {
+      first = hex_value(substr(value, index_at + 1, 1))
+      second = hex_value(substr(value, index_at + 2, 1))
+      decoded = decoded sprintf("%c", first * 16 + second)
+      index_at += 2
+    } else {
+      decoded = decoded character
+    }
+  }
+  return decoded
+}
+
+function url_encode(value, encoded, index_at, character, code) {
+  encoded = ""
+  for (index_at = 1; index_at <= length(value); index_at++) {
+    character = substr(value, index_at, 1)
+    if (character ~ /[A-Za-z0-9._~-]/) {
+      encoded = encoded character
+    } else {
+      code = ascii_code[character]
+      encoded = encoded sprintf("%%%02X", code == "" ? 63 : code)
+    }
+  }
+  return encoded
+}
+
+function normalize_name(value) {
+  gsub(/^[ ]+|[ ]+$/, "", value)
+  gsub(/[ ][ ]+/, " ", value)
+  return value
+}
+
+function valid_name(value) {
+  return length(value) >= 2 && length(value) <= 48 && value !~ /[^A-Za-z0-9 ._-]/
+}
+
+function valid_funnel_relay_url(value) {
+  return length(value) <= 260 && value ~ /^wss:\/\/[a-z0-9][a-z0-9.-]*[.]ts[.]net$/ && value !~ /[.][.]/
+}
+
+function valid_approval_url(value) {
+  return length(value) <= 2048 && value ~ /^https:\/\/login[.]tailscale[.]com\// && value !~ /[[:space:]<>]/
+}
+
+function valid_integer(value, minimum, maximum) {
+  return value ~ /^[0-9]+$/ && value + 0 >= minimum && value + 0 <= maximum
+}
+
+function setting(file, key, line, prefix, value) {
+  prefix = key "="
+  while ((getline line < file) > 0) {
+    if (index(line, prefix) == 1) {
+      value = substr(line, length(prefix) + 1)
+      close(file)
+      return value
+    }
+  }
+  close(file)
+  return ""
+}
+
+function setting_or(file, key, fallback, value) {
+  value = setting(file, key)
+  return value == "" ? fallback : value
+}
+
+function current_owner(value) {
+  value = setting(owner_file, "RELAY_OWNER_PUBKEY")
+  return length(value) == 64 && value !~ /[^0-9a-f]/ ? value : ""
+}
+
+function current_relay_url(value) {
+  value = setting(community_file, "RELAY_URL")
+  return value ~ /^wss?:\/\/[A-Za-z0-9][A-Za-z0-9.-]*(:[0-9]+)?$/ ? value : ""
+}
+
+function current_community_name(line, value) {
+  if ((getline line < community_name_file) > 0) value = normalize_name(line)
+  close(community_name_file)
+  return valid_name(value) ? value : ""
+}
+
+function form_value(body, wanted, count, fields, index_at, separator, key) {
+  count = split(body, fields, "&")
+  for (index_at = 1; index_at <= count; index_at++) {
+    separator = index(fields[index_at], "=")
+    key = separator == 0 ? fields[index_at] : substr(fields[index_at], 1, separator - 1)
+    if (key == wanted) return separator == 0 ? "" : url_decode(substr(fields[index_at], separator + 1))
+  }
+  return ""
+}
+
+function origin_for_relay(url, origin) {
+  origin = url
+  sub(/^ws:/, "http:", origin)
+  sub(/^wss:/, "https:", origin)
+  return origin
+}
+
+function bytes_to_mb(value) {
+  return int((value + 0) / 1048576)
+}
+
+function load_settings() {
+  cfg_huddle = setting_or(settings_file, "BUZZ_HUDDLE_AUDIO_AVAILABLE", "true")
+  cfg_audit = setting_or(settings_file, "BUZZ_AUDIT_ENABLED", "true")
+  cfg_connections = setting_or(settings_file, "BUZZ_MAX_CONNECTIONS", "10000")
+  cfg_human_messages = setting_or(settings_file, "BUZZ_RATE_LIMIT_HUMAN_MESSAGES_PER_MIN", "60")
+  cfg_human_api = setting_or(settings_file, "BUZZ_RATE_LIMIT_HUMAN_API_CALLS_PER_MIN", "300")
+  cfg_human_ws = setting_or(settings_file, "BUZZ_RATE_LIMIT_HUMAN_WS_EVENTS_PER_SEC", "10")
+  cfg_agent_standard_messages = setting_or(settings_file, "BUZZ_RATE_LIMIT_AGENT_STANDARD_MESSAGES_PER_MIN", "120")
+  cfg_agent_standard_api = setting_or(settings_file, "BUZZ_RATE_LIMIT_AGENT_STANDARD_API_CALLS_PER_MIN", "600")
+  cfg_agent_elevated_messages = setting_or(settings_file, "BUZZ_RATE_LIMIT_AGENT_ELEVATED_MESSAGES_PER_MIN", "300")
+  cfg_agent_platform_messages = setting_or(settings_file, "BUZZ_RATE_LIMIT_AGENT_PLATFORM_MESSAGES_PER_MIN", "600")
+  cfg_image_mb = bytes_to_mb(setting_or(settings_file, "BUZZ_MAX_IMAGE_BYTES", "52428800"))
+  cfg_gif_mb = bytes_to_mb(setting_or(settings_file, "BUZZ_MAX_GIF_BYTES", "10485760"))
+  cfg_video_mb = bytes_to_mb(setting_or(settings_file, "BUZZ_MAX_VIDEO_BYTES", "524288000"))
+  cfg_file_mb = bytes_to_mb(setting_or(settings_file, "BUZZ_MAX_FILE_BYTES", "104857600"))
+  cfg_uploads_concurrent = setting_or(settings_file, "BUZZ_MEDIA_MAX_CONCURRENT_UPLOADS", "8")
+  cfg_uploads_per_member = setting_or(settings_file, "BUZZ_MEDIA_MAX_CONCURRENT_UPLOADS_PER_PUBKEY", "2")
+  cfg_uploads_per_minute = setting_or(settings_file, "BUZZ_MEDIA_UPLOADS_PER_MINUTE", "30")
+  cfg_git_pack_mb = bytes_to_mb(setting_or(settings_file, "BUZZ_GIT_MAX_PACK_BYTES", "524288000"))
+  cfg_git_repo_mb = bytes_to_mb(setting_or(settings_file, "BUZZ_GIT_MAX_REPO_BYTES", "1073741824"))
+  cfg_git_cache_mb = bytes_to_mb(setting_or(settings_file, "BUZZ_GIT_PACK_CACHE_MAX_BYTES", "5368709120"))
+  cfg_git_repos = setting_or(settings_file, "BUZZ_GIT_MAX_REPOS_PER_PUBKEY", "100")
+  cfg_git_ops = setting_or(settings_file, "BUZZ_GIT_MAX_CONCURRENT_OPS", "20")
+}
+
+function parse_settings(body) {
+  cfg_huddle = form_value(body, "huddle_audio") == "true" ? "true" : "false"
+  cfg_audit = form_value(body, "audit_log") == "true" ? "true" : "false"
+  cfg_connections = form_value(body, "max_connections")
+  cfg_human_messages = form_value(body, "human_messages")
+  cfg_human_api = form_value(body, "human_api")
+  cfg_human_ws = form_value(body, "human_ws")
+  cfg_agent_standard_messages = form_value(body, "agent_standard_messages")
+  cfg_agent_standard_api = form_value(body, "agent_standard_api")
+  cfg_agent_elevated_messages = form_value(body, "agent_elevated_messages")
+  cfg_agent_platform_messages = form_value(body, "agent_platform_messages")
+  cfg_image_mb = form_value(body, "image_mb")
+  cfg_gif_mb = form_value(body, "gif_mb")
+  cfg_video_mb = form_value(body, "video_mb")
+  cfg_file_mb = form_value(body, "file_mb")
+  cfg_uploads_concurrent = form_value(body, "uploads_concurrent")
+  cfg_uploads_per_member = form_value(body, "uploads_per_member")
+  cfg_uploads_per_minute = form_value(body, "uploads_per_minute")
+  cfg_git_pack_mb = form_value(body, "git_pack_mb")
+  cfg_git_repo_mb = form_value(body, "git_repo_mb")
+  cfg_git_cache_mb = form_value(body, "git_cache_mb")
+  cfg_git_repos = form_value(body, "git_repos")
+  cfg_git_ops = form_value(body, "git_ops")
+
+  if (!valid_integer(cfg_connections, 100, 100000)) {
+    error = "Maximum connections must be between 100 and 100,000."
+  } else if (!valid_integer(cfg_human_messages, 1, 10000) || !valid_integer(cfg_human_api, 1, 50000) || !valid_integer(cfg_human_ws, 1, 1000)) {
+    error = "Human rate limits must be positive numbers within the shown ranges."
+  } else if (!valid_integer(cfg_agent_standard_messages, 1, 50000) || !valid_integer(cfg_agent_standard_api, 1, 100000) || !valid_integer(cfg_agent_elevated_messages, 1, 100000) || !valid_integer(cfg_agent_platform_messages, 1, 100000)) {
+    error = "Agent rate limits must be positive numbers within the shown ranges."
+  } else if (!valid_integer(cfg_image_mb, 1, 500) || !valid_integer(cfg_gif_mb, 1, 200) || !valid_integer(cfg_video_mb, 10, 5000) || !valid_integer(cfg_file_mb, 1, 1000)) {
+    error = "Upload size limits must be positive numbers within the shown ranges."
+  } else if (!valid_integer(cfg_uploads_concurrent, 1, 64) || !valid_integer(cfg_uploads_per_member, 1, 64) || !valid_integer(cfg_uploads_per_minute, 1, 1000)) {
+    error = "Upload activity limits must be positive numbers within the shown ranges."
+  } else if (cfg_uploads_per_member + 0 > cfg_uploads_concurrent + 0) {
+    error = "Uploads per member cannot exceed total concurrent uploads."
+  } else if (!valid_integer(cfg_git_pack_mb, 10, 5000) || !valid_integer(cfg_git_repo_mb, 10, 10000) || !valid_integer(cfg_git_cache_mb, 0, 51200) || !valid_integer(cfg_git_repos, 1, 1000) || !valid_integer(cfg_git_ops, 1, 100)) {
+    error = "Git limits must be numbers within the shown ranges."
+  } else if (cfg_git_repo_mb + 0 < cfg_git_pack_mb + 0) {
+    error = "Maximum repository size cannot be smaller than maximum push size."
+  }
+  return error == ""
+}
+
+function write_owner_and_settings(new_owner, temporary_owner, temporary_settings) {
+  temporary_owner = owner_file ".tmp"
+  print "RELAY_OWNER_PUBKEY=" new_owner > temporary_owner
+  close(temporary_owner)
+
+  temporary_settings = settings_file ".tmp"
+  print "BUZZ_HUDDLE_AUDIO_AVAILABLE=" cfg_huddle > temporary_settings
+  print "BUZZ_AUDIT_ENABLED=" cfg_audit >> temporary_settings
+  print "BUZZ_MAX_CONNECTIONS=" cfg_connections >> temporary_settings
+  print "BUZZ_RATE_LIMIT_HUMAN_MESSAGES_PER_MIN=" cfg_human_messages >> temporary_settings
+  print "BUZZ_RATE_LIMIT_HUMAN_API_CALLS_PER_MIN=" cfg_human_api >> temporary_settings
+  print "BUZZ_RATE_LIMIT_HUMAN_WS_EVENTS_PER_SEC=" cfg_human_ws >> temporary_settings
+  print "BUZZ_RATE_LIMIT_AGENT_STANDARD_MESSAGES_PER_MIN=" cfg_agent_standard_messages >> temporary_settings
+  print "BUZZ_RATE_LIMIT_AGENT_STANDARD_API_CALLS_PER_MIN=" cfg_agent_standard_api >> temporary_settings
+  print "BUZZ_RATE_LIMIT_AGENT_ELEVATED_MESSAGES_PER_MIN=" cfg_agent_elevated_messages >> temporary_settings
+  print "BUZZ_RATE_LIMIT_AGENT_PLATFORM_MESSAGES_PER_MIN=" cfg_agent_platform_messages >> temporary_settings
+  printf "BUZZ_MAX_IMAGE_BYTES=%.0f\n", cfg_image_mb * 1048576 >> temporary_settings
+  printf "BUZZ_MAX_GIF_BYTES=%.0f\n", cfg_gif_mb * 1048576 >> temporary_settings
+  printf "BUZZ_MAX_VIDEO_BYTES=%.0f\n", cfg_video_mb * 1048576 >> temporary_settings
+  printf "BUZZ_MAX_FILE_BYTES=%.0f\n", cfg_file_mb * 1048576 >> temporary_settings
+  print "BUZZ_MEDIA_MAX_CONCURRENT_UPLOADS=" cfg_uploads_concurrent >> temporary_settings
+  print "BUZZ_MEDIA_MAX_CONCURRENT_UPLOADS_PER_PUBKEY=" cfg_uploads_per_member >> temporary_settings
+  print "BUZZ_MEDIA_UPLOADS_PER_MINUTE=" cfg_uploads_per_minute >> temporary_settings
+  printf "BUZZ_GIT_MAX_PACK_BYTES=%.0f\n", cfg_git_pack_mb * 1048576 >> temporary_settings
+  printf "BUZZ_GIT_MAX_REPO_BYTES=%.0f\n", cfg_git_repo_mb * 1048576 >> temporary_settings
+  printf "BUZZ_GIT_PACK_CACHE_MAX_BYTES=%.0f\n", cfg_git_cache_mb * 1048576 >> temporary_settings
+  print "BUZZ_GIT_MAX_REPOS_PER_PUBKEY=" cfg_git_repos >> temporary_settings
+  print "BUZZ_GIT_MAX_CONCURRENT_OPS=" cfg_git_ops >> temporary_settings
+  close(temporary_settings)
+
+  return system("chmod 600 " temporary_owner " " temporary_settings " && mv " temporary_owner " " owner_file " && mv " temporary_settings " " settings_file) == 0
+}
+
+function render_mark() {
+  print "<svg class=\"brand-mark\" aria-hidden=\"true\" viewBox=\"0 0 466 309\" fill=\"currentColor\"><defs><mask id=\"buzz-cutouts\" x=\"-80\" y=\"-80\" width=\"626\" height=\"469\" maskUnits=\"userSpaceOnUse\" maskContentUnits=\"userSpaceOnUse\"><rect x=\"-80\" y=\"-80\" width=\"626\" height=\"469\" fill=\"white\"/><ellipse cx=\"193.3\" cy=\"84.4\" rx=\"27\" ry=\"27\" fill=\"black\"/><ellipse cx=\"276\" cy=\"84.4\" rx=\"27\" ry=\"27\" fill=\"black\"/><rect x=\"166.3\" y=\"157.2\" width=\"136.9\" height=\"38.3\" rx=\"5\" fill=\"black\"/><rect x=\"166.9\" y=\"235.1\" width=\"136.2\" height=\"37.6\" rx=\"5\" fill=\"black\"/></mask></defs><g mask=\"url(#buzz-cutouts)\"><circle cx=\"91.7\" cy=\"154.5\" r=\"91.7\"/><circle cx=\"374.3\" cy=\"154.5\" r=\"91.7\"/><rect x=\"128\" y=\"0\" width=\"210\" height=\"309\" rx=\"34\"/></g></svg>"
+}
+
+function render_public_access(state, relay_url, approval_url, tailscale_url, umbrel_url) {
+  if (state == "ready") {
+    print "<div class=\"summary public-address\"><span class=\"summary-label\">Public address</span><code>" html_escape(relay_url) "</code></div>"
+    print "<p class=\"muted\">Public via Tailscale Funnel. Community members do not need Tailscale.</p>"
+  } else if (state == "needs-approval") {
+    print "<div class=\"access-card\"><div class=\"access-copy\"><strong>Approve the public address</strong><ol class=\"access-steps\"><li>Open the approval link and allow Tailscale Funnel.</li><li>Return to Umbrel Home.</li><li>Right-click Buzz Relay and choose Restart.</li></ol></div><div class=\"access-actions\"><a class=\"secondary\" href=\"" html_escape(approval_url) "\" target=\"_blank\" rel=\"noreferrer\">Approve</a><a class=\"secondary\" href=\"" html_escape(umbrel_url) "\" target=\"_top\">Umbrel Home</a></div></div>"
+  } else if (state == "conflict") {
+    print "<div class=\"access-card error-card\"><div class=\"access-copy\"><strong>Public address unavailable</strong><ol class=\"access-steps\"><li>Open Tailscale.</li><li>Remove the existing Funnel or Serve rule using port 443.</li><li>Return to Umbrel Home, right-click Buzz Relay, and choose Restart.</li></ol></div><div class=\"access-actions\"><a class=\"secondary\" href=\"" html_escape(tailscale_url) "\" target=\"_blank\" rel=\"noreferrer\">Open Tailscale</a><a class=\"secondary\" href=\"" html_escape(umbrel_url) "\" target=\"_top\">Umbrel Home</a></div></div>"
+  } else if (state == "error") {
+    print "<div class=\"access-card error-card\"><div class=\"access-copy\"><strong>Public address unavailable</strong><ol class=\"access-steps\"><li>Open Tailscale and check its connection.</li><li>Sign in if Tailscale asks.</li><li>Return to Umbrel Home, right-click Buzz Relay, and choose Restart.</li></ol></div><div class=\"access-actions\"><a class=\"secondary\" href=\"" html_escape(tailscale_url) "\" target=\"_blank\" rel=\"noreferrer\">Open Tailscale</a><a class=\"secondary\" href=\"" html_escape(umbrel_url) "\" target=\"_top\">Umbrel Home</a></div></div>"
+  } else {
+    print "<div class=\"access-card\"><div class=\"access-copy\"><strong>Set up Tailscale</strong><ol class=\"access-steps\"><li>Open Tailscale and sign in.</li><li>Return to Umbrel Home.</li><li>Right-click Buzz Relay and choose Restart.</li><li>If Buzz asks for Funnel approval, approve it and restart again.</li></ol></div><div class=\"access-actions\"><a class=\"secondary\" href=\"" html_escape(tailscale_url) "\" target=\"_blank\" rel=\"noreferrer\">Open Tailscale</a><a class=\"secondary\" href=\"" html_escape(umbrel_url) "\" target=\"_top\">Umbrel Home</a></div></div>"
+  }
+  if (state != "ready") {
+    print "<p class=\"muted\">Tailscale is required on this Umbrel to create your public Buzz address. Sign in once; community members do not need Tailscale.</p>"
+  }
+}
+
+function render_number(name, label, value, minimum, maximum, help) {
+  print "<label class=\"setting-field\" for=\"" name "\"><span class=\"setting-label\">" label "</span><input type=\"number\" id=\"" name "\" name=\"" name "\" min=\"" minimum "\" max=\"" maximum "\" value=\"" html_escape(value) "\" required><small>" help "</small></label>"
+}
+
+function render_switch(name, title, description, checked) {
+  checked = (name == "huddle_audio" ? cfg_huddle : cfg_audit) == "true" ? "checked" : ""
+  print "<label class=\"switch-row\"><span><strong>" title "</strong><small>" description "</small></span><span class=\"switch\"><input type=\"checkbox\" name=\"" name "\" value=\"true\" " checked "><span aria-hidden=\"true\"></span></span></label>"
+}
+
+function render_setup_form(owner, relay_url, community_name, locked, button_label, funnel_state, funnel_relay_url, funnel_approval_url, tailscale_app_url, umbrel_home_url, disabled) {
+  print "<form id=\"setup-form\" method=\"post\" action=\"/setup\" autocomplete=\"off\" data-submit-label=\"Starting Buzz Relay…\"><input type=\"hidden\" name=\"intent\" value=\"setup\">"
+  if (locked && community_name != "") {
+    print "<input type=\"hidden\" name=\"community_name\" value=\"" html_escape(community_name) "\"><div class=\"summary\"><span class=\"summary-label\">Community name</span><strong>" html_escape(community_name) "</strong></div>"
+  } else {
+    print "<label class=\"field\" for=\"community_name\"><span class=\"field-label\">Community name</span><input type=\"text\" id=\"community_name\" name=\"community_name\" minlength=\"2\" maxlength=\"48\" pattern=\"[A-Za-z0-9 ._-]{2,48}\" placeholder=\"Example: Garden Club\" value=\"" html_escape(community_name) "\" required></label>"
+  }
+
+  if (locked) {
+    print "<div class=\"summary\"><span class=\"summary-label\">Relay address</span><code>" html_escape(relay_url) "</code></div>"
+  } else {
+    render_public_access(funnel_state, funnel_relay_url, funnel_approval_url, tailscale_app_url, umbrel_home_url)
+  }
+
+  print "<label class=\"field\" for=\"owner_pubkey\"><span class=\"field-label\">Owner public key</span><input class=\"owner-input\" type=\"text\" id=\"owner_pubkey\" name=\"owner_pubkey\" minlength=\"64\" maxlength=\"64\" pattern=\"[0-9a-fA-F]{64}\" placeholder=\"Paste 64-character hex public key\" value=\"" html_escape(owner) "\" autocapitalize=\"none\" spellcheck=\"false\" required><small>Buzz Desktop → Settings → Identity. Never paste your private key.</small></label>"
+  disabled = !locked && funnel_state != "ready" ? "disabled aria-disabled=\"true\"" : ""
+  print "<button class=\"submit-button start-button\" type=\"submit\" " disabled "><span class=\"button-spinner\" aria-hidden=\"true\"></span><span class=\"button-label\">" button_label "</span></button></form>"
+}
+
+function render_status(state, title, copy) {
+  if (state == "starting") {
+    title = "Starting Buzz Relay…"
+    copy = "This usually takes less than a minute. You can keep this page open."
+  } else if (state == "applying") {
+    title = "Applying your settings…"
+    copy = "Buzz Relay will reconnect automatically when the changes are active."
+  } else {
+    title = "Checking Buzz Relay…"
+    copy = "Confirming that the relay is ready."
+  }
+  print "<section id=\"relay-status\" class=\"status-card pending\" data-action=\"" state "\" aria-live=\"polite\" aria-atomic=\"true\"><span class=\"status-icon\"><span class=\"status-spinner\"></span></span><span><strong id=\"status-title\">" title "</strong><small id=\"status-copy\">" copy "</small></span></section>"
+}
+
+function render_settings_form(owner) {
+  print "<section class=\"settings\"><form id=\"settings-form\" method=\"post\" action=\"/setup\" autocomplete=\"off\" data-submit-label=\"Saving and applying…\"><input type=\"hidden\" name=\"intent\" value=\"settings\">"
+  print "<fieldset><legend>Owner access</legend><label class=\"field-label\" for=\"settings_owner_pubkey\">Owner public key</label><input class=\"owner-input\" type=\"text\" id=\"settings_owner_pubkey\" name=\"owner_pubkey\" minlength=\"64\" maxlength=\"64\" pattern=\"[0-9a-fA-F]{64}\" value=\"" html_escape(owner) "\" required><p class=\"muted\">Changing this key adds the new identity as an owner. It does not remove the previous owner.</p></fieldset>"
+  print "<fieldset><legend>Features</legend>"
+  render_switch("huddle_audio", "Voice huddles", "Allow audio huddles on this single-Umbrel relay.")
+  render_switch("audit_log", "Audit log", "Keep tamper-evident event and media audit records.")
+  print "</fieldset>"
+  print "<fieldset><legend>Capacity</legend><div class=\"settings-grid\">"
+  render_number("max_connections", "Maximum connections", cfg_connections, 100, 100000, "Total simultaneous relay connections.")
+  print "</div></fieldset>"
+  print "<fieldset><legend>Human limits</legend><div class=\"settings-grid\">"
+  render_number("human_messages", "Messages per minute", cfg_human_messages, 1, 10000, "Per community member.")
+  render_number("human_api", "API calls per minute", cfg_human_api, 1, 50000, "Per community member.")
+  render_number("human_ws", "Events per second", cfg_human_ws, 1, 1000, "Per WebSocket connection.")
+  print "</div></fieldset>"
+  print "<fieldset><legend>Agent limits</legend><div class=\"settings-grid\">"
+  render_number("agent_standard_messages", "Standard messages/min", cfg_agent_standard_messages, 1, 50000, "For standard agent access.")
+  render_number("agent_standard_api", "Standard API calls/min", cfg_agent_standard_api, 1, 100000, "For standard agent access.")
+  render_number("agent_elevated_messages", "Elevated messages/min", cfg_agent_elevated_messages, 1, 100000, "For elevated agent access.")
+  render_number("agent_platform_messages", "Platform messages/min", cfg_agent_platform_messages, 1, 100000, "For platform agent access.")
+  print "</div></fieldset>"
+  print "<fieldset><legend>Uploads</legend><div class=\"settings-grid\">"
+  render_number("image_mb", "Image limit (MB)", cfg_image_mb, 1, 500, "Maximum size for one image.")
+  render_number("gif_mb", "GIF limit (MB)", cfg_gif_mb, 1, 200, "Maximum size for one GIF.")
+  render_number("video_mb", "Video limit (MB)", cfg_video_mb, 10, 5000, "Maximum size for one video.")
+  render_number("file_mb", "File limit (MB)", cfg_file_mb, 1, 1000, "Maximum size for other files.")
+  render_number("uploads_concurrent", "Concurrent uploads", cfg_uploads_concurrent, 1, 64, "Across the whole relay.")
+  render_number("uploads_per_member", "Uploads per member", cfg_uploads_per_member, 1, 64, "Concurrent uploads from one member.")
+  render_number("uploads_per_minute", "Upload starts/min", cfg_uploads_per_minute, 1, 1000, "Per community member.")
+  print "</div></fieldset>"
+  print "<fieldset><legend>Git</legend><div class=\"settings-grid\">"
+  render_number("git_pack_mb", "Push limit (MB)", cfg_git_pack_mb, 10, 5000, "Maximum Git pack per push.")
+  render_number("git_repo_mb", "Repository limit (MB)", cfg_git_repo_mb, 10, 10000, "Maximum materialized repository size.")
+  render_number("git_cache_mb", "Cache limit (MB)", cfg_git_cache_mb, 0, 51200, "Use 0 to disable retained pack cache.")
+  render_number("git_repos", "Repositories per member", cfg_git_repos, 1, 1000, "Maximum repositories owned by one member.")
+  render_number("git_ops", "Concurrent Git operations", cfg_git_ops, 1, 100, "Across the relay.")
+  print "</div></fieldset><p class=\"settings-note\">Passwords, storage wiring, relay identity, and required privacy controls are managed by Umbrel and intentionally not editable here.</p>"
+  print "<button class=\"submit-button\" type=\"submit\"><span class=\"button-spinner\" aria-hidden=\"true\"></span><span class=\"button-label\">Save and apply settings</span></button></form></section>"
+}
+
+function render_page(message, error, owner, relay_url, community_name, ready_for_settings, status_state, settings_open, connect_url, deep_link, body_posted, public_link_ready) {
+  connect_url = relay_url == "" ? funnel_relay_url : relay_url
+  deep_link = owner != "" && community_name != "" ? "buzz://add-community?relay=" url_encode(connect_url) "&name=" url_encode(community_name) : ""
+  body_posted = method == "POST" ? "1" : "0"
+  public_link_ready = relay_url !~ /^wss:\/\/[a-zA-Z0-9][a-zA-Z0-9.-]*[.]ts[.]net$/ || (funnel_state == "ready" && funnel_relay_url == relay_url)
+
+  print "HTTP/1.1 200 OK\r"
+  print "Content-Type: text/html; charset=utf-8\r"
+  print "Connection: close\r"
+  print "Cache-Control: no-store\r"
+  print "X-Content-Type-Options: nosniff\r"
+  print "Referrer-Policy: no-referrer\r"
+  print "\r"
+  print "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>Buzz Relay</title><style>"
+  print ":root{color-scheme:light;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;background:#d7d72e;color:#171713}*{box-sizing:border-box}[hidden]{display:none!important}body{margin:0;min-height:100vh;padding:32px 16px;background:#d7d72e}main{width:100%;max-width:700px;margin:0 auto;background:#fffef7;border:2px solid #171713;border-radius:18px;overflow:hidden;box-shadow:7px 7px 0 #171713}.hero{display:flex;align-items:center;gap:16px;padding:25px 28px;background:#d7d72e;border-bottom:2px solid #171713}.brand-mark{width:50px;height:auto;color:#000;flex:none}h1{margin:0;font-size:clamp(1.7rem,5vw,2.25rem);letter-spacing:-.04em;line-height:1.05}.content{padding:26px 28px 30px}p,li{line-height:1.5;color:#58584e}.notice{margin:0 0 14px;padding:11px 13px;border-radius:9px;font-weight:750}.ok{background:#edf4d7;color:#33400f}.error{background:#ffe2dc;color:#751f10}form{display:grid;gap:12px}.step{display:flex;align-items:center;gap:9px;margin:20px 0 0}.step:first-of-type{margin-top:0}.step-number{display:grid;place-items:center;width:25px;height:25px;border-radius:50%;background:#171713;color:#d7d72e;font-size:.76rem;font-weight:900}.step h2{margin:0;font-size:1.06rem}.muted{margin:0;font-size:.84rem;color:#6a6a5f}.field-label,.setting-label{font-size:.86rem;font-weight:850}input[type=text],input[type=number]{width:100%;min-width:0;padding:12px 13px;border:1px solid #9d9d8e;border-radius:9px;background:#fff;color:#171713;font:650 .92rem Inter,ui-sans-serif,system-ui,sans-serif}.owner-input{font-family:ui-monospace,SFMono-Regular,Consolas,monospace!important;font-size:.82rem!important}input:focus{outline:3px solid #d7d72e;outline-offset:1px;border-color:#626208}.modes{display:grid;grid-template-columns:1fr 1fr;gap:9px}.mode{position:relative;display:block}.mode input{position:absolute;opacity:0}.mode-card{display:block;height:100%;padding:13px;border:1px solid #b7b7a7;border-radius:10px;background:#fff;cursor:pointer}.mode input:checked+.mode-card{border-color:#171713;background:#f7f7cd;box-shadow:inset 4px 0 0 #d7d72e}.mode input:focus-visible+.mode-card{outline:3px solid #d7d72e;outline-offset:2px}.mode-title{display:block;font-weight:850}.mode-copy{display:block;margin-top:4px;font-size:.79rem;line-height:1.4;color:#66665a}.guide{margin-top:2px;padding:14px;border:1px solid #c4c414;border-radius:11px;background:#fafad9}.guide[hidden]{display:none}.guide ol{margin:9px 0 0;padding-left:21px}.guide li{margin:4px 0;font-size:.83rem}.summary{padding:12px 13px;border:1px solid #d0d0c2;border-radius:10px;background:#f7f7ef}.summary-label{display:block;margin-bottom:4px;font-size:.7rem;font-weight:850;color:#6b6b60;text-transform:uppercase;letter-spacing:.06em}.summary code{display:block}.key-note{padding:11px 13px;border-radius:9px;background:#f7f7cd;font-size:.84rem;color:#4e4e42}.submit-button,.primary{display:inline-flex;align-items:center;justify-content:center;gap:9px;width:100%;border:1px solid #171713;border-radius:10px;padding:13px 17px;background:#171713;color:#d7d72e;font:850 .92rem Inter,ui-sans-serif,system-ui,sans-serif;text-decoration:none;cursor:pointer}.start-button{margin-top:5px;padding:16px 18px;font-size:1rem;box-shadow:3px 3px 0 #8d8d18}.submit-button:hover,.primary:hover{background:#303028}.submit-button:disabled{cursor:wait;opacity:.82}.button-spinner,.status-spinner{display:none;width:17px;height:17px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:spin .75s linear infinite}.submit-button[aria-busy=true] .button-spinner,.status-spinner{display:block}@keyframes spin{to{transform:rotate(360deg)}}.status-card{display:flex;align-items:center;gap:13px;padding:15px;border:1px solid #b7b7a7;border-radius:12px;background:#f7f7ef}.status-card .status-icon{display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:#171713;color:#d7d72e;flex:none}.status-card>span:last-child{display:grid;gap:2px}.status-card strong{font-size:.95rem}.status-card small{color:#646457;line-height:1.35}.status-card.ready{background:#edf4d7;border-color:#91a74e}.status-card.ready .status-icon{background:#3f5515;color:#fff}.status-card.delayed{background:#fff3cd;border-color:#d3b358}.identity{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}.identity .summary{min-width:0}.lock-note{margin:10px 0 0;font-size:.8rem}.rule{height:1px;background:#deded2;margin:24px 0}.connect{padding:18px;border-radius:12px;background:#171713;color:#fff}.connect h2{margin:0 0 5px;font-size:1.08rem}.connect p{margin:0 0 12px;color:#cfcfc0}.connect .primary{background:#d7d72e;color:#171713;border-color:#d7d72e}.connect code{display:block;margin-top:11px;color:#d7d72e}.connect .fallback{margin-top:11px;font-size:.76rem;color:#aaa99c}.settings{margin-top:18px;border:1px solid #c8c8ba;border-radius:12px;background:#fff}.settings>summary{display:flex;justify-content:space-between;align-items:center;padding:15px 16px;font-weight:900;cursor:pointer}.summary-meta{padding:4px 7px;border-radius:99px;background:#f0f0df;font-size:.67rem;text-transform:uppercase;letter-spacing:.05em}.settings form{padding:0 16px 17px}.settings fieldset{display:grid;gap:11px;margin:0;padding:17px 0;border:0;border-top:1px solid #e0e0d5}.settings legend{padding:0 0 10px;font-weight:900}.settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px}.setting-field{display:grid;align-content:start;gap:5px}.setting-field small,.switch-row small{font-size:.73rem;line-height:1.35;color:#747467}.switch-row{display:flex;align-items:center;justify-content:space-between;gap:18px}.switch-row>span:first-child{display:grid;gap:3px}.switch{position:relative;display:block;width:44px;height:25px;flex:none}.switch input{position:absolute;opacity:0}.switch span{position:absolute;inset:0;border-radius:99px;background:#adada1;cursor:pointer;transition:.15s}.switch span:before{content:\"\";position:absolute;width:19px;height:19px;left:3px;top:3px;border-radius:50%;background:#fff;transition:.15s;box-shadow:0 1px 3px #0004}.switch input:checked+span{background:#171713}.switch input:checked+span:before{transform:translateX(19px);background:#d7d72e}.switch input:focus-visible+span{outline:3px solid #d7d72e;outline-offset:2px}.settings-note{margin:0;padding:11px 12px;border-radius:9px;background:#f7f7ef;font-size:.78rem}code{font:650 .8rem ui-monospace,SFMono-Regular,Consolas,monospace;overflow-wrap:anywhere}strong{color:inherit}@media(prefers-reduced-motion:reduce){.button-spinner,.status-spinner{animation:none}}@media(max-width:560px){body{padding:0;background:#fffef7}main{border:0;border-radius:0;box-shadow:none;min-height:100vh}.hero{padding:21px 19px}.brand-mark{width:42px}.content{padding:22px 19px 26px}.modes,.identity,.settings-grid{grid-template-columns:1fr}.guide,.connect{padding:14px}}"
+  print ".field{display:grid;gap:6px}.field small{font-size:.75rem;line-height:1.4;color:#6a6a5f}.access-card{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:13px;border:1px solid #c4c414;border-radius:10px;background:#fafad9}.access-copy{display:grid;gap:3px}.access-steps{margin:2px 0 0;padding-left:19px}.access-steps li{margin:2px 0;font-size:.75rem;line-height:1.4;color:#6a6a5f}.access-actions{display:flex;gap:8px;flex:none}.secondary{display:inline-flex;align-items:center;justify-content:center;min-height:38px;padding:8px 12px;border:1px solid #171713;border-radius:8px;background:#fff;color:#171713;font-size:.8rem;font-weight:850;text-decoration:none;white-space:nowrap}.secondary:hover{background:#f0f0df}.error-card{border-color:#d7998d;background:#ffece8}.public-address{border-color:#91a74e;background:#edf4d7}.page-tabs{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:14px;padding:5px;border:1px solid #b7b7a7;border-radius:12px;background:#f0f0df}.page-tab{min-height:44px;border:0;border-radius:8px;background:transparent;color:#555548;font:900 .9rem Inter,ui-sans-serif,system-ui,sans-serif;cursor:pointer}.page-tab[aria-selected=true]{background:#171713;color:#d7d72e}.page-tab:focus-visible{outline:3px solid #d7d72e;outline-offset:2px}.tab-panel{margin-top:14px}.tab-panel .identity{margin-top:0}.tab-panel .settings{margin-top:0}.tab-panel .settings fieldset:first-child{border-top:0}@media(max-width:560px){.access-card,.access-actions{align-items:stretch;flex-direction:column}.secondary{width:100%}}"
+  print ".submit-button:disabled{cursor:not-allowed}.submit-button[aria-busy=true]{cursor:wait}.connect-check{font-size:.82rem}.connect-error{margin-top:10px;padding:10px 12px;border:1px solid #a85847;border-radius:9px;background:#ffe2dc;color:#751f10;font-size:.82rem;line-height:1.4}"
+  print "</style></head><body data-posted=\"" body_posted "\"><main><header class=\"hero\">"
+  render_mark()
+  print "<h1>Buzz Relay</h1></header><section class=\"content\">"
+  if (message != "") print "<p class=\"notice ok\">" html_escape(message) "</p>"
+  if (error != "") print "<p class=\"notice error\">" html_escape(error) "</p>"
+
+  if (!ready_for_settings) {
+    button_label = owner == "" ? "Start Buzz Relay" : "Finish setup"
+    render_setup_form(owner, relay_url, community_name, owner != "", button_label, funnel_state, funnel_relay_url, funnel_approval_url, tailscale_app_url, umbrel_home_url)
+  } else {
+    render_status(status_state)
+    initial_tab = settings_open ? "settings" : "home"
+    print "<div id=\"ready-content\" data-initial-tab=\"" initial_tab "\" hidden>"
+    print "<nav class=\"page-tabs\" role=\"tablist\" aria-label=\"Buzz Relay\"><button class=\"page-tab\" type=\"button\" id=\"home-tab\" role=\"tab\" aria-controls=\"home-panel\" aria-selected=\"true\" data-tab-target=\"home\">Home</button><button class=\"page-tab\" type=\"button\" id=\"settings-tab\" role=\"tab\" aria-controls=\"settings-panel\" aria-selected=\"false\" data-tab-target=\"settings\">Settings</button></nav>"
+    print "<section id=\"home-panel\" class=\"tab-panel\" role=\"tabpanel\" aria-labelledby=\"home-tab\" data-tab-panel=\"home\">"
+    print "<div class=\"identity\"><div class=\"summary\"><span class=\"summary-label\">Community name</span><strong>" html_escape(community_name) "</strong></div><div class=\"summary\"><span class=\"summary-label\">Relay address</span><code>" html_escape(relay_url) "</code></div></div>"
+    if (!public_link_ready) {
+      print "<div class=\"rule\"></div>"
+      render_public_access(funnel_state, funnel_relay_url, funnel_approval_url, tailscale_app_url, umbrel_home_url)
+    } else if (deep_link != "") {
+      print "<div class=\"rule\"></div><section class=\"connect\" id=\"connect-section\" data-probe=\"/setup?public=1\"><h2>Connect Buzz Desktop</h2><p class=\"connect-check\" id=\"connect-status\">Checking your public address…</p><a class=\"primary\" id=\"connect-action\" href=\"" html_escape(deep_link) "\" hidden>Open in Buzz Desktop</a><div class=\"connect-error\" id=\"connect-error\" hidden>The public address is offline. Open Tailscale, sign in if asked, then restart Buzz Relay and return here.</div></section>"
+    }
+    print "</section><section id=\"settings-panel\" class=\"tab-panel\" role=\"tabpanel\" aria-labelledby=\"settings-tab\" data-tab-panel=\"settings\" hidden>"
+    render_settings_form(owner)
+    print "</section></div>"
+  }
+
+  print "</section></main><script>"
+  print "(function(){"
+  print "var draftKey='buzz-setup-draft-v1';var setupForm=document.getElementById('setup-form');try{if(setupForm){var communityInput=document.getElementById('community_name');var ownerInput=document.getElementById('owner_pubkey');var saved=localStorage.getItem(draftKey);if(saved){var draft=JSON.parse(saved);if(communityInput&&!communityInput.value&&typeof draft.communityName==='string')communityInput.value=draft.communityName;if(ownerInput&&!ownerInput.value&&typeof draft.ownerPubkey==='string')ownerInput.value=draft.ownerPubkey;}function saveDraft(){localStorage.setItem(draftKey,JSON.stringify({communityName:communityInput?communityInput.value:'',ownerPubkey:ownerInput?ownerInput.value:''}));}if(communityInput)communityInput.addEventListener('input',saveDraft);if(ownerInput)ownerInput.addEventListener('input',saveDraft);window.addEventListener('beforeunload',saveDraft);saveDraft();}else{localStorage.removeItem(draftKey);}}catch(draftError){}"
+  print "var forms=document.querySelectorAll('form[data-submit-label]');for(var f=0;f<forms.length;f++){forms[f].addEventListener('submit',function(){var button=this.querySelector('.submit-button');if(!button)return;button.disabled=true;button.setAttribute('aria-busy','true');button.querySelector('.button-label').textContent=this.getAttribute('data-submit-label');});}"
+  print "if(document.body.getAttribute('data-posted')==='1'&&window.history&&history.replaceState){history.replaceState(null,'','/setup');}"
+  print "var readyContent=document.getElementById('ready-content');var tabs=document.querySelectorAll('[data-tab-target]');var panels=document.querySelectorAll('[data-tab-panel]');function selectTab(name){for(var t=0;t<tabs.length;t++){var selected=tabs[t].getAttribute('data-tab-target')===name;tabs[t].setAttribute('aria-selected',selected?'true':'false');tabs[t].tabIndex=selected?0:-1;}for(var p=0;p<panels.length;p++){panels[p].hidden=panels[p].getAttribute('data-tab-panel')!==name;}}for(var t=0;t<tabs.length;t++){tabs[t].addEventListener('click',function(){selectTab(this.getAttribute('data-tab-target'));});tabs[t].addEventListener('keydown',function(event){if(event.key!=='ArrowLeft'&&event.key!=='ArrowRight')return;event.preventDefault();var next=this===tabs[0]?tabs[1]:tabs[0];selectTab(next.getAttribute('data-tab-target'));next.focus();});}if(readyContent)selectTab(readyContent.getAttribute('data-initial-tab')||'home');"
+  print "var connectSection=document.getElementById('connect-section');var connectAction=document.getElementById('connect-action');var connectStatus=document.getElementById('connect-status');var connectError=document.getElementById('connect-error');var publicAttempts=0;var publicStarted=false;function publicFailed(){if(!connectSection)return;connectStatus.textContent='Public address unavailable';connectError.hidden=false;}function checkPublicAddress(){fetch(connectSection.getAttribute('data-probe'),{cache:'no-store',credentials:'same-origin'}).then(function(response){return response.ok?response.json():null;}).then(function(data){if(data&&data.ready){connectStatus.textContent='Public address verified';connectAction.hidden=false;return;}publicAttempts+=1;if(publicAttempts<30){setTimeout(checkPublicAddress,2000);}else{publicFailed();}}).catch(function(){publicAttempts+=1;if(publicAttempts<30){setTimeout(checkPublicAddress,2000);}else{publicFailed();}});}function startPublicCheck(){if(connectSection&&!publicStarted){publicStarted=true;checkPublicAddress();}}"
+  print "var status=document.getElementById('relay-status');if(status){var title=document.getElementById('status-title');var copy=document.getElementById('status-copy');var icon=status.querySelector('.status-icon');var attempts=0;function ready(){status.className='status-card ready';icon.innerHTML='✓';title.textContent='Buzz Relay is ready';copy.textContent='Your community is running and ready to connect.';if(readyContent)readyContent.hidden=false;startPublicCheck();}function delayed(){status.className='status-card delayed';icon.innerHTML='!';title.textContent='Buzz Relay is taking longer than expected';copy.textContent='Check the Buzz Relay logs in Umbrel, then restart the app if needed.';}function check(){fetch('/setup?status=1',{cache:'no-store',credentials:'same-origin'}).then(function(response){return response.ok?response.json():null;}).then(function(data){if(data&&data.ready){ready();return;}attempts+=1;if(attempts<60){setTimeout(check,2000);}else{delayed();}}).catch(function(){attempts+=1;if(attempts<60){setTimeout(check,2000);}else{delayed();}});}check();}"
+  print "})();</script></body></html>"
+}
+
+BEGIN {
+  for (ascii = 1; ascii < 128; ascii++) ascii_code[sprintf("%c", ascii)] = ascii
+
+  owner_file = ENVIRON["OWNER_FILE"] == "" ? "/data/relay/owner.env" : ENVIRON["OWNER_FILE"]
+  community_file = ENVIRON["COMMUNITY_FILE"] == "" ? "/data/relay/community.env" : ENVIRON["COMMUNITY_FILE"]
+  community_name_file = ENVIRON["COMMUNITY_NAME_FILE"] == "" ? "/www/community-name.txt" : ENVIRON["COMMUNITY_NAME_FILE"]
+  funnel_status_file = ENVIRON["FUNNEL_STATUS_FILE"] == "" ? "/www/funnel-status.env" : ENVIRON["FUNNEL_STATUS_FILE"]
+  settings_file = ENVIRON["SETTINGS_FILE"] == "" ? "/data/relay/settings.env" : ENVIRON["SETTINGS_FILE"]
+  tailscale_app_url = ENVIRON["TAILSCALE_APP_URL"]
+  umbrel_home_url = ENVIRON["UMBREL_HOME_URL"]
+  method = ENVIRON["SETUP_METHOD"]
+  message = ""
+  error = ""
+  status_state = "checking"
+  settings_open = 0
+  owner = current_owner()
+  relay_url = current_relay_url()
+  community_name = current_community_name()
+  funnel_state = setting(funnel_status_file, "FUNNEL_STATE")
+  funnel_relay_url = setting(funnel_status_file, "FUNNEL_RELAY_URL")
+  funnel_approval_url = setting(funnel_status_file, "FUNNEL_APPROVAL_URL")
+  if (!valid_funnel_relay_url(funnel_relay_url)) funnel_relay_url = ""
+  if (!valid_approval_url(funnel_approval_url)) funnel_approval_url = ""
+  if (funnel_state != "ready" && funnel_state != "needs-login" && funnel_state != "needs-approval" && funnel_state != "conflict" && funnel_state != "error") funnel_state = "needs-login"
+  if (funnel_state == "ready" && funnel_relay_url == "") funnel_state = "error"
+  if (funnel_state == "needs-approval" && funnel_approval_url == "") funnel_state = "error"
+  was_configured = owner != ""
+  had_community_name = community_name != ""
+  load_settings()
+
+  if (method == "POST") {
+    body = ENVIRON["SETUP_BODY"]
+    intent = form_value(body, "intent")
+    if (body == "REQUEST_TOO_LARGE") {
+      error = "Request is too large."
+    } else if (intent == "settings") {
+      settings_open = 1
+      submitted_owner = tolower(form_value(body, "owner_pubkey"))
+      if (!was_configured || !had_community_name) {
+        error = "Finish community setup before changing advanced settings."
+      } else if (length(submitted_owner) != 64 || submitted_owner ~ /[^0-9a-f]/) {
+        error = "Enter the 64-character hexadecimal public key shown by Buzz Desktop."
+      } else if (parse_settings(body)) {
+        if (write_owner_and_settings(submitted_owner)) {
+          owner = submitted_owner
+          status_state = "applying"
+        } else {
+          error = "Could not save settings. Check the app logs."
+        }
+      }
+    } else if (intent == "setup") {
+      value = form_value(body, "owner_pubkey")
+      submitted_name = normalize_name(form_value(body, "community_name"))
+      address_locked = was_configured && relay_url != ""
+      selected_url = address_locked ? relay_url : funnel_relay_url
+      owner = tolower(value)
+      community_name = submitted_name
+
+      if (!valid_name(submitted_name)) {
+        error = "Enter a community name using 2–48 letters, numbers, spaces, dots, underscores, or hyphens."
+      } else if (had_community_name && submitted_name != current_community_name()) {
+        error = "The community name is fixed after first setup because existing Desktop connections use it."
+      } else if (!address_locked && (funnel_state != "ready" || !valid_funnel_relay_url(selected_url))) {
+        error = "Connect Tailscale and enable the public link before starting Buzz Relay."
+      } else if (length(value) != 64 || value ~ /[^0-9A-Fa-f]/) {
+        error = "Enter the 64-character hexadecimal public key shown by Buzz Desktop."
+      } else if (was_configured && relay_url != "" && selected_url != relay_url) {
+        error = "The relay address is fixed because changing it creates a different community."
+      } else {
+        origin = origin_for_relay(selected_url)
+        temporary_community = community_file ".tmp"
+        print "RELAY_URL=" selected_url > temporary_community
+        print "BUZZ_CORS_ORIGINS=" origin ",tauri://localhost,http://localhost:1420" >> temporary_community
+        print "BUZZ_MEDIA_BASE_URL=" origin "/media" >> temporary_community
+        close(temporary_community)
+        temporary_owner = owner_file ".tmp"
+        print "RELAY_OWNER_PUBKEY=" tolower(value) > temporary_owner
+        close(temporary_owner)
+        temporary_name = community_name_file ".tmp"
+        print submitted_name > temporary_name
+        close(temporary_name)
+
+        if (system("chmod 600 " temporary_community " " temporary_owner " && chmod 644 " temporary_name " && mv " temporary_community " " community_file " && mv " temporary_owner " " owner_file " && mv " temporary_name " " community_name_file) != 0) {
+          error = "Could not save the community. Check the app logs."
+        } else {
+          owner = tolower(value)
+          relay_url = selected_url
+          community_name = submitted_name
+          status_state = was_configured ? "checking" : "starting"
+        }
+      }
+    } else {
+      error = "Unknown form action."
+    }
+  } else if (method != "GET" && method != "HEAD") {
+    error = "Unsupported request method."
+  }
+
+  ready_for_settings = owner != "" && community_name != ""
+  render_page(message, error, owner, relay_url, community_name, ready_for_settings, status_state, settings_open)
+}

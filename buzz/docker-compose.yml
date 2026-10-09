@@ -1,0 +1,269 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    depends_on:
+      gateway:
+        condition: service_healthy
+    environment:
+      APP_HOST: buzz_gateway_1
+      APP_PORT: 8080
+      # This port is the owner control plane. Umbrel auth remains enabled for
+      # every route; public relay clients use the separate 3023 listener below.
+
+  gateway:
+    image: caddy:2.10.2-alpine@sha256:4c6e91c6ed0e2fa03efd5b44747b625fec79bc9cd06ac5235a779726618e530d
+    user: "1000:1000"
+    init: true
+    restart: on-failure
+    entrypoint: ["caddy"]
+    command: ["run", "--config", "/etc/caddy/Caddyfile", "--adapter", "caddyfile"]
+    environment:
+      HOME: /tmp
+      XDG_CONFIG_HOME: /tmp
+      XDG_DATA_HOME: /tmp
+    volumes:
+      - ${APP_DATA_DIR}/Caddyfile:/etc/caddy/Caddyfile:ro
+    depends_on:
+      setup:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/setup"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 5s
+
+  setup:
+    image: redis:7.4.9-alpine@sha256:6ab0b6e7381779332f97b8ca76193e45b0756f38d4c0dcda72dbb3c32061ab99
+    user: "1000:1000"
+    init: true
+    restart: on-failure
+    entrypoint: ["/bin/sh", "-ec"]
+    command:
+      - |
+        sed 's/@D@/$$/g' /opt/setup-server.sh > /www/setup-server.sh
+        chmod 755 /www/setup-server.sh
+        exec busybox nc -lk -p 8081 -e /www/setup-server.sh
+    environment:
+      COMMUNITY_FILE: /data/relay/community.env
+      COMMUNITY_NAME_FILE: /www/community-name.txt
+      FUNNEL_STATUS_FILE: /www/funnel-status.env
+      OWNER_FILE: /data/relay/owner.env
+      SETTINGS_FILE: /data/relay/settings.env
+      APPLIED_CONFIG_FILE: /status/applied-config.sha256
+      TAILSCALE_APP_URL: http://${DEVICE_DOMAIN_NAME}:8240
+      UMBREL_HOME_URL: http://${DEVICE_DOMAIN_NAME}
+    volumes:
+      - ${APP_DATA_DIR}/setup.cgi:/opt/setup-page.awk:ro
+      - ${APP_DATA_DIR}/setup-server.sh:/opt/setup-server.sh:ro
+      - ${APP_DATA_DIR}/data/setup:/www
+      - ${APP_DATA_DIR}/data/relay:/data/relay
+      - ${APP_DATA_DIR}/data/setup-status:/status
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8081/setup"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 5s
+
+  relay:
+    image: ghcr.io/block/buzz:sha-3a96ace@sha256:535cb1b2f782824423c34d1dc72a210d1f51ccdb13dbc5785d3ef103d2a4d30a
+    user: "1000:1000"
+    init: true
+    restart: on-failure
+    entrypoint: ["/bin/bash", "-ec"]
+    command:
+      - |
+        while ! grep -Eq '^RELAY_OWNER_PUBKEY=[0-9a-f]{64}$$' /data/relay/owner.env 2>/dev/null; do
+          sleep 2
+        done
+        if ! grep -Eq '^RELAY_URL=wss?://[^[:space:]/]+$$' /data/relay/community.env 2>/dev/null; then
+          echo "Buzz relay community URL is missing or invalid" >&2
+          exit 1
+        fi
+        if ! grep -Eq '^BUZZ_HUDDLE_AUDIO_AVAILABLE=(true|false)$$' /data/relay/settings.env 2>/dev/null; then
+          echo "Buzz relay settings are missing or invalid" >&2
+          exit 1
+        fi
+
+        relay_pid=""
+        shutdown() {
+          if [ -n "$${relay_pid}" ]; then
+            kill -TERM "$${relay_pid}" 2>/dev/null || true
+            wait "$${relay_pid}" 2>/dev/null || true
+          fi
+          exit 0
+        }
+        config_signature() {
+          sha256sum /data/relay/owner.env /data/relay/community.env /data/relay/settings.env | sha256sum | cut -d' ' -f1
+        }
+        trap shutdown TERM INT
+
+        while true; do
+          startup_signature="$$(config_signature)"
+          set -a
+          source /data/relay/owner.env
+          source /data/relay/community.env
+          source /data/relay/settings.env
+          set +a
+
+          /usr/local/bin/buzz-relay &
+          relay_pid="$$!"
+          config_changed=0
+          applied=0
+
+          while kill -0 "$${relay_pid}" 2>/dev/null; do
+            current_signature="$$(config_signature 2>/dev/null || true)"
+            if [ "$${current_signature}" != "$${startup_signature}" ]; then
+              config_changed=1
+              kill -TERM "$${relay_pid}" 2>/dev/null || true
+              break
+            fi
+            if [ "$${applied}" = 0 ] && curl -fsS http://127.0.0.1:8080/_readiness >/dev/null 2>&1; then
+              printf '%s\n' "$${startup_signature}" >/status/applied-config.sha256.tmp
+              mv /status/applied-config.sha256.tmp /status/applied-config.sha256
+              applied=1
+            fi
+            sleep 1
+          done
+
+          set +e
+          wait "$${relay_pid}"
+          relay_status="$$?"
+          set -e
+          relay_pid=""
+
+          if [ "$${config_changed}" = 1 ]; then
+            continue
+          fi
+          exit "$${relay_status}"
+        done
+    # Preserve the existing relay/Funnel port while keeping it separate from
+    # the Umbrel-authenticated owner UI on the manifest port.
+    ports:
+      - "3023:3000"
+    env_file:
+      - ${APP_DATA_DIR}/data/relay/relay.env
+    environment:
+      BUZZ_BIND_ADDR: 0.0.0.0:3000
+      BUZZ_HEALTH_PORT: "8080"
+      BUZZ_METRICS_PORT: "9102"
+      DATABASE_URL: postgres://buzz:${APP_BUZZ_POSTGRES_PASSWORD}@postgres:5432/buzz
+      REDIS_URL: redis://:${APP_BUZZ_REDIS_PASSWORD}@redis:6379
+      BUZZ_REQUIRE_AUTH_TOKEN: "true"
+      BUZZ_REQUIRE_RELAY_MEMBERSHIP: "true"
+      BUZZ_ALLOW_NIP_OA_AUTH: "true"
+      BUZZ_AUTO_MIGRATE: "true"
+      BUZZ_GIT_CONFORMANCE_PROBE: "true"
+      BUZZ_GIT_HOOK_HMAC_SECRET: ${APP_BUZZ_GIT_HOOK_HMAC_SECRET}
+      BUZZ_GIT_REPO_PATH: /data/git
+      BUZZ_S3_ENDPOINT: http://minio:9000
+      BUZZ_S3_ADDRESSING_STYLE: path
+      BUZZ_S3_ACCESS_KEY: ${APP_BUZZ_S3_ACCESS_KEY}
+      BUZZ_S3_SECRET_KEY: ${APP_BUZZ_S3_SECRET_KEY}
+      BUZZ_S3_BUCKET: buzz-media
+      BUZZ_S3_REGION: us-east-1
+      RUST_LOG: buzz_relay=info,buzz_db=info,buzz_auth=info,buzz_pubsub=info,tower_http=info
+    volumes:
+      - ${APP_DATA_DIR}/data/git:/data/git
+      - ${APP_DATA_DIR}/data/relay:/data/relay:ro
+      - ${APP_DATA_DIR}/data/setup-status:/status
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "if ! grep -Eq '^RELAY_OWNER_PUBKEY=[0-9a-f]{64}$$' /data/relay/owner.env 2>/dev/null; then exit 0; fi; curl -fsS http://127.0.0.1:8080/_readiness >/dev/null",
+        ]
+      interval: 10s
+      timeout: 3s
+      retries: 12
+      start_period: 30s
+
+  postgres:
+    image: postgres:17.10-alpine@sha256:742f40ea20b9ff2ff31db5458d127452988a2164df9e17441e191f3b72252193
+    user: "1000:1000"
+    restart: on-failure
+    environment:
+      POSTGRES_DB: buzz
+      POSTGRES_USER: buzz
+      POSTGRES_PASSWORD: ${APP_BUZZ_POSTGRES_PASSWORD}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - ${APP_DATA_DIR}/data/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U buzz -d buzz"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
+  redis:
+    image: redis:7.4.9-alpine@sha256:6ab0b6e7381779332f97b8ca76193e45b0756f38d4c0dcda72dbb3c32061ab99
+    user: "1000:1000"
+    restart: on-failure
+    command:
+      [
+        "redis-server",
+        "--appendonly",
+        "yes",
+        "--requirepass",
+        "${APP_BUZZ_REDIS_PASSWORD}",
+      ]
+    environment:
+      REDIS_PASSWORD: ${APP_BUZZ_REDIS_PASSWORD}
+    volumes:
+      - ${APP_DATA_DIR}/data/redis:/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "redis-cli -a \"$${REDIS_PASSWORD}\" ping | grep -q PONG",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 5s
+
+  minio:
+    image: minio/minio:RELEASE.2025-09-07T16-13-09Z@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e
+    user: "1000:1000"
+    restart: on-failure
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${APP_BUZZ_S3_ACCESS_KEY}
+      MINIO_ROOT_PASSWORD: ${APP_BUZZ_S3_SECRET_KEY}
+    volumes:
+      - ${APP_DATA_DIR}/data/minio:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:9000/minio/health/live"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
+  minio-init:
+    image: minio/mc:RELEASE.2025-08-13T08-35-41Z@sha256:a7fe349ef4bd8521fb8497f55c6042871b2ae640607cf99d9bede5e9bdf11727
+    restart: on-failure
+    depends_on:
+      minio:
+        condition: service_healthy
+    environment:
+      BUZZ_S3_ACCESS_KEY: ${APP_BUZZ_S3_ACCESS_KEY}
+      BUZZ_S3_SECRET_KEY: ${APP_BUZZ_S3_SECRET_KEY}
+      BUZZ_S3_BUCKET: buzz-media
+    entrypoint: >
+      /bin/sh -euc '
+        mc alias set local http://minio:9000 "$${BUZZ_S3_ACCESS_KEY}" "$${BUZZ_S3_SECRET_KEY}"
+        mc mb --ignore-existing "local/$${BUZZ_S3_BUCKET}"
+        mc anonymous set none "local/$${BUZZ_S3_BUCKET}"
+      '

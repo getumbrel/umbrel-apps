@@ -1,0 +1,89 @@
+#!/bin/sh
+set -eu
+
+request_line=""
+IFS= read -r request_line || exit 0
+request_line=@D@(printf '%s' "@D@request_line" | tr -d '\r')
+set -- @D@request_line
+method=@D@{1:-}
+path=@D@{2:-}
+content_length=0
+
+while IFS= read -r header; do
+  header=@D@(printf '%s' "@D@header" | tr -d '\r')
+  [ -z "@D@header" ] && break
+  case "@D@header" in
+    [Cc]ontent-[Ll]ength:*)
+      content_length=@D@(printf '%s' "@D@header" | cut -d: -f2- | tr -d ' ')
+      ;;
+  esac
+done
+
+if [ "@D@method" = "GET" ] && [ "@D@path" = "/setup?status=1" ]; then
+  response='{"ready":false}'
+  status='503 Service Unavailable'
+  desired_signature=""
+  applied_signature=""
+
+  if [ -f "@D@{OWNER_FILE}" ] && [ -f "@D@{COMMUNITY_FILE}" ] && [ -f "@D@{SETTINGS_FILE}" ]; then
+    desired_signature=@D@(sha256sum "@D@{OWNER_FILE}" "@D@{COMMUNITY_FILE}" "@D@{SETTINGS_FILE}" | sha256sum | cut -d' ' -f1)
+  fi
+  if [ -f "@D@{APPLIED_CONFIG_FILE}" ]; then
+    applied_signature=@D@(tr -d '[:space:]' <"@D@{APPLIED_CONFIG_FILE}")
+  fi
+
+  if [ -n "@D@desired_signature" ] && [ "@D@desired_signature" = "@D@applied_signature" ] &&
+    wget -q -O /dev/null http://relay:8080/_readiness; then
+    response='{"ready":true}'
+    status='200 OK'
+  fi
+
+  printf 'HTTP/1.1 %s\r\nContent-Type: application/json\r\nCache-Control: no-store\r\nContent-Length: %s\r\nConnection: close\r\n\r\n%s' \
+    "@D@status" "@D@{#response}" "@D@response"
+  exit 0
+fi
+
+if [ "@D@method" = "GET" ] && [ "@D@path" = "/setup?public=1" ]; then
+  response='{"ready":false}'
+  status='503 Service Unavailable'
+  relay_url=""
+  relay_origin=""
+
+  if [ -f "@D@{COMMUNITY_FILE}" ]; then
+    relay_url=@D@(sed -n 's/^RELAY_URL=//p' "@D@{COMMUNITY_FILE}" | head -n 1)
+  fi
+
+  if printf '%s' "@D@relay_url" | grep -Eq '^wss?://[A-Za-z0-9][A-Za-z0-9.-]*(:[0-9]{1,5})?@D@'; then
+    case "@D@relay_url" in
+      ws://*) relay_origin="http://@D@{relay_url#ws://}" ;;
+      wss://*) relay_origin="https://@D@{relay_url#wss://}" ;;
+    esac
+  fi
+
+  if [ -n "@D@relay_origin" ] &&
+    wget -q -T 6 -O /dev/null "@D@relay_origin/api/join-policy"; then
+    response='{"ready":true}'
+    status='200 OK'
+  fi
+
+  printf 'HTTP/1.1 %s\r\nContent-Type: application/json\r\nCache-Control: no-store\r\nContent-Length: %s\r\nConnection: close\r\n\r\n%s' \
+    "@D@status" "@D@{#response}" "@D@response"
+  exit 0
+fi
+
+case "@D@content_length" in
+  ''|*[!0-9]*) content_length=0 ;;
+esac
+
+if [ "@D@content_length" -gt 16384 ]; then
+  body="REQUEST_TOO_LARGE"
+else
+  body=@D@(dd bs=1 count="@D@content_length" 2>/dev/null || true)
+fi
+
+SETUP_METHOD="@D@method"
+SETUP_PATH="@D@path"
+SETUP_BODY="@D@body"
+export SETUP_METHOD SETUP_PATH SETUP_BODY
+
+exec awk -f "@D@{SETUP_PAGE:-/opt/setup-page.awk}"
