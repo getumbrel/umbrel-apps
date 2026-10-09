@@ -1,0 +1,72 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: foundryvtt_server_1
+      APP_PORT: 30000
+      # Players join from their own devices without an Umbrel account. Foundry
+      # protects its setup screen with the admin key below and each world with
+      # its own user passwords.
+      PROXY_AUTH_ADD: "false"
+
+  server:
+    image: felddy/foundryvtt:14.368.0@sha256:8ec86078b0c461644d896cbe3a9f9bcae7d1ce8dc8d91eeb0b0f1d94c91c072f
+    restart: on-failure
+    # Foundry ties its license to the hostname, so keep it stable across container recreation.
+    hostname: foundryvtt
+    # The image downloads Foundry from the user's foundryvtt.com account and exits
+    # if it has neither credentials nor a cached archive for its FOUNDRY_VERSION,
+    # for example on first install or after a package update once the
+    # credentials were cleared. In that case, serve a short page explaining how
+    # to add them in the app settings, instead of a dead app.
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        if [ -n "$${FOUNDRY_RELEASE_URL}" ] || { [ -n "$${FOUNDRY_USERNAME}" ] && [ -n "$${FOUNDRY_PASSWORD}" ]; } || [ -f "/data/container_cache/foundryvtt-$${FOUNDRY_VERSION}.zip" ]; then
+          mkdir -p /data/Config
+          # options.json always follows the umbrelOS app settings.
+          rm -f /data/Config/options.json
+          # Apply FOUNDRY_ADMIN_KEY only when it changes in umbrelOS, so an admin
+          # key changed later inside Foundry is kept across restarts.
+          admin_key_hash="$$(printf '%s' "$${FOUNDRY_ADMIN_KEY}" | sha256sum | cut -d ' ' -f 1)"
+          if [ "$$(cat /data/Config/umbrel-admin-key.sha256 2>/dev/null)" != "$${admin_key_hash}" ]; then
+            rm -f /data/Config/admin.txt
+            printf '%s' "$${admin_key_hash}" > /data/Config/umbrel-admin-key.sha256
+          fi
+          exec ./entrypoint.sh "$$@"
+        fi
+        echo "Foundry Virtual Tabletop $${FOUNDRY_VERSION} needs to be downloaded. Add your foundryvtt.com username and password in the app settings in umbrelOS."
+        exec node -e "require('http').createServer((req, res) => { res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }); res.end(process.env.UMBREL_SETUP_PAGE); }).listen(30000)"
+      - --
+    command:
+      - resources/app/main.mjs
+      - --port=30000
+      - --headless
+      - --noupdate
+      - --dataPath=/data
+    environment:
+      # Random per-install admin key so the setup screen is never left open;
+      # users choose their own with FOUNDRY_ADMIN_KEY in the umbrelOS app settings.
+      FOUNDRY_ADMIN_KEY: ${APP_PASSWORD}
+      # Keep an existing admin.txt; the entrypoint above removes options.json and
+      # handles admin key changes from umbrelOS.
+      CONTAINER_PRESERVE_CONFIG: "true"
+      # Without this, LAN invitation links show the container's internal Docker IP.
+      FOUNDRY_LOCAL_HOSTNAME: ${DEVICE_DOMAIN_NAME}
+      # Recommended upstream for most users; off by default in the image.
+      FOUNDRY_COMPRESS_WEBSOCKET: "true"
+      FOUNDRY_MINIFY_STATIC_FILES: "true"
+      # Set explicitly so Foundry does not ask on every launch.
+      FOUNDRY_TELEMETRY: "false"
+      UMBREL_SETUP_PAGE: >-
+        <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Foundry Virtual Tabletop</title>
+        <style>body{font-family:system-ui,sans-serif;max-width:40rem;margin:3rem auto;padding:0 1rem;line-height:1.5;color:#222;background:#fafafa}code{background:#eee;padding:0 .3em;border-radius:4px}</style></head>
+        <body><h1>Finish setting up Foundry Virtual Tabletop</h1>
+        <p>Foundry Virtual Tabletop is downloaded from your foundryvtt.com account when it is first installed and after each update of this app. You need a purchased Foundry license. Your worlds and settings are kept.</p>
+        <ol><li>In umbrelOS, open the settings for the Foundry VTT app.</li>
+        <li>Enter your foundryvtt.com username in <code>FOUNDRY_USERNAME</code> and your password in <code>FOUNDRY_PASSWORD</code>.</li>
+        <li>Choose your Foundry admin password in <code>FOUNDRY_ADMIN_KEY</code>. You need it to open Foundry's setup screen.</li>
+        <li>Save. The app restarts, downloads Foundry, and opens normally after a few minutes.</li></ol>
+        <p>You can change the admin password later in Foundry or in the app settings.</p></body></html>
+    volumes:
+      - ${APP_DATA_DIR}/data/foundry:/data

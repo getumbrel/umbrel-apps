@@ -1,0 +1,106 @@
+manifestVersion: 2.0
+id: foundryvtt
+storage:
+  dataRoot: data
+environment:
+  - name: FOUNDRY_ADMIN_KEY
+    services:
+      - server
+    note: Choose your Foundry admin password for the setup screen. Until you set it, the setup screen is locked with a random password. Changes apply on the next start; a password changed inside Foundry is also kept.
+  - name: FOUNDRY_USERNAME
+    services:
+      - server
+    note: Your foundryvtt.com username. Used with your password to download Foundry on first start and to fetch your license key.
+  - name: FOUNDRY_PASSWORD
+    services:
+      - server
+    note: Your foundryvtt.com password. Keep both fields set so app updates can download the new Foundry version; if you clear them, you will be asked again after an update.
+  - name: FOUNDRY_RELEASE_URL
+    services:
+      - server
+    note: Optional instead of username and password. A timed download URL for the Node.js version from your foundryvtt.com licenses page. It expires after a few minutes.
+  - name: FOUNDRY_LICENSE_KEY
+    services:
+      - server
+    note: Optional. A license key, or a number such as 2 to pick one of the keys on your account. Leave empty to use the first key or enter it in the browser.
+  - name: FOUNDRY_HOSTNAME
+    services:
+      - server
+    note: Optional. Public hostname used in invitation links when Foundry is reachable through a tunnel or reverse proxy, such as foundry.example.com. Enter the hostname only, without https://. This does not expose Foundry by itself.
+  - name: FOUNDRY_PROXY_SSL
+    services:
+      - server
+    default: "false"
+    options:
+      - "true"
+      - "false"
+    note: Set to true when players reach Foundry through an HTTPS tunnel or reverse proxy, so invitation links and audio/video work over HTTPS.
+  - name: FOUNDRY_PROXY_PORT
+    services:
+      - server
+    note: Optional. External port of your tunnel or reverse proxy, used in invitation links. Usually 443 with HTTPS. Leave empty for access through Umbrel on port 30000.
+  - name: FOUNDRY_LOCAL_HOSTNAME
+    services:
+      - server
+    default: umbrel.local
+    note: Address shown in invitation links for players on your home network. Use your Umbrel's IP address if some devices cannot open umbrel.local.
+  - name: FOUNDRY_WORLD
+    services:
+      - server
+    note: Optional. Folder name of a world to launch automatically on start, as shown under Data/worlds.
+  - name: FOUNDRY_LANGUAGE
+    services:
+      - server
+    default: en.core
+    note: Default language as language.module, such as fr.fr-core for French. Install the translation module from the setup screen first.
+  - name: FOUNDRY_TELEMETRY
+    services:
+      - server
+    default: "false"
+    options:
+      - "true"
+      - "false"
+    note: Set to true to share anonymous usage data with the Foundry developers.
+category: media
+name: Foundry VTT
+version: "14.368"
+tagline: Self-hosted virtual tabletop for role-playing games
+description: >-
+  ⚠️ Foundry Virtual Tabletop is commercial software and requires a license purchased at foundryvtt.com. After installing, open the app's settings in umbrelOS and enter your foundryvtt.com username and password. Foundry is then downloaded from your account on the next start, which can take a few minutes.
+
+
+  Also set FOUNDRY_ADMIN_KEY in the app's settings to choose the admin password that protects Foundry's setup screen. Until you do, the setup screen is locked with a random password. You can later change it in Foundry's own Configuration screen too, and it is kept across restarts. Players join your game from their own browsers at the same address, without needing an Umbrel account. Set a password for each player inside your world.
+
+
+  Foundry's server options, such as hostname, language and the world to launch, are managed from the app's settings in umbrelOS and applied on every start. Other changes to those options in Foundry's Configuration screen are reset when the app restarts; the admin key is the exception.
+
+
+  Foundry Virtual Tabletop is a modern platform for running tabletop role-playing games online or around the table. Build worlds for systems such as Dungeons & Dragons 5th Edition, Pathfinder, and hundreds of community game systems, then invite your players to join.
+
+
+  - Dynamic lighting, fog of war, and line of sight on your battle maps
+
+  - Character sheets, compendiums, and dice rolling built in
+
+  - Audio and video chat, playlists, and ambient sound
+
+  - A large ecosystem of community systems and modules installable from the setup screen
+
+
+  Your worlds, systems, modules, and uploaded assets are stored on your Umbrel. This package uses the community-maintained felddy/foundryvtt Docker image, which downloads Foundry from your own account and does not include any Foundry software.
+releaseNotes: ""
+developer: Foundry Gaming
+website: https://foundryvtt.com
+dependencies: []
+repo: https://github.com/felddy/foundryvtt-docker
+support: https://github.com/felddy/foundryvtt-docker/discussions
+port: 30000
+gallery: []
+path: ""
+defaultUsername: ""
+defaultPassword: ""
+backupIgnore:
+  - data/foundry/container_cache/*
+  - data/foundry/Logs/*
+submitter: Aiacos
+submission: https://github.com/getumbrel/umbrel-apps/pull/6170
