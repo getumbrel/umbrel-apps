@@ -5,7 +5,7 @@ storage:
 name: BTC Tracker
 tagline: A simple, privacy-focused Bitcoin investment tracker
 category: bitcoin
-version: "0.7.0-patch.1"
+version: "0.8.0"
 port: 3947
 description: >-
   BTC Tracker is a user-friendly yet powerful application designed for managing and analyzing Bitcoin investments. It was created to offer a privacy-focused and straightforward alternative to existing tracking tools, which are often cluttered with unnecessary features, complicated to set up, or designed for managing large, diversified portfolios. Many of those tools require connections to external services and the sharing of sensitive information such as wallet addresses or transaction histories.
@@ -35,27 +35,37 @@ gallery:
   - 2.jpg
   - 3.jpg
   - 4.jpg
+  - 5.jpg
+  - 6.jpg
 releaseNotes: >-
-  This update adds support for new storage management and configuration options being introduced with umbrelOS 2.0.
+  A big update: a fresh new look, safer upgrades and an important security update. Updating is strongly recommended.
 
 
-  Previous BTC Tracker 0.7.0 release notes:
+  🔒 Security
+    - Hardened API authentication: every API route now requires a valid login or API key, and admin-only settings are restricted to admins
+
+
+  🛡️ Safer upgrades
+    - Your database is now backed up automatically before every upgrade (a copy is kept next to it in the app's data folder)
+    - Updates never remove database columns or tables they don't recognise
 
 
   ✨ New Features
-    - Exchange Auto-Sync (Beta) — connect exchange API keys to automatically import BTC spot trades; supports Binance, Kraken, Coinbase, Bybit, and Gemini
-    - Exchange Connections UI — new "Exchanges" tab in Settings to manage connections, test credentials, and trigger syncs
-
-
-  🐛 Bug Fixes
-    - Fixed "Net Holdings" on Transactions page showing USD values regardless of display currency setting
+    - A complete redesign with a cleaner, warmer look, plus small touches like liquid navigation and a chart pointer that snaps to your transactions
+    - Show amounts in BTC or sats, from the header or Settings → Display
+    - Backup and restore your whole database from Settings (admins)
+    - Cash App and Revolut X CSV import; Strike import now includes receives
+    - Choose whether a transfer's network fee was paid on top or taken from the amount (transfers you already saved keep their balances)
 
 
   🔧 Improvements
-    - Calendar now has month/year dropdowns for faster navigation
-    - Sort and filter on Transactions page now works across all pages (server-side)
-    - New optional "Wallet" column in transactions showing source/destination wallet
-    - Named wallets now show individual BTC balances in the portfolio sidebar
+    - Exports now include wallets and tags
+    - Your chosen display currency is used everywhere, including chart tooltips and goals
+    - Dashboard editing is simpler: Done saves, Cancel undoes
+    - Many smaller fixes
+
+
+  Full release notes: https://github.com/wilqq-the/BTC-Tracker/releases/tag/v0.8.0
 dependencies: []
 path: ""
 defaultUsername: ""
