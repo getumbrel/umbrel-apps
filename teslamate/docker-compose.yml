@@ -1,0 +1,96 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: teslamate_web_1
+      APP_PORT: 4000
+
+  web:
+    image: teslamate/teslamate:4.3.0@sha256:516fc9f0a14369f541b1a70ff2f65dd9b57c2e01c1f533b6d43b375445404955
+    restart: on-failure
+    environment:
+      ENCRYPTION_KEY: ${APP_TESLAMATE_ENCRYPTION_KEY}
+      DATABASE_USER: teslamate
+      DATABASE_PASS: ${APP_TESLAMATE_DB_PASSWORD}
+      DATABASE_NAME: teslamate
+      DATABASE_HOST: database
+      MQTT_HOST: mosquitto
+      VIRTUAL_HOST: ${DEVICE_DOMAIN_NAME}
+    volumes:
+      - ${APP_DATA_DIR}/data/import:/opt/app/import
+    cap_drop:
+      - ALL
+    depends_on:
+      database:
+        condition: service_healthy
+      mosquitto:
+        condition: service_started
+
+  database:
+    image: postgres:18-trixie@sha256:74935e72241653ca55e0414067e6d8763aceb8a810eb51b452253ec3dcfc4336
+    restart: on-failure
+    user: "1000:1000"
+    stop_grace_period: 1m
+    environment:
+      POSTGRES_USER: teslamate
+      POSTGRES_PASSWORD: ${APP_TESLAMATE_DB_PASSWORD}
+      POSTGRES_DB: teslamate
+    volumes:
+      # Postgres 18 stores data under /var/lib/postgresql (not .../data)
+      - ${APP_DATA_DIR}/data/db:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U teslamate -d teslamate"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  grafana:
+    image: teslamate/grafana:4.3.0@sha256:7f5a119ad06c212c4122e12c957a6848b5718d9618826b5ce70a1ec12d84fed5
+    restart: on-failure
+    user: "1000:1000"
+    environment:
+      DATABASE_USER: teslamate
+      DATABASE_PASS: ${APP_TESLAMATE_DB_PASSWORD}
+      DATABASE_NAME: teslamate
+      DATABASE_HOST: database
+      GF_SERVER_ROOT_URL: http://${DEVICE_DOMAIN_NAME}:4070
+    ports:
+      - "4070:3000"
+    volumes:
+      - ${APP_DATA_DIR}/data/grafana:/var/lib/grafana
+    depends_on:
+      database:
+        condition: service_healthy
+
+  mosquitto:
+    image: eclipse-mosquitto:2.1.2-alpine@sha256:38c0da4f2ef84284d47b3b3eeea1cb3bdeabe81ee10caf0cd5c5ff61ee3ea408
+    restart: on-failure
+    user: "1000:1000"
+    command: mosquitto -c /mosquitto-no-auth.conf
+    volumes:
+      - ${APP_DATA_DIR}/data/mosquitto/config:/mosquitto/config
+      - ${APP_DATA_DIR}/data/mosquitto/data:/mosquitto/data
+
+  # TeslaMateApi — JSON REST API over TeslaMate data (read-only; vehicle commands disabled)
+  # Docs: https://github.com/tobiasehlert/teslamateapi
+  api:
+    image: tobiasehlert/teslamateapi:1.25.0@sha256:6f7eea55c6475c2bc4639ee582dfec01d5cf618d30b0c7444020274a4786704e
+    restart: on-failure
+    environment:
+      ENCRYPTION_KEY: ${APP_TESLAMATE_ENCRYPTION_KEY}
+      DATABASE_USER: teslamate
+      DATABASE_PASS: ${APP_TESLAMATE_DB_PASSWORD}
+      DATABASE_NAME: teslamate
+      DATABASE_HOST: database
+      MQTT_HOST: mosquitto
+      TESLAMATE_HOST: web
+      TESLAMATE_PORT: 4000
+    ports:
+      - "4071:8080"
+    depends_on:
+      database:
+        condition: service_healthy
+      mosquitto:
+        condition: service_started
