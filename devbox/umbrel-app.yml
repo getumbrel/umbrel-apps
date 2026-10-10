@@ -1,0 +1,46 @@
+manifestVersion: 1
+id: devbox
+storage:
+  dataRoot: data
+folderAccess:
+  - id: umbrel-files
+    name: Umbrel Files
+    note: Optional folder to work on from Devbox. Available inside Devbox at ~/umbrel.
+    mounts:
+      - service: server
+        targetPath: /home/dev/umbrel
+category: developer
+name: Devbox
+version: "1.0.0"
+tagline: Isolated Debian environment with SSH, SFTP, and a web terminal
+description: >-
+  Devbox gives you and your coding agents an isolated Debian environment on your Umbrel. Open it in the browser for a terminal, or connect over SSH and SFTP on port 4222 as user dev with the app password shown in umbrelOS.
+
+
+  To use key authentication, add your public key to ~/.ssh/authorized_keys from the web terminal.
+
+
+  Devbox comes without language toolchains, so you set up exactly what you need. The dev user has passwordless sudo inside the container, and Devbox runs at a lower CPU priority so heavy jobs do not slow down the rest of your Umbrel.
+
+
+  Your home folder is kept across restarts and updates. System packages are reinstalled when the container is recreated, so put commands such as apt-get install in ~/.devbox/setup.sh, which runs as root on every start. You can also connect a folder from Umbrel Files in the app settings; it appears at ~/umbrel.
+
+
+  The first start after an install or update takes about a minute while base packages are installed.
+releaseNotes: ""
+
+developer: olegshulyakov
+website: https://github.com/getumbrel/umbrel-apps
+dependencies: []
+repo: https://github.com/getumbrel/umbrel-apps
+support: https://github.com/getumbrel/umbrel-apps/issues
+
+port: 8104
+gallery: []
+path: ""
+
+defaultUsername: dev
+deterministicPassword: true
+
+submitter: olegshulyakov
+submission: ""
