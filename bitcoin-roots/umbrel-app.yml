@@ -1,0 +1,103 @@
+manifestVersion: 1.1
+id: bitcoin-roots
+implements:
+  - bitcoin
+storage:
+  dataRoot: data
+category: bitcoin
+name: Bitcoin Roots
+version: "1.0.0"
+tagline: Run your personal node powered by Bitcoin Roots
+description: >-
+  Run your Bitcoin node, powered by Bitcoin Roots. Independently store and validate every Bitcoin transaction, and connect your wallets and apps directly to your own node for unmatched privacy.
+
+
+  Bitcoin Roots is built directly on Bitcoin Core and carries a reviewed patch series that preserves conservative relay, mempool, and mining-template policy controls from the Bitcoin Knots lineage. It remains fully compatible with Bitcoin Core consensus and does not enforce RDTS/BIP110: relay and mining restrictions are local and configurable, and a consensus-valid block is always acceptable even when its transactions are rejected by local policy.
+
+
+  Roots policy defaults:
+
+
+  - 83-byte default data-carrier (OP_RETURN) relay limit, configurable
+
+  - Bare-pubkey and bare-multisig relay disabled by default
+
+  - Default minimum relay fee of 1000 sat/kvB
+
+  - Dynamic dust controls and priority mining
+
+  - Full RBF by default, with getmempoolinfo reporting the configured replacement policy
+
+
+  Built on the official Umbrel Bitcoin Node app, this app runs Bitcoin Roots v30.3-roots.1 and gives you the same experience: over 20 advanced settings, outgoing and incoming connections over Tor, clearnet, and I2P, connect details for your wallets and apps, and much more.
+
+
+  Bitcoin Roots is free and open-source software maintained by Plan ₿ Foundation in Lugano. Review the source code and the patch series at https://github.com/LuganoPlanB/bitcoin-roots
+
+
+  To reuse an existing Bitcoin Core or Knots datadir, copy the blocks, chainstate, and indexes folders into this app's data/bitcoin directory before first start.
+
+
+  To forward incoming peer traffic to your device, set up the following configuration: (router) 7333 -> (device) 7333
+releaseNotes: ""
+developer: Plan ₿ Foundation
+website: https://bitcoinroots.org
+dependencies: []
+repo: https://github.com/LuganoPlanB/bitcoin-roots
+support: https://github.com/LuganoPlanB/bitcoin-roots/issues
+port: 2104
+gallery: []
+path: ""
+defaultPassword: ""
+widgets:
+  - id: "stats"
+    type: "four-stats"
+    refresh: "5s"
+    endpoint: "app:3000/api/widget/stats"
+    link: ""
+    example:
+      type: "four-stats"
+      link: ""
+      items:
+        - title: "Connections"
+          text: "11"
+          subtext: "peers"
+        - title: "Mempool"
+          text: "257"
+          subtext: "MB"
+        - title: "Hashrate"
+          text: "590"
+          subtext: "EH/s"
+        - title: "Blockchain size"
+          text: "600"
+          subtext: "GB"
+  - id: "sync"
+    type: "text-with-progress"
+    refresh: "2s"
+    endpoint: "app:3000/api/widget/sync"
+    link: ""
+    example:
+      type: "text-with-progress"
+      link: ""
+      title: "Blockchain sync"
+      text: "83%"
+      progressLabel: "In progress"
+      progress: 0.83
+backupIgnore:
+  - data/bitcoin/blocks
+  - data/bitcoin/chainstate
+  - data/bitcoin/indexes
+  - data/bitcoin/testnet3/blocks
+  - data/bitcoin/testnet3/chainstate
+  - data/bitcoin/testnet3/indexes
+  - data/bitcoin/testnet4/blocks
+  - data/bitcoin/testnet4/chainstate
+  - data/bitcoin/testnet4/indexes
+  - data/bitcoin/signet/blocks
+  - data/bitcoin/signet/chainstate
+  - data/bitcoin/signet/indexes
+  - data/bitcoin/regtest/blocks
+  - data/bitcoin/regtest/chainstate
+  - data/bitcoin/regtest/indexes
+submitter: Marco Argentieri
+submission: https://github.com/getumbrel/umbrel-apps/pull/TODO
