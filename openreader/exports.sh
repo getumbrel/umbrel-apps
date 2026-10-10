@@ -1,4 +1,7 @@
 export APP_OPENREADER_PORT="3391"
+export APP_OPENREADER_PLAYBACK_SECRET="$(derive_entropy "${app_entropy_identifier}-tts-playback")"
+# Preserve Nginx variables through Umbrel's template expansion.
+export APP_OPENREADER_NGINX_DOLLAR='$'
 
 local_ips=$(hostname --all-ip-addresses 2> /dev/null) || local_ips=""
 export APP_OPENREADER_LOCAL_IPS="${local_ips}"

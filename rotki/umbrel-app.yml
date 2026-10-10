@@ -1,8 +1,10 @@
 manifestVersion: 1
 id: rotki
+storage:
+  dataRoot: data
 category: finance
 name: rotki
-version: "1.44.0"
+version: "1.44.1"
 tagline: Portfolio tracking, analytics, accounting and tax reporting
 description: >-
   rotki is an open source portfolio tracking, analytics, accounting and tax reporting tool that protects your privacy. 
@@ -27,19 +29,18 @@ repo: https://github.com/rotki/rotki
 support: https://github.com/rotki/rotki/issues
 port: 8084
 releaseNotes: >-
-  This major release adds new portfolio analysis workflows, expanded exchange/protocol support, and a Docker runtime overhaul.
+  This patch release fixes issues found after rotki 1.44, with improvements to indexer handling, staking and validator tracking, and exchange/protocol workflows.
 
 
   Key highlights include:
-    - Added a local MCP server for premium users to analyze rotki data with compatible AI assistants
-    - Redesigned filters, saved views, and history-event actions across the app
-    - Added cross-chain bridge matching, a rebuilt balance snapshot editor, and support for Gate, CoinEx, and Bit2Me
-    - Added new decoders and support for Project X, Frankencoin Savings, Kinetiq, Yearn vesting escrows, Solana staking, Jupiter Lend Earn, Across, LI.FI, and more
-    - History events may need to be redecoded after upgrade; edited events are left untouched
-    - The Docker image now uses a distroless runtime, stops more cleanly, and keeps existing ports, volumes, and environment variables working
+    - Clarified paid Etherscan versus Blockscout API-key requirements for affected chains such as Polygon POS, Base, Gnosis, Optimism, and others
+    - Reduced redundant L1 fee and Routescan requests on Optimism, Base, Gnosis, and Scroll
+    - Fixed ETH staking and validator-related issues
+    - Added the ability to unlink matched bridge events from the history events list
+    - Removed BitMEX support now that the exchange has shut down
 
 
-  Full release notes are found at https://github.com/rotki/rotki/releases/tag/v1.44.0
+  Full release notes are found at https://github.com/rotki/rotki/releases/tag/v1.44.1
 gallery:
   - 1.jpg
   - 2.jpg

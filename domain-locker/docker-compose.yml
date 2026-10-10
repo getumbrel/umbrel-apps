@@ -7,7 +7,7 @@ services:
       APP_PORT: 3000
 
   app:
-    image: lissy93/domain-locker:0.2.0@sha256:1c3379d97344c153595973327957b23bc5695bb8c956f11a3d21e7cd92358781
+    image: lissy93/domain-locker:0.3.0@sha256:5b1b61367159c40469da92aee5af606da4205f9e81d3cebf40252ccaecbbff57
     user: "1000:1000"
     restart: on-failure
     environment:
@@ -37,7 +37,7 @@ services:
     volumes:
       - ${APP_DATA_DIR}/data/db_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d domain_locker"]
       interval: 10s
       timeout: 5s
       retries: 5

@@ -4,6 +4,7 @@ import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
+import { pathToFileURL } from "node:url";
 import YAML from "yaml";
 
 let ROOT = path.resolve(process.env.UMBREL_APP_LINT_ROOT || path.resolve(import.meta.dirname, ".."));
@@ -47,6 +48,7 @@ const OPTIONAL_BOOLEAN_MANIFEST_FIELDS = ["deterministicPassword", "optimizedFor
 const WIDGET_TYPES = new Set(["text-with-buttons", "text-with-progress", "two-stats-with-guage", "three-stats", "four-stats", "list", "list-emoji"]);
 const LINT_INFRASTRUCTURE_FILES = new Set([
   ".tools/lint-apps.mjs",
+  ".tools/lint-apps.test.mjs",
   ".github/workflows/lint-apps.yml",
   "package-lock.json",
   "package.json",
@@ -117,7 +119,7 @@ function usage(error, exitCode = 2) {
   process.exit(exitCode);
 }
 
-class AppLinter {
+export class AppLinter {
   constructor(options) {
     this.options = options;
     this.issues = [];
@@ -955,30 +957,57 @@ class AppLinter {
     }
   }
 
+  imageUnchanged(app, service, image) {
+    // Only a trusted comparison baseline can establish that this PR is not
+    // introducing the unavailable tag. Without one, keep validation strict.
+    if (!this.baseRef) return false;
+
+    try {
+      const content = execFileSync("git", ["show", `${this.baseRef}:${app}/docker-compose.yml`], {
+        cwd: ROOT,
+        encoding: "utf8",
+        stdio: ["ignore", "pipe", "ignore"],
+      });
+      return YAML.parse(content)?.services?.[service]?.image === image;
+    } catch {
+      return false;
+    }
+  }
+
   async checkImage(app, content, service, image, parsed) {
     // Use the registry API instead of Docker so CI can verify public pullability
     // and architecture support without pulling or executing PR-supplied images.
     let tagResponse;
+    let tagError;
     try {
       tagResponse = await this.fetchImageManifest(parsed, parsed.tag);
     } catch (error) {
-      this.add("error", "image.pullable", `${app}/docker-compose.yml`, serviceKeyLine(content, service, "image"), `Could not fetch public image manifest for \`${image}\`: ${error.message}`);
-      return;
+      if (!this.imageUnchanged(app, service, image)) {
+        this.add("error", "image.tag", `${app}/docker-compose.yml`, serviceKeyLine(content, service, "image"), `Could not check tag \`${parsed.tag}\` for \`${image}\`: ${error.message}. A warning is only allowed for an unchanged image reference at the same app and service in the comparison baseline. Investigate the tag lookup failure before approving this image.`);
+        return;
+      }
+      // An unchanged pin can remain available after its tag disappears. Verify
+      // the pin before warning, without approving new or changed references.
+      tagError = error;
     }
 
-    const tagDigest = normalizeDigest(tagResponse.digest);
+    const tagDigest = normalizeDigest(tagResponse?.digest);
     if (tagDigest && tagDigest !== parsed.digest) {
       this.add("warning", "image.digest", `${app}/docker-compose.yml`, serviceKeyLine(content, service, "image"), `Image \`${image}\` is pinned to ${parsed.digest}, but its tag now resolves to ${tagDigest}. The upstream publisher likely moved or rebuilt this tag after the package was pinned. Keep the existing digest unless this PR is intentionally updating that image.`);
     }
 
-    let platformManifest = tagResponse.manifest;
+    let platformManifest = tagResponse?.manifest;
     if (!tagDigest || tagDigest !== parsed.digest) {
       try {
         platformManifest = (await this.fetchImageManifest(parsed, parsed.digest)).manifest;
       } catch (error) {
-        this.add("error", "image.pullable", `${app}/docker-compose.yml`, serviceKeyLine(content, service, "image"), `Could not fetch public image manifest for \`${image}\`: ${error.message}`);
+        this.add("error", "image.pullable", `${app}/docker-compose.yml`, serviceKeyLine(content, service, "image"), `Could not fetch public image manifest for the pinned digest in \`${image}\`: ${error.message}`);
         return;
       }
+    }
+
+    if (tagError) {
+      this.add("warning", "image.tag", `${app}/docker-compose.yml`, serviceKeyLine(content, service, "image"), `Could not check tag \`${parsed.tag}\` for \`${image}\` (${tagError.message}), but its unchanged pinned manifest is available. Investigate the tag lookup failure and upstream image status before approving this update; do not change the digest automatically.`);
     }
 
     const platforms = manifestPlatforms(platformManifest);
@@ -1747,7 +1776,9 @@ function escapeRegex(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-const cliOptions = parseArgs(process.argv.slice(2));
-ROOT = cliOptions.root;
-const cliLinter = new AppLinter(cliOptions);
-process.exit(await cliLinter.run());
+if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
+  const cliOptions = parseArgs(process.argv.slice(2));
+  ROOT = cliOptions.root;
+  const cliLinter = new AppLinter(cliOptions);
+  process.exit(await cliLinter.run());
+}

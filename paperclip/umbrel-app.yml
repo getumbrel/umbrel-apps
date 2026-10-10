@@ -1,9 +1,11 @@
 manifestVersion: 1
 id: paperclip
+storage:
+  dataRoot: data
 name: Paperclip
 tagline: A team of AI agents for every person
 category: ai
-version: "2026.831.1"
+version: "2026.1005.0"
 port: 8860
 description: >-
   Paperclip is a self-hosted control center for running AI agents like a team.
@@ -38,11 +40,15 @@ gallery:
   - 4.webp
   - 5.webp
 releaseNotes: |-
-  - Fixed first-run onboarding so creating an organization reliably advances to the first-agent step instead of appearing to refresh.
-  - Onboarding is now shorter and starts with creating your first agent.
-  - Skills can be enabled for agents and delivered to runs; Kimi Code is now available as an adapter.
-  - Added operator controls for hiding settings surfaces and setting defaults, plus improved import, sandbox callback, and workspace reliability.
-  - Includes automatic database migrations, auth/security fixes, and removal of the old company brand color and attachment size limit fields.
+  - Adds Grok Build native-runner support, persistent agent files across tasks, GitHub-synced skills, Browser Use Cloud, Agent Chat navigation, per-message model/effort controls, and broader one-click MCP connector setup.
+  - Improves native runner, sandbox transport, Slack conversation syncing, heartbeat scheduling, model catalogs, and Codex/Claude/OpenCode runtime reliability.
+  - Fixes a crash loop caused by a permanently rejected queued run and hardens task/comment run behavior.
+  - Operator UI snippet injection is removed; move any `PAPERCLIP_CLOUD_UI_SNIPPET` integrations to a plugin UI contribution before updating.
+  - Keyboard shortcut preferences and APIs are removed; shortcuts are now always enabled for signed-in users.
+  - @-mentioning an agent in a task comment no longer starts a run. Assign the task or request review instead.
+  - Runs database migrations 0284-0320; no Umbrel package configuration changes are required.
+
+  Full release notes can be found at https://github.com/paperclipai/paperclip/releases/tag/v2026.1005.0
 dependencies: []
 path: ""
 defaultUsername: ""

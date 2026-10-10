@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: sabnzbd
 category: networking
 name: SABnzbd
-version: "5.1.2"
+version: "5.1.3"
 tagline: The automated Usenet download tool
 description: >-
   SABnzbd makes Usenet as simple and streamlined as possible by automating everything we can. All you have to do is add an .nzb.
@@ -30,16 +30,16 @@ repo: https://github.com/sabnzbd/sabnzbd
 support: https://forums.sabnzbd.org/
 port: 9876
 releaseNotes: >-
-  This update fixes a critical remote code execution vulnerability and a high-severity path traversal vulnerability. If untrusted parties can reach your SABnzbd web interface or if SABnzbd processes NZBs from sources you do not fully trust, update promptly.
+  This update fixes two security vulnerabilities: an API dispatch bypass that could allow unauthenticated API access, and a PAR2 symlink bypass that could allow remote code execution when processing untrusted NZBs. Update promptly if untrusted parties can reach your SABnzbd web interface or if SABnzbd processes NZBs from sources you do not fully trust.
 
 
-  It also includes the authentication-bypass fix from SABnzbd 5.1.1 for anyone updating from an older version. If you relied on SABnzbd's username and password for network or internet access, rotate sensitive credentials after updating, including the SABnzbd username/password, API key, Usenet server passwords, RSS indexer API keys, and notification credentials.
+  It also includes the security fixes from SABnzbd 5.1.1 and 5.1.2 for anyone updating from an older version. If your SABnzbd setup was exposed and you relied on SABnzbd's username and password for network or internet access, rotate sensitive credentials after updating, including the SABnzbd username/password, API key, Usenet server passwords, RSS indexer API keys, and notification credentials.
 
 
-  Other fixes include RSS filters not being applied directly.
+  Other fixes include tighter Compact display mode, clearer Usenet server errors, avoiding a database-is-locked error when re-evaluating stored RSS jobs, and a new tooltip explaining search filters in Queue and History.
 
 
-  Full release notes are available at https://github.com/sabnzbd/sabnzbd/releases/tag/5.1.2
+  Full release notes are available at https://github.com/sabnzbd/sabnzbd/releases/tag/5.1.3
 permissions:
   - STORAGE_DOWNLOADS
   - GPU

@@ -8,10 +8,10 @@ services:
       PROXY_AUTH_ADD: "false"
 
   server:
-    image: vaultwarden/server:1.37.2@sha256:094b5689ed81549bd293418395c7cf495ae9d960fc2d4928cef2083ef913d912
+    image: vaultwarden/server:1.37.3@sha256:1587c45feaa479f1f5e8af3b00eded36bff77bcf1880cf8dbf0541706dd470e0
     user: "1000:1000"
     entrypoint: /bin/sh
-    # Bitwarden Web Vault (v2026.4.1+, currently v2026.6.4) rejects non-HTTPS API and notification URLs.
+    # Bitwarden Web Vault (v2026.4.1+) rejects non-HTTPS API and notification URLs.
     # Umbrel's Tor hidden service is served over http://*.onion, which Tor Browser
     # treats as a secure context. Patch only the copied web vault bundle so onion
     # access still works, while plain HTTP remains blocked for non-onion hosts.

@@ -8,7 +8,7 @@ Browse the store at https://apps.umbrel.com.
 
 The easiest way to contribute is to send your coding agent to this repository and have it read `AGENTS.md`. That file helps the agent choose the right repo-local skill for the work: packaging an existing app, updating an App Store package, testing a package, or building a self-hosted app that can be packaged for the App Store.
 
-The skills in `.claude/skills/` capture the current Umbrel App Store guidance for app development, packaging, and verification.
+The skills in `.agents/skills/` capture the current Umbrel App Store guidance for app development, packaging, and verification.
 
 ## App Store Standard
 

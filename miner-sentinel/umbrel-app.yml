@@ -1,60 +1,80 @@
 manifestVersion: 1
 id: miner-sentinel
+storage:
+  dataRoot: data
 category: bitcoin
 name: MinerSentinel
-version: "1.0.3-1"
-tagline: Unified monitoring dashboard for Bitaxe and Avalon Bitcoin miners
+version: "1.2.0"
+tagline: Multi-make Bitcoin mining monitor for home ASIC fleets
 description: >-
-  MinerSentinel is a self-hosted monitoring solution designed for Bitcoin home miners running Bitaxe and Avalon Nano 3s ASIC devices. It provides a centralized dashboard to track performance, health, and profitability metrics across your entire mining fleet.
+  MinerSentinel is a self-hosted monitoring solution for Bitcoin home miners.
+  It unifies Bitaxe, Avalon, NMAxe, NerdNOS, and other makes into one device registry
+  and dashboard for fleet performance, hardware health, pool stats, cost analysis,
+  Activity alerts, and per-device Controls—with all data stored locally.
 
 
   **Real-Time Device Monitoring**
 
-  Monitor hashrate, temperature, power consumption, and efficiency for each device.
-  Visual status indicators show online/offline state and hardware health at a glance.
+  Monitor hashrate, temperature, power consumption, and efficiency (J/TH) for each device.
+  Visual status indicators show online, stale, offline, and inactive state.
 
 
-  **Multi-Device Fleet Management**
+  **Unified Multi-Make Fleet**
 
-  Add unlimited Bitaxe and Avalon miners through a simple web interface.
-  Dynamic device management allows adding or removing devices without service restarts.
-  Each device displays individual statistics with drill-down detail views.
+  Add miners of any supported make through a single Settings registry without restarting services.
+  One detail view covers mining stats, hardware logs, system information, and Controls per device.
 
 
   **Pool Integration**
 
-  Native support for CKPool and Public Pool solo mining statistics.
-  Track your best shares, worker counts, and pool-side hashrate.
-  View historical difficulty submissions and probability calculations for solo block discovery.
+  Native support for CKPool, Public Pool, BTC PoW Lab, and Parasite Pool solo mining statistics.
+  Track best shares, workers, and pool-side hashrate, plus solo-mining probability estimates.
 
 
-  **Advanced Analytics**
+  **Analytics and Cost Analysis**
 
-  Visualize performance trends with interactive charts.
-  Compare efficiency across devices, analyze power consumption patterns, and predict maintenance needs.
-  Time-series data stored in PostgreSQL enables historical trend analysis.
+  Interactive charts for hashrate and hardware trends over selectable time ranges.
+  Configure energy rate and currency to estimate power cost; optional revenue-style stats use cached network data.
 
 
-  **Intelligent Alerts**
+  **Activity, Controls, and Alerts**
 
-  Telegram integration delivers instant notifications for critical events.
-  Receive alerts for device offline status, hashrate stagnation, and new best difficulty achievements.
-  Automatic device restart attempts when stagnation is detected.
+  In-app Activity journal plus Telegram, Discord, ntfy, Gotify, or webhook notifications for
+  offline devices, hashrate stagnation, new best difficulty, and more. Remote Controls for
+  reboot, fans, and make-specific presets; LAN discovery to find miners on your network.
 
 
   **Built for Self-Sovereignty**
 
-  Runs entirely on your own hardware with no external dependencies. All data stays local.
-  Designed for Umbrel with Docker containerization for easy deployment and updates.
+  Runs entirely on your own hardware. All metrics stay in your PostgreSQL database.
+  Packaged for Umbrel with multi-architecture Docker images.
 
 releaseNotes: >-
-  Fixes a port conflict that could prevent MinerSentinel from running alongside OpenResty Manager.
+  Update to MinerSentinel 1.2.0.
 
 
-  MinerSentinel now opens on port 3082. No action is needed for normal use.
+  ⚠️ This update enables automatic deletion of metrics older than 90 days, including existing history. To keep all history, set Settings → Data Collector → Metrics retention (days) to 0 immediately after updating.
 
 
-  Note: If you manually created bookmarks or reverse proxy rules for MinerSentinel, update them to use the new port.
+  What's new:
+
+
+  - Activity journal for in-app alerts and fleet events
+
+
+  - Device Controls (reboot, fans, Bitaxe presets, Avalon workmode) plus LAN discovery
+
+
+  - BTC PoW Lab and Parasite Pool collectors
+
+
+  - Extra notification channels: ntfy, Gotify, and generic webhook
+
+
+  - Data retention pruning and dependency/container security hardening (Django 5.2 LTS)
+
+
+  Full release notes: https://github.com/dcbert/miner-sentinel/releases/tag/1.2.0
 developer: Davide Bert
 website: https://github.com/dcbert/miner-sentinel
 dependencies: []

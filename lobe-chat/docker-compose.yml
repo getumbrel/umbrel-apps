@@ -8,7 +8,7 @@ services:
       PROXY_AUTH_ADD: "false"
 
   app:
-    image: lobehub/lobehub:2.2.16@sha256:b51561ee77c7c4299b5f158d6fb3c71137d98abb89a248b782b93d8956db661d
+    image: lobehub/lobehub:2.2.17@sha256:775dbfb06820e2d0f6ac24cbaaa6ee46c1e40ebce7b73fb2ce16c4d06e61a51e
     restart: on-failure
     env_file:
       - ${APP_DATA_DIR}/settings.env
@@ -17,6 +17,7 @@ services:
       INTERNAL_APP_URL: http://lobe-chat_app_1:3210
       AUTH_TRUSTED_ORIGINS: http://${DEVICE_DOMAIN_NAME}:7455
       DATABASE_URL: postgresql://postgres:lobehubsecret@lobe-chat_postgres_1:5432/lobehub
+      ES_REINDEX_STATE_DIR: /app/.elasticsearch-reindex
       REDIS_URL: redis://lobe-chat_redis_1:6379
       REDIS_PREFIX: lobechat
       REDIS_TLS: "0"
@@ -29,6 +30,8 @@ services:
       S3_SET_ACL: "0"
       LLM_VISION_IMAGE_USE_BASE64: "1"
       SEARXNG_URL: http://lobe-chat_searxng_1:8080
+    volumes:
+      - ${APP_DATA_DIR}/data/elasticsearch-reindex:/app/.elasticsearch-reindex
     depends_on:
       postgres:
         condition: service_healthy
@@ -92,7 +95,7 @@ services:
       start_period: 40s
 
   rustfs-init:
-    image: minio/mc:RELEASE.2025-08-13T08-35-41Z@sha256:a7fe349ef4bd8521fb8497f55c6042871b2ae640607cf99d9bede5e9bdf11727
+    image: quay.io/minio/mc:RELEASE.2025-08-13T08-35-41Z@sha256:a7fe349ef4bd8521fb8497f55c6042871b2ae640607cf99d9bede5e9bdf11727
     restart: on-failure
     depends_on:
       rustfs:
@@ -103,7 +106,7 @@ services:
     command:
       - -c
       - >
-        set -eux;
+        set -eu;
         mc --version;
         mc alias set rustfs "http://lobe-chat_rustfs_1:9000" "lobehub" "${APP_PASSWORD}";
         mc ls rustfs || true;

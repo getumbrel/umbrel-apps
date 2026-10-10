@@ -1,8 +1,24 @@
 manifestVersion: 1.1
 id: jellyfin
+storage:
+  dataRoot: data
+folderAccess:
+  - id: umbrel-downloads
+    name: Downloads
+    note: Media files for your Jellyfin libraries. Available inside Jellyfin at /downloads.
+    mounts:
+      - service: server
+        targetPath: /downloads
+  - id: media-library
+    name: Media Library
+    note: Select an additional folder containing media, then add /media as a library folder in Jellyfin. Access is read-only to protect the original files.
+    mounts:
+      - service: server
+        targetPath: /media
+        readOnly: true
 category: media
 name: Jellyfin
-version: "10.11.11"
+version: "12.2"
 tagline: The Free Software Media System
 description: >-
   Jellyfin is the volunteer-built media solution that puts you in control of your media. Stream to any device from your own server, with no strings attached. Your media, your server, your way.
@@ -32,14 +48,19 @@ path: ""
 defaultUsername: ""
 defaultPassword: ""
 releaseNotes: >-
-  This bugfix release improves Jellyfin server reliability.
+  Jellyfin 12 is a major upgrade. Back up your Jellyfin data before updating because the database changes cannot be rolled back without restoring a backup. Direct upgrades from Jellyfin 10.11.x are supported, but repository plugins should be removed before migrating and re-added only after compatible versions are available.
 
 
   Key improvements in this release:
-    - Improved user management reliability by adding locking around UserManager operations
+    - Improves media/library scan reliability, cleanup behavior, user preferences, playlists, metadata handling, subtitles, and SyncPlay behavior
+    - Adds better handling for Dolby Vision profile 8, multilingual search, media extras, rating propagation, MusicBrainz artist names, and low-bitrate video transcoding
+    - Fixes Jellyfin 12.0/12.1 regressions and migration issues, including display preferences, database cleanup, transcoding settings migration, malformed FLAC hangs, and playlist/library view issues
 
 
-  Full release notes can be found at https://github.com/jellyfin/jellyfin/releases/tag/v10.11.11
+  After upgrading, run a full library scan to restore alternative versions.
+
+
+  Full release notes can be found at https://github.com/jellyfin/jellyfin/releases/tag/v12.2
 torOnly: false
 permissions:
   - STORAGE_DOWNLOADS

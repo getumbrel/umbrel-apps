@@ -1,8 +1,10 @@
 manifestVersion: 1
 id: yuvomi
+storage:
+  dataRoot: data
 category: files
 name: Yuvomi
-version: "2.64.1"
+version: "2.71.0"
 tagline: Self-hosted family planner — calendar, tasks, shopping, meals & budget
 description: >-
   Yuvomi is a self-hosted, privacy-focused family planner that bundles everything
@@ -51,29 +53,36 @@ description: >-
   Open Yuvomi from your Umbrel dashboard and create the first account — that
   account becomes the family admin and can invite the rest of the household.
 releaseNotes: >-
-  This is a security release, and it changes nothing about how Yuvomi looks or
-  works day to day. Four reports from security researchers are fixed: a family
-  member could edit or delete another member's private calendar event; the
-  Webhook, Gotify and ntfy notification channels could be pointed at addresses
-  inside your own network; a redirect could steer a calendar feed fetch to an
-  internal address; and a shared expense could be attributed to someone outside
-  its group, while a paid housekeeping visit could be changed by anyone.
+  This update adds Brazilian Portuguese and fixes several things people ran into
+  after 2.70.0.
 
 
-  One thing to check after updating: if your Gotify or ntfy server, or a webhook
-  target such as Home Assistant, runs in the same Docker network or on your LAN,
-  notification delivery to it now stops until you set
-  NOTIFICATION_ALLOW_PRIVATE_NETWORK=true in the app's environment. The channel
-  shows the reason in its status, and the setting is described in the
-  installation guide.
+  Brazilian Portuguese is now its own language in the app, next to the existing
+  Portuguese. A browser set to Brazilian Portuguese picks it on its own.
 
 
-  Nothing changes in the database with this update, so it is a plain container
-  swap with no migration to wait for.
+  Changing a recurring budget payment for all future months no longer rewrites
+  its first booking, which could lie years back and move old amounts to another
+  account. Members who may edit the meal plan can now edit and delete recipes
+  that someone else added; before, saving failed with "Not authorized", even for
+  an admin.
+
+
+  When the weather service cannot be reached, the weather tile now stays on the
+  overview and says the weather is currently unavailable, instead of
+  disappearing without a trace. In the app added to an iPhone home screen, the
+  dark strip below the tab bar is gone. Switches that are off are easier to see,
+  and in Arabic and Persian "on" sits on the left.
+
+
+  The update runs one database migration on first start. It gives every
+  recurring budget payment a definition of its own, without changing any
+  existing entry. No action is needed; as always, a backup before updating is a
+  good idea.
 
 
   Full release notes are available at
-  https://github.com/ulsklyc/yuvomi/releases/tag/v2.64.1
+  https://github.com/ulsklyc/yuvomi/releases/tag/v2.71.0
 backupIgnore:
   - data/app/yuvomi.db.plaintext-backup*
   - data/backups/*.db

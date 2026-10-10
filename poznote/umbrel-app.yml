@@ -1,12 +1,17 @@
 manifestVersion: 1
 id: poznote
+storage:
+  dataRoot: data
 name: Poznote
 tagline: A powerful app for taking notes
 category: files
-version: "6.74.0"
+version: "6.111.1"
 port: 8389
 description: >-
   📝 Poznote is a clean and focused application designed to help users capture, structure, and refine information in a flexible workspace. It combines a rich text editor with Markdown formatting to support both quick jotting and long form writing, allowing thoughts to grow and change without friction.
+
+
+  External MCP clients require an access token. Sign in to Poznote as an administrator, then open http://umbrel.local:8389/umbrel-mcp.php to get your connection URL and token. If your Umbrel uses a different address, use that address instead of umbrel.local.
 
 
   The interface encourages fluid organization through tags, search, and customizable workspaces so ideas remain easy to find even as the collection expands. Poznote supports attachments for images, documents, and other files, making it possible to keep related material together within a single note.
@@ -28,19 +33,22 @@ gallery:
   - 3.jpg
   - 4.jpg
 releaseNotes: |-
-  Poznote 6.74.0 improves snapshots, AI setup, and UI customization:
+  Poznote 6.111.1 improves rich text Markdown editing:
 
-  - Restored snapshots now preserve note attachments and images, including files that were removed from the live note while still referenced by a snapshot.
-  - Adds a Settings option for how many automatic daily snapshots to keep per note, plus individual snapshot deletion from the Snapshots dialog and API.
-  - Lets the AI assistant model be selected from a dropdown after checking provider access.
-  - Adds an option to hide the Settings page's Recent section.
-  - Fixes workspace deletion cleanup for note snapshots and removes a redundant dashboard breadcrumb home button.
+  - Improves table editing, formatting-button state, and command-menu actions in rich text Markdown view.
+  - Fixes typing, Enter, and Backspace behavior around bold text, links, lists, quotes, and aligned lines.
+  - Makes bare addresses clickable in live views and fixes preview rendering for links containing * or _ characters.
+  - Opens new Markdown notes in live view when no default new-note view mode has been chosen.
+  - Applies Alpine security updates in the Docker image.
+
+  ⚠️ MCP clients require authentication. If you have not updated since Poznote 6.81.5, your existing MCP URL and port 8340 stay the same, but connections will fail until you add an access token. Sign in to Poznote as an administrator, then open http://umbrel.local:8389/umbrel-mcp.php to get your token and setup instructions. Replace umbrel.local with your Umbrel's address if needed. Configure your client with an Authorization header of Bearer YOUR_TOKEN. The token stays the same across app restarts and updates. The built-in AI assistant does not need this token.
 
   If you're updating from before Poznote 6.51.0, you may need to log in again because of the remember-me cookie security changes.
 
   If you're updating from before Poznote 6.21.0, existing Excalidraw diagrams may need to be opened, slightly modified, and saved again before their generated images match the current dark/light theme.
 
-  Full release notes can be found at https://github.com/timothepoznanski/poznote/releases/tag/6.74.0
+  Full release notes can be found at https://github.com/timothepoznanski/poznote/releases/tag/6.111.1
+
 dependencies: []
 path: "/login.php"
 defaultUsername: "admin_change_me"

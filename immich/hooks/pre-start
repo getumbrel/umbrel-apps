@@ -4,19 +4,19 @@
 
 set -euo pipefail
 
-APP_DIR="$(readlink -f $(dirname "${BASH_SOURCE[0]}")/..)"
-APP_DATA_DIR="${APP_DIR}/data"
+APP_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")"
+DATA_ROOT="${APP_DATA_ROOT:-${APP_DIR}/data}"
 APP_COMPOSE_FILE="${APP_DIR}/docker-compose.yml"
-IMMICH_PG_VERSION_FILE="${APP_DATA_DIR}/postgres/PG_VERSION"
-IMMICH_UPDATE_FLAG_FILE="${APP_DATA_DIR}/POST_1_136_0_VERSION"
-MIGRATION_IN_PROGRESS_FILE="${APP_DATA_DIR}/MIGRATION_IN_PROGRESS"
+IMMICH_PG_VERSION_FILE="${DATA_ROOT}/postgres/PG_VERSION"
+IMMICH_UPDATE_FLAG_FILE="${DATA_ROOT}/POST_1_136_0_VERSION"
+MIGRATION_IN_PROGRESS_FILE="${DATA_ROOT}/MIGRATION_IN_PROGRESS"
 
 # Create model-cache directory if it doesn't exist
-MODEL_CACHE_DIR="${APP_DATA_DIR}/model-cache"
+MODEL_CACHE_DIR="${DATA_ROOT}/model-cache"
 [ ! -d "${MODEL_CACHE_DIR}" ] && mkdir -p "${MODEL_CACHE_DIR}" && chown 1000:1000 "${MODEL_CACHE_DIR}"
 
 # delete tsdata directory if it exists
-TYPESENSE_DIR="${APP_DATA_DIR}/tsdata"
+TYPESENSE_DIR="${DATA_ROOT}/tsdata"
 [ -d "${TYPESENSE_DIR}" ] && rm -rf "${TYPESENSE_DIR}"
 
 # delete old post-update script if it exists

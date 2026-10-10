@@ -8,12 +8,16 @@ services:
       PROXY_AUTH_ADD: "false"
   
   db:
-    image: mariadb:10.6.21@sha256:8a16204dc96c08ed0ee2c52c0f9324aa5d2dd0e43ad23a471d447a39f75765b5
+    image: mariadb:10.11.19@sha256:7f22313fc130a377a44999965bcb0a08dd5b21e8502824c1b864f792f9bc66ab
     user: "1000:1000"
+    entrypoint: ["bash", "/umbrel-migration-hook", "--guard", "db"]
+    stop_grace_period: 2m
     command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
     restart: on-failure
     volumes:
       - ${APP_DATA_DIR}/data/db:/var/lib/mysql
+      - ${APP_DATA_DIR}/hooks/pre-start:/umbrel-migration-hook:ro
+      - ${APP_DATA_DIR}/data/migration:/umbrel-migration:ro
     environment:
       - MYSQL_ROOT_PASSWORD=moneyprintergobrrr
       - MYSQL_PASSWORD=moneyprintergobrrr
@@ -35,13 +39,17 @@ services:
       - "${APP_DATA_DIR}/data/redis:/data"
 
   web:
-    image: nextcloud:34.0.3-apache@sha256:365baea128b5e0f45a8dc5111c9234b926f1e6082b4c14d75ae650324ce5d65c
+    image: nextcloud:35.0.1-apache@sha256:276547e033df451770dbf9c0065929e5ea179a613b1884bd3fa807ba1c2703e7
+    entrypoint: ["bash", "/umbrel-migration-hook", "--guard", "web"]
+    command: apache2-foreground
     # Currently needs to be run as root, if we run as uid 1000 this fails
     # https://github.com/nextcloud/docker/blob/05026b029d37fc5cd488d4a4a2a79480e39841ba/21.0/apache/entrypoint.sh#L53-L77
     # user: "1000:1000"
     restart: on-failure
     volumes:
       - ${APP_DATA_DIR}/data/nextcloud:/var/www/html
+      - ${APP_DATA_DIR}/hooks/pre-start:/umbrel-migration-hook:ro
+      - ${APP_DATA_DIR}/data/migration:/umbrel-migration:ro
     environment:
       - MYSQL_HOST=nextcloud_db_1
       - REDIS_HOST=nextcloud_redis_1
@@ -60,14 +68,16 @@ services:
         condition: service_started
 
   cron:
-    image: nextcloud:34.0.3-apache@sha256:365baea128b5e0f45a8dc5111c9234b926f1e6082b4c14d75ae650324ce5d65c
+    image: nextcloud:35.0.1-apache@sha256:276547e033df451770dbf9c0065929e5ea179a613b1884bd3fa807ba1c2703e7
     # Currently needs to be run as root, if we run as uid 1000 this fails
     # https://github.com/nextcloud/docker/blob/05026b029d37fc5cd488d4a4a2a79480e39841ba/21.0/apache/entrypoint.sh#L53-L77
     # user: "1000:1000"
     restart: on-failure
     volumes:
       - ${APP_DATA_DIR}/data/nextcloud:/var/www/html
-    entrypoint: /cron.sh
+      - ${APP_DATA_DIR}/hooks/pre-start:/umbrel-migration-hook:ro
+      - ${APP_DATA_DIR}/data/migration:/umbrel-migration:ro
+    entrypoint: ["bash", "/umbrel-migration-hook", "--guard", "cron"]
     depends_on:
       db:
         condition: service_healthy

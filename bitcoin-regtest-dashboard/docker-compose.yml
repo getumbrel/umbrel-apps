@@ -5,10 +5,16 @@ services:
     environment:
       APP_HOST: bitcoin-regtest-dashboard_dashboard_1
       APP_PORT: 3000
+      # The dashboard UI stays behind umbrelOS authentication. The HTTP API is
+      # exempt so scripts, test suites and agents running on other machines can
+      # reach it without umbrelOS credentials, which is the point of the API.
+      # Both rules are needed: "/api/*" does not match the bare /api index.
+      # Set API_TOKEN on the dashboard service below to require a bearer token.
+      PROXY_AUTH_WHITELIST: "/api,/api/*"
 
   # Bitcoin Core in regtest mode (self-contained, no dependencies)
   bitcoin:
-    image: ghcr.io/getumbrel/docker-bitcoind:v31.0@sha256:89185fc2792a9824cbe18f7ad4ead02a3a9a14adf5b34eb42f60ebec36201fa0
+    image: ghcr.io/getumbrel/docker-bitcoind:v31.1@sha256:e0a94f8390f4fee796faba306719860a1ba61e8fa841416bca26fd4e1e94cb8c
     user: "1000:1000"
     restart: on-failure
     entrypoint: ["/bin/sh", "-c"]
@@ -29,6 +35,7 @@ services:
         while [ ! -f /data/.bitcoin/regtest/.cookie ]; do sleep 1; done
         chmod 755 /data/.bitcoin/regtest
         chmod 644 /data/.bitcoin/regtest/.cookie
+        chmod 644 /data/.bitcoin/regtest/debug.log 2>/dev/null || true
         sleep 2
         bitcoin-cli -regtest -rpccookiefile=/data/.bitcoin/regtest/.cookie createwallet "regtest_wallet" 2>/dev/null || \
           bitcoin-cli -regtest -rpccookiefile=/data/.bitcoin/regtest/.cookie loadwallet "regtest_wallet" 2>/dev/null || true
@@ -37,6 +44,7 @@ services:
         while kill -0 $$BITCOIND_PID 2>/dev/null; do
           chmod 755 /data/.bitcoin/regtest 2>/dev/null
           chmod 644 /data/.bitcoin/regtest/.cookie 2>/dev/null
+          chmod 644 /data/.bitcoin/regtest/debug.log 2>/dev/null
           sleep 5
         done &
         wait $$BITCOIND_PID
@@ -71,7 +79,7 @@ services:
 
   # Bitcoin Regtest Dashboard
   dashboard:
-    image: coreylphillips/bitcoin-regtest-dashboard:v1.0.4@sha256:d71e099ec53426cecd05899a7f8efe2b73bfc1d0c21750ac53dc2b2dad107820
+    image: coreylphillips/bitcoin-regtest-dashboard:v1.1.0@sha256:41835f0f891ecaf7a581f89adac2c6c305669b30618973fab5a7aac251e0d677
     user: "1000:1000"
     restart: on-failure
     environment:
@@ -82,6 +90,7 @@ services:
       ELECTRS_HOST: bitcoin-regtest-dashboard_electrs_1
       ELECTRS_PORT: 50001
       ELECTRS_EXTERNAL_PORT: 60401
+      BITCOIN_DEBUG_LOG: /bitcoin/.bitcoin/regtest/debug.log
     volumes:
       - ${APP_DATA_DIR}/data/bitcoin:/bitcoin/.bitcoin:ro
     depends_on:
