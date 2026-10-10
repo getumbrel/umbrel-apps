@@ -1,22 +1,60 @@
 manifestVersion: 1
 id: libredb-studio
+storage:
+  dataRoot: data
 category: developer
 name: LibreDB Studio
-version: "0.17.0"
-tagline: MIT-licensed open source SQL IDE for 18 database engines
+version: "0.18.2"
+tagline: Self-hosted SQL IDE you open in a browser
 description: >-
-  LibreDB Studio is a MIT-licensed, self-hosted SQL IDE that connects to 18
-  engines including PostgreSQL, MySQL, Oracle, SQL Server, SQLite, libSQL,
-  DuckDB, MongoDB, Redis, Couchbase, ClickHouse, Druid, Elasticsearch,
-  OpenSearch, Trino, Apache Cassandra, Prometheus and Apache Kafka, all from
-  the browser. On
-  first start it creates an initial admin account and stores its own data in
-  a local SQLite file, so no external database is required to run it.
+  LibreDB Studio is a self-hosted database IDE you run on your own server and
+  use from a browser. Nothing is installed on anyone's laptop, and the database
+  never has to be reachable from the internet. MIT licensed, no paid tier,
+  nothing is held back. On the first start it creates the admin account from
+  the password Umbrel shows you, and keeps its own data in a local SQLite file
+  on the app's own data folder, so no external database is needed to run it.
 
 
-  The AI assistant is optional and works with Gemini, OpenAI or a local
-  Ollama model. With a local model, prompts, schema and data stay on your
-  network.
+  It ships 27 engine drivers of its own: PostgreSQL, MySQL, Oracle, Db2 LUW,
+  SQL Server, SQLite, libSQL, DuckDB, MongoDB, Redis, Couchbase, ClickHouse,
+  Druid, Elasticsearch, OpenSearch, Trino, Databend, Apache Cassandra,
+  Prometheus, Apache Kafka, etcd, Neo4j, Milvus, Qdrant, InfluxDB (InfluxQL),
+  InfluxDB 3 (SQL) and Oxia. Another 27 engines speak one of those wire
+  protocols and connect through the same drivers, among them MariaDB, TiDB,
+  CockroachDB, TimescaleDB, Citus, YugabyteDB, Valkey, ScyllaDB, StarRocks,
+  Apache Doris, Vitess, OceanBase and Redpanda. That is 54 reachable engines
+  in total.
+
+
+  The editor has completion and an EXPLAIN plan view, results can be charted or
+  pivoted without leaving the tab, and columns the app reads as personal data
+  are masked in the grid until you unmask them. On the SQL engines the object
+  browser shows tables, sizes, indexes and foreign keys, and there is schema
+  comparison, an ER diagram, and a session and slow query monitor. Sign ins,
+  admin actions and agent and MCP runs go to an audit log, and your own query
+  history sits beside it. OIDC single sign on and role based access control
+  ship with it.
+
+
+  Speaking the same wire protocol is not the same as having the same catalog.
+  All 27 wire compatible engines were run in Docker and tested on the same
+  screens. Eighteen answered on every screen, though a few of those publish row
+  counts or sizes you should not trust, and nine answered in part, usually
+  missing row counts, sizes and the monitoring panels. The connection works, the
+  screen can come up empty. The repository lists this engine by engine.
+
+
+  The interface is English only for now, and ten of the 27 drivers are read
+  only. Three because the SQL endpoint they expose cannot change rows: none of
+  Druid, Elasticsearch or OpenSearch has UPDATE in its grammar, and the write
+  statements Druid and OpenSearch do have are refused by the endpoint Studio
+  talks to. Seven because Studio only ever reads them: Prometheus, Apache Kafka,
+  Neo4j, Qdrant, Oxia and the two InfluxDB drivers.
+
+
+  The AI assistant is optional and works with Gemini, OpenAI, a local Ollama
+  model, or any OpenAI compatible endpoint; with a local model, prompts, schema
+  and data stay on your network.
 releaseNotes: ""
 developer: LibreDB
 website: https://libredb.org
