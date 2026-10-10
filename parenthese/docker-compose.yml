@@ -1,0 +1,56 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: parenthese_web_1
+      APP_PORT: 80
+
+  web:
+    image: ghcr.io/iliesallali/parenthese-web:1.0.3@sha256:f0350f317b6bf7b9ff80e0b68a5aa2850abcc09d85cfe1becd8e6700ba3d7134
+    restart: on-failure
+    environment:
+      # The web container proxies the API; on Umbrel's shared network it is reached by its container name.
+      API_UPSTREAM: parenthese_api_1:4000
+    depends_on:
+      api:
+        condition: service_healthy
+
+  api:
+    image: ghcr.io/iliesallali/parenthese-api:1.0.3@sha256:10becf6c7ea05c5d097cd7e0cee7683a42c248a27970609c31e6438796e200c0
+    restart: on-failure
+    environment:
+      NODE_ENV: production
+      PORT: "4000"
+      DATABASE_URL: postgresql://parenthese:${APP_PARENTHESE_DB_PASSWORD}@parenthese_db_1:5432/parenthese
+      JWT_SECRET: ${APP_PARENTHESE_JWT_SECRET}
+      MEDIA_STORAGE_PATH: /app/storage/media
+    volumes:
+      - ${APP_DATA_DIR}/data/media:/app/storage/media
+    depends_on:
+      db:
+        condition: service_healthy
+    # The image applies pending database migrations on start, then runs the server.
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4000/health').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  db:
+    image: postgres:16.15-alpine@sha256:721873c34ceb9f8d8fc265984940dc982404c105f19ad51be9fdc5970a6080ea
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      POSTGRES_USER: parenthese
+      POSTGRES_PASSWORD: ${APP_PARENTHESE_DB_PASSWORD}
+      POSTGRES_DB: parenthese
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - ${APP_DATA_DIR}/data/db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U parenthese -d parenthese"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
