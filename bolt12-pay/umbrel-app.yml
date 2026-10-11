@@ -5,7 +5,7 @@ storage:
 name: BOLT12 Pay
 tagline: Self-hosted Lightning payments and identity with BOLT12, BIP353, LNURL, and Nostr
 category: bitcoin
-version: 0.3.6
+version: 0.3.7
 port: 8367
 description: |-
   BOLT12 Pay is a self-hosted Lightning payments and identity app for LND nodes.
@@ -84,11 +84,13 @@ submission: https://github.com/getumbrel/umbrel-apps/pull/5429
 repo: https://github.com/Alex71btc/lndk-pay
 support: https://github.com/Alex71btc/lndk-pay/issues
 releaseNotes: |
-  Lightning Activity now displays the date and time for incoming and outgoing payments.
+  BOLT12 payments now allow more time for an invoice response, improving reliability with slower wallets and onion-message routes.
 
-  Dates and times follow the selected German or English interface language and use your browser's local timezone.
+  Repeated invoice requests now reuse the same invoice instead of creating unpaid duplicates in LND.
 
-  Older entries without a valid timestamp display a clear fallback message. The compact layout works on mobile and desktop.
+  Outgoing BOLT12 payments appear as one clear Lightning Activity entry, including the routing fee, instead of an additional underlying BOLT11 payment row.
+
+  The bundled LNDK runtime now supports LND 0.21 native onion messages and remains available for both amd64 and arm64 systems. Amountless offers and descriptive invoice memos remain supported.
 
   Existing application data and payment history are preserved. No manual migration is required.
 
