@@ -3,7 +3,7 @@ id: stalwart
 name: Stalwart
 tagline: All-in-one Mail & Collaboration server
 category: files
-version: "v0.16.24"
+version: "v0.16.25"
 port: 8745
 description: >-
   📧 Stalwart is a fast, secure, and scalable open-source server for email, calendars, contacts, and file sharing, built in Rust for top-tier performance and safety.
@@ -54,14 +54,15 @@ releaseNotes: >-
   If updating from Stalwart v0.15.x or earlier, Umbrel runs the v0.16 migration automatically as part of the update. Make sure you have a backup and leave Stalwart running until it comes back online. Upgrading guide: https://github.com/stalwartlabs/stalwart/blob/main/UPGRADING/v0_16.md
 
 
-  Changes in v0.16.24 include:
-    - Adds PowerDNS Authoritative as a DNS provider for automatic DNS record management
-    - Fixes spam-filter rule updates, phishing/short-link matching, incremental training, and reporting when rule imports fail
-    - Fixes JMAP push-delivery edge cases, same-request Email/import blob IDs, and IMAP visibility after certain Email/set updates
-    - Fixes MTA DATA handling on nodes without the outboundMta role, DANE/DNSSEC resolver behavior, MySQL range deletion timeouts, IMAP copy/move concurrency, Outlook autodiscover TLS hints, and idle HTTP keep-alive cleanup
+  Changes in v0.16.25 include:
+    - Fixes JMAP masked-email creation for accounts with addresses on multiple domains
+    - Fixes IMAP failed-login responses so clients no longer hang until timeout
+    - Fixes DKIM key-rotation edge cases that could leave outgoing mail unsigned or activate unpublished keys
+    - Fixes spam-filter Pyzor, DNSBL, and duplicate training-sample handling
+    - Fixes MTA empty-match queue quotas, RocksDB log retention, and WebUI startup when a blob-store read error occurs
 
 
-  Full release notes can be found at https://github.com/stalwartlabs/stalwart/releases/tag/v0.16.24
+  Full release notes can be found at https://github.com/stalwartlabs/stalwart/releases/tag/v0.16.25
 dependencies: []
 path: "/admin"
 deterministicPassword: true
