@@ -2,8 +2,15 @@ version: "3.7"
 
 services:
   server:
-    image: ghcr.io/matter-js/python-matter-server:8.1.2@sha256:6827e352011e2d8c2bde771e446fcf72acc49150ef66bad978816bac1762aad3
+    image: ghcr.io/matter-js/matterjs-server:1.4.0@sha256:54232d0d3e7dff5a54759469d2753399270412b4c30c55b31750a4595e4cb236
     restart: on-failure
+    user: "1000:1000"
+    environment:
+      STORAGE_PATH: /data
+      PORT: "5580"
+      VENDOR_ID: "65521"
+      FABRIC_ID: "1"
+      NOBLE_BINDINGS: dbus
     # Required for mDNS to work correctly
     network_mode: host
     # UI at default port 5580
