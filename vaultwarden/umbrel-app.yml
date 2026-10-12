@@ -4,7 +4,7 @@ storage:
   dataRoot: data
 category: files
 name: Vaultwarden
-version: "1.37.3-patch.2"
+version: "1.37.4"
 tagline: Unofficial Bitwarden® compatible server
 description: >-
   Vaultwarden is an unofficial Bitwarden-compatible server for self-hosting your encrypted password vault on Umbrel. It works with many official Bitwarden clients and provides a lightweight alternative to the official Bitwarden server.
@@ -32,10 +32,16 @@ description: >-
   **Disclaimer:** Vaultwarden is not associated with Bitwarden or 8bit Solutions LLC. For Vaultwarden issues, contact Vaultwarden/Umbrel support rather than Bitwarden's official support channels.
 
 releaseNotes: >-
-  On umbrelOS 2.0 or later, Vaultwarden now opens directly from your Umbrel dashboard over HTTPS, so Tor Browser is no longer needed to create an account.
+  This release includes important security fixes for organization member revocation, two-factor authentication, organization invitations, attachments, event logs, cipher sharing, and organization API keys.
 
 
-  If you haven't upgraded to umbrelOS 2.0 yet, your existing Bitwarden clients will still work. You can also keep using Tor or an HTTPS connection you've already set up, such as Tailscale Serve.
+  For shared organizations: if you have admins you don’t fully trust, rotate the organization’s API key after updating under Admin Console → Settings → Rotate API key.
+
+
+  No proxy changes are needed for standard Umbrel installations. If you have a custom setup using IP_HEADER=X-Forwarded-For with multiple reverse proxies, list all trusted proxies in IP_HEADER_TRUSTED_PROXIES so rate limiting and logs use the correct client IP address.
+
+
+  On umbrelOS 2.0 or later, Vaultwarden opens directly from your Umbrel dashboard over HTTPS, without needing Tor Browser. On older umbrelOS versions, continue using Tor Browser or your existing HTTPS setup.
 developer: Daniel García
 website: https://github.com/dani-garcia
 dependencies: []
