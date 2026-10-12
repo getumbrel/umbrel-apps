@@ -2,6 +2,8 @@
 set -euo pipefail
 
 ENV_FILE="${APP_DATA_DIR}/settings.env"
+GATEWAY_ENV_FILE="${APP_DATA_DIR}/gateway.env"
+BUCKET_CONFIG_FILE="${APP_DATA_DIR}/bucket.config.json"
 TMP_DIR="${APP_DATA_DIR}/tmp"
 DB_DATA_DIR="${APP_DATA_DIR}/data/db"
 REDIS_DATA_DIR="${APP_DATA_DIR}/data/redis"
@@ -12,7 +14,8 @@ ES_REINDEX_DATA_DIR="${APP_DATA_DIR}/data/elasticsearch-reindex"
 
 mkdir -p "${TMP_DIR}"
 mkdir -p "${DB_DATA_DIR}" "${REDIS_DATA_DIR}" "${RUSTFS_DATA_DIR}" "${RUSTFS_LOGS_DIR}" "${SEARXNG_DATA_DIR}" "${ES_REINDEX_DATA_DIR}"
-touch "${ENV_FILE}"
+(umask 077; touch "${ENV_FILE}")
+chmod 600 "${ENV_FILE}"
 chown -R 1000:1000 "${DB_DATA_DIR}" "${REDIS_DATA_DIR}" 2>/dev/null || true
 chown -R 10001:10001 "${RUSTFS_DATA_DIR}" "${RUSTFS_LOGS_DIR}" 2>/dev/null || true
 chown -R 1001:1001 "${ES_REINDEX_DATA_DIR}" 2>/dev/null || true
@@ -27,6 +30,27 @@ search:
     - json
 EOF
 fi
+
+cat > "${BUCKET_CONFIG_FILE}" <<'EOF'
+{
+  "Id": "",
+  "Statement": [
+    {
+      "Sid": "",
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": ["*"]
+      },
+      "Action": ["s3:GetObject"],
+      "NotAction": [],
+      "Resource": ["arn:aws:s3:::lobe/*"],
+      "NotResource": [],
+      "Condition": {}
+    }
+  ],
+  "Version": "2012-10-17"
+}
+EOF
 
 get_var() {
   local key="$1"
@@ -68,7 +92,7 @@ generate_secret() {
 
 generate_jwks() {
   local pem_file="${TMP_DIR}/jwks.pem"
-  openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out "${pem_file}" >/dev/null 2>&1
+  (umask 077; openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out "${pem_file}" >/dev/null 2>&1)
   python3 - "${pem_file}" <<'PY'
 import base64
 import hashlib
@@ -155,6 +179,26 @@ PY
   rm -f "${pem_file}"
 }
 
+generate_public_jwks() {
+  local private_jwks="$1"
+  python3 - "${private_jwks}" <<'PY'
+import json
+import sys
+
+jwks = json.loads(sys.argv[1])
+public_keys = []
+for key in jwks.get("keys", []):
+    public_keys.append(
+        {
+            k: v
+            for k, v in key.items()
+            if k not in {"d", "p", "q", "dp", "dq", "qi", "oth"}
+        }
+    )
+print(json.dumps({"keys": public_keys}, separators=(",", ":")))
+PY
+}
+
 if [[ -z "$(get_var KEY_VAULTS_SECRET)" ]]; then
   set_var KEY_VAULTS_SECRET "$(generate_secret)"
 fi
@@ -166,3 +210,21 @@ fi
 if [[ -z "$(get_var JWKS_KEY)" ]]; then
   set_var JWKS_KEY "$(generate_jwks)"
 fi
+
+# Derive the public keys from the persisted signing keys on every start.
+set_var JWKS_PUBLIC_KEY "$(generate_public_jwks "$(get_var JWKS_KEY)")"
+
+if [[ -z "$(get_var GATEWAY_SERVICE_TOKEN)" ]]; then
+  set_var GATEWAY_SERVICE_TOKEN "$(generate_secret)"
+fi
+
+set_var AGENT_GATEWAY_SERVICE_TOKEN "$(get_var GATEWAY_SERVICE_TOKEN)"
+set_var DEVICE_GATEWAY_SERVICE_TOKEN "$(get_var GATEWAY_SERVICE_TOKEN)"
+# The gateway only needs its service token and public verification keys.
+# Keep signing keys, account secrets, and encryption secrets in the app container.
+(
+  umask 077
+  printf 'SERVICE_TOKEN=%s\nJWKS_PUBLIC_KEY=%s\n' \
+    "$(get_var GATEWAY_SERVICE_TOKEN)" "$(get_var JWKS_PUBLIC_KEY)" > "${GATEWAY_ENV_FILE}"
+)
+chmod 600 "${GATEWAY_ENV_FILE}"
