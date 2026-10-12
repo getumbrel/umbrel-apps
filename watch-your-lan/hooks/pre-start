@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+APP_DIR="${APP_DATA_DIR:-$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")}"
+CONFIG_FILE="${APP_DIR}/data/config_v2.yaml"
+
+# Seed the previous defaults only when no settings have been saved yet.
+# WatchYourLAN creates an empty config file on its first start.
+if [[ ! -s "${CONFIG_FILE}" ]]; then
+  mkdir -p "${APP_DIR}/data"
+  printf 'ifaces: "eth0 wlan0 enp1s0"\n' > "${CONFIG_FILE}"
+fi
