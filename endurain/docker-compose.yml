@@ -8,16 +8,17 @@ services:
       PROXY_AUTH_ADD: "false"
 
   app:
-    image: ghcr.io/endurain-project/endurain:v0.17.7@sha256:af3d2b50667c081211e9af6b3590f6cbfbaacb73f63910902574f9d65c24b346
+    image: ghcr.io/endurain-project/endurain:v0.19.3@sha256:9fc6390e8eac6567d78f89ca1641bd79da5f92f389c49d9954b4b8382fb847e9
     environment:
-      UID: "1000"
-      GID: "1000"
       DB_TYPE: postgres
       DB_HOST: endurain_db_1
       DB_PORT: 5432
       DB_PASSWORD: endurain
       SECRET_KEY: ${APP_PASSWORD}
       BEHIND_PROXY: "true"
+      TRUSTED_PROXIES: ${NETWORK_IP}/16
+      RATE_LIMIT_STORAGE_URI: redis://:${APP_ENDURAIN_REDIS_PASSWORD}@endurain_redis_1:6379/0
+      AUTH_SECURITY_STORAGE_URI: redis://:${APP_ENDURAIN_REDIS_PASSWORD}@endurain_redis_1:6379/0
     env_file:
       - ${APP_DATA_DIR}/settings.env
     volumes:
@@ -25,6 +26,8 @@ services:
       - ${APP_DATA_DIR}/data/logs:/app/backend/logs
     depends_on:
       db:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     restart: on-failure
 
@@ -41,6 +44,20 @@ services:
     restart: on-failure
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U endurain"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:8-alpine@sha256:3811787313eba226a2ef38658c6ccb91cd5e110edc89c37767de373120a0e5a0
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "${APP_ENDURAIN_REDIS_PASSWORD}"]
+    environment:
+      REDISCLI_AUTH: ${APP_ENDURAIN_REDIS_PASSWORD}
+    volumes:
+      - ${APP_DATA_DIR}/data/redis:/data
+    restart: on-failure
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 5s
       retries: 5
