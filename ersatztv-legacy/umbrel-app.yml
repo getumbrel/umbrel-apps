@@ -4,7 +4,7 @@ storage:
   dataRoot: data
 category: media
 name: ErsatzTV Legacy
-version: "26.11.0"
+version: "26.11.1"
 tagline: Build your own live TV channels
 description: >-
   ErsatzTV Legacy transforms your personal media library into custom live TV channels with IPTV, XMLTV guide data, channel scheduling, and browser playback.
@@ -18,14 +18,11 @@ description: >-
 
   This package uses the ErsatzTV Legacy release stream, which upstream continues to maintain for security updates while ErsatzTV Next remains an experimental rewrite.
 releaseNotes: >-
-  - Migrates channels to the Next streaming engine by default while keeping per-channel rollback to the Legacy engine available.
-  - Adds Next engine support for rotated phone videos, MPEG-2 video encoding, song playback, frame-rate normalization, and a deep-scan option for local libraries.
-  - Updates the bundled ErsatzTV FFmpeg build to 8.1.2-4 and drops ARM32v7 Docker/native support.
-  - Improves Next engine stream copying, watermarks, hardware acceleration, playback troubleshooting, scheduling, and media duration handling.
-  - Fixes multiple playback and hardware-acceleration issues, Jellyfin 12 collection handling, Docker health warnings on arm64, block schedule skips/repeats, and song background changes.
-  - Breaking: custom Next engine channel config overlays must now include `"version": "https://ersatztv.org/channel/version/0.1.0"`; older overlays will be rejected until updated.
+  - Fixes Next engine channels failing to locate playout items on Windows after app data is copied or restored.
+  - Fixes QSV loudness normalization memory errors on older Intel devices.
+  - Fixes green padding with HDR and other BT.2020 content on Intel and AMD VAAPI devices.
 
-  Full release notes can be found at https://github.com/ErsatzTV/legacy/releases/tag/v26.11.0
+  Full release notes can be found at https://github.com/ErsatzTV/legacy/releases/tag/v26.11.1
 developer: ErsatzTV
 website: https://ersatztv.org
 dependencies: []
