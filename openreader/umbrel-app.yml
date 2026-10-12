@@ -5,7 +5,7 @@ storage:
 name: OpenReader
 tagline: A document reader with Text-to-Speech capabilities
 category: ai
-version: "5.1.0"
+version: "5.2.0"
 port: 3391
 description: >-
   OpenReader WebUI is a web-based document reader that integrates text-to-speech (TTS) functionality, allowing users to listen to text from various document formats, including PDF and EPUB. Designed to enhance accessibility and improve the reading experience, it features synchronized text highlighting, ensuring that the currently read portion of the document is visually emphasized as the speech engine narrates the content. This makes it particularly useful for individuals with visual impairments, reading difficulties, or those who simply prefer an auditory learning style.
@@ -39,16 +39,19 @@ releaseNotes: >-
   When updating from 4.4.0 or older, server-stored documents, folders, accounts, settings, and reading progress are retained. If you are updating from an older version, first download your original documents from the existing app in the browser you used to upload them. Older browser-only data and legacy document storage are not automatically migrated by v5; you may need to upload your documents again, and browser-only folders, preferences, and reading progress may reset. A server backup does not include browser-only data.
 
 
-  This release adds optional OIDC single sign-on support, resumable audiobook exports with per-chapter downloads, an admin system check for deployment issues, clearer startup configuration checks, library multi-select controls, and improved export/playback recovery after worker restarts, background tabs, or network drops.
+  This release adds a Project Gutenberg document catalog, bookmarks, in-document search, tap-to-seek playback, voice previews, storage usage controls, library reading progress, and provider connection checks.
 
 
-  It also fixes document operations getting stuck on "Opening document", chapter download and request handling issues, and Docker playback problems caused by the embedded worker binding to loopback.
+  It also improves PDF/EPUB text flow, playback startup, audiobook export durability, reader toolbar controls, and long-sentence word alignment.
 
 
-  User-supplied TTS provider API keys remain unsupported on Umbrel. OpenReader continues to use the shared Kokoro provider configured by the Umbrel package.
+  This update fixes upload integrity checks, EPUB highlighting and iPad opening issues, playback speed resets, audiobook export state, stale settings from the landing page, sign-in session handling, and voice settings on load.
 
 
-  Full release notes can be found at https://github.com/richardr1126/openreader/releases/tag/v5.1.0
+  EPUB books keep their read/unread status after the v5.2 migration, but reopen at the start. User-supplied TTS provider API keys remain unsupported on Umbrel. OpenReader continues to use the shared Kokoro provider configured by the Umbrel package.
+
+
+  Full release notes can be found at https://github.com/richardr1126/openreader/releases/tag/v5.2.0
 dependencies:
   - kokoro
 path: ""
