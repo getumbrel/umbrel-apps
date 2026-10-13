@@ -3,7 +3,7 @@ id: stalwart
 name: Stalwart
 tagline: All-in-one Mail & Collaboration server
 category: files
-version: "v0.16.25"
+version: "v0.16.26"
 port: 8745
 description: >-
   📧 Stalwart is a fast, secure, and scalable open-source server for email, calendars, contacts, and file sharing, built in Rust for top-tier performance and safety.
@@ -51,18 +51,26 @@ gallery:
   - 4.jpg
   - 5.jpg
 releaseNotes: >-
-  If updating from Stalwart v0.15.x or earlier, Umbrel runs the v0.16 migration automatically as part of the update. Make sure you have a backup and leave Stalwart running until it comes back online. Upgrading guide: https://github.com/stalwartlabs/stalwart/blob/main/UPGRADING/v0_16.md
+  ⚠️ Upgrading from v0.15.x or earlier is a breaking migration. Back up first, including any external databases and blob storage, and allow time for the migration to finish. Umbrel migrates accounts and supported settings, but custom mail routing, listeners, spam rules, ACME renewal settings, and other unsupported configuration must be reviewed and recreated as needed.
 
 
-  Changes in v0.16.25 include:
-    - Fixes JMAP masked-email creation for accounts with addresses on multiple domains
-    - Fixes IMAP failed-login responses so clients no longer hang until timeout
-    - Fixes DKIM key-rotation edge cases that could leave outgoing mail unsigned or activate unpublished keys
-    - Fixes spam-filter Pyzor, DNSBL, and duplicate training-sample handling
-    - Fixes MTA empty-match queue quotas, RocksDB log retention, and WebUI startup when a blob-store read error occurs
+  After a legacy upgrade, recalculate account disk quotas from the Tasks section of Stalwart, followed by tenant quotas if used. Clients using STARTTLS submission (10587), IMAP (10143), or POP3 (10110) need their listeners recreated or must switch to implicit TLS on 10465, 10993, or 10995 respectively. Update CalDAV, CardDAV, and WebDAV paths to use full email addresses with @ encoded as %40, and update external-directory filters where applicable. Your Umbrel-provided admin login remains available; custom administrator roles must be reassigned.
 
 
-  Full release notes can be found at https://github.com/stalwartlabs/stalwart/releases/tag/v0.16.25
+  Read the full migration guide before upgrading: https://github.com/stalwartlabs/stalwart/blob/v0.16.26/UPGRADING/v0_16.md
+
+
+  These migration steps do not apply to existing v0.16 installations.
+
+
+  Changes in v0.16.26 include:
+    - Fixes JMAP mailbox rename and duplicate-child handling
+    - Fixes DNSSEC resolver behavior
+    - Fixes RocksDB blob garbage collection, milter timeouts, OIDC account lookup, and JMAP email submission and vacation responses
+
+
+  Full release notes: https://github.com/stalwartlabs/stalwart/releases/tag/v0.16.26
+
 dependencies: []
 path: "/admin"
 deterministicPassword: true
