@@ -1,46 +1,41 @@
-manifestVersion: 1
+manifestVersion: 1.1
 id: matter-server
 storage:
   dataRoot: data
 name: Matter Server
 tagline: A Matter Controller Server over WebSockets
 category: automation
-version: "8.1.2-patch.1"
+version: "1.4.0"
 port: 5580
 description: >-
-  🛜 This project implements a Matter Controller Server over WebSockets using the official Matter (formerly CHIP) SDK as a base and provides both a server and client implementation.
+  🛜 Matter Server connects Matter devices to Home Assistant and other compatible applications through a WebSocket API. Built on matter.js and maintained by the Open Home Foundation, it supports commissioning, device control, firmware updates, and network diagnostics.
 
 
-  🏠 The goal of this project is primarily to have Matter support in Home Assistant but its universal approach makes it suitable to be used in other projects too.
-developer: Home Assistant
-website: https://home-assistant.io
-repo: https://github.com/matter-js/python-matter-server
+  🏠 The built-in dashboard lets you manage devices and explore Thread and Wi-Fi networks. Home Assistant can connect to the server at ws://umbrel.local:5580/ws; replace umbrel.local with your Umbrel's hostname or IP address if needed. Only allow trusted clients on your local network to access this port.
+developer: Open Home Foundation
+website: https://www.openhomefoundation.org/
+repo: https://github.com/matter-js/matterjs-server
 submitter: al-lac
 submission: https://github.com/getumbrel/umbrel-apps/pull/1866
-support: https://community.home-assistant.io/
+support: https://github.com/matter-js/matterjs-server/issues
 gallery:
   - 1.jpg
   - 2.jpg
   - 3.jpg
 releaseNotes: >-
-  This update adds support for new storage management and configuration options being introduced with umbrelOS 2.0.
+  Matter Server now runs on the Open Home Foundation's matter.js implementation, replacing the retired Python server. Version numbers now follow the new project, so this update goes from 8.1.2 to 1.4.0.
 
 
-  Previous Matter Server 8.1.2 release notes:
+  ⚠️ Your existing fabric and paired devices are migrated automatically on first start, which may take several minutes; you should not need to re-pair them. Back up your Umbrel before updating, as rolling back requires restoring that backup.
 
 
-  This release includes several improvements and bug fixes.
+  Key improvements:
+    - Enables the Matter network map in Home Assistant 2026.9
+    - Adds Thread and Wi-Fi network diagnostics and saved network credential management
+    - Improves sleepy-device support, device connections, and firmware updates
+    - Lets you upload local OTA firmware files from the dashboard
 
 
-  Key updates:
-    - Dashboard now includes fallback for unknown endpoint device types
-    - Fixed motion sensitivity and attribute type handling
-    - Added low power mode support for Heiman devices
-    - Added siren and mute functionality for Heiman smoke alarms
-    - Improved handling of non-string label data
-    - Documentation updates for Docker image references
-
-
-  Full release notes are available at https://github.com/home-assistant-libs/python-matter-server/releases
+  Full release notes are available at https://github.com/matter-js/matterjs-server/blob/v1.4.0/CHANGELOG.md
 dependencies: []
 path: ""

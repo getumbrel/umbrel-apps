@@ -7,7 +7,7 @@ services:
       APP_PORT: 8081
       PROXY_AUTH_WHITELIST: "/,/alias,/alias/*,/.well-known,/.well-known/*,/api/lnurl,/api/lnurl/*,/api/qr,/api/qr/*,/icon.svg,/icon.png,/service-worker.js,/public.webmanifest,/assets,/assets/*"
   web:
-    image: alex71btc/bolt12-pay:0.3.5@sha256:07218b9a785375ce7950c0ab876a703435829bf5fda3d71947fb4a8235c16868
+    image: alex71btc/bolt12-pay:0.3.7@sha256:6c6ef8b3693c2bc72fd68f98d81c09f1eedbabadd1c1cb0476dd510e7ae213ed
     restart: on-failure
     depends_on:
       - lndk
@@ -25,7 +25,8 @@ services:
       LNDK_GRPC_PORT: "7000"
       LNDK_CERT_PATH: /data/lndk/tls-cert.pem
       LNDK_MACAROON_PATH: /lnd/data/chain/bitcoin/${APP_BITCOIN_NETWORK}/admin.macaroon
-      LNDK_TIMEOUT_SECONDS: "30"
+      LNDK_INVOICE_TIMEOUT_SECONDS: "60"
+      LNDK_TIMEOUT_SECONDS: "75"
       ALLOW_PAY_OFFER: "true"
 
       LND_REST_URL: https://lightning_lnd_1:8080
@@ -45,7 +46,7 @@ services:
       - ${APP_LIGHTNING_NODE_DATA_DIR}:/lnd:ro
 
   lndk:
-    image: alex71btc/lndk:v0.3.0-memo@sha256:460fba9927e96cf24d5b96122638afc0b11f433cb8e74d1735fe4570fb005b4e
+    image: alex71btc/lndk:bolt12-pay-89a06db-multiarch@sha256:8c695fb18d593294e6f9a60ed9328bd7f6fc4c0b6ac9fae0dd3466cd3b9b0c97
     restart: on-failure
     entrypoint:
       - /bin/sh

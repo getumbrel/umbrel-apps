@@ -8,7 +8,7 @@ services:
       PROXY_AUTH_ADD: "false"
 
   server:
-    image: stalwartlabs/stalwart:v0.16.22@sha256:388dcb75a70727c5b551249a6d34b1f1321294852489e4fa3a4e6be698b7c4f0
+    image: stalwartlabs/stalwart:v0.16.26@sha256:254ce5d7f3dbe4bb628ce2c7912e664ecb1c3466db79907f4a44d9a00117776b
     user: "1000:1000"
     environment:
       - STALWART_RECOVERY_ADMIN=admin:${APP_PASSWORD}
@@ -26,4 +26,5 @@ services:
     volumes:
       - ${APP_DATA_DIR}/data/etc:/etc/stalwart
       - ${APP_DATA_DIR}/data/server:/var/lib/stalwart
+      - ${APP_DATA_DIR}/data/logs:/var/log/stalwart
     restart: on-failure

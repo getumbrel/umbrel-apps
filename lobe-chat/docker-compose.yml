@@ -8,7 +8,7 @@ services:
       PROXY_AUTH_ADD: "false"
 
   app:
-    image: lobehub/lobehub:2.2.17@sha256:775dbfb06820e2d0f6ac24cbaaa6ee46c1e40ebce7b73fb2ce16c4d06e61a51e
+    image: lobehub/lobehub:2.2.19@sha256:56a21005ba1148ad45310e57e09f88ce25006cd6492b5b585e90cf92f4d1826f
     restart: on-failure
     env_file:
       - ${APP_DATA_DIR}/settings.env
@@ -22,6 +22,7 @@ services:
       REDIS_PREFIX: lobechat
       REDIS_TLS: "0"
       S3_ENDPOINT: http://${DEVICE_DOMAIN_NAME}:7458
+      S3_INTERNAL_ENDPOINT: http://lobe-chat_rustfs_1:9000
       S3_BUCKET: lobe
       S3_ACCESS_KEY: lobehub
       S3_ENABLE_PATH_STYLE: "1"
@@ -30,20 +31,37 @@ services:
       S3_SET_ACL: "0"
       LLM_VISION_IMAGE_USE_BASE64: "1"
       SEARXNG_URL: http://lobe-chat_searxng_1:8080
+      ENABLE_AGENT_GATEWAY: "1"
+      AGENT_GATEWAY_URL: http://${DEVICE_DOMAIN_NAME}:7459
+      AGENT_GATEWAY_INTERNAL_URL: http://lobe-chat_gateway_1:8787
+      DEVICE_GATEWAY_URL: http://lobe-chat_gateway_1:8788
     volumes:
       - ${APP_DATA_DIR}/data/elasticsearch-reindex:/app/.elasticsearch-reindex
     depends_on:
-      postgres:
-        condition: service_healthy
+      postgres-upgrade:
+        condition: service_completed_successfully
       redis:
         condition: service_healthy
       rustfs:
         condition: service_healthy
       rustfs-init:
         condition: service_completed_successfully
+      gateway:
+        condition: service_started
+
+  gateway:
+    image: ghcr.io/lobehub/lobehub-gateway:0.3.2@sha256:e8f5158f6abaf865376cbd2d5614131665b8dbfc2e1debd4006b944392efbfa1
+    restart: on-failure
+    env_file:
+      - ${APP_DATA_DIR}/gateway.env
+    ports:
+      - "7459:8787"
+      - "7460:8788"
+    environment:
+      LOBE_API_BASE_URL: http://lobe-chat_app_1:3210
 
   postgres:
-    image: paradedb/paradedb:0.22.3-pg17@sha256:746c263e546b9d8bfdd278d7da9584c47ce838670e6cdfdb32713147548b43ce
+    image: paradedb/paradedb:0.24.3-pg17@sha256:a784ffa6471729af6be5178ad39ea607e5cbfec94f81bcaad439de40ecb45834
     user: "1000:1000"
     restart: on-failure
     environment:
@@ -52,10 +70,37 @@ services:
     volumes:
       - ${APP_DATA_DIR}/data/db:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d lobehub"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d lobehub -h 127.0.0.1"]
       interval: 10s
       timeout: 5s
       retries: 10
+      start_period: 60s
+
+  # Image upgrades leave extension SQL unchanged in existing databases.
+  # Finish the upstream-required upgrades before Lobe Hub runs migrations.
+  postgres-upgrade:
+    image: paradedb/paradedb:0.24.3-pg17@sha256:a784ffa6471729af6be5178ad39ea607e5cbfec94f81bcaad439de40ecb45834
+    user: "1000:1000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PGHOST: lobe-chat_postgres_1
+      PGUSER: postgres
+      PGPASSWORD: lobehubsecret
+      PGCONNECT_TIMEOUT: "10"
+    entrypoint: ["/bin/sh", "-ec"]
+    command:
+      - |
+        for database in template1 paradedb lobehub; do
+          psql --no-psqlrc --dbname="$${database}" --set=ON_ERROR_STOP=1 --single-transaction --file=- <<'SQL'
+        SELECT format('ALTER EXTENSION %I UPDATE;', name)
+        FROM pg_available_extensions
+        WHERE installed_version IS NOT NULL AND installed_version <> default_version
+        ORDER BY name
+        \gexec
+        SQL
+        done
 
   redis:
     image: redis:7.4.8@sha256:a5995dfdf108997f8a7c9587f54fad5e94ed5848de5236a6b28119e99efd67e0
@@ -95,23 +140,24 @@ services:
       start_period: 40s
 
   rustfs-init:
-    image: quay.io/minio/mc:RELEASE.2025-08-13T08-35-41Z@sha256:a7fe349ef4bd8521fb8497f55c6042871b2ae640607cf99d9bede5e9bdf11727
+    image: rustfs/rc:v0.1.36@sha256:ab024bfebee49a750ce886b4c70963ccd9ddaa03f491704a90710641d7a26699
     restart: on-failure
     depends_on:
       rustfs:
         condition: service_healthy
     volumes:
-      - ./bucket.config.json:/bucket.config.json:ro
+      - ${APP_DATA_DIR}/bucket.config.json:/bucket.config.json:ro
     entrypoint: /bin/sh
     command:
       - -c
       - >
         set -eu;
-        mc --version;
-        mc alias set rustfs "http://lobe-chat_rustfs_1:9000" "lobehub" "${APP_PASSWORD}";
-        mc ls rustfs || true;
-        mc mb "rustfs/lobe" --ignore-existing;
-        mc anonymous set download rustfs/lobe
+        rc --version;
+        rc alias set rustfs "http://lobe-chat_rustfs_1:9000" "lobehub" "${APP_PASSWORD}";
+        rc ls rustfs || true;
+        rc mb "rustfs/lobe" --ignore-existing;
+        rc anonymous set-json "/bucket.config.json" "rustfs/lobe";
+        printf "%s" "<CORSConfiguration><CORSRule><AllowedOrigin>*</AllowedOrigin><AllowedMethod>GET</AllowedMethod><AllowedMethod>PUT</AllowedMethod><AllowedMethod>HEAD</AllowedMethod><AllowedHeader>*</AllowedHeader><ExposeHeader>ETag</ExposeHeader><MaxAgeSeconds>3600</MaxAgeSeconds></CORSRule></CORSConfiguration>" | rc bucket cors set "rustfs/lobe" -
 
   searxng:
     image: ghcr.io/searxng/searxng:2026.4.22-74f1ca203@sha256:37c616a774b90fb5df9239eb143f1b11866ddf7b830cd1ebcca6ba11b38cc2bf

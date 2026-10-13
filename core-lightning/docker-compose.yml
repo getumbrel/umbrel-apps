@@ -6,7 +6,7 @@ services:
       APP_HOST: $APP_CORE_LIGHTNING_IP
       APP_PORT: $APP_CORE_LIGHTNING_PORT
   app:
-    image: ghcr.io/elementsproject/cln-application:26.04@sha256:78f92a973be7e756ad6b3325262ff689512bd2711c80fd5aac5e7f56eb9fb6d7
+    image: ghcr.io/elementsproject/cln-application:26.09@sha256:27684e8e495d077ce661793f74b25d50c2e40f68552cb1ba57d6750dd2585798
     command: npm run start
     restart: on-failure
     volumes:
@@ -49,9 +49,7 @@ services:
       default:
         ipv4_address: ${APP_CORE_LIGHTNING_IP}
   lightningd:
-    # Temporary Umbrel image built from the signed v26.06.7 release binaries.
-    # See: https://github.com/ElementsProject/lightning/releases/tag/v26.06.7
-    image: ghcr.io/getumbrel/docker-core-lightning:v26.06.7-umbrel.1@sha256:824cb64898d4e3d24bff7d2f3099b66ca1b28cb282a1b3a92b42e86bad6fe536
+    image: elementsproject/lightningd:v26.06.9@sha256:de74289ddcccb68cd60543b08b2b8594002d819125d200492e17a95166d56577
     restart: on-failure
     ports:
       - ${APP_CORE_LIGHTNING_DAEMON_PORT}:9735

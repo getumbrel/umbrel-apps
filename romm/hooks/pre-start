@@ -3,12 +3,12 @@ set -euo pipefail
 
 ### Correct permissions for romm data directories
 
-APP_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")"
-APP_DATA_DIR="${APP_DIR}/data"
+APP_DIR="${APP_DATA_DIR:-$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")}"
+DATA_DIR="${APP_DIR}/data"
 
 DESIRED_OWNER="1000:1000"
 
-CONFIG_DATA_DIR="${APP_DATA_DIR}/config"
+CONFIG_DATA_DIR="${DATA_DIR}/config"
 
 romm_correct_permission() {
 	local -r path="${1}"
@@ -73,12 +73,56 @@ system:
   # Asociate one platform to it's main version
   versions: {} # { naomi: 'arcade' }
 
-# The folder name where your roms are located
-filesystem: {} # { roms_folder: 'roms' } For example if your folder structure is /home/user/library/roms_folder
+# The library layout is detected and migrated by the pre-start hook.
+filesystem: {}
 EOF
 
 echo "Created romm configuration file."
 
 romm_correct_permission "${CONFIG_DATA_DIR}"
 
+fi
+
+# RomM 5.2 writes the retired folder keys whenever settings are saved in the UI.
+# Migrate those configs as well as the original empty filesystem placeholder.
+needs_migration="$(yq '
+  .filesystem.structure.default == null or
+  .filesystem.roms_folder != null or
+  .filesystem.firmware_folder != null
+' "${ROMM_CONFIG_FILE}")"
+if [[ "${needs_migration}" == "true" ]]; then
+  roms_folder="$(yq '.filesystem.roms_folder // "roms"' "${ROMM_CONFIG_FILE}")"
+  firmware_folder="$(yq '.filesystem.firmware_folder // "bios"' "${ROMM_CONFIG_FILE}")"
+
+  # Match RomM 5.2's detection: a top-level ROM folder takes precedence over
+  # platform/roms folders. An empty library starts with the top-level layout.
+  rom_structure="${roms_folder}/{platform}/{game}"
+  firmware_structure="${firmware_folder}/{platform}"
+  if [[ ! -d "${DATA_DIR}/library/${roms_folder}" ]]; then
+    for platform_roms in "${DATA_DIR}/library"/*/"${roms_folder}"; do
+      if [[ -d "${platform_roms}" ]]; then
+        rom_structure="{platform}/${roms_folder}/{game}"
+        firmware_structure="{platform}/${firmware_folder}"
+        break
+      fi
+    done
+  fi
+
+  tmp_file="$(mktemp "${CONFIG_DATA_DIR}/config.yml.XXXXXX")"
+  trap 'rm -f "${tmp_file}"' EXIT
+  # Preserve existing structure rules and unrelated settings. strenv keeps
+  # custom folder names as YAML strings without interpolating them into code.
+  ROMM_ROM_STRUCTURE="${rom_structure}" ROMM_FIRMWARE_STRUCTURE="${firmware_structure}" yq '
+    .filesystem.structure.default = (.filesystem.structure.default // strenv(ROMM_ROM_STRUCTURE)) |
+    .filesystem.structure.firmware = (.filesystem.structure.firmware // strenv(ROMM_FIRMWARE_STRUCTURE)) |
+    del(.filesystem.roms_folder, .filesystem.firmware_folder)
+  ' "${ROMM_CONFIG_FILE}" > "${tmp_file}"
+  chmod --reference="${ROMM_CONFIG_FILE}" "${tmp_file}"
+  chown "${DESIRED_OWNER}" "${tmp_file}"
+  if [[ ! -e "${CONFIG_DATA_DIR}/config.yml.pre-5.3" ]]; then
+    cp -p "${ROMM_CONFIG_FILE}" "${CONFIG_DATA_DIR}/config.yml.pre-5.3"
+  fi
+  mv "${tmp_file}" "${ROMM_CONFIG_FILE}"
+  trap - EXIT
+  echo "Migrated RomM filesystem configuration for 5.3."
 fi

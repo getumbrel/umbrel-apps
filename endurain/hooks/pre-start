@@ -29,17 +29,59 @@ else
     echo "FERNET_KEY is already set. No changes made."
 fi
 
-# Check if the ENDURAIN_HOST value is set to "changeme"
-if grep -Eq '^ENDURAIN_HOST= *changeme$' "$ENV_FILE"; then
-    echo "Placeholder value for ENDURAIN_HOST detected. Adding proper hostname..."
+# Avahi may advertise umbrel-2.local after a name collision while the kernel
+# hostname (and DEVICE_DOMAIN_NAME) remains umbrel. Use the reachable LAN name.
+avahi_hostname=$(busctl --timeout=2 call org.freedesktop.Avahi / org.freedesktop.Avahi.Server GetHostNameFqdn 2>/dev/null |
+    sed -n 's/^s "\([a-zA-Z0-9.-]*\)"$/\1/p') || avahi_hostname=""
+avahi_hostname="${avahi_hostname%.}"
 
-    # Replace the placeholder with the hostname
-    sed -i -E 's|^ENDURAIN_HOST= *changeme$|ENDURAIN_HOST="'"http://${DEVICE_DOMAIN_NAME}:8865"'"|' "$ENV_FILE"
+# Production authentication requires HTTPS. Follow changes to Umbrel-generated
+# LAN names while preserving custom hostnames, ports, and other settings.
+python3 - "$ENV_FILE" "$DEVICE_DOMAIN_NAME" "$avahi_hostname" "${APP_DATA_DIR}/.endurain-host" <<'PYTHON'
+from pathlib import Path
+import re
+import sys
 
-    echo "Updated ENDURAIN_HOST in $ENV_FILE"
-else
-    echo "ENDURAIN_HOST is already set. No changes made."
-fi
+path = Path(sys.argv[1])
+# Older packages did not record the generated address. Recognize the device's
+# default name and Avahi collision suffixes, e.g. umbrel.local / umbrel-5.local.
+device_name = sys.argv[2].removesuffix(".local")
+legacy_host = re.compile(rf"https?://{re.escape(device_name)}(?:-[0-9]+)?\.local:8865/?")
+local_host = f"https://{sys.argv[3] or sys.argv[2]}:8865"
+state_path = Path(sys.argv[4])
+previous_host = state_path.read_text().strip() if state_path.is_file() else ""
+managed_host = ""
+
+def migrate_host(match):
+    global managed_host
+    prefix, quote, value, suffix = match.groups()
+    if value == "changeme" or value == previous_host or legacy_host.fullmatch(value):
+        if value == "changeme":
+            value, quote = local_host, quote or '"'
+        elif sys.argv[3]:
+            value = local_host
+        # If Avahi is temporarily unavailable, retain the last known LAN name.
+        managed_host = value.replace("http://", "https://", 1)
+        value = managed_host
+    elif value.startswith("http://"):
+        value = "https://" + value[len("http://"):]
+    return f"{prefix}{quote}{value}{quote}{suffix}"
+
+original = path.read_text()
+updated = re.sub(r"^(ENDURAIN_HOST=[ \t]*)([\"']?)([^\"'\s]+)\2([^\r\n]*)$",
+                 migrate_host, original, flags=re.MULTILINE)
+if updated != original:
+    path.write_text(updated)
+    print("Updated Endurain's HTTPS address.")
+if managed_host and managed_host != previous_host:
+    state_path.parent.mkdir(parents=True, exist_ok=True)
+    state_path.write_text(managed_host + "\n")
+PYTHON
+
+# Updates do not copy data directories from the package. Prepare Redis storage
+# for the user in the pinned Redis image before the new sidecar starts.
+mkdir -p "${APP_DATA_DIR}/redis"
+chown 999:1000 "${APP_DATA_DIR}/redis"
 
 set_correct_permissions() {
 	local -r path="${1}"

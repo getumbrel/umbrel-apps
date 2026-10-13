@@ -8,13 +8,14 @@ services:
       PROXY_AUTH_ADD: "false"
 
   server:
-    image: ghcr.io/paperclipai/paperclip:sha-dffc2b3@sha256:3621579c4bd86ac3bba74f00d77287a3e8c95a95d9b87d838745d225c03fd6e5
+    image: ghcr.io/paperclipai/paperclip:2026.1012.0@sha256:1661b3dd3fdf7a9b59542d1ced464c3faf9dc8309798b4d15a9923ed32795307
     user: "1000:1000"
     restart: on-failure
     environment:
       HOST: "0.0.0.0"
       PAPERCLIP_HOME: "/paperclip"
       PAPERCLIP_PUBLIC_URL: "http://${DEVICE_DOMAIN_NAME}:8860"
+      PAPERCLIP_API_URL: "http://127.0.0.1:3100"
       PAPERCLIP_ALLOWED_HOSTNAMES: "${DEVICE_DOMAIN_NAME},${DEVICE_DOMAIN_NAME}:8860,${DEVICE_HOSTNAME},${DEVICE_HOSTNAME}:8860,${APP_DOMAIN},${APP_DOMAIN}:8860,${APP_HIDDEN_SERVICE},${APP_PAPERCLIP_LOCAL_IPS},paperclip_server_1"
       BETTER_AUTH_SECRET: "${APP_SEED}"
       PAPERCLIP_DEPLOYMENT_MODE: "authenticated"

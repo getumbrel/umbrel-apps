@@ -7,7 +7,7 @@ services:
       APP_PORT: 3000
       
   web:
-    image: flomp/wanderer-web:v0.20.0@sha256:d76177573caab135e8167179c9954168b5c582a48cbef0fcb7e1571af0c84d98
+    image: flomp/wanderer-web:v0.21.0@sha256:af721ffac56fd33243043211fc49e4d5c5651f784551ae7b5b05d845c7c41147
     user: "1000:1000"
     depends_on:
       search:
@@ -17,6 +17,7 @@ services:
     environment:
       ORIGIN: http://${DEVICE_DOMAIN_NAME}:3111
       BODY_SIZE_LIMIT: Infinity
+      POCKETBASE_PROXY_SECRET: ${APP_SEED}
       PUBLIC_POCKETBASE_URL: http://wanderer_db_1:8090
       PUBLIC_DISABLE_SIGNUP: "false"
       UPLOAD_FOLDER: /app/uploads
@@ -25,6 +26,7 @@ services:
       VALHALLA_URL: https://valhalla1.openstreetmap.de
       NOMINATIM_URL: https://nominatim.openstreetmap.org
       OVERPASS_API_URL: https://overpass-api.de
+      PUBLIC_MAP_MAX_POLYLINES: 100
       MEILI_URL: http://wanderer_search_1:7700
       MEILI_MASTER_KEY: ${APP_SEED}
     volumes:
@@ -48,13 +50,14 @@ services:
       timeout: 10s
 
   db:
-    image: flomp/wanderer-db:v0.20.0@sha256:591974a7cb92be1d30a9033da0b97ef628d0ee1328e3ec29683b0075619805ba
+    image: flomp/wanderer-db:v0.21.0@sha256:ba7bd45b8177fec7a31d297ecaf3c98e94aabb4fc043f167df35aeba8b93468c
     user: "1000:1000"
     depends_on:
       search:
         condition: service_healthy
     environment:
       POCKETBASE_ENCRYPTION_KEY: ${APP_WANDERER_ENCRYPTION_KEY}
+      POCKETBASE_PROXY_SECRET: ${APP_SEED}
       MEILI_URL: http://wanderer_search_1:7700
       MEILI_MASTER_KEY: ${APP_SEED}
       ORIGIN: http://${DEVICE_DOMAIN_NAME}:3111

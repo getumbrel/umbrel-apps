@@ -52,6 +52,7 @@ Use current app packages in this repo as the manifest contract. Some fields are 
 ```yaml
 manifestVersion:
 id:
+storage:
 category:
 name:
 version:
@@ -79,6 +80,8 @@ submission:
 - `manifestVersion` is Umbrel app-framework compatibility, not the app's upstream version. Use `1` by default. For example, if a package relies on app-framework behavior introduced in umbrelOS 1.3, use `manifestVersion: 1.3` so older umbrelOS versions refuse the install.
 - `id` is the stable app package identifier. It must exactly match the top-level directory name, use lowercase kebab-case, and be recognizable, for example `home-assistant`. umbrelOS uses it for app data, dependency references, and generated container names, so do not change it after release.
 - If the app implements another Umbrel app's dependency contract, put `implements:` immediately after `id`. Use it only for real drop-in providers, for example a Bitcoin node package that can satisfy apps depending on `bitcoin`. See Dependencies for the required exports contract.
+- Include `storage:` with `dataRoot: data` in new packages. It lets users move the app's data folder to an external drive in umbrelOS 2.0. Use exactly `dataRoot: data`; any other value makes the manifest invalid. Leave it out only if the app's data shouldn't be moved; you can add it in a later update but not remove it.
+- Put optional `folderAccess:` and `environment:` right after `storage`. See App Settings.
 - `name` is the user-facing app name shown in the App Store and on the Umbrel home screen. Use the upstream/product name users recognize.
 - `tagline`, `category`, and `description` are App Store copy. Use the current store taxonomy and make sure the wording makes sense for someone installing the app on Umbrel.
 - Put important first-run setup or security notes near the top of `description`.
@@ -97,9 +100,11 @@ submission:
     - Fixed login after restart
   ```
 - `version` is the upstream app/package version users recognize. Use the released upstream version in upstream's format. If upstream has no release version, use the short commit SHA for the exact upstream commit being packaged. Do not use `latest` or a Docker image digest.
-- `port` is the host-facing browser port umbrelOS uses for the app URL. For normal `app_proxy` web apps, it is the port assigned to `app_proxy`, not the app container's internal listen port, and must be unique across the App Store.
+- `port` is the host-facing browser port umbrelOS uses for the app URL, served over both HTTP and HTTPS. For normal `app_proxy` web apps, it is the port assigned to `app_proxy`, not the app container's internal listen port, and must be unique across the App Store.
 - Put the app container's real listening port in `app_proxy.environment.APP_PORT`. Example: if the web container listens on `8080` and the app should open at `http://umbrel.local:3456`, use manifest `port: 3456` and `APP_PORT: 8080`.
 - `path` is appended to the app URL. Use `path: ""` for apps that launch at the root. For subpath apps, start with a leading slash and do not include the host or port, for example `path: "/admin"`.
+- Set `requiresHttps: true` only when the app's browser UI does not work over plain HTTP, for example because it needs a secure context. umbrelOS then opens it over HTTPS. HTTPS is new in umbrelOS 2.0, so set `manifestVersion` to at least `2.0`.
+- Use `nativeTlsHostnameSuffixes:` only for apps without `app_proxy` whose clients connect over TLS to a public DNS name and expect the app's own certificate, such as Plex clients using `plex.direct`. umbrelOS normally serves its own certificate on the app port, which breaks those clients; for the listed names it passes TLS through to the app instead.
 - Use `releaseNotes: ""` for new packages.
 - Include accurate `developer`, `website`, `repo`, and `support` values. In the App Store, `developer` links to `website`.
 - Use `dependencies:` only for other Umbrel apps the package requires at runtime. Values are app IDs, for example `bitcoin` or `electrs`. Do not list same-package services such as Postgres, Redis, workers, or optional integrations.
@@ -133,9 +138,38 @@ Manifest `dependencies:` are runtime dependencies on other Umbrel apps.
 
 Manifest `permissions:` declares platform or shared-storage access the app needs. Permission values used in this repo include:
 
-- `GPU` requests GPU device access. When the device has `/dev/dri`, umbrelOS adds `/dev/dri` to every service in the app, so use it only when the app has a real GPU acceleration or hardware transcoding path.
+- `GPU` requests GPU device access. umbrelOS gives every service in the app access to the device's GPU (`/dev/dri`, plus AMD ROCm and NVIDIA on umbrelOS 2.0), so use it only when the app has a real GPU acceleration or hardware transcoding path. Do not map `/dev/dri` in compose yourself; umbrelOS removes it.
 - `STORAGE_DOWNLOADS` indicates the app needs access to Umbrel's shared Downloads storage. Use it only when the compose file mounts Downloads or one of its subdirectories.
 - Do not add empty or speculative permissions. The manifest should match what the package actually uses.
+
+### App Settings
+
+umbrelOS 2.0 adds per-app settings where users can change folders and environment variables without editing compose. The manifest declares what to offer.
+
+`folderAccess:` offers named folders users can point at their own storage: Home, external drives, or network shares.
+
+```yaml
+folderAccess:
+  - id: media-library
+    name: Media Library
+    note: Select a folder containing media, then add /media as a library folder in the app.
+    mounts:
+      - service: server
+        targetPath: /media
+        readOnly: true
+```
+
+- Use it when users bring their own files into the app, such as media libraries or import folders. Use `readOnly: true` when the app only needs to read them.
+- If compose already mounts a user folder at the same service and `targetPath`, that is the default. Otherwise nothing is mounted until the user picks a folder.
+- Compose mounts of the Downloads folder automatically become a Downloads setting. To give one a better note, add an entry for the same mount with `id: umbrel-downloads`; any other id breaks users' existing Downloads choice.
+- Use `note` to tell users where the folder appears inside the app.
+
+`environment:` exposes environment variables users can override. Each entry has a `name`, the `services` that receive it, and optional `default`, `options`, and `note`.
+
+- Expose only settings users may reasonably need to change, not secrets or packaging internals.
+- `default` is only displayed to users. Set the real default in compose or rely on upstream's default.
+
+umbrelOS silently ignores invalid entries, such as unknown services or duplicate ids, so check them in the app's settings when testing.
 
 ### Backups
 
@@ -158,7 +192,7 @@ Widgets are glanceable cards on the Umbrel home screen for app status, progress,
 - The `endpoint` must be `service:port/path` with no scheme. The host must exactly match a service key in `docker-compose.yml`. Umbrel builds `http://<endpoint>`, resolves the service to the container IP, and fetches it server-side.
 - The endpoint must return JSON matching the widget `type`, including a `refresh` duration such as `5s`, `30s`, or `1m`. The live response drives the rendered widget; the manifest `example` is sample data for the widget selector.
 - The endpoint is not fetched through `app_proxy` and does not receive browser cookies or an app login session. Use a small unauthenticated internal endpoint or widget sidecar when the app UI/API requires auth.
-- Keep `link` relative to the app path, or use `""` to launch the app root.
+- `link` is resolved against the app's origin, not its manifest `path`, so include the full path. Use `""` to open the app at its manifest `path`.
 - Widget-only services usually do not need raw host `ports:`.
 
 ## Compose
@@ -169,16 +203,16 @@ Widgets are glanceable cards on the Umbrel home screen for app status, progress,
 
 Use `app_proxy` for normal browser-based apps.
 
-- Define an `app_proxy` service with environment only.
+- Define an `app_proxy` service with environment only. umbrelOS reads it to route the app `port` to your web service. In umbrelOS 2.0 no `app_proxy` container runs, so other services must not reference it.
 - Treat manifest `port` and app_proxy `APP_PORT` as different values: manifest `port` is the host-facing app_proxy port; `APP_PORT` is the internal web service port.
 - Set `APP_HOST` to the Umbrel-injected container name: `<app-id>_<service-name>_1`.
 - Set `APP_PORT` to the internal port the web service listens on.
 - Do not publish the web UI with raw `ports:` when app_proxy is sufficient.
-- Keep app_proxy auth enabled by default. Do not add `PROXY_AUTH_ADD: "true"` because that is already the framework default.
+- Keep Umbrel auth enabled by default, and do not add `PROXY_AUTH_ADD: "true"` because that is already the default. In umbrelOS 2.0, owners can turn off "Require Umbrel login" per app in its settings, so don't disable it just because some users might need it off.
 - With app_proxy auth enabled, users already signed in to Umbrel can open the app without another Umbrel login prompt. Users who are not signed in must authenticate with Umbrel first.
 - Umbrel auth protects the route with the user's Umbrel login, including Umbrel 2FA when enabled.
 - Umbrel auth can also protect an app before the user has created the app's own account during first-run setup.
-- Set `PROXY_AUTH_ADD: "false"` only when the whole app must bypass Umbrel auth, such as an app with its own login that Umbrel auth would break or an app that is intentionally public.
+- Set `PROXY_AUTH_ADD: "false"` only when the app's main use breaks behind Umbrel auth and `PROXY_AUTH_WHITELIST` can't fix it, or the app is intentionally public.
 - For companion apps, mobile clients, webhooks, federation, or protocol endpoints that cannot send Umbrel auth cookies, keep Umbrel auth enabled and use `PROXY_AUTH_WHITELIST` only for the required paths.
 - Common whitelist examples are `/api/*`, `/webhook/*`, `/.well-known/*`, `/public/*`, `/assets/*`, or a narrow protocol route such as `/api/lnurl/*`.
 - Treat whitelisted paths as public. Keep them as narrow as possible and make sure the app's own auth, token, signature, or protocol rules protect anything sensitive.
@@ -196,7 +230,7 @@ Use `app_proxy` for normal browser-based apps.
 - Do not force `user: "1000:1000"` on images that need their bundled user, root entrypoint, or permission-fixing startup. If upstream exposes `PUID`/`PGID`, `UID`/`GID`, or similar settings, use that supported path and verify the app can write to its mounted data after first start and restart.
 - Treat the shared Docker network as untrusted. Do not rely on "no host-published port" as the only protection for databases, caches, admin APIs, or framework secrets. Generate stable per-install secrets; see `APP_SEED`, `APP_PASSWORD`, and `derive_entropy` under Umbrel Environment Variables.
 - Add public URL, trusted proxy, CSRF/CORS, or root path settings only when the app otherwise redirects to the wrong host, rejects proxied requests, or serves broken asset/API paths behind `app_proxy`.
-- When a canonical browser URL is required, point it at the Umbrel launch origin, usually `http://${DEVICE_DOMAIN_NAME}:${APP_PROXY_PORT}`. Keep trusted origins narrow; do not disable CSRF/CORS or use `*` unless the upstream protocol requires it.
+- Users may open the app over `http://` or `https://`, using any device hostname or IP. Avoid fixed public URL settings when upstream can derive URLs from the request. When a canonical browser URL is required, point it at the Umbrel launch origin, usually `http://${DEVICE_DOMAIN_NAME}:${APP_PROXY_PORT}`. If upstream accepts a list of trusted origins, include the `https://` origin too. Keep trusted origins narrow; do not disable CSRF/CORS or use `*` unless the upstream protocol requires it.
 
 ### Persistence
 
@@ -206,10 +240,11 @@ Containers are recreated on restart and update. Anything the user expects to kee
 - Do not leave upstream Docker named volumes for durable state. Convert them to `${APP_DATA_DIR}/data/...` bind mounts.
 - Do not rely on files written only inside the container filesystem. If losing a path would reset accounts, config, uploads, wallets, databases, or app identity, bind-mount it.
 - Keep runtime-created state under `data/`. Use the app-data root for package/lifecycle files and top-level rendered templates, not user data or databases.
+- With `storage`, umbrelOS moves the whole `${APP_DATA_DIR}/data` folder when the user relocates app data; anything outside it stays behind. Refer to it as `${APP_DATA_DIR}/data/...` in compose (umbrelOS rewrites these), `EXPORTS_APP_DATA_DIR` in `exports.sh`, and `APP_DATA_ROOT` in hooks. Mount only directories from `data/`; umbrelOS prepares each mounted `data/` path as a directory, so a single-file mount breaks the app.
 - Use `${UMBREL_ROOT}/data/storage/downloads...` only for intentional shared Downloads access, and include `STORAGE_DOWNLOADS` in `permissions:`.
 - Keep that compatibility Downloads mount path in app packages. Current umbrelOS rewrites it to `${UMBREL_ROOT}/home/Downloads...` when patching compose, while older umbrelOS versions expect the old path.
 - Commit every host-side `${APP_DATA_DIR}/data/...` bind-mount source directory the app needs on first start. If the directory would otherwise be empty, keep it in git with `data/.../.gitkeep`; umbrelOS removes `.gitkeep` before runtime, so the container sees an empty directory.
-- Be careful with file bind mounts such as `${APP_DATA_DIR}/data/config.yml:/app/config.yml:ro`. The host source file must exist before `docker compose up`; otherwise Docker may create a directory at that path and break the app. Commit the file, render it from a top-level template, or create it in a hook before start.
+- Be careful with file bind mounts such as `${APP_DATA_DIR}/config.yml:/app/config.yml:ro`. The host source file must exist before `docker compose up`; otherwise Docker may create a directory at that path and break the app. Commit the file, render it from a top-level template, or create it in a hook before start.
 
 ### Networking And Ports
 
@@ -219,10 +254,10 @@ Umbrel injects the external `umbrel_main_network` as the compose `default` netwo
 - Do not publish the web UI with raw `ports:` when `app_proxy` can front it.
 - Publish raw `ports:` only for non-HTTP protocols, companion-client endpoints, server-to-server protocol ports, or integrations that must connect without `app_proxy`.
 - Use explicit host mappings for raw ports, including protocol when needed, for example `"9735:9735"` or `"8448:8448/tcp"`. Do not use short syntax that lets Docker choose a random host port.
-- Manifest `port` and raw host-published compose ports share the host port space. Keep them from colliding with other app ports or umbrelOS public ports such as `80`, `443`, and `2000`.
+- Manifest `port` and raw host-published compose ports share the host port space. Keep them from colliding with other app ports or umbrelOS public ports such as `80`, `443`, and `2000`. Manifest ports `40000`–`49999` are reserved for virtual machines.
 - The linter catches literal ports and simple static same-app `exports.sh` port values. If it flags an unresolved host port, verify the port manually and call it out in the PR when relevant.
 - Internal container ports and app_proxy `APP_PORT` values do not need to be unique.
-- Use `network_mode: host` only when required for LAN discovery, multicast/broadcast, low-level networking, or an upstream image that cannot work behind bridge networking. Host-network apps cannot use normal `app_proxy` routing; manifest `port` must match a host listener.
+- Use `network_mode: host` only when required for LAN discovery, multicast/broadcast, low-level networking, or an upstream image that cannot work behind bridge networking. Host-network apps cannot use normal `app_proxy` routing; manifest `port` must match a host listener that serves plain HTTP. umbrelOS adds HTTPS in front of it.
 - Do not mount the host Docker socket, for example `/var/run/docker.sock`, or proxy access to Umbrel's Docker daemon.
 - Do not use `privileged: true`, broad host mounts, device mounts, or extra capabilities to work around ordinary app configuration. If host access is genuinely required, keep it as narrow as the app allows.
 
@@ -246,9 +281,9 @@ Values available after app env is sourced:
 - `APP_VERSION`: manifest `version`.
 - `APP_MANIFEST_FILE`: installed `umbrel-app.yml` path for the app.
 - `APP_DATA_DIR`: installed app data root, `${UMBREL_ROOT}/app-data/<app-id>`.
+- `APP_DATA_ROOT`: the app's current data folder, which is `${APP_DATA_DIR}/data` unless the user moved it (umbrelOS 2.0). Use it in hooks, not compose; compose keeps `${APP_DATA_DIR}/data/...`, which umbrelOS rewrites.
 - `APP_DOMAIN`: local `.local` domain for the Umbrel device; use with a port when upstream needs a browser-facing app URL.
 - `APP_HIDDEN_SERVICE`: app Tor hidden-service hostname when Umbrel remote Tor access is enabled. It may be a placeholder such as `not-enabled.onion` or `notyetset.onion` before a hidden service exists.
-- `APP_PROXY_HOSTNAME`: internal hostname of the generated `app_proxy` service.
 - `APP_PROXY_PORT`: manifest `port`, the host-facing app URL port.
 - `APP_SEED`: stable per-install derived value for the app; see Generated Secrets.
 - `APP_PASSWORD`: stable per-install derived value for local app credentials when the package wires the app login/admin password to this value; see Generated Secrets.
@@ -270,7 +305,6 @@ Generated secrets:
 - Do not reuse one derived value across unrelated secret fields.
 - Do not use derived values as provider API keys, OAuth secrets, SMTP passwords, cloud storage tokens, webhook tokens, cryptocurrency wallet seeds/private keys, or user recovery secrets.
 - Derived values are long hex strings. Verify upstream accepts that format and length before using one as a password, token, or key.
-- Do not use internal compatibility constants such as `AUTH_PORT`, `MANAGER_IP`, or `UMBREL_AUTH_SECRET` as app secrets.
 
 Dependency apps may export additional variables through their own `exports.sh`. Umbrel sources direct and transitive dependency exports before the app's own env is finalized. Read the dependency package before using its values, and consume the exact `APP_<DEPENDENCY>_*` contract it exports.
 
@@ -279,7 +313,7 @@ During `exports.sh`, Umbrel also provides context for the app whose exports file
 - `EXPORTS_APP_ID`: ID of the app whose `exports.sh` is currently being sourced. This may be a dependency app, not the app being installed or started.
 - `EXPORTS_APP_DIR`: installed app root for `EXPORTS_APP_ID`.
 - `EXPORTS_APP_FILE`: path to the current `exports.sh` file.
-- `EXPORTS_APP_DATA_DIR`: data directory for `EXPORTS_APP_ID`, equivalent to `${EXPORTS_APP_DIR}/data`.
+- `EXPORTS_APP_DATA_DIR`: current data folder for `EXPORTS_APP_ID`. This is `${EXPORTS_APP_DIR}/data` unless the user moved it. Build exported data paths from it.
 - `EXPORTS_TOR_DATA_DIR`: Umbrel Tor data directory for exports-time use.
 - `app_entropy_identifier`: stable per-app label, `app-<app-id>-seed`, used by Umbrel's built-in entropy derivation.
 
@@ -302,7 +336,7 @@ Rules:
 - Treat `exports.sh` as sourced shell, not an executable script. It does not need a shebang or executable bit, and it must not call `exit`, change directories for later code, or change shell options.
 - Export only values other package files or dependent apps need. Keep helper variables unexported.
 - Prefix package-owned exports as `APP_<APP_ID_WITH_UNDERSCORES>_...`. For `implements:`, also export the canonical `APP_<IMPLEMENTED_ID>_...` contract expected by dependent apps.
-- Use `EXPORTS_APP_DIR` and `EXPORTS_APP_DATA_DIR` when referencing this app's installed files or data. Do not use `APP_DATA_DIR` for the app being sourced.
+- Use `EXPORTS_APP_DATA_DIR` for this app's data and `EXPORTS_APP_DIR` for its other installed files. Do not build data paths from `${EXPORTS_APP_DIR}/data` or `APP_DATA_DIR`; dependent apps would keep using the old folder after the user moves the data.
 - Keep exports deterministic and idempotent. Prefer `derive_entropy` over generating random values or writing secret files. Only write/source a persisted file when required for an existing contract or upstream-generated material.
 - Do not run Docker commands, call upstream services, perform migrations, or create/chown directories here; use compose, templates, committed `data/` scaffolding, or hooks for lifecycle work.
 - `exports.sh` is sourced by Umbrel's app script while that script is running with `set -euo pipefail`. Guard optional files and commands, provide defaults for optional values, and avoid noisy output except actionable warnings.
@@ -353,7 +387,7 @@ Use this basic shape for new hook files:
 set -euo pipefail
 
 APP_DIR="${APP_DATA_DIR:-$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")}"
-DATA_DIR="${APP_DIR}/data"
+DATA_DIR="${APP_DATA_ROOT:-${APP_DIR}/data}"
 ```
 
 Hook rules:
@@ -361,9 +395,9 @@ Hook rules:
 - Keep hooks small, idempotent, and safe to run more than once.
 - Use hooks for narrow existing-install migrations, ownership fixes, or generated config that cannot be handled cleanly by compose, templates, or committed `data/` scaffolding.
 - Do not add hooks for ordinary new-app directory scaffolding.
-- Do not redefine `APP_DATA_DIR` to mean `${APP_DATA_DIR}/data`; use local names such as `APP_DIR` and `DATA_DIR`.
+- Use `APP_DIR` for package files and `DATA_DIR` for app data, as in the shape above. Do not redefine `APP_DATA_DIR` or build data paths from `${APP_DIR}/data`; that misses app data the user moved.
 - `pre-install`, `pre-stop`, and `pre-update` run before app env is sourced. If they need app paths, derive them from the hook location.
-- Hook failures may not stop the app lifecycle, so do not hide required setup in a hook when compose, templates, or package scaffolding can express it directly.
+- Hook failures do not stop the app lifecycle, so do not hide required setup in a hook when compose, templates, or package scaffolding can express it directly.
 
 ## Lint Before Testing
 

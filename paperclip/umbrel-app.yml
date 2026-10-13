@@ -5,7 +5,7 @@ storage:
 name: Paperclip
 tagline: A team of AI agents for every person
 category: ai
-version: "2026.916.0"
+version: "2026.1012.0"
 port: 8860
 description: >-
   Paperclip is a self-hosted control center for running AI agents like a team.
@@ -40,12 +40,13 @@ gallery:
   - 4.webp
   - 5.webp
 releaseNotes: |-
-  - Adds the new Connections system for managing AI runtime credentials, shared accounts, grants, and inline repair from tasks.
-  - Adds AgentMail inboxes, experimental Slack/Discord/Telegram/Teams/iMessage chat connectors, durable GitHub identities, and native in-app announcements.
-  - Refreshes onboarding, task chat, search, runner activity, workspace surfaces, and the app/connector catalog.
-  - Enables the experimental native Paperclip Runner by default for self-hosted installs when agents are explicitly configured for it.
-  - Includes 49 automatic database migrations, database pool reliability fixes, sandbox/workspace recovery fixes, and server/security hardening.
-  - Breaking changes: cheap model profiles are removed, agent API responses redact plaintext credentials, `X-Forwarded-Host` now requires trusted-proxy configuration, and Anthropic's legacy REST connection option is removed.
+  - Adds experimental Assistant Connection (MCP) support so external tools like Claude Code, Codex, OpenCode, and other MCP clients can connect to Paperclip as signed-in users.
+  - Adds Agent Chat-first navigation, a unified Connections catalog, connection instructions for agents, safer company skill updates, and refreshed Claude/Codex/OpenCode model/runtime support.
+  - Improves Codex run recovery across server restarts, capacity-limit handling, workspace restore locking, sandbox/workspace reliability, and task creation flows.
+  - Stored tool grants are now enforced more strictly; review custom grants if an agent loses access to a tool or connection after updating.
+  - Workspace restore locks now use SQLite file locks. Stop old Paperclip processes before upgrading or rolling back, and do not delete the new `.lock.sqlite` files.
+
+  Full release notes can be found at https://github.com/paperclipai/paperclip/releases/tag/v2026.1012.0
 dependencies: []
 path: ""
 defaultUsername: ""
