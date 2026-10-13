@@ -15,6 +15,8 @@ services:
       HERMES_BIN: /opt/hermes/.venv/bin/hermes
       HERMES_WEB_UI_MANAGED_GATEWAY: "1"
     volumes:
+      # Keep agent settings and native CLI state writable and persistent.
+      - ${APP_DATA_DIR}/data/home:/home/agent
       - ${APP_DATA_DIR}/data/hermes:/home/agent/.hermes
       - ${APP_DATA_DIR}/data/studio:/home/agent/.hermes-web-ui
       # Override the image's anonymous workspace volume with Umbrel-owned data.
