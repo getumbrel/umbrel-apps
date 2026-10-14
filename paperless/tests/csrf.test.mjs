@@ -6,7 +6,7 @@ import path from "node:path";
 import { test } from "node:test";
 import YAML from "yaml";
 
-const app = path.resolve(import.meta.dirname, "../paperless");
+const app = path.resolve(import.meta.dirname, "..");
 
 function origins(environment = {}) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "paperless-csrf-"));
