@@ -1,0 +1,193 @@
+#!/usr/bin/env bash
+# Generate persistent Nostr identity keys and setup artifacts.
+# Infra passwords come from exports.sh (derive_entropy). Identity keys are
+# random, written once under data/secrets/, and must survive restarts.
+set -euo pipefail
+
+APP_DIR="${APP_DATA_DIR:-$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")}"
+DATA_DIR="${APP_DIR}/data"
+SECRETS_DIR="${DATA_DIR}/secrets"
+SETUP_DIR="${DATA_DIR}/setup"
+RELAY_ENV="${SECRETS_DIR}/relay.env"
+OWNER_OVERRIDE="${SECRETS_DIR}/owner-pubkey.override"
+OWNER_SECRET_FILE="${SECRETS_DIR}/owner.secret"
+OWNER_PUBKEY_FILE="${SECRETS_DIR}/owner.pubkey"
+RELAY_SECRET_FILE="${SECRETS_DIR}/relay.secret"
+JOIN_TXT="${SETUP_DIR}/JOIN.txt"
+BUZZ_IMAGE="ghcr.io/block/buzz:0.2.0@sha256:a0f67203d71d15d237fa7517788799957c30c8acdb81cbcff711e07e951c2710"
+
+EXPORT_OWNER_PUBKEY=""
+EXPORT_OWNER_SECRET=""
+
+# Ensure volume mount points exist before compose starts (avoids root-owned surprises).
+mkdir -p \
+  "${SECRETS_DIR}" \
+  "${SETUP_DIR}" \
+  "${DATA_DIR}/git" \
+  "${DATA_DIR}/postgres" \
+  "${DATA_DIR}/redis" \
+  "${DATA_DIR}/minio"
+
+# If a prior broken bind-mount turned nginx.conf into a directory, clean it up.
+if [[ -d "${DATA_DIR}/proxy/nginx.conf" ]]; then
+  rm -rf "${DATA_DIR}/proxy/nginx.conf"
+fi
+
+# Same class of Docker bug: missing file bind-mount → directory.
+if [[ -d "${SETUP_DIR}/relay_entrypoint.sh" ]]; then
+  echo "App: buzz-relay - removing broken relay_entrypoint.sh directory from a prior mount" >&2
+  rm -rf "${SETUP_DIR}/relay_entrypoint.sh"
+fi
+
+generate_keypair() {
+  local output pubkey secret
+  if ! command -v docker >/dev/null 2>&1; then
+    echo "App: buzz-relay - docker is required to generate Nostr keypairs" >&2
+    exit 1
+  fi
+  # Cap runtime so a hung docker pull/run cannot wedge Umbrel install forever.
+  if command -v timeout >/dev/null 2>&1; then
+    output="$(timeout 120s docker run --rm --entrypoint /usr/local/bin/buzz-admin "${BUZZ_IMAGE}" generate-key)"
+  else
+    output="$(docker run --rm --entrypoint /usr/local/bin/buzz-admin "${BUZZ_IMAGE}" generate-key)"
+  fi
+  pubkey="$(printf '%s\n' "${output}" | awk '/Public key:/{print $3; exit}')"
+  secret="$(printf '%s\n' "${output}" | awk '/Secret key:/{print $3; exit}')"
+  if [[ -z "${pubkey}" || -z "${secret}" || "${#pubkey}" -ne 64 || "${#secret}" -ne 64 ]]; then
+    echo "App: buzz-relay - failed to parse buzz-admin generate-key output:" >&2
+    printf '%s\n' "${output}" >&2
+    exit 1
+  fi
+  GENERATED_PUBKEY="${pubkey}"
+  GENERATED_SECRET="${secret}"
+}
+
+ensure_identity_secrets() {
+  local relay_secret owner_pubkey owner_secret=""
+
+  if [[ ! -f "${RELAY_SECRET_FILE}" ]]; then
+    generate_keypair
+    printf '%s\n' "${GENERATED_SECRET}" > "${RELAY_SECRET_FILE}"
+    chmod 600 "${RELAY_SECRET_FILE}"
+    echo "App: buzz-relay - generated relay identity key"
+  fi
+  relay_secret="$(tr -d '[:space:]' < "${RELAY_SECRET_FILE}")"
+
+  if [[ -f "${OWNER_OVERRIDE}" ]]; then
+    owner_pubkey="$(tr -d '[:space:]' < "${OWNER_OVERRIDE}")"
+    if [[ ! "${owner_pubkey}" =~ ^[0-9a-fA-F]{64}$ ]]; then
+      echo "App: buzz-relay - owner-pubkey.override must be a 64-char hex pubkey" >&2
+      exit 1
+    fi
+    printf '%s\n' "${owner_pubkey}" > "${OWNER_PUBKEY_FILE}"
+    echo "App: buzz-relay - using owner pubkey override"
+  elif [[ -f "${OWNER_SECRET_FILE}" && -f "${OWNER_PUBKEY_FILE}" ]]; then
+    owner_pubkey="$(tr -d '[:space:]' < "${OWNER_PUBKEY_FILE}")"
+    owner_secret="$(tr -d '[:space:]' < "${OWNER_SECRET_FILE}")"
+  else
+    generate_keypair
+    owner_pubkey="${GENERATED_PUBKEY}"
+    owner_secret="${GENERATED_SECRET}"
+    printf '%s\n' "${owner_secret}" > "${OWNER_SECRET_FILE}"
+    printf '%s\n' "${owner_pubkey}" > "${OWNER_PUBKEY_FILE}"
+    chmod 600 "${OWNER_SECRET_FILE}"
+    echo "App: buzz-relay - generated bootstrap owner keypair"
+  fi
+
+  cat > "${RELAY_ENV}" <<EOF
+BUZZ_RELAY_PRIVATE_KEY=${relay_secret}
+RELAY_OWNER_PUBKEY=${owner_pubkey}
+EOF
+  chmod 600 "${RELAY_ENV}"
+
+  # ghcr.io/block/buzz runs as USER buzz:buzz (uid/gid 1000). The 0.2.10
+  # restart wrapper sources relay.env inside that user; root-only 0600 files
+  # made the container exit immediately under set -e.
+  chown_secrets_for_relay
+
+  EXPORT_OWNER_PUBKEY="${owner_pubkey}"
+  EXPORT_OWNER_SECRET="${owner_secret}"
+}
+
+chown_secrets_for_relay() {
+  # Match Dockerfile: USER buzz:buzz → uid 1000 gid 1000
+  if ! chown -R 1000:1000 "${SECRETS_DIR}" 2>/dev/null; then
+    echo "App: buzz-relay - warning: could not chown ${SECRETS_DIR} to 1000:1000" >&2
+  fi
+  # Ensure the relay can create/remove restart-relay.requested
+  chmod 755 "${SECRETS_DIR}" 2>/dev/null || true
+  if [[ -f "${RELAY_ENV}" ]]; then
+    chmod 600 "${RELAY_ENV}" 2>/dev/null || true
+  fi
+}
+
+install_setup_server() {
+  # Sources live in scripts/ (not hooks/ — Umbrel only allows lifecycle hook names
+  # under hooks/). Copy into APP_DATA_DIR on every start so app updates refresh them.
+  local app_root scripts_dir
+  app_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+  scripts_dir="${app_root}/scripts"
+  if [[ ! -f "${scripts_dir}/setup_server.py" ]]; then
+    echo "App: buzz-relay - missing scripts/setup_server.py" >&2
+    exit 1
+  fi
+  if [[ ! -f "${scripts_dir}/relay_entrypoint.sh" ]]; then
+    echo "App: buzz-relay - missing scripts/relay_entrypoint.sh" >&2
+    exit 1
+  fi
+  cp "${scripts_dir}/setup_server.py" "${SETUP_DIR}/server.py"
+  chmod 755 "${SETUP_DIR}/server.py"
+  # Copied into the data volume so the relay container can mount it without
+  # depending on Umbrel's read-only app install tree at runtime.
+  cp "${scripts_dir}/relay_entrypoint.sh" "${SETUP_DIR}/relay_entrypoint.sh"
+  chmod 755 "${SETUP_DIR}/relay_entrypoint.sh"
+}
+
+write_join_txt() {
+  local ws_url http_origin
+  ws_url="${APP_BUZZ_RELAY_WS_URL:-ws://${DEVICE_DOMAIN_NAME:-umbrel.local}:${APP_PROXY_PORT:-3737}}"
+  http_origin="${APP_BUZZ_RELAY_HTTP_ORIGIN:-http://${DEVICE_DOMAIN_NAME:-umbrel.local}:${APP_PROXY_PORT:-3737}}"
+
+  cat > "${JOIN_TXT}" <<EOF
+Buzz Relay — Umbrel join info
+=============================
+
+Web UI:     ${http_origin}/
+WebSocket:  ${ws_url}
+
+Owner pubkey (hex):
+${EXPORT_OWNER_PUBKEY}
+
+EOF
+
+  if [[ -n "${EXPORT_OWNER_SECRET}" ]]; then
+    cat >> "${JOIN_TXT}" <<EOF
+Bootstrap owner secret key (back this up):
+${EXPORT_OWNER_SECRET}
+
+EOF
+  else
+    cat >> "${JOIN_TXT}" <<EOF
+Bootstrap owner secret: not shown (owner-pubkey.override is set).
+
+EOF
+  fi
+
+  chmod 600 "${JOIN_TXT}" || true
+
+  echo "App: buzz-relay - ============================================"
+  echo "App: buzz-relay - Join URL (Buzz Desktop): ${ws_url}"
+  echo "App: buzz-relay - Web UI: ${http_origin}/"
+  echo "App: buzz-relay - Owner pubkey: ${EXPORT_OWNER_PUBKEY}"
+  if [[ -n "${EXPORT_OWNER_SECRET}" ]]; then
+    echo "App: buzz-relay - Owner secret: ${EXPORT_OWNER_SECRET}"
+  fi
+  echo "App: buzz-relay - Also written to data/setup/JOIN.txt"
+  echo "App: buzz-relay - Setup UI is served by setup-api at /umbrel-setup/"
+  echo "App: buzz-relay - ============================================"
+}
+
+ensure_identity_secrets
+install_setup_server
+write_join_txt
+echo "App: buzz-relay - setup artifacts ready under data/setup/"
