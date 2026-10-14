@@ -1,0 +1,101 @@
+manifestVersion: 1
+id: lancache
+storage:
+  dataRoot: data
+environment:
+  - name: LANCACHE_IP
+    services:
+      - monolithic
+      - dns
+      - web
+    default: "192.168.1.50"
+    note: >-
+      The local IP address of your Umbrel server on your home network (e.g. 192.168.1.50).
+  - name: UPSTREAM_DNS
+    services:
+      - monolithic
+      - dns
+      - web
+    default: "1.1.1.1 1.0.0.1"
+    note: >-
+      Upstream DNS servers for non-gaming internet traffic (e.g. 1.1.1.1 or 8.8.8.8).
+  - name: CACHE_DISK_SIZE
+    services:
+      - monolithic
+      - web
+    default: "500g"
+    note: >-
+      Maximum disk space to allocate for cached game files (e.g. 500g, 1000g, or 2000g).
+  - name: CACHE_MEM_SIZE
+    services:
+      - monolithic
+    default: "500m"
+    note: >-
+      Memory allocation for Nginx cache index (e.g. 500m for ~500GB cache).
+  - name: CACHE_MAX_AGE
+    services:
+      - monolithic
+    default: "3650d"
+    note: >-
+      How long cached game chunks remain on disk before being purged (e.g. 3650d).
+category: networking
+name: LanCache
+version: "0.2.1"
+tagline: Local high-speed game and update caching proxy for your network
+description: >-
+  LanCache is a high-performance local caching proxy designed for gamers, homelabs, and LAN parties. When someone on your network downloads a game or update from Steam, Epic Games, Riot, Battle.net, or Windows Update, LanCache stores a local copy.
+
+
+  When any other device on your network downloads or updates the same game, it downloads directly from your Umbrel at full local gigabit or 10-gigabit wire speed, saving your internet bandwidth and reducing download times from hours to minutes.
+
+
+  Supported Game Services:
+
+
+  - Steam & Steam Workshop downloads
+
+
+  - Epic Games Store
+
+
+  - Battle.net / Blizzard
+
+
+  - Riot Games (League of Legends, Valorant)
+
+
+  - EA App / Origin
+
+
+  - Ubisoft Connect / Uplay
+
+
+  - Sony PlayStation & Microsoft Xbox updates
+
+
+  - Windows Updates (WSUS / Delivery Optimization)
+
+
+  Features:
+
+
+  - Massive Bandwidth Savings: Download once, serve to everyone on your LAN at full speed.
+
+
+  - Automated Caching: No manual client downloads needed; simply set your router DNS to point to your Umbrel server.
+
+
+  - Interactive Web Dashboard: Monitor cache status, verify DNS interception, and follow step-by-step onboarding.
+developer: LanCache.NET
+website: https://lancache.net
+dependencies: []
+repo: https://github.com/lancachenet/monolithic
+support: https://lancache.net/docs/
+port: 8260
+gallery: []
+path: ""
+defaultUsername: ""
+defaultPassword: ""
+submitter: opeitsmax
+submission: https://github.com/getumbrel/umbrel-apps/pull/1251
+releaseNotes: ""

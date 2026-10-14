@@ -1,0 +1,52 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: lancache_web_1
+      APP_PORT: 80
+
+  web:
+    image: nginx:1.27.4-alpine@sha256:4ff102c5d78d254a6f0da062b3cf39eaf07f01eec0927fd21e219d0af8bc0591
+    restart: on-failure
+    depends_on:
+      - monolithic
+    environment:
+      - LANCACHE_IP=${LANCACHE_IP:-127.0.0.1}
+      - UPSTREAM_DNS=${UPSTREAM_DNS:-1.1.1.1}
+      - CACHE_DISK_SIZE=${CACHE_DISK_SIZE:-500g}
+    volumes:
+      - ${APP_DATA_DIR}/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ${APP_DATA_DIR}/index.html:/usr/share/nginx/html/index.html:ro
+      - ${APP_DATA_DIR}/data/logs:/var/log/lancache:ro
+
+  monolithic:
+    image: lancachenet/monolithic:latest@sha256:155817065b13cc427aa0014acc34bbb389591400d7639c95abcfcfb2230ad7f0
+    restart: on-failure
+    environment:
+      - USE_GENERIC_CACHE=true
+      - LANCACHE_IP=${LANCACHE_IP:-127.0.0.1}
+      - DNS_BIND_IP=0.0.0.0
+      - UPSTREAM_DNS=${UPSTREAM_DNS:-1.1.1.1}
+      - CACHE_DISK_SIZE=${CACHE_DISK_SIZE:-500g}
+      - CACHE_INDEX_SIZE=${CACHE_MEM_SIZE:-500m}
+      - CACHE_MAX_AGE=${CACHE_MAX_AGE:-3650d}
+      - TZ=UTC
+    ports:
+      - "8261:80"
+      - "8262:443"
+    volumes:
+      - ${APP_DATA_DIR}/data/cache:/data/cache
+      - ${APP_DATA_DIR}/data/logs:/data/logs
+
+  dns:
+    image: lancachenet/lancache-dns:latest@sha256:6e046a40e9f0467b1df97ca2ba9b8b7c0d4404736a349c0f8df11fa212871a03
+    restart: on-failure
+    environment:
+      - USE_GENERIC_CACHE=true
+      - LANCACHE_IP=${LANCACHE_IP:-127.0.0.1}
+      - UPSTREAM_DNS=${UPSTREAM_DNS:-1.1.1.1}
+      - TZ=UTC
+    ports:
+      - "53:53/udp"
+      - "53:53/tcp"

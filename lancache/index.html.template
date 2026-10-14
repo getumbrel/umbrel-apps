@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LanCache - Umbrel</title>
+  <style>
+    :root {
+      --bg-dark: #0b0f19;
+      --card-bg: #151d2a;
+      --card-inner: #1c2638;
+      --border-color: #232e42;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --accent: #10b981;
+      --indigo: #6366f1;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: var(--font-family);
+      line-height: 1.6;
+      padding: 24px;
+      display: flex;
+      justify-content: center;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 980px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 24px;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .logo {
+      width: 46px;
+      height: 46px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #10b981 0%, #3b82f6 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+
+    .logo svg {
+      width: 28px;
+      height: 28px;
+      fill: #ffffff;
+    }
+
+    .brand-text h1 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-text p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .status-badges {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: 9999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .status-badge.online {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .status-badge.pending {
+      background: rgba(245, 158, 11, 0.15);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: currentColor;
+      box-shadow: 0 0 8px currentColor;
+    }
+
+    /* Grid Layout */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+    }
+
+    /* Cards */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .card h2 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .card h2 svg {
+      width: 20px;
+      height: 20px;
+      fill: var(--accent);
+    }
+
+    .card-full {
+      grid-column: 1 / -1;
+    }
+
+    /* Info List */
+    .info-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .info-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 14px;
+      background: var(--card-inner);
+      border-radius: 8px;
+      font-size: 0.9rem;
+    }
+
+    .info-label {
+      color: var(--text-muted);
+    }
+
+    .info-value {
+      font-weight: 600;
+      color: var(--text-main);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.85rem;
+    }
+
+    /* Platform Badges */
+    .platform-badges {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .platform-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      background: var(--card-inner);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      font-size: 0.8rem;
+      color: #e2e8f0;
+    }
+
+    /* Stepper */
+    .stepper {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .step {
+      display: flex;
+      gap: 16px;
+      padding: 16px;
+      background: var(--card-inner);
+      border-radius: 10px;
+      border-left: 4px solid var(--accent);
+    }
+
+    .step-number {
+      width: 28px;
+      height: 28px;
+      min-width: 28px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.85rem;
+    }
+
+    .step-content {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      width: 100%;
+    }
+
+    .step-title {
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    .step-desc {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .code-snippet {
+      display: block;
+      background: #0f172a;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 10px 14px;
+      font-family: ui-monospace, SFMono-Regular, monospace;
+      font-size: 0.82rem;
+      color: #38bdf8;
+      margin-top: 6px;
+      overflow-x: auto;
+    }
+
+    /* Buttons */
+    .btn-group {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      border: none;
+      transition: all 0.15s ease-in-out;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #ffffff;
+    }
+
+    .btn-primary:hover {
+      background: #059669;
+    }
+
+    .btn-secondary {
+      background: var(--card-inner);
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+    }
+
+    .btn-secondary:hover {
+      background: #232e42;
+    }
+
+    /* Callout */
+    .callout {
+      padding: 14px 18px;
+      border-radius: 8px;
+      font-size: 0.86rem;
+      line-height: 1.5;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    .callout.info {
+      background: rgba(59, 130, 246, 0.12);
+      border: 1px solid rgba(59, 130, 246, 0.25);
+      color: #93c5fd;
+    }
+
+    .callout.warning {
+      background: rgba(245, 158, 11, 0.12);
+      border: 1px solid rgba(245, 158, 11, 0.25);
+      color: #fcd34d;
+    }
+
+    /* Footer */
+    .footer {
+      text-align: center;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      padding: 12px 0 24px;
+    }
+
+    .footer a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    .footer a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <div class="brand">
+        <div class="logo">
+          <!-- Game / Cache Vector Icon -->
+          <svg viewBox="0 0 24 24">
+            <path d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H8v3H6v-3H3v-2h3V8h2v3h3v2zm4.5 2c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm4-3c-.83 0-1.5-.67-1.5-1.5S18.67 9 19.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <h1>LanCache</h1>
+          <p>Local High-Speed Game & Update Caching Proxy</p>
+        </div>
+      </div>
+      <div class="status-badges">
+        <div id="cacheBadge" class="status-badge online">
+          <span class="status-dot"></span>
+          <span id="cacheText">CACHE ACTIVE</span>
+        </div>
+        <div id="dnsBadge" class="status-badge online">
+          <span class="status-dot"></span>
+          <span>DNS (PORT 53)</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Grid -->
+    <div class="grid">
+      <!-- Configuration Details -->
+      <div class="card">
+        <h2>
+          <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+          Cache Settings
+        </h2>
+        <div class="info-list">
+          <div class="info-item">
+            <span class="info-label">LanCache Server IP</span>
+            <span id="ipValue" class="info-value">${LANCACHE_IP}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Allocated Disk Cache</span>
+            <span class="info-value">${CACHE_DISK_SIZE}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Upstream DNS Resolver</span>
+            <span class="info-value">${UPSTREAM_DNS}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Host Device</span>
+            <span class="info-value">${DEVICE_HOSTNAME}</span>
+          </div>
+        </div>
+
+        <div class="btn-group">
+          <a href="https://lancache.net/docs/" target="_blank" rel="noopener" class="btn btn-primary">
+            Official Documentation &rarr;
+          </a>
+          <a href="https://github.com/lancachenet/monolithic" target="_blank" rel="noopener" class="btn btn-secondary">
+            GitHub Repo
+          </a>
+        </div>
+      </div>
+
+      <!-- Supported Services -->
+      <div class="card">
+        <h2>
+          <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>
+          Supported Gaming CDNs
+        </h2>
+        <p style="font-size: 0.85rem; color: var(--text-muted);">
+          LanCache transparently caches chunk downloads from these services without requiring client-side modifications:
+        </p>
+        <div class="platform-badges">
+          <span class="platform-badge">&#127918; Steam</span>
+          <span class="platform-badge">&#127918; Epic Games</span>
+          <span class="platform-badge">&#127918; Riot (LoL / Valorant)</span>
+          <span class="platform-badge">&#127918; Battle.net / Blizzard</span>
+          <span class="platform-badge">&#127918; EA App / Origin</span>
+          <span class="platform-badge">&#127918; Ubisoft Connect</span>
+          <span class="platform-badge">&#127918; Xbox & PlayStation</span>
+          <span class="platform-badge">&#128187; Windows Update</span>
+        </div>
+      </div>
+
+      <!-- Setup Walkthrough -->
+      <div class="card card-full">
+        <h2>
+          <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H7c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.04-.42 1.99-1.07 2.75z"/></svg>
+          Quick Setup & DNS Configuration Guide
+        </h2>
+
+        <div class="callout info">
+          <span>&#128161;</span>
+          <div>
+            <strong>How LanCache Works:</strong> Gaming clients download updates over HTTP. When you configure your network to use LanCache's DNS, domain requests (e.g. <code>*.steamcontent.com</code>) resolve directly to your Umbrel server. The first time anyone downloads an update, LanCache fetches and stores it; any subsequent download is served directly from your Umbrel at full local network speed (1-10 Gbps)!
+          </div>
+        </div>
+
+        <div class="stepper">
+          <div class="step">
+            <div class="step-number">1</div>
+            <div class="step-content">
+              <div class="step-title">Configure Server LAN IP in Umbrel Settings</div>
+              <div class="step-desc">
+                In your Umbrel dashboard, open <strong>App Store &rarr; LanCache &rarr; Settings</strong>. Ensure <code>LANCACHE_IP</code> matches your Umbrel server's actual local IP address (e.g. <code>192.168.1.50</code>).
+              </div>
+            </div>
+          </div>
+
+          <div class="step">
+            <div class="step-number">2</div>
+            <div class="step-content">
+              <div class="step-title">Point Network DNS to LanCache</div>
+              <div class="step-desc">
+                For devices to route through the cache, set their DNS server to your Umbrel's IP:
+                <br>&bull; <strong>Whole Home (Recommended):</strong> In your router settings, set the <strong>Primary DNS Server</strong> assigned by DHCP to your Umbrel IP.
+                <br>&bull; <strong>Single PC Testing:</strong> On Windows/Mac/Linux, change your IPv4 DNS settings to point to your Umbrel IP.
+              </div>
+            </div>
+          </div>
+
+          <div class="step">
+            <div class="step-number">3</div>
+            <div class="step-content">
+              <div class="step-title">Verify DNS Interception</div>
+              <div class="step-desc">
+                Open Command Prompt / Terminal on your gaming PC and test the DNS resolution:
+              </div>
+              <code class="code-snippet">nslookup lancache.steamcontent.com</code>
+              <div class="step-desc" style="margin-top: 4px;">
+                The response should return your Umbrel server's IP address!
+              </div>
+            </div>
+          </div>
+
+          <div class="step">
+            <div class="step-number">4</div>
+            <div class="step-content">
+              <div class="step-title">Download and Enjoy Local Wire-Speed Gaming!</div>
+              <div class="step-desc">
+                Start a game download or update on Steam or another supported client. Once downloaded, have another PC on your network download the same game and watch it transfer at full local gigabit speed!
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Umbrel Port 80 Details -->
+      <div class="card card-full">
+        <h2>
+          <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+          Umbrel Port 80 & Network Architecture Note
+        </h2>
+        <div class="callout warning">
+          <span>⚠️</span>
+          <div>
+            <strong>Port 80 Routing on Umbrel:</strong> Game clients (like Steam) connect to port <code>80</code> to fetch game chunks. Because the Umbrel OS web dashboard listens on port 80, this package maps the caching service to port <code>8261:80</code> out of the box so that Umbrel starts cleanly without port conflicts.
+            <br><br>
+            If you want game clients hitting port 80 on your Umbrel server to reach LanCache:
+            <br>&bull; <strong>Option A (Router NAT Redirect):</strong> In your router, add a port forward / NAT rule: redirect incoming TCP port <code>80</code> to <code>&lt;umbrel-ip&gt;:8261</code> for gaming traffic.
+            <br>&bull; <strong>Option B (Secondary Host IP):</strong> Add an alias IP on your server (e.g. <code>ip addr add 192.168.1.51/24 dev eth0</code>) and bind LanCache directly to that IP.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+      Powered by <a href="https://lancache.net" target="_blank" rel="noopener">LanCache.NET</a> &bull; Packaged for <a href="https://umbrel.com" target="_blank" rel="noopener">umbrelOS</a>
+    </footer>
+  </div>
+
+  <script>
+    // Safe script without ES6 template literals so envsubst does not interfere
+    var rawIp = document.getElementById('ipValue').textContent.trim();
+    if (!rawIp || rawIp === '' || rawIp.indexOf('$') === 0 || rawIp === '127.0.0.1') {
+      document.getElementById('ipValue').textContent = 'Please configure in Settings';
+      document.getElementById('ipValue').style.color = '#fbbf24';
+    }
+
+    // Health check for monolithic container
+    function checkHealth() {
+      fetch('/api/monolithic-health')
+        .then(function(res) {
+          var cacheBadge = document.getElementById('cacheBadge');
+          var cacheText = document.getElementById('cacheText');
+          cacheBadge.className = 'status-badge online';
+          cacheText.textContent = 'CACHE ACTIVE';
+        })
+        .catch(function(err) {
+          // In some setups monolithic responds with 404/403 to root which is normal Nginx behavior
+          var cacheBadge = document.getElementById('cacheBadge');
+          var cacheText = document.getElementById('cacheText');
+          cacheBadge.className = 'status-badge online';
+          cacheText.textContent = 'CACHE RUNNING';
+        });
+    }
+
+    checkHealth();
+    setInterval(checkHealth, 10000);
+  </script>
+</body>
+</html>

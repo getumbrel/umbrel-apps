@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+APP_DIR="${APP_DATA_DIR:-$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")}"
+DATA_DIR="${APP_DATA_ROOT:-${APP_DIR}/data}"
+
+mkdir -p "${DATA_DIR}/cache"
+mkdir -p "${DATA_DIR}/logs"
+
+# Ensure rendered templates exist if pre-start runs before envsubst
+if [[ ! -f "${APP_DIR}/index.html" ]] && [[ -f "${APP_DIR}/index.html.template" ]]; then
+  envsubst < "${APP_DIR}/index.html.template" > "${APP_DIR}/index.html"
+fi
+
+if [[ ! -f "${APP_DIR}/nginx.conf" ]] && [[ -f "${APP_DIR}/nginx.conf.template" ]]; then
+  envsubst < "${APP_DIR}/nginx.conf.template" > "${APP_DIR}/nginx.conf"
+fi
