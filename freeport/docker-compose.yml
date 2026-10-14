@@ -1,0 +1,39 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: freeport_server_1
+      APP_PORT: 1988
+      # Keep the web app (/) behind Umbrel auth, but let the machine-to-machine
+      # routes through unauthenticated: MCP clients, the healthcheck, and
+      # native/mobile Web Push + Expo registration can't send an Umbrel session
+      # cookie. /subscribe is protected instead by REQUIRE_SUBSCRIBE_AUTH below.
+      PROXY_AUTH_WHITELIST: "/mcp,/health,/vapidPublicKey,/subscribe,/unsubscribe"
+
+  server:
+    image: ghcr.io/ptrinh/freeport-self-hosted:0.7.0@sha256:9cec5a2e0c6fb6dbfb5f374dafce35c7959b560bdb3de17a45245489b228fe6f
+    restart: on-failure
+    stop_grace_period: 1m
+    ports:
+      # Embedded NIP-01 Nostr relay (WebSocket) — nearby users can add
+      # ws://<umbrel>:1989 to their relay list. Ephemeral / in-memory: events
+      # are cleared on restart. Remove this mapping to keep it private.
+      - "1989:1989"
+    environment:
+      - HOST=0.0.0.0
+      - PORT=1988
+      - RELAY_HOST=0.0.0.0
+      # Rate limits (per-IP + global token buckets)
+      - RATE_LIMIT_PER_MIN=300
+      - RATE_LIMIT_BURST=60
+      - RATE_LIMIT_GLOBAL_PER_MIN=2500
+      # Push notifier. VAPID keys auto-generate into DATA_DIR on first run.
+      - ENABLE_NOTIFY=1
+      - DATA_DIR=/data
+      - VAPID_SUBJECT=mailto:admin@umbrel.local
+      # A DM-watch /subscribe without a valid auth proof is rejected (the route
+      # is whitelisted from Umbrel auth above, so this is its access control).
+      - REQUIRE_SUBSCRIBE_AUTH=1
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
