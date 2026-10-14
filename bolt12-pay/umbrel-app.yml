@@ -5,7 +5,7 @@ storage:
 name: BOLT12 Pay
 tagline: Self-hosted Lightning payments and identity with BOLT12, BIP353, LNURL, and Nostr
 category: bitcoin
-version: 0.3.7
+version: 0.3.8
 port: 8367
 description: |-
   BOLT12 Pay is a self-hosted Lightning payments and identity app for LND nodes.
@@ -84,13 +84,13 @@ submission: https://github.com/getumbrel/umbrel-apps/pull/5429
 repo: https://github.com/Alex71btc/lndk-pay
 support: https://github.com/Alex71btc/lndk-pay/issues
 releaseNotes: |
-  BOLT12 payments now allow more time for an invoice response, improving reliability with slower wallets and onion-message routes.
+  Restores reliable NIP-57 Zap receipts and Android push notifications. BOLT12 Pay now advertises the same receipt signer it actually uses; previously standards-validating clients such as Amethyst could reject the receipts, often causing only the first Zap notification to appear.
 
-  Repeated invoice requests now reuse the same invoice instead of creating unpaid duplicates in LND.
+  Zaps are now detected and published much faster. New Zap invoices wake the publisher immediately and active payments are checked about once per second instead of waiting for the previous 15-second polling interval.
 
-  Outgoing BOLT12 payments appear as one clear Lightning Activity entry, including the routing fee, instead of an additional underlying BOLT11 payment row.
+  Relay publishing now waits for real acceptance acknowledgements, tolerates individual blocked or unavailable relays once another requested relay accepted the receipt, and safely reuses the same signed receipt when a retry is necessary.
 
-  The bundled LNDK runtime now supports LND 0.21 native onion messages and remains available for both amd64 and arm64 systems. Amountless offers and descriptive invoice memos remain supported.
+  NWC connections sharing a relay now use one shared subscription, duplicate requests are ignored, and reconnects use bounded backoff. Lightning Activity remains responsive while avoiding overlapping LND history scans.
 
   Existing application data and payment history are preserved. No manual migration is required.
 
