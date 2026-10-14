@@ -1,0 +1,30 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: rusty-kaspa-stratum-bridge_bridge_1
+      APP_PORT: 3030
+
+  bridge:
+    image: sondelviento/rusty-kaspa-stratum-bridge:v2.0.1@sha256:9e6267135f0bf10a5cf2068e14b4b0343085134d83cac1fa0c4a6b7d141d5c57
+    restart: on-failure
+    stop_grace_period: 1m
+    init: true
+    user: "1000:1000"
+    environment:
+      HOME: /home/kaspa
+      # Allow saving config changes from the web dashboard (persisted via the bind mount below)
+      RKSTRATUM_ALLOW_CONFIG_WRITE: "1"
+    command:
+      - /app/stratum-bridge
+      - --config=/app/conf/config.yaml
+      - --node-mode=external
+      # Rusty Kaspad app's kaspad container (gRPC)
+      - --kaspad-address=rusty-kaspad_kaspad_1:16110
+    volumes:
+      - ${APP_DATA_DIR}/data/config:/app/conf
+      - ${APP_DATA_DIR}/data/bridge:/home/kaspa
+    ports:
+      # Stratum port for miners
+      - 5555:5555
