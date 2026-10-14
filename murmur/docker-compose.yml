@@ -10,15 +10,40 @@ services:
       PROXY_AUTH_WHITELIST: "/manifest.webmanifest,/favicon.svg,/icon.svg,/icon-192.png,/icon-512.png,/icon-maskable-512.png,/apple-touch-icon.png"
 
   web:
-    image: ghcr.io/getumbrel/murmur:v0.1.0@sha256:0bf75e8a1afb24b11662a0e34872f3adbdc903e472891e63d41ab45cdb438634
+    image: ghcr.io/getumbrel/murmur:v0.2.0@sha256:dcd174d470caf31b8f89b5d9377de4faee3e466128272c56e152d148c519c9a0
     user: "1000:1000"
     init: true
     restart: on-failure
     volumes:
-      - ${APP_DATA_DIR}/data:/data
+      - ${APP_DATA_DIR}/data/murmur:/data
     environment:
-      # Hermes Agent's dashboard, reached directly on the shared Umbrel network.
-      HERMES_URL: "http://hermes-agent_web_1:18789"
+      # The Hermes that comes with Murmur (below), and how Murmur signs in to it.
+      MURMUR_BUILTIN_HERMES_URL: "http://murmur_hermes_1:9119"
+      MURMUR_BUILTIN_HERMES_USERNAME: "murmur"
+      MURMUR_BUILTIN_HERMES_PASSWORD: ${APP_MURMUR_HERMES_PASSWORD}
+      # The Hermes Agent app, if it's installed: offered on first run instead,
+      # with the agents and chats already in it.
+      MURMUR_FIND_HERMES: "Hermes Agent=http://hermes-agent_web_1:18789"
       # Umbrel's login sits in front of Murmur, so it answers to whatever name
       # or address the Umbrel is reached by (umbrel.local, an IP, a custom domain).
       MURMUR_ALLOWED_HOSTS: "*"
+
+  # Murmur's own Hermes. Private: never published, never behind app_proxy, and
+  # gated by a username and password only Murmur knows. Its data (and the API
+  # keys in its .env) has its own folder, which Murmur's container can't see.
+  hermes:
+    image: ghcr.io/getumbrel/hermes-agent-umbrel:v0.22.0@sha256:3377aa4f92d91408c6267991c3a6d167d3d064a1df8ea2efb754406ae5861d93
+    restart: on-failure
+    stop_grace_period: 1m
+    volumes:
+      - ${APP_DATA_DIR}/data/hermes:/opt/data
+    environment:
+      HERMES_UID: "1000"
+      HERMES_GID: "1000"
+      HERMES_DASHBOARD: "1"
+      HERMES_DASHBOARD_BASIC_AUTH_USERNAME: "murmur"
+      HERMES_DASHBOARD_BASIC_AUTH_PASSWORD: ${APP_MURMUR_HERMES_PASSWORD}
+      HERMES_DASHBOARD_BASIC_AUTH_SECRET: ${APP_MURMUR_HERMES_SECRET}
+      # Routines and Telegram run in Hermes's messaging gateway.
+      HERMES_GATEWAY_BOOTSTRAP_STATE: "running"
+    command: ["gateway", "run"]
