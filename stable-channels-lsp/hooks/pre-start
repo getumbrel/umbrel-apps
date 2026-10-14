@@ -1,0 +1,152 @@
+#!/usr/bin/env bash
+# Bootstraps ldk-server.toml + sc-lsp.toml in ${APP_DATA_DIR}/data/config from
+# the Bitcoin app's exports (sourced by Umbrel before this hook runs).
+# Existing files are operator-owned and intentionally preserved on restart.
+set -euo pipefail
+umask 077
+
+SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
+APP_DIR="$(dirname "$SCRIPT_DIR")"
+APP_DATA_DIR="${APP_DATA_DIR:-$APP_DIR}"
+CONF_DIR="${APP_DATA_DIR}/data/config"
+
+BITCOIN_IP="${APP_BITCOIN_NODE_IP:?APP_BITCOIN_NODE_IP not set (is the Bitcoin app installed?)}"
+BITCOIN_RPC_PORT="${APP_BITCOIN_RPC_PORT:-8332}"
+BITCOIN_RPC_USER="${APP_BITCOIN_RPC_USER:?APP_BITCOIN_RPC_USER not set}"
+BITCOIN_RPC_PASS="${APP_BITCOIN_RPC_PASS:?APP_BITCOIN_RPC_PASS not set}"
+
+# Umbrel reports "mainnet"; LDK/rust-bitcoin expect "bitcoin".
+case "${APP_BITCOIN_NETWORK:-mainnet}" in
+    mainnet|bitcoin) NETWORK="bitcoin" ;;
+    testnet)         NETWORK="testnet" ;;
+    testnet4)        NETWORK="testnet4" ;;
+    signet)          NETWORK="signet" ;;
+    regtest)         NETWORK="regtest" ;;
+    *) echo "unsupported APP_BITCOIN_NETWORK: ${APP_BITCOIN_NETWORK}" >&2; exit 1 ;;
+esac
+
+# Umbrel-injected container names (<app-id>_<service>_1) — used as the gRPC
+# hostname, so the TLS cert SAN must include the ldk-server one (same class of
+# issue as the e2e stack's "[tls] hosts" gotcha).
+LDK_SERVER_HOST="stable-channels-lsp_ldk-server_1"
+
+mkdir -p "${CONF_DIR}" \
+         "${APP_DATA_DIR}/data/ldk-server" \
+         "${APP_DATA_DIR}/data/sc-lsp"
+
+LDK_CONFIG_TMP="${CONF_DIR}/.ldk-server.toml.$$"
+SC_CONFIG_TMP="${CONF_DIR}/.sc-lsp.toml.$$"
+cleanup() {
+    rm -f -- "$LDK_CONFIG_TMP" "$SC_CONFIG_TMP"
+}
+trap cleanup EXIT HUP INT TERM
+
+if [ ! -e "${CONF_DIR}/ldk-server.toml" ]; then
+    cat > "$LDK_CONFIG_TMP" <<EOF
+# Created by hooks/pre-start on first launch. Operator edits are preserved.
+[node]
+network = "${NETWORK}"
+alias = "Stable Channels"
+listening_addresses = ["0.0.0.0:9735"]
+grpc_service_address = "0.0.0.0:3536"
+
+[storage.disk]
+dir_path = "/data/ldk-server"
+
+[bitcoind]
+rpc_address = "${BITCOIN_IP}:${BITCOIN_RPC_PORT}"
+rpc_user = "${BITCOIN_RPC_USER}"
+rpc_password = "${BITCOIN_RPC_PASS}"
+
+# LSPS2 service — values mirror the production bidaemon deployment.
+[liquidity.lsps2_service]
+advertise_service = true
+channel_opening_fee_ppm = 0
+channel_over_provisioning_ppm = 1000000
+min_channel_opening_fee_msat = 0
+min_channel_lifetime = 100
+max_client_to_self_delay = 1024
+min_payment_size_msat = 0
+max_payment_size_msat = 100000000000
+client_trusts_lsp = true
+disable_client_reserve = false
+
+[log]
+level = "Info"
+file = "/data/ldk-server/${NETWORK}/ldk-server.log"
+log_to_file = true
+
+[tls]
+hosts = ["${LDK_SERVER_HOST}"]
+EOF
+    chmod 600 "$LDK_CONFIG_TMP"
+    mv -f -- "$LDK_CONFIG_TMP" "${CONF_DIR}/ldk-server.toml"
+fi
+
+if [ ! -e "${CONF_DIR}/sc-lsp.toml" ]; then
+    cat > "$SC_CONFIG_TMP" <<EOF
+# Created by hooks/pre-start on first launch. Operator edits are preserved.
+[node]
+rest_service_address = "0.0.0.0:3002"
+network = "${NETWORK}"
+
+[storage.disk]
+dir_path = "/data/stable-channels-lsp"
+
+[ldk_server]
+config_path = "/etc/sc-lsp/ldk-server.toml"
+grpc_address = "${LDK_SERVER_HOST}:3536"
+cert_path    = "/data/ldk-server/tls.crt"
+api_key_path = "/data/ldk-server/${NETWORK}/api_key"
+
+# Optional mobile push notifications. Copy the credential files into this
+# app's data/config directory, then uncomment the relevant settings below.
+[push]
+# APNs (iOS)
+# apns_key_path    = "/etc/sc-lsp/AuthKey.p8"
+# apns_key_id      = "<Apple key ID>"
+# apns_team_id     = "<Apple team ID>"
+# apns_topic       = "com.stablechannels.app"
+# apns_environment = "production"
+
+# FCM (Android)
+# fcm_service_account_path = "/etc/sc-lsp/firebase-service-account.json"
+EOF
+    chmod 600 "$SC_CONFIG_TMP"
+    mv -f -- "$SC_CONFIG_TMP" "${CONF_DIR}/sc-lsp.toml"
+fi
+
+chmod 600 "${CONF_DIR}/ldk-server.toml" "${CONF_DIR}/sc-lsp.toml"
+
+# The GUI setup helper uses this marker to locate sc-lsp's network-scoped API
+# key. Derive it from the persistent config, not the current Bitcoin export,
+# so an operator edit and the marker cannot silently diverge.
+SC_EFFECTIVE_NETWORK="$({
+    awk -F= '
+        /^[[:space:]]*\[node\][[:space:]]*$/ { in_node = 1; next }
+        /^[[:space:]]*\[/ { in_node = 0 }
+        in_node && $1 ~ /^[[:space:]]*network[[:space:]]*$/ {
+            value = $2
+            sub(/^[[:space:]]*"/, "", value)
+            sub(/".*/, "", value)
+            print value
+            exit
+        }
+    ' "${CONF_DIR}/sc-lsp.toml"
+} || true)"
+case "$SC_EFFECTIVE_NETWORK" in
+    bitcoin|testnet|testnet4|signet|regtest) ;;
+    *)
+        echo "unsupported or missing node.network in ${CONF_DIR}/sc-lsp.toml" >&2
+        exit 1
+        ;;
+esac
+printf '%s\n' "$SC_EFFECTIVE_NETWORK" > "${APP_DATA_DIR}/data/sc-lsp/network"
+
+trap - EXIT HUP INT TERM
+
+# Umbrel runs hooks as root; local test containers may not, and Docker Desktop
+# handles bind-mount ownership itself.
+if [ "$(id -u)" = "0" ]; then
+    chown -R 1000:1000 "${APP_DATA_DIR}/data"
+fi
