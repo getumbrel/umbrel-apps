@@ -1,0 +1,6 @@
+export APP_MASTODON_DB_PASS="$(derive_entropy "${app_entropy_identifier}-postgres-password")"
+export APP_MASTODON_SECRET_KEY_BASE="$(derive_entropy "${app_entropy_identifier}-secret-key-base")"
+export APP_MASTODON_OTP_SECRET="$(derive_entropy "${app_entropy_identifier}-otp-secret")"
+export APP_MASTODON_AR_DETERMINISTIC="$(derive_entropy "${app_entropy_identifier}-ar-deterministic-key")"
+export APP_MASTODON_AR_DERIVATION="$(derive_entropy "${app_entropy_identifier}-ar-derivation-salt")"
+export APP_MASTODON_AR_PRIMARY="$(derive_entropy "${app_entropy_identifier}-ar-primary-key")"
