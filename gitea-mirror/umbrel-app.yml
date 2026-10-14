@@ -5,7 +5,7 @@ storage:
 name: Gitea Mirror
 tagline: Mirror your GitHub repositories to a Gitea instance automatically
 category: developer
-version: "3.40.3"
+version: "3.40.4"
 port: 4322
 description: >-
   Gitea Mirror automatically mirrors your GitHub repositories to a self-hosted Gitea instance. It supports mirroring public and private repositories, organizations, starred repos, issues, wikis, and pull requests.
@@ -44,14 +44,15 @@ defaultUsername: ""
 defaultPassword: ""
 dependencies: []
 releaseNotes: >-
-  This update improves large repository sync reliability and fixes an Activity Log summary issue.
+  This update fixes milestone mirroring and restores the password reset command.
 
   Key highlights:
-    - Continues issue and pull request syncs across GitHub rate-limit resets instead of restarting each pass from the beginning.
-    - Reduces weekly full-pass API usage for unchanged issues and pull requests.
-    - Shows completed quick syncs correctly in the Activity Log summary instead of leaving repositories marked as syncing.
+    - Assigns mirrored issues and pull requests to their GitHub milestones and keeps those assignments up to date.
+    - Syncs milestone status, due dates, and descriptions after creation.
+    - Avoids mistaking issue titles containing a pull request reference for mirrored pull requests.
+    - Fixes the password reset command in Docker installs.
 
-  Upgrade notes: existing installs need no action. A repository that was part way through an issue or pull request pass picks up the new continuation behavior on its next sync.
+  Existing unchanged issues and pull requests receive their milestone assignments on the next weekly full sync. Items changed on GitHub pick them up on their next sync. No action is needed.
 
   If you're updating from a version older than 3.40.1, Gitea Mirror also includes improved GitHub rate-limit handling, an organizations list view, incremental scheduled issue and pull request syncs, and saved URL/security hardening.
 
@@ -65,5 +66,5 @@ releaseNotes: >-
 
   If you're updating from a version older than 3.17 and use OAuth provider clients registered in Gitea Mirror, rotate the client secret for each client after upgrading because OAuth application secrets are stored hashed after migration.
 
-  Full release notes can be found at https://github.com/RayLabsHQ/gitea-mirror/releases/tag/v3.40.3
+  Full release notes can be found at https://github.com/RayLabsHQ/gitea-mirror/releases/tag/v3.40.4
 path: ""
