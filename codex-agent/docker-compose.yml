@@ -1,0 +1,53 @@
+version: "3.7"
+
+services:
+  # Umbrel's managed proxy is the sole route from a browser to this app.
+  app_proxy:
+    environment:
+      APP_HOST: codex-agent_app_1
+      APP_PORT: "8080"
+
+  app:
+    image: ghcr.io/earlvanze/codex-agent:0.3.8@sha256:b80f5183050f327e6913857006cf2133efcf7268c213e44a3ce770dc408e6fdf
+    user: "1000:1000"
+    init: true
+    restart: on-failure
+    stop_grace_period: 45s
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    environment:
+      HOME: /data/codex-home
+      CODEX_HOME: /data/codex-home
+      PORT: "8080"
+      # Umbrel derives this before rendering Compose. Do not obtain it via
+      # exports.sh: legacy lifecycle hooks source exports before APP_PASSWORD
+      # exists, which would leave the internal bridge unauthenticated.
+      BRIDGE_API_KEY: ${APP_PASSWORD}
+      # Browser setup is accepted only from Umbrel's authenticated reverse
+      # proxy. Chat clients use the bearer-protected /v1 API directly.
+      TRUSTED_PROXY_HOSTNAME: ${APP_PROXY_HOSTNAME}
+      CODEX_WORKSPACE: /projects
+      CODEX_AUTH_FILE: /run/secrets/codex/auth.json
+      CODEX_PERSISTENT_AUTH_FILE: /data/codex-home/auth.json
+      REMNIC_AUTH_FILE: /run/secrets/codex/remnic-auth-token
+      REMNIC_MCP_URL: ${REMNIC_MCP_URL:-http://remnic_server_1:4318/mcp}
+      NODE_ENV: production
+    volumes:
+      # Persistent SSD-backed application state and user project workspaces.
+      - ${APP_DATA_DIR}/data:/data:rw
+      - ${APP_DATA_DIR}/projects:/projects:rw
+      # Legacy host-local credentials are migrated once when present. New
+      # installs authenticate through the app's browser device-code flow.
+      - ${APP_DATA_DIR}/runtime-secrets:/run/secrets/codex:ro
+    tmpfs:
+      - /runtime:uid=1000,gid=1000,mode=0700
+      - /tmp:uid=1000,gid=1000,mode=1777
+    healthcheck:
+      test: ["CMD", "node", "/app/healthcheck.mjs"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
