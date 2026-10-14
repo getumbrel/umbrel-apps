@@ -1,0 +1,58 @@
+version: "3.7"
+
+services:
+  # NO app_proxy, and that is not an oversight.
+  #
+  # PearTune's host MUST run with network_mode: host. Measured on a real Umbrel,
+  # twice, with the real image: under Docker's default bridge the firewall admits
+  # the phone (gate:allow-for-pairing) and the connection then dies before the pair
+  # channel opens. Bridge NAT is a second layer of NAT and holepunching does not
+  # survive it.
+  #
+  # app_proxy is a container on a bridge network, so it cannot front a
+  # host-networked service - which is why Umbrel's own host-networked apps (Plex,
+  # Home Assistant) do not use it either. The proxy WAS the only thing standing in
+  # for our missing auth, so the dashboard now has its own: PEARTUNE_PASSWORD, which
+  # umbrelOS fills with the app password shown next to PearTune in the app list.
+  # The host refuses to start on a non-loopback bind without it.
+  app:
+    image: ghcr.io/peerloomllc/peartune-host:0.2.41@sha256:47ab391cc042382a1b5c2eee8dddbba936153b1b3b6695ae41765055e3504032
+    restart: on-failure
+    stop_grace_period: 1m
+    network_mode: host
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      PEARTUNE_HTTP_HOST: 0.0.0.0
+      PEARTUNE_HTTP_PORT: "8741"
+      PEARTUNE_PASSWORD: ${APP_PASSWORD}
+      PEARTUNE_NAME: My Library
+      PEARTUNE_DATA: /data
+      # Point PearTune at the Navidrome you already run on this box. Leave the URL
+      # empty to serve a plain folder instead (mounted at /music below).
+      PEARTUNE_NAVIDROME_URL: ${APP_PEARTUNE_NAVIDROME_URL:-}
+      PEARTUNE_NAVIDROME_USER: ${APP_PEARTUNE_NAVIDROME_USER:-}
+      PEARTUNE_NAVIDROME_PASS: ${APP_PEARTUNE_NAVIDROME_PASS:-}
+      # The DEFAULT library, for a folder install with no dashboard choice. This is
+      # the path INSIDE the container, and it points at the music subfolder of the
+      # mount below. The operator can pick a different folder in the dashboard
+      # (music vs podcasts vs audiobooks) - it browses what the container can see.
+      PEARTUNE_MUSIC: /library/music
+    volumes:
+      # The host identity seed and the grant store. Losing this means every device
+      # must re-pair; leaking it means someone can impersonate your library.
+      - ${APP_DATA_DIR}/data:/data
+      # WHERE AN UMBREL USER'S MUSIC ACTUALLY LIVES.
+      #
+      # This mounted ${UMBREL_ROOT}/data/storage/downloads before, and that path was
+      # simply WRONG: on a real Umbrel it is a different, empty directory, so a folder
+      # install landed on an empty library and looked broken. Navidrome's own Umbrel
+      # app - the established music app on the box, the one PearTune reads alongside -
+      # mounts ${UMBREL_ROOT}/home/Downloads/music, and that is where the files are
+      # (verified on hardware: 1357 tracks there, 0 in the old path).
+      #
+      # We mount the whole Downloads directory, not just music/, so the dashboard's
+      # folder picker can also reach podcasts/ and audiobooks/ if that is where a
+      # given user keeps things. Read-only, always: PearTune serves music, it has no
+      # business writing to it.
+      - ${UMBREL_ROOT}/home/Downloads:/library:ro
