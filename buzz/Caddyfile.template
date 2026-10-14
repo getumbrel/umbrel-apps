@@ -1,0 +1,15 @@
+{
+	admin off
+	auto_https off
+}
+
+:8080 {
+	@setup path /setup
+	handle @setup {
+		reverse_proxy setup:8081
+	}
+
+	handle {
+		reverse_proxy relay:3000
+	}
+}
