@@ -10,7 +10,8 @@ mkdir -p "${DATA_DIR}/prefill"
 
 # Ensure rendered templates exist
 if [[ -f "${APP_DIR}/index.html.template" ]]; then
-  envsubst < "${APP_DIR}/index.html.template" > "${APP_DIR}/index.html"
+  VARS='$LANCACHE_IP $CACHE_DISK_SIZE $UPSTREAM_DNS $CACHE_MEM_SIZE $CACHE_MAX_AGE $PREFILL_SCHEDULE $ENABLE_PREFILL'
+  envsubst "$VARS" < "${APP_DIR}/index.html.template" > "${APP_DIR}/index.html"
 fi
 
 if [[ -f "${APP_DIR}/nginx.conf.template" ]]; then

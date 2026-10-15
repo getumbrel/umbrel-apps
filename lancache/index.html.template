@@ -3,22 +3,27 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LanCache - Umbrel</title>
+  <title>LanCache.NET - Umbrel</title>
   <style>
     :root {
-      --bg-dark: #0b0f19;
-      --card-bg: #151d2a;
-      --card-inner: #1c2638;
-      --border-color: #232e42;
-      --text-main: #f8fafc;
-      --text-muted: #94a3b8;
-      --primary: #3b82f6;
-      --primary-hover: #2563eb;
-      --accent: #10b981;
-      --indigo: #6366f1;
-      --warning: #f59e0b;
-      --danger: #ef4444;
-      --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --bg-body: #141414;
+      --bg-header: #1f1f1f;
+      --bg-card: #1c1c1c;
+      --bg-card-inner: #242424;
+      --bg-terminal: #0f0f0f;
+      --border-color: #333333;
+      --border-highlight: #444444;
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+      --text-dim: #6b7280;
+      --red-primary: #e91d12;
+      --red-hover: #f30001;
+      --red-glow: rgba(233, 29, 18, 0.25);
+      --teal-primary: #0389aa;
+      --teal-glow: rgba(3, 137, 170, 0.25);
+      --green-status: #10b981;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
     }
 
     * {
@@ -28,220 +33,513 @@
     }
 
     body {
-      background-color: var(--bg-dark);
+      background-color: var(--bg-body);
       color: var(--text-main);
-      font-family: var(--font-family);
-      line-height: 1.6;
-      padding: 24px;
+      font-family: var(--font-sans);
+      line-height: 1.55;
+      padding: 24px 16px;
       display: flex;
       justify-content: center;
       min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
     }
 
     .container {
-      max-width: 980px;
+      max-width: 1060px;
       width: 100%;
       display: flex;
       flex-direction: column;
-      gap: 24px;
+      gap: 22px;
     }
 
-    /* Header */
+    /* LanCache Header */
     .header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 20px 24px;
-      background: var(--card-bg);
+      padding: 18px 24px;
+      background: var(--bg-header);
       border: 1px solid var(--border-color);
-      border-radius: 14px;
+      border-bottom: 3px solid var(--red-primary);
+      border-radius: 10px;
       flex-wrap: wrap;
+      gap: 16px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    }
+
+    .brand-wrap {
+      display: flex;
+      align-items: center;
       gap: 16px;
     }
 
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 14px;
+    .brand-logo-svg {
+      height: 42px;
+      width: auto;
+      max-width: 220px;
+      display: block;
     }
 
-    .logo {
-      width: 46px;
-      height: 46px;
-      border-radius: 10px;
-      background: linear-gradient(135deg, #10b981 0%, #3b82f6 100%);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-    }
-
-    .logo svg {
-      width: 28px;
-      height: 28px;
-      fill: #ffffff;
-    }
-
-    .brand-text h1 {
-      font-size: 1.35rem;
-      font-weight: 700;
-      letter-spacing: -0.02em;
-    }
-
-    .brand-text p {
+    .brand-tagline {
       font-size: 0.85rem;
       color: var(--text-muted);
+      border-left: 2px solid #3a3a3a;
+      padding-left: 14px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
     }
 
-    .status-badges {
+    .brand-tagline strong {
+      color: #fff;
+      font-weight: 600;
+    }
+
+    .header-badges {
       display: flex;
       gap: 10px;
       flex-wrap: wrap;
+      align-items: center;
     }
 
-    .status-badge {
+    .badge {
       display: inline-flex;
       align-items: center;
       gap: 8px;
       padding: 6px 14px;
-      border-radius: 9999px;
-      font-size: 0.8rem;
-      font-weight: 600;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.04em;
+      letter-spacing: 0.05em;
     }
 
-    .status-badge.online {
-      background: rgba(16, 185, 129, 0.15);
+    .badge-teal {
+      background: rgba(3, 137, 170, 0.18);
+      color: #38bdf8;
+      border: 1px solid rgba(3, 137, 170, 0.45);
+    }
+
+    .badge-red {
+      background: rgba(233, 29, 18, 0.18);
+      color: #f87171;
+      border: 1px solid rgba(233, 29, 18, 0.45);
+    }
+
+    .badge-green {
+      background: rgba(16, 185, 129, 0.18);
       color: #34d399;
-      border: 1px solid rgba(16, 185, 129, 0.3);
+      border: 1px solid rgba(16, 185, 129, 0.45);
     }
 
-    .status-badge.pending {
-      background: rgba(245, 158, 11, 0.15);
-      color: #fbbf24;
-      border: 1px solid rgba(245, 158, 11, 0.3);
+    .badge-gray {
+      background: rgba(156, 163, 175, 0.15);
+      color: #9ca3af;
+      border: 1px solid rgba(156, 163, 175, 0.3);
     }
 
-    .status-dot {
+    .dot {
       width: 8px;
       height: 8px;
       border-radius: 50%;
-      background-color: currentColor;
-      box-shadow: 0 0 8px currentColor;
+      display: inline-block;
     }
+    .badge-teal .dot { background: #38bdf8; box-shadow: 0 0 8px #38bdf8; }
+    .badge-red .dot { background: #ef4444; box-shadow: 0 0 8px #ef4444; }
+    .badge-green .dot { background: #10b981; box-shadow: 0 0 8px #10b981; }
+    .badge-gray .dot { background: #6b7280; }
 
-    /* Grid Layout */
-    .grid {
+    /* Grid layout */
+    .grid-2 {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
       gap: 20px;
     }
 
-    /* Cards */
     .card {
-      background: var(--card-bg);
+      background: var(--bg-card);
       border: 1px solid var(--border-color);
-      border-radius: 14px;
-      padding: 24px;
+      border-radius: 10px;
+      padding: 22px;
       display: flex;
       flex-direction: column;
       gap: 16px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
     }
 
-    .card h2 {
-      font-size: 1.1rem;
-      font-weight: 600;
+    .card-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #ffffff;
       display: flex;
       align-items: center;
       gap: 10px;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 12px;
+      letter-spacing: -0.01em;
     }
 
-    .card h2 svg {
+    .card-title svg {
       width: 20px;
       height: 20px;
-      fill: var(--accent);
+      fill: var(--red-primary);
+      flex-shrink: 0;
     }
 
-    .card-full {
-      grid-column: 1 / -1;
-    }
-
-    /* Info List */
-    .info-list {
+    /* Info list */
+    .info-table {
+      width: 100%;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
     }
 
-    .info-item {
+    .info-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 10px 14px;
-      background: var(--card-inner);
-      border-radius: 8px;
-      font-size: 0.9rem;
+      padding: 9px 12px;
+      background: var(--bg-card-inner);
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      font-size: 0.88rem;
     }
 
-    .info-label {
+    .info-key {
       color: var(--text-muted);
+      font-weight: 500;
     }
 
-    .info-value {
-      font-weight: 600;
-      color: var(--text-main);
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      font-size: 0.85rem;
+    .info-val {
+      font-weight: 700;
+      color: #ffffff;
+      font-family: var(--font-mono);
+      font-size: 0.84rem;
     }
 
-    /* Platform Badges */
-    .platform-badges {
+    /* Buttons */
+    .btn-row {
       display: flex;
-      gap: 8px;
+      gap: 12px;
       flex-wrap: wrap;
+      margin-top: 4px;
     }
 
-    .platform-badge {
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 16px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.15s ease-in-out;
+      border: 1px solid transparent;
+    }
+
+    .btn-red {
+      background: linear-gradient(180deg, var(--red-primary) 0%, #b8140b 100%);
+      color: #ffffff;
+      box-shadow: 0 2px 8px var(--red-glow);
+    }
+    .btn-red:hover {
+      background: linear-gradient(180deg, var(--red-hover) 0%, #d1170d 100%);
+      box-shadow: 0 4px 12px rgba(243, 0, 1, 0.4);
+    }
+
+    .btn-secondary {
+      background: var(--bg-card-inner);
+      color: var(--text-main);
+      border-color: var(--border-color);
+    }
+    .btn-secondary:hover {
+      background: #2b2b2b;
+      border-color: #555;
+    }
+
+    .btn-sm {
+      padding: 6px 12px;
+      font-size: 0.8rem;
+    }
+
+    /* Platform chips */
+    .platform-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .chip {
       display: inline-flex;
       align-items: center;
       gap: 6px;
       padding: 6px 12px;
-      background: var(--card-inner);
+      background: var(--bg-card-inner);
       border: 1px solid var(--border-color);
       border-radius: 6px;
-      font-size: 0.8rem;
-      color: #e2e8f0;
+      font-size: 0.82rem;
+      color: #e5e7eb;
+    }
+
+    /* PREFILL CENTER (Flagship Feature) */
+    .prefill-card {
+      border: 1px solid rgba(233, 29, 18, 0.4);
+      background: linear-gradient(180deg, #1f1c1c 0%, #171717 100%);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .prefill-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--red-primary) 0%, var(--teal-primary) 100%);
+    }
+
+    .prefill-tabs {
+      display: flex;
+      gap: 8px;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .tab-btn {
+      background: var(--bg-card-inner);
+      color: var(--text-muted);
+      border: 1px solid var(--border-color);
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 0.86rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease-in-out;
+    }
+
+    .tab-btn:hover {
+      color: #fff;
+      border-color: #555;
+    }
+
+    .tab-btn.active {
+      background: var(--red-primary);
+      color: #ffffff;
+      border-color: var(--red-primary);
+      box-shadow: 0 2px 8px var(--red-glow);
+    }
+
+    .tab-content {
+      display: none;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .tab-content.active {
+      display: flex;
+    }
+
+    /* Game Selector Grid */
+    .game-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 10px;
+    }
+
+    .game-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      background: var(--bg-card-inner);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      color: var(--text-main);
+      cursor: pointer;
+      text-align: left;
+      font-size: 0.84rem;
+      transition: all 0.12s ease;
+      user-select: none;
+    }
+
+    .game-btn:hover {
+      background: #2a2a2a;
+      border-color: #555;
+    }
+
+    .game-btn.selected {
+      background: rgba(233, 29, 18, 0.15);
+      border-color: var(--red-primary);
+      color: #ffffff;
+    }
+
+    .game-check {
+      width: 18px;
+      height: 18px;
+      border-radius: 4px;
+      border: 2px solid #555;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.12s ease;
+    }
+
+    .game-btn.selected .game-check {
+      background: var(--red-primary);
+      border-color: var(--red-primary);
+    }
+
+    .game-check svg {
+      width: 12px;
+      height: 12px;
+      fill: #fff;
+      display: none;
+    }
+
+    .game-btn.selected .game-check svg {
+      display: block;
+    }
+
+    .game-details {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .game-name {
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .game-appid {
+      font-size: 0.72rem;
+      color: var(--text-dim);
+      font-family: var(--font-mono);
+    }
+
+    .game-btn.selected .game-appid {
+      color: #fca5a5;
+    }
+
+    /* Terminal command display */
+    .terminal-box {
+      background: var(--bg-terminal);
+      border: 1px solid #292929;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+    }
+
+    .terminal-header {
+      background: #222222;
+      padding: 6px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #2e2e2e;
+    }
+
+    .terminal-title {
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      color: #888888;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .terminal-dots {
+      display: inline-flex;
+      gap: 6px;
+    }
+    .t-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #444;
+    }
+    .t-dot.red { background: #ef4444; }
+    .t-dot.yellow { background: #f59e0b; }
+    .t-dot.green { background: #10b981; }
+
+    .terminal-body {
+      padding: 14px 16px;
+      font-family: var(--font-mono);
+      font-size: 0.84rem;
+      color: #38bdf8;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+      line-height: 1.5;
+    }
+
+    .terminal-prompt {
+      color: #e91d12;
+      user-select: none;
+      margin-right: 8px;
+      font-weight: 700;
+    }
+
+    /* Quick action callouts */
+    .callout {
+      padding: 14px 18px;
+      border-radius: 8px;
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      font-size: 0.88rem;
+    }
+
+    .callout-info {
+      background: rgba(3, 137, 170, 0.12);
+      border: 1px solid rgba(3, 137, 170, 0.35);
+      color: #bae6fd;
+    }
+
+    .callout-warning {
+      background: rgba(233, 29, 18, 0.12);
+      border: 1px solid rgba(233, 29, 18, 0.35);
+      color: #fecaca;
     }
 
     /* Stepper */
     .stepper {
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 14px;
     }
 
-    .step {
+    .step-item {
       display: flex;
-      gap: 16px;
-      padding: 16px;
-      background: var(--card-inner);
-      border-radius: 10px;
-      border-left: 4px solid var(--accent);
+      gap: 14px;
+      padding: 14px;
+      background: var(--bg-card-inner);
+      border-radius: 8px;
+      border-left: 3px solid var(--red-primary);
     }
 
-    .step-number {
-      width: 28px;
-      height: 28px;
-      min-width: 28px;
+    .step-badge {
+      width: 26px;
+      height: 26px;
+      min-width: 26px;
       border-radius: 50%;
-      background: var(--accent);
+      background: var(--red-primary);
       color: #fff;
       display: flex;
       align-items: center;
       justify-content: center;
       font-weight: 700;
-      font-size: 0.85rem;
+      font-size: 0.8rem;
     }
 
     .step-content {
@@ -251,103 +549,55 @@
       width: 100%;
     }
 
-    .step-title {
+    .step-heading {
       font-weight: 600;
-      font-size: 0.95rem;
-    }
-
-    .step-desc {
-      font-size: 0.85rem;
-      color: var(--text-muted);
-    }
-
-    .code-snippet {
-      display: block;
-      background: #0f172a;
-      border: 1px solid var(--border-color);
-      border-radius: 6px;
-      padding: 10px 14px;
-      font-family: ui-monospace, SFMono-Regular, monospace;
-      font-size: 0.82rem;
-      color: #38bdf8;
-      margin-top: 6px;
-      overflow-x: auto;
-    }
-
-    /* Buttons */
-    .btn-group {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-      margin-top: 8px;
-    }
-
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 10px 18px;
-      border-radius: 8px;
-      font-size: 0.88rem;
-      font-weight: 600;
-      text-decoration: none;
-      cursor: pointer;
-      border: none;
-      transition: all 0.15s ease-in-out;
-    }
-
-    .btn-primary {
-      background: var(--accent);
+      font-size: 0.92rem;
       color: #ffffff;
     }
 
-    .btn-primary:hover {
-      background: #059669;
+    .step-text {
+      font-size: 0.84rem;
+      color: var(--text-muted);
     }
 
-    .btn-secondary {
-      background: var(--card-inner);
-      color: var(--text-main);
-      border: 1px solid var(--border-color);
-    }
-
-    .btn-secondary:hover {
-      background: #232e42;
-    }
-
-    /* Callout */
-    .callout {
-      padding: 14px 18px;
+    /* Toast Notification */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #10b981;
+      color: #ffffff;
+      padding: 12px 20px;
       border-radius: 8px;
-      font-size: 0.86rem;
-      line-height: 1.5;
+      font-size: 0.88rem;
+      font-weight: 600;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
       display: flex;
-      gap: 12px;
-      align-items: flex-start;
+      align-items: center;
+      gap: 8px;
+      opacity: 0;
+      transform: translateY(16px);
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      pointer-events: none;
+      z-index: 1000;
     }
 
-    .callout.info {
-      background: rgba(59, 130, 246, 0.12);
-      border: 1px solid rgba(59, 130, 246, 0.25);
-      color: #93c5fd;
-    }
-
-    .callout.warning {
-      background: rgba(245, 158, 11, 0.12);
-      border: 1px solid rgba(245, 158, 11, 0.25);
-      color: #fcd34d;
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
     }
 
     /* Footer */
     .footer {
       text-align: center;
-      font-size: 0.8rem;
-      color: var(--text-muted);
-      padding: 12px 0 24px;
+      font-size: 0.82rem;
+      color: var(--text-dim);
+      padding: 16px 0 8px;
+      border-top: 1px solid #242424;
     }
 
     .footer a {
-      color: var(--accent);
+      color: var(--red-primary);
       text-decoration: none;
     }
 
@@ -358,221 +608,584 @@
 </head>
 <body>
   <div class="container">
-    <!-- Header -->
+    <!-- Header with Official LanCache.NET Branding -->
     <header class="header">
-      <div class="brand">
-        <div class="logo">
-          <!-- Game / Cache Vector Icon -->
-          <svg viewBox="0 0 24 24">
-            <path d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H8v3H6v-3H3v-2h3V8h2v3h3v2zm4.5 2c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm4-3c-.83 0-1.5-.67-1.5-1.5S18.67 9 19.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
-          </svg>
-        </div>
-        <div class="brand-text">
-          <h1>LanCache</h1>
-          <p>Local High-Speed Game & Update Caching Proxy</p>
+      <div class="brand-wrap">
+        <!-- Official LanCache.NET Vector Logo -->
+        <svg class="brand-logo-svg" viewBox="0 0 1725.1 353.72" xmlns="http://www.w3.org/2000/svg">
+          <style>
+            .lc-w{fill:#FFFFFF;}
+            .lc-r{fill:none;stroke:#E91D12;stroke-width:14;stroke-miterlimit:10;}
+            .lc-rd{fill:#E91D12;}
+          </style>
+          <path class="lc-w" d="M485.71,209.68c0-31.36,0-61.28,0-91.59c5.06,0,9.78,0,14.82,0c0,39.14,0,78.36,0,117.77c-4.12,0-8.1,0-12.57,0 c-28.97-36.28-58.15-72.81-87.23-109.23c0-3.05,0-5.87,0-8.98c3.9,0,7.67,0,11.82,0C436.52,147.81,460.65,178.16,485.71,209.68z"/>
+          <path class="lc-w" d="M1252.33,126.84c0-3.33,0-6.12,0-9.19c3.83,0,7.43,0,11.66,0c23.94,30.11,48.16,60.56,73.19,92.04 c0-31.28,0-61.31,0-91.66c5.22,0,9.95,0,14.98,0c0,39.14,0,78.22,0,117.67c-4.08,0-8.16,0-12.87,0 C1310.53,199.71,1281.44,163.28,1252.33,126.84z"/>
+          <path class="lc-w" d="M1018.55,168.91c0-17.48,0-34.11,0-51.14c4.93,0,9.65,0,14.71,0c0,39.12,0,78.32,0,117.9 c-4.54,0-9.27,0-14.49,0c0-17.52,0-35.25,0-53.48c-17.53,0-34.58,0-51.9,0c0-4.58,0-8.67,0-13.29 C983.87,168.91,1000.91,168.91,1018.55,168.91z"/>
+          <path class="lc-w" d="M938.54,117.59c5,0,9.62,0,14.53,0c0,39.43,0,78.61,0,118.13c-4.81,0-9.54,0-14.53,0 C938.54,196.48,938.54,157.26,938.54,117.59z"/>
+          <path class="lc-w" d="M775.57,235.87c-5.58,0-10.53,0-16.02,0c-4.59-11.27-9.26-22.74-14-34.41c-12.36,0-24.47,0-37.44,0 c1.53-4.19,2.86-7.81,4.32-11.8c9.72,0,19.31,0,29.74,0c-5.13-13.14-9.99-25.58-14.95-38.3c2-5.44,4.05-10.98,6.52-17.69 C747.91,168.3,761.63,201.8,775.57,235.87z"/>
+          <path class="lc-w" d="M798.68,183.91c5.12,0,9.9,0,14.75,0c4.47,19.56,13.85,35.1,35.05,38.88c17.61,3.14,31.02-4.35,40.22-19.97 c3.97,2.17,7.85,4.29,11.7,6.39c-4.21,16.19-27.87,28.9-51.25,27.68C825.2,235.63,802.78,212.31,798.68,183.91z"/>
+          <path class="lc-w" d="M898.68,142.69c-3.98,2.59-7.7,5.01-11.62,7.56c-8.88-16.05-22.74-22.31-39.95-19.15 c-20.64,3.8-29.71,18.98-33.53,38.37c-4.92,0-9.67,0-14.42,0c-1.71-19.11,17.53-44.05,38.79-50.32 C863.19,111.71,887.04,120.79,898.68,142.69z"/>
+          <path class="lc-w" d="M540.62,183.87c5.04,0,9.67,0,14.49,0c5.01,20.66,15.13,36.71,38.31,39.39c15.45,1.79,28.18-5.6,36.95-20.51 c3.98,2.16,7.98,4.34,11.95,6.49c-5.81,17.41-30.82,30.3-53.03,27.51C564.9,233.69,542.74,209.81,540.62,183.87z"/>
+          <path class="lc-w" d="M555.34,169.48c-4.99,0-9.78,0-14.56,0c-0.44-21.95,19.02-45.43,42.2-51.17c24.04-5.95,47.03,3.74,57.42,24.43 c-3.71,2.42-7.45,4.86-11.47,7.49c-9.07-16.2-23.21-22.53-40.8-18.99C567.81,135.34,559.09,150.63,555.34,169.48z"/>
+          <path class="lc-w" d="M681.46,235.79c-5.28,0-10.04,0-15.46,0c16.27-39.74,32.36-79.01,48.44-118.28c4.2,0,7.99,0,13.07,0 C712.03,157.26,696.78,196.44,681.46,235.79z"/>
+          <path class="lc-w" d="M1414.28,130.83c0,7.93,0,15.36,0,23c-5.19,0-9.94,0-14.84,0c0-12.14,0-24.05,0-36.22c26.2,0,52.12,0,78.45,0 c0,4.29,0,8.49,0,13.23C1456.82,130.83,1435.76,130.83,1414.28,130.83z"/>
+          <path class="lc-w" d="M1095.68,153.89c-5.36,0-9.99,0-14.94,0c0-11.99,0-23.88,0-36.16c26.11,0,52.26,0,78.59,0c0,4.32,0,8.43,0,13 c-21.16,0-42.21,0-63.65,0C1095.68,138.59,1095.68,146,1095.68,153.89z"/>
+          <path class="lc-w" d="M120.95,117.56c5.02,0,9.63,0,14.52,0c0,29.96,0,59.83,0,89.9c-4.83,0-9.55,0-14.52,0 C120.95,177.48,120.95,147.77,120.95,117.56z"/>
+          <path class="lc-w" d="M1507.61,130.5c0-4.25,0-8.37,0-12.83c32.17,0,64.21,0,96.54,0c0,4.24,0,8.33,0,12.83 C1572.22,130.5,1540.19,130.5,1507.61,130.5z"/>
+          <path class="lc-w" d="M1548.69,146.05c4.98,0,9.59,0,14.49,0c0,29.9,0,59.62,0,89.68c-4.77,0-9.49,0-14.49,0 C1548.69,205.94,1548.69,176.21,1548.69,146.05z"/>
+          <path class="lc-w" d="M1414.18,207.61c-5.27,0-9.75,0-14.62,0c0-12.82,0-25.52,0-38.4c23.27,0,46.37,0,69.83,0c0,4.17,0,8.2,0,12.72 c-18.31,0-36.55,0-55.21,0C1414.18,190.66,1414.18,198.92,1414.18,207.61z"/>
+          <path class="lc-w" d="M1080.86,169.29c23.24,0,46.44,0,69.94,0c0,4.08,0,8,0,12.37c-18.22,0-36.42,0-55.19,0c0,8.78,0,17.15,0,25.79 c-5.15,0-9.74,0-14.75,0C1080.86,194.88,1080.86,182.21,1080.86,169.29z"/>
+          <path class="lc-w" d="M1252.31,150.19c5.08,6.58,9.4,12.04,13.54,17.63c0.81,1.1,1.29,2.73,1.3,4.11 c0.08,21.11,0.06,42.22,0.06,63.73c-5.04,0-9.88,0-14.89,0C1252.31,207.54,1252.31,179.52,1252.31,150.19z"/>
+          <path class="lc-w" d="M400.86,150.22c5,6.47,9.38,12.07,13.65,17.75c0.64,0.85,1.06,2.1,1.06,3.17c0.06,21.44,0.05,42.89,0.05,64.62 c-5.05,0-9.77,0-14.76,0C400.86,207.63,400.86,179.58,400.86,150.22z"/>
+          <path class="lc-w" d="M201.85,223.07c0,4.34,0,8.32,0,12.64c-26.87,0-53.62,0-80.76,0c0-4.08,0-8.28,0-12.64 C148.05,223.07,174.92,223.07,201.85,223.07z"/>
+          <path class="lc-w" d="M1160.63,223c0,4.3,0,8.39,0,12.76c-26.57,0-52.99,0-79.8,0c0-4.05,0-8.25,0-12.76 C1107.34,223,1133.88,223,1160.63,223z"/>
+          <path class="lc-w" d="M1479.42,222.97c0,4.39,0,8.48,0,12.82c-26.62,0-53.04,0-79.85,0c0-4.17,0-8.36,0-12.82 C1426.06,222.97,1452.49,222.97,1479.42,222.97z"/>
+          <path class="lc-w" d="M1196.75,235.69c0-6.01,0-11.91,0-18.1c3.9,0,7.66,0,11.75,0c0,5.92,0,11.84,0,18.1 C1204.69,235.69,1200.83,235.69,1196.75,235.69z"/>
+          <!-- Red orbit loop icon -->
+          <path class="lc-r" d="M360.31,232.15c0,0-26.51,5.63-48.23-6.72c-21.72-12.35-30.44-38.01-30.44-38.01s26.51-5.63,48.23,6.72 C351.59,206.49,360.31,232.15,360.31,232.15z"/>
+          <path class="lc-r" d="M294.81,122.03c0,0,18.13,20.14,18.29,45.13c0.16,24.99-17.7,45.37-17.7,45.37s-18.13-20.14-18.29-45.13 C276.95,142.41,294.81,122.03,294.81,122.03z"/>
+          <path class="lc-r" d="M231.71,233.01c0,0,8.38-25.77,29.94-38.41s48.14-7.35,48.14-7.35s-8.38,25.77-29.94,38.41 C258.28,238.29,231.71,233.01,231.71,233.01z"/>
+          <circle class="lc-rd" cx="295.84" cy="196.41" r="26"/>
+        </svg>
+        <div class="brand-tagline">
+          <strong>LAN Party Game Caching</strong>
+          <span>umbrelOS Node Edition</span>
         </div>
       </div>
-      <div class="status-badges">
-        <div id="cacheBadge" class="status-badge online">
-          <span class="status-dot"></span>
+
+      <div class="header-badges">
+        <div id="cacheBadge" class="badge badge-teal">
+          <span class="dot"></span>
           <span id="cacheText">CACHE ACTIVE</span>
         </div>
-        <div id="dnsBadge" class="status-badge online">
-          <span class="status-dot"></span>
+        <div class="badge badge-red">
+          <span class="dot"></span>
           <span>DNS (PORT 53)</span>
+        </div>
+        <div id="prefillBadge" class="badge badge-gray">
+          <span class="dot"></span>
+          <span id="prefillText">PREFILL: STANDBY</span>
         </div>
       </div>
     </header>
 
-    <!-- Main Grid -->
-    <div class="grid">
-      <!-- Configuration Details -->
+    <!-- Top Grid: System Overview & CDNs -->
+    <div class="grid-2">
+      <!-- Cache Configuration -->
       <div class="card">
-        <h2>
+        <div class="card-title">
           <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
-          Cache Settings
-        </h2>
-        <div class="info-list">
-          <div class="info-item">
-            <span class="info-label">LanCache Server IP</span>
-            <span id="ipValue" class="info-value">${LANCACHE_IP}</span>
+          LanCache Configuration
+        </div>
+        <div class="info-table">
+          <div class="info-row">
+            <span class="info-key">LanCache Node IP</span>
+            <span id="ipValue" class="info-val">${LANCACHE_IP}</span>
           </div>
-          <div class="info-item">
-            <span class="info-label">Allocated Disk Cache</span>
-            <span class="info-value">${CACHE_DISK_SIZE}</span>
+          <div class="info-row">
+            <span class="info-key">Allocated Cache Storage</span>
+            <span class="info-val">${CACHE_DISK_SIZE}</span>
           </div>
-          <div class="info-item">
-            <span class="info-label">Upstream DNS Resolver</span>
-            <span class="info-value">${UPSTREAM_DNS}</span>
+          <div class="info-row">
+            <span class="info-key">Upstream DNS Server</span>
+            <span class="info-val">${UPSTREAM_DNS}</span>
           </div>
-          <div class="info-item">
-            <span class="info-label">Host Device</span>
-            <span class="info-value">${DEVICE_HOSTNAME}</span>
+          <div class="info-row">
+            <span class="info-key">Memory Cache Index</span>
+            <span class="info-val">${CACHE_MEM_SIZE}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-key">Cache Retention Policy</span>
+            <span class="info-val">${CACHE_MAX_AGE}</span>
           </div>
         </div>
-
-        <div class="btn-group">
-          <a href="https://lancache.net/docs/" target="_blank" rel="noopener" class="btn btn-primary">
-            Official Documentation &rarr;
+        <div class="btn-row">
+          <a href="https://lancache.net/docs/" target="_blank" rel="noopener" class="btn btn-red btn-sm">
+            LanCache Documentation &rarr;
           </a>
-          <a href="https://github.com/lancachenet/monolithic" target="_blank" rel="noopener" class="btn btn-secondary">
-            GitHub Repo
+          <a href="https://github.com/lancachenet/monolithic" target="_blank" rel="noopener" class="btn btn-secondary btn-sm">
+            Monolithic GitHub
           </a>
         </div>
       </div>
 
-      <!-- Supported Services -->
+      <!-- Supported CDNs -->
       <div class="card">
-        <h2>
+        <div class="card-title">
           <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>
-          Supported Gaming CDNs
-        </h2>
+          Supported Gaming Services
+        </div>
         <p style="font-size: 0.85rem; color: var(--text-muted);">
-          LanCache transparently caches chunk downloads from these services without requiring client-side modifications:
+          LanCache transparently intercepts and accelerates chunk downloads from all major gaming networks on your LAN:
         </p>
-        <div class="platform-badges">
-          <span class="platform-badge">&#127918; Steam</span>
-          <span class="platform-badge">&#127918; Epic Games</span>
-          <span class="platform-badge">&#127918; Riot (LoL / Valorant)</span>
-          <span class="platform-badge">&#127918; Battle.net / Blizzard</span>
-          <span class="platform-badge">&#127918; EA App / Origin</span>
-          <span class="platform-badge">&#127918; Ubisoft Connect</span>
-          <span class="platform-badge">&#127918; Xbox & PlayStation</span>
-          <span class="platform-badge">&#128187; Windows Update</span>
+        <div class="platform-chips">
+          <span class="chip">&#127918; Steam</span>
+          <span class="chip">&#127918; Epic Games</span>
+          <span class="chip">&#127918; Riot (LoL &amp; Valorant)</span>
+          <span class="chip">&#127918; Battle.net / Blizzard</span>
+          <span class="chip">&#127918; EA App / Origin</span>
+          <span class="chip">&#127918; Ubisoft Connect</span>
+          <span class="chip">&#127918; Xbox &amp; PlayStation</span>
+          <span class="chip">&#128187; Windows Update / WSUS</span>
         </div>
-      </div>
-
-      <!-- LanCache Prefill Card -->
-      <div class="card">
-        <h2>
-          <svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>
-          LanCache Prefill
-        </h2>
-        <div class="info-list">
-          <div class="info-item">
-            <span class="info-label">Service Status</span>
-            <span id="prefillBadgeVal" class="info-value" style="font-weight: 600;">${ENABLE_PREFILL}</span>
-          </div>
-          <div class="info-item">
-            <span class="info-label">Schedule (UTC)</span>
-            <span class="info-value">${PREFILL_SCHEDULE}</span>
-          </div>
-          <div class="info-item">
-            <span class="info-label">Supported Tools</span>
-            <span class="info-value">Steam, Epic, Battle.net</span>
-          </div>
-        </div>
-        <div style="margin-top: 10px; font-size: 0.85rem; color: var(--text-muted);">
-          To log in and select games to cache, run in your terminal:
-        </div>
-        <code class="code-snippet">docker exec -it lancache_prefill_1 SteamPrefill select-apps</code>
-      </div>
-
-      <!-- Setup Walkthrough -->
-      <div class="card card-full">
-        <h2>
-          <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H7c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.04-.42 1.99-1.07 2.75z"/></svg>
-          Quick Setup & DNS Configuration Guide
-        </h2>
-
-        <div class="callout info">
+        <div class="callout callout-info" style="margin-top: auto;">
           <span>&#128161;</span>
           <div>
-            <strong>How LanCache Works:</strong> Gaming clients download updates over HTTP. When you configure your network to use LanCache's DNS, domain requests (e.g. <code>*.steamcontent.com</code>) resolve directly to your Umbrel server. The first time anyone downloads an update, LanCache fetches and stores it; any subsequent download is served directly from your Umbrel at full local network speed (1-10 Gbps)!
+            <strong>Zero Client Mods:</strong> No software installation is required on gaming PCs or consoles. Simply point your router's primary DNS to your Umbrel node IP!
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PREFILL CENTER: Interactive WebUI Game Prefill Assistant -->
+    <div class="card prefill-card">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>
+        <span>LanCache Prefill Assistant</span>
+        <span style="margin-left: auto; font-size: 0.78rem; font-weight: 500; color: var(--text-muted);">
+          Schedule: <code style="color: #38bdf8;">${PREFILL_SCHEDULE}</code>
+        </span>
+      </div>
+
+      <p style="font-size: 0.88rem; color: var(--text-muted);">
+        Pre-download game updates directly into LanCache before anyone requests them so your LAN party starts instantly with 100% cache hits.
+      </p>
+
+      <!-- Tabs Navigation -->
+      <div class="prefill-tabs">
+        <button class="tab-btn active" onclick="switchPrefillTab('steam', this)">
+          <span>&#127918;</span> Steam Prefill
+        </button>
+        <button class="tab-btn" onclick="switchPrefillTab('epic', this)">
+          <span>&#9889;</span> Epic Games
+        </button>
+        <button class="tab-btn" onclick="switchPrefillTab('bnet', this)">
+          <span>&#9876;</span> Battle.net
+        </button>
+        <button class="tab-btn" onclick="switchPrefillTab('schedule', this)">
+          <span>&#9201;</span> Automated Schedule
+        </button>
+      </div>
+
+      <!-- TAB 1: STEAM PREFILL -->
+      <div id="tab-steam" class="tab-content active">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+          <span style="font-weight: 600; font-size: 0.9rem; color: #fff;">
+            Click games to add to your prefill batch:
+          </span>
+          <div style="display: flex; gap: 8px;">
+            <button class="btn btn-secondary btn-sm" onclick="selectAllGames(true)">Select All</button>
+            <button class="btn btn-secondary btn-sm" onclick="selectAllGames(false)">Clear</button>
           </div>
         </div>
 
+        <!-- Quick Game Selector Grid -->
+        <div class="game-grid" id="gameGrid">
+          <!-- Injected dynamically by JS for safety -->
+        </div>
+
+        <!-- Custom App ID Input -->
+        <div style="display: flex; gap: 10px; align-items: center; margin-top: 4px;">
+          <input type="number" id="customAppInput" placeholder="Add custom Steam App ID (e.g. 1245620 for Elden Ring)" 
+                 style="background: #111; border: 1px solid var(--border-color); color: #fff; padding: 8px 12px; border-radius: 6px; font-size: 0.85rem; flex: 1;">
+          <button class="btn btn-secondary btn-sm" onclick="addCustomGame()">+ Add App ID</button>
+        </div>
+
+        <!-- Generated Command Box -->
+        <div class="terminal-box">
+          <div class="terminal-header">
+            <div class="terminal-title">
+              <span class="terminal-dots"><span class="t-dot red"></span><span class="t-dot yellow"></span><span class="t-dot green"></span></span>
+              <span>Generated Prefill Command</span>
+            </div>
+            <button class="btn btn-red btn-sm" onclick="copySteamCommand()">
+              <span id="copyBtnIcon">&#128203;</span>
+              <span id="copyBtnText">Copy Command</span>
+            </button>
+          </div>
+          <div class="terminal-body">
+            <span class="terminal-prompt">umbrel:~$</span><span id="steamCommandOutput">docker exec -it lancache_prefill_1 SteamPrefill prefill --app 730,570</span>
+          </div>
+        </div>
+
+        <!-- One-Time Login Helper Accordion -->
+        <div class="step-item" style="background: rgba(0,0,0,0.3); border-left-color: var(--teal-primary);">
+          <div class="step-badge" style="background: var(--teal-primary);">&#128273;</div>
+          <div class="step-content">
+            <div class="step-heading">First Time Setup: One-Time Steam Login</div>
+            <div class="step-text">
+              Because Steam uses Steam Guard 2FA, you must authenticate once interactively. Run this command in your Umbrel terminal to log in and save your credentials securely:
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center; margin-top: 6px;">
+              <code style="background: #000; padding: 6px 10px; border-radius: 4px; font-family: var(--font-mono); font-size: 0.82rem; color: #38bdf8; flex: 1; overflow-x: auto;">
+                docker exec -it lancache_prefill_1 SteamPrefill select-apps
+              </code>
+              <button class="btn btn-secondary btn-sm" onclick="copyText('docker exec -it lancache_prefill_1 SteamPrefill select-apps')">
+                Copy
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 2: EPIC GAMES -->
+      <div id="tab-epic" class="tab-content">
+        <p style="font-size: 0.88rem; color: var(--text-muted);">
+          Pre-populate downloads from the Epic Games Store (Fortnite, Unreal Engine, Rocket League, GTA V):
+        </p>
+
         <div class="stepper">
-          <div class="step">
-            <div class="step-number">1</div>
+          <div class="step-item">
+            <div class="step-badge">1</div>
             <div class="step-content">
-              <div class="step-title">Configure Server LAN IP in Umbrel Settings</div>
-              <div class="step-desc">
-                In your Umbrel dashboard, open <strong>App Store &rarr; LanCache &rarr; Settings</strong>. Ensure <code>LANCACHE_IP</code> matches your Umbrel server's actual local IP address (e.g. <code>192.168.1.50</code>).
+              <div class="step-heading">Authenticate Epic Games Account</div>
+              <div class="step-text">Run once in your Umbrel terminal to sign into Epic Games via browser authorization:</div>
+              <div style="display: flex; gap: 8px; align-items: center; margin-top: 6px;">
+                <code style="background: #000; padding: 6px 10px; border-radius: 4px; font-family: var(--font-mono); font-size: 0.82rem; color: #38bdf8; flex: 1;">
+                  docker exec -it lancache_prefill_1 EpicPrefill select-apps
+                </code>
+                <button class="btn btn-secondary btn-sm" onclick="copyText('docker exec -it lancache_prefill_1 EpicPrefill select-apps')">
+                  Copy
+                </button>
               </div>
             </div>
           </div>
 
-          <div class="step">
-            <div class="step-number">2</div>
+          <div class="step-item">
+            <div class="step-badge">2</div>
             <div class="step-content">
-              <div class="step-title">Point Network DNS to LanCache</div>
-              <div class="step-desc">
-                For devices to route through the cache, set their DNS server to your Umbrel's IP:
-                <br>&bull; <strong>Whole Home (Recommended):</strong> In your router settings, set the <strong>Primary DNS Server</strong> assigned by DHCP to your Umbrel IP.
-                <br>&bull; <strong>Single PC Testing:</strong> On Windows/Mac/Linux, change your IPv4 DNS settings to point to your Umbrel IP.
-              </div>
-            </div>
-          </div>
-
-          <div class="step">
-            <div class="step-number">3</div>
-            <div class="step-content">
-              <div class="step-title">Verify DNS Interception</div>
-              <div class="step-desc">
-                Open Command Prompt / Terminal on your gaming PC and test the DNS resolution:
-              </div>
-              <code class="code-snippet">nslookup lancache.steamcontent.com</code>
-              <div class="step-desc" style="margin-top: 4px;">
-                The response should return your Umbrel server's IP address!
-              </div>
-            </div>
-          </div>
-
-          <div class="step">
-            <div class="step-number">4</div>
-            <div class="step-content">
-              <div class="step-title">Download and Enjoy Local Wire-Speed Gaming!</div>
-              <div class="step-desc">
-                Start a game download or update on Steam or another supported client. Once downloaded, have another PC on your network download the same game and watch it transfer at full local gigabit speed!
+              <div class="step-heading">Prefill Your Epic Library</div>
+              <div class="step-text">Trigger a download run for all selected Epic titles:</div>
+              <div style="display: flex; gap: 8px; align-items: center; margin-top: 6px;">
+                <code style="background: #000; padding: 6px 10px; border-radius: 4px; font-family: var(--font-mono); font-size: 0.82rem; color: #38bdf8; flex: 1;">
+                  docker exec -it lancache_prefill_1 EpicPrefill prefill
+                </code>
+                <button class="btn btn-secondary btn-sm" onclick="copyText('docker exec -it lancache_prefill_1 EpicPrefill prefill')">
+                  Copy
+                </button>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Umbrel Port 80 Details -->
-      <div class="card card-full">
-        <h2>
-          <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
-          Umbrel Port 80 & Network Architecture Note
-        </h2>
-        <div class="callout warning">
-          <span>⚠️</span>
-          <div>
-            <strong>Port 80 Routing on Umbrel:</strong> Game clients (like Steam) connect to port <code>80</code> to fetch game chunks. Because the Umbrel OS web dashboard listens on port 80, this package maps the caching service to port <code>8261:80</code> out of the box so that Umbrel starts cleanly without port conflicts.
-            <br><br>
-            If you want game clients hitting port 80 on your Umbrel server to reach LanCache:
-            <br>&bull; <strong>Option A (Router NAT Redirect):</strong> In your router, add a port forward / NAT rule: redirect incoming TCP port <code>80</code> to <code>&lt;umbrel-ip&gt;:8261</code> for gaming traffic.
-            <br>&bull; <strong>Option B (Secondary Host IP):</strong> Add an alias IP on your server (e.g. <code>ip addr add 192.168.1.51/24 dev eth0</code>) and bind LanCache directly to that IP.
+      <!-- TAB 3: BATTLE.NET -->
+      <div id="tab-bnet" class="tab-content">
+        <p style="font-size: 0.88rem; color: var(--text-muted);">
+          Pre-populate Battle.net / Blizzard games (Call of Duty, World of Warcraft, Overwatch 2, Diablo IV, Hearthstone):
+        </p>
+
+        <div class="stepper">
+          <div class="step-item">
+            <div class="step-badge">1</div>
+            <div class="step-content">
+              <div class="step-heading">Authenticate Battle.net Account</div>
+              <div class="step-text">Run once in your Umbrel terminal to link Battle.net:</div>
+              <div style="display: flex; gap: 8px; align-items: center; margin-top: 6px;">
+                <code style="background: #000; padding: 6px 10px; border-radius: 4px; font-family: var(--font-mono); font-size: 0.82rem; color: #38bdf8; flex: 1;">
+                  docker exec -it lancache_prefill_1 BattleNetPrefill select-apps
+                </code>
+                <button class="btn btn-secondary btn-sm" onclick="copyText('docker exec -it lancache_prefill_1 BattleNetPrefill select-apps')">
+                  Copy
+                </button>
+              </div>
+            </div>
           </div>
+
+          <div class="step-item">
+            <div class="step-badge">2</div>
+            <div class="step-content">
+              <div class="step-heading">Prefill All Selected Blizzard Games</div>
+              <div class="step-text">Downloads all game manifests and updates into LanCache:</div>
+              <div style="display: flex; gap: 8px; align-items: center; margin-top: 6px;">
+                <code style="background: #000; padding: 6px 10px; border-radius: 4px; font-family: var(--font-mono); font-size: 0.82rem; color: #38bdf8; flex: 1;">
+                  docker exec -it lancache_prefill_1 BattleNetPrefill prefill --all
+                </code>
+                <button class="btn btn-secondary btn-sm" onclick="copyText('docker exec -it lancache_prefill_1 BattleNetPrefill prefill --all')">
+                  Copy
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 4: AUTOMATED SCHEDULE -->
+      <div id="tab-schedule" class="tab-content">
+        <div class="info-table">
+          <div class="info-row">
+            <span class="info-key">Service Automation Status</span>
+            <span id="schedStatusVal" class="info-val" style="color: #38bdf8;">${ENABLE_PREFILL}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-key">Cron Schedule Expression</span>
+            <span class="info-val">${PREFILL_SCHEDULE}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-key">Configured Run Timing</span>
+            <span class="info-val">Daily at 04:00 AM UTC (Default)</span>
+          </div>
+        </div>
+
+        <div class="callout callout-info">
+          <span>&#9881;</span>
+          <div>
+            <strong>How to Change Schedule or Enable/Disable:</strong> In your Umbrel web dashboard, click the three dots on the LanCache app icon &rarr; select <strong>Settings</strong>. You can customize the cron schedule expression or toggle <code>ENABLE_PREFILL</code> anytime!
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Setup & Router DNS Configuration -->
+    <div class="card">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H7c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.04-.42 1.99-1.07 2.75z"/></svg>
+        Quick Network Setup Guide
+      </div>
+
+      <div class="stepper">
+        <div class="step-item">
+          <div class="step-badge">1</div>
+          <div class="step-content">
+            <div class="step-heading">Configure Router DNS</div>
+            <div class="step-text">
+              Log into your home router's admin portal (DHCP Settings) and set your <strong>Primary DNS Server</strong> to your Umbrel IP:
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center; margin-top: 6px;">
+              <code id="dnsSnippet" style="background: #000; padding: 6px 12px; border-radius: 4px; font-family: var(--font-mono); font-size: 0.85rem; color: #38bdf8;">
+                ${LANCACHE_IP}
+              </code>
+              <button class="btn btn-secondary btn-sm" onclick="copyText(document.getElementById('dnsSnippet').textContent.trim())">
+                Copy IP
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="step-item">
+          <div class="step-badge">2</div>
+          <div class="step-content">
+            <div class="step-heading">Verify DNS Interception on your PC</div>
+            <div class="step-text">
+              Open Command Prompt (Windows) or Terminal (Mac/Linux) on your gaming PC and verify game domains resolve to your Umbrel:
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center; margin-top: 6px;">
+              <code style="background: #000; padding: 6px 10px; border-radius: 4px; font-family: var(--font-mono); font-size: 0.82rem; color: #38bdf8; flex: 1;">
+                nslookup lancache.steamcontent.com ${LANCACHE_IP}
+              </code>
+              <button class="btn btn-secondary btn-sm" onclick="copyText('nslookup lancache.steamcontent.com ' + document.getElementById('ipValue').textContent.trim())">
+                Copy
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="step-item">
+          <div class="step-badge">3</div>
+          <div class="step-content">
+            <div class="step-heading">Enjoy Gigabit Wire-Speed Downloads</div>
+            <div class="step-text">
+              Download any game or update on one PC. When any other PC or console downloads the same title, it will transfer from your Umbrel at full local gigabit (or 10GbE) wire speed!
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Umbrel Port 80 Routing Architecture Note -->
+    <div class="card">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+        Umbrel Port 80 &amp; Router Forwarding Note
+      </div>
+      <div class="callout callout-warning">
+        <span>&#9888;</span>
+        <div style="font-size: 0.85rem; line-height: 1.5;">
+          <strong>Port 80 Routing on Umbrel:</strong> Game clients download chunks over HTTP port 80. Because the Umbrel OS web manager reserves port 80 for the main dashboard, LanCache binds monolithic to port <strong>8261:80</strong>.
+          <br><br>
+          For maximum speed across your whole network, add a port forward / NAT rule in your router redirecting incoming TCP port <code>80</code> to <code>&lt;umbrel-ip&gt;:8261</code> for gaming traffic, or assign a secondary alias IP to your server.
         </div>
       </div>
     </div>
 
     <!-- Footer -->
     <footer class="footer">
-      Powered by <a href="https://lancache.net" target="_blank" rel="noopener">LanCache.NET</a> &bull; Packaged for <a href="https://umbrel.com" target="_blank" rel="noopener">umbrelOS</a>
+      Powered by <a href="https://lancache.net" target="_blank" rel="noopener">LanCache.NET</a> &bull; Official Community App for <a href="https://umbrel.com" target="_blank" rel="noopener">umbrelOS</a>
     </footer>
   </div>
 
+  <!-- Toast Notification element -->
+  <div id="toast" class="toast">
+    <span>&#10003;</span>
+    <span id="toastMsg">Command copied to clipboard!</span>
+  </div>
+
   <script>
-    // Safe script without ES6 template literals so envsubst does not interfere
+    // PRESET STEAM GAMES
+    var POPULAR_GAMES = [
+      { name: 'Counter-Strike 2', id: '730', selected: true },
+      { name: 'Dota 2', id: '570', selected: true },
+      { name: 'Apex Legends', id: '1172470', selected: false },
+      { name: 'Team Fortress 2', id: '440', selected: false },
+      { name: 'Rust', id: '252490', selected: false },
+      { name: 'Grand Theft Auto V', id: '271590', selected: false },
+      { name: 'Baldur\'s Gate 3', id: '1086940', selected: false },
+      { name: 'Cyberpunk 2077', id: '1091500', selected: false },
+      { name: 'Helldivers 2', id: '553850', selected: false },
+      { name: 'Rainbow Six Siege', id: '359550', selected: false },
+      { name: 'Warframe', id: '230410', selected: false },
+      { name: 'PUBG: BATTLEGROUNDS', id: '578080', selected: false },
+      { name: 'Call of Duty HQ', id: '1938090', selected: false },
+      { name: 'Palworld', id: '1623730', selected: false },
+      { name: 'Left 4 Dead 2', id: '550', selected: false },
+      { name: 'PAYDAY 2', id: '218620', selected: false }
+    ];
+
+    // Render Game Grid
+    function renderGameGrid() {
+      var grid = document.getElementById('gameGrid');
+      grid.innerHTML = '';
+      for (var i = 0; i < POPULAR_GAMES.length; i++) {
+        var g = POPULAR_GAMES[i];
+        var btn = document.createElement('div');
+        btn.className = 'game-btn' + (g.selected ? ' selected' : '');
+        btn.setAttribute('data-id', g.id);
+        btn.onclick = (function(game) {
+          return function() {
+            game.selected = !game.selected;
+            renderGameGrid();
+            updateSteamCommand();
+          };
+        })(g);
+
+        btn.innerHTML = '<div class="game-check">' +
+          '<svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>' +
+          '</div>' +
+          '<div class="game-details">' +
+          '<span class="game-name">' + g.name + '</span>' +
+          '<span class="game-appid">App ID: ' + g.id + '</span>' +
+          '</div>';
+
+        grid.appendChild(btn);
+      }
+    }
+
+    function selectAllGames(state) {
+      for (var i = 0; i < POPULAR_GAMES.length; i++) {
+        POPULAR_GAMES[i].selected = state;
+      }
+      renderGameGrid();
+      updateSteamCommand();
+    }
+
+    function addCustomGame() {
+      var input = document.getElementById('customAppInput');
+      var val = input.value.trim();
+      if (!val || !/^\d+$/.test(val)) {
+        showToast('Please enter a valid numeric Steam App ID');
+        return;
+      }
+      POPULAR_GAMES.push({
+        name: 'Custom App (' + val + ')',
+        id: val,
+        selected: true
+      });
+      input.value = '';
+      renderGameGrid();
+      updateSteamCommand();
+      showToast('Added App ID ' + val + ' to selection');
+    }
+
+    function updateSteamCommand() {
+      var selectedIds = [];
+      for (var i = 0; i < POPULAR_GAMES.length; i++) {
+        if (POPULAR_GAMES[i].selected) {
+          selectedIds.push(POPULAR_GAMES[i].id);
+        }
+      }
+      var out = document.getElementById('steamCommandOutput');
+      if (selectedIds.length === 0) {
+        out.textContent = 'docker exec -it lancache_prefill_1 SteamPrefill prefill';
+      } else {
+        out.textContent = 'docker exec -it lancache_prefill_1 SteamPrefill prefill --app ' + selectedIds.join(',');
+      }
+    }
+
+    function copySteamCommand() {
+      var cmd = document.getElementById('steamCommandOutput').textContent.trim();
+      copyText(cmd);
+      var btnText = document.getElementById('copyBtnText');
+      btnText.textContent = 'Copied!';
+      setTimeout(function() {
+        btnText.textContent = 'Copy Command';
+      }, 2000);
+    }
+
+    function copyText(text) {
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text);
+      } else {
+        var area = document.createElement('textarea');
+        area.value = text;
+        area.style.position = 'fixed';
+        area.style.opacity = '0';
+        document.body.appendChild(area);
+        area.select();
+        document.execCommand('copy');
+        document.body.removeChild(area);
+      }
+      showToast('Copied to clipboard!');
+    }
+
+    function showToast(msg) {
+      var t = document.getElementById('toast');
+      var m = document.getElementById('toastMsg');
+      m.textContent = msg;
+      t.className = 'toast show';
+      setTimeout(function() {
+        t.className = 'toast';
+      }, 2400);
+    }
+
+    function switchPrefillTab(tabName, elem) {
+      var tabs = document.querySelectorAll('.prefill-tabs .tab-btn');
+      for (var i = 0; i < tabs.length; i++) {
+        tabs[i].className = 'tab-btn';
+      }
+      elem.className = 'tab-btn active';
+
+      var contents = document.querySelectorAll('.tab-content');
+      for (var j = 0; j < contents.length; j++) {
+        contents[j].className = 'tab-content';
+      }
+      var target = document.getElementById('tab-' + tabName);
+      if (target) {
+        target.className = 'tab-content active';
+      }
+    }
+
+    // IP validation and badge formatting
     var rawIp = document.getElementById('ipValue').textContent.trim();
     if (!rawIp || rawIp === '' || rawIp.indexOf('$') === 0 || rawIp === '127.0.0.1') {
       document.getElementById('ipValue').textContent = 'Please configure in Settings';
-      document.getElementById('ipValue').style.color = '#fbbf24';
+      document.getElementById('ipValue').style.color = '#f59e0b';
     }
 
-    var prefillBadge = document.getElementById('prefillBadgeVal');
-    if (prefillBadge) {
-      var pVal = prefillBadge.textContent.trim().toLowerCase();
-      if (pVal === 'true') {
-        prefillBadge.textContent = 'ENABLED';
-        prefillBadge.style.color = '#10b981';
+    var pBadge = document.getElementById('prefillBadge');
+    var pText = document.getElementById('prefillText');
+    var schedVal = document.getElementById('schedStatusVal');
+    if (schedVal) {
+      var s = schedVal.textContent.trim().toLowerCase();
+      if (s === 'true') {
+        pBadge.className = 'badge badge-green';
+        pText.textContent = 'PREFILL: ACTIVE';
+        schedVal.textContent = 'ACTIVE (Automated Prefill Enabled)';
+        schedVal.style.color = '#10b981';
       } else {
-        prefillBadge.textContent = 'STANDBY (DISABLED)';
-        prefillBadge.style.color = '#94a3b8';
+        pBadge.className = 'badge badge-gray';
+        pText.textContent = 'PREFILL: STANDBY';
+        schedVal.textContent = 'STANDBY (Disabled in App Settings)';
+        schedVal.style.color = '#9ca3af';
       }
     }
 
@@ -582,20 +1195,21 @@
         .then(function(res) {
           var cacheBadge = document.getElementById('cacheBadge');
           var cacheText = document.getElementById('cacheText');
-          cacheBadge.className = 'status-badge online';
+          cacheBadge.className = 'badge badge-teal';
           cacheText.textContent = 'CACHE ACTIVE';
         })
         .catch(function(err) {
-          // In some setups monolithic responds with 404/403 to root which is normal Nginx behavior
           var cacheBadge = document.getElementById('cacheBadge');
           var cacheText = document.getElementById('cacheText');
-          cacheBadge.className = 'status-badge online';
+          cacheBadge.className = 'badge badge-teal';
           cacheText.textContent = 'CACHE RUNNING';
         });
     }
 
     checkHealth();
     setInterval(checkHealth, 10000);
+    renderGameGrid();
+    updateSteamCommand();
   </script>
 </body>
 </html>
