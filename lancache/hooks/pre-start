@@ -8,11 +8,11 @@ mkdir -p "${DATA_DIR}/cache"
 mkdir -p "${DATA_DIR}/logs"
 mkdir -p "${DATA_DIR}/prefill"
 
-# Ensure rendered templates exist if pre-start runs before envsubst
-if [[ ! -f "${APP_DIR}/index.html" ]] && [[ -f "${APP_DIR}/index.html.template" ]]; then
+# Ensure rendered templates exist
+if [[ -f "${APP_DIR}/index.html.template" ]]; then
   envsubst < "${APP_DIR}/index.html.template" > "${APP_DIR}/index.html"
 fi
 
-if [[ ! -f "${APP_DIR}/nginx.conf" ]] && [[ -f "${APP_DIR}/nginx.conf.template" ]]; then
-  envsubst < "${APP_DIR}/nginx.conf.template" > "${APP_DIR}/nginx.conf"
+if [[ -f "${APP_DIR}/nginx.conf.template" ]]; then
+  cp "${APP_DIR}/nginx.conf.template" "${APP_DIR}/nginx.conf"
 fi
