@@ -38,6 +38,20 @@ environment:
     default: "3650d"
     note: >-
       How long cached game chunks remain on disk before being purged (e.g. 3650d).
+  - name: ENABLE_PREFILL
+    services:
+      - prefill
+      - web
+    default: "false"
+    note: >-
+      Set to 'true' to install and activate the automated Steam, Epic & Battle.net LanCache Prefill service.
+  - name: PREFILL_SCHEDULE
+    services:
+      - prefill
+      - web
+    default: "0 4 * * *"
+    note: >-
+      Cron schedule for automated game pre-filling (e.g. '0 4 * * *' for daily at 4:00 AM UTC).
 category: networking
 name: LanCache
 version: "0.2.1"
@@ -86,6 +100,9 @@ description: >-
 
 
   - Interactive Web Dashboard: Monitor cache status, verify DNS interception, and follow step-by-step onboarding.
+
+
+  - Optional Game Prefill: Automatically pre-cache updates for Steam, Epic Games, and Battle.net on a schedule before users even start playing.
 developer: LanCache.NET
 website: https://lancache.net
 dependencies: []
@@ -97,5 +114,5 @@ path: ""
 defaultUsername: ""
 defaultPassword: ""
 submitter: opeitsmax
-submission: https://github.com/getumbrel/umbrel-apps/pull/1251
+submission: https://github.com/getumbrel/umbrel-apps/pull/6201
 releaseNotes: ""

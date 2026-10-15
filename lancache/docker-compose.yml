@@ -15,6 +15,8 @@ services:
       - LANCACHE_IP=${LANCACHE_IP:-127.0.0.1}
       - UPSTREAM_DNS=${UPSTREAM_DNS:-1.1.1.1}
       - CACHE_DISK_SIZE=${CACHE_DISK_SIZE:-500g}
+      - ENABLE_PREFILL=${ENABLE_PREFILL:-false}
+      - PREFILL_SCHEDULE=${PREFILL_SCHEDULE:-0 4 * * *}
     volumes:
       - ${APP_DATA_DIR}/nginx.conf:/etc/nginx/conf.d/default.conf:ro
       - ${APP_DATA_DIR}/index.html:/usr/share/nginx/html/index.html:ro
@@ -50,3 +52,17 @@ services:
     ports:
       - "53:53/udp"
       - "53:53/tcp"
+
+  prefill:
+    image: ghcr.io/opeitsmax/lancache-prefill:0.2.1@sha256:9f8911844ca89f277dec5ac00885853d5476ef224ea9b2853580ead25a4e329f
+    restart: on-failure
+    depends_on:
+      - monolithic
+      - dns
+    environment:
+      - ENABLE_PREFILL=${ENABLE_PREFILL:-false}
+      - CRON_SCHEDULE=${PREFILL_SCHEDULE:-0 4 * * *}
+      - LANCACHE_IP=${LANCACHE_IP:-127.0.0.1}
+      - TZ=UTC
+    volumes:
+      - ${APP_DATA_DIR}/data/prefill:/Config

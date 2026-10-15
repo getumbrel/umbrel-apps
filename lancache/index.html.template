@@ -442,6 +442,32 @@
         </div>
       </div>
 
+      <!-- LanCache Prefill Card -->
+      <div class="card">
+        <h2>
+          <svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>
+          LanCache Prefill
+        </h2>
+        <div class="info-list">
+          <div class="info-item">
+            <span class="info-label">Service Status</span>
+            <span id="prefillBadgeVal" class="info-value" style="font-weight: 600;">${ENABLE_PREFILL}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Schedule (UTC)</span>
+            <span class="info-value">${PREFILL_SCHEDULE}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Supported Tools</span>
+            <span class="info-value">Steam, Epic, Battle.net</span>
+          </div>
+        </div>
+        <div style="margin-top: 10px; font-size: 0.85rem; color: var(--text-muted);">
+          To log in and select games to cache, run in your terminal:
+        </div>
+        <code class="code-snippet">docker exec -it lancache_prefill_1 SteamPrefill select-apps</code>
+      </div>
+
       <!-- Setup Walkthrough -->
       <div class="card card-full">
         <h2>
@@ -536,6 +562,18 @@
     if (!rawIp || rawIp === '' || rawIp.indexOf('$') === 0 || rawIp === '127.0.0.1') {
       document.getElementById('ipValue').textContent = 'Please configure in Settings';
       document.getElementById('ipValue').style.color = '#fbbf24';
+    }
+
+    var prefillBadge = document.getElementById('prefillBadgeVal');
+    if (prefillBadge) {
+      var pVal = prefillBadge.textContent.trim().toLowerCase();
+      if (pVal === 'true') {
+        prefillBadge.textContent = 'ENABLED';
+        prefillBadge.style.color = '#10b981';
+      } else {
+        prefillBadge.textContent = 'STANDBY (DISABLED)';
+        prefillBadge.style.color = '#94a3b8';
+      }
     }
 
     // Health check for monolithic container
