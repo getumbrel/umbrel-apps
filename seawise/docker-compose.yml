@@ -1,0 +1,20 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: seawise_web_1
+      APP_PORT: 8082
+
+  web:
+    image: ghcr.io/seawise-io/seawise-client:1.0.13@sha256:5270f356b9202baf3b63a58067892464f9d4288572aa61c376f3a80fe04581ee
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      PUID: "1000"
+      PGID: "1000"
+    # Lets users add apps that publish ports on the Umbrel host.
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    volumes:
+      - ${APP_DATA_DIR}/data/config:/config
