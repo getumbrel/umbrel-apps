@@ -17,4 +17,17 @@ server {
         proxy_read_timeout 3s;
         proxy_send_timeout 2s;
     }
+
+    # Proxy to live Steam Store Search API (resolves CORS and enables real-time search for any Steam game)
+    location /api/steam/search/ {
+        proxy_pass https://store.steampowered.com/api/storesearch/;
+        proxy_set_header Host store.steampowered.com;
+        proxy_ssl_server_name on;
+        proxy_connect_timeout 5s;
+        proxy_read_timeout 10s;
+    }
+
+    location = /api/steam/search {
+        rewrite ^ /api/steam/search/ last;
+    }
 }
