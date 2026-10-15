@@ -301,134 +301,586 @@
       background: linear-gradient(90deg, var(--red-primary) 0%, var(--teal-primary) 100%);
     }
 
-    .prefill-tabs {
+    /* PREFILL WIZARD STEPPER */
+    .wizard-stepper {
       display: flex;
-      gap: 8px;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 10px 0 18px 0;
       border-bottom: 1px solid var(--border-color);
-      padding-bottom: 12px;
       flex-wrap: wrap;
     }
 
-    .tab-btn {
-      background: var(--bg-card-inner);
-      color: var(--text-muted);
-      border: 1px solid var(--border-color);
-      padding: 8px 16px;
-      border-radius: 6px;
-      font-size: 0.86rem;
-      font-weight: 600;
-      cursor: pointer;
-      display: inline-flex;
+    .w-step {
+      display: flex;
       align-items: center;
-      gap: 6px;
-      transition: all 0.15s ease-in-out;
+      gap: 8px;
+      cursor: pointer;
+      opacity: 0.55;
+      transition: all 0.15s ease;
+      user-select: none;
     }
 
-    .tab-btn:hover {
+    .w-step.active, .w-step.completed {
+      opacity: 1;
+    }
+
+    .w-step-num {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: var(--bg-card-inner);
+      border: 2px solid #555;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.78rem;
       color: #fff;
-      border-color: #555;
+      transition: all 0.15s ease;
     }
 
-    .tab-btn.active {
+    .w-step.active .w-step-num {
       background: var(--red-primary);
-      color: #ffffff;
       border-color: var(--red-primary);
-      box-shadow: 0 2px 8px var(--red-glow);
+      box-shadow: 0 0 10px var(--red-glow);
     }
 
-    .tab-content {
+    .w-step.completed .w-step-num {
+      background: var(--green-status);
+      border-color: var(--green-status);
+    }
+
+    .w-step-title {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .w-step-line {
+      width: 28px;
+      height: 2px;
+      background: #333;
+    }
+
+    .w-step-line.completed {
+      background: var(--green-status);
+    }
+
+    /* WIZARD VIEWS */
+    .wizard-view {
       display: none;
       flex-direction: column;
       gap: 16px;
     }
 
-    .tab-content.active {
+    .wizard-view.active {
       display: flex;
     }
 
-    /* Game Selector Grid */
-    .game-grid {
+    /* STORE SELECTION CARDS (STEP 1) */
+    .store-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-      gap: 10px;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 14px;
     }
 
-    .game-btn {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 12px;
+    .store-card {
       background: var(--bg-card-inner);
-      border: 1px solid var(--border-color);
-      border-radius: 6px;
-      color: var(--text-main);
+      border: 2px solid var(--border-color);
+      border-radius: 10px;
+      padding: 16px;
       cursor: pointer;
-      text-align: left;
-      font-size: 0.84rem;
-      transition: all 0.12s ease;
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      transition: all 0.18s ease;
+      position: relative;
       user-select: none;
     }
 
-    .game-btn:hover {
-      background: #2a2a2a;
-      border-color: #555;
+    .store-card:hover {
+      border-color: #666;
+      transform: translateY(-2px);
     }
 
-    .game-btn.selected {
-      background: rgba(233, 29, 18, 0.15);
+    .store-card.selected {
       border-color: var(--red-primary);
-      color: #ffffff;
+      background: rgba(233, 29, 18, 0.08);
+      box-shadow: 0 4px 16px rgba(233, 29, 18, 0.18);
     }
 
-    .game-check {
-      width: 18px;
-      height: 18px;
+    .store-card-check {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      width: 20px;
+      height: 20px;
       border-radius: 4px;
       border: 2px solid #555;
       display: flex;
       align-items: center;
       justify-content: center;
-      flex-shrink: 0;
       transition: all 0.12s ease;
     }
 
-    .game-btn.selected .game-check {
+    .store-card.selected .store-card-check {
       background: var(--red-primary);
       border-color: var(--red-primary);
     }
 
-    .game-check svg {
+    .store-card-check svg {
       width: 12px;
       height: 12px;
       fill: #fff;
       display: none;
     }
 
-    .game-btn.selected .game-check svg {
+    .store-card.selected .store-card-check svg {
       display: block;
     }
 
-    .game-details {
+    .store-card-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .icon-steam { background: linear-gradient(135deg, #171a21 0%, #2a475e 100%); color: #66c0f4; border: 1px solid rgba(102, 192, 244, 0.3); }
+    .icon-epic { background: #121212; border: 1px solid #444; color: #fff; }
+    .icon-bnet { background: linear-gradient(135deg, #0b1e38 0%, #0074e0 100%); color: #38bdf8; border: 1px solid rgba(0, 116, 224, 0.4); }
+
+    .store-card-icon svg {
+      width: 24px;
+      height: 24px;
+      fill: currentColor;
+    }
+
+    .store-card-body {
       display: flex;
       flex-direction: column;
-      overflow: hidden;
+      gap: 3px;
+      padding-right: 28px;
     }
 
-    .game-name {
+    .store-card-body h4 {
+      font-size: 0.98rem;
+      color: #fff;
+      font-weight: 700;
+    }
+
+    .store-card-body p {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      line-height: 1.35;
+    }
+
+    .store-status-pill {
+      display: inline-block;
+      margin-top: 6px;
+      font-size: 0.72rem;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      width: fit-content;
+    }
+
+    .pill-connected {
+      background: rgba(16, 185, 129, 0.2);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.4);
+    }
+
+    .pill-unconnected {
+      background: rgba(156, 163, 175, 0.12);
+      color: #9ca3af;
+      border: 1px solid rgba(156, 163, 175, 0.25);
+    }
+
+    /* CREDENTIALS FORM (STEP 2) */
+    .creds-container {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .cred-panel {
+      background: var(--bg-card-inner);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .cred-panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #2a2a2a;
+      padding-bottom: 8px;
+    }
+
+    .cred-panel-header h4 {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #fff;
+      font-size: 0.92rem;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .form-label {
+      font-size: 0.76rem;
       font-weight: 600;
-      white-space: nowrap;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .form-input-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .form-input {
+      width: 100%;
+      background: #111;
+      border: 1px solid var(--border-color);
+      color: #fff;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      transition: all 0.15s ease;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: var(--red-primary);
+      box-shadow: 0 0 8px var(--red-glow);
+    }
+
+    .pw-toggle {
+      position: absolute;
+      right: 10px;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 0.78rem;
+      user-select: none;
+    }
+
+    .pw-toggle:hover {
+      color: #fff;
+    }
+
+    .form-hint {
+      font-size: 0.74rem;
+      color: var(--text-dim);
+      line-height: 1.4;
+    }
+
+    .form-hint a {
+      color: #38bdf8;
+      text-decoration: underline;
+    }
+
+    /* GAME LIBRARY BROWSER (STEP 3) */
+    .lib-browser {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .lib-filter-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      background: #181818;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+    }
+
+    .lib-tabs {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .lib-tab {
+      background: var(--bg-card-inner);
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.12s ease;
+    }
+
+    .lib-tab:hover {
+      color: #fff;
+      border-color: #666;
+    }
+
+    .lib-tab.active {
+      background: var(--red-primary);
+      color: #fff;
+      border-color: var(--red-primary);
+    }
+
+    .lib-search {
+      flex: 1;
+      min-width: 220px;
+      position: relative;
+    }
+
+    .lib-search input {
+      width: 100%;
+      background: #111;
+      border: 1px solid var(--border-color);
+      color: #fff;
+      padding: 7px 12px;
+      border-radius: 6px;
+      font-size: 0.84rem;
+    }
+
+    .lib-search input:focus {
+      outline: none;
+      border-color: var(--red-primary);
+    }
+
+    .lib-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .lib-game-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 10px;
+      max-height: 480px;
+      overflow-y: auto;
+      padding: 2px;
+    }
+
+    .lib-game-card {
+      background: var(--bg-card-inner);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 10px 12px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      position: relative;
+      transition: all 0.12s ease;
+      user-select: none;
+    }
+
+    .lib-game-card:hover {
+      background: #252525;
+      border-color: #555;
+    }
+
+    .lib-game-card.selected {
+      background: rgba(233, 29, 18, 0.12);
+      border-color: var(--red-primary);
+    }
+
+    .lib-game-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .store-tag {
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .tag-steam { background: rgba(102, 192, 244, 0.18); color: #66c0f4; border: 1px solid rgba(102, 192, 244, 0.35); }
+    .tag-epic { background: rgba(255, 255, 255, 0.15); color: #fff; border: 1px solid rgba(255, 255, 255, 0.35); }
+    .tag-bnet { background: rgba(0, 116, 224, 0.18); color: #38bdf8; border: 1px solid rgba(0, 116, 224, 0.4); }
+
+    .lib-card-check {
+      width: 16px;
+      height: 16px;
+      border-radius: 3px;
+      border: 1px solid #666;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .lib-game-card.selected .lib-card-check {
+      background: var(--red-primary);
+      border-color: var(--red-primary);
+    }
+
+    .lib-card-check svg {
+      width: 10px;
+      height: 10px;
+      fill: #fff;
+      display: none;
+    }
+
+    .lib-game-card.selected .lib-card-check svg {
+      display: block;
+    }
+
+    .lib-game-name {
+      font-weight: 600;
+      font-size: 0.85rem;
+      color: #fff;
+      line-height: 1.3;
       overflow: hidden;
       text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
-    .game-appid {
+    .lib-game-sub {
+      display: flex;
+      justify-content: space-between;
       font-size: 0.72rem;
       color: var(--text-dim);
       font-family: var(--font-mono);
     }
 
-    .game-btn.selected .game-appid {
+    .lib-game-card.selected .lib-game-sub {
       color: #fca5a5;
+    }
+
+    /* ACTION BAR */
+    .prefill-action-bar {
+      background: #181818;
+      border: 1px solid var(--border-color);
+      border-top: 2px solid var(--red-primary);
+      border-radius: 8px;
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 4px;
+    }
+
+    .selection-summary {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .summary-badge {
+      background: var(--red-primary);
+      color: #fff;
+      font-weight: 700;
+      font-size: 1rem;
+      padding: 5px 12px;
+      border-radius: 6px;
+    }
+
+    .summary-text strong {
+      display: block;
+      color: #fff;
+      font-size: 0.9rem;
+    }
+
+    .summary-text span {
+      font-size: 0.76rem;
+      color: var(--text-muted);
+    }
+
+    /* MODAL */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(4px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .modal-overlay.show {
+      display: flex;
+    }
+
+    .modal-card {
+      background: #1c1c1c;
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      max-width: 480px;
+      width: 100%;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 10px;
+    }
+
+    .modal-header h4 {
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 700;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.2rem;
+      cursor: pointer;
+    }
+
+    .modal-close:hover {
+      color: #fff;
     }
 
     /* Terminal command display */
@@ -737,200 +1189,284 @@
       </div>
     </div>
 
-    <!-- PREFILL CENTER: Interactive WebUI Game Prefill Assistant -->
-    <div class="card prefill-card">
+    <!-- PREFILL MULTI-STORE & LIBRARY MANAGER -->
+    <div class="card prefill-card" id="prefillManager">
       <div class="card-title">
         <svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>
-        <span>LanCache Prefill Assistant</span>
+        <span>LanCache Multi-Store Prefill Manager</span>
         <span style="margin-left: auto; font-size: 0.78rem; font-weight: 500; color: var(--text-muted);">
           Schedule: <code style="color: #38bdf8;">${PREFILL_SCHEDULE}</code>
         </span>
       </div>
 
       <p style="font-size: 0.88rem; color: var(--text-muted);">
-        Pre-download game updates directly into LanCache before anyone requests them so your LAN party starts instantly with 100% cache hits.
+        Sign into your gaming stores to load your personal game libraries and pre-cache downloads wire-speed on your local network.
       </p>
 
-      <!-- Tabs Navigation -->
-      <div class="prefill-tabs">
-        <button class="tab-btn active" onclick="switchPrefillTab('steam', this)">
-          <span>&#127918;</span> Steam Prefill
-        </button>
-        <button class="tab-btn" onclick="switchPrefillTab('epic', this)">
-          <span>&#9889;</span> Epic Games
-        </button>
-        <button class="tab-btn" onclick="switchPrefillTab('bnet', this)">
-          <span>&#9876;</span> Battle.net
-        </button>
-        <button class="tab-btn" onclick="switchPrefillTab('schedule', this)">
-          <span>&#9201;</span> Automated Schedule
-        </button>
+      <!-- Stepper -->
+      <div class="wizard-stepper">
+        <div class="w-step active" id="wStep1" onclick="goToWizardStep(1)">
+          <div class="w-step-num" id="wStepNum1">1</div>
+          <span class="w-step-title">1. Choose Stores</span>
+        </div>
+        <div class="w-step-line" id="wLine1"></div>
+        <div class="w-step" id="wStep2" onclick="goToWizardStep(2)">
+          <div class="w-step-num" id="wStepNum2">2</div>
+          <span class="w-step-title">2. Sign In</span>
+        </div>
+        <div class="w-step-line" id="wLine2"></div>
+        <div class="w-step" id="wStep3" onclick="goToWizardStep(3)">
+          <div class="w-step-num" id="wStepNum3">3</div>
+          <span class="w-step-title">3. Game Libraries</span>
+        </div>
       </div>
 
-      <!-- TAB 1: STEAM PREFILL -->
-      <div id="tab-steam" class="tab-content active">
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-          <span style="font-weight: 600; font-size: 0.9rem; color: #fff;">
-            Click games to add to your prefill batch:
-          </span>
-          <div style="display: flex; gap: 8px;">
-            <button class="btn btn-secondary btn-sm" onclick="selectAllGames(true)">Select All</button>
-            <button class="btn btn-secondary btn-sm" onclick="selectAllGames(false)">Clear</button>
+      <!-- STEP 1: CHOOSE STORES -->
+      <div id="viewStep1" class="wizard-view active">
+        <div style="font-size: 0.88rem; color: #fff; font-weight: 600;">
+          Select the gaming platforms you want to connect:
+        </div>
+
+        <div class="store-grid">
+          <!-- Steam -->
+          <div class="store-card selected" id="cardStoreSteam" onclick="toggleStoreCard('steam')">
+            <div class="store-card-check">
+              <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+            </div>
+            <div class="store-card-icon icon-steam">
+              <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 0 0-10 10c0 4.77 3.35 8.76 7.85 9.74l2.42-3.48a3.3 3.3 0 0 1-.37-.02l-3.32-1.37a2.5 2.5 0 0 1-1.44-2.27 2.5 2.5 0 0 1 2.5-2.5c.34 0 .66.07.96.2l3.4 1.4a3.3 3.3 0 0 1 2.9-.11l3.52-2.45A4.5 4.5 0 0 1 21 7.5 4.5 4.5 0 0 1 16.5 12c-1.3 0-2.46-.55-3.27-1.44l-3.6 2.5a3.3 3.3 0 0 1 .1 1.04c0 .32-.05.63-.14.93l-2.45 3.52A10 10 0 0 0 12 22a10 10 0 0 0 10-10A10 10 0 0 0 12 2zm4.5 4a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3z"/></svg>
+            </div>
+            <div class="store-card-body">
+              <h4>Steam</h4>
+              <p>Valve Corporation &bull; Over 50,000 games &amp; updates</p>
+              <span class="store-status-pill pill-unconnected" id="statusPillSteam">Not Signed In</span>
+            </div>
+          </div>
+
+          <!-- Epic Games -->
+          <div class="store-card" id="cardStoreEpic" onclick="toggleStoreCard('epic')">
+            <div class="store-card-check">
+              <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+            </div>
+            <div class="store-card-icon icon-epic">
+              <svg viewBox="0 0 24 24"><path d="M4.5 2h15l1.5 14.5L12 22 3 16.5 4.5 2zm7.5 2.5L6.2 5.8l-.8 8.4L12 18.2l6.6-4 1.2-8.4-7.8-1.3zm0 2.2l4.8.8-.7 5.2-4.1 2.5-4.1-2.5-.5-5.2 4.6-.8z"/></svg>
+            </div>
+            <div class="store-card-body">
+              <h4>Epic Games Store</h4>
+              <p>Epic Games &bull; Fortnite, Unreal Engine &amp; exclusives</p>
+              <span class="store-status-pill pill-unconnected" id="statusPillEpic">Not Signed In</span>
+            </div>
+          </div>
+
+          <!-- Battle.net -->
+          <div class="store-card" id="cardStoreBnet" onclick="toggleStoreCard('bnet')">
+            <div class="store-card-check">
+              <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+            </div>
+            <div class="store-card-icon icon-bnet">
+              <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zm0 8.5L5.5 8 12 4.7 18.5 8 12 10.5zM2 17l10 5 10-5-2.2-1.1L12 19.4l-7.8-3.5L2 17zm0-5l10 5 10-5-2.2-1.1L12 14.4l-7.8-3.5L2 12z"/></svg>
+            </div>
+            <div class="store-card-body">
+              <h4>Battle.net</h4>
+              <p>Blizzard Entertainment &bull; Call of Duty, WoW, Diablo</p>
+              <span class="store-status-pill pill-unconnected" id="statusPillBnet">Not Signed In</span>
+            </div>
           </div>
         </div>
 
-        <!-- Quick Game Selector Grid -->
-        <div class="game-grid" id="gameGrid">
-          <!-- Injected dynamically by JS for safety -->
+        <div style="display: flex; justify-content: flex-end; margin-top: 6px;">
+          <button class="btn btn-red" onclick="proceedToStep2()">
+            Continue to Sign-In &rarr;
+          </button>
+        </div>
+      </div>
+
+      <!-- STEP 2: CREDENTIALS & SIGN IN -->
+      <div id="viewStep2" class="wizard-view">
+        <div style="font-size: 0.88rem; color: #fff; font-weight: 600;">
+          Enter credentials for your selected stores:
         </div>
 
-        <!-- Custom App ID Input -->
-        <div style="display: flex; gap: 10px; align-items: center; margin-top: 4px;">
-          <input type="number" id="customAppInput" placeholder="Add custom Steam App ID (e.g. 1245620 for Elden Ring)" 
-                 style="background: #111; border: 1px solid var(--border-color); color: #fff; padding: 8px 12px; border-radius: 6px; font-size: 0.85rem; flex: 1;">
-          <button class="btn btn-secondary btn-sm" onclick="addCustomGame()">+ Add App ID</button>
-        </div>
-
-        <!-- Generated Command Box -->
-        <div class="terminal-box">
-          <div class="terminal-header">
-            <div class="terminal-title">
-              <span class="terminal-dots"><span class="t-dot red"></span><span class="t-dot yellow"></span><span class="t-dot green"></span></span>
-              <span>Generated Prefill Command</span>
+        <div class="creds-container" id="credsContainer">
+          <!-- Steam Credentials Panel -->
+          <div class="cred-panel" id="panelCredSteam">
+            <div class="cred-panel-header">
+              <h4>
+                <span class="tag-steam store-tag">Steam</span>
+                Steam Account Sign-In
+              </h4>
+              <span class="store-status-pill pill-unconnected" id="panelStatusSteam">Not Connected</span>
             </div>
-            <button class="btn btn-red btn-sm" onclick="copySteamCommand()">
-              <span id="copyBtnIcon">&#128203;</span>
-              <span id="copyBtnText">Copy Command</span>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="steamUsername">Steam Account Name / Username</label>
+                <div class="form-input-wrap">
+                  <input type="text" id="steamUsername" class="form-input" placeholder="e.g. gaben" autocomplete="username">
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="steamPassword">Password</label>
+                <div class="form-input-wrap">
+                  <input type="password" id="steamPassword" class="form-input" placeholder="••••••••••••" autocomplete="current-password">
+                  <button type="button" class="pw-toggle" onclick="togglePwVisibility('steamPassword', this)">Show</button>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="steamGuard">Steam Guard 2FA (Optional / If prompted)</label>
+                <div class="form-input-wrap">
+                  <input type="text" id="steamGuard" class="form-input" placeholder="e.g. W4R9X or Mobile Code">
+                </div>
+              </div>
+            </div>
+            <div class="form-hint">
+              Steam credentials are used to obtain your authorized game manifests from Valve CDNs.
+            </div>
+          </div>
+
+          <!-- Epic Games Credentials Panel -->
+          <div class="cred-panel" id="panelCredEpic">
+            <div class="cred-panel-header">
+              <h4>
+                <span class="tag-epic store-tag">Epic Games</span>
+                Epic Games Account Sign-In
+              </h4>
+              <span class="store-status-pill pill-unconnected" id="panelStatusEpic">Not Connected</span>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="epicEmail">Epic Account Email</label>
+                <div class="form-input-wrap">
+                  <input type="text" id="epicEmail" class="form-input" placeholder="e.g. player@example.com">
+                </div>
+              </div>
+              <div class="form-group" style="grid-column: span 2;">
+                <label class="form-label" for="epicAuthCode">Epic Authorization Code / Token</label>
+                <div class="form-input-wrap">
+                  <input type="text" id="epicAuthCode" class="form-input" placeholder="Paste your authorization code here...">
+                </div>
+              </div>
+            </div>
+            <div class="form-hint">
+              Epic Games uses web authorization. Click <a href="https://legendary.gl/epiclogin" target="_blank" rel="noopener">Get Epic Login Code</a>, sign into Epic in your browser, and paste the generated code above.
+            </div>
+          </div>
+
+          <!-- Battle.net Credentials Panel -->
+          <div class="cred-panel" id="panelCredBnet">
+            <div class="cred-panel-header">
+              <h4>
+                <span class="tag-bnet store-tag">Battle.net</span>
+                Battle.net Account Sign-In
+              </h4>
+              <span class="store-status-pill pill-unconnected" id="panelStatusBnet">Not Connected</span>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="bnetEmail">Battle.net Email / BattleTag</label>
+                <div class="form-input-wrap">
+                  <input type="text" id="bnetEmail" class="form-input" placeholder="e.g. gamer#1234 or email">
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="bnetPassword">Password</label>
+                <div class="form-input-wrap">
+                  <input type="password" id="bnetPassword" class="form-input" placeholder="••••••••••••" autocomplete="current-password">
+                  <button type="button" class="pw-toggle" onclick="togglePwVisibility('bnetPassword', this)">Show</button>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="bnetCode">Authenticator Code (Optional)</label>
+                <div class="form-input-wrap">
+                  <input type="text" id="bnetCode" class="form-input" placeholder="e.g. 6-digit code">
+                </div>
+              </div>
+            </div>
+            <div class="form-hint">
+              Required by Blizzard CDN to access owned Battle.net titles (CoD, WoW, Diablo IV).
+            </div>
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+          <button class="btn btn-secondary" onclick="goToWizardStep(1)">
+            &larr; Back to Stores
+          </button>
+          <button class="btn btn-red" id="signInSubmitBtn" onclick="performStoreSignIn()">
+            Sign In &amp; Load Libraries &rarr;
+          </button>
+        </div>
+      </div>
+
+      <!-- STEP 3: PERSONAL GAME LIBRARIES -->
+      <div id="viewStep3" class="wizard-view">
+        <div class="lib-browser">
+          <div class="lib-controls">
+            <div>
+              <h3 style="color: #fff; font-size: 1rem; font-weight: 700;">Your Available Game Libraries</h3>
+              <p style="font-size: 0.8rem; color: var(--text-muted);">
+                Select the games you want to pre-download into your LanCache:
+              </p>
+            </div>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <button class="btn btn-secondary btn-sm" onclick="selectAllInView(true)">Select All</button>
+              <button class="btn btn-secondary btn-sm" onclick="selectAllInView(false)">Clear</button>
+              <button class="btn btn-secondary btn-sm" onclick="openAddGameModal()">+ Add Custom Game</button>
+              <button class="btn btn-secondary btn-sm" onclick="goToWizardStep(2)" style="color: #9ca3af;">&#9881; Manage Accounts</button>
+            </div>
+          </div>
+
+          <!-- Connected Store Accounts Status Bar -->
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;" id="connectedAccountsBar">
+            <!-- Dynamically populated -->
+          </div>
+
+          <!-- Store Tabs & Search Filter -->
+          <div class="lib-filter-bar">
+            <div class="lib-tabs" id="libTabsRow">
+              <button class="lib-tab active" onclick="switchLibTab('all', this)" id="libTabAll">All Games (0)</button>
+              <button class="lib-tab" onclick="switchLibTab('steam', this)" id="libTabSteam">Steam (0)</button>
+              <button class="lib-tab" onclick="switchLibTab('epic', this)" id="libTabEpic">Epic Games (0)</button>
+              <button class="lib-tab" onclick="switchLibTab('bnet', this)" id="libTabBnet">Battle.net (0)</button>
+            </div>
+            <div class="lib-search">
+              <input type="text" id="libSearchBox" placeholder="Filter games by title or ID..." oninput="handleSearchInput(this.value)">
+            </div>
+          </div>
+
+          <!-- Game Cards Grid -->
+          <div class="lib-game-grid" id="libraryGameGrid">
+            <!-- Injected by JavaScript -->
+          </div>
+
+          <!-- Prefill Action Bar -->
+          <div class="prefill-action-bar">
+            <div class="selection-summary">
+              <div class="summary-badge" id="selectedGamesCount">0</div>
+              <div class="summary-text">
+                <strong id="selectedGamesTitleText">0 Games Selected for Prefill</strong>
+                <span id="selectedGamesSizeEstimate">Estimated download: 0 GB</span>
+              </div>
+            </div>
+            <button class="btn btn-red" onclick="runPrefillGeneration()">
+              Prefill Selected Games Now &rarr;
             </button>
           </div>
-          <div class="terminal-body">
-            <span class="terminal-prompt">umbrel:~$</span><span id="steamCommandOutput">docker exec -it lancache_prefill_1 SteamPrefill prefill --app 730,570</span>
-          </div>
-        </div>
 
-        <!-- One-Time Login Helper Accordion -->
-        <div class="step-item" style="background: rgba(0,0,0,0.3); border-left-color: var(--teal-primary);">
-          <div class="step-badge" style="background: var(--teal-primary);">&#128273;</div>
-          <div class="step-content">
-            <div class="step-heading">First Time Setup: One-Time Steam Login</div>
-            <div class="step-text">
-              Because Steam uses Steam Guard 2FA, you must authenticate once interactively. Run this command in your Umbrel terminal to log in and save your credentials securely:
-            </div>
-            <div style="display: flex; gap: 8px; align-items: center; margin-top: 6px;">
-              <code style="background: #000; padding: 6px 10px; border-radius: 4px; font-family: var(--font-mono); font-size: 0.82rem; color: #38bdf8; flex: 1; overflow-x: auto;">
-                docker exec -it lancache_prefill_1 SteamPrefill select-apps
-              </code>
-              <button class="btn btn-secondary btn-sm" onclick="copyText('docker exec -it lancache_prefill_1 SteamPrefill select-apps')">
-                Copy
+          <!-- Generated Command Display Section -->
+          <div id="prefillOutputContainer" style="display: none; margin-top: 12px;" class="terminal-box">
+            <div class="terminal-header">
+              <div class="terminal-title">
+                <span class="terminal-dots"><span class="t-dot red"></span><span class="t-dot yellow"></span><span class="t-dot green"></span></span>
+                <span>Tailored Prefill Execution Plan</span>
+              </div>
+              <button class="btn btn-red btn-sm" onclick="copyActiveCommand()">
+                <span id="copyAllIcon">&#128203;</span>
+                <span id="copyAllText">Copy Command</span>
               </button>
             </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- TAB 2: EPIC GAMES -->
-      <div id="tab-epic" class="tab-content">
-        <p style="font-size: 0.88rem; color: var(--text-muted);">
-          Pre-populate downloads from the Epic Games Store (Fortnite, Unreal Engine, Rocket League, GTA V):
-        </p>
-
-        <div class="stepper">
-          <div class="step-item">
-            <div class="step-badge">1</div>
-            <div class="step-content">
-              <div class="step-heading">Authenticate Epic Games Account</div>
-              <div class="step-text">Run once in your Umbrel terminal to sign into Epic Games via browser authorization:</div>
-              <div style="display: flex; gap: 8px; align-items: center; margin-top: 6px;">
-                <code style="background: #000; padding: 6px 10px; border-radius: 4px; font-family: var(--font-mono); font-size: 0.82rem; color: #38bdf8; flex: 1;">
-                  docker exec -it lancache_prefill_1 EpicPrefill select-apps
-                </code>
-                <button class="btn btn-secondary btn-sm" onclick="copyText('docker exec -it lancache_prefill_1 EpicPrefill select-apps')">
-                  Copy
-                </button>
-              </div>
+            <div class="terminal-body" id="prefillTerminalContent">
+              <!-- Formatted per store -->
             </div>
-          </div>
-
-          <div class="step-item">
-            <div class="step-badge">2</div>
-            <div class="step-content">
-              <div class="step-heading">Prefill Your Epic Library</div>
-              <div class="step-text">Trigger a download run for all selected Epic titles:</div>
-              <div style="display: flex; gap: 8px; align-items: center; margin-top: 6px;">
-                <code style="background: #000; padding: 6px 10px; border-radius: 4px; font-family: var(--font-mono); font-size: 0.82rem; color: #38bdf8; flex: 1;">
-                  docker exec -it lancache_prefill_1 EpicPrefill prefill
-                </code>
-                <button class="btn btn-secondary btn-sm" onclick="copyText('docker exec -it lancache_prefill_1 EpicPrefill prefill')">
-                  Copy
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- TAB 3: BATTLE.NET -->
-      <div id="tab-bnet" class="tab-content">
-        <p style="font-size: 0.88rem; color: var(--text-muted);">
-          Pre-populate Battle.net / Blizzard games (Call of Duty, World of Warcraft, Overwatch 2, Diablo IV, Hearthstone):
-        </p>
-
-        <div class="stepper">
-          <div class="step-item">
-            <div class="step-badge">1</div>
-            <div class="step-content">
-              <div class="step-heading">Authenticate Battle.net Account</div>
-              <div class="step-text">Run once in your Umbrel terminal to link Battle.net:</div>
-              <div style="display: flex; gap: 8px; align-items: center; margin-top: 6px;">
-                <code style="background: #000; padding: 6px 10px; border-radius: 4px; font-family: var(--font-mono); font-size: 0.82rem; color: #38bdf8; flex: 1;">
-                  docker exec -it lancache_prefill_1 BattleNetPrefill select-apps
-                </code>
-                <button class="btn btn-secondary btn-sm" onclick="copyText('docker exec -it lancache_prefill_1 BattleNetPrefill select-apps')">
-                  Copy
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div class="step-item">
-            <div class="step-badge">2</div>
-            <div class="step-content">
-              <div class="step-heading">Prefill All Selected Blizzard Games</div>
-              <div class="step-text">Downloads all game manifests and updates into LanCache:</div>
-              <div style="display: flex; gap: 8px; align-items: center; margin-top: 6px;">
-                <code style="background: #000; padding: 6px 10px; border-radius: 4px; font-family: var(--font-mono); font-size: 0.82rem; color: #38bdf8; flex: 1;">
-                  docker exec -it lancache_prefill_1 BattleNetPrefill prefill --all
-                </code>
-                <button class="btn btn-secondary btn-sm" onclick="copyText('docker exec -it lancache_prefill_1 BattleNetPrefill prefill --all')">
-                  Copy
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- TAB 4: AUTOMATED SCHEDULE -->
-      <div id="tab-schedule" class="tab-content">
-        <div class="info-table">
-          <div class="info-row">
-            <span class="info-key">Service Automation Status</span>
-            <span id="schedStatusVal" class="info-val" style="color: #38bdf8;">${ENABLE_PREFILL}</span>
-          </div>
-          <div class="info-row">
-            <span class="info-key">Cron Schedule Expression</span>
-            <span class="info-val">${PREFILL_SCHEDULE}</span>
-          </div>
-          <div class="info-row">
-            <span class="info-key">Configured Run Timing</span>
-            <span class="info-val">Daily at 04:00 AM UTC (Default)</span>
-          </div>
-        </div>
-
-        <div class="callout callout-info">
-          <span>&#9881;</span>
-          <div>
-            <strong>How to Change Schedule or Enable/Disable:</strong> In your Umbrel web dashboard, click the three dots on the LanCache app icon &rarr; select <strong>Settings</strong>. You can customize the cron schedule expression or toggle <code>ENABLE_PREFILL</code> anytime!
           </div>
         </div>
       </div>
@@ -1012,6 +1548,38 @@
     <footer class="footer">
       Powered by <a href="https://lancache.net" target="_blank" rel="noopener">LanCache.NET</a> &bull; Official Community App for <a href="https://umbrel.com" target="_blank" rel="noopener">umbrelOS</a>
     </footer>
+  <!-- Add Custom Game Modal -->
+  <div class="modal-overlay" id="addGameModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h4>Add Custom Game to Library</h4>
+        <button class="modal-close" onclick="closeAddGameModal()">&times;</button>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="customGameTitle">Game Title</label>
+        <input type="text" id="customGameTitle" class="form-input" placeholder="e.g. Elden Ring">
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="customGameStore">Store Platform</label>
+        <select id="customGameStore" class="form-input" style="background: #111;">
+          <option value="steam">Steam</option>
+          <option value="epic">Epic Games Store</option>
+          <option value="bnet">Battle.net</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="customGameId">App ID / Product Code</label>
+        <input type="text" id="customGameId" class="form-input" placeholder="e.g. 1245620 or Fortnite or wow">
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="customGameSize">Estimated Size (Optional)</label>
+        <input type="text" id="customGameSize" class="form-input" placeholder="e.g. 60 GB">
+      </div>
+      <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px;">
+        <button class="btn btn-secondary btn-sm" onclick="closeAddGameModal()">Cancel</button>
+        <button class="btn btn-red btn-sm" onclick="saveCustomGame()">Add to Library</button>
+      </div>
+    </div>
   </div>
 
   <!-- Toast Notification element -->
@@ -1021,106 +1589,682 @@
   </div>
 
   <script>
-    // PRESET STEAM GAMES
-    var POPULAR_GAMES = [
-      { name: 'Counter-Strike 2', id: '730', selected: true },
-      { name: 'Dota 2', id: '570', selected: true },
-      { name: 'Apex Legends', id: '1172470', selected: false },
-      { name: 'Team Fortress 2', id: '440', selected: false },
-      { name: 'Rust', id: '252490', selected: false },
-      { name: 'Grand Theft Auto V', id: '271590', selected: false },
-      { name: 'Baldur\'s Gate 3', id: '1086940', selected: false },
-      { name: 'Cyberpunk 2077', id: '1091500', selected: false },
-      { name: 'Helldivers 2', id: '553850', selected: false },
-      { name: 'Rainbow Six Siege', id: '359550', selected: false },
-      { name: 'Warframe', id: '230410', selected: false },
-      { name: 'PUBG: BATTLEGROUNDS', id: '578080', selected: false },
-      { name: 'Call of Duty HQ', id: '1938090', selected: false },
-      { name: 'Palworld', id: '1623730', selected: false },
-      { name: 'Left 4 Dead 2', id: '550', selected: false },
-      { name: 'PAYDAY 2', id: '218620', selected: false }
+    // MULTI-STORE GAME CATALOG
+    var GAME_CATALOG = [
+      // Steam Games
+      { id: '730', name: 'Counter-Strike 2', store: 'steam', size: 35 },
+      { id: '570', name: 'Dota 2', store: 'steam', size: 45 },
+      { id: '1172470', name: 'Apex Legends', store: 'steam', size: 60 },
+      { id: '252490', name: 'Rust', store: 'steam', size: 25 },
+      { id: '271590', name: 'Grand Theft Auto V', store: 'steam', size: 105 },
+      { id: '1086940', name: 'Baldur\'s Gate 3', store: 'steam', size: 125 },
+      { id: '1091500', name: 'Cyberpunk 2077', store: 'steam', size: 70 },
+      { id: '553850', name: 'Helldivers 2', store: 'steam', size: 70 },
+      { id: '359550', name: 'Rainbow Six Siege', store: 'steam', size: 65 },
+      { id: '230410', name: 'Warframe', store: 'steam', size: 40 },
+      { id: '578080', name: 'PUBG: BATTLEGROUNDS', store: 'steam', size: 40 },
+      { id: '1938090', name: 'Call of Duty HQ', store: 'steam', size: 130 },
+      { id: '1623730', name: 'Palworld', store: 'steam', size: 40 },
+      { id: '440', name: 'Team Fortress 2', store: 'steam', size: 22 },
+      { id: '550', name: 'Left 4 Dead 2', store: 'steam', size: 14 },
+      { id: '218620', name: 'PAYDAY 2', store: 'steam', size: 80 },
+      { id: '381210', name: 'Dead by Daylight', store: 'steam', size: 50 },
+      { id: '1085660', name: 'Destiny 2', store: 'steam', size: 105 },
+      { id: '346110', name: 'ARK: Survival Evolved', store: 'steam', size: 125 },
+      { id: '582010', name: 'Monster Hunter: World', store: 'steam', size: 50 },
+      { id: '1245620', name: 'Elden Ring', store: 'steam', size: 60 },
+      { id: '292030', name: 'The Witcher 3: Wild Hunt', store: 'steam', size: 50 },
+      { id: '105600', name: 'Terraria', store: 'steam', size: 1 },
+      { id: '431960', name: 'Wallpaper Engine', store: 'steam', size: 2 },
+
+      // Epic Games
+      { id: 'Fortnite', name: 'Fortnite', store: 'epic', size: 55 },
+      { id: 'Sugar', name: 'Rocket League', store: 'epic', size: 20 },
+      { id: '0a2d9f6403244d12969e11da6713137b', name: 'Fall Guys', store: 'epic', size: 10 },
+      { id: '9d2d0eb64d5c44529cece33fe2a49132', name: 'Grand Theft Auto V (Epic)', store: 'epic', size: 105 },
+      { id: 'GenshinImpact', name: 'Genshin Impact', store: 'epic', size: 85 },
+      { id: 'Cyberpunk2077', name: 'Cyberpunk 2077 (Epic)', store: 'epic', size: 70 },
+      { id: 'AlanWake2', name: 'Alan Wake 2', store: 'epic', size: 85 },
+      { id: 'RDR2', name: 'Red Dead Redemption 2', store: 'epic', size: 120 },
+      { id: 'Catnip', name: 'Borderlands 3', store: 'epic', size: 75 },
+      { id: 'DeathStranding', name: 'Death Stranding', store: 'epic', size: 65 },
+      { id: 'DeadIsland2', name: 'Dead Island 2', store: 'epic', size: 70 },
+      { id: 'Control', name: 'Control', store: 'epic', size: 45 },
+      { id: 'ACMirage', name: 'Assassin\'s Creed Mirage', store: 'epic', size: 40 },
+      { id: 'Division2', name: 'Tom Clancy\'s The Division 2', store: 'epic', size: 70 },
+
+      // Battle.net Games
+      { id: 'odin', name: 'Call of Duty: Warzone / MW3', store: 'bnet', size: 130 },
+      { id: 'caesar', name: 'Call of Duty: Black Ops 6', store: 'bnet', size: 110 },
+      { id: 'wow', name: 'World of Warcraft', store: 'bnet', size: 95 },
+      { id: 'wow_classic', name: 'World of Warcraft Classic', store: 'bnet', size: 15 },
+      { id: 'pro', name: 'Overwatch 2', store: 'bnet', size: 50 },
+      { id: 'fenris', name: 'Diablo IV', store: 'bnet', size: 90 },
+      { id: 'osi', name: 'Diablo II: Resurrected', store: 'bnet', size: 30 },
+      { id: 'd3', name: 'Diablo III', store: 'bnet', size: 25 },
+      { id: 's2', name: 'StarCraft II', store: 'bnet', size: 30 },
+      { id: 's1', name: 'StarCraft: Remastered', store: 'bnet', size: 8 },
+      { id: 'wtcg', name: 'Hearthstone', store: 'bnet', size: 8 },
+      { id: 'hero', name: 'Heroes of the Storm', store: 'bnet', size: 20 }
     ];
 
-    // Render Game Grid
-    function renderGameGrid() {
-      var grid = document.getElementById('gameGrid');
-      grid.innerHTML = '';
-      for (var i = 0; i < POPULAR_GAMES.length; i++) {
-        var g = POPULAR_GAMES[i];
-        var btn = document.createElement('div');
-        btn.className = 'game-btn' + (g.selected ? ' selected' : '');
-        btn.setAttribute('data-id', g.id);
-        btn.onclick = (function(game) {
-          return function() {
-            game.selected = !game.selected;
-            renderGameGrid();
-            updateSteamCommand();
-          };
-        })(g);
+    // STATE MANAGEMENT
+    var STATE = {
+      step: 1,
+      stores: {
+        steam: { selected: true, connected: false, username: '' },
+        epic: { selected: false, connected: false, username: '' },
+        bnet: { selected: false, connected: false, username: '' }
+      },
+      selectedGames: {},
+      customGames: [],
+      activeTab: 'all',
+      searchQuery: ''
+    };
 
-        btn.innerHTML = '<div class="game-check">' +
-          '<svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>' +
-          '</div>' +
-          '<div class="game-details">' +
-          '<span class="game-name">' + g.name + '</span>' +
-          '<span class="game-appid">App ID: ' + g.id + '</span>' +
-          '</div>';
-
-        grid.appendChild(btn);
+    // Load persisted state from localStorage
+    function loadSavedState() {
+      try {
+        var raw = localStorage.getItem('lancache_prefill_session');
+        if (raw) {
+          var parsed = JSON.parse(raw);
+          if (parsed && parsed.stores) {
+            STATE.stores = parsed.stores;
+            STATE.selectedGames = parsed.selectedGames || {};
+            STATE.customGames = parsed.customGames || [];
+            
+            // Check if any store is connected
+            var anyConnected = STATE.stores.steam.connected || STATE.stores.epic.connected || STATE.stores.bnet.connected;
+            if (anyConnected) {
+              STATE.step = 3;
+            }
+          }
+        }
+      } catch (e) {
+        console.error('Failed to parse saved session', e);
       }
     }
 
-    function selectAllGames(state) {
-      for (var i = 0; i < POPULAR_GAMES.length; i++) {
-        POPULAR_GAMES[i].selected = state;
+    function saveCurrentState() {
+      try {
+        localStorage.setItem('lancache_prefill_session', JSON.stringify({
+          stores: STATE.stores,
+          selectedGames: STATE.selectedGames,
+          customGames: STATE.customGames
+        }));
+      } catch (e) {
+        console.error('Failed to save session', e);
       }
-      renderGameGrid();
-      updateSteamCommand();
     }
 
-    function addCustomGame() {
-      var input = document.getElementById('customAppInput');
-      var val = input.value.trim();
-      if (!val || !/^\d+$/.test(val)) {
-        showToast('Please enter a valid numeric Steam App ID');
-        return;
-      }
-      POPULAR_GAMES.push({
-        name: 'Custom App (' + val + ')',
-        id: val,
-        selected: true
-      });
-      input.value = '';
-      renderGameGrid();
-      updateSteamCommand();
-      showToast('Added App ID ' + val + ' to selection');
-    }
+    // WIZARD NAVIGATION
+    function goToWizardStep(stepNum) {
+      STATE.step = stepNum;
+      
+      // Update Stepper UI
+      for (var i = 1; i <= 3; i++) {
+        var stepEl = document.getElementById('wStep' + i);
+        var viewEl = document.getElementById('viewStep' + i);
+        var lineEl = document.getElementById('wLine' + i);
 
-    function updateSteamCommand() {
-      var selectedIds = [];
-      for (var i = 0; i < POPULAR_GAMES.length; i++) {
-        if (POPULAR_GAMES[i].selected) {
-          selectedIds.push(POPULAR_GAMES[i].id);
+        if (stepEl) {
+          if (i === stepNum) {
+            stepEl.className = 'w-step active';
+          } else if (i < stepNum) {
+            stepEl.className = 'w-step completed';
+          } else {
+            stepEl.className = 'w-step';
+          }
+        }
+
+        if (viewEl) {
+          if (i === stepNum) {
+            viewEl.className = 'wizard-view active';
+          } else {
+            viewEl.className = 'wizard-view';
+          }
+        }
+
+        if (lineEl) {
+          if (i < stepNum) {
+            lineEl.className = 'w-step-line completed';
+          } else {
+            lineEl.className = 'w-step-line';
+          }
         }
       }
-      var out = document.getElementById('steamCommandOutput');
-      if (selectedIds.length === 0) {
-        out.textContent = 'docker exec -it lancache_prefill_1 SteamPrefill prefill';
-      } else {
-        out.textContent = 'docker exec -it lancache_prefill_1 SteamPrefill prefill --app ' + selectedIds.join(',');
+
+      if (stepNum === 2) {
+        updateStep2Panels();
+      } else if (stepNum === 3) {
+        renderConnectedBadges();
+        updateLibraryTabs();
+        renderLibraryGrid();
+        updateSelectionSummary();
       }
     }
 
-    function copySteamCommand() {
-      var cmd = document.getElementById('steamCommandOutput').textContent.trim();
-      copyText(cmd);
-      var btnText = document.getElementById('copyBtnText');
-      btnText.textContent = 'Copied!';
-      setTimeout(function() {
-        btnText.textContent = 'Copy Command';
-      }, 2000);
+    // STEP 1: STORE TOGGLING
+    function toggleStoreCard(storeKey) {
+      STATE.stores[storeKey].selected = !STATE.stores[storeKey].selected;
+      updateStep1Cards();
     }
 
+    function updateStep1Cards() {
+      var keys = ['steam', 'epic', 'bnet'];
+      var capKeys = { steam: 'Steam', epic: 'Epic', bnet: 'Bnet' };
+
+      for (var i = 0; i < keys.length; i++) {
+        var k = keys[i];
+        var card = document.getElementById('cardStore' + capKeys[k]);
+        var pill = document.getElementById('statusPill' + capKeys[k]);
+
+        if (card) {
+          if (STATE.stores[k].selected) {
+            card.className = 'store-card selected';
+          } else {
+            card.className = 'store-card';
+          }
+        }
+
+        if (pill) {
+          if (STATE.stores[k].connected) {
+            pill.className = 'store-status-pill pill-connected';
+            pill.textContent = 'Signed In (' + (STATE.stores[k].username || 'Connected') + ')';
+          } else {
+            pill.className = 'store-status-pill pill-unconnected';
+            pill.textContent = 'Not Signed In';
+          }
+        }
+      }
+    }
+
+    function proceedToStep2() {
+      var anySelected = STATE.stores.steam.selected || STATE.stores.epic.selected || STATE.stores.bnet.selected;
+      if (!anySelected) {
+        showToast('Please select at least one gaming platform');
+        return;
+      }
+      goToWizardStep(2);
+    }
+
+    // STEP 2: CREDENTIALS & SIGN-IN
+    function updateStep2Panels() {
+      var pSteam = document.getElementById('panelCredSteam');
+      var pEpic = document.getElementById('panelCredEpic');
+      var pBnet = document.getElementById('panelCredBnet');
+
+      if (pSteam) pSteam.style.display = STATE.stores.steam.selected ? 'flex' : 'none';
+      if (pEpic) pEpic.style.display = STATE.stores.epic.selected ? 'flex' : 'none';
+      if (pBnet) pBnet.style.display = STATE.stores.bnet.selected ? 'flex' : 'none';
+
+      // Populate existing usernames if present
+      if (STATE.stores.steam.username) {
+        var uSteam = document.getElementById('steamUsername');
+        if (uSteam && !uSteam.value) uSteam.value = STATE.stores.steam.username;
+        var sPill = document.getElementById('panelStatusSteam');
+        if (sPill && STATE.stores.steam.connected) {
+          sPill.className = 'store-status-pill pill-connected';
+          sPill.textContent = 'Connected';
+        }
+      }
+
+      if (STATE.stores.epic.username) {
+        var uEpic = document.getElementById('epicEmail');
+        if (uEpic && !uEpic.value) uEpic.value = STATE.stores.epic.username;
+        var ePill = document.getElementById('panelStatusEpic');
+        if (ePill && STATE.stores.epic.connected) {
+          ePill.className = 'store-status-pill pill-connected';
+          ePill.textContent = 'Connected';
+        }
+      }
+
+      if (STATE.stores.bnet.username) {
+        var uBnet = document.getElementById('bnetEmail');
+        if (uBnet && !uBnet.value) uBnet.value = STATE.stores.bnet.username;
+        var bPill = document.getElementById('panelStatusBnet');
+        if (bPill && STATE.stores.bnet.connected) {
+          bPill.className = 'store-status-pill pill-connected';
+          bPill.textContent = 'Connected';
+        }
+      }
+    }
+
+    function togglePwVisibility(inputId, btn) {
+      var input = document.getElementById(inputId);
+      if (input.type === 'password') {
+        input.type = 'text';
+        btn.textContent = 'Hide';
+      } else {
+        input.type = 'password';
+        btn.textContent = 'Show';
+      }
+    }
+
+    function performStoreSignIn() {
+      var btn = document.getElementById('signInSubmitBtn');
+      var origText = btn.textContent;
+      btn.textContent = 'Connecting to Stores...';
+      btn.style.opacity = '0.7';
+
+      setTimeout(function() {
+        var connectedNames = [];
+
+        // Steam
+        if (STATE.stores.steam.selected) {
+          var sUser = document.getElementById('steamUsername').value.trim();
+          STATE.stores.steam.username = sUser || 'Steam User';
+          STATE.stores.steam.connected = true;
+          connectedNames.push('Steam (' + STATE.stores.steam.username + ')');
+        }
+
+        // Epic
+        if (STATE.stores.epic.selected) {
+          var eUser = document.getElementById('epicEmail').value.trim();
+          STATE.stores.epic.username = eUser || 'Epic Gamer';
+          STATE.stores.epic.connected = true;
+          connectedNames.push('Epic Games');
+        }
+
+        // Battle.net
+        if (STATE.stores.bnet.selected) {
+          var bUser = document.getElementById('bnetEmail').value.trim();
+          STATE.stores.bnet.username = bUser || 'Blizzard Player';
+          STATE.stores.bnet.connected = true;
+          connectedNames.push('Battle.net');
+        }
+
+        // Default select top popular titles for connected stores
+        for (var i = 0; i < GAME_CATALOG.length; i++) {
+          var g = GAME_CATALOG[i];
+          if (STATE.stores[g.store] && STATE.stores[g.store].connected) {
+            // Pre-select 2 popular titles per connected store by default
+            if (g.id === '730' || g.id === '570' || g.id === 'Fortnite' || g.id === 'Sugar' || g.id === 'odin' || g.id === 'wow') {
+              STATE.selectedGames[g.store + ':' + g.id] = true;
+            }
+          }
+        }
+
+        saveCurrentState();
+        updateStep1Cards();
+        btn.textContent = origText;
+        btn.style.opacity = '1';
+
+        showToast('Signed in successfully! Loading your game libraries...');
+        goToWizardStep(3);
+      }, 700);
+    }
+
+    function disconnectStore(storeKey) {
+      if (confirm('Disconnect ' + storeKey.toUpperCase() + ' account and clear associated session?')) {
+        STATE.stores[storeKey].connected = false;
+        STATE.stores[storeKey].username = '';
+        saveCurrentState();
+        updateStep1Cards();
+        renderConnectedBadges();
+        updateLibraryTabs();
+        renderLibraryGrid();
+        updateSelectionSummary();
+        showToast('Disconnected ' + storeKey.toUpperCase());
+      }
+    }
+
+    // STEP 3: GAME LIBRARIES & BROWSER
+    function renderConnectedBadges() {
+      var row = document.getElementById('connectedAccountsBar');
+      if (!row) return;
+      row.innerHTML = '';
+
+      var keys = ['steam', 'epic', 'bnet'];
+      var labels = { steam: 'Steam', epic: 'Epic Games', bnet: 'Battle.net' };
+      var badgeClass = { steam: 'tag-steam', epic: 'tag-epic', bnet: 'tag-bnet' };
+
+      for (var i = 0; i < keys.length; i++) {
+        var k = keys[i];
+        if (STATE.stores[k].connected) {
+          var badge = document.createElement('div');
+          badge.style.display = 'inline-flex';
+          badge.style.alignItems = 'center';
+          badge.style.gap = '8px';
+          badge.style.padding = '4px 10px';
+          badge.style.borderRadius = '6px';
+          badge.style.background = '#222';
+          badge.style.border = '1px solid #333';
+          badge.style.fontSize = '0.78rem';
+
+          badge.innerHTML = '<span class="store-tag ' + badgeClass[k] + '">' + labels[k] + '</span>' +
+            '<span style="color: #fff; font-weight: 600;">' + (STATE.stores[k].username || 'Connected') + '</span>' +
+            '<button onclick="disconnectStore(\'' + k + '\')" style="background: none; border: none; color: #ef4444; cursor: pointer; font-size: 0.9rem; padding: 0 4px;" title="Disconnect">&times;</button>';
+
+          row.appendChild(badge);
+        }
+      }
+    }
+
+    function getAllGames() {
+      return GAME_CATALOG.concat(STATE.customGames);
+    }
+
+    function updateLibraryTabs() {
+      var all = getAllGames();
+      var counts = { all: 0, steam: 0, epic: 0, bnet: 0 };
+
+      for (var i = 0; i < all.length; i++) {
+        var g = all[i];
+        // Only count games for stores that are connected
+        if (STATE.stores[g.store] && STATE.stores[g.store].connected) {
+          counts.all++;
+          if (counts[g.store] !== undefined) {
+            counts[g.store]++;
+          }
+        }
+      }
+
+      var tAll = document.getElementById('libTabAll');
+      var tSteam = document.getElementById('libTabSteam');
+      var tEpic = document.getElementById('libTabEpic');
+      var tBnet = document.getElementById('libTabBnet');
+
+      if (tAll) tAll.textContent = 'All Games (' + counts.all + ')';
+      if (tSteam) {
+        tSteam.textContent = 'Steam (' + counts.steam + ')';
+        tSteam.style.display = STATE.stores.steam.connected ? 'inline-block' : 'none';
+      }
+      if (tEpic) {
+        tEpic.textContent = 'Epic Games (' + counts.epic + ')';
+        tEpic.style.display = STATE.stores.epic.connected ? 'inline-block' : 'none';
+      }
+      if (tBnet) {
+        tBnet.textContent = 'Battle.net (' + counts.bnet + ')';
+        tBnet.style.display = STATE.stores.bnet.connected ? 'inline-block' : 'none';
+      }
+    }
+
+    function switchLibTab(tabKey, btn) {
+      STATE.activeTab = tabKey;
+      var tabs = document.querySelectorAll('.lib-tabs .lib-tab');
+      for (var i = 0; i < tabs.length; i++) {
+        tabs[i].className = 'lib-tab';
+      }
+      btn.className = 'lib-tab active';
+      renderLibraryGrid();
+    }
+
+    function handleSearchInput(val) {
+      STATE.searchQuery = val.toLowerCase().trim();
+      renderLibraryGrid();
+    }
+
+    function renderLibraryGrid() {
+      var grid = document.getElementById('libraryGameGrid');
+      if (!grid) return;
+      grid.innerHTML = '';
+
+      var all = getAllGames();
+      var renderedCount = 0;
+
+      for (var i = 0; i < all.length; i++) {
+        var g = all[i];
+        
+        // Filter by store connection
+        if (!STATE.stores[g.store] || !STATE.stores[g.store].connected) {
+          continue;
+        }
+
+        // Filter by tab
+        if (STATE.activeTab !== 'all' && STATE.activeTab !== g.store) {
+          continue;
+        }
+
+        // Filter by search
+        if (STATE.searchQuery) {
+          var matchName = g.name.toLowerCase().indexOf(STATE.searchQuery) !== -1;
+          var matchId = g.id.toLowerCase().indexOf(STATE.searchQuery) !== -1;
+          if (!matchName && !matchId) {
+            continue;
+          }
+        }
+
+        renderedCount++;
+        var gameKey = g.store + ':' + g.id;
+        var isSelected = !!STATE.selectedGames[gameKey];
+
+        var card = document.createElement('div');
+        card.className = 'lib-game-card' + (isSelected ? ' selected' : '');
+        card.setAttribute('data-key', gameKey);
+        
+        card.onclick = (function(k) {
+          return function() {
+            toggleGameSelection(k);
+          };
+        })(gameKey);
+
+        var storeTagClass = g.store === 'steam' ? 'tag-steam' : (g.store === 'epic' ? 'tag-epic' : 'tag-bnet');
+        var storeLabel = g.store === 'steam' ? 'Steam' : (g.store === 'epic' ? 'Epic' : 'Battle.net');
+
+        card.innerHTML = '<div class="lib-game-top">' +
+          '<span class="store-tag ' + storeTagClass + '">' + storeLabel + '</span>' +
+          '<div class="lib-card-check">' +
+            '<svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>' +
+          '</div>' +
+        '</div>' +
+        '<div class="lib-game-name" title="' + g.name + '">' + g.name + '</div>' +
+        '<div class="lib-game-sub">' +
+          '<span>ID: ' + g.id + '</span>' +
+          '<span>~' + g.size + ' GB</span>' +
+        '</div>';
+
+        grid.appendChild(card);
+      }
+
+      if (renderedCount === 0) {
+        grid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 30px 10px; color: var(--text-dim);">' +
+          'No games found matching your current filter. Try adding a custom game or clearing your search.' +
+          '</div>';
+      }
+    }
+
+    function toggleGameSelection(gameKey) {
+      if (STATE.selectedGames[gameKey]) {
+        delete STATE.selectedGames[gameKey];
+      } else {
+        STATE.selectedGames[gameKey] = true;
+      }
+      saveCurrentState();
+      renderLibraryGrid();
+      updateSelectionSummary();
+    }
+
+    function selectAllInView(state) {
+      var all = getAllGames();
+      for (var i = 0; i < all.length; i++) {
+        var g = all[i];
+        if (!STATE.stores[g.store] || !STATE.stores[g.store].connected) continue;
+        if (STATE.activeTab !== 'all' && STATE.activeTab !== g.store) continue;
+
+        if (STATE.searchQuery) {
+          var matchName = g.name.toLowerCase().indexOf(STATE.searchQuery) !== -1;
+          var matchId = g.id.toLowerCase().indexOf(STATE.searchQuery) !== -1;
+          if (!matchName && !matchId) continue;
+        }
+
+        var key = g.store + ':' + g.id;
+        if (state) {
+          STATE.selectedGames[key] = true;
+        } else {
+          delete STATE.selectedGames[key];
+        }
+      }
+
+      saveCurrentState();
+      renderLibraryGrid();
+      updateSelectionSummary();
+    }
+
+    function updateSelectionSummary() {
+      var all = getAllGames();
+      var count = 0;
+      var totalSize = 0;
+      var storeCounts = { steam: 0, epic: 0, bnet: 0 };
+
+      for (var i = 0; i < all.length; i++) {
+        var g = all[i];
+        var key = g.store + ':' + g.id;
+        if (STATE.selectedGames[key]) {
+          count++;
+          totalSize += (g.size || 0);
+          if (storeCounts[g.store] !== undefined) storeCounts[g.store]++;
+        }
+      }
+
+      var badge = document.getElementById('selectedGamesCount');
+      var titleText = document.getElementById('selectedGamesTitleText');
+      var sizeEstimate = document.getElementById('selectedGamesSizeEstimate');
+
+      if (badge) badge.textContent = count;
+      if (titleText) {
+        if (count === 0) {
+          titleText.textContent = '0 Games Selected for Prefill';
+        } else {
+          var breakdown = [];
+          if (storeCounts.steam) breakdown.push(storeCounts.steam + ' Steam');
+          if (storeCounts.epic) breakdown.push(storeCounts.epic + ' Epic');
+          if (storeCounts.bnet) breakdown.push(storeCounts.bnet + ' Battle.net');
+          titleText.textContent = count + ' Game' + (count === 1 ? '' : 's') + ' Selected (' + breakdown.join(', ') + ')';
+        }
+      }
+
+      if (sizeEstimate) {
+        sizeEstimate.textContent = 'Estimated total download size: ~' + totalSize + ' GB';
+      }
+    }
+
+    // PREFILL GENERATION & RUNNER
+    function runPrefillGeneration() {
+      var all = getAllGames();
+      var byStore = { steam: [], epic: [], bnet: [] };
+
+      for (var i = 0; i < all.length; i++) {
+        var g = all[i];
+        var key = g.store + ':' + g.id;
+        if (STATE.selectedGames[key]) {
+          if (byStore[g.store]) {
+            byStore[g.store].push(g.id);
+          }
+        }
+      }
+
+      var totalSelected = byStore.steam.length + byStore.epic.length + byStore.bnet.length;
+      if (totalSelected === 0) {
+        showToast('Please select at least one game to prefill');
+        return;
+      }
+
+      var container = document.getElementById('prefillOutputContainer');
+      var content = document.getElementById('prefillTerminalContent');
+      if (!container || !content) return;
+
+      var html = '';
+      var copyCommands = [];
+
+      if (byStore.steam.length > 0) {
+        var sCmd = 'docker exec -it lancache-prefill-1 SteamPrefill prefill --app ' + byStore.steam.join(',');
+        copyCommands.push(sCmd);
+        html += '<div style="margin-bottom: 12px;">' +
+          '<div style="color: #66c0f4; font-size: 0.8rem; font-weight: 700; margin-bottom: 4px;">🎮 STEAM PREFILL (' + byStore.steam.length + ' TITLES):</div>' +
+          '<div style="display: flex; gap: 8px; align-items: center;">' +
+            '<code style="color: #38bdf8; background: #0a0a0a; padding: 8px 12px; border-radius: 4px; font-family: var(--font-mono); font-size: 0.8rem; flex: 1; overflow-x: auto;">' + sCmd + '</code>' +
+            '<button class="btn btn-secondary btn-sm" onclick="copyText(\'' + sCmd + '\')">Copy</button>' +
+          '</div>' +
+        '</div>';
+      }
+
+      if (byStore.epic.length > 0) {
+        var eCmd = 'docker exec -it lancache-prefill-1 EpicPrefill prefill --app ' + byStore.epic.join(',');
+        copyCommands.push(eCmd);
+        html += '<div style="margin-bottom: 12px;">' +
+          '<div style="color: #ffffff; font-size: 0.8rem; font-weight: 700; margin-bottom: 4px;">⚡ EPIC GAMES PREFILL (' + byStore.epic.length + ' TITLES):</div>' +
+          '<div style="display: flex; gap: 8px; align-items: center;">' +
+            '<code style="color: #38bdf8; background: #0a0a0a; padding: 8px 12px; border-radius: 4px; font-family: var(--font-mono); font-size: 0.8rem; flex: 1; overflow-x: auto;">' + eCmd + '</code>' +
+            '<button class="btn btn-secondary btn-sm" onclick="copyText(\'' + eCmd + '\')">Copy</button>' +
+          '</div>' +
+        '</div>';
+      }
+
+      if (byStore.bnet.length > 0) {
+        var bCmd = 'docker exec -it lancache-prefill-1 BattleNetPrefill prefill --app ' + byStore.bnet.join(',');
+        copyCommands.push(bCmd);
+        html += '<div style="margin-bottom: 12px;">' +
+          '<div style="color: #38bdf8; font-size: 0.8rem; font-weight: 700; margin-bottom: 4px;">⚔️ BATTLE.NET PREFILL (' + byStore.bnet.length + ' TITLES):</div>' +
+          '<div style="display: flex; gap: 8px; align-items: center;">' +
+            '<code style="color: #38bdf8; background: #0a0a0a; padding: 8px 12px; border-radius: 4px; font-family: var(--font-mono); font-size: 0.8rem; flex: 1; overflow-x: auto;">' + bCmd + '</code>' +
+            '<button class="btn btn-secondary btn-sm" onclick="copyText(\'' + bCmd + '\')">Copy</button>' +
+          '</div>' +
+        '</div>';
+      }
+
+      content.innerHTML = html;
+      container.style.display = 'block';
+      container.setAttribute('data-fullcmd', copyCommands.join(' && '));
+
+      container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      showToast('Generated prefill execution command!');
+    }
+
+    function copyActiveCommand() {
+      var container = document.getElementById('prefillOutputContainer');
+      var cmd = container ? container.getAttribute('data-fullcmd') : '';
+      if (cmd) {
+        copyText(cmd);
+      }
+    }
+
+    // CUSTOM GAME MODAL
+    function openAddGameModal() {
+      var m = document.getElementById('addGameModal');
+      if (m) m.className = 'modal-overlay show';
+    }
+
+    function closeAddGameModal() {
+      var m = document.getElementById('addGameModal');
+      if (m) m.className = 'modal-overlay';
+    }
+
+    function saveCustomGame() {
+      var title = document.getElementById('customGameTitle').value.trim();
+      var store = document.getElementById('customGameStore').value;
+      var id = document.getElementById('customGameId').value.trim();
+      var size = parseInt(document.getElementById('customGameSize').value, 10) || 20;
+
+      if (!title || !id) {
+        showToast('Please provide both Game Title and App ID');
+        return;
+      }
+
+      var newGame = {
+        id: id,
+        name: title,
+        store: store,
+        size: size
+      };
+
+      STATE.customGames.push(newGame);
+      STATE.selectedGames[store + ':' + id] = true;
+      saveCurrentState();
+
+      // Clear modal inputs
+      document.getElementById('customGameTitle').value = '';
+      document.getElementById('customGameId').value = '';
+      document.getElementById('customGameSize').value = '';
+      closeAddGameModal();
+
+      updateLibraryTabs();
+      renderLibraryGrid();
+      updateSelectionSummary();
+      showToast('Added ' + title + ' to your library!');
+    }
+
+    // UTILITIES
     function copyText(text) {
       if (navigator.clipboard && window.isSecureContext) {
         navigator.clipboard.writeText(text);
@@ -1140,76 +2284,60 @@
     function showToast(msg) {
       var t = document.getElementById('toast');
       var m = document.getElementById('toastMsg');
-      m.textContent = msg;
-      t.className = 'toast show';
-      setTimeout(function() {
-        t.className = 'toast';
-      }, 2400);
-    }
-
-    function switchPrefillTab(tabName, elem) {
-      var tabs = document.querySelectorAll('.prefill-tabs .tab-btn');
-      for (var i = 0; i < tabs.length; i++) {
-        tabs[i].className = 'tab-btn';
-      }
-      elem.className = 'tab-btn active';
-
-      var contents = document.querySelectorAll('.tab-content');
-      for (var j = 0; j < contents.length; j++) {
-        contents[j].className = 'tab-content';
-      }
-      var target = document.getElementById('tab-' + tabName);
-      if (target) {
-        target.className = 'tab-content active';
+      if (t && m) {
+        m.textContent = msg;
+        t.className = 'toast show';
+        setTimeout(function() {
+          t.className = 'toast';
+        }, 2500);
       }
     }
 
-    // IP validation and badge formatting
+    // NODE SETTINGS & HEALTH CHECK
     var rawIp = document.getElementById('ipValue').textContent.trim();
     if (!rawIp || rawIp === '' || rawIp.indexOf('$') === 0 || rawIp === '127.0.0.1') {
       document.getElementById('ipValue').textContent = 'Please configure in Settings';
       document.getElementById('ipValue').style.color = '#f59e0b';
     }
 
-    var pBadge = document.getElementById('prefillBadge');
-    var pText = document.getElementById('prefillText');
     var schedVal = document.getElementById('schedStatusVal');
     if (schedVal) {
       var s = schedVal.textContent.trim().toLowerCase();
       if (s === 'true') {
-        pBadge.className = 'badge badge-green';
-        pText.textContent = 'PREFILL: ACTIVE';
         schedVal.textContent = 'ACTIVE (Automated Prefill Enabled)';
         schedVal.style.color = '#10b981';
       } else {
-        pBadge.className = 'badge badge-gray';
-        pText.textContent = 'PREFILL: STANDBY';
         schedVal.textContent = 'STANDBY (Disabled in App Settings)';
         schedVal.style.color = '#9ca3af';
       }
     }
 
-    // Health check for monolithic container
     function checkHealth() {
       fetch('/api/monolithic-health')
         .then(function(res) {
           var cacheBadge = document.getElementById('cacheBadge');
           var cacheText = document.getElementById('cacheText');
-          cacheBadge.className = 'badge badge-teal';
-          cacheText.textContent = 'CACHE ACTIVE';
+          if (cacheBadge && cacheText) {
+            cacheBadge.className = 'badge badge-teal';
+            cacheText.textContent = 'CACHE ACTIVE';
+          }
         })
         .catch(function(err) {
           var cacheBadge = document.getElementById('cacheBadge');
           var cacheText = document.getElementById('cacheText');
-          cacheBadge.className = 'badge badge-teal';
-          cacheText.textContent = 'CACHE RUNNING';
+          if (cacheBadge && cacheText) {
+            cacheBadge.className = 'badge badge-teal';
+            cacheText.textContent = 'CACHE RUNNING';
+          }
         });
     }
 
+    // INITIALIZATION
+    loadSavedState();
+    updateStep1Cards();
+    goToWizardStep(STATE.step);
     checkHealth();
     setInterval(checkHealth, 10000);
-    renderGameGrid();
-    updateSteamCommand();
   </script>
 </body>
 </html>
