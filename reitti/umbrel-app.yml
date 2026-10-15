@@ -3,7 +3,7 @@ id: reitti
 name: Reitti
 tagline: A location tracking and analysis application
 category: files
-version: "5.6.1"
+version: "5.7.0"
 port: 8744
 description: >-
   🗺️ Reitti is an application designed to monitor and record your movements in a comprehensive and automated way. It continuously tracks your location throughout the day and identifies the places you visit, creating a detailed log of your daily activities. By analyzing your movements, it can detect the mode of transportation you use, whether you are walking, cycling, or driving, and provides insights into how you travel between different locations.
@@ -38,13 +38,16 @@ releaseNotes: >-
   ⚠️ Reitti 5 is a recent major update. If you're updating from a pre-5.0 version, back up your app data first, let the first-start migration finish, and then verify your devices, API tokens, and map style selection in Settings.
 
 
-  This security update fixes several vulnerabilities and invalidates all remember-me sessions once, so you will need to log in again after updating.
+  This update adds automatic activity imports from Intervals.icu, improves visit detection from sparse location data, and makes transportation mode detection more accurate.
 
 
-  It also moves the GPSLogger configuration download to the API at `/api/v2/gpslogger/reitti.properties`.
+  Security improvements include CSRF protection for the web UI, stronger separation of user data, administrator-only role and geocoding changes, and login throttling. Jobs now show only your own activity, raw tracks exclude synthetic points, and workbench box selection respects the selected time range.
 
 
-  Full release notes can be found at https://github.com/dedicatedcode/reitti/releases/tag/v5.6.1.
+  Detection improvements apply to new data automatically. To reprocess existing history, save a setting under Settings > Visit Sensitivity and accept recalculation. Back up first: recalculation clears and rebuilds places, visits, and trips.
+
+
+  Full release notes can be found at https://github.com/dedicatedcode/reitti/releases/tag/v5.7.0.
 dependencies: []
 path: ""
 defaultUsername: "admin"
