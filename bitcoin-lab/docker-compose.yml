@@ -1,0 +1,214 @@
+# One image, four lightweight services (one per long-running process). All
+# four share the same SQLite file under ${APP_DATA_DIR}/data (better-sqlite3
+# in WAL mode is safe for multiple local processes).
+#
+# restart: on-failure - a service exits non-zero on any fault (see
+# src/lib/process-guard.js), so the policy brings it back; it exits 0 only
+# when Umbrel stops it on purpose.
+#
+# Every service has a healthcheck. The three worker processes have no HTTP
+# port, so each writes a heartbeat into the shared database every 30s and its
+# check reads that back read-only (see src/lib/health.js). Without this a
+# crash-looping worker was completely invisible: the app kept showing as
+# running and its tables simply stopped growing.
+#
+# The checks run every 60s rather than every 30s. Each one starts a node
+# process, and four services checking every 30s is eight node starts a minute,
+# all day, on a machine that is often a Raspberry Pi. The staleness threshold
+# in the workers' checks is unchanged at 120000 ms, and that threshold is what
+# decides when a check starts failing; the interval only decides how often the
+# question is asked. Worst case, a worker that has stopped writing heartbeats
+# is now marked unhealthy 120s (stale) + 2 x 60s (retries) = four minutes after
+# its last heartbeat, against three minutes before. The workers use retries: 2
+# rather than 3 because a stale heartbeat is already an average over two
+# minutes and not a flaky reading; the dashboard keeps retries: 3, because one
+# missed HTTP request really can be noise, so it is flagged within at most
+# three minutes.
+#
+# Sandboxing. All four services run the same image as uid 1000, and:
+#
+#   cap_drop: [ALL] - a node process serving HTTP on 8788 and reading and
+#     writing SQLite files it owns needs no Linux capability at all. Both of
+#     this app's ports are above 1024, so not even NET_BIND_SERVICE.
+#   security_opt: no-new-privileges - nothing in the image is setuid and
+#     nothing re-execs into anything, so no process here should ever gain
+#     privileges it did not start with. Assumes no future command in this file
+#     needs to escalate.
+#   read_only: true - the assumption is that the app writes only inside
+#     DATA_DIR, which is set to /data, which is the volume below and stays
+#     writable. SQLite's -wal and -shm files are created beside the database
+#     file, so they land there too. Nothing writes to /app or to the node
+#     user's home at runtime: the image runs no npm install, writes no log file
+#     and keeps no cache.
+#   tmpfs: /tmp - the one deliberate hole in the read-only root. SQLite spills
+#     large sorts and VACUUM into a temporary directory, and anything calling
+#     os.tmpdir() expects /tmp to exist and be writable. In memory, small, and
+#     empty again after a restart.
+#
+# If a future version of the app starts writing somewhere else inside the
+# container, read_only is what breaks first, and it breaks loudly: EROFS on the
+# path it tried to write, in that service's logs. The fix then is to mount that
+# path, not to drop the flag.
+#
+# app_proxy is left alone deliberately: Umbrel owns that service and supplies
+# its image, and these flags belong to the containers this file defines.
+#
+# The `image:` reference is pinned by tag AND digest, and all four services
+# use the same one. See RELEASING.md for where that reference comes from.
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: bitcoin-lab_dashboard_1
+      APP_PORT: 8788
+
+  dashboard:
+    image: ghcr.io/benunskilled/bitcoin-lab:1.26.0@sha256:80153ebf51a7ba776eed8a9386a2a13347550a19e55d26e4d95a342dae92ff35
+    user: "1000:1000"
+    init: true
+    restart: on-failure
+    # Hardening - see "Sandboxing" at the top of this file for what each line
+    # assumes about this app. The data mount below stays writable.
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - "no-new-privileges:true"
+    cap_drop:
+      - ALL
+    command: ["node", "src/dashboard-server.js"]
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+    environment:
+      APP_BITCOIN_NODE_IP: $APP_BITCOIN_NODE_IP
+      APP_BITCOIN_RPC_PORT: $APP_BITCOIN_RPC_PORT
+      APP_BITCOIN_RPC_USER: $APP_BITCOIN_RPC_USER
+      APP_BITCOIN_RPC_PASS: $APP_BITCOIN_RPC_PASS
+      APP_BITCOIN_ZMQ_HASHBLOCK_PORT: $APP_BITCOIN_ZMQ_HASHBLOCK_PORT
+      APP_BITCOIN_NETWORK: $APP_BITCOIN_NETWORK
+      DATA_DIR: /data
+      DASHBOARD_PORT: "8788"
+      PEERMAP_HEALTH_URL: http://peer-map_web_1:8789/api/health
+    healthcheck:
+      # Double-quoted deliberately: the JavaScript contains ": " (in the
+      # ternary "? 0 : 1"), and an unquoted YAML plain scalar treats that as a
+      # key/value separator - which silently turned this argument into a
+      # mapping, made the whole compose file fail schema validation, and left
+      # the app with no containers at all. Keep the quotes.
+      test:
+        - CMD
+        - node
+        - -e
+        - "require('http').get('http://127.0.0.1:8788/api/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  peer-profiler:
+    image: ghcr.io/benunskilled/bitcoin-lab:1.26.0@sha256:80153ebf51a7ba776eed8a9386a2a13347550a19e55d26e4d95a342dae92ff35
+    user: "1000:1000"
+    init: true
+    restart: on-failure
+    # Hardening - see "Sandboxing" at the top of this file for what each line
+    # assumes about this app. The data mount below stays writable.
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - "no-new-privileges:true"
+    cap_drop:
+      - ALL
+    command: ["node", "src/peer-profiler.js"]
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+    environment:
+      APP_BITCOIN_NODE_IP: $APP_BITCOIN_NODE_IP
+      APP_BITCOIN_RPC_PORT: $APP_BITCOIN_RPC_PORT
+      APP_BITCOIN_RPC_USER: $APP_BITCOIN_RPC_USER
+      APP_BITCOIN_RPC_PASS: $APP_BITCOIN_RPC_PASS
+      APP_BITCOIN_ZMQ_HASHBLOCK_PORT: $APP_BITCOIN_ZMQ_HASHBLOCK_PORT
+      APP_BITCOIN_NETWORK: $APP_BITCOIN_NETWORK
+      DATA_DIR: /data
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - require('/app/src/lib/health').assertFresh('peer-profiler', 120000)
+      interval: 60s
+      timeout: 10s
+      retries: 2
+      start_period: 60s
+
+  relay-profiler:
+    image: ghcr.io/benunskilled/bitcoin-lab:1.26.0@sha256:80153ebf51a7ba776eed8a9386a2a13347550a19e55d26e4d95a342dae92ff35
+    user: "1000:1000"
+    init: true
+    restart: on-failure
+    # Hardening - see "Sandboxing" at the top of this file for what each line
+    # assumes about this app. The data mount below stays writable.
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - "no-new-privileges:true"
+    cap_drop:
+      - ALL
+    command: ["node", "src/relay-profiler.js"]
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+    environment:
+      APP_BITCOIN_NODE_IP: $APP_BITCOIN_NODE_IP
+      APP_BITCOIN_RPC_PORT: $APP_BITCOIN_RPC_PORT
+      APP_BITCOIN_RPC_USER: $APP_BITCOIN_RPC_USER
+      APP_BITCOIN_RPC_PASS: $APP_BITCOIN_RPC_PASS
+      APP_BITCOIN_ZMQ_HASHBLOCK_PORT: $APP_BITCOIN_ZMQ_HASHBLOCK_PORT
+      APP_BITCOIN_NETWORK: $APP_BITCOIN_NETWORK
+      DATA_DIR: /data
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - require('/app/src/lib/health').assertFresh('relay-profiler', 120000)
+      interval: 60s
+      timeout: 10s
+      retries: 2
+      start_period: 60s
+
+  stratum-race:
+    image: ghcr.io/benunskilled/bitcoin-lab:1.26.0@sha256:80153ebf51a7ba776eed8a9386a2a13347550a19e55d26e4d95a342dae92ff35
+    user: "1000:1000"
+    init: true
+    restart: on-failure
+    # Hardening - see "Sandboxing" at the top of this file for what each line
+    # assumes about this app. The data mount below stays writable.
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - "no-new-privileges:true"
+    cap_drop:
+      - ALL
+    command: ["node", "src/stratum-race.js"]
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+    environment:
+      APP_BITCOIN_NODE_IP: $APP_BITCOIN_NODE_IP
+      APP_BITCOIN_RPC_PORT: $APP_BITCOIN_RPC_PORT
+      APP_BITCOIN_RPC_USER: $APP_BITCOIN_RPC_USER
+      APP_BITCOIN_RPC_PASS: $APP_BITCOIN_RPC_PASS
+      APP_BITCOIN_ZMQ_HASHBLOCK_PORT: $APP_BITCOIN_ZMQ_HASHBLOCK_PORT
+      APP_BITCOIN_NETWORK: $APP_BITCOIN_NETWORK
+      DATA_DIR: /data
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - require('/app/src/lib/health').assertFresh('stratum-race', 120000)
+      interval: 60s
+      timeout: 10s
+      retries: 2
+      start_period: 60s
