@@ -1,0 +1,51 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    # Umbrel injects the authenticated proxy image and public port. Its target
+    # must be a bridge-network Compose service for the official app linter.
+    environment:
+      APP_HOST: tunnelsats-web
+      APP_PORT: "9740"
+      PROXY_AUTH_ADD: "true"
+
+  tunnelsats-web:
+    image: tunnelsats/ts-umbrel-app:3.4.2@sha256:cd6a635faa06d51b9495acad73d0072eb46c63947c5f1acac5495fd1b8b43690
+    restart: on-failure
+    user: "1000:1000"
+    cap_drop:
+      - ALL
+    security_opt: [no-new-privileges:true]
+    environment:
+      - TUNNELSATS_ROLE=web
+      - TUNNELSATS_DAEMON_SOCKET=/run/tunnelsats/daemon.sock
+      - DASHBOARD_BIND_HOST=0.0.0.0
+      - DASHBOARD_BIND_PORT=9740
+      - MANAGEMENT_BROWSER_SECURITY_ENABLED=true
+      - MANAGEMENT_TRUSTED_PROXY_HOST=app_proxy
+    volumes:
+      # Subscription metadata/configs are user-owned application state. The web
+      # service has no host, Docker, Lightning, or dataplane access.
+      - ${APP_DATA_DIR}/data:/data
+      - ${APP_DATA_DIR}/runtime:/run/tunnelsats
+
+  tunnelsats-daemon:
+    image: tunnelsats/ts-umbrel-app:3.4.2@sha256:cd6a635faa06d51b9495acad73d0072eb46c63947c5f1acac5495fd1b8b43690
+    restart: on-failure
+    network_mode: "host"
+    cap_add:
+      - NET_ADMIN
+    environment:
+      - TUNNELSATS_ROLE=daemon
+      - TUNNELSATS_DAEMON_SOCKET=/run/tunnelsats/daemon.sock
+      - TUNNELSATS_WEB_UID=1000
+      - TUNNELSATS_WEB_GID=1000
+      - SECURE_MODE=${SECURE_MODE:-true}
+      - MANAGEMENT_BROWSER_SECURITY_ENABLED=false
+    volumes:
+      # Persistent peer directory (Uninstall-safe)
+      - ${APP_DATA_DIR}/data:/data
+      # Lightning Node config mounts (Graceful discovery via relative paths)
+      - ${APP_DATA_DIR}/../lightning/data/lnd:/lightning-data/lnd:ro
+      - ${APP_DATA_DIR}/../core-lightning/data/lightningd:/lightning-data/cln:ro
+      - ${APP_DATA_DIR}/runtime:/run/tunnelsats
