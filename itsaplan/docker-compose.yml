@@ -63,7 +63,7 @@ services:
       S3_BUCKET: planner-attachments
     entrypoint: >
       /bin/sh -c "
-      sleep 5
+      sleep 5;
       for i in 1 2 3 4 5 6 7 8 9 10; do
         curl -fs -o /dev/null -X PUT --aws-sigv4 aws:amz:us-east-1:s3 --user \"$$S3_ACCESS_KEY_ID:$$S3_SECRET_ACCESS_KEY\" http://itsaplan_minio_1:9000/\"$$S3_BUCKET\" && { echo 'bucket ready: '\"$$S3_BUCKET\"; exit 0; };
         sleep 2;
