@@ -2,13 +2,10 @@
 set -euo pipefail
 
 APP_DIR="${APP_DATA_DIR:-$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")}"
-DATA_DIR="${APP_DATA_ROOT:-${APP_DIR}/data}"
 NGINX_CONFIG_FILE="${APP_DIR}/config/nginx.conf"
-MARKER='# Umbrel It'\''s a Plan nginx reverse proxy'
 
-if [[ ! -f "${NGINX_CONFIG_FILE}" ]] || ! grep -qF "${MARKER}" "${NGINX_CONFIG_FILE}"; then
-  mkdir -p "${APP_DIR}/config"
-  cat >"${NGINX_CONFIG_FILE}" <<'EOF'
+mkdir -p "${APP_DIR}/config"
+cat >"${NGINX_CONFIG_FILE}" <<'EOF'
 # Umbrel It's a Plan nginx reverse proxy
 
 map $http_x_forwarded_port $final_port {
@@ -58,7 +55,5 @@ server {
   }
 }
 EOF
-  echo "Updated nginx configuration file for itsaplan."
-fi
 
 exit 0
