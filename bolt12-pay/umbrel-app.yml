@@ -5,7 +5,7 @@ storage:
 name: BOLT12 Pay
 tagline: Self-hosted Lightning payments and identity with BOLT12, BIP353, LNURL, and Nostr
 category: bitcoin
-version: 0.3.8
+version: 0.3.13
 port: 8367
 description: |-
   BOLT12 Pay is a self-hosted Lightning payments and identity app for LND nodes.
@@ -84,15 +84,13 @@ submission: https://github.com/getumbrel/umbrel-apps/pull/5429
 repo: https://github.com/Alex71btc/lndk-pay
 support: https://github.com/Alex71btc/lndk-pay/issues
 releaseNotes: |
-  Restores reliable NIP-57 Zap receipts and Android push notifications. BOLT12 Pay now advertises the same receipt signer it actually uses; previously standards-validating clients such as Amethyst could reject the receipts, often causing only the first Zap notification to appear.
+  Adds the new BOLT12 Pay Android Companion, offered directly from the mobile Pay page. It accepts BOLT12 Offers, BOLT11 invoices, Lightning Addresses and Amethyst BIP321 payment links, then safely transfers them to your own BOLT12 Pay server for review. Payments are never started automatically. The Companion interface is available in German and English, and its saved server configuration is preserved across normal app updates.
 
-  Zaps are now detected and published much faster. New Zap invoices wake the publisher immediately and active payments are checked about once per second instead of waiting for the previous 15-second polling interval.
+  Pay and Console are now one installable BOLT12 Pay PWA with a shared identity. This fixes the mixed installation state where Chrome could install one view but not the other, improves reinstall handling, and provides separate standard and Android maskable launcher icons.
 
-  Relay publishing now waits for real acceptance acknowledgements, tolerates individual blocked or unavailable relays once another requested relay accepted the receipt, and safely reuses the same signed receipt when a retry is necessary.
+  PWA installation requires the configured HTTPS address and a normal Chrome or Chromium tab. Firefox on Linux does not currently offer the same direct installation flow. On Android, open the Pay page directly in Chrome instead of the embedded Umbrel app window. If separate BOLT12 Pay and BOLT12 Console web apps from an earlier version are still installed, remove both once, reload the Pay page and install the single BOLT12 Pay app again.
 
-  NWC connections sharing a relay now use one shared subscription, duplicate requests are ignored, and reconnects use bounded backoff. Lightning Activity remains responsive while avoiding overlapping LND history scans.
-
-  Existing application data and payment history are preserved. No manual migration is required.
+  Existing application data, aliases, identities, payment history and Android Companion configuration are preserved. No manual migration is required.
 
 dependencies:
   - lightning
