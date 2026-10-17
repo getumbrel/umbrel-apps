@@ -11,7 +11,7 @@ services:
     environment:
       APP_HOST: itsaplan_nginx_1
       APP_PORT: 8790
-      PROXY_AUTH_ADD: "false"
+      PROXY_AUTH_WHITELIST: "/.well-known/*,/mcp,/webhooks/*,/scim/*"
 
   nginx:
     image: nginx:alpine@sha256:892bb2152464f0c5d8972593a5f5afaf8054552580b699d95f8ff4af08c2d33d
@@ -63,8 +63,12 @@ services:
       S3_BUCKET: planner-attachments
     entrypoint: >
       /bin/sh -c "
-      curl -fsS -X PUT --aws-sigv4 aws:amz:us-east-1:s3 --user \"$$S3_ACCESS_KEY_ID:$$S3_SECRET_ACCESS_KEY\" http://itsaplan_minio_1:9000/\"$$S3_BUCKET\" &&
-      echo 'bucket ready: '\"$$S3_BUCKET\"
+      sleep 3
+      for i in 1 2 3 4 5 6 7 8 9 10; do
+        curl -fsS -X PUT --aws-sigv4 aws:amz:us-east-1:s3 --user \"$$S3_ACCESS_KEY_ID:$$S3_SECRET_ACCESS_KEY\" http://itsaplan_minio_1:9000/\"$$S3_BUCKET\" && { echo 'bucket ready: '\"$$S3_BUCKET\"; exit 0; };
+        sleep 2;
+      done;
+      echo 'bucket init failed' >&2; exit 1
       "
 
   migrate:
@@ -97,8 +101,8 @@ services:
       DATABASE_URL: postgres://itsaplan:${APP_ITSAPLAN_POSTGRES_PASSWORD}@itsaplan_postgres_1:5432/itsaplan
       BETTER_AUTH_SECRET: ${APP_ITSAPLAN_BETTER_AUTH_SECRET}
       APP_ENCRYPTION_KEY: ${APP_ITSAPLAN_APP_ENCRYPTION_KEY}
-      API_URL: http://${DEVICE_DOMAIN_NAME}:${APP_PROXY_PORT}/api
-      APP_URL: http://${DEVICE_DOMAIN_NAME}:${APP_PROXY_PORT}
+      API_URL: https://${DEVICE_DOMAIN_NAME}:${APP_PROXY_PORT}/api
+      APP_URL: https://${DEVICE_DOMAIN_NAME}:${APP_PROXY_PORT}
       COOKIE_DOMAIN: ""
       S3_ENDPOINT: http://itsaplan_minio_1:9000
       S3_BUCKET: planner-attachments
@@ -157,7 +161,7 @@ services:
       NODE_ENV: production
       PORT: 3001
       HOSTNAME: 0.0.0.0
-      API_URL: http://${DEVICE_DOMAIN_NAME}:${APP_PROXY_PORT}/api
+      API_URL: https://${DEVICE_DOMAIN_NAME}:${APP_PROXY_PORT}/api
       SERVICE_URL_API: http://itsaplan_api_1:3000
       PRIVACY_URL: ""
       TERMS_URL: ""
