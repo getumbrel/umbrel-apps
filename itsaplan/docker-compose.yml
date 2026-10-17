@@ -1,5 +1,3 @@
-version: "3.7"
-
 x-environment: &env
   POSTGRES_USER: itsaplan
   POSTGRES_PASSWORD: ${APP_ITSAPLAN_POSTGRES_PASSWORD}
@@ -11,14 +9,16 @@ services:
     environment:
       APP_HOST: itsaplan_nginx_1
       APP_PORT: 8790
-      PROXY_AUTH_WHITELIST: "/.well-known/*,/mcp,/webhooks/*,/scim/*"
+      PROXY_AUTH_WHITELIST: "/.well-known/*,/api/.well-known/*,/mcp,/api/mcp,/api/webhooks/*,/api/scim/*"
 
   nginx:
-    image: nginx:alpine@sha256:892bb2152464f0c5d8972593a5f5afaf8054552580b699d95f8ff4af08c2d33d
+    image: nginx:1.31.7-alpine@sha256:892bb2152464f0c5d8972593a5f5afaf8054552580b699d95f8ff4af08c2d33d
     restart: on-failure
     depends_on:
-      - api
-      - web
+      api:
+        condition: service_healthy
+      web:
+        condition: service_healthy
     volumes:
       - ${APP_DATA_DIR}/config/nginx.conf:/etc/nginx/conf.d/default.conf:ro
 
@@ -40,7 +40,7 @@ services:
 
   minio:
     image: rustfs/rustfs:1.0.0@sha256:8cc9801755448b71a786705ce76692c77e14936cccd87cf2fc31842e58f4d1ff
-    user: "0:0"
+    user: "1000:1000"
     restart: on-failure
     environment:
       RUSTFS_ACCESS_KEY: itsaplan
@@ -56,7 +56,11 @@ services:
 
   minio-init:
     image: rustfs/rustfs:1.0.0@sha256:8cc9801755448b71a786705ce76692c77e14936cccd87cf2fc31842e58f4d1ff
+    user: "1000:1000"
     restart: on-failure
+    depends_on:
+      minio:
+        condition: service_healthy
     environment:
       S3_ACCESS_KEY_ID: itsaplan
       S3_SECRET_ACCESS_KEY: ${APP_ITSAPLAN_S3_SECRET_ACCESS_KEY}
@@ -72,7 +76,7 @@ services:
 
   migrate:
     image: ghcr.io/croffasia/itsaplan-api:1.5.0@sha256:42c53136c4b04532afcbebe815fcd22203632a167c9f84084e3bda4ed8d4bad5
-    restart: "no"
+    restart: on-failure
     command: ["bun", "run", "packages/db/src/migrate.ts"]
     depends_on:
       postgres:
@@ -124,6 +128,8 @@ services:
       postgres:
         condition: service_healthy
       migrate:
+        condition: service_completed_successfully
+      minio-init:
         condition: service_completed_successfully
     environment:
       NODE_ENV: production
