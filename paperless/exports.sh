@@ -1,3 +1,23 @@
+# Trust only HTTPS origins belonging to this device, not forwarded request headers.
+export APP_PAPERLESS_CSRF_TRUSTED_ORIGINS="$(
+  local_ips=$(hostname --all-ip-addresses 2>/dev/null) || local_ips=""
+  # Avahi may advertise a different name after a hostname collision.
+  avahi_hostname=$(busctl --timeout=2 call org.freedesktop.Avahi / org.freedesktop.Avahi.Server GetHostNameFqdn 2>/dev/null |
+    sed -n 's/^s "\([a-zA-Z0-9.-]*\)"$/\1/p') || avahi_hostname=""
+  avahi_hostname="${avahi_hostname%.}"
+  separator=""
+  for host in "${DEVICE_DOMAIN_NAME:-}" "${DEVICE_HOSTNAME:-}" "$avahi_hostname" $local_ips; do
+    case "$host" in
+      ""|*[!a-zA-Z0-9.:-]*) continue ;;
+    esac
+    case "$host" in
+      *:*) host="[$host]" ;;
+    esac
+    printf '%shttps://%s:2349' "$separator" "$host"
+    separator=","
+  done
+)"
+
 # Ensure that Paperless consume and export directories are created with the correct permissions
 UMBREL_DATA_DIR="${UMBREL_ROOT}/data"
 UMBREL_DATA_STORAGE_DIR="${UMBREL_DATA_DIR}/storage"
