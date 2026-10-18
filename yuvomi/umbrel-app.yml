@@ -4,7 +4,7 @@ storage:
   dataRoot: data
 category: files
 name: Yuvomi
-version: "2.77.1"
+version: "2.78.0"
 tagline: Self-hosted family planner — calendar, tasks, shopping, meals & budget
 description: >-
   Yuvomi is a self-hosted, privacy-focused family planner that bundles everything
@@ -53,33 +53,38 @@ description: >-
   Open Yuvomi from your Umbrel dashboard and create the first account — that
   account becomes the family admin and can invite the rest of the household.
 releaseNotes: >-
-  This update fixes calendar sync details, makes error messages on the health
-  pages speak your language, and tightens how reminder and task sync talk to a
-  CalDAV server.
+  This update makes Yuvomi start faster, gives phones more room for content and
+  reworks many screens, with a few new features along the way.
 
 
-  A "last day of the month" series now keeps the date you entered: it goes out
-  with the same start on every upload, and the next sync no longer writes the
-  start that came back into Yuvomi or moves its reminders. A timed series that
-  ends on a date ends on the same occurrence in Google as in Yuvomi. Renaming an
-  event no longer shifts it when the app and the server run in different time
-  zones and no household time zone is set.
+  You can now find your weather location by name instead of typing coordinates.
+  Birthdays and name days have their own calendar feed, the budget ledger sorts
+  by date or amount and filters by account, and on wide screens the calendar
+  shows a sidebar with a mini month, people and what is up next. The search
+  palette (Cmd+K or Ctrl+K) remembers the places you opened recently.
 
 
-  The health pages and the waste source dialog now explain a failed save or
-  refresh in the language of the app instead of showing the server's text. A
-  contact or shopping item already deleted on a CalDAV or CardDAV server no
-  longer blocks its sync, and reminder and task sync check every request against
-  the account's address, as event sync already did.
+  New child accounts start with child defaults: budget off, household help
+  read-only without amounts, and their own points first. Existing accounts keep
+  their permissions. A household help payment task is now only visible to the
+  adults who pay.
 
 
-  The update runs three database migrations on first start. They add columns the
-  calendar sync and the waste sources need; no action is needed. As always, a
-  backup before updating is a good idea.
+  On a phone the tab bar shrinks to a small pill while you read, headers take
+  less space, and lists react faster when you tick off items. Budget figures are
+  clearer: loans keep money you owe apart from money owed to you, statistics
+  share one scale, and a missing pulse is no longer drawn as zero. Settings,
+  dialogs and empty screens follow one layout across all modules.
+
+
+  Two database migrations run automatically on first start: one prepares the
+  birthday feed, the other moves open household help payment tasks to the adults
+  who pay. No action is needed. As always, a backup before updating is a good
+  idea.
 
 
   Full release notes are available at
-  https://github.com/ulsklyc/yuvomi/releases/tag/v2.77.1
+  https://github.com/ulsklyc/yuvomi/releases/tag/v2.78.0
 backupIgnore:
   - data/app/yuvomi.db.plaintext-backup*
   - data/backups/*.db
