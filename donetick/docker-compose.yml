@@ -8,7 +8,7 @@ services:
       PROXY_AUTH_ADD: "false"
 
   app:
-    image: donetick/donetick:v0.1.80@sha256:eb94251e1a22d1613b2cc05546509461e708f30c6ae02e0907c4a6d44ceaa18c
+    image: donetick/donetick:v0.1.82@sha256:44fce161cb2cd4c46acb184f76212ed77ed961dca6f4face6528064b9b0f5ca5
     user: "1000:1000"
     restart: on-failure
     volumes:
@@ -16,4 +16,5 @@ services:
       - ${APP_DATA_DIR}/data/config:/config
     environment:
       - DT_ENV=selfhosted
+      - DT_JWT_SECRET=${APP_SEED}
       - DT_SQLITE_PATH=/donetick-data/donetick.db
