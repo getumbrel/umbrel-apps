@@ -1,0 +1,93 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: silo-server_server_1
+      APP_PORT: 8080
+      # Umbrel login stays on for the web UI. Silo's own account system guards
+      # the API, and its native clients cannot send Umbrel auth cookies, so
+      # only /api/* is opened up.
+      PROXY_AUTH_WHITELIST: "/api/*"
+
+  server:
+    # Upstream publishes no releases: `latest` and per-commit tags are built from
+    # main. This tag is the full commit SHA the image was built from, so the
+    # pinned image is traceable to a specific upstream commit.
+    image: ghcr.io/silo-server/silo-server:365e3d436fc2fac8e8b3f4f6d42111ff1baeb48b@sha256:232a97b657d9057b180fe9e536331eba096cba8b6290f6aa434fd3ccbe897295
+    restart: on-failure
+    # On stop Silo fails readiness, keeps serving for SILO_SHUTDOWN_DELAY (5s by
+    # default), then finishes in-flight requests. Docker's default 10s stop
+    # timeout would cut that short.
+    stop_grace_period: 2m
+    environment:
+      MODE: integrated
+      # Keep the container listeners fixed; the published host ports below are
+      # what users see.
+      PORT: "8080"
+      JF_PORT: "8096"
+      # Master key for at-rest credential encryption. Required, and must survive
+      # restarts or secrets stored in Silo's database become unrecoverable.
+      SECRET_KEY: ${APP_SILO_SERVER_SECRET_KEY}
+      DATABASE_URL: "postgres://silo:${APP_SILO_SERVER_POSTGRES_PASSWORD}@postgres:5432/silo?sslmode=disable"
+      REDIS_URL: "redis://redis:6379"
+      SILO_PLUGIN_CACHE_DIR: /var/lib/silo/plugins
+      POSTGRES_TUNE: auto
+    volumes:
+      - ${APP_DATA_DIR}/data/plugins:/var/lib/silo/plugins
+      - ${APP_DATA_DIR}/data/artwork:/var/lib/silo/artwork
+      - ${APP_DATA_DIR}/data/compat:/var/lib/silo/compat
+      - ${APP_DATA_DIR}/data/transcode:/tmp/silo-transcode
+      # Prepared downloads live beside the transcode directory, not inside it,
+      # so they need their own mount to survive image updates.
+      - ${APP_DATA_DIR}/data/download-artifacts:/tmp/silo-download-artifacts
+      - ${APP_DATA_DIR}/data/catalog-seeds:/catalog-seeds:ro
+      # Umbrel's shared Downloads folder, read-only: Silo only ever reads media.
+      - ${UMBREL_ROOT}/data/storage/downloads:/downloads:ro
+      # /media is intentionally not mounted here. The Media Library folderAccess
+      # entry in umbrel-app.yml mounts the folder the user picks at this path.
+      # Read-only /proc files, which Silo reads to report its own CPU, load, and
+      # memory. Only load-bearing when the Docker host is itself an LXC container;
+      # on bare metal or a VM they are the same files Silo would read anyway.
+      - /proc/meminfo:/host/proc/meminfo:ro
+      - /proc/stat:/host/proc/stat:ro
+      - /proc/loadavg:/host/proc/loadavg:ro
+    ports:
+      # Jellyfin/Emby and Audiobookshelf compatible APIs. Silo's defaults for
+      # these are 8096 and 13378; both host ports belong to other Umbrel apps
+      # already, so this package publishes them on 18096 and 13379 instead.
+      - "18096:8096"
+      - "13379:13378"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  postgres:
+    image: pgvector/pgvector:pg18@sha256:2358fcba361ed2233a5ed81b5fe4ca779ccb304120ce531a3bf51c0ed7e2bc11
+    restart: on-failure
+    shm_size: 8gb
+    environment:
+      POSTGRES_USER: silo
+      POSTGRES_PASSWORD: ${APP_SILO_SERVER_POSTGRES_PASSWORD}
+      POSTGRES_DB: silo
+    volumes:
+      # pgvector's PostgreSQL 18 layout keeps data under the parent directory.
+      - ${APP_DATA_DIR}/data/postgres:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U silo"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  redis:
+    image: redis:8.2-alpine@sha256:b51665e66f00759be7c3152ad5ac3c66fb2f619c13ef62dea7cc1f9914524635
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data/redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
