@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Twingate Connector - Umbrel</title>
+  <style>
+    :root {
+      --bg-dark: #0b0f19;
+      --card-bg: #151d2a;
+      --card-inner: #1c2638;
+      --border-color: #232e42;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --indigo: #6366f1;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: var(--font-family);
+      line-height: 1.6;
+      padding: 24px;
+      display: flex;
+      justify-content: center;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 960px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 24px;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .logo {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
+
+    .logo svg {
+      width: 26px;
+      height: 26px;
+      fill: #ffffff;
+    }
+
+    .brand-text h1 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-text p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: 9999px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .status-badge.online {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .status-badge.pending {
+      background: rgba(245, 158, 11, 0.15);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .status-badge.error {
+      background: rgba(239, 68, 68, 0.15);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: currentColor;
+      box-shadow: 0 0 8px currentColor;
+    }
+
+    /* Grid Layout */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+    }
+
+    /* Cards */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .card h2 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .card h2 svg {
+      width: 20px;
+      height: 20px;
+      fill: var(--primary);
+    }
+
+    .card-full {
+      grid-column: 1 / -1;
+    }
+
+    /* Info Items */
+    .info-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .info-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 14px;
+      background: var(--card-inner);
+      border-radius: 8px;
+      font-size: 0.9rem;
+    }
+
+    .info-label {
+      color: var(--text-muted);
+    }
+
+    .info-value {
+      font-weight: 600;
+      color: var(--text-main);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.85rem;
+    }
+
+    /* Metric Counters */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 12px;
+    }
+
+    .metric-box {
+      background: var(--card-inner);
+      border-radius: 10px;
+      padding: 16px;
+      text-align: center;
+      border: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    .metric-val {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: #ffffff;
+      font-family: ui-monospace, SFMono-Regular, monospace;
+    }
+
+    .metric-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-top: 4px;
+    }
+
+    /* Setup Stepper */
+    .stepper {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .step {
+      display: flex;
+      gap: 16px;
+      padding: 16px;
+      background: var(--card-inner);
+      border-radius: 10px;
+      border-left: 4px solid var(--primary);
+    }
+
+    .step-number {
+      width: 28px;
+      height: 28px;
+      min-width: 28px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.85rem;
+    }
+
+    .step-content {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .step-title {
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    .step-desc {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .code-snippet {
+      display: block;
+      background: #0f172a;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-family: ui-monospace, SFMono-Regular, monospace;
+      font-size: 0.8rem;
+      color: #38bdf8;
+      margin-top: 6px;
+      overflow-x: auto;
+    }
+
+    /* Buttons */
+    .btn-group {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      border: none;
+      transition: all 0.15s ease-in-out;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #ffffff;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-hover);
+    }
+
+    .btn-secondary {
+      background: var(--card-inner);
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+    }
+
+    .btn-secondary:hover {
+      background: #232e42;
+    }
+
+    /* Clients list */
+    .client-badges {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+
+    .client-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      background: var(--card-inner);
+      border-radius: 6px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      border: 1px solid var(--border-color);
+      text-decoration: none;
+      transition: border-color 0.15s;
+    }
+
+    .client-badge:hover {
+      border-color: var(--primary);
+      color: var(--text-main);
+    }
+
+    /* Footer */
+    .footer {
+      text-align: center;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      padding: 12px 0 24px;
+    }
+
+    .footer a {
+      color: var(--primary);
+      text-decoration: none;
+    }
+
+    .footer a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <div class="brand">
+        <div class="logo">
+          <!-- Twingate Vector Icon -->
+          <svg viewBox="0 0 24 24">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <h1>Twingate Connector</h1>
+          <p>Zero Trust Network Access for your Umbrel Server</p>
+        </div>
+      </div>
+      <div id="statusBadge" class="status-badge pending">
+        <span class="status-dot"></span>
+        <span id="statusText">Checking Status...</span>
+      </div>
+    </header>
+
+    <!-- Main Grid -->
+    <div class="grid">
+      <!-- Connector Status -->
+      <div class="card">
+        <h2>
+          <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>
+          Connection Details
+        </h2>
+        <div class="info-list">
+          <div class="info-item">
+            <span class="info-label">Twingate Network</span>
+            <span id="networkValue" class="info-value">${TWINGATE_NETWORK}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Host Name</span>
+            <span class="info-value">${DEVICE_HOSTNAME}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Network Architecture</span>
+            <span class="info-value">Outbound TLS / QUIC</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Port Forwarding</span>
+            <span class="info-value" style="color: #34d399;">None Required</span>
+          </div>
+        </div>
+
+        <div class="btn-group">
+          <a id="adminConsoleBtn" href="https://twingate.com" target="_blank" rel="noopener" class="btn btn-primary">
+            Open Admin Console &rarr;
+          </a>
+          <a href="https://www.twingate.com/docs/" target="_blank" rel="noopener" class="btn btn-secondary">
+            Documentation
+          </a>
+        </div>
+      </div>
+
+      <!-- Live Metrics Card -->
+      <div class="card">
+        <h2>
+          <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>
+          Live Activity
+        </h2>
+        <div class="metrics-grid">
+          <div class="metric-box">
+            <div id="metricUptime" class="metric-val">-</div>
+            <div class="metric-label">Uptime</div>
+          </div>
+          <div class="metric-box">
+            <div id="metricP2P" class="metric-val">-</div>
+            <div class="metric-label">P2P Tunnels</div>
+          </div>
+          <div class="metric-box">
+            <div id="metricRelay" class="metric-val">-</div>
+            <div class="metric-label">Relay Tunnels</div>
+          </div>
+          <div class="metric-box">
+            <div id="metricData" class="metric-val">-</div>
+            <div class="metric-label">Data Transferred</div>
+          </div>
+        </div>
+        <p id="metricsNote" style="font-size: 0.8rem; color: var(--text-muted); text-align: center; margin-top: 6px;">
+          Live metrics stream from the local connector container.
+        </p>
+      </div>
+
+      <!-- Setup Walkthrough -->
+      <div class="card card-full">
+        <h2>
+          <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+          Quick Setup & Configuration Guide
+        </h2>
+        
+        <div class="stepper">
+          <div class="step">
+            <div class="step-number">1</div>
+            <div class="step-content">
+              <div class="step-title">Create a Free Twingate Account</div>
+              <div class="step-desc">
+                Sign up at <a href="https://www.twingate.com" target="_blank" rel="noopener" style="color: var(--primary);">twingate.com</a> and sign in to your Admin Console.
+              </div>
+            </div>
+          </div>
+
+          <div class="step">
+            <div class="step-number">2</div>
+            <div class="step-content">
+              <div class="step-title">Add a Remote Network & Connector</div>
+              <div class="step-desc">
+                In the Admin Console, go to <strong>Remote Networks</strong>, add or select a Remote Network (e.g. <em>Umbrel Home</em>), and click <strong>Add Connector</strong>.
+              </div>
+            </div>
+          </div>
+
+          <div class="step">
+            <div class="step-number">3</div>
+            <div class="step-content">
+              <div class="step-title">Generate Connector Tokens</div>
+              <div class="step-desc">
+                Choose <strong>Docker</strong> as the deployment method and click <strong>Generate Tokens</strong>. Copy your Network Slug, Access Token, and Refresh Token.
+              </div>
+            </div>
+          </div>
+
+          <div class="step">
+            <div class="step-number">4</div>
+            <div class="step-content">
+              <div class="step-title">Enter Tokens in Umbrel App Settings</div>
+              <div class="step-desc">
+                In your Umbrel dashboard, open <strong>App Store &rarr; Twingate &rarr; Settings</strong> (or the App context menu). Paste your Network, Access Token, and Refresh Token, then save. Umbrel will automatically restart the connector!
+              </div>
+            </div>
+          </div>
+
+          <div class="step">
+            <div class="step-number">5</div>
+            <div class="step-content">
+              <div class="step-title">Define Umbrel as a Resource in Twingate</div>
+              <div class="step-desc">
+                In the Twingate Console, click <strong>Add Resource</strong> under your Remote Network:
+                <br>&bull; <strong>Resource Address:</strong> Enter your Umbrel's local IP (e.g. <code>192.168.1.50</code>) or your entire home subnet CIDR (e.g. <code>192.168.1.0/24</code>) to access all self-hosted apps.
+                <br>&bull; <strong>Port Access:</strong> Select All Ports or specify web app ports (e.g. <code>80, 443, 8250</code>).
+                <br>&bull; <strong>Permissions:</strong> Assign access to your user or group.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Client Downloads -->
+      <div class="card card-full">
+        <h2>
+          <svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>
+          Download Twingate Client Apps
+        </h2>
+        <p style="font-size: 0.88rem; color: var(--text-muted);">
+          Install the Twingate client on your phones and computers. Once signed in, you can securely access your Umbrel and all home services seamlessly from anywhere.
+        </p>
+        <div class="client-badges">
+          <a class="client-badge" href="https://www.twingate.com/download/" target="_blank" rel="noopener">&#63743; macOS</a>
+          <a class="client-badge" href="https://www.twingate.com/download/" target="_blank" rel="noopener">&#8862; Windows</a>
+          <a class="client-badge" href="https://www.twingate.com/download/" target="_blank" rel="noopener">&#63743; iOS & iPadOS</a>
+          <a class="client-badge" href="https://www.twingate.com/download/" target="_blank" rel="noopener">&#129302; Android</a>
+          <a class="client-badge" href="https://www.twingate.com/download/" target="_blank" rel="noopener">&#128039; Linux</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+      Powered by <a href="https://www.twingate.com" target="_blank" rel="noopener">Twingate</a> &bull; Packaged for <a href="https://umbrel.com" target="_blank" rel="noopener">umbrelOS</a>
+    </footer>
+  </div>
+
+  <script>
+    // Utility functions avoiding ES6 template literals so envsubst does not touch them
+    function formatBytes(bytes) {
+      if (!bytes || bytes === 0) return '0 B';
+      var k = 1024;
+      var sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+      var i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+    }
+
+    function formatSeconds(seconds) {
+      if (!seconds || seconds <= 0) return '0s';
+      var d = Math.floor(seconds / 86400);
+      var h = Math.floor((seconds % 86400) / 3600);
+      var m = Math.floor((seconds % 3600) / 60);
+      if (d > 0) return d + 'd ' + h + 'h';
+      if (h > 0) return h + 'h ' + m + 'm';
+      return m + 'm';
+    }
+
+    // Initialize network label and admin URL
+    var rawNetwork = document.getElementById('networkValue').textContent.trim();
+    if (!rawNetwork || rawNetwork === '' || rawNetwork.indexOf('$') === 0) {
+      document.getElementById('networkValue').textContent = 'Not Configured';
+      document.getElementById('networkValue').style.color = '#fbbf24';
+    } else {
+      var adminUrl = 'https://' + rawNetwork + '.twingate.com';
+      document.getElementById('adminConsoleBtn').href = adminUrl;
+      document.getElementById('adminConsoleBtn').textContent = 'Open ' + rawNetwork + '.twingate.com \u2192';
+    }
+
+    // Poll live Prometheus metrics from /api/metrics
+    function fetchMetrics() {
+      fetch('/api/metrics')
+        .then(function(res) {
+          if (!res.ok) {
+            throw new Error('Connector offline or starting');
+          }
+          return res.text();
+        })
+        .then(function(text) {
+          // Parse Prometheus metrics
+          var statusBadge = document.getElementById('statusBadge');
+          var statusText = document.getElementById('statusText');
+          statusBadge.className = 'status-badge online';
+          statusText.textContent = 'CONNECTED & ONLINE';
+
+          var lines = text.split('\n');
+          var metrics = {};
+          for (var i = 0; i < lines.length; i++) {
+            var line = lines[i].trim();
+            if (line.length > 0 && line.indexOf('#') !== 0) {
+              var parts = line.split(' ');
+              if (parts.length >= 2) {
+                var key = parts[0].split('{')[0];
+                var val = parseFloat(parts[parts.length - 1]);
+                metrics[key] = val;
+              }
+            }
+          }
+
+          if (metrics['twingate_uptime_seconds'] !== undefined) {
+            document.getElementById('metricUptime').textContent = formatSeconds(metrics['twingate_uptime_seconds']);
+          } else {
+            document.getElementById('metricUptime').textContent = 'Active';
+          }
+
+          var p2p = metrics['twingate_active_connections_p2p'] || metrics['twingate_p2p_connections'] || 0;
+          document.getElementById('metricP2P').textContent = p2p;
+
+          var relay = metrics['twingate_active_connections_relay'] || metrics['twingate_relay_connections'] || 0;
+          document.getElementById('metricRelay').textContent = relay;
+
+          var inBytes = metrics['twingate_bytes_received_total'] || 0;
+          var outBytes = metrics['twingate_bytes_sent_total'] || 0;
+          var totalBytes = inBytes + outBytes;
+          document.getElementById('metricData').textContent = formatBytes(totalBytes);
+          document.getElementById('metricsNote').textContent = 'Live metrics updated ' + new Date().toLocaleTimeString();
+        })
+        .catch(function(err) {
+          var statusBadge = document.getElementById('statusBadge');
+          var statusText = document.getElementById('statusText');
+          if (!rawNetwork || rawNetwork === '' || rawNetwork.indexOf('$') === 0) {
+            statusBadge.className = 'status-badge pending';
+            statusText.textContent = 'AWAITING CONFIGURATION';
+            document.getElementById('metricsNote').textContent = 'Please configure your Twingate tokens in Umbrel App Settings.';
+          } else {
+            statusBadge.className = 'status-badge pending';
+            statusText.textContent = 'CONNECTING TO TWINGATE...';
+            document.getElementById('metricsNote').textContent = 'Connecting to Twingate network. Live metrics will appear once authenticated.';
+          }
+          document.getElementById('metricUptime').textContent = '-';
+          document.getElementById('metricP2P').textContent = '-';
+          document.getElementById('metricRelay').textContent = '-';
+          document.getElementById('metricData').textContent = '-';
+        });
+    }
+
+    fetchMetrics();
+    setInterval(fetchMetrics, 5000);
+  </script>
+</body>
+</html>
