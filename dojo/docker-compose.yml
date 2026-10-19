@@ -1,0 +1,240 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: dojo_nginx_1
+      APP_PORT: 8081
+
+  db:
+    image: ghcr.io/dojo-open-source-project/dojo-db:1.7.0-umbrel19@sha256:b0f0574d7f54e9d223b7c846d3c4091e0ea7f4e0062f0279094e5ddc42610aea
+    init: true
+    restart: on-failure
+    user: "1000:1000"
+    # Dojo's tracker writes continuously; give MariaDB room to flush cleanly.
+    stop_grace_period: 5m
+    environment:
+      MYSQL_DATABASE: samourai-main
+      MYSQL_USER: samourai
+      MYSQL_PASSWORD: ${APP_DOJO_MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${APP_DOJO_MYSQL_ROOT_PASSWORD}
+      MARIADB_AUTO_UPGRADE: "true"
+    volumes:
+      - ${APP_DATA_DIR}/data/mysql:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      start_period: 1m
+      interval: 10s
+      timeout: 5s
+      retries: 6
+
+  node:
+    image: ghcr.io/dojo-open-source-project/dojo-nodejs:1.29.3-umbrel19@sha256:f98d39ba3c3b3f426748cf53cbd2e9e0cec5f5234a4488d080ef43e8b7c704da
+    init: true
+    restart: on-failure
+    user: "1000:1000"
+    # Dojo reads its own onion address from /var/lib/tor/hsv3dojo/hostname at
+    # import time and uses it to build the auth47 callback URL. Give Tor a
+    # bounded chance to publish it on a first install so auth47 is live
+    # straight away; Dojo starts fine without it either way.
+    # The second wait is for Soroban's own onion, and only when the user has
+    # turned announcing on. keys/index.js reads that hostname at import time,
+    # and Soroban writes it only after its Tor has bootstrapped -- tens of
+    # seconds after this container starts. Without the wait the read loses the
+    # race on every cold start. `$$` is compose's escape for a literal `$`, so
+    # SOROBAN_ANNOUNCE is expanded by the container's shell, not by compose.
+    command: sh -c 'n=0; while [ ! -f /var/lib/tor/hsv3dojo/hostname ] && [ $$n -lt 60 ]; do n=$$((n+1)); sleep 2; done; if [ "$$SOROBAN_ANNOUNCE" = "on" ]; then n=0; while [ ! -f /var/lib/tor/hsv3soroban/hostname ] && [ $$n -lt 90 ]; do n=$$((n+1)); sleep 2; done; fi; exec /home/node/app/wait-for-it.sh dojo_db_1:3306 --timeout=720 --strict -- /home/node/app/restart.sh'
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      # Dojo expects its own hidden service here. The path is fixed because the
+      # app id is fixed; hooks/pre-start creates it so Docker cannot make it
+      # root-owned and lock Tor out of it.
+      - ${TOR_DATA_DIR}/app-dojo-api:/var/lib/tor/hsv3dojo:ro
+      # Mempool's onion, for the pairing payload's explorer. A directory, not
+      # the file: hooks/pre-start only writes hostname once Mempool has
+      # published, and an absent file is what tells Dojo there is no explorer.
+      - ${APP_DATA_DIR}/data/explorer:/var/lib/tor/hsv3explorer:ro
+      # Soroban's own onion, for when announcing is on. Soroban writes it to
+      # /home/soroban/data/hostname (SOROBAN_ONION_FILE), which is this same
+      # host directory, and Dojo looks for it under hsv3soroban -- so this
+      # mount is only renaming the path Dojo expects onto the one that exists.
+      - ${APP_DATA_DIR}/data/soroban:/var/lib/tor/hsv3soroban:ro
+    environment:
+      # pm2 keeps its state under $HOME; without this it lands on / and the
+      # process manager cannot start.
+      HOME: /home/node
+
+      # GLOBAL
+      COMMON_BTC_NETWORK: ${APP_DOJO_BTC_NETWORK}
+      DOJO_VERSION_TAG: 1.29.3
+      NET_DOJO_MYSQL_IPV4: dojo_db_1
+      NET_DOJO_TOR_IPV4: ${TOR_PROXY_IP}
+      TOR_SOCKS_PORT: ${TOR_PROXY_PORT}
+
+      # MYSQL
+      MYSQL_DATABASE: samourai-main
+      MYSQL_USER: samourai
+      MYSQL_PASSWORD: ${APP_DOJO_MYSQL_PASSWORD}
+
+      # BITCOIN -- Umbrel's Bitcoin Node app
+      BITCOIND_IP: ${APP_BITCOIN_NODE_IP}
+      BITCOIND_RPC_PORT: ${APP_BITCOIN_RPC_PORT}
+      BITCOIND_RPC_USER: ${APP_BITCOIN_RPC_USER}
+      BITCOIND_RPC_PASSWORD: ${APP_BITCOIN_RPC_PASS}
+      BITCOIND_ZMQ_RAWTXS: ${APP_BITCOIN_ZMQ_RAWTX_PORT}
+      BITCOIND_ZMQ_BLK_HASH: ${APP_BITCOIN_ZMQ_HASHBLOCK_PORT}
+
+      # INDEXER -- Umbrel's Electrs app, or any app implementing it (Fulcrum).
+      # INDEXER_INSTALL stays unset on purpose: that branch reads a Tor
+      # hostname file that only exists when Dojo runs its own bundled indexer.
+      NODE_ACTIVE_INDEXER: local_indexer
+      INDEXER_IP: ${APP_ELECTRS_NODE_IP}
+      INDEXER_RPC_PORT: ${APP_ELECTRS_NODE_PORT}
+      INDEXER_PROTOCOL: tcp
+      INDEXER_BATCH_SUPPORT: ${APP_DOJO_INDEXER_BATCH_SUPPORT}
+
+      # EXPLORER -- Umbrel's Mempool app, whose onion goes into the pairing
+      # payload so a paired wallet can open transactions in your own explorer
+      # rather than a public one.
+      #
+      # Dojo builds the explorer URL only from the hostname file below; there is
+      # no environment variable for it. hooks/pre-start writes that file from
+      # Mempool's exported onion, and leaves it absent until the onion exists --
+      # the read is wrapped in try/catch, so absent means "no explorer" rather
+      # than a broken http:// URL.
+      EXPLORER_INSTALL: "on"
+      EXPLORER_TYPE: mempool_space
+
+      # SOROBAN / PandoTx
+      # Pushed transactions are relayed by a random Soroban node instead of
+      # this one, so the broadcasting node is not linkable to the sender.
+      # ANNOUNCE stays off: announcing would publish this node's onion address
+      # as a public Soroban relay, which is not a sensible default for a home
+      # server. PROCESS requires ANNOUNCE, so it is off too.
+      SOROBAN_INSTALL: "on"
+      SOROBAN_ANNOUNCE: "off"
+      NET_DOJO_SOROBAN_IPV4: dojo_soroban_1
+      SOROBAN_PORT: ${APP_DOJO_SOROBAN_PORT}
+      SOROBAN_ANNOUNCE_KEY_MAIN: soroban.cluster.mainnet.nodes
+      SOROBAN_ANNOUNCE_KEY_TEST: soroban.cluster.testnet.nodes
+      NODE_PANDOTX_PUSH: "on"
+      NODE_PANDOTX_PROCESS: "off"
+      NODE_PANDOTX_FALLBACK_MODE: convenient
+      NODE_PANDOTX_NB_RETRIES: 2
+
+      # SECURITY
+      NODE_API_KEY: ${APP_DOJO_NODE_API_KEY}
+      NODE_ADMIN_KEY: ${APP_DOJO_NODE_ADMIN_KEY}
+      NODE_JWT_SECRET: ${APP_DOJO_NODE_JWT_SECRET}
+      NODE_PAYMENT_CODE: ""
+
+      # NODEJS -- upstream defaults (docker/my-dojo/.env at v1.29.3)
+      NODE_GAP_EXTERNAL: 100
+      NODE_GAP_INTERNAL: 100
+      NODE_ADDR_FILTER_THRESHOLD: 1000
+      NODE_ADDR_DERIVATION_MIN_CHILD: 2
+      NODE_ADDR_DERIVATION_MAX_CHILD: 2
+      NODE_ADDR_DERIVATION_THRESHOLD: 10
+      NODE_TXS_SCHED_MAX_ENTRIES: 10
+      NODE_TXS_SCHED_MAX_DELTA_HEIGHT: 18
+      NODE_JWT_ACCESS_EXPIRES: 900
+      NODE_JWT_REFRESH_EXPIRES: 7200
+      NODE_PREFIX_STATUS: status
+      NODE_PREFIX_SUPPORT: support
+      NODE_PREFIX_STATUS_PUSHTX: status
+      NODE_TRACKER_MEMPOOL_PERIOD: 10000
+      NODE_TRACKER_UNCONF_TXS_PERIOD: 300000
+      NODE_FEE_TYPE: ECONOMICAL
+      NODE_URL_OXT_API: https://api.oxt.me
+      NODE_URL_ESPLORA_API: https://blockstream.info/testnet
+
+  soroban:
+    image: ghcr.io/dojo-open-source-project/dojo-soroban:0.4.2-umbrel19@sha256:068f261aaecfda41257ea25c28d2b7a3099efaccb99fd3c3ee0ccb1882ee317c
+    init: true
+    restart: on-failure
+    user: "1000:1000"
+    env_file:
+      - ${APP_DATA_DIR}/soroban.env
+    environment:
+      # Soroban runs its own Tor daemon, which needs a writable home.
+      HOME: /home/soroban
+      COMMON_BTC_NETWORK: ${APP_DOJO_BTC_NETWORK}
+      NET_DOJO_SOROBAN_IPV4: dojo_soroban_1
+      SOROBAN_PORT: ${APP_DOJO_SOROBAN_PORT}
+      SOROBAN_ANNOUNCE: "off"
+    volumes:
+      - ${APP_DATA_DIR}/data/soroban:/home/soroban/data
+
+  nginx:
+    image: ghcr.io/dojo-open-source-project/dojo-nginx:1.29.3-umbrel19@sha256:ade532acc2e8e85bfc554757405d3cc6eb89983279a539a2c677808b941abc24
+    init: true
+    restart: on-failure
+    user: "1000:1000"
+    depends_on:
+      - node
+    environment:
+      COMMON_BTC_NETWORK: ${APP_DOJO_BTC_NETWORK}
+      DOJO_CHAIN: ${APP_DOJO_CHAIN}
+      DOJO_VERSION_TAG: 1.29.3
+      DOJO_API_PORT: ${APP_DOJO_API_PORT}
+      DOJO_HIDDEN_SERVICE: ${APP_DOJO_HIDDEN_SERVICE}
+      # So the Connect page can tell the user's own Mempool from the public
+      # fallback by comparison, rather than carrying its own copy of the onion.
+      DOJO_PUBLIC_EXPLORER: ${APP_DOJO_PUBLIC_EXPLORER}
+      DEVICE_DOMAIN_NAME: ${DEVICE_DOMAIN_NAME}
+      NODE_ADMIN_KEY: ${APP_DOJO_NODE_ADMIN_KEY}
+      NODE_PREFIX_SUPPORT: support
+      NODE_HOST: dojo_node_1
+      # The same three the node service gets, so the Advanced tab reports what
+      # Dojo actually computed rather than a second opinion. umbrelOS injects a
+      # user override into every service the manifest's `environment:` entry
+      # names, which is why both services are listed there -- naming only `node`
+      # would leave this page showing a stale value after a change.
+      NODE_PANDOTX_PUSH: "on"
+      NODE_PANDOTX_PROCESS: "off"
+      SOROBAN_ANNOUNCE: "off"
+    volumes:
+      # Same mount the node container takes. DOJO_HIDDEN_SERVICE above is
+      # resolved by exports.sh before any container exists, so on a first
+      # install it is always notyetset.onion; reading the file here, and
+      # serving it at /onion, is what gets the real address onto the page.
+      - ${TOR_DATA_DIR}/app-dojo-api:/var/lib/tor/hsv3dojo:ro
+    ports:
+      # The Dojo API, for wallets on the same network. The Connect UI on 8081
+      # is not published here -- Umbrel's app_proxy fronts it, so it stays
+      # behind the user's Umbrel login.
+      - "${APP_DOJO_API_PORT}:8080"
+    networks:
+      default:
+        # Fixed so torrc can point the hidden service at it.
+        ipv4_address: ${APP_DOJO_NGINX_IP}
+
+  widget:
+    # The home-screen widget: next-block fee estimates, reshaped from Dojo's
+    # own nextblock estimator (GET /fees/estimator). See
+    # umbrel/images/widget/server.mjs.
+    #
+    # Deliberately no `ports:` -- umbrelOS fetches a widget endpoint itself,
+    # over the app network and without going through app_proxy, so 3000 must
+    # not be reachable from the host.
+    image: ghcr.io/dojo-open-source-project/dojo-widget:1.29.3-umbrel19@sha256:10f6c0d327db7b13a50746f3bf92a642028ca3c2bbece764cbe1aea70c6717da
+    init: true
+    restart: on-failure
+    user: "1000:1000"
+    depends_on:
+      - node
+    environment:
+      NODE_HOST: dojo_node_1
+      # The API key, not the admin key: /fees/estimator only needs
+      # checkAuthentication, so the admin key never enters this container.
+      NODE_API_KEY: ${APP_DOJO_NODE_API_KEY}
+
+  tor:
+    image: ghcr.io/getumbrel/tor:0.4.9.11@sha256:e382b8629c0dfef6ceb396b062622d4e4e955b19d6f16b883fd2c0723ad5671a
+    user: "1000:1000"
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/torrc:/etc/tor/torrc:ro
+      - ${TOR_DATA_DIR}:/data
+    environment:
+      HOME: "/tmp"
