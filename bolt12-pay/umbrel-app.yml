@@ -5,7 +5,7 @@ storage:
 name: BOLT12 Pay
 tagline: Self-hosted Lightning payments and identity with BOLT12, BIP353, LNURL, and Nostr
 category: bitcoin
-version: 0.3.13
+version: 0.3.14
 port: 8367
 description: |-
   BOLT12 Pay is a self-hosted Lightning payments and identity app for LND nodes.
@@ -84,13 +84,11 @@ submission: https://github.com/getumbrel/umbrel-apps/pull/5429
 repo: https://github.com/Alex71btc/lndk-pay
 support: https://github.com/Alex71btc/lndk-pay/issues
 releaseNotes: |
-  Adds the new BOLT12 Pay Android Companion, offered directly from the mobile Pay page. It accepts BOLT12 Offers, BOLT11 invoices, Lightning Addresses and Amethyst BIP321 payment links, then safely transfers them to your own BOLT12 Pay server for review. Payments are never started automatically. The Companion interface is available in German and English, and its saved server configuration is preserved across normal app updates.
+  Improves the reliability of Nostr Wallet Connect (NWC) connections, especially when relays become temporarily unavailable or connections are interrupted.
 
-  Pay and Console are now one installable BOLT12 Pay PWA with a shared identity. This fixes the mixed installation state where Chrome could install one view but not the other, improves reinstall handling, and provides separate standard and Android maskable launcher icons.
+  Reduces unnecessary reconnect attempts and relay traffic, improves recovery after connection failures, and helps prevent repeated connection loops.
 
-  PWA installation requires the configured HTTPS address and a normal Chrome or Chromium tab. Firefox on Linux does not currently offer the same direct installation flow. On Android, open the Pay page directly in Chrome instead of the embedded Umbrel app window. If separate BOLT12 Pay and BOLT12 Console web apps from an earlier version are still installed, remove both once, reload the Pay page and install the single BOLT12 Pay app again.
-
-  Existing application data, aliases, identities, payment history and Android Companion configuration are preserved. No manual migration is required.
+  Existing application data, NWC connections, aliases, identities and payment history are preserved. No manual migration is required.
 
 dependencies:
   - lightning
