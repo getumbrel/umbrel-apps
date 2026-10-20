@@ -4,7 +4,7 @@ storage:
   dataRoot: data
 category: social
 name: Campfire
-version: "1.5.2"
+version: "1.5.4"
 tagline: Self-hosted chat for teams
 description: >-
   Campfire is a web-based chat application for teams. Run your own private chat server with all the features you need.
@@ -25,10 +25,18 @@ description: >-
 backupIgnore:
   - data/redis/*
 releaseNotes: >-
-  This update fixes security issues where room members could visually displace another member's live message and where banned users could continue receiving push notifications.
+  This update includes important security fixes and is recommended for all installations.
 
 
-  Campfire also improves message loading/rendering performance. Browser tabs left open across the upgrade may show newly sent messages twice until they are reloaded.
+  - Prevents crafted chat messages and quoted mentions from running scripts in other members' browsers.
+  - Requires your current password when changing passwords and signs out your other sessions. Other devices need to sign in again to receive push notifications.
+  - Adds a stricter content security policy and serves non-media attachments as downloads.
+
+
+  Sign-in links and QR codes created before this upgrade will no longer work; generate new ones if needed. Custom scripts and scripts injected by external proxies are now blocked.
+
+
+  Full release notes can be found at https://github.com/basecamp/once-campfire/releases/tag/v1.5.4
 developer: basecamp
 website: https://once.com/campfire
 dependencies: []
