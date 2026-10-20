@@ -8,7 +8,7 @@ services:
       PROXY_AUTH_WHITELIST: "/api/*"
 
   server:
-    image: linuxserver/bookstack:version-v26.09.1@sha256:99cd1f5707c1911afad213adec5c9739763b76f843d1477142231834ecdcb6f7
+    image: linuxserver/bookstack:version-v26.09.2@sha256:d1ebd57baa3bf966e72419cf682408831713d22fe8aa0dc28deb9add4a29e3e9
     restart: on-failure
     stop_grace_period: 1m
     environment:
@@ -24,6 +24,8 @@ services:
       # default while preserving umbrel.local, renamed .local hosts, LAN IPs,
       # and Tailscale/MagicDNS access.
       - APP_URL=http://bookstack.dev
+      # Trust only Umbrel's gateway proxy for the original HTTP/HTTPS scheme.
+      - APP_PROXIES=${GATEWAY_IP}
       - APP_KEY=${APP_BOOKSTACK_APP_KEY}
       - DB_HOST=bookstack_db_1
       - DB_PORT=3306
