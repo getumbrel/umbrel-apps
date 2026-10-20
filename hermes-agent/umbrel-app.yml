@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: hermes-agent
 category: ai
 name: Hermes Agent
-version: "2026.9.24"
+version: "0.22.2"
 tagline: The AI agent that grows with you
 description: >-
   Hermes Agent is an AI agent that gets better the more you use it by creating its own skills, storing user preferences, and updating its memory.
@@ -38,12 +38,22 @@ path: "/chat"
 defaultUsername: ""
 defaultPassword: ""
 releaseNotes: >-
-  Hermes Agent v0.21.5 rolls up the v0.21.4 and v0.21.5 patch windows, with reliability and performance improvements across the gateway, dashboard, CLI/TUI, cron, Kanban, session search, state.db, plugin/connectors, and model/provider routing.
+  ⚠️ Ended sessions inactive for 90 days are now automatically deleted at startup. To keep all session history, set sessions.auto_prune to false in your Hermes config before updating. Pinned and open sessions are preserved.
 
 
-  This update also includes new Desktop/plugin SDK work, connector setup improvements, MCP discovery and authorization fixes, profile isolation updates, UI/translation improvements, webhook delivery updates, and new community plugin/catalog additions.
+  Hermes now uses semantic version numbers: v0.22.2 is newer than the previously packaged date-based release.
 
 
-  Full release notes can be found at https://github.com/NousResearch/hermes-agent/releases/tag/v2026.9.24
+  Key highlights:
+    - Connect hosted apps through connectors and browse the expanded plugin catalog.
+    - Improved model selection, custom-provider profiles, and recovery from temporary provider failures.
+    - More reliable gateway startup after restarts and improved handling of long local-model requests.
+    - Browser password-manager integration, live subagent controls, and translation improvements.
+
+
+  Chats no longer reset automatically on idle or daily timers; use /new or /reset to start a fresh conversation. Several memory providers and integrations have moved to plugins and are migrated on startup.
+
+
+  Full release notes can be found at https://github.com/NousResearch/hermes-agent/releases/tag/v0.22.2
 submitter: Umbrel
 submission: https://github.com/getumbrel/umbrel-apps/pull/5376
