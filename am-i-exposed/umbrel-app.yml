@@ -2,7 +2,7 @@ manifestVersion: 1
 id: am-i-exposed
 category: bitcoin
 name: "am-i.exposed"
-version: "0.43.0"
+version: "0.43.1"
 tagline: Bitcoin privacy scanner - see what the blockchain reveals about you
 description: >-
   Paste a Bitcoin address, transaction ID, xpub or descriptor, or an unsigned
@@ -19,12 +19,10 @@ description: >-
   network. The optional Chainalysis check is routed over Tor. No tracking, no
   logging, no third-party analytics.
 releaseNotes: |-
-  This update adds new transaction graph investigation tools and encrypted backups.
+  This update fixes connection searches when a self-hosted Mempool server cannot load an address's history.
 
-  - Find connections between transactions or addresses, with estimates of each path's link certainty.
-  - Organize graphs chronologically and select multiple nodes to label, hide, isolate, or remove them together.
-  - Import and export graph labels in BIP329 format, with a preview before replacing conflicting labels.
-  - Back up and restore browser-stored data with password encryption, and optionally lock saved wallet public keys with a password.
+  - Address-history lookups now time out after 15 seconds instead of leaving the search stuck.
+  - Searches can still find a destination address through transactions that pay to or spend from it, with a warning when its full history is unavailable.
 developer: Copexit
 website: https://am-i.exposed
 dependencies:
