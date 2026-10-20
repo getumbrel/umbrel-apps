@@ -1,7 +1,5 @@
-# NOTE: backend, listening address, and zmq are already configured in the docker compose
-# and will override anything set here!!!
 [pogolo]
-# optional, required from clients if set
+# optional, required from sv1 clients if set
 # password = ''
 # will be replaced by default tag if too long (about 86 chars)
 # customize it! add your swarm stats, like
@@ -15,9 +13,23 @@ default_difficulty = 1024.0
 job_interval = 60
 # how often we want shares on average, in seconds
 target_share_interval = 5
+# maximum time pogolo will wait for the next share before acknowledging the batch, in seconds
+# minimum: 1
+share_batch_window = 15
 # extranonce2 size in bytes, usually shouldnt be touched
 # extranonce2_size = 4
+# version bits as int32, ORed with the template version
+# bip_version_bits = 0
 # ignore the client-suggested difficulty
 # ignore_suggested_difficulty = false
 # disable automatic difficulty adjustment
 # disable_vardiff = false
+# whether to wait for the backend to sync before creating the first job
+wait_for_sync = true
+# the encoded stratumv2.Keypair used for the authority key
+# can be generated with '--generate-authority-key'
+# authority_keypair = ''
+# file to log to (path resolution same as cookie)
+# log_file = ''
+# disables logging entirely
+# disable_logs = false
