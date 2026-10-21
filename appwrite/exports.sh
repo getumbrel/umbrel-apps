@@ -1,0 +1,6 @@
+export APP_APPWRITE_OPENSSL_KEY="$(derive_entropy "${app_entropy_identifier}-encryption-key")"
+export APP_APPWRITE_EXECUTOR_SECRET="$(derive_entropy "${app_entropy_identifier}-executor-secret")"
+export APP_APPWRITE_MONGODB_ROOT_PASSWORD="$(derive_entropy "${app_entropy_identifier}-mongodb-root-password")"
+export APP_APPWRITE_MONGODB_PASSWORD="$(derive_entropy "${app_entropy_identifier}-mongodb-password")"
+export APP_APPWRITE_POSTGRES_PASSWORD="$(derive_entropy "${app_entropy_identifier}-postgres-password")"
+export APP_APPWRITE_REDIS_PASSWORD="$(derive_entropy "${app_entropy_identifier}-redis-password")"
