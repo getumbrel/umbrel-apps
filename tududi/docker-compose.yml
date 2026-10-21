@@ -1,0 +1,29 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: tududi_web_1
+      APP_PORT: 3002
+      PROXY_AUTH_ADD: "false"
+
+  web:
+    image: chrisvel/tududi:1.2.4@sha256:4dd5842ab6065435fe70dad71fe23fcc261e8d15991fde13009c595f77726fca
+    restart: on-failure
+    environment:
+      TUDUDI_USER_EMAIL: "admin@umbrel.local"
+      TUDUDI_USER_PASSWORD: "${APP_PASSWORD}"
+      TUDUDI_SESSION_SECRET: "${APP_SEED}"
+
+      TUDUDI_ALLOWED_ORIGINS: "http://${DEVICE_DOMAIN_NAME}:3382"
+      TUDUDI_TRUST_PROXY: "1"
+
+      DB_FILE: "/app/db/production.sqlite3"
+      TUDUDI_UPLOAD_PATH: "/app/uploads"
+
+      PUID: "1000"
+      PGID: "1000"
+
+    volumes:
+      - ${APP_DATA_DIR}/data/db:/app/db
+      - ${APP_DATA_DIR}/data/uploads:/app/uploads
