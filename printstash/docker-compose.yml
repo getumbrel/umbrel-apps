@@ -1,0 +1,44 @@
+# Umbrel app definition, derived from the root docker-compose.yml. Umbrel pins
+# every image by digest: keep the release tag beside the multi-arch index digest
+# (`docker buildx imagetools inspect ghcr.io/xiao-villamor/printstash:X.Y.Z`).
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: printstash_web_1
+      APP_PORT: 3000
+      # Keep Umbrel's login in front of the UI. PrintStash's own accounts are what
+      # slicers and print hosts authenticate with, and they cannot send an Umbrel
+      # cookie, so only the API is exempt: browsers keep the Umbrel login (and its
+      # 2FA), integrations keep working.
+      PROXY_AUTH_WHITELIST: "/api/*"
+
+  web:
+    image: ghcr.io/xiao-villamor/printstash:0.14.0@sha256:cef11e20924ea7fc9037dc3f2b73d4b9a213882992ba060fcec91277911ca3d8
+    # Not on-failure: a restart requested from Settings is a graceful SIGTERM,
+    # which can exit with status 0 and would not be relaunched.
+    restart: unless-stopped
+    stop_grace_period: 60s
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+    environment:
+      # environment mode: the credentials are always set, and browser
+      # registration never opens. If they are ever invalid, the installation
+      # stays closed and the setup page names what to fix.
+      VAULT_SETUP_MODE: environment
+      VAULT_RESTART_ENABLED: "true"
+      # The credentials Umbrel shows on the app's page (umbrel-app.yml).
+      VAULT_SETUP_ADMIN_USERNAME: admin
+      VAULT_SETUP_ADMIN_PASSWORD: ${APP_PASSWORD}
+      # Umbrel creates app data as 1000:1000. The image repairs ownership at
+      # start and then runs as this identity (PUID/PGID are upstream settings),
+      # so the library on disk stays owned by the same user Umbrel uses.
+      PUID: "1000"
+      PGID: "1000"
+      # GPU use and memory budgets. A GPU is used when the container can see
+      # one (docs/compute.md); otherwise the CPU does the work.
+      VAULT_COMPUTE_MODE: auto
+      VAULT_COMPUTE_MEMORY_MB: "1024"
+      VAULT_MESH_MEMORY_BUDGET_FRACTION: "0.5"
+      VAULT_EMBEDDING_MEMORY_BUDGET_FRACTION: "0.25"
