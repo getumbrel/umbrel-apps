@@ -2,7 +2,7 @@ manifestVersion: 1
 id: am-i-exposed
 category: bitcoin
 name: "am-i.exposed"
-version: "0.43.1"
+version: "0.43.2"
 tagline: Bitcoin privacy scanner - see what the blockchain reveals about you
 description: >-
   Paste a Bitcoin address, transaction ID, xpub or descriptor, or an unsigned
@@ -19,10 +19,10 @@ description: >-
   network. The optional Chainalysis check is routed over Tor. No tracking, no
   logging, no third-party analytics.
 releaseNotes: |-
-  This update fixes connection searches when a self-hosted Mempool server cannot load an address's history.
+  This update improves CoinJoin privacy analysis.
 
-  - Address-history lookups now time out after 15 seconds instead of leaving the search stuck.
-  - Searches can still find a destination address through transactions that pay to or spend from it, with a warning when its full history is unavailable.
+  - Reduces false JoinMarket detections and flags CoinJoin-like transactions that may belong to a single wallet.
+  - Adjusts privacy scores when certain CoinJoin outputs are later spent together.
 developer: Copexit
 website: https://am-i.exposed
 dependencies:
