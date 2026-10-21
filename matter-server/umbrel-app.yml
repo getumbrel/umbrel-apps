@@ -5,7 +5,7 @@ storage:
 name: Matter Server
 tagline: A Matter Controller Server over WebSockets
 category: automation
-version: "1.5.0"
+version: "1.5.2"
 port: 5580
 description: >-
   🛜 Matter Server connects Matter devices to Home Assistant and other compatible applications through a WebSocket API. Built on matter.js and maintained by the Open Home Foundation, it supports commissioning, device control, firmware updates, and network diagnostics.
@@ -26,14 +26,16 @@ releaseNotes: >-
   If you're updating from the retired Python Matter Server (8.x), your fabric and paired devices migrate automatically on first start, which may take several minutes. Back up your Umbrel before updating; restoring that backup is the safest way to roll back.
 
 
+  If a previous Python migration failed and the logs report conflicting controller data, restore your backup from before migration and try again.
+
+
   Key improvements:
-    - Adds Matter 1.6.1 support and expands device controls in the dashboard
-    - Improves camera streaming and adds two-way audio for compatible cameras (microphone access requires HTTPS or localhost)
-    - Fixes device discovery, pairing error reporting, and handling of devices and bridge endpoints that change
-    - Improves Thread network diagnostics and reliability for connected WebSocket clients
-    - Redacts additional sensitive fields from debug logs, including door-lock PINs
+    - Fixes preservation of the controller fabric when migrating from Python Matter Server
+    - Corrects device event timestamps and network names in diagnostics
+    - Keeps the server responsive while updating fabric labels on connected devices
+    - Adds music-sync configuration support for Aqara LED Strip T2
 
 
-  Full release notes are available at https://github.com/matter-js/matterjs-server/blob/v1.5.0/CHANGELOG.md
+  Full release notes are available at https://github.com/matter-js/matterjs-server/blob/v1.5.2/CHANGELOG.md
 dependencies: []
 path: ""
