@@ -4,7 +4,7 @@ storage:
   dataRoot: data
 category: automation
 name: ESPHome
-version: "2026.9.1"
+version: "2026.10.0"
 tagline: Intelligently manage all your ESP8266/ESP32 devices
 description: >-
   ESPHome is a system to control your ESP8266/ESP32 by simple yet powerful configuration files and control them remotely through Home Automation systems.
@@ -23,12 +23,15 @@ defaultUsername: ""
 defaultPassword: ""
 torOnly: false
 releaseNotes: >-
-  ESPHome 2026.9.1 fixes OTA encryption-key handling for safe-mode uploads without the API server, masks password text-entity values more consistently in the web server, and includes stability fixes for MIPI displays, LVGL build flags, ESP32/RP2040 crash logging, ESP32-P4 builds, SPI Ethernet, and mixer task handling.
+  ⚠️ Review the upstream upgrade checklist before updating device firmware. ESP8266 now uses the native Arduino toolchain and the first compile is a clean build; set `toolchain: platformio` under `esp8266:` temporarily if your board or custom framework needs the old toolchain. Sendspin requires Music Assistant 2.10.7 or newer (or 2.11.0b4 or newer).
 
 
-  Review the upstream 2026.9 breaking changes before updating if your configs use Modbus Controller `custom_command`, `register_count`, `force_new_range`, or `skip_updates`; ESP32 custom eFuse MACs with Ethernet, Bluetooth, Thread, or Zigbee; custom lambdas or external components; or components with unsupported non-default UART settings such as `mhz19`, `daly_bms`, or `teleinfo`.
+  Check existing light boot-state settings, speaker codec and mute automations, remote-receiver buffer sizes, Climate IR modes, USB UART filters, e-paper settings, and custom lambdas or external components for breaking changes described upstream.
 
 
-  Full release notes can be found at https://github.com/esphome/esphome/releases/tag/2026.9.1
+  This release adds compressed OTA uploads on more platforms, faster firmware builds, lower memory usage, native API outgoing connections, and new sensor, audio, USB bridge, and touchscreen components.
+
+
+  Full release notes can be found at https://esphome.io/blog/2026/10/21/esphome-2026-10/
 submitter: ShonP40
 submission: https://github.com/getumbrel/umbrel-apps/pull/43
