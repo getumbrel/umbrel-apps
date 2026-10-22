@@ -5,7 +5,7 @@ storage:
 name: Gitea Mirror
 tagline: Mirror your GitHub repositories to a Gitea instance automatically
 category: developer
-version: "3.42.0"
+version: "3.43.0"
 port: 4322
 description: >-
   Gitea Mirror automatically mirrors your GitHub repositories to a self-hosted Gitea instance. It supports mirroring public and private repositories, organizations, starred repos, issues, wikis, and pull requests.
@@ -44,14 +44,13 @@ defaultUsername: ""
 defaultPassword: ""
 dependencies: []
 releaseNotes: >-
-  This update adds GitHub App installation authentication as an alternative to personal access tokens.
+  This update lets you choose which newly discovered repositories trigger notifications.
 
   Key highlights:
-    - Connect a GitHub App in the Sources settings to mirror its selected repositories using the installation's own rate limit.
-    - Automatically refreshes installation tokens before each mirror sync.
-    - Includes manual syncs in the dashboard's last sync time.
+    - Separately control notifications for repositories in your account, organizations, and starred repositories.
+    - Existing notification settings keep all three groups enabled until you change them.
 
-  GitHub App-backed mirrors require Gitea 1.27 or later. Keep Gitea Mirror's scheduler enabled for these mirrors, as Gitea's independent pull schedule is disabled. Use personal access tokens with older Gitea versions, Forgejo, starred repositories, or star lists. Existing token-based mirrors are unchanged.
+  If you're updating from a version older than 3.42.0, GitHub App installation authentication is also available as an alternative to personal access tokens. GitHub App-backed mirrors require Gitea 1.27 or later. Keep Gitea Mirror's scheduler enabled for these mirrors, as Gitea's independent pull schedule is disabled. Use personal access tokens with older Gitea versions, Forgejo, starred repositories, or star lists. Existing token-based mirrors are unchanged.
 
   If you're updating from a version older than 3.40.4, milestone assignments are now mirrored for issues and pull requests. Existing unchanged items receive their assignments on the next weekly full sync; changed items receive them on their next sync.
 
@@ -67,5 +66,5 @@ releaseNotes: >-
 
   If you're updating from a version older than 3.17 and use OAuth provider clients registered in Gitea Mirror, rotate the client secret for each client after upgrading because OAuth application secrets are stored hashed after migration.
 
-  Full release notes can be found at https://github.com/RayLabsHQ/gitea-mirror/releases/tag/v3.42.0
+  Full release notes can be found at https://github.com/RayLabsHQ/gitea-mirror/releases/tag/v3.43.0
 path: ""
