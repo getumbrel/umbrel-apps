@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: portainer
 category: developer
 name: Portainer
-version: "2.45.2"
+version: "2.45.3"
 tagline: Run custom Docker containers on your Umbrel
 description: >-
   ⚠️ Make sure to only use named Docker volumes for your stacks and containers. Data in bind-mounted volumes
@@ -51,13 +51,16 @@ path: ""
 defaultUsername: "admin"
 defaultPassword: "changeme"
 releaseNotes: >-
-  This release includes security fixes for Portainer access controls, Kubernetes namespace cleanup, and Kubernetes API TLS handling.
+  ⚠️ Portainer no longer trusts compromised eMudhra (emSign) certificates. Before upgrading, check certificates used by your login providers, registries, and Git hosts. Affected connections will fail; if your login provider is affected, only the initial administrator can sign in.
 
 
-  It also fixes issues with GitOps source loading, Kubernetes stack deletion, Edge stack retries, Docker dashboard volume counts, and stack undeploy timeouts.
+  This release improves security by preventing restricted users from inheriting hidden bind mounts through stacks and limiting Kubernetes access tokens to their intended environment.
 
 
-  Existing stacks, containers, and named volumes are preserved.
+  It also fixes container startup failures, overlapping GitOps deployments, and Docker Hub rate-limit detection on newer Docker engines.
+
+
+  Full release notes can be found at https://github.com/portainer/portainer/releases/tag/2.45.3
 permissions:
   - GPU
 developer: Portainer
