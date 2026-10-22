@@ -1,0 +1,26 @@
+version: "3.7"
+
+services:
+
+  app_proxy:
+    environment:
+      APP_HOST: auralog_web_1
+      APP_PORT: 80
+
+  web:
+    image: ghcr.io/nillawafa/auralog:1.1.2@sha256:7777188aedda3120b4bd03de1508cabefaf2e6767da2743bfa5c3da9b531a100
+    restart: on-failure
+    stop_grace_period: 1m
+    depends_on:
+      - proxy
+
+  proxy:
+    image: ghcr.io/nillawafa/auralog-proxy:1.1.2@sha256:51cf1b86cb972b156312e7aebedfa51bd37f7ad37caefcf35ba507cd67fc4097
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      - PORT=3851
+      - NODE_ENV=production
+      - DATA_DIR=/data
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
