@@ -1,0 +1,23 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: openpost_server_1
+      APP_PORT: 8080
+      # Social providers fetch uploaded media without an Umbrel session.
+      PROXY_AUTH_WHITELIST: "/media/*"
+
+  server:
+    image: ghcr.io/getopenpost/openpost:v7.23.0@sha256:75c1ce92bd646fa5a866b96ecad9a7870707ae33d9792708a74a23c58f6c5b71
+    user: "1000:1000"
+    init: true
+    restart: on-failure
+    stop_grace_period: 30s
+    environment:
+      OPENPOST_APP_URL: http://${DEVICE_DOMAIN_NAME}:3457
+      OPENPOST_EXTRA_CORS_ORIGINS: https://${DEVICE_DOMAIN_NAME}:3457
+      OPENPOST_JWT_SECRET: ${APP_OPENPOST_JWT_SECRET}
+      OPENPOST_ENCRYPTION_KEY: ${APP_OPENPOST_ENCRYPTION_KEY}
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
