@@ -5,7 +5,7 @@ storage:
 name: Wealthfolio
 tagline: Private investment portfolio tracking
 category: finance
-version: "3.10.0"
+version: "3.11.0"
 port: 8880
 description: >-
   Wealthfolio is an open source investment portfolio tracker for monitoring holdings, accounts, performance,
@@ -26,19 +26,25 @@ gallery:
   - 3.webp
   - 4.webp
 releaseNotes: >-
-  Wealthfolio 3.10.0 introduces a new portfolio calculation engine, cost basis methods, loan tracking, and encrypted cloud backups for Wealthfolio Connect subscribers.
+  ⚠️ In rare cases, the first broker sync after updating can reset a holding's average cost to zero, including costs you entered manually. This can affect holdings with three or more decimal places when the broker supplies no average cost. Later syncs will not restore the previous cost.
 
 
-  Holdings, cash, valuations, returns, transfers, shorts, splits, FX, and rounding now use one shared engine across desktop, mobile, and the server. The first launch recalculates history after creating a backup, so derived values such as cost basis, realized gains, and past values may change slightly.
+  Wealthfolio 3.11.0 adds running balances, daily activity grouping, per-currency number formats, Arabic with a right-to-left layout, and currency exchanges within an account. The refreshed interface improves tables, menus, and keyboard accessibility.
 
 
-  Transaction-tracked accounts can now use FIFO, weighted average cost, LIFO, or HIFO cost basis methods, and liabilities can be tracked as loans or mortgages with amortization schedules and repayments.
+  This release also improves income and performance calculations, device sync, loan rate changes, and CSV import templates on self-hosted HTTP connections.
 
 
-  Device sync users should update all devices before using the new cost-basis and return-of-capital data. Self-hosting needs no configuration changes.
+  If you used external credits, custom Other holdings, same-account currency conversions, or currency codes such as USDT on 3.10.0, run Settings → Market Data → History → Refresh full history once to correct past values. Income now uses historical exchange rates and local-time months, and performance includes currency gains and losses on cash.
 
 
-  Full release notes can be found at https://github.com/wealthfolio/wealthfolio/releases/tag/v3.10.0
+  Update all devices if you use device sync.
+
+
+  Upgrading from before 3.10.0 also introduces the new calculation engine: first launch creates a backup and recalculates history, which may change derived cost basis, realized gains, and past values.
+
+
+  Full release notes can be found at https://github.com/wealthfolio/wealthfolio/releases/tag/v3.11.0
 dependencies: []
 path: ""
 defaultUsername: ""
