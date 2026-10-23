@@ -1,0 +1,18 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: nodeguard-node_web_1
+      APP_PORT: 9596
+
+  web:
+    image: ghcr.io/thenodeguard/nodeguard-node:1.0.13@sha256:ec1f026aa37ea0d2fc74c3e4ccdb55a9bd70c296b1ce45e7ad819abdc4004b74
+    restart: on-failure
+    stop_grace_period: 1m
+    volumes:
+      - ${APP_DATA_DIR}/data/config:/config
+      - ${APP_DATA_DIR}/data/storage:/data
+    environment:
+      NODEGUARD_NODE_AUTH: proxy
+      NODEGUARD_NODE_NAME: umbrel
