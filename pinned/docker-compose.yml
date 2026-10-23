@@ -1,0 +1,30 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: pinned_web_1
+      APP_PORT: 8080
+      # The browser extension and scripts send an API token, share links are
+      # opened by people without an Umbrel login, and a share page loads the
+      # app's own CSS, scripts, fonts and icon. The app's password, tokens and
+      # share links protect these paths.
+      PROXY_AUTH_WHITELIST: "/api/*,/s/*,/extras/*,/health,/static/*,/favicon.svg"
+
+  web:
+    image: ghcr.io/pinned-cc/pinned:0.1.8@sha256:966179509dedddf3171e3b2a6bf8411c294a1354e9d464df81d5a39061967c34
+    user: "1000:1000"
+    restart: on-failure
+    # The app writes only to /data.
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      APP_PASSWORD: ${APP_PASSWORD}
+      TZ: UTC
+      # Read the visitor's address from Umbrel's proxy for the wrong password limits.
+      TRUSTED_PROXIES: "127.0.0.0/8,::1,${GATEWAY_IP}/32"
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
