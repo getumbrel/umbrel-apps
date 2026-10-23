@@ -4,7 +4,7 @@ storage:
   dataRoot: data
 category: bitcoin
 name: Bisq 2 Node
-version: "2.1.13.0"
+version: "2.1.14.0"
 tagline: Run your own Bisq 2 node for private Bitcoin trading
 description: >-
   Bisq Connect lets you buy and sell Bitcoin peer-to-peer from your phone. This
@@ -36,4 +36,26 @@ defaultUsername: ""
 defaultPassword: ""
 submitter: rodvar
 submission: https://github.com/getumbrel/umbrel-apps/pull/5850
-releaseNotes: "Security update. Upgrades the node's Tor daemon to 0.4.9.13, the Tor Project's emergency security release of 23 September 2026 that fixes a series of high-severity issues affecting clients, onion services and relays (it also includes the 0.4.9.12 fixes). Moves the node to Bisq 2 API 2.1.13, which Bisq 2 marks as required to continue trading. Update your node as soon as possible, then update the Bisq Connect app. Tor advisory: https://forum.torproject.org/t/security-release-0-4-9-13/22178 — Bisq 2 release: https://github.com/bisq-network/bisq2/releases/tag/v2.1.13 — Full changes: https://github.com/bisq-network/bisq2/compare/v2.1.13...3e07b59 (bisq2 @ 3e07b59)"
+releaseNotes: >-
+  **Update before 25 November 2026.** Update the node first, then Bisq Connect.
+
+
+  This security update moves the node to Bisq 2 API 2.1.14 and Tor 0.4.9.14. It includes new storage signatures and owner-bound storage keys, stricter checks when offers are taken, separate Tor circuits per identity, pairing secrets stored only as hashes, and authentication on every WebSocket connection.
+
+
+  From 25 November 2026, updated nodes no longer accept data signed only the old way, so a node still on 2.1.13 can miss offers and messages and its trades can stall.
+
+
+  - **Pairing:** Bisq Connect stays paired, but asks you to accept the updated terms again.
+
+  - **Fixed-price offers:** Offers published through a 2.1.13 node must be created again.
+
+  - **Old logs:** Logs written by earlier versions contain the node's private keys. This version hides them in its own log files, but do not share older copies such as container logs, log viewer exports or backups.
+
+  - **Downgrades:** Downgrading to 2.1.13 is not supported; going back would require pairing every device again.
+
+
+  Bisq 2 release: https://github.com/bisq-network/bisq2/releases/tag/v2.1.14
+
+
+  Full changes: https://github.com/bisq-network/bisq2/compare/3e07b59...52f9141 (bisq2 @ 52f9141)

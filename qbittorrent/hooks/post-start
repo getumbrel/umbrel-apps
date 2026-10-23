@@ -72,10 +72,12 @@ set_default_save_path() {
 	fi
 }
 
-ensure_preferences_section() {
-	if ! grep --quiet '^\[Preferences\]$' "${QBITTORRENT_CONF_FILE}"; then
-		echo "[Preferences] section does not exist in qBittorrent.conf. Creating it."
-		printf '\n[Preferences]\n' >> "${QBITTORRENT_CONF_FILE}"
+# qBittorrent 5.3 stores these settings in [WebUI], not [Preferences]
+# with WebUI-prefixed keys. Upstream migrates existing settings before this hook.
+ensure_webui_section() {
+	if ! grep --quiet '^\[WebUI\]$' "${QBITTORRENT_CONF_FILE}"; then
+		echo "[WebUI] section does not exist in qBittorrent.conf. Creating it."
+		printf '\n[WebUI]\n' >> "${QBITTORRENT_CONF_FILE}"
 	fi
 }
 
@@ -100,27 +102,27 @@ if [[ "${RUN_EXISTING_INSTALL_MIGRATION}" == true ]]; then
   fi
 fi
 
-ensure_preferences_section
+ensure_webui_section
 
 # Enable reverse proxy support so qBittorrent reads the real client IP from X-Forwarded-For
 # and checks that against AuthSubnetWhitelist instead of the direct connection IP.
 # This allows third-party apps (e.g. qRemote) to authenticate with qBittorrent natively
 # while still allowing internal apps (Radarr, Sonarr, etc.) to bypass auth via the subnet whitelist.
 
-# Ensure WebUI\ReverseProxySupportEnabled is set correctly
-echo "Setting WebUI\ReverseProxySupportEnabled=true in qBittorrent.conf"
-if grep -q '^WebUI\\ReverseProxySupportEnabled=' "${QBITTORRENT_CONF_FILE}"; then
-  sed -i 's/^WebUI\\ReverseProxySupportEnabled=.*/WebUI\\ReverseProxySupportEnabled=true/' "${QBITTORRENT_CONF_FILE}"
+# Ensure WebUI/ReverseProxySupportEnabled is set correctly
+echo "Setting WebUI/ReverseProxySupportEnabled=true in qBittorrent.conf"
+if grep -q '^ReverseProxySupportEnabled=' "${QBITTORRENT_CONF_FILE}"; then
+  sed -i 's/^ReverseProxySupportEnabled=.*/ReverseProxySupportEnabled=true/' "${QBITTORRENT_CONF_FILE}"
 else
-  sed -i '/^\[Preferences\]/a WebUI\\ReverseProxySupportEnabled=true' "${QBITTORRENT_CONF_FILE}"
+  sed -i '/^\[WebUI\]/a ReverseProxySupportEnabled=true' "${QBITTORRENT_CONF_FILE}"
 fi
 
-# Ensure WebUI\TrustedReverseProxiesList is set correctly
-echo "Setting WebUI\TrustedReverseProxiesList=10.21.0.0/16 in qBittorrent.conf"
-if grep -q '^WebUI\\TrustedReverseProxiesList=' "${QBITTORRENT_CONF_FILE}"; then
-  sed -i 's/^WebUI\\TrustedReverseProxiesList=.*/WebUI\\TrustedReverseProxiesList=10.21.0.0\/16/' "${QBITTORRENT_CONF_FILE}"
+# Ensure WebUI/TrustedReverseProxiesList is set correctly
+echo "Setting WebUI/TrustedReverseProxiesList=10.21.0.0/16 in qBittorrent.conf"
+if grep -q '^TrustedReverseProxiesList=' "${QBITTORRENT_CONF_FILE}"; then
+  sed -i 's/^TrustedReverseProxiesList=.*/TrustedReverseProxiesList=10.21.0.0\/16/' "${QBITTORRENT_CONF_FILE}"
 else
-  sed -i '/^\[Preferences\]/a WebUI\\TrustedReverseProxiesList=10.21.0.0/16' "${QBITTORRENT_CONF_FILE}"
+  sed -i '/^\[WebUI\]/a TrustedReverseProxiesList=10.21.0.0/16' "${QBITTORRENT_CONF_FILE}"
 fi
 
 if [[ "${RUN_REVERSE_PROXY_MIGRATION}" == true ]]; then
@@ -135,18 +137,18 @@ fi
 # This script will set the default password to the legacy 'adminadmin' password if the password is not already set. If a user has already set a password, this script will not overwrite it.
 # The app description in the Umbrel app store encourages users to change the default password.
 
-# If a line with `WebUI\Password_PBKDF2` does not exist yet in the qBittorrent.conf, then a custom password hasn't been set yet and we write out `adminadmin` as the default password.
-# This line is expected to be under the [Preferences] section.
+# If a line with `WebUI/Password_PBKDF2` does not exist yet in the qBittorrent.conf, then a custom password hasn't been set yet and we write out `adminadmin` as the default password.
+# This line is expected to be under the [WebUI] section.
 # We check for this line first because a user may have a legacy install from before qBittorrent removed the default password.
-if ! grep --quiet '^WebUI\\Password_PBKDF2' "${QBITTORRENT_CONF_FILE}"; then
-  echo "WebUI\\Password_PBKDF2 does not exist in qBittorrent.conf. Adding default password."
+if ! grep --quiet '^Password_PBKDF2' "${QBITTORRENT_CONF_FILE}"; then
+  echo "Password_PBKDF2 does not exist in qBittorrent.conf. Adding default password."
 
   echo "Writing default password adminadmin to qBittorrent.conf"
-  sed -i '/^\[Preferences\]/a WebUI\\Password_PBKDF2="@ByteArray(gTzqQHUv3A1X43tLaAhaJQ==:ZBCIBA4honNZ7H66xdEoHpqBC/Vvwj17ZCjQKARSK78ScJWDMdWSfxezHG536UekAL/zpRn571MXCfhtdqiArA==)"' "${QBITTORRENT_CONF_FILE}"
+  sed -i '/^\[WebUI\]/a Password_PBKDF2="@ByteArray(gTzqQHUv3A1X43tLaAhaJQ==:ZBCIBA4honNZ7H66xdEoHpqBC/Vvwj17ZCjQKARSK78ScJWDMdWSfxezHG536UekAL/zpRn571MXCfhtdqiArA==)"' "${QBITTORRENT_CONF_FILE}"
 
 else
   # This is a legacy install and the user has already set a password. We don't want to overwrite it. 
-  echo "'WebUI\\Password_PBKDF2' already exists in qBittorrent.conf. No changes made."
+  echo "'Password_PBKDF2' already exists in qBittorrent.conf. No changes made."
 fi
 
 echo "Setting Session\\DefaultSavePath=/downloads in qBittorrent.conf"
@@ -158,28 +160,28 @@ fi
 
 # Users can overwrite these settings in the qBittorrent.conf file if they want to change them and this script won't overwrite them.
 
-# Ensure WebUI\AuthSubnetWhitelist is set correctly
+# Ensure WebUI/AuthSubnetWhitelist is set correctly
 echo "Setting AuthSubnetWhitelist=10.21.0.0/16 in qBittorrent.conf"
-if grep -q '^WebUI\\AuthSubnetWhitelist=' "${QBITTORRENT_CONF_FILE}"; then
-  sed -i 's/^WebUI\\AuthSubnetWhitelist=.*/WebUI\\AuthSubnetWhitelist=10.21.0.0\/16/' "${QBITTORRENT_CONF_FILE}"
+if grep -q '^AuthSubnetWhitelist=' "${QBITTORRENT_CONF_FILE}"; then
+  sed -i 's/^AuthSubnetWhitelist=.*/AuthSubnetWhitelist=10.21.0.0\/16/' "${QBITTORRENT_CONF_FILE}"
 else
-  sed -i '/^\[Preferences\]/a WebUI\\AuthSubnetWhitelist=10.21.0.0/16' "${QBITTORRENT_CONF_FILE}"
+  sed -i '/^\[WebUI\]/a AuthSubnetWhitelist=10.21.0.0/16' "${QBITTORRENT_CONF_FILE}"
 fi
 
-# Ensure WebUI\AuthSubnetWhitelistEnabled is set correctly
-echo "Setting WebUI\AuthSubnetWhitelistEnabled=true in qBittorrent.conf"
-if grep -q '^WebUI\\AuthSubnetWhitelistEnabled=' "${QBITTORRENT_CONF_FILE}"; then
-  sed -i 's/^WebUI\\AuthSubnetWhitelistEnabled=.*/WebUI\\AuthSubnetWhitelistEnabled=true/' "${QBITTORRENT_CONF_FILE}"
+# Ensure WebUI/AuthSubnetWhitelistEnabled is set correctly
+echo "Setting WebUI/AuthSubnetWhitelistEnabled=true in qBittorrent.conf"
+if grep -q '^AuthSubnetWhitelistEnabled=' "${QBITTORRENT_CONF_FILE}"; then
+  sed -i 's/^AuthSubnetWhitelistEnabled=.*/AuthSubnetWhitelistEnabled=true/' "${QBITTORRENT_CONF_FILE}"
 else
-  sed -i '/^\[Preferences\]/a WebUI\\AuthSubnetWhitelistEnabled=true' "${QBITTORRENT_CONF_FILE}"
+  sed -i '/^\[WebUI\]/a AuthSubnetWhitelistEnabled=true' "${QBITTORRENT_CONF_FILE}"
 fi
 
-# Ensure WebUI\HostHeaderValidation is set correctly
-echo "Setting WebUI\HostHeaderValidation=false in qBittorrent.conf"
-if grep -q '^WebUI\\HostHeaderValidation=' "${QBITTORRENT_CONF_FILE}"; then
-  sed -i 's/^WebUI\\HostHeaderValidation=.*/WebUI\\HostHeaderValidation=false/' "${QBITTORRENT_CONF_FILE}"
+# Ensure WebUI/HostHeaderValidation is set correctly
+echo "Setting WebUI/HostHeaderValidation=false in qBittorrent.conf"
+if grep -q '^HostHeaderValidation=' "${QBITTORRENT_CONF_FILE}"; then
+  sed -i 's/^HostHeaderValidation=.*/HostHeaderValidation=false/' "${QBITTORRENT_CONF_FILE}"
 else
-  sed -i '/^\[Preferences\]/a WebUI\\HostHeaderValidation=false' "${QBITTORRENT_CONF_FILE}"
+  sed -i '/^\[WebUI\]/a HostHeaderValidation=false' "${QBITTORRENT_CONF_FILE}"
 fi
 
 # Create the UMBREL_QBITTORRENT_CONFIG_FLAG file to indicate that we've configured qBittorrent

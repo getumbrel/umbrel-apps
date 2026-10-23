@@ -5,7 +5,7 @@ storage:
 name: Langflow
 tagline: Build AI agents and workflows visually
 category: ai
-version: "1.12.6"
+version: "1.13.0"
 port: 8862
 description: >-
   Langflow is a visual platform for building and deploying AI-powered agents and workflows.
@@ -29,13 +29,16 @@ gallery:
   - 4.webp
   - 5.webp
 releaseNotes: >-
-  Fixes security backports from Langflow 1.13.0, bundle-release validation, MCP flow input schema generation, and dependency updates.
+  ⚠️ Before updating, back up Langflow's database and knowledge base data. Local Chroma knowledge and memory bases are automatically copied to SQLite on first startup; allow roughly four times each store's size in free disk space and wait for the bases to show Ready before using them.
 
 
-  Improves JSON/message type conversion and numeric column handling in Replace Value operations.
+  Flows using Chroma or Local DB components need those components replaced with a knowledge base or supported remote vector store. Chroma Cloud requires manual migration, and retired ALTK components need replacing with Agent. See https://docs.langflow.org/knowledge-storage-upgrade for guidance.
 
 
-  Full release notes can be found at https://github.com/langflow-ai/langflow/releases/tag/v1.12.6
+  This update adds managed integration connections, safer concurrent flow editing, and guided instance migration tools. It also improves knowledge base ingestion, chat history, and credential handling.
+
+
+  Full release notes can be found at https://github.com/langflow-ai/langflow/releases/tag/v1.13.0
 dependencies: []
 path: ""
 defaultUsername: ""

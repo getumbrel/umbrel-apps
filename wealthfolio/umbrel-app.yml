@@ -5,7 +5,7 @@ storage:
 name: Wealthfolio
 tagline: Private investment portfolio tracking
 category: finance
-version: "3.9.1"
+version: "3.11.0"
 port: 8880
 description: >-
   Wealthfolio is an open source investment portfolio tracker for monitoring holdings, accounts, performance,
@@ -26,19 +26,25 @@ gallery:
   - 3.webp
   - 4.webp
 releaseNotes: >-
-  Wealthfolio 3.9.1 fixes device sync, portfolio returns, and Linux startup reliability.
+  ⚠️ In rare cases, the first broker sync after updating can reset a holding's average cost to zero, including costs you entered manually. This can affect holdings with three or more decimal places when the broker supplies no average cost. Later syncs will not restore the previous cost.
 
 
-  Encrypted device transfers are faster and smaller, include broker holdings, and show clearer pairing progress. Update both devices to Wealthfolio 3.9.1 before pairing.
+  Wealthfolio 3.11.0 adds running balances, daily activity grouping, per-currency number formats, Arabic with a right-to-left layout, and currency exchanges within an account. The refreshed interface improves tables, menus, and keyboard accessibility.
 
 
-  Holdings-account returns are now consistent after full and partial recalculations. If older return history is incorrect, run a full portfolio rebuild.
+  This release also improves income and performance calculations, device sync, loan rate changes, and CSV import templates on self-hosted HTTP connections.
 
 
-  Self-hosted profile startup errors are clearer, and interrupted sessions recover more reliably.
+  If you used external credits, custom Other holdings, same-account currency conversions, or currency codes such as USDT on 3.10.0, run Settings → Market Data → History → Refresh full history once to correct past values. Income now uses historical exchange rates and local-time months, and performance includes currency gains and losses on cash.
 
 
-  Full release notes can be found at https://github.com/wealthfolio/wealthfolio/releases/tag/v3.9.1
+  Update all devices if you use device sync.
+
+
+  Upgrading from before 3.10.0 also introduces the new calculation engine: first launch creates a backup and recalculates history, which may change derived cost basis, realized gains, and past values.
+
+
+  Full release notes can be found at https://github.com/wealthfolio/wealthfolio/releases/tag/v3.11.0
 dependencies: []
 path: ""
 defaultUsername: ""

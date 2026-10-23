@@ -5,7 +5,7 @@ storage:
 name: BOLT12 Pay
 tagline: Self-hosted Lightning payments and identity with BOLT12, BIP353, LNURL, and Nostr
 category: bitcoin
-version: 0.3.7
+version: 0.3.15
 port: 8367
 description: |-
   BOLT12 Pay is a self-hosted Lightning payments and identity app for LND nodes.
@@ -84,15 +84,13 @@ submission: https://github.com/getumbrel/umbrel-apps/pull/5429
 repo: https://github.com/Alex71btc/lndk-pay
 support: https://github.com/Alex71btc/lndk-pay/issues
 releaseNotes: |
-  BOLT12 payments now allow more time for an invoice response, improving reliability with slower wallets and onion-message routes.
+  Incoming BOLT12 payment messages now appear in Lightning Activity separately from the offer memo, including messages sent by Phoenix and phoenixd.
 
-  Repeated invoice requests now reuse the same invoice instead of creating unpaid duplicates in LND.
+  Payer notes are saved by payment hash, remain searchable after restarts, and preserve Unicode, emojis and line breaks without additional app-level truncation. Messages are displayed safely as text.
 
-  Outgoing BOLT12 payments appear as one clear Lightning Activity entry, including the routing fee, instead of an additional underlying BOLT11 payment row.
+  Includes matching multi-architecture LNDK server and CLI builds while retaining native onion messaging, amountless offers, offer memos and invoice reuse for repeated requests. Run only one LNDK instance per LND node to avoid competing invoice responses.
 
-  The bundled LNDK runtime now supports LND 0.21 native onion messages and remains available for both amd64 and arm64 systems. Amountless offers and descriptive invoice memos remain supported.
-
-  Existing application data and payment history are preserved. No manual migration is required.
+  Existing data, payment history, NWC connections, aliases, identities and Keysend messages are preserved. Migration is automatic; notes discarded by older versions cannot be recovered. The existing signed Android Companion is unchanged and remains available.
 
 dependencies:
   - lightning
@@ -102,6 +100,7 @@ gallery:
   - 3.webp
   - 4.webp
   - 5.webp
+
 path: ""
 defaultUsername: ""
 defaultPassword: ""

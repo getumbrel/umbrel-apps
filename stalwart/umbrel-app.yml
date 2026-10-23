@@ -3,7 +3,7 @@ id: stalwart
 name: Stalwart
 tagline: All-in-one Mail & Collaboration server
 category: files
-version: "v0.16.26"
+version: "v0.16.27"
 port: 8745
 description: >-
   📧 Stalwart is a fast, secure, and scalable open-source server for email, calendars, contacts, and file sharing, built in Rust for top-tier performance and safety.
@@ -57,19 +57,20 @@ releaseNotes: >-
   After a legacy upgrade, recalculate account disk quotas from the Tasks section of Stalwart, followed by tenant quotas if used. Clients using STARTTLS submission (10587), IMAP (10143), or POP3 (10110) need their listeners recreated or must switch to implicit TLS on 10465, 10993, or 10995 respectively. Update CalDAV, CardDAV, and WebDAV paths to use full email addresses with @ encoded as %40, and update external-directory filters where applicable. Your Umbrel-provided admin login remains available; custom administrator roles must be reassigned.
 
 
-  Read the full migration guide before upgrading: https://github.com/stalwartlabs/stalwart/blob/v0.16.26/UPGRADING/v0_16.md
+  Read the full migration guide before upgrading: https://github.com/stalwartlabs/stalwart/blob/v0.16.27/UPGRADING/v0_16.md
 
 
   These migration steps do not apply to existing v0.16 installations.
 
 
-  Changes in v0.16.26 include:
-    - Fixes JMAP mailbox rename and duplicate-child handling
-    - Fixes DNSSEC resolver behavior
-    - Fixes RocksDB blob garbage collection, milter timeouts, OIDC account lookup, and JMAP email submission and vacation responses
+  Changes in v0.16.27 include:
+    - Fixes mail change notifications when messages are appended, copied, or moved into another account's mailbox
+    - Fixes incomplete IMAP search results when combining minimum, maximum, and saved-result options
+    - Fixes calendar updates that could display both the original and rescheduled occurrence in Apple Calendar
+    - Fixes OAuth loopback redirects and WebDAV file and folder names in Windows Explorer
 
 
-  Full release notes: https://github.com/stalwartlabs/stalwart/releases/tag/v0.16.26
+  Full release notes: https://github.com/stalwartlabs/stalwart/releases/tag/v0.16.27
 
 dependencies: []
 path: "/admin"

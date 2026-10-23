@@ -3,7 +3,7 @@ id: baikal
 name: Baikal
 tagline: A lightweight calendar and contacts server
 category: networking
-version: "0.11.1"
+version: "0.13.0"
 port: 8890
 description: >-
   🪆 Baikal Server is a lightweight CalDAV and CardDAV server designed for users who want to manage their calendar and contact information securely on their own server. This robust application offers an extensive web interface that simplifies the management of users, address books, and calendars, making it accessible for both beginners and experienced users.
@@ -31,7 +31,18 @@ gallery:
   - 2.jpg
   - 3.jpg
 releaseNotes: >-
-  This release fixes upgrades for Baikal installations using MySQL and ships with sabre/dav 4.7.0.
+  This update brings Baikal from 0.11.1 to 0.13.0 and includes a security fix.
+
+
+  ⚠️ After updating, open Baikal, go to its admin page, and click "Start upgrade". Calendar and contact sync stays paused until you do. Upstream recommends backing up your Baikal data before updating.
+
+
+  Highlights:
+    - Fixed an XSS vulnerability where an authenticated user could take over the admin interface by renaming their calendar (0.12.1)
+    - Fixed calendar sharing on old SQLite installs (0.13.0)
+    - Fixed emoji encoding on MySQL (0.13.0)
+    - Fixed deprecation notices on PHP 8.4 and 8.5, and updated dependencies (0.12.0)
+    - Ships with sabre/dav 4.7.1
 
 
   Full release notes can be found at https://github.com/sabre-io/Baikal/releases

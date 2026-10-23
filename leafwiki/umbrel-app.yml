@@ -5,7 +5,7 @@ storage:
 name: LeafWiki
 tagline: A real wiki app without the heavy stack
 category: files
-version: "0.14.1"
+version: "0.14.2"
 port: 8066
 description: >-
   🌿 LeafWiki gives you a focused space to create, structure, and maintain a personal or shared knowledge base. It helps you turn scattered notes, instructions, ideas, and reference material into clear wiki pages that are easy to read, update, and organize. You can use it to document processes, collect important information, write guides, preserve technical notes, and build a clean library of knowledge that grows naturally over time.
@@ -26,16 +26,13 @@ gallery:
   - 2.webp
   - 3.webp
 releaseNotes: >-
-  This update adds inline PDF embeds for same-origin attachments, French and Simplified Chinese translations, an admin option to always show the table of contents, and search improvements for result scrolling and unusual punctuation.
+  This update makes Git backup pulls all-or-nothing and prevents force pushes that would discard remote commits. It also handles damaged databases more safely, preserving non-rebuildable data instead of deleting it. If the user database is unreadable, LeafWiki now stops and logs recovery instructions.
 
 
-  Uploaded non-media files such as SVG, text, Markdown, CSV, JSON, and HTML now download instead of opening in the browser, which helps protect against stored-XSS through uploads. Password changes also sign out the user's other sessions after their access token expires.
+  Pages now use a consistent reading column for text, code, and tables. Attachments are easier to find, dropped text files upload as attachments, and links to your own wiki open in the current tab. Search and page navigation are faster, and security-related dependency fixes are included.
 
 
-  It also improves Git backup performance, includes public-access and table-of-contents settings in full backups, fixes ambiguous wiki link reporting, and serves revision assets with the same download headers as regular assets.
-
-
-  Full release notes can be found at https://github.com/perber/leafwiki/releases/tag/v0.14.1
+  Full release notes can be found at https://github.com/perber/leafwiki/releases/tag/v0.14.2
 dependencies: []
 path: ""
 defaultUsername: "admin"
