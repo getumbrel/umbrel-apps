@@ -1,0 +1,38 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: mps_web_1
+      APP_PORT: 8099
+  web:
+    image: ghcr.io/matty03072/mps-media-payment-system:v0.1.0-beta.5@sha256:749e4ed601dce61185354b89e395855f5b0c5ca797751a373046afb5348212c1
+    user: "1000:1000"
+    init: true
+    restart: on-failure
+    environment:
+      UMBREL_BOOTSTRAP_PASSWORD: ${APP_PASSWORD}
+      PUBLIC_URL: http://${DEVICE_DOMAIN_NAME}:${APP_PROXY_PORT}
+    volumes:
+      - ${APP_DATA_DIR}/data/state:/state
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8099/health', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+  worker:
+    image: ghcr.io/matty03072/mps-media-payment-system:v0.1.0-beta.5@sha256:749e4ed601dce61185354b89e395855f5b0c5ca797751a373046afb5348212c1
+    command: [worker]
+    user: "1000:1000"
+    init: true
+    restart: on-failure
+    environment:
+      UMBREL_BOOTSTRAP_PASSWORD: ${APP_PASSWORD}
+      PUBLIC_URL: http://${DEVICE_DOMAIN_NAME}:${APP_PROXY_PORT}
+    volumes:
+      - ${APP_DATA_DIR}/data/state:/state
+    depends_on:
+      web:
+        condition: service_healthy
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
