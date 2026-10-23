@@ -1,0 +1,15 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: speedketchup_web_1
+      APP_PORT: 8080
+
+  web:
+    image: gatispei/speedketchup:0.4.0@sha256:bef465ed91103b62c66b1e605be6cdc1de66d4c909cf889132af99038a197dba
+    user: "1000:1000"
+    # speedketchup has no SIGTERM handler, as pid 1 it would only stop after
+    # the stop timeout kills it
+    init: true
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data/results:/data
