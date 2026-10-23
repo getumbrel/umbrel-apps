@@ -1,0 +1,48 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: solo45_dashboard_1
+      APP_PORT: 8099
+
+  pool:
+    image: ghcr.io/race45race/solo45:v0.1.33@sha256:4e7e538f400298f690906c009c557866b3f232f66a43327c72d92dfa809430ec
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 30s  # the pool finishes sending a found block to the node before it stops
+    command: ["python", "/app/pool.py"]
+    ports:
+      - "3337:3333"  # stratum for miners (keep it on your home network: don't forward it to the internet)
+    volumes:
+      - ${APP_DATA_DIR}/data/pool:/data/pool
+    environment:
+      SOLO45_DATA_DIR: /data/pool
+      BITCOIN_ZMQ_HASHBLOCK: tcp://${APP_BITCOIN_NODE_IP}:${APP_BITCOIN_ZMQ_HASHBLOCK_PORT}  # new blocks the moment the node has them
+      SOLO45_API_TOKEN: ${APP_SOLO45_API_TOKEN}
+      BITCOIN_RPC_URL: http://${APP_BITCOIN_NODE_IP}:${APP_BITCOIN_RPC_PORT}/
+      BITCOIN_RPC_USER: ${APP_BITCOIN_RPC_USER}
+      BITCOIN_RPC_PASS: ${APP_BITCOIN_RPC_PASS}
+
+  dashboard:
+    image: ghcr.io/race45race/solo45:v0.1.33@sha256:4e7e538f400298f690906c009c557866b3f232f66a43327c72d92dfa809430ec
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 30s
+    depends_on:
+      - pool
+    command: ["sh", "-c", "exec python /app/server.py >> /data/dash/dashboard.log 2>&1"]
+    volumes:
+      - ${APP_DATA_DIR}/data/dash:/data/dash
+      - ${APP_DATA_DIR}/data/pool:/data/pool:ro
+    environment:
+      SOLO45_DASH_DATA: /data/dash
+      SOLO45_POOL_LOG: /data/pool/pool.log
+      SOLO45_API_BASE: http://solo45_pool_1:3380
+      SOLO45_API_TOKEN: ${APP_SOLO45_API_TOKEN}
+      SOLO45_STRATUM_PORT: "3337"  # the port miners use, so the dashboard knows which miners are on Solo45
+      SOLO45_PROXY_HOST: solo45_app_proxy_1  # umbrelOS 1.x only; on 2.0 the login proxy connects from the gateway
+      BITCOIN_ZMQ_HASHBLOCK: tcp://${APP_BITCOIN_NODE_IP}:${APP_BITCOIN_ZMQ_HASHBLOCK_PORT}  # new blocks, no log reading
+      BITCOIN_RPC_URL: http://${APP_BITCOIN_NODE_IP}:${APP_BITCOIN_RPC_PORT}/
+      BITCOIN_RPC_USER: ${APP_BITCOIN_RPC_USER}
+      BITCOIN_RPC_PASS: ${APP_BITCOIN_RPC_PASS}
