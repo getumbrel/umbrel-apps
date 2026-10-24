@@ -1,0 +1,23 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: legejo_web_1
+      APP_PORT: 3000
+      # Clients that cannot send the Umbrel login, each with Legejo's own
+      # credentials: Kobo sync (token in the path), OPDS reading apps (app
+      # password), KOReader progress sync, the MCP server (app password),
+      # podcast feeds and shelf Atom feeds (secret key in the path).
+      PROXY_AUTH_WHITELIST: "/api/kobo/*,/api/v3/*,/api/UserStorage/*,/api/internal/*,/api/opds,/api/opds/*,/api/kosync/*,/api/mcp,/podcast/*,/feeds/*"
+
+  web:
+    image: slurvdjur/legejo:1.23.1@sha256:80d86bd7bfdbea0a5a8e4235fa23898f0131954c86e707dc2b98e8c2ba6c9e14
+    user: "1000:1000"
+    restart: on-failure
+    environment:
+      LEGEJO_ADMIN_USER: admin
+      # Used only on the first start, to create the admin account.
+      LEGEJO_ADMIN_PASSWORD: ${APP_PASSWORD}
+    volumes:
+      - ${APP_DATA_DIR}/data/legejo:/data
