@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# Make sure the app data directory exists and belongs to the UID the web
+# service runs as.
+#
+# Fresh installs get ${APP_DATA_DIR}/data from the committed package directory,
+# already owned by 1000:1000. But if that directory is ever missing when
+# containers start, Docker creates the bind-mount source itself — as root — and
+# the service then cannot write its caches. This hook repairs that case and
+# covers installs made before the directory was part of the package.
+set -euo pipefail
+
+APP_DIR="${APP_DATA_DIR:-$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")}"
+DATA_DIR="${APP_DIR}/data"
+
+mkdir -p "${DATA_DIR}"
+
+# Only touch ownership when it is actually wrong — a recursive chown over a
+# grown UTXO cache on every start would be wasteful.
+if [ "$(stat -c '%u:%g' "${DATA_DIR}")" != "1000:1000" ]; then
+	echo "satsage: fixing ownership of ${DATA_DIR}"
+	chown -R 1000:1000 "${DATA_DIR}"
+fi
