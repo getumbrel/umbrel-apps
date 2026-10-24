@@ -8,9 +8,11 @@ services:
       PROXY_AUTH_WHITELIST: "/iptv/*,/discover.json,/device.xml,/lineup.json,/lineup_status.json"
 
   web:
-    image: ghcr.io/ersatztv/legacy:v26.11.3@sha256:cb0383fdb22050bdaff19e94974e86151d289e56355ca77cde8f15c3b49895d7
+    image: ghcr.io/ersatztv/legacy:v26.11.4@sha256:fbb168eae984efcad085d56f949bba10a8b7b63c54f48bc1cc20b494362c18a4
     restart: on-failure
     user: "1000:1000"
+    environment:
+      HOME: /config
     volumes:
       - ${APP_DATA_DIR}/data/config:/config
       - ${APP_DATA_DIR}/data/transcode:/transcode
