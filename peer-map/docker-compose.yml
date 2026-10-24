@@ -1,0 +1,62 @@
+# One service, one static binary (ghcr.io/benunskilled/peer-map, built from
+# github.com/benunskilled/peer-map). No volume: the app keeps no state.
+#
+# The image reference is pinned by tag AND digest - the digest of the
+# multi-arch index, as listed for the tagged version under the repository's
+# GitHub Packages. See RELEASING.md.
+#
+# port: in umbrel-app.yml (8791) is the host port; APP_PORT below is the port
+# inside the container, which the binary listens on by default.
+#
+# Sandboxing. This app is the easy case: the image is FROM scratch and holds
+# one static binary, run as uid 1000, with the map and the location databases
+# compiled into it.
+#
+#   read_only: true - the app keeps no state and has no volume. There is no
+#     database, no cache directory and no log file; the only writes it makes
+#     are bytes onto an open HTTP socket. There is also no /tmp in a scratch
+#     image, so nothing can have been using one, and no tmpfs is needed here.
+#   cap_drop: [ALL] - it listens on 8789, above 1024, and makes outbound HTTP
+#     calls to Bitcoin Core on the Docker network. Neither needs a capability.
+#   security_opt: no-new-privileges - there is nothing in the image to
+#     escalate into: no shell, no setuid binary, no package manager.
+#
+# The healthcheck runs the same binary with a `healthcheck` argument, inside
+# the same container, so it is covered by all three flags and needs nothing
+# further. Left at 30s: this is one process, not four, and unlike the Lab it
+# has no heartbeat threshold in front of it - a failed check here means the
+# HTTP server did not answer just now.
+#
+# app_proxy is left alone deliberately: Umbrel owns that service and supplies
+# its image.
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: peer-map_web_1
+      APP_PORT: 8789
+
+  web:
+    image: ghcr.io/benunskilled/peer-map:2.0.3@sha256:94ceedddc72ff4f0af84ab825a19ba69f8cca6ade6a598392c2363e94e38dc63
+    user: "1000:1000"
+    restart: on-failure
+    # See "Sandboxing" at the top of this file.
+    read_only: true
+    security_opt:
+      - "no-new-privileges:true"
+    cap_drop:
+      - ALL
+    environment:
+      APP_BITCOIN_NODE_IP: $APP_BITCOIN_NODE_IP
+      APP_BITCOIN_RPC_PORT: $APP_BITCOIN_RPC_PORT
+      APP_BITCOIN_RPC_USER: $APP_BITCOIN_RPC_USER
+      APP_BITCOIN_RPC_PASS: $APP_BITCOIN_RPC_PASS
+      PEERMAP_PORT: "8789"
+      PEERMAP_SIBLING_HEALTH_URL: http://bitcoin-lab_dashboard_1:8788/api/health
+    healthcheck:
+      # The image has no shell; the binary checks its own /api/health.
+      test: ["CMD", "/peermap", "healthcheck"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
