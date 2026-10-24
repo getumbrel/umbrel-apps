@@ -1,0 +1,269 @@
+#!/usr/bin/env python3
+"""Token-aware reverse proxy in front of `dsh web`.
+
+Umbrel's app_proxy already authenticates the visitor with the Umbrel login.
+dsh adds its own per-process launch token (`?token=...`, printed only on
+stdout) before it sets a 30-day session cookie. This proxy supplies that
+token automatically so users never copy it from logs:
+
+- Cookie-less `GET /` (without, or with a stale, `token` param) gets a `302`
+  to `/?token=<current>` while the token is known. dsh mints the cookie
+  and `303`s back to `/`; all later requests carry the cookie.
+- Everything else is proxied transparently, with Host normalized to the
+  loopback authority and Origin dropped (see TRUSTED_HOST_HEADER): dsh's
+  per-authority trust fence passes for any Umbrel-facing URL, and the
+  browser-session cookie's authority stays constant.
+- `Upgrade: websocket` requests are relayed byte-transparent (dsh serves a
+  stream multiplexer over WebSocket); dsh itself enforces auth on them.
+
+The proxy never weakens dsh's auth: it only performs the documented token
+exchange on behalf of an already Umbrel-authenticated visitor. The token
+value is never logged.
+
+Config via environment: PROXY_PORT, DSH_HOST, DSH_PORT, DSH_LOG_FILE.
+The current token is scraped from the tail of dsh's stdout log
+(`dsh web: ...?token=...`); unknown until dsh boots.
+"""
+import os
+import re
+import select
+import socket
+import threading
+from http.client import HTTPConnection
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from urllib.parse import urlsplit, parse_qs
+
+LISTEN_PORT = int(os.environ.get("PROXY_PORT", "8091"))
+# NOTE: use the compose *service* name (e.g. `app`), not Umbrel's injected
+# container name (`<app-id>_<service>_1`): service names resolve on the shared
+# network under rootless runtimes where `<name>_1` aliases may not.
+UPSTREAM_HOST = os.environ.get("DSH_HOST", "app")
+UPSTREAM_PORT = int(os.environ.get("DSH_PORT", "3080"))
+LOG_FILE = os.environ.get("DSH_LOG_FILE", "/logs/dsh.log")
+
+TOKEN_RE = re.compile(rb"dsh web: \S*?token=([A-Za-z0-9_-]+)")
+TAIL_BYTES = 65536
+COOKIE_PREFIX = "dsh-auth-"
+
+# Umbrel users reach the app under many authorities (umbrel.local, device LAN
+# IP, Tailscale name, custom domain). dsh's browser-trust fence gates /api per
+# authority, while the index is unfenced — a non-loopback authority not listed
+# via --trusted-host therefore loads the UI but 403s every RPC and the
+# WebSocket stream ("Disconnected"). The fence is redundant behind this proxy
+# (Umbrel's app_proxy already authenticates the visitor), so the proxy
+# normalizes Host to a fixed loopback authority: fence always passes, and the
+# browser-session cookie's authority stays stable regardless of the URL used.
+TRUSTED_HOST_HEADER = f"127.0.0.1:{UPSTREAM_PORT}"
+
+_token_lock = threading.Lock()
+_token_value = None
+_token_mtime_ns = 0
+
+
+def current_token():
+    """Return the latest launch token scraped from dsh's log, or None."""
+    global _token_value, _token_mtime_ns
+    try:
+        mtime_ns = os.stat(LOG_FILE).st_mtime_ns
+    except OSError:
+        return None
+    with _token_lock:
+        if _token_value is not None and mtime_ns <= _token_mtime_ns:
+            return _token_value
+    try:
+        with open(LOG_FILE, "rb") as f:
+            f.seek(0, 2)
+            size = f.tell()
+            f.seek(max(0, size - TAIL_BYTES))
+            tail = f.read()
+    except OSError:
+        return None
+    matches = TOKEN_RE.findall(tail)
+    with _token_lock:
+        _token_mtime_ns = mtime_ns
+        if matches:
+            _token_value = matches[-1].decode("ascii")
+        return _token_value
+
+
+HOP_BY_HOP = frozenset({
+    "connection", "keep-alive", "proxy-authenticate", "proxy-authorization",
+    "te", "trailer", "transfer-encoding", "upgrade", "proxy-connection",
+})
+
+
+class Handler(BaseHTTPRequestHandler):
+    server_version = "DSHProxy/1.0"
+    protocol_version = "HTTP/1.1"
+
+    def log_message(self, fmt, *args):
+        pass
+
+    def _log(self, code):
+        path = urlsplit(self.path).path
+        print(f"{self.client_address[0]} {self.command} {path} -> {code}", flush=True)
+
+    def _has_session(self):
+        cookie = self.headers.get("Cookie", "")
+        return any(part.strip().startswith(COOKIE_PREFIX) for part in cookie.split(";"))
+
+    def _is_websocket(self):
+        return self.headers.get("Upgrade", "").lower() == "websocket"
+
+    def _serve_503(self, message):
+        body = message.encode()
+        self.send_response(503)
+        self.send_header("Content-Type", "text/plain; charset=utf-8")
+        self.send_header("Cache-Control", "no-store")
+        self.send_header("Content-Length", str(len(body)))
+        self.send_header("Connection", "close")
+        self.end_headers()
+        try:
+            self.wfile.write(body)
+        except (BrokenPipeError, ConnectionResetError):
+            pass
+        self.close_connection = True
+        self._log(503)
+
+    def _redirect_to_token(self, token):
+        self.send_response(302)
+        self.send_header("Location", f"/?token={token}")
+        self.send_header("Cache-Control", "no-store")
+        self.send_header("Content-Length", "0")
+        self.end_headers()
+        self._log(302)
+
+    def _route(self):
+        # NOTE: BaseHTTPRequestHandler parses only the request line +
+        # headers; Upgrade requests and plain HTTP share this entry point.
+        # `self.headers` is available immediately, so route before touching
+        # the body (a WS handshake has none).
+        if self._is_websocket():
+            # dsh enforces its own auth on upgrades; relay transparently.
+            self._relay_websocket()
+            return
+        parts = urlsplit(self.path)
+        if (self.command == "GET" and parts.path == "/" and not self._has_session()):
+            token = current_token()
+            given = parse_qs(parts.query).get("token", [None])[0]
+            if token is not None and given != token:
+                self._redirect_to_token(token)
+                return
+        self._proxy_http()
+
+    do_GET = _route
+    do_POST = _route
+    do_PUT = _route
+    do_DELETE = _route
+    do_PATCH = _route
+    do_HEAD = _route
+    do_OPTIONS = _route
+
+    def _proxy_http(self):
+        length = self.headers.get("Content-Length")
+        try:
+            body = self.rfile.read(int(length)) if length else None
+        except (ValueError, OSError):
+            self._serve_503("Failed to read request body.\n")
+            return
+        headers = {
+            k: v for k, v in self.headers.items()
+            if k.lower() not in HOP_BY_HOP and k.lower() not in ("host", "origin")
+        }
+        headers["Host"] = TRUSTED_HOST_HEADER
+        headers["X-Forwarded-For"] = self.client_address[0]
+        headers["X-Forwarded-Proto"] = "http"
+        try:
+            conn = HTTPConnection(UPSTREAM_HOST, UPSTREAM_PORT, timeout=60)
+            conn.request(self.command, self.path, body=body, headers=headers)
+            resp = conn.getresponse()
+        except OSError:
+            self._serve_503(
+                "DeepSeek Harness is still starting. Please retry in a few seconds.\n")
+            return
+        self.send_response_only(resp.status, resp.reason)
+        has_length = False
+        for key, value in resp.getheaders():
+            lowered = key.lower()
+            if lowered in HOP_BY_HOP or lowered == "transfer-encoding":
+                continue
+            if lowered == "content-length":
+                has_length = True
+            self.send_header(key, value)
+        if not has_length:
+            # No framing for keep-alive: close after this response
+            # (e.g. the SSE event stream).
+            self.send_header("Connection", "close")
+            self.close_connection = True
+        self.end_headers()
+        try:
+            while True:
+                chunk = resp.read(65536)
+                if not chunk:
+                    break
+                self.wfile.write(chunk)
+        except (BrokenPipeError, ConnectionResetError):
+            pass
+        finally:
+            conn.close()
+        self._log(resp.status)
+
+    def _relay_websocket(self):
+        try:
+            upstream = socket.create_connection(
+                (UPSTREAM_HOST, UPSTREAM_PORT), timeout=30)
+        except OSError:
+            self._serve_503(
+                "DeepSeek Harness is still starting. Please retry in a few seconds.\n")
+            return
+        try:
+            lines = [f"{self.command} {self.path} HTTP/1.1\r\n"]
+            for key, value in self.headers.items():
+                if key.lower() in ("proxy-connection", "origin"):
+                    continue
+                if key.lower() == "host":
+                    value = TRUSTED_HOST_HEADER
+                lines.append(f"{key}: {value}\r\n")
+            upstream.sendall(("".join(lines) + "\r\n").encode("latin-1"))
+            self._relay(self.connection, upstream)
+        except OSError:
+            pass
+        finally:
+            try:
+                upstream.close()
+            except OSError:
+                pass
+        self.close_connection = True
+
+    @staticmethod
+    def _relay(client, upstream):
+        while True:
+            try:
+                ready, _, _ = select.select([client, upstream], [], [], 300)
+            except (OSError, ValueError):
+                return
+            if not ready:
+                return
+            for src in ready:
+                dst = upstream if src is client else client
+                try:
+                    data = src.recv(65536)
+                except OSError:
+                    return
+                if not data:
+                    return
+                try:
+                    dst.sendall(data)
+                except OSError:
+                    return
+
+
+if __name__ == "__main__":
+    server = ThreadingHTTPServer(("0.0.0.0", LISTEN_PORT), Handler)
+    server.daemon_threads = True
+    print(f"proxy: listening on {LISTEN_PORT}, upstream {UPSTREAM_HOST}:{UPSTREAM_PORT}",
+          flush=True)
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        pass
