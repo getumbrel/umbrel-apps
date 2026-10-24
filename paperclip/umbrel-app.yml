@@ -5,7 +5,7 @@ storage:
 name: Paperclip
 tagline: A team of AI agents for every person
 category: ai
-version: "2026.1012.0"
+version: "2026.1023.0"
 port: 8860
 description: >-
   Paperclip is a self-hosted control center for running AI agents like a team.
@@ -40,13 +40,18 @@ gallery:
   - 4.webp
   - 5.webp
 releaseNotes: |-
-  - Adds experimental Assistant Connection (MCP) support so external tools like Claude Code, Codex, OpenCode, and other MCP clients can connect to Paperclip as signed-in users.
-  - Adds Agent Chat-first navigation, a unified Connections catalog, connection instructions for agents, safer company skill updates, and refreshed Claude/Codex/OpenCode model/runtime support.
-  - Improves Codex run recovery across server restarts, capacity-limit handling, workspace restore locking, sandbox/workspace reliability, and task creation flows.
-  - Stored tool grants are now enforced more strictly; review custom grants if an agent loses access to a tool or connection after updating.
-  - Workspace restore locks now use SQLite file locks. Stop old Paperclip processes before upgrading or rolling back, and do not delete the new `.lock.sqlite` files.
+  Review your member roles after updating: Operators now gain company editing, agent configuration, invitation, connection, tool, and audit permissions. Demote members who should remain read-only. Budget policies now pause work with unpriced usage by default; resolve those charges or set the policy to allow unpriced usage if appropriate.
 
-  Full release notes can be found at https://github.com/paperclipai/paperclip/releases/tag/v2026.1012.0
+  - Adds private tasks and projects with explicit sharing and access controls.
+  - Adds connections for your own model gateways, including OpenRouter, Bedrock, Gemini, and compatible API endpoints.
+  - Improves cost accounting, subscription fee tracking, agent recovery, and workspace preservation.
+  - On instances configured with an HTTPS public URL, connected MCP assistants can now edit tasks, upload files, and manage approved configurations.
+  - Adds HTML report previews and CSV table views on tasks.
+  - Existing GitHub review bots keep running, but their settings now require enabling Settings → Experimental → GitHub review bots.
+
+  For upgrades from older versions, review stored tool grants and agent execution permissions: omitted execution settings may enable full-auto operation. Workspace restore locks use SQLite; stop old Paperclip processes before upgrading or rolling back, and do not delete `.lock.sqlite` files. Legacy Composio broker integrations require reconnecting through MCP aggregators.
+
+  Full release notes can be found at https://github.com/paperclipai/paperclip/releases/tag/v2026.1023.0
 dependencies: []
 path: ""
 defaultUsername: ""
