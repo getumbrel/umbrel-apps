@@ -7,7 +7,7 @@ services:
       APP_PORT: 8081
       PROXY_AUTH_WHITELIST: "/,/alias,/alias/*,/.well-known,/.well-known/*,/api/lnurl,/api/lnurl/*,/api/qr,/api/qr/*,/icon.svg,/icon.png,/service-worker.js,/public.webmanifest,/pay.webmanifest,/assets,/assets/*"
   web:
-    image: alex71btc/bolt12-pay:0.3.15@sha256:3bb05072a7ffa4659a49d786fa0a21ec117b4b23d77457ab9c82063954be702f
+    image: alex71btc/bolt12-pay:0.3.16@sha256:3e90c2384ed4b0be799358798d72d9709f8767870b06be321dcd4b5352df52a9
     restart: on-failure
     depends_on:
       - lndk
@@ -46,7 +46,7 @@ services:
       - ${APP_LIGHTNING_NODE_DATA_DIR}:/lnd:ro
 
   lndk:
-    image: alex71btc/lndk:bolt12-pay-295b537-multiarch@sha256:9d43c21a07892432602dfd369ba51391899519e4a2b07e41116b96ce766a07a1
+    image: alex71btc/lndk:bolt12-pay-0.3.16-multiarch@sha256:8fee8bd094d7a3e59f596ce978097655ef820a88971aad52d6aac931c1894fb6
     restart: on-failure
     entrypoint:
       - /bin/sh
