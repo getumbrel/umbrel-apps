@@ -7,7 +7,7 @@ services:
       PROXY_AUTH_ADD: "false"
 
   backend:
-    image: ghcr.io/kittendevv/invio-backend:v2.2.0@sha256:402c3b2255021834fefeeaaae32cd0f68563a2205dbd6b99914a42cf89e699b5
+    image: ghcr.io/kittendevv/invio-backend:v2.3.0@sha256:ea93d65abe16dd744bf8319048f0afb3d010cc4152ce0e568ee8b2752eddaa47
     environment:
       ADMIN_USER: "admin"
       ADMIN_PASS: ${APP_PASSWORD}
@@ -21,14 +21,14 @@ services:
     restart: on-failure
 
   frontend:
-    image: ghcr.io/kittendevv/invio-frontend:v2.2.0@sha256:b2a48dc3bfa04771a2b658905268dfc766958c72be6f783f141e313c189c61b8
+    image: ghcr.io/kittendevv/invio-frontend:v2.3.0@sha256:13d16e68e015412c28e1d925a42ab71f371ad31d8a2dc2eeaddf9c5b51610660
     environment:
       PORT: 8000
       BACKEND_URL: http://invio_backend_1:3000
       COOKIE_SECURE: "false"
       FRONTEND_SECURE_HEADERS_DISABLED: "false"
       ENABLE_HSTS: "false"
-      ORIGIN: "http://${DEVICE_DOMAIN_NAME}:8003"
+      # Leave ORIGIN unset to use Invio's same-host form-origin validation.
     depends_on:
       - backend
     restart: on-failure
