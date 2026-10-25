@@ -1,0 +1,16 @@
+version: '3.7'
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: privatebin_server_1
+      APP_PORT: 8080
+      PROXY_AUTH_ADD: "false"
+
+  server:
+    image: privatebin/nginx-fpm-alpine:2.1.0@sha256:0f80fb240c3c3073c53a82893da7c7d62f03f4e05403855b720e4371541ba412
+    user: "1000:1000"
+    read_only: true
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data/privatebin-data:/srv/data

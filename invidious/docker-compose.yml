@@ -7,7 +7,7 @@ services:
       APP_PORT: 3000
 
   web:
-    image: ceramicwhite/invidious:build-eda7444@sha256:adb27aa2b7acda32c8eb006d1e8ec56b7669c3f9724f65bc86fcc2d526781c30
+    image: ceramicwhite/invidious:build-fda8d1b@sha256:39fe17102eb65ff34ac83e4d2b7f4233e735c1221e3c881fd0e0919b78760f81
     restart: on-failure
     stop_grace_period: 1m
     user: "1000:1000"
@@ -22,13 +22,13 @@ services:
           host: invidious_postgres_1
           port: 5432
         check_tables: true
-        external_port: 3420
-        captcha_enabled: false
-        admins: ["umbrel"]
+        invidious_companion:
+        - private_url: "http://invidious_companion_1:8282/companion"
+        invidious_companion_key: ${APP_INV_SECRET_KEY}
+        hmac_key: ${APP_SEED}
         default_user_preferences:
           feed_menu: ["Trending", "Subscriptions", "Playlists"]
           default_home: Trending
-        hmac_key: "${APP_SEED}"
     healthcheck:
       disable: true
     depends_on:
@@ -46,3 +46,17 @@ services:
       POSTGRES_DB: invidious
       POSTGRES_USER: umbrel
       POSTGRES_PASSWORD: moneyprintergobrrr
+
+  companion:
+    image: quay.io/invidious/invidious-companion:master-6c76cab@sha256:aaec4e18b3cffb5457633f427c834299677f2c2a7e27b598404ab815643c3747
+    restart: on-failure
+    user: "1000:1000"
+    cap_drop:
+      - ALL
+    read_only: true
+    volumes:
+      - ${APP_DATA_DIR}/data/companioncache:/var/tmp/youtubei.js:rw
+    security_opt:
+      - no-new-privileges:true
+    environment:
+       - SERVER_SECRET_KEY=${APP_INV_SECRET_KEY}

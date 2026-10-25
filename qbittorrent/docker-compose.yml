@@ -5,16 +5,16 @@ services:
     environment:
       APP_HOST: qbittorrent_server_1
       APP_PORT: 8080
-      PROXY_AUTH_ADD: "false"
+      PROXY_AUTH_ADD: "true"
+      PROXY_AUTH_WHITELIST: "/api/*"
 
   server:
-    image: hotio/qbittorrent:release-4.6.5@sha256:6a665f19c2d123dd9063ac61345cbc377d9238e66bb3964a6b8ec29a21b3416d
+    image: ghcr.io/hotio/qbittorrent:release-5.3.0@sha256:84a374fce2b6a35687b77cc2e6ffe349d12c183b96a847c6faf7287482527d26
     environment:
       - PUID=1000
       - PGID=1000
       # - UMASK=002
     volumes:
       - ${APP_DATA_DIR}/data/config:/config
-      # /app/qBittorrent/downloads is the default path set in qBittorrent
-      - ${UMBREL_ROOT}/data/storage/downloads:/app/qBittorrent/downloads
+      - ${UMBREL_ROOT}/data/storage/downloads:/downloads
     restart: on-failure

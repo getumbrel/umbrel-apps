@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+APP_DATA_DIR="$(readlink -f $(dirname "${BASH_SOURCE[0]}")/..)"
+
+# Ensure the new logs directory exists for apps updating from the old version that didn't have it 
+LOG_DATA_DIR="${APP_DATA_DIR}/data/logs"
+[ ! -d "${LOG_DATA_DIR}" ] && mkdir -p "${LOG_DATA_DIR}" && chown 1000:1000 "${LOG_DATA_DIR}"
+
+exit 0

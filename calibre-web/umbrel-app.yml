@@ -1,22 +1,21 @@
 manifestVersion: 1
 id: calibre-web
+storage:
+  dataRoot: data
 category: files
 name: Calibre Web
-version: "0.6.21"
+version: "0.6.27-patch.1"
 tagline: A clean web app for your eBooks
 description: >-
-  Calibre-web is a web app providing a clean interface for browsing, reading and downloading eBooks using an existing Calibre database.
+  Calibre-Web is a web app providing a clean interface for browsing, reading and downloading eBooks using an existing Calibre database.
   It is also possible to integrate google drive and edit metadata and your calibre library through the app itself. 
-  It's the webbapp version of the well known Calibre for desktop.
   
   
-  On the initial setup screen, enter /books as your calibre library location.
-  
-  
-  If you wish to enable the upload feature, please go to "Settings > Edit Basic Configuration > Feature Configuration > Enable Upload".
-  
-  
-  It's recommended to read through the official documentation, which is available at https://github.com/janeczku/calibre-web/wiki
+  🛠️ SET-UP INSTRUCTIONS
+
+    - Library Setup: On the initial setup screen, enter /books as your calibre library location.
+    - Uploading eBooks: If you wish to enable the upload feature, navigate to Admin > Edit Basic Configuration > Feature Configuration and toggle "Enable Upload".
+    - Documentation: It is recommended to read through the official documentation available at https://github.com/janeczku/calibre-web/wiki
 developer: Janeczku
 website: https://github.com/janeczku/calibre-web
 dependencies: []
@@ -32,25 +31,21 @@ defaultUsername: "admin"
 defaultPassword: "admin123"
 torOnly: false
 releaseNotes: >-
-  This release contains various bug fixes, as well as the following new features:
-
-  - cb7 files are now supported for metadata extrcation of comicfiles (but not for comicreader)
-  
-  - Updated lubimyczytac metadata provider
-
-  - Cover size is adapted to requested size from kobo
-
-  - Added option "-o" to define logfile via command line
-
-  - Added "/opds/stats" route to generate a widget
-
-  - Reading position can be saved in comic reader
-
-  - Several dependencies are upgraded to newer versions
-  
-  - Additional translations: portuguese
+  This update adds support for new storage management and configuration options being introduced with umbrelOS 2.0.
 
 
-  Full release notes can be found here: https://github.com/janeczku/calibre-web/releases/tag/0.6.21
+  Previous Calibre Web 0.6.27 release notes:
+
+
+  This update includes new features, bug fixes, and security improvements:
+
+
+    - Added MOBI metadata extraction on upload and reverse proxy login with a shared secret header
+    - Fixed Kobo sync behind reverse proxies, shelf dropdown rendering, mobile infinite scroll, and duplicate tag handling
+    - Improved OPDS, metadata search, eReader, conversion, sorting, download, and email behavior
+    - Fixed security issues involving XSS, remote command execution (CVE-2025-7404), ReDoS (CVE-2025-6998), SQL injection, LDAP injection, XXE injection, IDOR, OAuth account relinking, and unauthorized file or shelf access
+
+
+  Full release notes can be found here: https://github.com/janeczku/calibre-web/releases/tag/0.6.27
 submitter: Xosten
 submission: https://github.com/getumbrel/umbrel-apps/pull/74

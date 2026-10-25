@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# This scripts checks the environment file for placeholder values and replaces them with generated keys or system variables.
+
+APP_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")"
+KEYS_DIR="$APP_DIR/data/keys"
+ENV_FILE="$APP_DIR/settings.env"
+APP_DATA_DIR="$APP_DIR/data"
+DOCKER_DIR="${APP_DATA_DIR}/docker"
+
+# Remove stale Docker-in-Docker runtime state that can survive power loss,
+# crashes, restarts, or updates and prevent the nested Docker daemon from
+# starting.
+#
+# Keep ${DOCKER_DIR}/data intact. It is the nested Docker graph root and may
+# contain user-managed Portainer containers, images, volumes, and stacks.
+rm -f "${DOCKER_DIR}/docker.pid"
+rm -f "${DOCKER_DIR}/docker.sock"
+rm -rf "${DOCKER_DIR}/exec"
+
+mkdir -p "$KEYS_DIR"
+chown -R 1000:1000 "$KEYS_DIR"
+
+# Check if the file exists
+if [ ! -f "$ENV_FILE" ]; then
+    echo "Error: Environment file not found at $ENV_FILE"
+    exit 1
+fi
+
+# Check if the KOMODO_HOST value is set to "changeme"
+if grep -Eq '^KOMODO_HOST= *changeme$' "$ENV_FILE"; then
+    echo "Placeholder value for KOMODO_HOST detected. Adding proper hostname..."
+
+    # Replace the placeholder with the hostname
+    sed -i -E 's|^KOMODO_HOST= *changeme$|KOMODO_HOST="'"http://${DEVICE_DOMAIN_NAME}:9120"'"|' "$ENV_FILE"
+
+    echo "Updated KOMODO_HOST in $ENV_FILE"
+else
+    echo "KOMODO_HOST is already set. No changes made."
+fi
+
+exit 0

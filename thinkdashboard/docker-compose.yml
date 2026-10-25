@@ -1,0 +1,15 @@
+version: "3.7"
+services:
+  app_proxy:
+    environment:
+      APP_HOST: thinkdashboard_server_1
+      APP_PORT: "8080"
+
+  server:
+    image: ghcr.io/matiasdesuu/thinkdashboard:v0.7.6@sha256:3bd3ac29fcd0329673a1b4946e4e63ecc55239e6221a00bd4b407a5343c55079
+    user: "1000:1000"
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data:/app/data
+    environment:
+      - PORT=8080

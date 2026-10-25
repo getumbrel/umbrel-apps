@@ -1,0 +1,128 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+### Correct permissions for romm data directories
+
+APP_DIR="${APP_DATA_DIR:-$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")}"
+DATA_DIR="${APP_DIR}/data"
+
+DESIRED_OWNER="1000:1000"
+
+CONFIG_DATA_DIR="${DATA_DIR}/config"
+
+romm_correct_permission() {
+	local -r path="${1}"
+
+	if [[ -d "${path}" ]]; then
+		owner=$(stat -c "%u:%g" "${path}")
+
+		if [[ "${owner}" != "${DESIRED_OWNER}" ]]; then
+			chown "${DESIRED_OWNER}" "${path}"
+		fi
+	fi
+}
+
+### Create default configuration file for romm if it does not exist
+
+ROMM_CONFIG_FILE="${CONFIG_DATA_DIR}/config.yml"
+
+# We check if the romm config file does not exist
+if [[ ! -f "${ROMM_CONFIG_FILE}" ]]; then
+  echo "Creating romm configuration file."
+  # Create the romm configuration file
+  cat >"${ROMM_CONFIG_FILE}" <<'EOF'
+exclude:
+  # Exclude platforms to be scanned
+  platforms: [] # ['my_excluded_platform_1', 'my_excluded_platform_2']
+
+  # Exclude roms or parts of roms to be scanned
+  roms:
+    # Single file games section.
+    # Will not apply to files that are in sub-folders (multi-disc roms, games with updates, DLC, patches, etc.)
+    single_file:
+      # Exclude all files with certain extensions to be scanned
+      extensions: [] # ['xml', 'txt']
+
+      # Exclude matched file names to be scanned.
+      # Supports unix filename pattern matching
+      # Can also exclude files by extension
+      names: [] # ['info.txt', '._*', '*.nfo']
+
+    # Multi files games section
+    # Will apply to files that are in sub-folders (multi-disc roms, games with updates, DLC, patches, etc.)
+    multi_file:
+      # Exclude matched 'folder' names to be scanned (RomM identifies folders as multi file games)
+      names: [] # ['my_multi_file_game', 'DLC']
+
+      # Exclude files within sub-folders.
+      parts:
+        # Exclude matched file names to be scanned from multi file roms
+        # Keep in mind that RomM doesn't scan folders inside multi files games,
+        # so there is no need to exclude folders from inside of multi files games.
+        names: [] # ['data.xml', '._*'] # Supports unix filename pattern matching
+
+        # Exclude all files with certain extensions to be scanned from multi file roms
+        extensions: [] # ['xml', 'txt']
+
+system:
+  # Asociate different platform names to your current file system platform names
+  # [your custom platform folder name]: [RomM platform name]
+  # In this example if you have a 'gc' folder, RomM will treat it like the 'ngc' folder and if you have a 'psx' folder, RomM will treat it like the 'ps' folder
+  platforms: {} # { gc: 'ngc', psx: 'ps' }
+
+  # Asociate one platform to it's main version
+  versions: {} # { naomi: 'arcade' }
+
+# The library layout is detected and migrated by the pre-start hook.
+filesystem: {}
+EOF
+
+echo "Created romm configuration file."
+
+romm_correct_permission "${CONFIG_DATA_DIR}"
+
+fi
+
+# RomM 5.2 writes the retired folder keys whenever settings are saved in the UI.
+# Migrate those configs as well as the original empty filesystem placeholder.
+needs_migration="$(yq '
+  .filesystem.structure.default == null or
+  .filesystem.roms_folder != null or
+  .filesystem.firmware_folder != null
+' "${ROMM_CONFIG_FILE}")"
+if [[ "${needs_migration}" == "true" ]]; then
+  roms_folder="$(yq '.filesystem.roms_folder // "roms"' "${ROMM_CONFIG_FILE}")"
+  firmware_folder="$(yq '.filesystem.firmware_folder // "bios"' "${ROMM_CONFIG_FILE}")"
+
+  # Match RomM 5.2's detection: a top-level ROM folder takes precedence over
+  # platform/roms folders. An empty library starts with the top-level layout.
+  rom_structure="${roms_folder}/{platform}/{game}"
+  firmware_structure="${firmware_folder}/{platform}"
+  if [[ ! -d "${DATA_DIR}/library/${roms_folder}" ]]; then
+    for platform_roms in "${DATA_DIR}/library"/*/"${roms_folder}"; do
+      if [[ -d "${platform_roms}" ]]; then
+        rom_structure="{platform}/${roms_folder}/{game}"
+        firmware_structure="{platform}/${firmware_folder}"
+        break
+      fi
+    done
+  fi
+
+  tmp_file="$(mktemp "${CONFIG_DATA_DIR}/config.yml.XXXXXX")"
+  trap 'rm -f "${tmp_file}"' EXIT
+  # Preserve existing structure rules and unrelated settings. strenv keeps
+  # custom folder names as YAML strings without interpolating them into code.
+  ROMM_ROM_STRUCTURE="${rom_structure}" ROMM_FIRMWARE_STRUCTURE="${firmware_structure}" yq '
+    .filesystem.structure.default = (.filesystem.structure.default // strenv(ROMM_ROM_STRUCTURE)) |
+    .filesystem.structure.firmware = (.filesystem.structure.firmware // strenv(ROMM_FIRMWARE_STRUCTURE)) |
+    del(.filesystem.roms_folder, .filesystem.firmware_folder)
+  ' "${ROMM_CONFIG_FILE}" > "${tmp_file}"
+  chmod --reference="${ROMM_CONFIG_FILE}" "${tmp_file}"
+  chown "${DESIRED_OWNER}" "${tmp_file}"
+  if [[ ! -e "${CONFIG_DATA_DIR}/config.yml.pre-5.3" ]]; then
+    cp -p "${ROMM_CONFIG_FILE}" "${CONFIG_DATA_DIR}/config.yml.pre-5.3"
+  fi
+  mv "${tmp_file}" "${ROMM_CONFIG_FILE}"
+  trap - EXIT
+  echo "Migrated RomM filesystem configuration for 5.3."
+fi

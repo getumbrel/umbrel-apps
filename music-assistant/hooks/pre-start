@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# This script checks the settings file for placeholder values and replaces them with system variables.
+
+APP_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")"
+APP_DATA_DIR="$APP_DIR/data"
+SETTINGS_FILE="$APP_DATA_DIR/settings.json"
+
+# Check if the file exists
+if [ ! -f "$SETTINGS_FILE" ]; then
+    echo "Error: Settings file not found at $SETTINGS_FILE"
+    exit 1
+fi
+
+# Replace changeme placeholder in base_url with the actual device hostname
+if grep -q '"base_url": "http://changeme:' "$SETTINGS_FILE"; then
+    echo "Placeholder 'changeme' detected in base_url. Replacing with device hostname..."
+
+    sed -i "s|http://changeme:|http://${DEVICE_DOMAIN_NAME}:|g" "$SETTINGS_FILE"
+
+    echo "Updated base_url to http://${DEVICE_DOMAIN_NAME}:8896 in $SETTINGS_FILE"
+else
+    echo "base_url is already configured. No changes made."
+fi
+
+exit 0

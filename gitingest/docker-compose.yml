@@ -1,0 +1,15 @@
+version: '3.7'
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: gitingest_app_1
+      APP_PORT: 8000
+
+  app:
+    image: ghcr.io/coderamp-labs/gitingest:v0.3.1@sha256:0107c1e389d9e5e86dc3052defe024bd2439b776a1904ae4ee14f1cfb16e3b77
+    restart: on-failure
+    user: "1000:1000"
+    environment:
+      # Allows main .local address, tailscale magicDNS, and IP addresses of the host machine
+      - ALLOWED_HOSTS=${DEVICE_DOMAIN_NAME},${DEVICE_HOSTNAME},${APP_GITINGEST_LOCAL_IPS}

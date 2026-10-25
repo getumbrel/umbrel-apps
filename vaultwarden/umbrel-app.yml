@@ -1,67 +1,47 @@
-manifestVersion: 1
+manifestVersion: 2.0
 id: vaultwarden
+storage:
+  dataRoot: data
 category: files
 name: Vaultwarden
-version: "1.30.3"
+version: "1.37.4"
 tagline: Unofficial Bitwarden® compatible server
 description: >-
-  Vaultwarden is an alternative
-  implementation of the Bitwarden® server API that is compatible with
-  Bitwarden® clients*. Vaultwarden is perfect for self-hosting all of
-  your passwords in an encrypted vault on your Umbrel. Vaultwarden is a full
-  implementation of Bitwarden® API that includes:
+  Vaultwarden is an unofficial Bitwarden-compatible server for self-hosting your encrypted password vault on Umbrel. It works with many official Bitwarden clients and provides a lightweight alternative to the official Bitwarden server.
 
 
-  - Organizations support
-
-  - Attachments
-
-  - Vault API support
-
-  - Serving the static files for Vault interface
-
-  - Website icons API
-
-  - Authenticator and U2F support
-
-  - YubiKey and Duo support
-
-  - Emergency Access
+  **Connecting your devices**
 
 
-  🛠️ SET-UP INSTRUCTIONS
-
-  Vaultwarden's web interface is not accessible over http, meaning that to access it for initial set-up you need to use Tor. Here's how to do it:
-
-  - Ensure your Umbrel is accessible over Tor by going to Settings in your dashboard and toggling "Remote Tor access" to enabled. You will need to restart your Umbrel if Remote Tor access was previously disabled.
-  
-  - Access your umbrel through a Tor browser using the .onion address shown in Settings under "Remote Tor access". 
-
-  - In your Tor browser, open the Vaultwaden app and create an account.
-
-  - Once you've created an account, you can connect your Vaultwarden server from any Bitwarden app (mobile, desktop, browser, etc) by adding your server IP details.
-
-  - For the most robust connection from anywhere, install Tailscale on your Umbrel and your devices, and use the Tailscale IP address to connect to your Vaultwarden server.
+  Some Bitwarden clients require a secure HTTPS connection. Options include:
 
 
-  *Please note that Vaultwarden is not associated with the Bitwarden® project nor 8bit Solutions LLC. When using this app, please report any bugs or suggestions to us directly, regardless of whatever clients you are using (mobile, desktop, browser, etc), and do not use Bitwarden®'s official support channels.
-releaseNotes: |
-  This release updates Vaultwarden from v1.30.0 to v1.30.3. 
+  - **Tailscale Serve:** A private HTTPS address that works at home and away, with Tailscale connected on your devices.
 
-  This is a minor release to fix some issues with push notification device registration and docker healthcheck. As well as some issues with the Login with device feature, and restore the alpine docker tag that was missing on the latest release.
-  
-  Changes:
+  - **Local HTTPS:** Available on umbrelOS 2.0 or later for connections on your local network. This requires installing and trusting Umbrel's certificate on each device, following the instructions under **Settings → Advanced settings**.
 
-  - Fix push device registration
-  
-  - Decrease JWT Refresh/Auth token
-
-  - Prevent generating an error during ws close 
-  
-  - Fix attachment upload size check
+  - **Another HTTPS reverse proxy:** Connect through an HTTPS address you've configured for Vaultwarden.
 
 
-  The full release notes are available at https://github.com/dani-garcia/vaultwarden/releases
+  Use your chosen HTTPS address as the self-hosted server URL in your Bitwarden client.
+
+
+  **Features:** Vaultwarden supports personal vaults, organizations, attachments, Bitwarden Send, website icons, two-factor authentication, emergency access, and the Vaultwarden admin backend.
+
+
+  **Disclaimer:** Vaultwarden is not associated with Bitwarden or 8bit Solutions LLC. For Vaultwarden issues, contact Vaultwarden/Umbrel support rather than Bitwarden's official support channels.
+
+releaseNotes: >-
+  This release includes important security fixes for organization member revocation, two-factor authentication, organization invitations, attachments, event logs, cipher sharing, and organization API keys.
+
+
+  For shared organizations: if you have admins you don’t fully trust, rotate the organization’s API key after updating under Admin Console → Settings → Rotate API key.
+
+
+  No proxy changes are needed for standard Umbrel installations. If you have a custom setup using IP_HEADER=X-Forwarded-For with multiple reverse proxies, list all trusted proxies in IP_HEADER_TRUSTED_PROXIES so rate limiting and logs use the correct client IP address.
+
+
+  On umbrelOS 2.0 or later, Vaultwarden opens directly from your Umbrel dashboard over HTTPS, without needing Tor Browser. On older umbrelOS versions, continue using Tor Browser or your existing HTTPS setup.
 developer: Daniel García
 website: https://github.com/dani-garcia
 dependencies: []
@@ -75,6 +55,6 @@ gallery:
 path: ""
 defaultUsername: ""
 defaultPassword: ""
-torOnly: true
+requiresHttps: true
 submitter: Umbrel
 submission: https://github.com/getumbrel/umbrel/commit/44c842bddafffa558569f730cb0d5442ee073bf5

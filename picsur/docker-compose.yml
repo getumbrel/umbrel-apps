@@ -1,0 +1,45 @@
+version: '3.7'
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: picsur_web_1
+      APP_PORT: 8286
+      PROXY_AUTH_ADD: "false"
+
+  db:
+    image: postgres:17.4@sha256:fe3f571d128e8efadcd8b2fde0e2b73ebab6dbec33f6bfe69d98c682c7d8f7bd
+    user: "1000:1000"
+    mem_limit: 1g
+    cpu_shares: 1024
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "pg_isready", "-q", "-d", "picsur", "-U", "picsuruser"]
+      timeout: 45s
+      interval: 10s
+      retries: 10
+    volumes:
+      - ${APP_DATA_DIR}/data/db:/var/lib/postgresql/data:rw
+    environment:
+      POSTGRES_DB: picsur
+      POSTGRES_USER: picsuruser
+      POSTGRES_PASSWORD: picsurpass
+    restart: on-failure
+
+  web:
+    image: ghcr.io/caramelfur/picsur:0.5.6@sha256:209ce21d338cd7d9a1adc838a67695e903149359bf192359819607df1b3c4417
+    user: "1000:1000"
+    environment:
+      PICSUR_PORT: 8286
+      PICSUR_DB_HOST: picsur_db_1
+      PICSUR_DB_PORT: 5432
+      PICSUR_DB_USERNAME: picsuruser
+      PICSUR_DB_PASSWORD: picsurpass
+      PICSUR_DB_DATABASE: picsur
+      PICSUR_ADMIN_PASSWORD: ${APP_PASSWORD}
+      PICSUR_MAX_FILE_SIZE: 128000000000
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: on-failure

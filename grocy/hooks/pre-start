@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+config_file="${APP_DATA_DIR}/data/config/data/config.php"
+
+if [[ ! -f "${config_file}" ]]; then
+  exit 0
+fi
+
+content="$(< "${config_file}")"
+updated="${content}"
+
+# Grocy 4.7.0 moved the built-in auth middleware classes under
+# Grocy\Middleware\Auth\. Existing Umbrel installs can have the old
+# fully-qualified class names persisted in config.php.
+old_default='Grocy\\Middleware\\DefaultAuthMiddleware'
+new_default='Grocy\Middleware\Auth\DefaultAuthMiddleware'
+old_reverse_proxy='Grocy\\Middleware\\ReverseProxyAuthMiddleware'
+new_reverse_proxy='Grocy\Middleware\Auth\ReverseProxyAuthMiddleware'
+old_ldap='Grocy\\Middleware\\LdapAuthMiddleware'
+new_ldap='Grocy\Middleware\Auth\LdapAuthMiddleware'
+old_api_key='Grocy\\Middleware\\ApiKeyAuthMiddleware'
+new_api_key='Grocy\Middleware\Auth\ApiKeyAuthMiddleware'
+old_session='Grocy\\Middleware\\SessionAuthMiddleware'
+new_session='Grocy\Middleware\Auth\SessionAuthMiddleware'
+
+updated="${updated//${old_default}/${new_default}}"
+updated="${updated//${old_reverse_proxy}/${new_reverse_proxy}}"
+updated="${updated//${old_ldap}/${new_ldap}}"
+updated="${updated//${old_api_key}/${new_api_key}}"
+updated="${updated//${old_session}/${new_session}}"
+
+if [[ "${updated}" != "${content}" ]]; then
+  printf '%s\n' "${updated}" > "${config_file}"
+fi

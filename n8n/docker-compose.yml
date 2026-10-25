@@ -5,12 +5,14 @@ services:
     environment:
       APP_HOST: n8n_server_1
       APP_PORT: 5678
-      # These webhook endpoints are protected using Basic or Header Auth
+      # Allow external clients to reach n8n webhook and form endpoints
+      # Authentication can be configured on the corresponding n8n nodes
       # More details here: https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.webhook/
-      PROXY_AUTH_WHITELIST: "/webhook-test/*,/webhook/*"
+      # https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.formtrigger/
+      PROXY_AUTH_WHITELIST: "/webhook-test/*,/webhook/*,/form-test/*,/form/*,/form-waiting/*"
 
   server:
-    image: n8nio/n8n:1.44.1@sha256:e86cd970292e6136d2babb3da0ba9b3129c9a153a777660303eee7e672f3540e
+    image: n8nio/n8n:2.44.6@sha256:d02752c6ab446ae9db8deec2f9cc887c378f77cdcad31650814df936b7386dfb
     restart: on-failure
     volumes:
       - ${APP_DATA_DIR}/data:/home/node/.n8n
@@ -21,3 +23,6 @@ services:
       # Used to set the url for editor, REST API & webhooks
       - N8N_HOST=$DEVICE_DOMAIN_NAME
       - N8N_SECURE_COOKIE=false
+      - N8N_DIAGNOSTICS_ENABLED=false
+      - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
+      - N8N_PROXY_HOPS=1

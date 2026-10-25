@@ -1,66 +1,70 @@
 manifestVersion: 1.1
 id: immich
+storage:
+  dataRoot: data
+folderAccess:
+  - id: external-library
+    name: External Library
+    note: Select a folder containing photos or videos, then configure /mnt/external-library as an import path for an External Library in Immich. Access is read-only to protect the original files.
+    mounts:
+      - service: server
+        targetPath: /mnt/external-library
+        readOnly: true
 category: files
 name: Immich
-version: "v1.107.2"
+version: "v3.3.5"
 tagline: High-performance photo and video backup solution
 description: >-
   An open-source and high-performance self-hosted backup solution for the videos and photos on your mobile device
 
-  
+
   ⚠️ Immich is under very active development. Expect bugs and changes. Do not use it as the only way to store your photos and videos!
 
-  
+
   Features:
-  
+
   - Upload and view videos and photos
-  
+
   - Auto backup when the app is opened
-  
+
   - Selective album(s) for backup
-  
+
   - Download photos and videos to a local device
-  
+
   - Multi-user support
-  
+
   - Album and Shared albums
-  
+
   - Scrubbable/draggable scrollbar
-  
+
   - Support RAW (HEIC, HEIF, DNG, Apple ProRaw)
-  
+
   - Metadata view (EXIF, map)
-  
+
   - Search by metadata, objects and image tags
-  
+
   - Administrative functions (user management)
-  
+
   - Background backup
-  
+
   - Virtual scroll
-  
+
   - OAuth support
-  
+
   - LivePhoto backup and playback
-  
+
   - User-defined storage structure
 releaseNotes: >-
-  ⚠️ As usual, please check that your mobile app is compatible with this release of Immich. 
+  This update keeps the new umbrelOS storage-management options introduced in recent packages, including optional read-only access to an existing photo or video library.
 
 
-  Welcome to version v1.107 of Immich. This release includes many bug fixes, new translations from many new languages, and enhancements to the recent new features in the last release, as well as a change in the default timeline display on the mobile app. Check out some of the highlights below:
-  
-  
-  - Enhancement to deduplication UI - bulk resolve duplicates, view duplicates in fullscreen.
-
-  - Display all local assets on the mobile timeline by default.
-  
-  - Custom request headers for the mobile app.
-  
-  - Facial recognition now recognizes more faces.
+  ⚠️ If you're updating from a pre-v3 version, Immich v3 includes breaking API changes mostly affecting third-party tools. Check that your mobile app and any Immich integrations are compatible with this release; the Immich mobile app no longer supports iOS 14.
 
 
-  Full release notes are found at https://github.com/immich-app/immich/releases
+  This security update refreshes trusted certificate authorities following the reported eMudhra certificate-authority compromise. The Immich team recommends updating as soon as possible, although they do not believe it poses an immediate danger to Immich instances.
+
+
+  Full release notes can be found at https://github.com/immich-app/immich/releases/tag/v3.3.5
 developer: Alex Tran
 website: https://www.immich.app
 dependencies: []
@@ -74,5 +78,7 @@ gallery:
 path: ""
 defaultUsername: ""
 defaultPassword: ""
+permissions:
+  - GPU
 submitter: levma
 submission: https://github.com/getumbrel/umbrel-apps/pull/239

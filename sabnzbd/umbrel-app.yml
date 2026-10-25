@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: sabnzbd
 category: networking
 name: SABnzbd
-version: "4.3.2"
+version: "5.1.3"
 tagline: The automated Usenet download tool
 description: >-
   SABnzbd makes Usenet as simple and streamlined as possible by automating everything we can. All you have to do is add an .nzb.
@@ -21,7 +21,7 @@ description: >-
 
   If you want to modify the default categories that are set up on install, you can do so by navigating to the Categories section in the SABnzbd settings tab.
   If you do this, you will need to update the categories in your other apps like Sonarr and Radarr to match the ones you set up in SABnzbd in order for them to work together.
-  
+
   You can also set up API keys for integration with other apps like Sonarr and Radarr by navigating to the General section in the SABnzbd app.
 developer: sabnzbd
 website: https://sabnzbd.org/
@@ -30,16 +30,19 @@ repo: https://github.com/sabnzbd/sabnzbd
 support: https://forums.sabnzbd.org/
 port: 9876
 releaseNotes: >-
-  SABnzbd on umbrelOS now offers automatic configuration for media apps like Radarr, Sonarr, Lidarr, Readarr, and Prowlarr. Simply install your preferred media apps from the Umbrel App Store, and the rest will be handled for you. No manual configuration required!
+  This update fixes two security vulnerabilities: an API dispatch bypass that could allow unauthenticated API access, and a PAR2 symlink bypass that could allow remote code execution when processing untrusted NZBs. Update promptly if untrusted parties can reach your SABnzbd web interface or if SABnzbd processes NZBs from sources you do not fully trust.
 
 
-  Please update your media apps to the latest versions to take advantage of this feature. If you have previously set up SABnzbd as a download client within media apps, this update will not affect your existing settings.
-  If you have not previously set up SABnzbd with media apps, it is recommended that you uninstall and reinstall SABnzbd to avoid any potential category conflicts.
+  It also includes the security fixes from SABnzbd 5.1.1 and 5.1.2 for anyone updating from an older version. If your SABnzbd setup was exposed and you relied on SABnzbd's username and password for network or internet access, rotate sensitive credentials after updating, including the SABnzbd username/password, API key, Usenet server passwords, RSS indexer API keys, and notification credentials.
 
 
-  Full release notes for SABnzbd are available at https://github.com/sabnzbd/sabnzbd/releases
+  Other fixes include tighter Compact display mode, clearer Usenet server errors, avoiding a database-is-locked error when re-evaluating stored RSS jobs, and a new tooltip explaining search filters in Queue and History.
+
+
+  Full release notes are available at https://github.com/sabnzbd/sabnzbd/releases/tag/5.1.3
 permissions:
   - STORAGE_DOWNLOADS
+  - GPU
 gallery:
   - 1.jpg
   - 2.jpg

@@ -1,8 +1,8 @@
-manifestVersion: 1
+manifestVersion: 1.1
 id: frigate
 category: automation
 name: Frigate
-version: "0.13.2"
+version: "0.18.2"
 tagline: A complete and local NVR
 description: >-
   A complete and local NVR designed for Home Assistant with AI object detection. 
@@ -15,13 +15,19 @@ description: >-
   - You can configure your cameras directly within the Frigate app, there is no need to manually edit the configuration files.
 
 
-  - Your RTSP password (if needed) is the "default app password" that is displayed on Frigate's page in the app store (shown after install).
+  - Sign in to Frigate with username `admin` and the "default app password" displayed on Frigate's page in the app store (shown after install). The same default app password is also used as your RTSP password if needed.
 releaseNotes: >-
-  This update takes Frigate from 0.12.1 to 0.13.2.
+  Frigate 0.18 is a major upgrade. Back up your Frigate config and database before upgrading; Frigate will attempt to migrate existing configs automatically, but some setups may need manual changes.
 
 
-  Full release notes are available at https://github.com/blakeblackshear/frigate/releases
-developer:  Blake Blackshear
+  - Fixes security issues that could allow authenticated users to execute commands through camera stream configuration or live-stream WebSocket endpoints.
+
+
+  - Fixes media access checks for specially formatted request paths.
+
+
+  Full release notes can be found at https://github.com/blakeblackshear/frigate/releases/tag/v0.18.2
+developer: Blake Blackshear
 website: https://frigate.video/
 repo: https://github.com/blakeblackshear/frigate
 support: https://github.com/blakeblackshear/frigate/issues
@@ -31,8 +37,10 @@ gallery:
   - 2.jpg
   - 3.jpg
 path: ""
-defaultUsername: ""
+defaultUsername: "admin"
 deterministicPassword: true
 dependencies: []
+permissions:
+  - GPU
 submitter: ~dibref-labter
 submission: https://github.com/getumbrel/umbrel-apps/pull/843

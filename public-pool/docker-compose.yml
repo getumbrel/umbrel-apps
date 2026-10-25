@@ -8,14 +8,17 @@ services:
       PROXY_AUTH_WHITELIST: "/api/*"
 
   web:
-    image: smolgrrr/public-pool-ui:8cd2563@sha256:95884d33475b1681cf645831aefadb0cc31a89c6f537ede643251bc874311804
+    image: ghcr.io/benjamin-wilson/public-pool-ui:5f730f4@sha256:c1eaae042ee179eca87b273c04c54c8b1fba5ceb63a03411a21ec8ac6875be3d
     restart: on-failure
     stop_grace_period: 30s
     environment:
       - DOMAIN=$DEVICE_DOMAIN_NAME
+      # Intentionally empty so the UI uses same-origin /api routes via Umbrel's proxy.
+      - PUBLIC_POOL_API_URL=
+      - PUBLIC_POOL_STRATUM_URL=${DEVICE_DOMAIN_NAME}:2018
 
   server:
-    image: sethforprivacy/public-pool:820d8d1@sha256:2074bdad3930ad6e07e73f03cc07970cc5c912ab597bc7f11565d22038695d74
+    image: ghcr.io/benjamin-wilson/public-pool:95565ee@sha256:3edffef3bbad23cbd46098904b22ba8a1c14c679ae90cf1e4d97ed98492bbab4
     restart: on-failure
     stop_grace_period: 30s
     ports:
@@ -35,6 +38,7 @@ services:
       - API_SECURE=false
       - ENABLE_SOLO=true
       - ENABLE_PROXY=false
+      - POOL_IDENTIFIER="Public Pool on Umbrel"
 
   proxy:
     image: nginx:1.25.3@sha256:4c0fdaa8b6341bfdeca5f18f7837462c80cff90527ee35ef185571e1c327beac
@@ -43,4 +47,11 @@ services:
     depends_on:
       - web
       - server
+    restart: on-failure
+
+  widget-server:
+    image: ghcr.io/getumbrel/umbrel-public-pool-widget:v1.0.1@sha256:a4bd771225594b0118c19345223a1dda9cca26e80a6853f7cccc3be1a835cdfe
+    user: "1000:1000"
+    environment:
+      - PUBLIC_POOL_API_URL=http://public-pool_proxy_1/api/pool
     restart: on-failure

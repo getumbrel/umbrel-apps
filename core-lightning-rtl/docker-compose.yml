@@ -7,7 +7,7 @@ services:
       APP_PORT: 3000
 
   web:
-    image: shahanafarooqui/rtl:v0.15.2@sha256:e2c40d04821a1a6e9bcb55b4276c428c6c416ab1c33b4efd256366430234ea6a
+    image: shahanafarooqui/rtl:v0.15.15@sha256:fdf3c8dc5843eccd556e475265487b2be24478727cd160e51127ea65c2a3bbb6
     restart: on-failure
     environment:
       PORT: 3000
@@ -17,6 +17,7 @@ services:
       LN_SERVER_URL: "https://$APP_CORE_LIGHTNING_DAEMON_IP:$CORE_LIGHTNING_REST_PORT"
       RUNE_PATH: "/root/.lightning/.commando-env"
       RTL_CONFIG_PATH: "/data"
+      DB_DIRECTORY_PATH: "/data"
       RTL_COOKIE_PATH: "/data/.cookie"
       BLOCK_EXPLORER_URL: "${APP_CORE_RTL_BLOCK_EXPLORER_URL}"
     volumes:

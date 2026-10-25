@@ -1,0 +1,106 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+APP_ROOT="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")"
+CONFIG_DIR="${APP_ROOT}/data/config"
+BOOTSTRAP_NEEDED_FLAG="${CONFIG_DIR}/.umbrel-frigate-bootstrap-admin-password-needed"
+BOOTSTRAP_DONE_FLAG="${CONFIG_DIR}/.umbrel-frigate-bootstrap-admin-password-done"
+
+if [ -f "${BOOTSTRAP_DONE_FLAG}" ] || [ ! -f "${BOOTSTRAP_NEEDED_FLAG}" ]; then
+  exit 0
+fi
+
+if [ -z "${UMBREL_ROOT:-}" ] || [ -z "${APP_ID:-}" ]; then
+  echo "UMBREL_ROOT and APP_ID are required to bootstrap the Frigate admin password."
+  exit 1
+fi
+
+echo "Waiting for Frigate database to bootstrap the admin password..."
+
+for attempt in $(seq 1 120); do
+  if "${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" exec -T web python3 - <<'PY'
+import base64
+import datetime as _datetime
+import hashlib
+import os
+import secrets
+import sqlite3
+import sys
+
+DB_PATH = "/config/frigate.db"
+REQUIRED_COLUMNS = {"username", "role", "password_hash", "notification_tokens"}
+PASSWORD = os.environ.get("FRIGATE_RTSP_PASSWORD")
+
+if not PASSWORD:
+    print("FRIGATE_RTSP_PASSWORD is not set in the Frigate container.", file=sys.stderr)
+    sys.exit(1)
+
+if not os.path.exists(DB_PATH):
+    sys.exit(75)
+
+try:
+    conn = sqlite3.connect(DB_PATH, timeout=30)
+    try:
+        columns = {row[1] for row in conn.execute('PRAGMA table_info("user")')}
+        if not REQUIRED_COLUMNS.issubset(columns):
+            sys.exit(75)
+
+        iterations = 600000
+        salt = secrets.token_hex(16)
+        digest = hashlib.pbkdf2_hmac(
+            "sha256", PASSWORD.encode("utf-8"), salt.encode("utf-8"), iterations
+        )
+        password_hash = "pbkdf2_sha256${}${}${}".format(
+            iterations, salt, base64.b64encode(digest).decode("ascii").strip()
+        )
+        password_changed_at = _datetime.datetime.utcnow().replace(microsecond=0).isoformat(sep=" ")
+
+        existing = conn.execute(
+            'SELECT username FROM "user" WHERE username = ?', ("admin",)
+        ).fetchone()
+
+        if existing:
+            assignments = ["password_hash = ?", "role = ?"]
+            values = [password_hash, "admin"]
+            if "password_changed_at" in columns:
+                assignments.append("password_changed_at = ?")
+                values.append(password_changed_at)
+            values.append("admin")
+            conn.execute(
+                'UPDATE "user" SET ' + ", ".join(assignments) + " WHERE username = ?",
+                values,
+            )
+        else:
+            insert_columns = ["username", "role", "password_hash", "notification_tokens"]
+            values = ["admin", "admin", password_hash, "[]"]
+            if "password_changed_at" in columns:
+                insert_columns.append("password_changed_at")
+                values.append(password_changed_at)
+            placeholders = ", ".join("?" for _ in values)
+            quoted_columns = ", ".join('"{}"'.format(column) for column in insert_columns)
+            conn.execute(
+                'INSERT INTO "user" ({}) VALUES ({})'.format(quoted_columns, placeholders),
+                values,
+            )
+
+        conn.commit()
+    finally:
+        conn.close()
+except sqlite3.OperationalError as exc:
+    print("Frigate database is not ready yet: {}".format(exc), file=sys.stderr)
+    sys.exit(75)
+
+print("Frigate admin password bootstrapped to the Umbrel default app password.")
+PY
+  then
+    touch "${BOOTSTRAP_DONE_FLAG}"
+    rm -f "${BOOTSTRAP_NEEDED_FLAG}"
+    chown 1000:1000 "${BOOTSTRAP_DONE_FLAG}"
+    exit 0
+  fi
+
+  sleep 1
+done
+
+echo "Timed out waiting to bootstrap the Frigate admin password."
+exit 1

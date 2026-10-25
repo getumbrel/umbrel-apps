@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# v1.7.0 allowed the pingvin container to run as non-root: https://github.com/stonith404/pingvin-share/releases/tag/v1.7.0
+# Pingvin previously ran as root, so we now recursively set the owner of the data directory to 1000:1000 so that pre-1.7.0 users do not have a broken app
+APP_DATA_DIR="$(readlink -f $(dirname "${BASH_SOURCE[0]}")/..)/data"
+
+# Recursively set ownership of all files and directories under APP_DATA_DIR to 1000:1000
+chown -R 1000:1000 "${APP_DATA_DIR}"

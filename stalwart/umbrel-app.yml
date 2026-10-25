@@ -1,0 +1,78 @@
+manifestVersion: 1.1
+id: stalwart
+name: Stalwart
+tagline: All-in-one Mail & Collaboration server
+category: files
+version: "v0.16.27"
+port: 8745
+description: >-
+  📧 Stalwart is a fast, secure, and scalable open-source server for email, calendars, contacts, and file sharing, built in Rust for top-tier performance and safety.
+
+
+  All-in-One Communication Platform
+    - Full Email Protocol Support: JMAP, IMAP4, POP3, and SMTP with advanced authentication, security, and filtering.
+    - Collaboration Tools: CalDAV calendars, CardDAV contacts, WebDAV file storage and sharing.
+    - Spam & Phishing Protection: AI-powered filtering, DNS blocklists, greylisting, sender reputation tracking, and more.
+
+
+  Powerful Features for Any Scale
+    - Flexible storage backends: PostgreSQL, MySQL, SQLite, S3, Redis, ElasticSearch, and more.
+    - Built-in encryption, 2FA, and automated TLS certificates.
+    - Fault-tolerant, cluster-ready design with Kubernetes and Docker support.
+    - Rich admin dashboard, real-time monitoring, and user self-service tools.
+
+
+  Whether you're running a small private server or a large enterprise deployment, Stalwart delivers modern, secure, and efficient communication you can trust.
+
+
+  These are the configured external port mappings:
+    - **10443:443** (HTTPS)
+    - **10025:25** (SMTP)
+    - **10465:465** (SMTPS)
+    - **10587:587** (SMTP Submission)
+    - **10143:143** (IMAP)
+    - **10993:993** (IMAPS)
+    - **14190:4190** (Sieve)
+    - **10110:110**  (POP3)
+    - **10995:995**  (POP3S)
+
+
+  You can find more details on how to properly setup your instance here: https://stalw.art/docs/install/platform/docker/
+developer: Stalwart Labs
+website: https://stalw.art/
+submitter: al-lac
+submission: https://github.com/getumbrel/umbrel-apps/pull/4112
+repo: https://github.com/stalwartlabs/stalwart
+support: https://github.com/stalwartlabs/stalwart/issues
+gallery:
+  - 1.jpg
+  - 2.jpg
+  - 3.jpg
+  - 4.jpg
+  - 5.jpg
+releaseNotes: >-
+  ⚠️ Upgrading from v0.15.x or earlier is a breaking migration. Back up first, including any external databases and blob storage, and allow time for the migration to finish. Umbrel migrates accounts and supported settings, but custom mail routing, listeners, spam rules, ACME renewal settings, and other unsupported configuration must be reviewed and recreated as needed.
+
+
+  After a legacy upgrade, recalculate account disk quotas from the Tasks section of Stalwart, followed by tenant quotas if used. Clients using STARTTLS submission (10587), IMAP (10143), or POP3 (10110) need their listeners recreated or must switch to implicit TLS on 10465, 10993, or 10995 respectively. Update CalDAV, CardDAV, and WebDAV paths to use full email addresses with @ encoded as %40, and update external-directory filters where applicable. Your Umbrel-provided admin login remains available; custom administrator roles must be reassigned.
+
+
+  Read the full migration guide before upgrading: https://github.com/stalwartlabs/stalwart/blob/v0.16.27/UPGRADING/v0_16.md
+
+
+  These migration steps do not apply to existing v0.16 installations.
+
+
+  Changes in v0.16.27 include:
+    - Fixes mail change notifications when messages are appended, copied, or moved into another account's mailbox
+    - Fixes incomplete IMAP search results when combining minimum, maximum, and saved-result options
+    - Fixes calendar updates that could display both the original and rescheduled occurrence in Apple Calendar
+    - Fixes OAuth loopback redirects and WebDAV file and folder names in Windows Explorer
+
+
+  Full release notes: https://github.com/stalwartlabs/stalwart/releases/tag/v0.16.27
+
+dependencies: []
+path: "/admin"
+deterministicPassword: true
+defaultUsername: admin

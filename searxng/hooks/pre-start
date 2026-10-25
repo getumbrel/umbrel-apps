@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+APP_DATA_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")"
+SETTINGS_FILE="${APP_DATA_DIR}/data/config/settings.yml"
+MIGRATED_FLAG="${APP_DATA_DIR}/SETTINGS_MIGRATED"
+
+# One-time migration: replace the auto-generated 3000-line settings.yml with our
+# minimal overlay. This enables JSON search format (required by API consumers like
+# Open WebUI) while inheriting all other defaults from SearXNG's built-in config.
+# After migration, the user owns the file and we never touch it again.
+# On fresh installs this is a harmless no-op (overwrites the bundled file with identical content).
+if [[ ! -f "${MIGRATED_FLAG}" ]]; then
+  echo "Replacing SearXNG settings.yml with minimal overlay..."
+  cat > "${SETTINGS_FILE}" <<'EOF'
+# Overlay on top of SearXNG's built-in defaults (avoids shipping the full 3000-line config).
+# JSON format is required for API consumers like Open WebUI.
+use_default_settings: true
+
+search:
+  formats:
+    - html
+    - json
+EOF
+  touch "${MIGRATED_FLAG}"
+fi

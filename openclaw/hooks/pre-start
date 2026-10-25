@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# OpenClaw uses a Chromium-based browser profile under app data.
+# After unclean shutdowns or app restarts, Chromium singleton files can remain
+# and block the next browser startup. We remove those stale files here.
+
+APP_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")"
+APP_DATA_DIR="${APP_DIR}/data"
+
+FILES_TO_REMOVE=(
+  "${APP_DATA_DIR}/.openclaw/browser/openclaw/user-data/SingletonLock"
+  "${APP_DATA_DIR}/.openclaw/browser/openclaw/user-data/SingletonCookie"
+  "${APP_DATA_DIR}/.openclaw/browser/openclaw/user-data/SingletonSocket"
+  "${APP_DATA_DIR}/.openclaw/browser/openclaw/user-data/Default/SingletonLock"
+  "${APP_DATA_DIR}/.openclaw/browser/openclaw/user-data/Default/SingletonCookie"
+  "${APP_DATA_DIR}/.openclaw/browser/openclaw/user-data/Default/SingletonSocket"
+)
+
+removed_count=0
+
+for file in "${FILES_TO_REMOVE[@]}"; do
+  if [[ -e "${file}" || -L "${file}" ]]; then
+    rm -f "${file}"
+    echo "OpenClaw: Removed stale Chromium singleton file: ${file}"
+    ((removed_count+=1))
+  fi
+done
+
+if [[ "${removed_count}" -eq 0 ]]; then
+  echo "OpenClaw: No stale Chromium singleton files found."
+fi
+
+exit 0

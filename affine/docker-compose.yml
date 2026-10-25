@@ -6,19 +6,36 @@ services:
       APP_PORT: 3010
 
   web:
-    image: ghcr.io/toeverything/affine-graphql:stable-06890d6@sha256:e80b83a14f11cdaf5388d156cf4bfb1933c39fa8e3f85d7b2874ac4cec72e625
+    image: ghcr.io/toeverything/affine:0.27.4@sha256:b649f5ce2384ffdf13c23bccf81d759e15973d59d0b0058af65d895a84373099
     restart: on-failure
-    init: true
-    command:
-      ['sh', '-c', 'node ./scripts/self-host-predeploy && node ./dist/index.js']
     environment:
-      - NODE_OPTIONS="--import=./scripts/register.js"
       - AFFINE_CONFIG_PATH=/root/.affine/config
       - REDIS_SERVER_HOST=affine_redis_1
-      - DATABASE_URL=postgres://affine:affine@db:5432/affine
+      - DATABASE_URL=postgres://affine:affine@affine_db_1:5432/affine
+      - AFFINE_INDEXER_ENABLED=false
       - NODE_ENV=production
-      - AFFINE_ADMIN_EMAIL=admin@umbrel.local
-      - AFFINE_ADMIN_PASSWORD=$APP_PASSWORD
+    volumes:
+      - ${APP_DATA_DIR}/data/config:/root/.affine/config
+      - ${APP_DATA_DIR}/data/storage/blob:/root/.affine/storage
+    depends_on:
+      redis:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+      migration:
+        condition: service_completed_successfully
+
+  migration:
+    image: ghcr.io/toeverything/affine:0.27.4@sha256:b649f5ce2384ffdf13c23bccf81d759e15973d59d0b0058af65d895a84373099
+    restart: on-failure
+    command:
+      ['sh', '-c', 'node ./scripts/self-host-predeploy.js']
+    environment:
+      - AFFINE_CONFIG_PATH=/root/.affine/config
+      - REDIS_SERVER_HOST=affine_redis_1
+      - DATABASE_URL=postgres://affine:affine@affine_db_1:5432/affine
+      - AFFINE_INDEXER_ENABLED=false
+      - NODE_ENV=production
     volumes:
       - ${APP_DATA_DIR}/data/config:/root/.affine/config
       - ${APP_DATA_DIR}/data/storage/blob:/root/.affine/storage

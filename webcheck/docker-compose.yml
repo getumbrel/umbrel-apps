@@ -1,0 +1,12 @@
+version: '3.7'
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: webcheck_server_1
+      APP_PORT: 3000
+  server:
+    image: ghcr.io/lissy93/web-check:2.3.0@sha256:6fb2b5a58e4fa77afb724a7e6e041f876c081e2f9340b7ba6520ac4d4fc2290a
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data:/app/data

@@ -1,0 +1,33 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: route96_server_1
+      APP_PORT: 8002
+      PROXY_AUTH_ADD: "false"
+
+  server:
+    image: voidic/route96:v0.7.0@sha256:5ab6064f18ca191dd5836487505607122ef3bfeba6e6ccc5b28eef5c604cf4cc
+    user: "1000:1000"
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data/uploads:/app/data
+      - ${APP_DATA_DIR}/data/config.yaml:/app/config.yaml
+    environment:
+      RUST_LOG: "info"
+      APP_PUBLIC_URL: "http://${APP_DOMAIN}:8002"
+    depends_on:
+      - db
+
+  db:
+    image: mariadb:11.2.4@sha256:e9ea1dbab6783ff0281e41e3357d950a5f598b2033559b8443e03b181807910b
+    user: "1000:1000"
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data/db:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: "moneyprintergobrrr"
+      MYSQL_USER: "route96"
+      MYSQL_PASSWORD: "moneyprintergobrrr"
+      MYSQL_DATABASE: "route96"

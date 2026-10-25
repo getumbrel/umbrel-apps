@@ -1,8 +1,10 @@
 manifestVersion: 1
 id: ghostfolio
+storage:
+  dataRoot: data
 category: finance
 name: Ghostfolio
-version: "2.83.0"
+version: "3.91.0"
 tagline: Manage your wealth like a boss
 description: >-
   Ghostfolio is a privacy-first, open source dashboard for your personal finances.
@@ -17,6 +19,8 @@ description: >-
   
   Ghostfolio empowers busy people to keep track of stocks, ETFs or cryptocurrencies
   without being tracked.
+backupIgnore:
+  - data/redis/*
 developer: Ghostfolio
 website: https://ghostfol.io/
 dependencies: []
@@ -30,42 +34,13 @@ gallery:
 path: ""
 deterministicPassword: false
 torOnly: false
-releaseNotes: >
-  This release upgrades Ghostfolio from 2.61.0 to v2.83.0, and includes numerous bug fixes, performance improvements, and new features. Here's what's new in the latest version:
-  
-
-  Added:
-
-    - Added an indicator for active filters (experimental)
-
-    - Added the absolute change column to the holdings table on the home page
+releaseNotes: >-
+  This update improves account and benchmark details, fixes a timeout when managing historical market data presets, and tightens access checks for asset and dividend-import APIs.
 
 
-  Changed:
+  Existing MCP access with permission to create activities also gains permission to update account balances when upgrading from versions before 3.88.0.
 
-    - Improved the usability of the create or update activity dialog by preselecting the (only) account
-    
-    - Improved the usability of the date range selector in the assistant
-    
-    - Refactored the holding detail dialog to a standalone component
-    
-    - Refreshed the cryptocurrencies list
-    
-    - Refactored various pages to standalone components
-    
-    - Improved the delete all activities functionality on the portfolio activities page to work with the filters of the assistant
 
-    - Improved the language localization for German (de)
-    
-    - Improved the language localization for Türkçe (tr)
-  
-
-  Fixed:
-
-    - Upgraded yahoo-finance2 from version 2.11.1 to 2.11.2 (causing pricing errors)
-    - Fixed the position detail dialog close functionality
-    
-
-  For full release notes and additional changes from previous versions, please visit: https://github.com/ghostfolio/ghostfolio/releases
+  Full release notes can be found at https://github.com/ghostfolio/ghostfolio/releases/tag/3.91.0
 submitter: BeauAgst
 submission: https://github.com/getumbrel/umbrel-apps/pull/396

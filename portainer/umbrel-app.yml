@@ -1,8 +1,8 @@
-manifestVersion: 1
+manifestVersion: 1.1
 id: portainer
 category: developer
 name: Portainer
-version: "2.19.1"
+version: "2.45.3"
 tagline: Run custom Docker containers on your Umbrel
 description: >-
   ⚠️ Make sure to only use named Docker volumes for your stacks and containers. Data in bind-mounted volumes
@@ -36,7 +36,7 @@ description: >-
   to restart automatically when the Portainer app is restarted or updated.
 
 
-  4. Web access to containers: Access your custom containers in your browser at umbrel.local:<mapped-port>. For example, for a container
+  4. Web access to containers: Access your custom containers in your browser at umbrel.local:PORT_NUMBER. For example, for a container
   with a web UI running on port 4545, navigate to umbrel.local:4545 to access it.
 website: https://portainer.io
 dependencies: []
@@ -51,36 +51,18 @@ path: ""
 defaultUsername: "admin"
 defaultPassword: "changeme"
 releaseNotes: >-
-  This update of Portainer from 2.19.0 to 2.19.1 includes various bug fixes, improvements, and new features, including the following highlights.
+  ⚠️ Portainer no longer trusts compromised eMudhra (emSign) certificates. Before upgrading, check certificates used by your login providers, registries, and Git hosts. Affected connections will fail; if your login provider is affected, only the initial administrator can sign in.
 
 
-  👉 Breaking changes:
-
-  - Changes to API format and checking of some requests - See rest API changes below for more details.
+  This release improves security by preventing restricted users from inheriting hidden bind mounts through stacks and limiting Kubernetes access tokens to their intended environment.
 
 
-  👉 Portainer:
-
-  - Fixed an issue where backup files were missing the Chisel private key. This could have disrupted communication between the Portainer server and agent after a restoration from backup.
-
-  - Improved the upgrade process for the Portainer server, upgrade process now halts on database migration errors, preventing database version mismatches for a more stable environment.
-
-  - Fixed an issue where toggles could be activated outside of their intended component area, potentially leading to inadvertent toggling.
+  It also fixes container startup failures, overlapping GitOps deployments, and Docker Hub rate-limit detection on newer Docker engines.
 
 
-  👉 RestAPI:
-
-  - Fixed an issue introduced in 2.19.0 when Kubernetes environment metrics API features were enabled, where these features would return an ‘Unable to reach metrics API’ error.
-
-  - Introduced new format around the change of a user’s password via API.
-
-  - Updated the checking around change of a user via API.
-
-  - Fixed API endpoints that were broken in the 2.19.0 release, ensuring that they retain their previous functionality.
-
-
-  View full release notes here: https://github.com/portainer/portainer/releases/tag/2.19.1
-
+  Full release notes can be found at https://github.com/portainer/portainer/releases/tag/2.45.3
+permissions:
+  - GPU
 developer: Portainer
 submitter: Umbrel
 submission: https://github.com/getumbrel/umbrel-apps/pull/774

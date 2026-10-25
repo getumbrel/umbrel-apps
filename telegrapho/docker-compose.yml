@@ -1,0 +1,14 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: telegrapho_app_1
+      APP_PORT: 3712
+
+  app:
+    image: ghcr.io/egzola/telegrapho:1.0.1@sha256:9486b185b993398cc651158a9292c2fa54eb83254c83d610759988fb20b413b8
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      PORT: 3712

@@ -1,0 +1,49 @@
+version: '3.7'
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: karakeep_web_1
+      APP_PORT: 3000
+      PROXY_AUTH_ADD: "false"
+
+  web:
+    image: ghcr.io/karakeep-app/karakeep:0.34.1@sha256:69ae5315c618b7c14c1af3e34c6e211acdb231793af424ecd1cab0b70691d987
+    user: 1000:1000
+    restart: on-failure
+    environment:
+      MEILI_ADDR: http://karakeep_meilisearch_1:7700
+      MEILI_MASTER_KEY: ${APP_SEED}
+      BROWSER_WEB_URL: http://karakeep_chrome_1:9222
+      DATA_DIR: /data
+      NEXTAUTH_SECRET: ${APP_SEED}
+      NEXTAUTH_URL: http://${DEVICE_DOMAIN_NAME}:8620
+      KARAKEEP_VERSION: release
+    env_file:
+      - ${APP_DATA_DIR}/settings.env
+    volumes:
+      - ${APP_DATA_DIR}/data/karakeep_data:/data
+    depends_on:
+      - chrome
+      - meilisearch
+
+  chrome:
+    image: ghcr.io/karakeep-app/karakeep-chrome:154.0.8037.57-r1@sha256:c51a8c8e6c3c1040a50fa0ecfd0b2fc298401b4229262636552458151f6f18fa
+    restart: on-failure
+    init: true
+    command:
+      - --disable-gpu
+      - --disable-dev-shm-usage
+      - --hide-scrollbars
+      - --disable-blink-features=AutomationControlled
+      - --window-size=1440,900
+
+  meilisearch:
+    image: getmeili/meilisearch:v1.41.0@sha256:860fa4baed04ae1c235de870edab0c8006227546dea1bbb6411fbfc5e27cf1db
+    user: 1000:1000
+    restart: on-failure
+    environment:
+      MEILI_NO_ANALYTICS: "true"
+      MEILI_MASTER_KEY: ${APP_SEED}
+    volumes:
+      - ${APP_DATA_DIR}/data/meilisearch_data:/meili_data

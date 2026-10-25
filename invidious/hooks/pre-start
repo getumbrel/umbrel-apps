@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+### Correct permissions for data directories
+
+APP_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")"
+APP_DATA_DIR="${APP_DIR}/data"
+
+DESIRED_OWNER="1000:1000"
+
+COMPANIONCACHE_DATA_DIR="${APP_DATA_DIR}/companioncache"
+
+# Ensure the directory exists
+mkdir -p "${COMPANIONCACHE_DATA_DIR}"
+
+correct_permission() {
+	local -r path="${1}"
+
+	if [[ -d "${path}" ]]; then
+		owner=$(stat -c "%u:%g" "${path}")
+
+		if [[ "${owner}" != "${DESIRED_OWNER}" ]]; then
+			chown "${DESIRED_OWNER}" "${path}"
+		fi
+	fi
+}
+
+correct_permission "${COMPANIONCACHE_DATA_DIR}"

@@ -1,0 +1,28 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: slink_web_1
+      APP_PORT: 3000
+
+  web:
+    image: anirdev/slink:v1.14.3@sha256:dd2af33782a4bf16b1445c74c8354593a0a810585ae4a65cf6a0263edab10835
+    user: "1000:1000"
+    restart: on-failure
+    environment:
+      TZ: UTC
+      ORIGIN: http://${DEVICE_DOMAIN_NAME}:8811
+      PROTOCOL_HEADER: x-forwarded-proto
+      REQUIRE_SSL: "false"
+      USER_APPROVAL_REQUIRED: "false"
+      USER_PASSWORD_MIN_LENGTH: 8
+      USER_PASSWORD_REQUIREMENTS: 15
+      IMAGE_MAX_SIZE: 15M
+      IMAGE_STRIP_EXIF_METADATA: "true"
+      IMAGE_COMPRESSION_QUALITY: 80
+      STORAGE_PROVIDER: local
+    volumes:
+      - ${APP_DATA_DIR}/server.js:/services/client/svelte-kit/server.js:ro
+      - ${APP_DATA_DIR}/data/var:/app/var/data
+      - ${APP_DATA_DIR}/data/images:/app/slink/images

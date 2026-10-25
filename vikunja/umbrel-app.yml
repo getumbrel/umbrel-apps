@@ -1,8 +1,10 @@
 manifestVersion: 1
 id: vikunja
+storage:
+  dataRoot: data
 category: files
 name: Vikunja
-version: "0.22.1"
+version: "2.7.1"
 tagline: The open-source, self-hostable to-do app
 description: >-
   Think of Vikunja like the notebook you have with all your things to keep track of. But with superpowers.
@@ -21,12 +23,26 @@ description: >-
   🛠️ Use It How You Need It
 
   You can view your tasks in the classic list view - or in a Gantt Chart, or Table view, or Kanban Board. Whatever you need!
-releaseNotes:
-  This is a patch release with many small bug fixes and improvements. Full release notes are available at https://vikunja.io/blog/2024/01/vikunja-frontend-and-api-v0.22.1-was-released/
+releaseNotes: >-
+  🚨 This release includes 41 security fixes covering access control, sharing, login sessions, and more. Upgrading is highly recommended.
+
+
+  Key highlights in this release:
+    - Reworks attachment previews to reduce memory usage and improve Kanban cover image loading
+    - Fixes bulk updates unexpectedly clearing assignees, reminders, or favorites
+    - Fixes monthly repeating tasks skipping months and improves CalDAV label syncing
+    - Improves the editor toolbar, time entry dates, and mobile Kanban dragging
+    - Fixes MySQL migrations failing on text-column indexes
+
+
+  Note: Existing API token permissions are migrated automatically. Integrations that create tokens must use the renamed permission keys. Views now allow up to 100 manual buckets and 50 filter buckets, and imports default to a 100,000-item limit. The v2 API uses a dedicated attachment preview route instead of preview_size on downloads.
+
+
+  Full release notes are available at https://vikunja.io/changelog/vikunja-2.7.1-was-released/
 developer: Vikunja
 website: https://vikunja.io/
 dependencies: []
-repo: https://github.com/go-vikunja
+repo: https://github.com/go-vikunja/vikunja
 support: https://community.vikunja.io/
 port: 4523
 gallery:
@@ -36,4 +52,4 @@ gallery:
 path: ""
 deterministicPassword: false
 submitter: Pranshu Agrawal
-submission: https://github.com/getumbrel/umbrel-apps/pull/
+submission: https://github.com/getumbrel/umbrel-apps/pull/694

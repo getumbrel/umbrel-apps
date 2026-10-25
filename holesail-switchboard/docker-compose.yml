@@ -1,0 +1,32 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: holesail-switchboard_web_1
+      APP_PORT: 3160
+
+  web:
+    image: orenz0/holesail-switchboard:v2.0.8@sha256:87bee9070543a0ec929289fc1d6ebe37b899350b4844d35ff1f2b38e689868ad
+    restart: on-failure
+    stop_grace_period: 1m
+    ports:
+      - 3161:3161
+      - 3162:3162
+      - 3163:3163
+      - 3164:3164
+      - 3165:3165
+      - 3166:3166
+      - 3167:3167
+      - 3168:3168
+      - 3169:3169
+      - 3170:3170
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+    environment:
+      HSSB_DATA_FILE: /data/data.json
+      HSSB_HOST: 0.0.0.0
+      HSSB_PORT: 3160
+      HSSB_CLIENT_HOST: 0.0.0.0
+      HSSB_FIXED_CLIENT_PORTS: 3161-3170
+      HSSB_SUBTITLE: "For more information, visit: https://github.com/oren-z0/holesail-switchboard/blob/main/docs/Umbrel.md"

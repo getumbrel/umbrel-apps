@@ -1,0 +1,40 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: $APP_ZEROTIER_WEB_IP
+      APP_PORT: 8080
+
+  zerotier:
+    # Requires root: NET_ADMIN cap and /dev/net/tun device access for VPN tunnel management.
+    image: zerotier/zerotier:1.14.2@sha256:575d150a0e09fbee1a7580625b361040a7f78f46cbfbe5016effe812abe202ff
+    restart: on-failure
+    stop_grace_period: 1m
+    network_mode: host
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun
+    environment:
+      ZEROTIER_API_SECRET: ${APP_PASSWORD}
+    volumes:
+      - ${APP_DATA_DIR}/data:/var/lib/zerotier-one
+      - ${APP_DATA_DIR}/local.conf:/var/lib/zerotier-one/local.conf:ro
+
+  web:
+    # Built from github.com/andrijdavid/umbrel-zerotier-web (FastAPI + uvicorn).
+    # Calls the daemon's management API with the seeded token configured above.
+    image: ghcr.io/andrijdavid/umbrel-zerotier-web:0.1.1@sha256:0177ec5254860e3ad0c59e174034816496bd0a63cda203a2c663f08b3c205063
+    restart: on-failure
+    depends_on:
+      - zerotier
+    environment:
+      ZT_HOST: $GATEWAY_IP
+      ZT_PORT: "9993"
+      ZT_AUTHTOKEN: ${APP_PASSWORD}
+      PUID: "1000"
+      PGID: "1000"
+    networks:
+      default:
+        ipv4_address: $APP_ZEROTIER_WEB_IP

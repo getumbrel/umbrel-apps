@@ -7,15 +7,16 @@ services:
       APP_PORT: 3334
 
   server:
-    image: ghostfolio/ghostfolio:2.83.0@sha256:e25d644dbc4189822d54f3559b6a02826a4b4612b612c63dfa6af0ece528d269
+    image: ghostfolio/ghostfolio:3.91.0@sha256:a57feebf71c4582ea9e460df9bc1e9c22d0e5f715f19e344e099649b0dbb2f6f
     init: true
     restart: on-failure
+    stop_grace_period: 1m
     environment:
       NODE_ENV: production
       HOST: 0.0.0.0
       PORT: 3334
       ACCESS_TOKEN_SALT: $APP_GHOSTFOLIO_ACCESS_TOKEN_SALT
-      DATABASE_URL: postgresql://${APP_GHOSTFOLIO_DB_USERNAME}:${APP_GHOSTFOLIO_DB_PASSWORD}@ghostfolio_postgres_1:5432/${APP_GHOSTFOLIO_DB_DATABASE_NAME}?sslmode=prefer
+      DATABASE_URL: postgresql://${APP_GHOSTFOLIO_DB_USERNAME}:${APP_GHOSTFOLIO_DB_PASSWORD}@ghostfolio_postgres_1:5432/${APP_GHOSTFOLIO_DB_DATABASE_NAME}
       JWT_SECRET_KEY: ${APP_SEED}
       POSTGRES_DB: ${APP_GHOSTFOLIO_DB_DATABASE_NAME}
       POSTGRES_USER: ${APP_GHOSTFOLIO_DB_USERNAME}
@@ -23,7 +24,7 @@ services:
       REDIS_HOST: ghostfolio_redis_1
       REDIS_PASSWORD: ${APP_GHOSTFOLIO_REDIS_PASSWORD}
       REDIS_PORT: 6379
-  
+
   postgres:
     image: postgres:14-bullseye@sha256:c2a30d08a6f9e6c365595fd086c9e0436064c52425f15f72379ecf0807bac518
     restart: on-failure

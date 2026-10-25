@@ -1,22 +1,265 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# If no config directory exists then this is a pre 0.13.2 install that needs to handle a frigate breaking change:
+# If no config directory exists then this is a pre 0.13.2 install that needs to handle a Frigate breaking change:
 # https://github.com/blakeblackshear/frigate/releases/tag/v0.13.0
 
-APP_DATA_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")/data"
+APP_ROOT="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")"
+APP_DATA_DIR="${APP_ROOT}/data"
 CONFIG_DIR="${APP_DATA_DIR}/config"
 OLD_CONFIG_FILE="${APP_DATA_DIR}/config.yml"
+CONFIG_FILE="${CONFIG_DIR}/config.yml"
+DB_FILE="${CONFIG_DIR}/frigate.db"
+BOOTSTRAP_NEEDED_FLAG="${CONFIG_DIR}/.umbrel-frigate-bootstrap-admin-password-needed"
+BOOTSTRAP_DONE_FLAG="${CONFIG_DIR}/.umbrel-frigate-bootstrap-admin-password-done"
 
-# Create the new config directory if it doesn't exist
+# Create the new config directory if it doesn't exist.
 if [ ! -d "${CONFIG_DIR}" ]; then
   mkdir -p "${CONFIG_DIR}" && chown 1000:1000 "${CONFIG_DIR}"
-  
-  # Move the old config.yml file into the config directory if it exists
-  # If it doesn't exist then the user has deleted it
+
+  # Move the old config.yml file into the config directory if it exists.
+  # If it doesn't exist then the user has deleted it.
   if [ -f "${OLD_CONFIG_FILE}" ]; then
     mv "${OLD_CONFIG_FILE}" "${CONFIG_DIR}/"
   else
     echo "The old Frigate config file does not exist."
   fi
 fi
+
+if [ ! -f "${CONFIG_FILE}" ]; then
+  touch "${CONFIG_FILE}"
+fi
+chown 1000:1000 "${CONFIG_FILE}"
+
+config_has_top_level_value() {
+  local section="$1"
+  local key="$2"
+  local expected_value="$3"
+
+  awk -v section="${section}" -v key="${key}" -v expected_value="${expected_value}" '
+    BEGIN { in_section = 0; result = 1 }
+
+    $0 ~ "^[^[:space:]#][^:]*:[[:space:]]*" { in_section = 0 }
+
+    $0 ~ "^" section ":[[:space:]]*($|#)" {
+      in_section = 1
+      next
+    }
+
+    in_section && $0 ~ "^[[:space:]]+" key ":[[:space:]]*" {
+      value = $0
+      sub("^[[:space:]]+" key ":[[:space:]]*", "", value)
+      sub("[[:space:]]+#.*$", "", value)
+      gsub("^[[:space:]\"'\''\\047]+|[[:space:]\"'\''\\047]+$", "", value)
+      result = (tolower(value) == tolower(expected_value)) ? 0 : 1
+      exit
+    }
+
+    END { exit result }
+  ' "${CONFIG_FILE}"
+}
+
+ensure_top_level_value() {
+  local section="$1"
+  local key="$2"
+  local value="$3"
+  local tmp_file
+  tmp_file="$(mktemp)"
+
+  awk -v section="${section}" -v key="${key}" -v value="${value}" '
+    BEGIN { in_section = 0; section_seen = 0; key_seen = 0 }
+
+    function is_top_level(line) {
+      return line ~ /^[^[:space:]#][^:]*:[[:space:]]*/
+    }
+
+    function insert_key_if_needed() {
+      if (in_section && !key_seen) {
+        print "  " key ": " value
+        key_seen = 1
+      }
+    }
+
+    $0 ~ "^" section ":[[:space:]]*($|#)" {
+      if (in_section) {
+        insert_key_if_needed()
+      }
+      in_section = 1
+      section_seen = 1
+      key_seen = 0
+      print
+      next
+    }
+
+    is_top_level($0) {
+      if (in_section) {
+        insert_key_if_needed()
+        in_section = 0
+      }
+    }
+
+    in_section && $0 ~ "^[[:space:]]+" key ":[[:space:]]*" {
+      print "  " key ": " value
+      key_seen = 1
+      next
+    }
+
+    { print }
+
+    END {
+      if (in_section) {
+        insert_key_if_needed()
+      }
+      if (!section_seen) {
+        print ""
+        print section ":"
+        print "  " key ": " value
+      }
+    }
+  ' "${CONFIG_FILE}" > "${tmp_file}"
+
+  write_config_if_changed "${tmp_file}"
+}
+
+write_config_if_changed() {
+  local tmp_file="$1"
+
+  if ! cmp -s "${tmp_file}" "${CONFIG_FILE}"; then
+    cat "${tmp_file}" > "${CONFIG_FILE}"
+  fi
+
+  rm -f "${tmp_file}"
+}
+
+remove_umbrel_managed_proxy_default() {
+  local tmp_file
+  tmp_file="$(mktemp)"
+
+  awk '
+    BEGIN { in_proxy = 0; proxy_block = ""; child_count = 0; has_default_admin = 0 }
+
+    function flush_proxy_block() {
+      if (!in_proxy) {
+        return
+      }
+
+      # Remove only the exact old Umbrel-managed proxy block. If a user has added
+      # any other proxy settings, keep the whole section untouched.
+      if (!(child_count == 1 && has_default_admin == 1)) {
+        printf "%s", proxy_block
+      }
+
+      in_proxy = 0
+      proxy_block = ""
+      child_count = 0
+      has_default_admin = 0
+    }
+
+    $0 ~ /^proxy:[[:space:]]*($|#)/ {
+      flush_proxy_block()
+      in_proxy = 1
+      proxy_block = $0 ORS
+      next
+    }
+
+    in_proxy && $0 ~ /^[^[:space:]#][^:]*:[[:space:]]*/ {
+      flush_proxy_block()
+      print
+      next
+    }
+
+    in_proxy {
+      proxy_block = proxy_block $0 ORS
+      if ($0 ~ /^[[:space:]]+[^#[:space:]].*/) {
+        child_count++
+        if ($0 ~ /^[[:space:]]+default_role:[[:space:]]*admin[[:space:]]*(#.*)?$/) {
+          has_default_admin = 1
+        }
+      }
+      next
+    }
+
+    { print }
+
+    END {
+      flush_proxy_block()
+    }
+  ' "${CONFIG_FILE}" > "${tmp_file}"
+
+  write_config_if_changed "${tmp_file}"
+}
+
+replace_umbrel_managed_auth_comment() {
+  local tmp_file
+  tmp_file="$(mktemp)"
+
+  awk '
+    $0 == "# Umbrel handles access control before requests reach Frigate. The Frigate UI is" {
+      old_line_1 = $0
+
+      if ((getline old_line_2) <= 0) {
+        print old_line_1
+        next
+      }
+      if (old_line_2 != "# served through its authenticated reverse-proxy port with native auth disabled") {
+        print old_line_1
+        print old_line_2
+        next
+      }
+
+      if ((getline old_line_3) <= 0) {
+        print old_line_1
+        print old_line_2
+        next
+      }
+      if (old_line_3 != "# so users dont need a separate Frigate admin password." && old_line_3 != "# so users don\047t need a separate Frigate admin password.") {
+        print old_line_1
+        print old_line_2
+        print old_line_3
+        next
+      }
+
+      if ((getline auth_line) <= 0) {
+        print old_line_1
+        print old_line_2
+        print old_line_3
+        next
+      }
+      if (auth_line !~ /^auth:[[:space:]]*($|#)/) {
+        print old_line_1
+        print old_line_2
+        print old_line_3
+        print auth_line
+        next
+      }
+
+      print "# Frigate native auth protects the web UI and API. Umbrel bootstraps the initial"
+      print "# admin password to the default app password shown in the app store."
+      print auth_line
+      next
+    }
+
+    { print }
+  ' "${CONFIG_FILE}" > "${tmp_file}"
+
+  write_config_if_changed "${tmp_file}"
+}
+
+# If this is a fresh install (no database yet) or an existing install still using
+# the old Umbrel-managed reverse-proxy auth mode, post-start will one-time set
+# Frigate's admin password to Umbrel's deterministic default app password.
+if [ ! -f "${BOOTSTRAP_DONE_FLAG}" ]; then
+  if [ -f "${BOOTSTRAP_NEEDED_FLAG}" ] || [ ! -f "${DB_FILE}" ] || ! config_has_top_level_value "auth" "enabled" "True"; then
+    touch "${BOOTSTRAP_NEEDED_FLAG}"
+    chown 1000:1000 "${BOOTSTRAP_NEEDED_FLAG}"
+  fi
+fi
+
+# Frigate's authenticated reverse-proxy port (8971) should be protected by
+# Frigate's own auth so Home Assistant and other non-browser clients can log in
+# through Frigate's API instead of Umbrel's browser/session auth.
+ensure_top_level_value "auth" "enabled" "True"
+ensure_top_level_value "tls" "enabled" "False"
+remove_umbrel_managed_proxy_default
+replace_umbrel_managed_auth_comment
+chown 1000:1000 "${CONFIG_FILE}"

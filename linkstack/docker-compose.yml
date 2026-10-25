@@ -1,0 +1,28 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: linkstack_linkstack_1
+      APP_PORT: 80
+      PROXY_AUTH_ADD: "false"
+      
+  linkstack:
+    hostname: 'linkstack'
+    # Pin the stable version-specific upstream image.
+    image: 'linkstackorg/linkstack:v4.8.8@sha256:deba986fc1f7391af629c0bbcca67a1508284176bd3accf69d041ecc887dc7dd'
+    restart: on-failure
+    # This image doesn't support a custom user. It must be apache (100:101)
+    # user: '1000:1000'
+    volumes:
+      - linkstack_data:/htdocs
+
+# https://docs.linkstack.org/docker/setup/#docker-bind-mounts
+# This gets around the requirement to download the latest release of linkstack and place it in the bind mounted directory in order to use a bind mount. 
+volumes:
+  linkstack_data:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: ${APP_DATA_DIR}/data

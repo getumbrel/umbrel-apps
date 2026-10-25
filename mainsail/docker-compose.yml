@@ -1,0 +1,13 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: mainsail_web_1
+      APP_PORT: 80
+  web:
+    image: ghcr.io/mainsail-crew/mainsail:v2.19.0@sha256:adcadcdb6f9f6ede1f347ca4ac5f469dcc07f3677d46f8ffcd23696c66681893
+    restart: on-failure
+    stop_grace_period: 1m
+    volumes:
+      - ${APP_DATA_DIR}/data/config.json:/usr/share/nginx/html/config.json:ro

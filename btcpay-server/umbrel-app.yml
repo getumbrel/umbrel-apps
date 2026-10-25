@@ -1,8 +1,10 @@
 manifestVersion: 1
 id: btcpay-server
+storage:
+  dataRoot: data
 category: bitcoin
 name: BTCPay Server
-version: "1.13.1"
+version: "2.4.5"
 tagline: Accept Bitcoin payments with 0 fees & no 3rd party
 description: >-
   BTCPay Server is a payment processor that allows you to receive
@@ -33,23 +35,22 @@ gallery:
 path: ""
 defaultUsername: ""
 defaultPassword: ""
-releaseNotes: >-
-  This update brings BTCPay Server to version 1.13.1, and includes various new features, bug fixes, and improvements.
+releaseNotes: |-
+  This release changes several existing workflows:
 
+  - Your Umbrel Lightning Node connection continues working as usual. If you’ve manually connected BTCPay to other apps on your home network, check those connections after updating. Advanced configuration instructions: https://docs.btcpayserver.org/Operators/#allow-private-outbound-destinations
+  - Employees without permission to create approved pull payments can no longer auto-approve invoice overpayment refunds.
+  - Public checkout, status, and receipt endpoints hide invoice information one month after monitoring ends; users with invoice-view permission can still access it.
+  - Manual invoice notification URLs are deprecated in favor of webhooks.
 
-  Highlights:
+  It also adds Greenfield APIs for store reports, improves invoice permissions and access-token management, fixes invoice, payout, refund, Lightning, plugin-migration, and store-scoping issues, and updates NBXplorer to 2.6.19.
 
-  - It is now possible to customize your instance name and add a contact URL in Server Settings
-  
-  - There is a new Admin overview of the stores on the instance
-  
-  - Onboarding: Invite new users (#5714 #5719 #5874) @dennisreimann @dstrukt
-  
-  - A new option to add item list to keypad
-  
-  - Support for Better Bitcoin QRs (BBQr)
+  ⚠️ Security reminder for skipped-version updates. If you used BTCPay Server before 2.4.2 and have not rotated your Lightning Node credentials since updating to 2.4.2 or later, update first, then rotate your Lightning Node credentials immediately. Updating alone does not invalidate credentials that may have been exposed.
 
+  Umbrel credential-rotation instructions: https://github.com/getumbrel/umbrel-apps/blob/ef1400c9571d4f317f0dae38130f42afc98e9af6/btcpay-server/umbrel-app.yml#L43-L65
 
-  Full release notes can be found at https://github.com/btcpayserver/btcpayserver/releases.
+  Prior security advisory: https://blog.btcpayserver.org/security-advisory-btcpay-server-2-4-2/
+
+  Full release notes: https://github.com/btcpayserver/btcpayserver/releases/tag/v2.4.5
 submitter: Umbrel
 submission: https://github.com/getumbrel/umbrel/pull/353

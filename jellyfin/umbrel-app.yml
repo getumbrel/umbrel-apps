@@ -1,8 +1,24 @@
-manifestVersion: 1
+manifestVersion: 1.1
 id: jellyfin
+storage:
+  dataRoot: data
+folderAccess:
+  - id: umbrel-downloads
+    name: Downloads
+    note: Media files for your Jellyfin libraries. Available inside Jellyfin at /downloads.
+    mounts:
+      - service: server
+        targetPath: /downloads
+  - id: media-library
+    name: Media Library
+    note: Select an additional folder containing media, then add /media as a library folder in Jellyfin. Access is read-only to protect the original files.
+    mounts:
+      - service: server
+        targetPath: /media
+        readOnly: true
 category: media
 name: Jellyfin
-version: "10.9.4"
+version: "12.3"
 tagline: The Free Software Media System
 description: >-
   Jellyfin is the volunteer-built media solution that puts you in control of your media. Stream to any device from your own server, with no strings attached. Your media, your server, your way.
@@ -14,7 +30,7 @@ description: >-
   Watch your media from a web browser on your computer, apps on your Roku, Android, iOS (including AirPlay), Android TV, or Fire TV device, or via your Chromecast or existing Kodi installation.
 
 
-  Jellyfin has no tracking, phone-home, or central servers collecting your data. We believe in keeping our software open and transparent, and anything we might collect (crash logs, etc.) is opt-in only. We’re also not in the media business, so the only media you see is your own.
+  Jellyfin has no tracking, phone-home, or central servers collecting your data. We believe in keeping our software open and transparent, and anything we might collect (crash logs, etc.) is opt-in only. We're also not in the media business, so the only media you see is your own.
 
 
   The Jellyfin server and clients are free to download, now and always. There are no costs, hidden or otherwise, to use Jellyfin, either for yourself, for your friends, or for your company. All our incidental costs are paid through donations from users like you.
@@ -32,9 +48,23 @@ path: ""
 defaultUsername: ""
 defaultPassword: ""
 releaseNotes: >-
-  This update brings Jellyfin from version 10.8.13 to 10.9.4. Full release notes can be found at https://github.com/jellyfin/jellyfin/releases
+  Jellyfin 12 is a major upgrade. Back up your Jellyfin data before updating because the database changes cannot be rolled back without restoring a backup. Direct upgrades from Jellyfin 10.11.x are supported, but repository plugins should be removed before migrating and re-added only after compatible versions are available.
+
+
+  Key improvements in this release:
+    - Fixes crashes when reading subtitles with unsupported character encodings or probing media streams without frame-size information
+    - Fixes image extraction for Half Top and Bottom 3D videos
+    - Improves TMDb matching when release years differ by one year
+    - Prevents invalid ratings and audio gain values from being saved and reduces unnecessary warnings
+
+
+  After upgrading, run a full library scan to restore alternative versions.
+
+
+  Full release notes can be found at https://github.com/jellyfin/jellyfin/releases/tag/v12.3
 torOnly: false
 permissions:
   - STORAGE_DOWNLOADS
+  - GPU
 submitter: Umbrel
 submission: https://github.com/getumbrel/umbrel-apps/commit/60878f278d544b204d8e7c96240c797f43a9b319

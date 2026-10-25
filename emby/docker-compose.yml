@@ -1,0 +1,19 @@
+version: '3.7'
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: emby_server_1
+      APP_PORT: 8096
+      PROXY_AUTH_ADD: "false"
+
+  server:
+    image: linuxserver/emby:version-4.10.2.0@sha256:af9197e44a9f8acdeb3ce06d8d77f406a866bd99253eaaaca7c7cfbe1b47970a
+    environment:
+      TZ: Europe/Berlin
+      UID: 1000
+      GID: 1000
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data/config:/config:rw
+      - ${UMBREL_ROOT}/data/storage/downloads:/downloads

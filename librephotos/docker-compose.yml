@@ -1,0 +1,70 @@
+version: '3.7'
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: librephotos_proxy_1
+      APP_PORT: 80
+
+  proxy:
+    image: reallibrephotos/librephotos-proxy:2026w14@sha256:c88c0a65b50ba7e4f65ccc9aa7d5002df9827cb79edb1f88a3a4c130d0b03be4
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data/photos:/data
+      - ${APP_DATA_DIR}/data/protected_media:/protected_media
+    expose:
+      - "80"
+    depends_on:
+      - backend
+      - frontend
+
+  db:
+    image: pgautoupgrade/pgautoupgrade:17-alpine3.22@sha256:2ec008ae5f0a2e5dd8f4d2475df41cf3ccc9562acf49bd668fcc0c061944b9bf
+    restart: on-failure
+    environment:
+      POSTGRES_USER: librephotos
+      POSTGRES_PASSWORD: librephotos
+      POSTGRES_DB: librephotos
+    volumes:
+      - ${APP_DATA_DIR}/data/db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "psql", "-U", "librephotos", "-d", "librephotos", "-c", "SELECT 1;"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  frontend:
+    image: reallibrephotos/librephotos-frontend:2026w14@sha256:e2fb909607b1d9552c033a9432446eadb6b693289af2b4b016da55d50724afcb
+    restart: on-failure
+
+  backend:
+    image: reallibrephotos/librephotos:2026w14@sha256:3f4d6fa163bf41f2cd496aca342307fec8b827fe4a7ced1e7773a050ef7a5dca
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data/photos:/data
+      - ${APP_DATA_DIR}/data/protected_media:/protected_media
+      - ${APP_DATA_DIR}/data/logs:/logs
+      - ${APP_DATA_DIR}/data/cache:/root/.cache
+    environment:
+      SECRET_KEY: ${APP_SEED}
+      BACKEND_HOST: backend
+      ADMIN_EMAIL: admin@admin.com
+      ADMIN_USERNAME: admin
+      ADMIN_PASSWORD: ${APP_PASSWORD}
+      DB_BACKEND: postgresql
+      DB_NAME: librephotos
+      DB_USER: librephotos
+      DB_PASS: librephotos
+      DB_HOST: librephotos_db_1
+      DB_PORT: 5432
+      MAPBOX_API_KEY: ""
+      WEB_CONCURRENCY: 2
+      HEAVYWEIGHT_PROCESS: 1
+      FIXPERMISSIONS: "true"
+      SKIP_PATTERNS: ""
+      ALLOW_UPLOAD: "true"
+      CSRF_TRUSTED_ORIGINS: ""
+      DEBUG: "0"
+    depends_on:
+      db:
+        condition: service_healthy

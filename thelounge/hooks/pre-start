@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# The purpose of this pre-start hook is to add thelounge user
+
+APP_DATA_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")"
+
+# sentinel file to check if user was already initialised
+USER_SENTINEL="${APP_DATA_DIR}/.user_created"
+
+# user name and email
+USER_NAME="umbrel"
+
+# max number of tries and sleep time between them (60 seconds)
+MAX_TRIES=12
+SLEEP_SECS=5
+
+# ──────────────────────────────────────────────────────────────
+# Skip bootstrap entirely if user already initialised
+# ──────────────────────────────────────────────────────────────
+if [[ -f "$USER_SENTINEL" ]]; then
+  echo "thelounge: user already initialised - skipping bootstrap."
+  exit 0
+fi
+
+# ──────────────────────────────────────────────────────────────
+# Bring the web service up so that everything is ready to run
+# ──────────────────────────────────────────────────────────────
+echo "thelounge: starting full stack to run migrations…"
+"${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" \
+  up -d --wait --wait-timeout 90 web
+
+# ──────────────────────────────────────────────────────────────
+# Retry until the user is created (max 60 s)
+# This should succeed first try
+# But including a retry loop for robustness
+# ──────────────────────────────────────────────────────────────
+echo "thelounge: ensuring user exists…"
+for ((try=1; try<=MAX_TRIES; try++)); do
+  if "${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" exec -T web thelounge add "${USER_NAME}" --password "${APP_PASSWORD}" \ ; then
+	touch "$USER_SENTINEL"
+    echo "thelounge: user ready."
+    break
+  fi
+  echo "  Attempt $try/$MAX_TRIES failed - retrying in ${SLEEP_SECS}s…"
+  sleep "$SLEEP_SECS"
+done
+
+if [[ ! -f "$USER_SENTINEL" ]]; then
+  echo "thelounge ERROR: could not create user after $MAX_TRIES attempts."
+  exit 1
+fi
+
+# ──────────────────────────────────────────────────────────────
+# Bring down all containers and let umbrelOS start them fresh
+# ──────────────────────────────────────────────────────────────
+echo "thelounge: bootstrap finished - stopping stack for clean start…"
+"${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" stop

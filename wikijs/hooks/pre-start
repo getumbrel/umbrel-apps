@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+APP_DATA_DIR="$(readlink -f $(dirname "${BASH_SOURCE[0]}")/..)/data"
+APP_CONFIG_DIR="$(readlink -f $(dirname "${BASH_SOURCE[0]}")/..)/config"
+APP_REPO_DIR="$(readlink -f $(dirname "${BASH_SOURCE[0]}")/..)/repo"
+
+# Create repo directory if it does not exist. This was not included for pre-2.5.306-1 installs
+[ ! -d "${APP_REPO_DIR}" ] && mkdir -p "${APP_REPO_DIR}"
+
+# Recursively set ownership of all bind mounts to 1000:1000. wikijs was running as root for pre-2.5.306-1 installs
+# even though it was using "correct" PUID/PGID env vars for linuxserver.io images.
+chown -R 1000:1000 "${APP_DATA_DIR}"
+chown -R 1000:1000 "${APP_CONFIG_DIR}"
+chown -R 1000:1000 "${APP_REPO_DIR}"

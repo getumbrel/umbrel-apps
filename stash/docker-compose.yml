@@ -1,0 +1,17 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: stash_web_1
+      APP_PORT: 5173
+
+  web:
+    image: savewithstash/stash:1.0.1@sha256:fdca95d75438eba149d31d303cfe7ed3b194a5938b10d1cca184b49cd8511271
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      PORT: 5173
+    volumes:
+      - ${APP_DATA_DIR}/data/app:/app/data
+      - ${APP_DATA_DIR}/data/models:/app/models

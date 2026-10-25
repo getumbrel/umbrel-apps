@@ -1,0 +1,19 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: glasshome_server_1
+      APP_PORT: 3123
+      # GlassHome has its own authenticated device sessions, and its new-device
+      # pairing flow must work on devices that do not have an Umbrel session.
+      PROXY_AUTH_ADD: "false"
+
+  server:
+    image: ghcr.io/glasshome/dash:1.4.5@sha256:173777a0d0f575907486448f339e33c8268ff8497d8292c59989bb8294540307
+    restart: on-failure
+    environment:
+      PORT: 3123
+      DATA_DIR: /data
+      # Use the client address supplied by Umbrel for sign-in rate limits.
+      TRUSTED_PROXIES: "127.0.0.0/8,::1,${GATEWAY_IP}/32"
+    volumes:
+      - ${APP_DATA_DIR}/data:/data

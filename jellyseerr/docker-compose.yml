@@ -8,7 +8,15 @@ services:
       PROXY_AUTH_WHITELIST: "/api/*"
 
   server:
-    image: fallenbagel/jellyseerr:1.7.0@sha256:6dcdb5ba50913a14b2bd7df6388607ce175121f3416679c2746501256ac9f075
+    image: ghcr.io/seerr-team/seerr:v3.5.1@sha256:d8fab675b55ad293ded98fd71efcfd46054cbad9746534ae1cc4794a88c0b3be
+    user: "1000:1000"
+    init: true
     volumes:
       - ${APP_DATA_DIR}/data/config:/app/config
     restart: on-failure
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider http://localhost:5055/api/v1/status || exit 1
+      start_period: 20s
+      timeout: 3s
+      interval: 15s
+      retries: 3

@@ -1,0 +1,19 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: scanservjs_server_1
+      APP_PORT: 8080
+
+  server:
+    image: sbs20/scanservjs:v3.3.0@sha256:7a0c0dfd546f483c2fe8c5ccdcd8fc96301a41fb0d4309747fc8268108defb6a
+    restart: on-failure
+    stop_grace_period: 1m
+    volumes:
+      - ${APP_DATA_DIR}/data/scans:/var/lib/scanservjs/output
+      - ${APP_DATA_DIR}/data/config:/etc/scanservjs
+      - /var/run/dbus:/var/run/dbus
+      # map the host's /dev to allow discovery of usb devices without needing to know apriori which devices are connected
+      - /dev:/dev 
+    privileged: true

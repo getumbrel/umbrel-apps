@@ -1,0 +1,73 @@
+version: '3.7'
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: wanderer_web_1
+      APP_PORT: 3000
+      
+  web:
+    image: flomp/wanderer-web:v0.21.1@sha256:e57900a59a746d6f1cab3f191a54a5760922ecccad93f13d61d0fb3188335da4
+    user: "1000:1000"
+    depends_on:
+      search:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+    environment:
+      ORIGIN: http://${DEVICE_DOMAIN_NAME}:3111
+      BODY_SIZE_LIMIT: Infinity
+      POCKETBASE_PROXY_SECRET: ${APP_SEED}
+      PUBLIC_POCKETBASE_URL: http://wanderer_db_1:8090
+      PUBLIC_DISABLE_SIGNUP: "false"
+      UPLOAD_FOLDER: /app/uploads
+      UPLOAD_USER: admin
+      UPLOAD_PASSWORD: ${APP_PASSWORD}
+      VALHALLA_URL: https://valhalla1.openstreetmap.de
+      NOMINATIM_URL: https://nominatim.openstreetmap.org
+      OVERPASS_API_URL: https://overpass-api.de
+      PUBLIC_MAP_MAX_POLYLINES: 100
+      MEILI_URL: http://wanderer_search_1:7700
+      MEILI_MASTER_KEY: ${APP_SEED}
+    volumes:
+      - ${APP_DATA_DIR}/data/uploads:/app/uploads
+    restart: on-failure
+
+  search:
+    image: getmeili/meilisearch:v1.14.0@sha256:8cd411ba5d9ec2dfce02e241305208eebacce0fd74a72bece21cadd03dc566ce
+    environment:
+      MEILI_NO_ANALYTICS: "true"
+      MEILI_URL: http://wanderer_search_1:7700
+      MEILI_MASTER_KEY: ${APP_SEED}
+    volumes:
+      - ${APP_DATA_DIR}/data/data.ms:/meili_data/data.ms
+    restart: on-failure
+    healthcheck:
+      test: curl --fail http://localhost:7700/health || exit 1
+      interval: 15s
+      retries: 10
+      start_period: 20s
+      timeout: 10s
+
+  db:
+    image: flomp/wanderer-db:v0.21.1@sha256:1575a18a025af284185612d165ec80bb4a6e0c7727c157c6a6edbe917853d10e
+    user: "1000:1000"
+    depends_on:
+      search:
+        condition: service_healthy
+    environment:
+      POCKETBASE_ENCRYPTION_KEY: ${APP_WANDERER_ENCRYPTION_KEY}
+      POCKETBASE_PROXY_SECRET: ${APP_SEED}
+      MEILI_URL: http://wanderer_search_1:7700
+      MEILI_MASTER_KEY: ${APP_SEED}
+      ORIGIN: http://${DEVICE_DOMAIN_NAME}:3111
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data/pb_data:/pb_data
+      - ${APP_DATA_DIR}/data/plugins:/data/plugins
+    healthcheck:
+      test: ["CMD", "/curl", "--fail", "http://localhost:8090/health"]
+      interval: 15s
+      retries: 10
+      start_period: 20s
+      timeout: 10s

@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+UMBREL_STORAGE_DOWNLOADS_MUSIC_DIR="${UMBREL_ROOT}/data/storage/downloads/music"
+DESIRED_OWNER="1000:1000"
+
+if [[ ! -d "${UMBREL_STORAGE_DOWNLOADS_MUSIC_DIR}" ]]; then
+	mkdir -p "${UMBREL_STORAGE_DOWNLOADS_MUSIC_DIR}"
+fi
+
+navidrome_correct_permission() {
+	local -r path="${1}"
+
+	if [[ -d "${path}" ]]; then
+		owner=$(stat -c "%u:%g" "${path}")
+
+		if [[ "${owner}" != "${DESIRED_OWNER}" ]]; then
+			chown "${DESIRED_OWNER}" "${path}"
+		fi
+	fi
+}
+
+navidrome_correct_permission "${UMBREL_STORAGE_DOWNLOADS_MUSIC_DIR}"

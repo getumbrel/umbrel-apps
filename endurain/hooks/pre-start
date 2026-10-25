@@ -1,0 +1,156 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# This scripts checks the environment file for placeholder values and replaces them with generated keys or system variables.
+
+APP_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")"
+APP_DATA_DIR="$APP_DIR/data"
+DESIRED_OWNER="1000:1000"
+ENV_FILE="$APP_DIR/settings.env"
+
+# Check if the file exists
+if [ ! -f "$ENV_FILE" ]; then
+    echo "Error: Environment file not found at $ENV_FILE"
+    exit 1
+fi
+
+# Check if the FERNET_KEY value is set to "changeme"
+if grep -Eq '^FERNET_KEY= *changeme$' "$ENV_FILE"; then
+    echo "Placeholder value for FERNET_KEY detected. Generating a new key..."
+
+    # Generate new FERNET key
+    FERNET_KEY=$(python3 -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())")
+
+    # Replace the placeholder with the new key
+    sed -i -E 's|^FERNET_KEY= *changeme$|FERNET_KEY="'"$FERNET_KEY"'"|' "$ENV_FILE"
+
+    echo "Updated FERNET_KEY in $ENV_FILE"
+else
+    echo "FERNET_KEY is already set. No changes made."
+fi
+
+# Avahi may advertise umbrel-2.local after a name collision while the kernel
+# hostname (and DEVICE_DOMAIN_NAME) remains umbrel. Use the reachable LAN name.
+avahi_hostname=$(busctl --timeout=2 call org.freedesktop.Avahi / org.freedesktop.Avahi.Server GetHostNameFqdn 2>/dev/null |
+    sed -n 's/^s "\([a-zA-Z0-9.-]*\)"$/\1/p') || avahi_hostname=""
+avahi_hostname="${avahi_hostname%.}"
+
+# Production authentication requires HTTPS. Follow changes to Umbrel-generated
+# LAN names while preserving custom hostnames, ports, and other settings.
+python3 - "$ENV_FILE" "$DEVICE_DOMAIN_NAME" "$avahi_hostname" "${APP_DATA_DIR}/.endurain-host" <<'PYTHON'
+from pathlib import Path
+import re
+import sys
+
+path = Path(sys.argv[1])
+# Older packages did not record the generated address. Recognize the device's
+# default name and Avahi collision suffixes, e.g. umbrel.local / umbrel-5.local.
+device_name = sys.argv[2].removesuffix(".local")
+legacy_host = re.compile(rf"https?://{re.escape(device_name)}(?:-[0-9]+)?\.local:8865/?")
+local_host = f"https://{sys.argv[3] or sys.argv[2]}:8865"
+state_path = Path(sys.argv[4])
+previous_host = state_path.read_text().strip() if state_path.is_file() else ""
+managed_host = ""
+
+def migrate_host(match):
+    global managed_host
+    prefix, quote, value, suffix = match.groups()
+    if value == "changeme" or value == previous_host or legacy_host.fullmatch(value):
+        if value == "changeme":
+            value, quote = local_host, quote or '"'
+        elif sys.argv[3]:
+            value = local_host
+        # If Avahi is temporarily unavailable, retain the last known LAN name.
+        managed_host = value.replace("http://", "https://", 1)
+        value = managed_host
+    elif value.startswith("http://"):
+        value = "https://" + value[len("http://"):]
+    return f"{prefix}{quote}{value}{quote}{suffix}"
+
+original = path.read_text()
+updated = re.sub(r"^(ENDURAIN_HOST=[ \t]*)([\"']?)([^\"'\s]+)\2([^\r\n]*)$",
+                 migrate_host, original, flags=re.MULTILINE)
+if updated != original:
+    path.write_text(updated)
+    print("Updated Endurain's HTTPS address.")
+if managed_host and managed_host != previous_host:
+    state_path.parent.mkdir(parents=True, exist_ok=True)
+    state_path.write_text(managed_host + "\n")
+PYTHON
+
+# Updates do not copy data directories from the package. Prepare Redis storage
+# for the user in the pinned Redis image before the new sidecar starts.
+mkdir -p "${APP_DATA_DIR}/redis"
+chown 999:1000 "${APP_DATA_DIR}/redis"
+
+set_correct_permissions() {
+	local -r path="${1}"
+
+	# Check if the path exists (file or directory)
+	if [[ -e "${path}" ]]; then
+		owner=$(stat -c "%u:%g" "${path}")
+
+		if [[ "${owner}" != "${DESIRED_OWNER}" ]]; then
+			chown "${DESIRED_OWNER}" "${path}"
+			echo "Changed ownership of ${path} to ${DESIRED_OWNER}"
+		fi
+	else
+		echo "Skipping ${path} - path does not exist"
+	fi
+}
+
+# Handle directory restructuring for version 0.13.0
+restructure_directories() {
+	local -r app_dir="${APP_DATA_DIR}/app"
+	
+	# Check if we need to do the restructuring
+	if [[ -d "${app_dir}/files" && ! -d "${app_dir}/activity_files" ]]; then
+		echo "Restructuring directories for Endurain v0.13.0..."
+		
+		# Rename files directory to activity_files
+		if mv "${app_dir}/files" "${app_dir}/activity_files" 2>/dev/null; then
+			echo "Renamed ${app_dir}/files to ${app_dir}/activity_files"
+		else
+			echo "Failed to rename ${app_dir}/files to ${app_dir}/activity_files"
+		fi
+	fi
+	
+	# Create new directories if they don't exist
+	mkdir -p "${app_dir}/activity_media"
+	echo "Created ${app_dir}/activity_media directory"
+	
+	mkdir -p "${app_dir}/server_images"
+	echo "Created ${app_dir}/server_images directory"
+	
+	# Move logs directory from app/logs to logs (at root level)
+	if [[ -d "${app_dir}/logs" && ! -d "${APP_DATA_DIR}/logs" ]]; then
+		if mv "${app_dir}/logs" "${APP_DATA_DIR}/logs" 2>/dev/null; then
+			echo "Moved ${app_dir}/logs to ${APP_DATA_DIR}/logs"
+		else
+			echo "Failed to move ${app_dir}/logs to ${APP_DATA_DIR}/logs"
+		fi
+	elif [[ ! -d "${APP_DATA_DIR}/logs" ]]; then
+		# Create logs directory if it doesn't exist
+		mkdir -p "${APP_DATA_DIR}/logs"
+		echo "Created ${APP_DATA_DIR}/logs directory"
+	fi
+}
+
+# Perform directory restructuring
+if [[ -d "${APP_DATA_DIR}/app" ]]; then
+	restructure_directories
+fi
+
+# Set permissions recursively on the entire /app directory and its subdirectories
+if [[ -d "${APP_DATA_DIR}/app" ]]; then
+	chown -R "${DESIRED_OWNER}" "${APP_DATA_DIR}/app"
+	echo "Set recursive ownership of ${APP_DATA_DIR}/app to ${DESIRED_OWNER}"
+fi
+
+# Set permissions recursively on the entire /logs directory and its subdirectories
+if [[ -d "${APP_DATA_DIR}/logs" ]]; then
+	chown -R "${DESIRED_OWNER}" "${APP_DATA_DIR}/logs"
+	echo "Set recursive ownership of ${APP_DATA_DIR}/logs to ${DESIRED_OWNER}"
+fi
+
+exit 0

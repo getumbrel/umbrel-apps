@@ -1,13 +1,29 @@
 manifestVersion: 1
 id: plex
+storage:
+  dataRoot: data
+folderAccess:
+  - id: umbrel-downloads
+    name: Downloads
+    note: Media files for your Plex libraries. Available inside Plex at /downloads.
+    mounts:
+      - service: server
+        targetPath: /downloads
+  - id: media-library
+    name: Media Library
+    note: Select an additional folder containing media, then add /media as a folder in a Plex library. Access is read-only to protect the original files.
+    mounts:
+      - service: server
+        targetPath: /media
+        readOnly: true
 category: media
 name: Plex
-version: "1.40.3"
+version: "1.43.5.11029"
 tagline: Stream Movies & TV Shows
 description: >-
   Stream movies and TV shows, plus 300+ channels of live TV, instantly, without a subscription. Watch live TV and movies anywhere, from any device, with Plex.
-  
-  
+
+
   Plex uses a server to house your media library and player apps to playback the media. Add, access, and share all the entertainment that matters to you, on almost any device.
 
 
@@ -18,6 +34,8 @@ dependencies: []
 repo: ""
 support: https://www.plex.tv/
 port: 32400
+nativeTlsHostnameSuffixes:
+  - plex.direct
 gallery:
   - 1.jpg
   - 2.jpg
@@ -28,27 +46,14 @@ defaultPassword: ""
 torOnly: false
 permissions:
   - STORAGE_DOWNLOADS
+  - GPU
 releaseNotes: >-
-  NEW:
-
-  - Metadata: Added support for additional TVDB episode orderings in TV Show preferences. This requires a metadata refresh.
-
-
-  FIXES:
-
-  - Live-TV: Fixed an issue where tuning slots were not properly released if the tune was canceled during startup, such as when rapidly changing channels.
-  
-  - Scanner: Removed deprecated support for modern metadata agent scan/refresh via Scanner CLI.
-  
-  - Scanner: Fixed an issue where the scanner would not ignore #snapshot/s directories.
-  
-  - Scanner: Fixed an issue where the scanner would not ignore @eaDir copy directories.
-  
-  - Serialization: The viewUpdatedAt field is now included when requested.
-  
-  - Transcoder: Corrected the quality parameter for devices without rate control.
-  
-  - Transcoder: Fixed an issue where Windows would fail to hardware transcode after an RDP session is started or ended.
+  This update includes improvements and security fixes:
+    - Adds support for artist and album metadata from NFO files in music libraries.
+    - Improves IPv6 connections and local network detection.
+    - Fixes remote access status getting stuck after remote access is disabled.
+    - Fixes library scoping in search results and strengthens request and proxy security.
+    - Fixes music metadata, unwanted loudness analysis, and a crash when streaming media without a video track.
 
 
   Full release notes are available at https://www.videohelp.com/software/Plex

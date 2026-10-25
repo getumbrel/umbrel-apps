@@ -1,0 +1,162 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Appsmith 2.0 bundles MongoDB 7. Upstream requires existing installs from
+# before the v1.96-v1.99 checkpoint window to run on v1.99 before starting 2.0+.
+# Umbrel updates directly from any previously packaged version, so run a one-time
+# v1.99 checkpoint service against existing Appsmith data before the real v2.0
+# service starts.
+
+APP_ROOT_DIR="${APP_DATA_DIR:-$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")}"
+UMBREL_ROOT="${UMBREL_ROOT:-$(readlink -f "${APP_ROOT_DIR}/../..")}"
+APP_ID="${APP_ID:-appsmith}"
+APP_CONTAINER="${APP_ID}_app_1"
+STACKS_DIR="${APP_ROOT_DIR}/data/app"
+MARKER_FILE="${STACKS_DIR}/.umbrel-appsmith-v1.99-checkpoint-complete"
+CHECKPOINT_IMAGE="appsmith/appsmith-ce:v1.99@sha256:eb9c41524a4be8103666b38b437d5496cb62ead292d9642ba130d8ed37a28aca"
+CHECKPOINT_COMPOSE_FILE="${APP_ROOT_DIR}/.umbrel-appsmith-v1.99-checkpoint.compose.yml"
+
+log() {
+  echo "appsmith pre-start: $*"
+}
+
+app_compose() {
+  "${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" "$@"
+}
+
+checkpoint_compose() {
+  app_compose --file "${CHECKPOINT_COMPOSE_FILE}" "$@"
+}
+
+has_existing_appsmith_data() {
+  find "${STACKS_DIR}" -mindepth 1 \
+    ! -name ".gitkeep" \
+    ! -name "$(basename "${MARKER_FILE}")" \
+    -print -quit | grep -q .
+}
+
+write_checkpoint_compose_file() {
+  cat >"${CHECKPOINT_COMPOSE_FILE}" <<EOF
+services:
+  app:
+    image: "${CHECKPOINT_IMAGE}"
+EOF
+}
+
+cleanup_checkpoint() {
+  if [[ -f "${CHECKPOINT_COMPOSE_FILE}" ]]; then
+    checkpoint_compose stop app >/dev/null 2>&1 || true
+    checkpoint_compose rm --force app >/dev/null 2>&1 || true
+    rm -f "${CHECKPOINT_COMPOSE_FILE}"
+  fi
+}
+
+show_checkpoint_logs() {
+  checkpoint_compose logs --tail 200 app || true
+}
+
+# /api/v1/health only checks Redis/Mongo, but Appsmith v1.99 runs Mongock
+# migrations during backend Spring initialization before serving API requests,
+# so a successful backend health response is a simple checkpoint-complete proxy.
+# Wait as long as the checkpoint container stays alive instead of using a hard
+# timeout that could interrupt a slow migration.
+is_checkpoint_backend_ready() {
+  checkpoint_compose exec -T app \
+    curl --silent --fail --max-time 5 \
+    http://localhost:8080/api/v1/health >/dev/null 2>&1
+}
+
+get_checkpoint_container_status() {
+  docker inspect --format '{{.State.Status}}' "${APP_CONTAINER}" 2>/dev/null || true
+}
+
+checkpoint_already_running=false
+
+if [[ -f "${MARKER_FILE}" ]]; then
+  if [[ -f "${CHECKPOINT_COMPOSE_FILE}" ]]; then
+    log "v1.99 checkpoint already completed; cleaning up leftover checkpoint compose override"
+    cleanup_checkpoint
+  fi
+
+  log "v1.99 checkpoint already completed; skipping"
+  exit 0
+fi
+
+if [[ -f "${CHECKPOINT_COMPOSE_FILE}" ]]; then
+  container_status="$(get_checkpoint_container_status)"
+
+  if [[ "${container_status}" == "running" || "${container_status}" == "restarting" ]]; then
+    log "found running v1.99 checkpoint container from previous attempt; continuing to wait"
+    checkpoint_already_running=true
+  else
+    log "found leftover checkpoint compose override; cleaning up previous attempt"
+    cleanup_checkpoint
+  fi
+fi
+
+mkdir -p "${STACKS_DIR}"
+
+if ! has_existing_appsmith_data; then
+  log "no existing Appsmith data found; marking checkpoint as not required"
+  touch "${MARKER_FILE}"
+  exit 0
+fi
+
+if [[ -z "${APP_PASSWORD:-}" ]]; then
+  log "APP_PASSWORD is not set; cannot run v1.99 checkpoint"
+  exit 1
+fi
+
+log "existing Appsmith data found; running one-time v1.99 checkpoint before v2.0 startup"
+write_checkpoint_compose_file
+
+keep_checkpoint_running=false
+cleanup_checkpoint_on_exit() {
+  if [[ "${keep_checkpoint_running}" == "true" ]]; then
+    log "leaving running v1.99 checkpoint container in place for manual inspection/retry"
+    return
+  fi
+
+  cleanup_checkpoint
+}
+
+trap cleanup_checkpoint_on_exit EXIT
+
+if [[ "${checkpoint_already_running}" == "true" ]]; then
+  log "reusing running v1.99 checkpoint container"
+else
+  checkpoint_compose pull app
+  checkpoint_compose up --detach app
+fi
+
+keep_checkpoint_running=true
+
+while true; do
+  container_status="$(get_checkpoint_container_status)"
+
+  if [[ -z "${container_status}" ]]; then
+    keep_checkpoint_running=false
+    log "v1.99 checkpoint container was not found before backend health check passed"
+    show_checkpoint_logs
+    exit 1
+  fi
+
+  if [[ "${container_status}" == "exited" || "${container_status}" == "dead" ]]; then
+    keep_checkpoint_running=false
+    log "v1.99 checkpoint container stopped before backend health check passed"
+    show_checkpoint_logs
+    exit 1
+  fi
+
+  if is_checkpoint_backend_ready; then
+    log "v1.99 backend health check passed; stopping checkpoint container before v2.0 startup"
+    keep_checkpoint_running=false
+    cleanup_checkpoint
+    touch "${MARKER_FILE}"
+    trap - EXIT
+    log "v1.99 checkpoint complete"
+    exit 0
+  fi
+
+  sleep 10
+done

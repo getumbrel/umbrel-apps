@@ -1,0 +1,19 @@
+version: '3.7'
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: ollama_ollama_1
+      APP_PORT: 11434
+      PROXY_AUTH_ADD: "false"
+
+  ollama:
+    image: ollama/ollama:0.40.10@sha256:4c5b27871a3239a717048f9b93057680a51b60c8119a7016aebb57f938e25e35
+    environment:
+      OLLAMA_ORIGINS: "*"
+      OLLAMA_CONTEXT_LENGTH: 8192
+      OLLAMA_VULKAN: "1"
+      OLLAMA_IGPU_ENABLE: "1"
+    volumes:
+      - ${APP_DATA_DIR}/data:/root/.ollama
+    restart: on-failure

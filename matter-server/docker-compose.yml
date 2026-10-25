@@ -1,0 +1,23 @@
+version: "3.7"
+
+services:
+  server:
+    image: ghcr.io/matter-js/matterjs-server:1.5.3@sha256:c0a816559384497f30d5cfe32dcd049fdec90c5659f1a1a86c87600fb3298595
+    restart: on-failure
+    user: "1000:1000"
+    environment:
+      STORAGE_PATH: /data
+      PORT: "5580"
+      VENDOR_ID: "65521"
+      FABRIC_ID: "1"
+      NOBLE_BINDINGS: dbus
+    # Required for mDNS to work correctly
+    network_mode: host
+    # UI at default port 5580
+    security_opt:
+      # Needed for Bluetooth via dbus
+      - apparmor:unconfined
+    volumes:
+      - ${APP_DATA_DIR}/data:/data/
+      # Required for Bluetooth via D-Bus
+      - /run/dbus:/run/dbus:ro

@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: lightning
 category: bitcoin
 name: Lightning Node
-version: "v0.18.0-beta"
+version: "0.21.5-beta.rc1-patch.1"
 tagline: Run your personal Lightning Network node
 description: >-
   Run your personal Lightning Network node, and join the future of Bitcoin today.
@@ -22,13 +22,19 @@ description: >-
 
   An official app from Umbrel.
 releaseNotes: >-
-  ⚠️ Please allow a few minutes for your Lightning Node to come online after updating to this version. Nodes running with Watchtower Client enabled (wtclient.active=true) will not be able to downgrade to a previous version of lnd after updating to this version.
+  We recommend updating as soon as possible. This update refreshes Lightning Node’s runtime and dependencies. It includes LND v0.21.5-beta.rc1, unchanged from the previous app release.
 
 
-  This release updates LND to v0.18.0-beta. This is a major release that includes support for blinded paths (forwarding), a new native SQL invoice database, deadline aware HTLC/commitment transaction RBF/CPFP fee bumping, experimental support for inbound channel fees (discount only), first class probing for payment fee estimation, testmempoolaccept awareness for all transaction publishing, and much more!
+  Previous release — important LND update
 
 
-  Full LND v0.18.0-beta release notes can be found at https://github.com/lightningnetwork/lnd/blob/master/docs/release-notes/release-notes-0.18.0.md
+  The previous release upgraded LND to v0.21.5-beta.rc1, the release candidate recommended by upstream for an important security fix.
+
+
+  It also improves channel handling, fee estimation, wallet synchronization, and database reliability.
+
+
+  Full LND release notes: https://github.com/lightningnetwork/lnd/blob/v0.21.5-beta.rc1/docs/release-notes/release-notes-0.21.5.md
 developer: Umbrel
 website: https://umbrel.com
 dependencies:
@@ -104,3 +110,7 @@ widgets:
           subtext: "sats"
 submitter: Umbrel
 submission: https://github.com/getumbrel/umbrel-apps/commit/576ecd2bef8d625abceed0f67ec9c487da9b2b1b
+backupIgnore:
+  - data/lnd/data/graph/*/channel.db
+  - data/lnd/data/graph/*/wtclient.db
+  - data/lnd/data/watchtower/*/*/watchtower.db

@@ -1,0 +1,94 @@
+manifestVersion: 1.1
+name: pogolo
+id: pogolo
+storage:
+  dataRoot: data
+version: "1.1.7-yip"
+category: bitcoin
+dependencies:
+  - bitcoin
+tagline: Local Go-based SV1+SV2 solo pool
+description: >-
+  solo db-less bitcoin-only mining pool,
+  meant for lan swarms, not the internet;
+
+
+  start it, point your miners to it, and watch the logs roll by
+
+
+  think of this as public-pool but minimal and for self-sovereign nerds
+releaseNotes: |-
+  # New
+
+  ## config
+
+  - pogolo can wait for the backend to sync with `[pogolo].wait_for_sync` before creating the first job
+
+  - pogolo will wait for up to `[pogolo].share_batch_window` seconds for the next share before acknowledging the batch
+
+  - the sv2 authority key can be pinned with `[pogolo].authority_keypair`, which can be generated with the button in the webui or `--generate-authority-key` (see below)
+
+  ## api
+
+  - new endpoint `/license.txt` returns the embedded AGPL license
+
+  ## cli
+
+  - `--generate-authority-key` prints a keypair for the static authority key
+
+  - `--license` prints the embedded AGPL license
+
+
+  # Changed
+
+  - the coinbase tag salt is now appended to the tag text, saving a byte
+
+  - the salt is restricted to ascii bytes, for fun uwu
+
+  ## api
+
+  - pprof endpoints have been exposed as an alternative to running with `--pprof`
+
+  - the `/api/v1/info` endpoint now has an `authorityPubkey` key, populated when `[pogolo].authority_keypair` is set
+
+  ## cli
+
+  - `--help` now has the AGPL notice as its footer
+
+
+  # Fixed
+
+  - worker names with periods are now supported
+
+developer: 0xf0xx0
+website: https://github.com/0xf0xx0/pogolo
+repo: https://github.com/0xf0xx0/pogolo
+support: https://github.com/0xf0xx0/pogolo/discussions
+port: 5663
+gallery:
+  - 1.webp
+  - 2.webp
+  - 3.webp
+path: ""
+submitter: 0xf0xx0
+submission: https://github.com/getumbrel/umbrel-apps/pull/4622
+widgets:
+  - id: "pogolo-stats"
+    type: "four-stats"
+    refresh: "5s"
+    endpoint: "webui:5663/api/widget/pool"
+    link: ""
+    example:
+      type: "four-stats"
+      link: ""
+      items:
+        - title: "Hashrate"
+          text: "6.9"
+          subtext: "Th/s"
+        - title: "Gophers"
+          text: "420,420"
+        - title: "Height"
+          text: "676,767"
+        - title: "Best Share"
+          text: "210"
+          subtext: "Giga"

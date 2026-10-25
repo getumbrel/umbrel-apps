@@ -8,17 +8,28 @@ services:
       PROXY_AUTH_ADD: "false"
   
   db:
-    image: mariadb:10.5.12@sha256:dfcba5641bdbfd7cbf5b07eeed707e6a3672f46823695a0d3aba2e49bbd9b1dd
+    image: mariadb:10.11.19@sha256:7f22313fc130a377a44999965bcb0a08dd5b21e8502824c1b864f792f9bc66ab
     user: "1000:1000"
-    command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
+    entrypoint: ["bash", "/umbrel-migration-hook", "--guard", "db"]
+    stop_grace_period: 2m
+    command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW --innodb-log-file-size=256M
     restart: on-failure
     volumes:
       - ${APP_DATA_DIR}/data/db:/var/lib/mysql
+      - ${APP_DATA_DIR}/hooks/pre-start:/umbrel-migration-hook:ro
+      - ${APP_DATA_DIR}/data/migration:/umbrel-migration:ro
     environment:
       - MYSQL_ROOT_PASSWORD=moneyprintergobrrr
       - MYSQL_PASSWORD=moneyprintergobrrr
       - MYSQL_DATABASE=nextcloud
       - MYSQL_USER=nextcloud
+      - MARIADB_AUTO_UPGRADE=1
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      start_period: 10s
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
   redis:
     image: redis:6.2.2-buster@sha256:e10f55f92478715698a2cef97c2bbdc48df2a05081edd884938903aa60df6396
@@ -28,37 +39,47 @@ services:
       - "${APP_DATA_DIR}/data/redis:/data"
 
   web:
-    image: nextcloud:28.0.3-apache@sha256:ed07f89119dcca2a3711897c48a8ac969542d96d69384445d8fcdc7804ca946f
+    image: nextcloud:35.0.2-apache@sha256:3f05f4d5eded9d3d029e617926500645cca6344710364737a374088f6811095a
+    entrypoint: ["bash", "/umbrel-migration-hook", "--guard", "web"]
+    command: apache2-foreground
     # Currently needs to be run as root, if we run as uid 1000 this fails
     # https://github.com/nextcloud/docker/blob/05026b029d37fc5cd488d4a4a2a79480e39841ba/21.0/apache/entrypoint.sh#L53-L77
     # user: "1000:1000"
     restart: on-failure
     volumes:
       - ${APP_DATA_DIR}/data/nextcloud:/var/www/html
+      - ${APP_DATA_DIR}/hooks/pre-start:/umbrel-migration-hook:ro
+      - ${APP_DATA_DIR}/data/migration:/umbrel-migration:ro
     environment:
       - MYSQL_HOST=nextcloud_db_1
       - REDIS_HOST=nextcloud_redis_1
       - MYSQL_PASSWORD=moneyprintergobrrr
       - MYSQL_DATABASE=nextcloud
       - MYSQL_USER=nextcloud
-      - TRUSTED_PROXIES="${NETWORK_IP}/16"
+      - TRUSTED_PROXIES=${NETWORK_IP}/16
       - NEXTCLOUD_ADMIN_USER=umbrel
       - NEXTCLOUD_ADMIN_PASSWORD=${APP_PASSWORD}
-      - NEXTCLOUD_TRUSTED_DOMAINS=${APP_DOMAIN}:${APP_NEXTCLOUD_PORT} ${APP_HIDDEN_SERVICE} ${DEVICE_HOSTNAME}:${APP_NEXTCLOUD_PORT} ${APP_NEXTCLOUD_LOCAL_IPS}
+      - NEXTCLOUD_TRUSTED_DOMAINS=${APP_DOMAIN}:${APP_NEXTCLOUD_PORT} ${APP_HIDDEN_SERVICE} ${DEVICE_HOSTNAME}:${APP_NEXTCLOUD_PORT} ${APP_NEXTCLOUD_LOCAL_IPS} nextcloud_web_1
       - PHP_UPLOAD_LIMIT=1024G
     depends_on:
-      - db
-      - redis
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
 
   cron:
-    image: nextcloud:28.0.3-apache@sha256:ed07f89119dcca2a3711897c48a8ac969542d96d69384445d8fcdc7804ca946f
+    image: nextcloud:35.0.2-apache@sha256:3f05f4d5eded9d3d029e617926500645cca6344710364737a374088f6811095a
     # Currently needs to be run as root, if we run as uid 1000 this fails
     # https://github.com/nextcloud/docker/blob/05026b029d37fc5cd488d4a4a2a79480e39841ba/21.0/apache/entrypoint.sh#L53-L77
     # user: "1000:1000"
     restart: on-failure
     volumes:
       - ${APP_DATA_DIR}/data/nextcloud:/var/www/html
-    entrypoint: /cron.sh
+      - ${APP_DATA_DIR}/hooks/pre-start:/umbrel-migration-hook:ro
+      - ${APP_DATA_DIR}/data/migration:/umbrel-migration:ro
+    entrypoint: ["bash", "/umbrel-migration-hook", "--guard", "cron"]
     depends_on:
-      - db
-      - redis
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
