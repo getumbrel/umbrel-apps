@@ -4,19 +4,16 @@ storage:
   dataRoot: data
 category: bitcoin
 name: Bitcoin Lab
-version: "2.0.4"
+version: "2.0.5"
 tagline: See which peers bring you new blocks first
 description: >-
-  Ever wondered which of your peers actually brings you new blocks first? Your peers decide how soon your node hears about a new block, and Bitcoin Core picks them at random. Bitcoin Lab notes for every block which peer delivered it first and ranks your peers by it.
+  Every new block reaches your node through one of your peers. Some peers are first again and again, others never. Bitcoin Lab notes for every block who was first and ranks your peers by it. Keep the fast ones as manual peers, drop the ones that never deliver and get fresh ones to rank, or let rotation do it for you.
 
 
-  Then you act on it. Keep a good peer and Core holds on to it instead of letting it rotate away; drop one that never delivers and Core hands you a fresh random peer to rank in its place. An optional rotation runs this loop for you among Core's outbound connections; it is off by default. Your proven peers are put back after a restart, which Core itself will not do. Inbound peers are ranked too, but never promoted or replaced automatically.
+  Rotation only works on the outbound peers Core picks for you. Inbound peers are ranked too, but never kept or dropped automatically. Many of them don't accept connections at all, and the port you see is only the one they called from, so there is no address to dial back.
 
 
-  Not every connection is even in the running. A phone wallet, a network crawler, an address indexer - software like that passes no blocks on at all, so it can never deliver one. Those peers are marked "never first" in the list, with the reason shown on hover, rather than quietly counted among your competitors. Peer Map, in the same store, shows the same peers on a world map: where they are, who runs them and what they are.
-
-
-  Stratum Race is the other half: it times how quickly each mining pool turns a new block into fresh work, your own local pool included, with eight public solo pools racing as the baseline. It is off until you switch it on, so installing this does not start talking to anybody's pool on its own. Every second a miner spends on an already-solved block is a stale share, and that is the window curated peers close. Whether that is worth chasing is a fair question: half a second off a ten-minute job is 0.08% of your miner's time. Bitcoin Lab is for people who enjoy chasing it anyway.
+  Mining solo? Stratum Race times how fast your own pool turns a new block into fresh work, side by side with public pools. Rotation and Stratum Race are both off by default, and Bitcoin Lab never touches bitcoin.conf, wallets or keys.
 
 
 releaseNotes: ""
