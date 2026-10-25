@@ -2,7 +2,7 @@ manifestVersion: 1
 id: teslamate
 category: automation
 name: TeslaMate
-version: "4.3.0"
+version: "4.4.0"
 tagline: A powerful, self-hosted data logger for your Tesla
 description: >-
   TeslaMate is a powerful, self-hosted data logger for your Tesla.
@@ -36,7 +36,28 @@ description: >-
 
 
   Grafana default credentials: username admin, password admin (change on first login).
-releaseNotes: ""
+releaseNotes: >-
+  TeslaMate 4.4.0 updates the logger and the bundled Grafana dashboards (Grafana 13.2.4).
+
+
+  - Stops trusting compromised eMudhra certificate authorities, so they cannot impersonate the Tesla streaming API or the MQTT broker
+
+  - Car summary and MQTT use the newest stream or poll value, so the odometer no longer steps backward while driving
+
+  - Visited lists the countries and cities each car stopped or charged in, and Temperatures shows averages for the selected range
+
+  - Charging dashboards label charger values as AC input and hide them during DC fast charging
+
+  - Changing a geofence re-assigns drives and charges by distance. Renaming one, or editing only its costs, no longer reprocesses history
+
+
+  MQTT note: a value the car reports as missing is now published as an empty topic, for example speed and shift_state after the car is switched off. A topic the car has not reported since TeslaMate started keeps its retained value. While TeslaMate is running, the odometer never decreases and is never published empty.
+
+
+  Postgres stays on 18.6 and Mosquitto stays on 2.1.2, refreshed to their current image builds. TeslaMateApi stays on 1.25.0. Existing drives, charges, and Grafana settings are kept.
+
+
+  Full release notes: https://github.com/teslamate-org/teslamate/releases/tag/v4.4.0
 developer: TeslaMate
 website: https://docs.teslamate.org
 dependencies: []

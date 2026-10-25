@@ -7,7 +7,7 @@ services:
       APP_PORT: 4000
 
   web:
-    image: teslamate/teslamate:4.3.0@sha256:516fc9f0a14369f541b1a70ff2f65dd9b57c2e01c1f533b6d43b375445404955
+    image: teslamate/teslamate:4.4.0@sha256:c85b3d447502683ed7bf12fb478e0dae9a985fe975ac22cccb64faeb4c4a5d31
     restart: on-failure
     environment:
       ENCRYPTION_KEY: ${APP_TESLAMATE_ENCRYPTION_KEY}
@@ -28,7 +28,7 @@ services:
         condition: service_started
 
   database:
-    image: postgres:18-trixie@sha256:74935e72241653ca55e0414067e6d8763aceb8a810eb51b452253ec3dcfc4336
+    image: postgres:18.6-trixie@sha256:edb0c08dc33befd0262ab3b5cf1c4f3f8cfd8b09e88c05b45adee29d6761ddb6
     restart: on-failure
     user: "1000:1000"
     stop_grace_period: 1m
@@ -47,7 +47,7 @@ services:
       start_period: 30s
 
   grafana:
-    image: teslamate/grafana:4.3.0@sha256:7f5a119ad06c212c4122e12c957a6848b5718d9618826b5ce70a1ec12d84fed5
+    image: teslamate/grafana:4.4.0@sha256:2dd1fae85cd891e1d851350d13b547abf000efd602c8d0e5734eda6d43e22e01
     restart: on-failure
     user: "1000:1000"
     environment:
@@ -65,7 +65,7 @@ services:
         condition: service_healthy
 
   mosquitto:
-    image: eclipse-mosquitto:2.1.2-alpine@sha256:38c0da4f2ef84284d47b3b3eeea1cb3bdeabe81ee10caf0cd5c5ff61ee3ea408
+    image: eclipse-mosquitto:2.1.2-alpine@sha256:860aeb5d63ce509508f6dcfb2bc8a1c1dd2bc60555b562b45ce90e52d8dabb0f
     restart: on-failure
     user: "1000:1000"
     command: mosquitto -c /mosquitto-no-auth.conf
