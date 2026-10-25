@@ -7,7 +7,7 @@ services:
       APP_PORT: 3400
 
   web:
-    image: ghcr.io/hoseki-inc/bitcoin-control-center:1.0.0@sha256:e94a51428f3a6d95f358f869736a1114fe8322485009cf5f65fc3cc283c5c29e
+    image: ghcr.io/hoseki-inc/bitcoin-control-center:1.1.0@sha256:6e53e78df30c4334767e1f3b3996574f57901476323439bf298138c95484f6e6
     user: '1000:1000'
     restart: on-failure
     stop_grace_period: 1m
@@ -28,3 +28,8 @@ services:
       # names that only resolve privately; none of them can be used for DNS rebinding.
       SENTINEL_ALLOWED_HOSTS: '${DEVICE_HOSTNAME},*.local,*.onion,*.ts.net,*.lan,*.home.arpa,*.internal'
       SENTINEL_ALLOW_IP_HOSTS: 'true'
+      # Every route needs a PIN, set in the app on first open. Other apps on Umbrel's Docker
+      # network reach this container directly, past Umbrel's login. Forgot it? From the umbrelOS
+      # terminal: sudo docker exec bitcoin-control-center_web_1 node /app/dist/cli.js reset-pin
+      # then restart the app.
+      SENTINEL_PIN: umbrel
