@@ -6,7 +6,7 @@ services:
       APP_PORT: "3000"
 
   web:
-    image: ghcr.io/fccview/jotty:1.28.0@sha256:df965e56fe2e3ce056351425b8ff5d7df991a6596dfa807c73c91cf5eaa30c86
+    image: ghcr.io/fccview/jotty:1.29.1@sha256:8cf45c7ba1c0354a8711e11e0cd2e6bcc0994f848d4c1f6786f9a8694caf5290
     user: "1000:1000"
     restart: on-failure
     volumes:
@@ -15,3 +15,4 @@ services:
       - ${APP_DATA_DIR}/data/cache:/app/.next/cache
     environment:
       - NODE_ENV=production
+      - INTERNAL_API_URL=http://localhost:3000
