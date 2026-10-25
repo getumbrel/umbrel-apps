@@ -1,0 +1,13 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: jellymeme_app_1
+      APP_PORT: 8080
+  app:
+    image: ghcr.io/armanckeser/jellymeme:1.1.0@sha256:49c4549ed6cd759e902013ffa98563bff75b062ea4d7faf95d5e492b7c94ee73
+    restart: on-failure
+    stop_grace_period: 1m
+    volumes:
+      - ${APP_DATA_DIR}/data/data:/data
