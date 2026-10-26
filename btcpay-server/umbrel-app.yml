@@ -4,7 +4,7 @@ storage:
   dataRoot: data
 category: bitcoin
 name: BTCPay Server
-version: "2.4.5"
+version: "2.4.6"
 tagline: Accept Bitcoin payments with 0 fees & no 3rd party
 description: >-
   BTCPay Server is a payment processor that allows you to receive
@@ -36,14 +36,19 @@ path: ""
 defaultUsername: ""
 defaultPassword: ""
 releaseNotes: |-
-  This release changes several existing workflows:
+  ⚠️ Per-invoice email notifications have been removed. Use merchant-controlled email rules instead.
 
-  - Your Umbrel Lightning Node connection continues working as usual. If you’ve manually connected BTCPay to other apps on your home network, check those connections after updating. Advanced configuration instructions: https://docs.btcpayserver.org/Operators/#allow-private-outbound-destinations
-  - Employees without permission to create approved pull payments can no longer auto-approve invoice overpayment refunds.
-  - Public checkout, status, and receipt endpoints hide invoice information one month after monitoring ends; users with invoice-view permission can still access it.
-  - Manual invoice notification URLs are deprecated in favor of webhooks.
+  This release strengthens API-key and store permissions, browser actions, external URLs, and handling of untrusted input. It also includes runtime security updates.
 
-  It also adds Greenfield APIs for store reports, improves invoice permissions and access-token management, fixes invoice, payout, refund, Lightning, plugin-migration, and store-scoping issues, and updates NBXplorer to 2.6.19.
+  - Faster recent-invoice lists on large servers.
+  - Clearer wallet filters, import/export controls, and fee-bump actions.
+  - Improved QR-code scanning in dark mode and readable checkout payment-method names.
+  - Persistent diagnostics for plugins disabled after failures.
+  - Fixes for email rules, subscriptions, public forms, and invoice redirect URLs.
+  - Updates NBXplorer to 2.6.21.
+
+  For users skipping 2.4.5: manually configured connections to other apps on your home network may need updating. Advanced configuration: https://docs.btcpayserver.org/Operators/#allow-private-outbound-destinations
+  Public invoice details are hidden one month after monitoring ends, and manual invoice notification URLs are deprecated in favor of webhooks.
 
   ⚠️ Security reminder for skipped-version updates. If you used BTCPay Server before 2.4.2 and have not rotated your Lightning Node credentials since updating to 2.4.2 or later, update first, then rotate your Lightning Node credentials immediately. Updating alone does not invalidate credentials that may have been exposed.
 
@@ -51,6 +56,6 @@ releaseNotes: |-
 
   Prior security advisory: https://blog.btcpayserver.org/security-advisory-btcpay-server-2-4-2/
 
-  Full release notes: https://github.com/btcpayserver/btcpayserver/releases/tag/v2.4.5
+  Full release notes: https://github.com/btcpayserver/btcpayserver/releases/tag/v2.4.6
 submitter: Umbrel
 submission: https://github.com/getumbrel/umbrel/pull/353
