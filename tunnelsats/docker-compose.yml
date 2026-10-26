@@ -10,7 +10,7 @@ services:
       PROXY_AUTH_ADD: "true"
 
   tunnelsats-web:
-    image: tunnelsats/ts-umbrel-app:3.4.4@sha256:6ff569de0b81565e6300ed2b79d27c26d01373fea9cf191472032d2e26993e76
+    image: tunnelsats/ts-umbrel-app:3.5.0@sha256:665ec13033c6e1d5de96b244d0c29ed8e34caf0ce62b46ba359efbafed5f2017
     restart: on-failure
     user: "1000:1000"
     cap_drop:
@@ -30,7 +30,7 @@ services:
       - ${APP_DATA_DIR}/runtime:/run/tunnelsats
 
   tunnelsats-daemon:
-    image: tunnelsats/ts-umbrel-app:3.4.4@sha256:6ff569de0b81565e6300ed2b79d27c26d01373fea9cf191472032d2e26993e76
+    image: tunnelsats/ts-umbrel-app:3.5.0@sha256:665ec13033c6e1d5de96b244d0c29ed8e34caf0ce62b46ba359efbafed5f2017
     restart: on-failure
     network_mode: "host"
     cap_add:
@@ -43,7 +43,7 @@ services:
       - SECURE_MODE=${SECURE_MODE:-true}
       - MANAGEMENT_BROWSER_SECURITY_ENABLED=false
     volumes:
-      # Persistent peer directory (Uninstall-safe)
+      # Persistent application state directory
       - ${APP_DATA_DIR}/data:/data
       # Lightning Node config mounts (Graceful discovery via relative paths)
       - ${APP_DATA_DIR}/../lightning/data/lnd:/lightning-data/lnd:ro
