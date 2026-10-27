@@ -25,7 +25,7 @@ services:
   # do this, because the dashboard edits the same file and a re-rendered
   # template would overwrite those edits on every start.
   config:
-    image: synonymsoft/homeserver-umbrel-config-wrapper:v0.0.8@sha256:23d2ba85fa07e61a9d87550179910d85a03cd49b6532b62c584d9b4e8ba2eb14
+    image: synonymsoft/homeserver-umbrel-config-wrapper:v0.0.9@sha256:14e5ec26c363a5df3aef5111e69bfbab3eadfed48aa4942f88b4997c9298e2bf
     restart: on-failure
     environment:
       POSTGRES_USER: pubky
@@ -72,7 +72,7 @@ services:
       start_period: 120s
 
   web:
-    image: synonymsoft/homeserver-dashboard:v0.1.32@sha256:416da0438af1246b35aeb1f7ec2520e29791e0479b46e78d64fe3cfe151e5d05
+    image: synonymsoft/homeserver-dashboard:v0.1.33@sha256:1a5e04274647e73fdba655fc892b33e6e6a1fd8fffab8f7945ce04c6023111a6
     restart: on-failure
     stop_grace_period: 1m
     # The entrypoint starts as root only to fix ownership on the mounts it
@@ -99,7 +99,7 @@ services:
   # until a tunnel is configured. The image carries the official cloudflared
   # binary; preview/ is the only path this service can write to.
   tunnel:
-    image: synonymsoft/homeserver-umbrel-config-wrapper:v0.0.8@sha256:23d2ba85fa07e61a9d87550179910d85a03cd49b6532b62c584d9b4e8ba2eb14
+    image: synonymsoft/homeserver-umbrel-config-wrapper:v0.0.9@sha256:14e5ec26c363a5df3aef5111e69bfbab3eadfed48aa4942f88b4997c9298e2bf
     restart: on-failure
     stop_grace_period: 1m
     user: "65532:65532"
