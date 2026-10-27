@@ -1,0 +1,32 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: opensoho_server_1
+      APP_PORT: 8090
+
+  init:
+    image: ghcr.io/opensoho/opensoho:v0.15.2@sha256:8768e34a8197dba831a3ebec05f974b2d2f0a6cd775693efc0e70c834cfc319e
+    restart: on-failure
+    command: ["superuser", "upsert", "admin@opensoho.local", "${APP_PASSWORD}"]
+    environment:
+      OPENSOHO_SHARED_SECRET: $APP_PASSWORD
+      APP_PASSWORD: $APP_PASSWORD
+    volumes:
+      - ${APP_DATA_DIR}/data/pb_data:/ko-app/pb_data
+
+  server:
+    image: ghcr.io/opensoho/opensoho:v0.15.2@sha256:8768e34a8197dba831a3ebec05f974b2d2f0a6cd775693efc0e70c834cfc319e
+    command: ["serve", "--http", "0.0.0.0:8090"]
+    init: true
+    restart: on-failure
+    ports:
+      - "18090:8090"
+    depends_on:
+      init:
+        condition: service_completed_successfully
+    environment:
+      OPENSOHO_SHARED_SECRET: $APP_PASSWORD
+    volumes:
+      - ${APP_DATA_DIR}/data/pb_data:/ko-app/pb_data
