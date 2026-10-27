@@ -1,0 +1,5 @@
+laravel_key="$(derive_entropy "${app_entropy_identifier}-laravel-key")"
+laravel_key_base64="$(printf '%s' "${laravel_key}" | openssl dgst -sha256 -binary | openssl base64 -A)"
+export APP_SYNKK_APP_KEY="base64:${laravel_key_base64}"
+export APP_SYNKK_REVERB_KEY="$(derive_entropy "${app_entropy_identifier}-reverb-key")"
+export APP_SYNKK_REVERB_SECRET="$(derive_entropy "${app_entropy_identifier}-reverb-secret")"
