@@ -1,0 +1,60 @@
+manifestVersion: 1
+id: opentodo
+storage:
+  dataRoot: data
+environment:
+  - name: OPENTODO_BASE_URL
+    services:
+      - web
+    default: ""
+    note: Leave empty when you open OpenTodo from your Umbrel. Set it only when OpenTodo is reachable at your own https address, for example https://todo.example.com, through a tunnel or reverse proxy.
+  - name: OPENTODO_SETUP_TOKEN
+    services:
+      - web
+    default: ""
+    note: Optional, at least 16 characters. When set, creating the first (owner) account asks for this token. Useful only if you turn off Umbrel login for OpenTodo and it is reachable by others.
+  - name: OPENTODO_ALLOW_SIGNUP
+    services:
+      - web
+    default: "false"
+    options:
+      - "false"
+      - "true"
+    note: true lets anyone who can open OpenTodo create an account. Otherwise the owner invites people.
+  - name: OPENTODO_TRUSTED_PROXIES
+    services:
+      - web
+    default: ""
+    note: Reverse proxies whose X-Forwarded-For is trusted for the visitor's address, such as cloudflare or 192.0.2.0/24. Leave empty unless every request comes through them.
+category: files
+name: OpenTodo
+version: "0.13.0"
+tagline: A to-do app that runs on your own server
+description: >-
+  OpenTodo is an open-source, local-first task manager. Plan your day, keep projects in order, set reminders and share lists with your family or your team, from your phone and your computer.
+
+
+  There is no default password: the first person to open OpenTodo creates the owner account, and after that the owner invites people. Open it right after installing to create yours.
+
+
+  Projects, labels, due dates, reminders, boards, comments and attachments are included, along with CalDAV for calendar and task apps, calendar feeds, an API with tokens, and import from other task apps. Your tasks are stored in one SQLite database in the app's data folder.
+
+
+  Installing OpenTodo as an app on your phone, working offline, push notifications, passkeys and end-to-end encryption need an https address that your browser trusts.
+releaseNotes: ""
+
+developer: OpenTodo
+website: https://open-todo.app
+dependencies: []
+repo: https://github.com/pixari/opentodo
+support: https://github.com/pixari/opentodo/issues
+
+port: 8418
+gallery: []
+path: ""
+
+defaultUsername: ""
+defaultPassword: ""
+
+submitter: OpenTodo
+submission: https://github.com/getumbrel/umbrel-apps/pull/6251

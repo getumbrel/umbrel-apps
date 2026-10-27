@@ -1,0 +1,23 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: opentodo_web_1
+      APP_PORT: 8080
+      # CalDAV, API-token, MCP and calendar-feed clients, and public list links, cannot send the
+      # Umbrel login cookie; OpenTodo authenticates these routes itself (feeds and public links
+      # by the secret in their address). Static assets are listed so a public link page loads.
+      PROXY_AUTH_WHITELIST: "/api/*,/dav,/dav/*,/.well-known/caldav,/.well-known/caldav/*,/feeds/*,/mcp,/public/*,/assets/*,/appearance.js"
+      # Creating an account stays behind the Umbrel login, so nobody can claim the owner account
+      # through the API before you open the app.
+      PROXY_AUTH_BLACKLIST: "/api/v1/auth/register"
+
+  web:
+    image: ghcr.io/pixari/opentodo:0.13.0@sha256:ab74f08ba9bb5c6a61823b942c5e071eeeeb1db86fae24fd73f1f957030a42f5
+    # Umbrel creates the app data owned by 1000:1000; OpenTodo's static binary runs as any user.
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 1m
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
