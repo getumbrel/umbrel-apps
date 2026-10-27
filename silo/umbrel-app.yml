@@ -4,7 +4,7 @@ storage:
   dataRoot: data
 category: files
 name: Silo
-version: "2026.10.18"
+version: "2026.10.26"
 tagline: Store your files with an S3-compatible object server
 description: >-
   Silo is a community-maintained, open-source object storage server with an S3-compatible API and a full web console. Organize files in buckets, upload and download objects, and manage access keys and policies from your browser.
@@ -14,7 +14,17 @@ description: >-
 
 
   This installation uses a single local storage directory, not a redundant storage cluster. Keep independent backups. The S3 endpoint uses HTTP: use it only on a trusted network or through an encrypted connection such as Tailscale, and do not expose it directly to the internet.
-releaseNotes: ""
+releaseNotes: >-
+  Back up your data, access policies, configuration, and encryption keys before updating. If you use replication or multiple Silo servers, upgrade all participating servers together.
+
+
+  - Updated web console with improved permissions, identity management, exports, and accessibility.
+  - Fixed resetting built-in policies and refreshing the bucket list.
+  - Improved protection of versioned objects and tiered data during deletion and lifecycle expiration.
+  - Fixed checksum handling for replicated multipart objects and improved LDAP login reliability.
+
+
+  Full release notes: https://github.com/pgsty/silo/releases/tag/RELEASE.2026-10-26T00-00-00Z
 developer: PGSTY
 website: https://silo.pgsty.com
 dependencies: []
