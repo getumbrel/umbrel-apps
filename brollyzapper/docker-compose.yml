@@ -1,0 +1,131 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: brollyzapper_server_1
+      APP_PORT: 8080
+      # The LNURL endpoints are fetched by anonymous clients on the public
+      # internet, which cannot send an Umbrel auth cookie. Everything else stays
+      # behind Umbrel auth AND the app's own login (spec §3).
+      #
+      # This list must equal the app's public route set exactly. A path
+      # whitelisted here but absent from the public mux is dead config; the
+      # reverse is worse — a public route Umbrel still demands a login for,
+      # which breaks anonymous LNURL clients with no visible error. The lint in
+      # umbrel/lint_test.go asserts the two agree.
+      PROXY_AUTH_WHITELIST: "/health,/.well-known/lnurlp/*,/lnurlp/*"
+      #
+      # PROXY_TRUST_UPSTREAM must never appear here. Setting it true makes
+      # app_proxy forward a client-supplied X-Forwarded-For verbatim, handing
+      # any caller a spoofed source address past the rate limiter — verified on
+      # a real box, and undocumented in app-proxy's own README, so nothing
+      # warns an author who adds it. The lint asserts its absence.
+
+  # The credential broker. This is the ONLY container that mounts
+  # admin.macaroon, and it listens on nothing: its sole input is a unix socket
+  # in the shared credential volume (spec §3, §6).
+  guard:
+    image: ghcr.io/davotoula/brollyzapper-guard:0.1.18@sha256:bf31ae22049d637d6e934d04165270862c899fd45452ef5405e0b6e21e3234bc
+    user: "1000:1000"
+    volumes:
+      - ${APP_DATA_DIR}/data/guard:/guard
+      - ${APP_DATA_DIR}/data/credentials:/credentials
+      # Two individual FILES, never the directory. Mounting
+      # ${APP_LIGHTNING_NODE_DATA_DIR} whole would also expose wallet.db,
+      # macaroons.db and channel.backup — and with Umbrel's default wallet
+      # password, wallet.db is the seed (spec §6, §20).
+      - ${APP_LIGHTNING_NODE_DATA_DIR}/tls.cert:/lnd/tls.cert:ro
+      - ${APP_LIGHTNING_NODE_DATA_DIR}/data/chain/bitcoin/${APP_BITCOIN_NETWORK}/admin.macaroon:/lnd/admin.macaroon:ro
+    environment:
+      LND_ADDRESS: $APP_LIGHTNING_NODE_IP:$APP_LIGHTNING_NODE_GRPC_PORT
+      LND_CERT_FILE: "/lnd/tls.cert"
+      LND_ADMIN_MACAROON: "/lnd/admin.macaroon"
+      DATA_DIR: "/guard"
+      CREDENTIALS_DIR: "/credentials"
+      SERVER_IP: $APP_BROLLYZAPPER_IP
+      NETWORK_CIDR: ${NETWORK_IP}/16
+      # INITIAL VALUES since `06v`, not ceilings. They seed the guard's stored
+      # caps on first start and the operator may then lower either freely and
+      # raise either through the same one-time code. Making them ceilings would
+      # re-create `06v` exactly: an unmovable limit set by package content the
+      # operator cannot reach.
+      #
+      # The APP_BROLLYZAPPER_* variables are still defined nowhere, and that is
+      # now correct rather than the bug `06v` was filed on — the values they
+      # would have set are no longer where an operator needs to reach.
+      GUARD_MAX_SPEND_MSAT: ${APP_BROLLYZAPPER_MAX_SPEND_MSAT:-100000000}
+      GUARD_MAX_PAYMENT_MSAT: ${APP_BROLLYZAPPER_MAX_PAYMENT_MSAT:-25000000}
+      # THE DEPLOYMENT CEILING on minting spend authority: may sending ever be
+      # enabled on this deployment at all (tna.4, reshaped by `06v`).
+      #
+      # TRUE HERE, and the flip is a change of meaning rather than of appetite.
+      # It was the OPERATOR's gate and defaulted to false, which was right while
+      # an operator could reach it. `06v` established they cannot: umbrelOS has
+      # no settings key in any of 391 app manifests, and `exports.sh` — the only
+      # live channel into compose interpolation — is package content that
+      # `apps.update.mutate` overwrites, confirmed live when the 0.1.12 update
+      # wiped a hand-added export. So false-by-default did not mean "off until
+      # the operator says so"; it meant sending could not be enabled on a stock
+      # install at all, while the app's own Sending page told them to change a
+      # setting that does not exist.
+      #
+      # THE OPERATOR'S GATE IS NOW THE GUARD'S STORED LATCH, off on a fresh
+      # install, turned on only by a one-time code the guard writes into
+      # `data/guard` — a directory the server has no mount for. §6's
+      # receive-only default is preserved by that, not by this line.
+      #
+      # WHAT THIS LINE IS STILL FOR: a deployment that wants a hard "never".
+      # Setting it false means no in-app action can enable sending, and the
+      # Sending page says exactly that rather than offering a ceremony that
+      # cannot work. On Umbrel that is not the case we are packaging for.
+      GUARD_ALLOW_SENDING: ${APP_BROLLYZAPPER_ALLOW_SENDING:-true}
+      # Where the operator will find the guard's authorisation file, in words
+      # they can follow. §19 forbids the generic app assuming a
+      # deployment-specific path, so the PACKAGE supplies the sentence, the
+      # guard relays it over the socket, and the page renders what it is given —
+      # an arch rule asserts no umbrelOS route appears in the app's own source.
+      #
+      # umbrelOS's Files app maps /Apps to app-data (`files.ts`), so this is the
+      # route an operator actually walks in the UI they already have. It is a
+      # DESCRIPTION, not a path the app resolves: nothing opens it, and a wrong
+      # value costs an operator a second look rather than a security property.
+      GUARD_AUTHORISATION_LOCATION: "the Files app, under Apps → brollyzapper → data → guard → authorisation.txt"
+
+    restart: on-failure
+    stop_grace_period: 30s
+
+  # All of the attack surface: HTTP, nostr relays, sqlite. It never sees
+  # admin.macaroon — adding that mount here would silently undo §3, §6 and half
+  # of §11, which is what the lint exists to prevent.
+  server:
+    image: ghcr.io/davotoula/brollyzapper:0.1.18@sha256:4b5c998aa9670f0ce480db84108dbcd6e86b5bbfd77cf098ee402459f457e03f
+    # The images run as uid 65532 (distroless/static:nonroot) by default, and
+    # this line overrides that. umbrelOS creates ${APP_DATA_DIR} owned by
+    # 1000:1000, so 1000 is the uid that can write the bind mounts — including
+    # data/credentials, which the GUARD writes recv.macaroon into. Change one
+    # of these without the other and the symptom is the guard failing to write
+    # the macaroon on first run, which reads like a bake failure and is not.
+    user: "1000:1000"
+    depends_on:
+      - guard
+    volumes:
+      - ${APP_DATA_DIR}/data/server:/data
+      # Read-only: the server consumes what the guard bakes and writes nothing
+      # into the credential volume itself.
+      - ${APP_DATA_DIR}/data/credentials:/credentials:ro
+    environment:
+      LND_ADDRESS: $APP_LIGHTNING_NODE_IP:$APP_LIGHTNING_NODE_GRPC_PORT
+      CREDENTIALS_DIR: "/credentials"
+      GUARD_SOCKET: "/credentials/guard.sock"
+      DATA_DIR: "/data"
+      LISTEN_ADDR: "0.0.0.0:8080"
+      # app_proxy is always a hop, so the forwarded-for walk needs to trust it
+      # (spec §7).
+      TRUSTED_PROXIES: ${NETWORK_IP}/16
+      ADMIN_PASSWORD: $APP_PASSWORD
+      SESSION_SECRET: $APP_BROLLYZAPPER_SESSION_SECRET
+    restart: on-failure
+    stop_grace_period: 1m
+    networks:
+      default:
+        # Must match the ipaddr caveat the guard bakes into the spend macaroon.
+        ipv4_address: $APP_BROLLYZAPPER_IP
