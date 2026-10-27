@@ -1,0 +1,19 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: lazylibrarian_server_1
+      APP_PORT: 5299
+
+  server:
+    image: ghcr.io/linuxserver/lazylibrarian:36795e7c-ls319@sha256:401024a35ae14c62ff2a581c3854e5628eb9d1f86b9dcff1c279aed6e77d5e5c
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
+    volumes:
+      - ${APP_DATA_DIR}/data/config:/config
+      - ${UMBREL_ROOT}/data/storage/downloads:/downloads
