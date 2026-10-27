@@ -1,4 +1,4 @@
-version: "3.7"
+﻿version: "3.7"
 
 services:
   app_proxy:
@@ -7,22 +7,23 @@ services:
       APP_PORT: 3000
 
   web:
-    image: ghcr.io/karakeep-app/karakeep:0.34.1@sha256:placeholder
+    image: ghcr.io/karakeep-app/karakeep:0.34.1@sha256:8e8a2f07265fca1f04dfabd29e70a57cd4491449de20b9c9c7de360b4c4d08cd
     restart: on-failure
     volumes:
-      - ${APP_DATA_DIR}/data:/data
+      - /data:/data
     environment:
       MEILI_ADDR: http://karakeep_meilisearch_1:7700
       BROWSER_WEB_URL: http://karakeep_chrome_1:9222
       DATA_DIR: /data
-      NEXTAUTH_SECRET: ${APP_SEED}
-      NEXTAUTH_URL: http://${DEVICE_DOMAIN_NAME}:${APP_PROXY_PORT}
+      NEXTAUTH_SECRET: 
+      NEXTAUTH_URL: http://:
+      MEILI_MASTER_KEY: 
     depends_on:
       - meilisearch
       - chrome
 
   chrome:
-    image: ghcr.io/karakeep-app/karakeep-chrome:0.34.1@sha256:placeholder
+    image: ghcr.io/karakeep-app/karakeep-chrome:156.0.8078.47-r1@sha256:4ad61127638dd27bfe685222787c5780dd1d083d23a7658c39af657775814c44
     restart: on-failure
     init: true
     command:
@@ -33,10 +34,10 @@ services:
       - --window-size=1440,900
 
   meilisearch:
-    image: getmeili/meilisearch:v1.41.0@sha256:placeholder
+    image: getmeili/meilisearch:v1.41.0@sha256:7f95cdd482dab97abe881d7639320672a5f89e3affaf6c8038c0a008f9fe6cdc
     restart: on-failure
     environment:
       MEILI_NO_ANALYTICS: "true"
-      MEILI_MASTER_KEY: ${APP_SEED}
+      MEILI_MASTER_KEY: 
     volumes:
-      - ${APP_DATA_DIR}/data/meilisearch:/meili_data
+      - /data/meilisearch:/meili_data
