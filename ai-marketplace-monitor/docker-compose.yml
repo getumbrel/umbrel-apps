@@ -1,0 +1,25 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: ai-marketplace-monitor_web_1
+      APP_PORT: 8467
+
+  web:
+    image: ghcr.io/bopeng/ai-marketplace-monitor:0.10.14@sha256:f7dea83be2caee4e53db0e82873a68e01cf3fe4cf5885a4c1fe8fb1fcfd3471c
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      PUID: "1000"
+      PGID: "1000"
+      # aimm's own sign-in, with the password Umbrel generates and shows; the Facebook
+      # credentials, which Umbrel has no settings form for, go in the config editor
+      AIMM_WEBUI_AUTH: local
+      AIMM_WEBUI_USERNAME: umbrel
+      AIMM_WEBUI_PASSWORD: ${APP_PASSWORD}
+      # Umbrel cannot pass a key: the placeholder keeps the default configuration valid,
+      # and you put your key in its place in the config editor
+      UNITYSVC_API_KEY: "svcpass_XXXXX"
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
