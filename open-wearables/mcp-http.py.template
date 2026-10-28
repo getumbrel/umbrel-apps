@@ -1,0 +1,110 @@
+"""Stateless HTTP transport for upstream's read-only tools, with per-request API keys.
+
+The bearer token is validated by the API and passed only to this request's
+upstream client. Never replace it with a shared instance-level credential.
+"""
+
+from contextvars import ContextVar
+import ipaddress
+import os
+
+import httpx
+import uvicorn
+
+from app.services import api_client
+
+request_key: ContextVar[str] = ContextVar("open_wearables_api_key", default="")
+
+
+class RequestClient(api_client.OpenWearablesClient):
+    def __init__(self) -> None:
+        self.base_url = os.environ["OPEN_WEARABLES_API_URL"].rstrip("/")
+        self.timeout = 30
+
+    @property
+    def _api_key(self) -> str:
+        return request_key.get()
+
+
+# Routers import this singleton when app.main is imported below. Replacing it
+# before that import keeps all tool implementations intact and avoids global
+# credential mutation when concurrent clients use different API keys.
+api_client.client = RequestClient()
+from app.main import mcp  # noqa: E402
+
+mcp_app = mcp.http_app(path="/mcp", stateless_http=True)
+allowed_hosts = set(os.environ.get("MCP_ALLOWED_HOSTS", "localhost:3495,127.0.0.1:3495").split(","))
+
+
+def host_allowed(authority: str) -> bool:
+    if authority in allowed_hosts:
+        return True
+    # Literal RFC1918 LAN addresses cannot be DNS rebinding names. Other custom
+    # DNS authorities must be explicitly listed by the deployer.
+    host, separator, port = authority.rpartition(":")
+    if not separator or port != "3495":
+        return False
+    try:
+        address = ipaddress.IPv4Address(host)
+        return any(address in subnet for subnet in (
+            ipaddress.IPv4Network("10.0.0.0/8"),
+            ipaddress.IPv4Network("172.16.0.0/12"),
+            ipaddress.IPv4Network("192.168.0.0/16"),
+        ))
+    except ipaddress.AddressValueError:
+        return False
+
+
+async def respond(send, status: int, body: bytes, *, authenticate: bool = False) -> None:
+    headers = [(b"content-type", b"text/plain"), (b"cache-control", b"no-store")]
+    if authenticate:
+        headers.append((b"www-authenticate", b'Bearer realm="open-wearables-mcp"'))
+    await send({"type": "http.response.start", "status": status, "headers": headers})
+    await send({"type": "http.response.body", "body": body})
+
+
+async def app(scope, receive, send) -> None:
+    if scope["type"] != "http":
+        await mcp_app(scope, receive, send)
+        return
+    headers = {name.lower(): value for name, value in scope["headers"]}
+    authority = headers.get(b"host", b"").decode("latin-1").lower()
+    if not host_allowed(authority) or b"origin" in headers:
+        await respond(send, 403, b"Forbidden")
+        return
+    if scope["path"] != "/mcp":
+        await respond(send, 404, b"Not found")
+        return
+    if scope["method"] != "POST":
+        await respond(send, 405, b"Use MCP POST requests")
+        return
+    authorization = headers.get(b"authorization", b"").decode("latin-1")
+    scheme, _, key = authorization.partition(" ")
+    if scheme.lower() != "bearer" or not key or len(key) > 1024 or any(c.isspace() for c in key):
+        await respond(send, 401, b"Open Wearables API key required", authenticate=True)
+        return
+    try:
+        async with httpx.AsyncClient(timeout=10, follow_redirects=False) as client:
+            validation = await client.get(
+                api_client.client.base_url + "/api/v1/users",
+                params={"limit": 1}, headers={"X-Open-Wearables-API-Key": key},
+            )
+    except httpx.HTTPError:
+        await respond(send, 503, b"Open Wearables API unavailable")
+        return
+    if validation.status_code in (401, 403):
+        await respond(send, 401, b"Invalid or revoked API key", authenticate=True)
+        return
+    if validation.status_code != 200:
+        await respond(send, 503, b"Open Wearables API unavailable")
+        return
+    token = request_key.set(key)
+    try:
+        await mcp_app(scope, receive, send)
+    finally:
+        request_key.reset(token)
+
+
+if __name__ == "__main__":
+    # Do not trust caller-provided forwarding headers or log authorization/data.
+    uvicorn.run(app, host="0.0.0.0", port=3495, proxy_headers=False, access_log=False)

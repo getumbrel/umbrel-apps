@@ -1,0 +1,67 @@
+"""Run the release's unmodified MCP tools with the package HTTP adapter."""
+
+import hashlib
+import os
+from pathlib import Path, PurePosixPath
+import shutil
+import subprocess
+import sys
+import tarfile
+import tempfile
+import urllib.request
+
+COMMIT = "d18304f8076a7710c48a4b279f8e8abd5a16887e"
+ARCHIVE_SHA256 = "b2780c235315d08c1d18cc830487f1ccd956df45683fafd4227c7f4690bc754f"
+ROOT = Path(os.environ.get("MCP_RUNTIME_DIR", "/tmp/open-wearables-mcp"))
+ADAPTER = os.environ.get("MCP_HTTP_ADAPTER", "/opt/umbrel/mcp-http.py")
+
+
+def prepare() -> None:
+    ROOT.mkdir(parents=True, exist_ok=True)
+    marker = ROOT / ".ready"
+    if marker.exists() and marker.read_text() == ARCHIVE_SHA256 and (ROOT / ".venv/bin/python").exists():
+        return
+
+    print("Preparing checksum-pinned Open Wearables MCP 0.10.0", flush=True)
+    with tempfile.TemporaryFile() as archive:
+        digest = hashlib.sha256()
+        url = "https://codeload.github.com/the-momentum/open-wearables/tar.gz/" + COMMIT
+        with urllib.request.urlopen(url, timeout=180) as response:
+            while chunk := response.read(1024 * 1024):
+                digest.update(chunk)
+                archive.write(chunk)
+        if digest.hexdigest() != ARCHIVE_SHA256:
+            raise RuntimeError("MCP source archive checksum mismatch")
+        archive.seek(0)
+        prefix = PurePosixPath("open-wearables-" + COMMIT, "mcp")
+        with tarfile.open(fileobj=archive, mode="r:gz") as source:
+            for member in source:
+                name = PurePosixPath(member.name)
+                if not name.is_relative_to(prefix) or not member.isfile():
+                    continue
+                relative = name.relative_to(prefix)
+                if ".." in relative.parts:
+                    raise RuntimeError("Unsafe MCP archive member")
+                target = ROOT.joinpath(*relative.parts)
+                target.parent.mkdir(parents=True, exist_ok=True)
+                with source.extractfile(member) as input_file, target.open("wb") as output_file:
+                    shutil.copyfileobj(input_file, output_file)
+
+    env = os.environ.copy()
+    env["UV_PROJECT_ENVIRONMENT"] = str(ROOT / ".venv")
+    env["UV_NO_SYNC"] = "false"
+    env["UV_PYTHON_DOWNLOADS"] = "never"
+    subprocess.run(
+        ["uv", "sync", "--project", str(ROOT), "--python", sys.executable,
+         "--locked", "--no-dev", "--no-default-groups", "--no-install-project"],
+        env=env, check=True,
+    )
+    marker.write_text(ARCHIVE_SHA256)
+
+
+if __name__ == "__main__":
+    prepare()
+    os.environ["PYTHONPATH"] = str(ROOT)
+    os.chdir(ROOT)
+    python = str(ROOT / ".venv/bin/python")
+    os.execv(python, [python, ADAPTER])
