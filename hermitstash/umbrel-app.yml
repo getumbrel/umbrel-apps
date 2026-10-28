@@ -4,7 +4,7 @@ storage:
   dataRoot: data
 category: files
 name: HermitStash
-version: "1.15.10"
+version: "1.15.11"
 tagline: Post-quantum encrypted self-hosted file sharing
 description: >-
   HermitStash is a self-hosted file upload server with post-quantum encryption. Every file and database field is sealed with an ML-KEM-1024 + ECDH P-384 hybrid envelope and XChaCha20-Poly1305 before touching disk; passwords use Argon2id. Nothing is stored in plaintext, including database fields the operator never thinks of as sensitive.
@@ -33,14 +33,11 @@ defaultPassword: ""
 submitter: dotCooCoo
 submission: https://github.com/getumbrel/umbrel-apps/pull/5378
 releaseNotes: >-
-  This update keeps a file's local copy when S3 storage reports a short upload, and stops S3 uploads and downloads from holding their data in memory for two minutes after they finish.
-
-
-  It also reports a damaged vault key file as damaged rather than as a wrong passphrase, makes the daily database vacuum free space, prefers the strongest post-quantum key exchange a client supports, accepts vault uploads when the file size limit is off, and checks outbound TLS certificate chains up to a trusted root.
+  This update requires a patched Node.js runtime with a fix for a security vulnerability in Brotli decompression, along with additional security fixes in DNS, TLS, HTTP, and cryptography.
 
 
   If you moved files from local storage to S3 on 1.15.9, check the bucket for objects of 0 bytes and restore those files from a backup. The first start of this version rebuilds the database once, which needs free space of about the database's size.
 
 
-  Full release notes can be found at https://github.com/dotCooCoo/hermitstash/releases/tag/v1.15.10
+  Full release notes can be found at https://github.com/dotCooCoo/hermitstash/releases/tag/v1.15.11
 dependencies: []
