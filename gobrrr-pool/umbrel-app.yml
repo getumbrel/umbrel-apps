@@ -4,7 +4,7 @@ storage:
   dataRoot: data
 category: bitcoin
 name: Go Brrr Pool
-version: "1.2.1-patch.2"
+version: "1.2.4"
 tagline: Bitcoin Solo Mining, Done Right!
 description: >-
   Go Brrr Pool is a self-hosted solo Bitcoin mining pool powered by ckpool-solo.
@@ -34,14 +34,28 @@ description: >-
 
   Homescreen widget developed by RodB.
 releaseNotes: >-
-  This update adds support for new storage management and configuration options being introduced with umbrelOS 2.0.
+  The web dashboard now runs on Node.js 24, as Node.js 20 no longer receives
+  security updates. The dashboard image is also less than half its previous
+  size.
 
 
-  Previous Go Brrr Pool 1.2.1-patch.1 release notes:
+  New read-only public API for monitoring apps, so you can follow your pool's
+  hashrate, best share and workers from a phone app next to your rigs. It is
+  read-only and never exposes miner IP addresses. For each worker it shows the
+  best share ever, the best share since the miner connected, and when it
+  connected.
 
 
-  This maintenance update improves long-term compatibility with the optional
-  local Mempool integration. Go Brrr Pool itself is unchanged.
+  Fixed the per-worker best share showing only the current session's best on
+  fresh installs.
+
+
+  Fixed ckpool receiving full blocks over ZMQ instead of only block hashes on
+  nodes that publish both on the same port, which caused log spam.
+
+
+  Backups no longer include the ever-growing pool log file; pool and worker
+  statistics are still backed up.
 developer: GoBrrr
 website: https://gobrrr.me
 dependencies:
@@ -56,6 +70,10 @@ gallery:
 path: ""
 defaultUsername: ""
 defaultPassword: ""
+backupIgnore:
+  - data/ckpool-logs/ckpool.log
+  - data/ckpool-logs/ckpool.log.old
+  - data/ckpool-socket
 widgets:
   - id: "stats"
     type: "four-stats"
