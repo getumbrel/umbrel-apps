@@ -1,0 +1,19 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: stackyard_web_1
+      APP_PORT: 80
+
+  web:
+    image: ghcr.io/sandobserver/stackyard:1.20.0@sha256:bb222c10043289189fa88609b745a690ccb8d83a4217bde32e5963996d7135ea
+    restart: on-failure
+    init: true
+    volumes:
+      - ${APP_DATA_DIR}/data/data:/data
+      - ${APP_DATA_DIR}/data/icons:/icons
+    environment:
+      ALLOW_PRIVATE_IPS: "true"
+      TRUST_PROXY: "true"
+      TRUSTED_PROXY: ${NETWORK_IP}/16
