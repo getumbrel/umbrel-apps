@@ -4,31 +4,33 @@ storage:
   dataRoot: data
 name: Originless
 version: "2026.10.29"
-tagline: "Zero-auth backend for signed events, binary blobs, and live P2P mesh"
+tagline: "Self-hosted, content-addressed file hosting over IPFS"
 category: files
 description: >-
-  Originless is a zero-auth, zero-account, zero-password backend for the open web.
-  It delivers cryptographically signed event sourcing, content-addressed binary blob
-  storage, real-time live streaming (SSE), and global peer-to-peer mesh sync in a
-  single lightweight binary with zero external dependencies.
+  Originless is self-hosted, content-addressed file hosting built on IPFS. Upload
+  a file or folder from the built-in dashboard (or the /up and /upf endpoints) and
+  get back a CID, the hash of the content. Share that CID and anyone can fetch the
+  file from your node or any IPFS-capable gateway, with no domain, DNS, account,
+  or API key.
 
-  Identity is an Ed25519 keypair you hold in your client or agent; the server
-  only verifies cryptographic signatures. No user accounts, passwords, or API keys
-  to leak or rotate.
+  Files live in an embedded Kubo IPFS node inside the app's data directory. Uploads
+  are unpinned by default and can be garbage-collected when the repository reaches
+  its storage limit, so keep your originals and re-upload when a CID stops
+  resolving. Pin CIDs you need to keep and set STORAGE_MAX to control the soft limit.
 
-  Includes an embedded web control panel, live SVG telemetry studio, in-browser
-  Web Crypto Ed25519 signer, drag-and-drop blob vault, and /agent.txt AI skill
-  instructions for Cursor, Claude, Copilot, ChatGPT, and Antigravity.
+  Upgrading from Originless v0.x is not supported in place: v1 uses a new data
+  layout (the Kubo repository lives under /data/ipfs), so existing v0.x data and
+  workflows do not carry over. Back up anything you need before upgrading. Treat
+  the node as a cache rather than permanent storage: unpinned content can be
+  garbage-collected, and removing the app removes its data.
 releaseNotes: >-
   2026.10.29:
-  - Zero-Auth Backend: Cryptographic Ed25519 signatures, zero accounts or passwords.
-  - Immutable Signed Events: Event sourcing with SHA-256 IDs, TTLs, and label queries.
-  - Content-Addressed Binary Blobs: SHA-256 content verification and atomic multipart publishing.
-  - Automatic P2P Mesh: Zero-config libp2p DHT discovery, WebSocket & QUIC-v1 on port 3232, and Bloom filter sync.
-  - Real-Time Live SSE: Instant Server-Sent Events stream (/events/stream).
-  - Autonomous AI Agent Skill: Every node serves /agent.txt machine-readable skill contract.
-  - Embedded Control Panel: Pure-white dashboard with ORIGINLESS live telemetry hero and SVG visualizers.
-  - Port Update: Streamlined down to single port 3232 (TCP & UDP) for both HTTP API and P2P mesh.
+  - Content-addressed file hosting: upload files and folders and get a stable CID.
+  - Embedded Kubo IPFS node with a built-in dashboard, upload endpoints, and live repo stats.
+  - Fetch by CID through any IPFS-capable gateway; no domain, DNS, account, or API key required.
+  - Storage controls: STORAGE_MAX soft limit with hourly garbage collection at a 90% watermark.
+  - v1 data layout: the Kubo repository now lives under /data/ipfs. In-place upgrades from v0.x are not supported; existing data and workflows do not carry over.
+  - Temporary storage warning: uploads are unpinned by default and can be garbage-collected. Keep originals and re-upload, or pin CIDs you need to keep.
 developer: "besoeasy"
 website: "https://github.com/besoeasy/originless"
 repo: "https://github.com/besoeasy/originless"
