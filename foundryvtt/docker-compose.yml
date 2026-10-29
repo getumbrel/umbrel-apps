@@ -70,3 +70,32 @@ services:
         <p>You can change the admin password later in Foundry or in the app settings.</p></body></html>
     volumes:
       - ${APP_DATA_DIR}/data/foundry:/data
+
+  # Optional audio/video server for Foundry's LiveKit AVClient module. Browsers send
+  # audio and video straight to it over WebRTC, so it uses host networking to offer
+  # every address of the Umbrel (home network, VPN) to players.
+  # Ports: 7880 signalling (put HTTPS in front of it), 7881/tcp and 7882/udp media.
+  livekit:
+    image: livekit/livekit-server:v1.13.11@sha256:25cd902de7cacbd5f1f779f6a6ac1eae20ba8f56b0935934ce6b0ab80d1e3d20
+    restart: on-failure
+    network_mode: host
+    environment:
+      # Until the user sets a secret, the server only accepts the per-install seed,
+      # which nobody knows, so it cannot be used.
+      LIVEKIT_KEYS: "foundryvtt: ${LIVEKIT_API_SECRET:-${APP_SEED}}"
+      LIVEKIT_CONFIG: |
+        port: 7880
+        rtc:
+          tcp_port: 7881
+          udp_port: 7882
+          use_external_ip: ${LIVEKIT_USE_EXTERNAL_IP:-false}
+          # Keep the home network and VPN addresses next to the public one.
+          advertise_internal_ip: true
+          # Most home routers do not loop traffic back to their own public address.
+          skip_external_ip_validation: true
+          interfaces:
+            excludes:
+              - docker0
+          ips:
+            excludes:
+              - ${NETWORK_IP}/16
