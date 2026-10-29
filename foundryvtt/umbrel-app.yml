@@ -26,15 +26,16 @@ environment:
   - name: FOUNDRY_HOSTNAME
     services:
       - server
-    note: Optional. Public hostname used in invitation links when Foundry is reachable through a tunnel or reverse proxy, such as foundry.example.com. Enter the hostname only, without https://. This does not expose Foundry by itself.
+    default: umbrel.local
+    note: Hostname used in public invitation links. Set it to your domain when Foundry is reachable through a tunnel or reverse proxy, such as foundry.example.com. Enter the hostname only, without https://. This does not expose Foundry by itself.
   - name: FOUNDRY_PROXY_SSL
     services:
       - server
-    default: "false"
+    default: "true"
     options:
       - "true"
       - "false"
-    note: Set to true when players reach Foundry through an HTTPS tunnel or reverse proxy, so invitation links and audio/video work over HTTPS.
+    note: Invitation links use https://, which browsers need for cameras and microphones. umbrelOS serves the app over HTTPS on its port, and a tunnel or reverse proxy with HTTPS works too. Set to false only if your players open Foundry over plain http://.
   - name: FOUNDRY_PROXY_PORT
     services:
       - server

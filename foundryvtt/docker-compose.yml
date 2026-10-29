@@ -53,6 +53,10 @@ services:
       CONTAINER_PRESERVE_CONFIG: "true"
       # Without this, LAN invitation links show the container's internal Docker IP.
       FOUNDRY_LOCAL_HOSTNAME: ${DEVICE_DOMAIN_NAME}
+      # umbrelOS also serves the app over HTTPS on its port, which browsers need for
+      # cameras and microphones, so invitation links use https://<device>:30000.
+      FOUNDRY_HOSTNAME: ${DEVICE_DOMAIN_NAME}
+      FOUNDRY_PROXY_SSL: "true"
       # Recommended upstream for most users; off by default in the image.
       FOUNDRY_COMPRESS_WEBSOCKET: "true"
       FOUNDRY_MINIFY_STATIC_FILES: "true"
