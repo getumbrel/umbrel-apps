@@ -3,7 +3,7 @@ id: netbird
 name: NetBird
 tagline: An adaptive client for Zero Trust Networking
 category: networking
-version: "0.81.5"
+version: "0.82.0"
 port: 8479
 description: >-
   NetBird is a secure networking platform that creates private, peer-to-peer connections between devices using encrypted communication channels. It builds a trusted network layer that allows seamless and direct communication without exposing data to intermediaries. Every connection is protected with modern encryption standards and managed automatically through a zero trust security model that authenticates identities rather than networks.
@@ -30,9 +30,19 @@ gallery:
   - 2.jpg
   - 3.jpg
 releaseNotes: >-
-  This update improves SSH session security and reliability by validating requests, limiting session channels and queued requests, and preventing terminal resizing from blocking a session.
+  This update improves connection stability and SSH security.
 
-  Full release notes can be found at https://github.com/netbirdio/netbird/releases/tag/v0.81.5
+  - Reduces unnecessary routing-peer switches to keep long-running connections stable
+
+  - Adds a compact peer table with connection status, latency, and traffic using netbird status --table
+
+  - Fixes a deadlock during signal reconnection shutdown
+
+  - Strengthens SSH root-login restrictions and validation of session environment variables
+
+  Rosenpass support is deprecated but continues to work for now.
+
+  Full release notes can be found at https://github.com/netbirdio/netbird/releases/tag/v0.82.0
 dependencies: []
 path: ""
 defaultUsername: ""
