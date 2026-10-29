@@ -4,7 +4,7 @@ storage:
   dataRoot: data
 category: bitcoin
 name: BTCPay Server
-version: "2.4.6"
+version: "2.4.7"
 tagline: Accept Bitcoin payments with 0 fees & no 3rd party
 description: >-
   BTCPay Server is a payment processor that allows you to receive
@@ -36,17 +36,15 @@ path: ""
 defaultUsername: ""
 defaultPassword: ""
 releaseNotes: |-
-  ⚠️ Per-invoice email notifications have been removed. Use merchant-controlled email rules instead.
+  ⚠️ Security update: updating is highly recommended. This release fixes 85 security findings, including 1 critical and 13 high severity issues, especially affecting servers shared by multiple merchants.
 
-  This release strengthens API-key and store permissions, browser actions, external URLs, and handling of untrusted input. It also includes runtime security updates.
+  - Stronger store isolation for forms, payment requests, apps, search, notifications, and Lightning payments.
+  - BitPay API invoices now require authentication to read and follow the store's confirmation and expiry policies.
+  - Fixes for payouts, Point of Sale, Crowdfund, subscriptions, LNURL, two-factor login limits, and payment accounting.
+  - Protections against excessive memory and processing use from malicious input.
+  - The legacy /invoices/create route has been removed; use the store's invoice page instead.
 
-  - Faster recent-invoice lists on large servers.
-  - Clearer wallet filters, import/export controls, and fee-bump actions.
-  - Improved QR-code scanning in dark mode and readable checkout payment-method names.
-  - Persistent diagnostics for plugins disabled after failures.
-  - Fixes for email rules, subscriptions, public forms, and invoice redirect URLs.
-  - Updates NBXplorer to 2.6.21.
-
+  For users skipping 2.4.6: per-invoice email notifications have been removed. Use merchant-controlled email rules instead.
   For users skipping 2.4.5: manually configured connections to other apps on your home network may need updating. Advanced configuration: https://docs.btcpayserver.org/Operators/#allow-private-outbound-destinations
   Public invoice details are hidden one month after monitoring ends, and manual invoice notification URLs are deprecated in favor of webhooks.
 
@@ -56,6 +54,6 @@ releaseNotes: |-
 
   Prior security advisory: https://blog.btcpayserver.org/security-advisory-btcpay-server-2-4-2/
 
-  Full release notes: https://github.com/btcpayserver/btcpayserver/releases/tag/v2.4.6
+  Full release notes: https://github.com/btcpayserver/btcpayserver/releases/tag/v2.4.7
 submitter: Umbrel
 submission: https://github.com/getumbrel/umbrel/pull/353
