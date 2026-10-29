@@ -61,10 +61,6 @@ environment:
       - "true"
       - "false"
     note: Set to true to share anonymous usage data with the Foundry developers.
-  - name: LIVEKIT_API_SECRET
-    services:
-      - livekit
-    note: Optional, for audio and video with the LiveKit AVClient module. Choose a secret of at least 32 characters. In Foundry, enter the API key foundryvtt and this secret in the module's settings. Until you set it, the LiveKit server cannot be used.
   - name: LIVEKIT_USE_EXTERNAL_IP
     services:
       - livekit
@@ -84,7 +80,7 @@ description: >-
   Also set FOUNDRY_ADMIN_KEY in the app's settings to choose the admin password that protects Foundry's setup screen. Until you do, the setup screen is locked with a random password. You can later change it in Foundry's own Configuration screen too, and it is kept across restarts. Players join your game from their own browsers at the same address, without needing an Umbrel account. Set a password for each player inside your world.
 
 
-  For audio and video, the app also runs a LiveKit server for the LiveKit AVClient module. Browsers only allow cameras and microphones over HTTPS, so put a reverse proxy with a certificate in front of Foundry (port 30000) and of LiveKit's signalling port 7880, set LIVEKIT_API_SECRET in the app's settings, then enter the LiveKit address, the API key foundryvtt and your secret in the module's settings. Media uses ports 7881 TCP and 7882 UDP.
+  For audio and video, the app also runs a LiveKit server for the LiveKit AVClient module, reachable at the same address as Foundry. In the module's settings, enter the address you use for Foundry, such as foundry.example.com, as the LiveKit server. Enter the username and password that umbrelOS shows for this app as the API key and secret; they are not a Foundry login. Browsers only allow cameras and microphones over HTTPS, so open Foundry through HTTPS, for example with a reverse proxy and a certificate in front of port 30000. Audio and video use ports 7881 TCP and 7882 UDP.
 
 
   Foundry's server options, such as hostname, language and the world to launch, are managed from the app's settings in umbrelOS and applied on every start. Other changes to those options in Foundry's Configuration screen are reset when the app restarts; the admin key is the exception.
@@ -112,8 +108,9 @@ support: https://github.com/felddy/foundryvtt-docker/discussions
 port: 30000
 gallery: []
 path: ""
-defaultUsername: ""
+defaultUsername: foundryvtt
 defaultPassword: ""
+deterministicPassword: true
 backupIgnore:
   - data/foundry/container_cache/*
   - data/foundry/Logs/*
