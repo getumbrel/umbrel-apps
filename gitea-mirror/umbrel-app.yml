@@ -5,7 +5,7 @@ storage:
 name: Gitea Mirror
 tagline: Mirror your GitHub repositories to a Gitea instance automatically
 category: developer
-version: "3.47.0"
+version: "3.48.0"
 port: 4322
 description: >-
   Gitea Mirror automatically mirrors your GitHub repositories to a self-hosted Gitea instance. It supports mirroring public and private repositories, organizations, starred repos, issues, wikis, and pull requests.
@@ -44,14 +44,16 @@ defaultUsername: ""
 defaultPassword: ""
 dependencies: []
 releaseNotes: >-
-  This update adds a Storage page to show how much space your mirrors use on Gitea and Forgejo.
+  ⚠️ Back up your Gitea or Forgejo instance and review release limits and filters before upgrading. The next sync can delete older releases: retention and release filters now inspect all destination releases, not just the newest 30. Previously untrimmed releases beyond your limit or excluded by your filters will be removed.
 
   Key highlights:
-    - See total storage, Git and LFS data, release assets, and a breakdown by destination owner and repository.
-    - Search, sort, and filter repositories to find your largest mirrors.
-    - Access the same storage information through the API.
+    - Refresh mirror storage sizes on demand without waiting for a sync.
+    - Pages keep their data while you navigate and refresh in the background.
+    - Large repository and storage lists load and scroll more smoothly.
+    - Release counts, retention limits, and filter previews now include releases beyond the first 30.
+    - Includes a security fix for oversized lists submitted to authenticated MCP tools.
 
-  Storage measurements appear as repositories sync after upgrading. Git and LFS sizes trail by one sync. GitHub and GitLab push destinations are not measured.
+  If you're updating from a version older than 3.47.0, the Storage page also shows total storage and a breakdown by owner and repository. GitHub and GitLab push destinations are not measured.
 
   If you're updating from a version older than 3.46.0, Gitea Mirror also includes an MCP endpoint and read-only API keys. Existing API keys keep full access.
 
@@ -73,5 +75,5 @@ releaseNotes: >-
 
   If you're updating from a version older than 3.17 and use OAuth provider clients registered in Gitea Mirror, rotate the client secret for each client after upgrading because OAuth application secrets are stored hashed after migration.
 
-  Full release notes can be found at https://github.com/RayLabsHQ/gitea-mirror/releases/tag/v3.47.0
+  Full release notes can be found at https://github.com/RayLabsHQ/gitea-mirror/releases/tag/v3.48.0
 path: ""
