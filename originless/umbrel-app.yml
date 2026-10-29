@@ -3,29 +3,38 @@ id: originless
 storage:
   dataRoot: data
 name: Originless
-version: "0.1.0-patch.1"
-tagline: "Private, decentralized file sharing for Nostr and the web"
+version: "2026.10.29"
+tagline: "Self-hosted, content-addressed file hosting over IPFS"
 category: files
 description: >-
-  One all-in-one storage backend you can drop into anything: your own apps,
-  screenshot tools, pastebin-style pastes, Nostr clients, Reddit posts, forum
-  embeds-anything that needs durable, anonymous file hosting. Built on IPFS with
-  95% bandwidth reduction compared to previous versions.
+  Originless is self-hosted, content-addressed file hosting built on IPFS. Upload
+  a file or folder from the built-in dashboard (or the /up and /upf endpoints) and
+  get back a CID, the hash of the content. Share that CID and anyone can fetch the
+  file from your node or any IPFS-capable gateway, with no domain, DNS, account,
+  or API key.
 
+  Files live in an embedded Kubo IPFS node inside the app's data directory. Uploads
+  are unpinned by default and can be garbage-collected when the repository reaches
+  its storage limit, so keep your originals and re-upload when a CID stops
+  resolving. Pin CIDs you need to keep and set STORAGE_MAX to control the soft limit.
 
-  For File Drop users: Originless replaces the developer's previous Umbrel app
-  listing for File Drop. If File Drop is installed on your Umbrel, uninstall it
-  before installing Originless because both apps cannot run at the same time.
-
-
-  Advanced IPFS note: For direct external IPFS connectivity, forward TCP and UDP
-  port 4001 on your router to TCP and UDP port 4003 on your Umbrel.
+  Upgrading from Originless v0.x is not supported in place: v1 uses a new data
+  layout (the Kubo repository lives under /data/ipfs), so existing v0.x data and
+  workflows do not carry over. Back up anything you need before upgrading. Treat
+  the node as a cache rather than permanent storage: unpinned content can be
+  garbage-collected, and removing the app removes its data.
 releaseNotes: >-
-  This update adds support for new storage management and configuration options being introduced with umbrelOS 2.0.
+  2026.10.29:
+  - Content-addressed file hosting: upload files and folders and get a stable CID.
+  - Embedded Kubo IPFS node with a built-in dashboard, upload endpoints, and live repo stats.
+  - Fetch by CID through any IPFS-capable gateway; no domain, DNS, account, or API key required.
+  - Storage controls: STORAGE_MAX soft limit with hourly garbage collection at a 90% watermark.
+  - v1 data layout: the Kubo repository now lives under /data/ipfs. In-place upgrades from v0.x are not supported; existing data and workflows do not carry over.
+  - Temporary storage warning: uploads are unpinned by default and can be garbage-collected. Keep originals and re-upload, or pin CIDs you need to keep.
 developer: "besoeasy"
-website: "https://github.com/besoeasy/Originless"
-repo: "https://github.com/besoeasy/Originless"
-support: "https://github.com/besoeasy/Originless/issues"
+website: "https://github.com/besoeasy/originless"
+repo: "https://github.com/besoeasy/originless"
+support: "https://github.com/besoeasy/originless/issues"
 port: 3232
 gallery:
   - 1.jpg
