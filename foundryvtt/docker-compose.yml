@@ -33,6 +33,11 @@ services:
             rm -f /data/Config/admin.txt
             printf '%s' "$${admin_key_hash}" > /data/Config/umbrel-admin-key.sha256
           fi
+          # A custom domain is normally served by an HTTPS reverse proxy on port 443.
+          # On the Umbrel address, links keep the app port, where umbrelOS serves HTTPS.
+          if [ -z "$${FOUNDRY_PROXY_PORT}" ] && [ -n "$${FOUNDRY_HOSTNAME}" ] && [ "$${FOUNDRY_HOSTNAME}" != "$${UMBREL_DEVICE_DOMAIN_NAME}" ]; then
+            export FOUNDRY_PROXY_PORT=443
+          fi
           exec ./entrypoint.sh "$$@"
         fi
         echo "Foundry Virtual Tabletop $${FOUNDRY_VERSION} needs to be downloaded. Add your foundryvtt.com username and password in the app settings in umbrelOS."
@@ -56,6 +61,7 @@ services:
       # umbrelOS also serves the app over HTTPS on its port, which browsers need for
       # cameras and microphones, so invitation links use https://<device>:30000.
       FOUNDRY_HOSTNAME: ${DEVICE_DOMAIN_NAME}
+      UMBREL_DEVICE_DOMAIN_NAME: ${DEVICE_DOMAIN_NAME}
       FOUNDRY_PROXY_SSL: "true"
       # Recommended upstream for most users; off by default in the image.
       FOUNDRY_COMPRESS_WEBSOCKET: "true"
