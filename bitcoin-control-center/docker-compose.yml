@@ -1,0 +1,35 @@
+version: '3.7'
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: bitcoin-control-center_web_1
+      APP_PORT: 3400
+
+  web:
+    image: ghcr.io/hoseki-inc/bitcoin-control-center:1.3.1@sha256:79dc833af4da8ab3369e7b40889a689f58bf180269039989a3d9d8f5abeb68bf
+    user: '1000:1000'
+    restart: on-failure
+    stop_grace_period: 1m
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+    environment:
+      ELECTRUM_HOST: $APP_ELECTRS_NODE_IP
+      ELECTRUM_PORT: $APP_ELECTRS_NODE_PORT
+      # Serve the app while the Electrum server is unavailable; Sentinel connects once it answers.
+      SENTINEL_WAIT_FOR_ELECTRUM: 'false'
+      # The mempool web app proxies its API, including historical prices. Statement quotes can
+      # still fall back to public mempool.space.
+      MEMPOOL_API_URL: http://$APP_MEMPOOL_IP:$APP_MEMPOOL_PORT
+      # Sentinel supports mainnet and testnet only. Like StartOS, this package targets mainnet.
+      BITCOIN_NETWORK: mainnet
+      # Umbrel opens apps at whatever name or address the dashboard uses and doesn't tell
+      # apps their LAN or Tailscale addresses. Allow IP addresses, the device's own name, and
+      # names that only resolve privately; none of them can be used for DNS rebinding.
+      SENTINEL_ALLOWED_HOSTS: '${DEVICE_HOSTNAME},*.local,*.onion,*.ts.net,*.lan,*.home.arpa,*.internal'
+      SENTINEL_ALLOW_IP_HOSTS: 'true'
+      # Every route needs a PIN, set in the app on first open. Other apps on Umbrel's Docker
+      # network reach this container directly, past Umbrel's login. Forgot it? From the umbrelOS
+      # terminal: sudo docker exec bitcoin-control-center_web_1 node /app/dist/cli.js reset-pin
+      # then restart the app.
+      SENTINEL_PIN: umbrel
