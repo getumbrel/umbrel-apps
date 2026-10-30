@@ -5,7 +5,7 @@ storage:
 name: Gitea Mirror
 tagline: Mirror your GitHub repositories to a Gitea instance automatically
 category: developer
-version: "3.46.0"
+version: "3.49.0"
 port: 4322
 description: >-
   Gitea Mirror automatically mirrors your GitHub repositories to a self-hosted Gitea instance. It supports mirroring public and private repositories, organizations, starred repos, issues, wikis, and pull requests.
@@ -44,12 +44,18 @@ defaultUsername: ""
 defaultPassword: ""
 dependencies: []
 releaseNotes: >-
-  This update adds an MCP endpoint and read-only API keys.
+  ⚠️ Back up your Gitea or Forgejo instance and review release limits and filters before upgrading. The next sync can delete older releases: retention and release filters now inspect all destination releases, not just the newest 30. Previously untrimmed releases beyond your limit or excluded by your filters will be removed.
 
   Key highlights:
-    - Connect MCP clients to inspect mirrors, find failures, add repositories and organizations, and start syncs or retries.
-    - Create read-only API keys for monitoring and integrations that should not change your configuration or mirrors.
-    - Existing API keys keep full access.
+    - Optionally remove attachments from older mirrored releases to reclaim storage. The new "Remove old release assets" setting is off by default; enabling it deletes destination attachments beyond each repository's asset limit, but keeps release notes and tags.
+    - Fix the Activity Log failing to load after a sync records a release-filter warning.
+    - Sort repository owner, organization, and activity name filters alphabetically regardless of case.
+
+  If you're updating from a version older than 3.48.0, you can also refresh storage sizes on demand, navigate between cached pages, and browse large lists more smoothly. Release retention and filters now inspect every destination release, and authenticated MCP tools include a security fix for oversized lists.
+
+  If you're updating from a version older than 3.47.0, the Storage page also shows total storage and a breakdown by owner and repository. GitHub and GitLab push destinations are not measured.
+
+  If you're updating from a version older than 3.46.0, Gitea Mirror also includes an MCP endpoint and read-only API keys. Existing API keys keep full access.
 
   Reminder: release filters added in 3.44.0 delete already-mirrored releases that no longer match on the next sync. Preview the affected releases in the tag rules dialog before saving, and back up your Gitea instance. Existing configurations keep mirroring all releases until you enable a filter.
 
@@ -69,5 +75,5 @@ releaseNotes: >-
 
   If you're updating from a version older than 3.17 and use OAuth provider clients registered in Gitea Mirror, rotate the client secret for each client after upgrading because OAuth application secrets are stored hashed after migration.
 
-  Full release notes can be found at https://github.com/RayLabsHQ/gitea-mirror/releases/tag/v3.46.0
+  Full release notes can be found at https://github.com/RayLabsHQ/gitea-mirror/releases/tag/v3.49.0
 path: ""

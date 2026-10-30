@@ -4,7 +4,7 @@ storage:
   dataRoot: data
 category: bitcoin
 name: Bisq 2 Node
-version: "2.1.14.0"
+version: "2.1.14.1"
 tagline: Run your own Bisq 2 node for private Bitcoin trading
 description: >-
   Bisq Connect lets you buy and sell Bitcoin peer-to-peer from your phone. This
@@ -37,25 +37,22 @@ defaultPassword: ""
 submitter: rodvar
 submission: https://github.com/getumbrel/umbrel-apps/pull/5850
 releaseNotes: >-
-  **Update before 25 November 2026.** Update the node first, then Bisq Connect.
+  **No action needed.** Bisq Connect stays paired.
 
 
-  This security update moves the node to Bisq 2 API 2.1.14 and Tor 0.4.9.14. It includes new storage signatures and owner-bound storage keys, stricter checks when offers are taken, separate Tor circuits per identity, pairing secrets stored only as hashes, and authentication on every WebSocket connection.
+  This maintenance update keeps the node on Bisq 2 API 2.1.14 and brings fixes for Bisq Connect.
 
 
-  From 25 November 2026, updated nodes no longer accept data signed only the old way, so a node still on 2.1.13 can miss offers and messages and its trades can stall.
+  - **Banned account data:** The node can now check a seller's payment account data against the banned list, so the next Bisq Connect release can warn you not to pay a seller whose account data is banned and cancel the trade for your protection.
+
+  - **Offerbook:** Offers from banned or ignored makers, and sell offers whose maker lacks the reputation for the amount, are no longer listed, and the offer counts match the list.
+
+  - **Restarts:** If the node fails to start, it now exits so it is restarted automatically instead of running without the API. A pairing code left over from an earlier run is deleted at startup.
+
+  - **Trades:** Cancelling or rejecting a trade no longer waits for the trade chat message to be delivered.
 
 
-  - **Pairing:** Bisq Connect stays paired, but asks you to accept the updated terms again.
-
-  - **Fixed-price offers:** Offers published through a 2.1.13 node must be created again.
-
-  - **Old logs:** Logs written by earlier versions contain the node's private keys. This version hides them in its own log files, but do not share older copies such as container logs, log viewer exports or backups.
-
-  - **Downgrades:** Downgrading to 2.1.13 is not supported; going back would require pairing every device again.
+  It also includes storage pruning and performance fixes.
 
 
-  Bisq 2 release: https://github.com/bisq-network/bisq2/releases/tag/v2.1.14
-
-
-  Full changes: https://github.com/bisq-network/bisq2/compare/3e07b59...52f9141 (bisq2 @ 52f9141)
+  Full changes: https://github.com/bisq-network/bisq2/compare/52f9141...7f68c09 (bisq2 @ 7f68c09)

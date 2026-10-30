@@ -4,7 +4,7 @@ storage:
   dataRoot: data
 category: files
 name: NocoDB
-version: "2026.10.0"
+version: "2026.10.1"
 tagline: No-code platform for database management, self-hosted Airtable alternative
 description: >-
   NocoDB is an open-source platform that converts databases into smart, collaborative spreadsheets. It enables users to create no-code applications on top of databases like MySQL, PostgreSQL, SQLite, and even Airtable-like interfaces on existing data structures. 
@@ -32,22 +32,21 @@ description: >-
 
   🛡️ Permissions & Roles: NocoDB supports user roles, access controls, and permissions, making it suitable for team use.
 releaseNotes: >-
-  This update improves grids, formulas, workflows, and sign-in, and includes security hardening.
+  ⚠️ Date and time values in API responses, webhooks, and CSV exports now include milliseconds. Check integrations that expect a fixed date format. Changing your password now deletes API tokens and disconnects OAuth apps.
 
 
-  New features and improvements:
-    - Replay past workflow runs step by step without running them again
-    - Connect supported AI tools through MCP by signing in instead of copying a token
-    - Display text formula results as colored single-select values
-    - Group grids up to five levels deep and freeze more columns
-    - Improved mobile grids, live updates, filters, linked records, and attachments
-    - Redesigned sign-in screens; Interfaces are now called classic apps, with existing pages and access preserved
+  Improvements and fixes:
+    - Improved classic apps on phones, grouping, column resizing, and live updates
+    - Sort Single Select fields by option order
+    - Fixed workflows and webhooks not firing when linked records change
+    - Fixed formulas, filters, linked records, and copying large text or JSON values
+    - Improved sign-in, attachments, sharing, and security hardening
 
 
-  Webhooks and uploads by URL now reject private network addresses. Existing integrations targeting local services may need adjustment. Some MCP response formats have changed; the REST v3 API is unchanged.
+  Webhooks and uploads by URL reject private network addresses. Local ClickHouse connections and MySQL or PostgreSQL Unix socket connections require NC_ALLOW_LOCAL_EXTERNAL_DBS=true. MCP now lists every tool; clients with tool limits can use /mcp-discovery instead. Some MCP response formats have changed; the REST v3 API is unchanged.
 
 
-  Full release notes can be found at https://github.com/nocodb/nocodb/releases/tag/2026.10.0
+  Full release notes can be found at https://github.com/nocodb/nocodb/releases/tag/2026.10.1
 developer: NocoDB Inc.
 website: https://nocodb.com
 dependencies: []
