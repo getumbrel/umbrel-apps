@@ -1,0 +1,17 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: keepword_web_1
+      APP_PORT: 8480
+
+  web:
+    image: git.keepword.net/keepword/keepword:2.5.0@sha256:9b049802d2e789c195c8a8fa6aec42e1990c7af3dafbea5d446e32d3fddb5a4e
+    user: "1000:1000"
+    restart: on-failure
+    environment:
+      # The web UI's password, which Umbrel shows; the UI can't change it.
+      KEEPWORD_UI_PASSWORD: ${APP_PASSWORD}
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
