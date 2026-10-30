@@ -4,7 +4,7 @@ storage:
   dataRoot: data
 category: files
 name: NocoDB
-version: "2026.09.1"
+version: "2026.10.1"
 tagline: No-code platform for database management, self-hosted Airtable alternative
 description: >-
   NocoDB is an open-source platform that converts databases into smart, collaborative spreadsheets. It enables users to create no-code applications on top of databases like MySQL, PostgreSQL, SQLite, and even Airtable-like interfaces on existing data structures. 
@@ -32,19 +32,21 @@ description: >-
 
   🛡️ Permissions & Roles: NocoDB supports user roles, access controls, and permissions, making it suitable for team use.
 releaseNotes: >-
-  This update adds support for new storage management and configuration options being introduced with umbrelOS 2.0.
+  ⚠️ Date and time values in API responses, webhooks, and CSV exports now include milliseconds. Check integrations that expect a fixed date format. Changing your password now deletes API tokens and disconnects OAuth apps.
 
 
-  New features and improvements in this release:
-    - Adds account-wide MCP connections so one connection can cover the selected bases and allowed tools
-    - Adds a consolidated Tools panel for table fields, relations, permissions, webhooks, and other table actions
-    - Adds support for tracking specific fields in Last Modified fields
-    - Improves invite links, base settings, integrations, webhook trigger fields, workflow email links, interface forms and filters, number abbreviations, Excel exports, menus, List View drag-and-drop, and bulk updates
-    - Fixes grouped grids, select options, imports and duplication, Interfaces behavior, bulk update triggers, Kanban ordering, workflow iterate steps, shared List views, formulas after table renames, audit log filtering, API link/date filters, MCP permissions, invites, sign-in resilience, and Airtable imports
-    - Includes self-hosting improvements for static file loading, license server health warnings, API field validation, CSV currency exports, and security hardening
+  Improvements and fixes:
+    - Improved classic apps on phones, grouping, column resizing, and live updates
+    - Sort Single Select fields by option order
+    - Fixed workflows and webhooks not firing when linked records change
+    - Fixed formulas, filters, linked records, and copying large text or JSON values
+    - Improved sign-in, attachments, sharing, and security hardening
 
 
-  Full release notes can be found at https://github.com/nocodb/nocodb/releases/tag/2026.09.1
+  Webhooks and uploads by URL reject private network addresses. Local ClickHouse connections and MySQL or PostgreSQL Unix socket connections require NC_ALLOW_LOCAL_EXTERNAL_DBS=true. MCP now lists every tool; clients with tool limits can use /mcp-discovery instead. Some MCP response formats have changed; the REST v3 API is unchanged.
+
+
+  Full release notes can be found at https://github.com/nocodb/nocodb/releases/tag/2026.10.1
 developer: NocoDB Inc.
 website: https://nocodb.com
 dependencies: []

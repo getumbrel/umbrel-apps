@@ -4,7 +4,7 @@ storage:
   dataRoot: data
 category: bitcoin
 name: Bitcoin Node
-version: "1.4.1"
+version: "1.5.0"
 tagline: Run your personal node powered by Bitcoin Core
 description: >-
   Run your Bitcoin node, powered by Bitcoin Core. Independently store and validate every Bitcoin transaction.
@@ -38,13 +38,19 @@ gallery:
 path: ""
 defaultPassword: ""
 releaseNotes: >-
-  This update improves dashboard reconnection after network interruptions or node restarts, including catching up on missed block updates.
+  This update adds Bitcoin Core v32.1, v31.2, v30.4, and v29.5, which fix security vulnerabilities that Bitcoin Core disclosed on October 28, 2026.
 
 
-  It also updates the app’s runtime and dependencies. Bundled Bitcoin Core versions are unchanged from the previous app release.
+  If your node is set to always use the latest version, it will start running Bitcoin Core v32.1 after this update. If you have chosen to stay on a specific version, your node will keep running that version until you change it. We recommend switching in Settings to v32.1, or to v31.2 or v30.4 if you want to stay on the same major version. Bitcoin Core 29.x is now end of life and no longer receives security fixes, so if you have chosen to stay on 29.x, we recommend switching to a newer version.
 
 
-  Bitcoin Core v30.0 is no longer offered as a new selection due to an upstream wallet migration issue. Nodes already pinned to v30.0 will remain on it until you choose another version in Settings.
+  Bitcoin Core v32.1 adds new settings for the maximum number of RPC connections, the share of incoming connections that can relay transactions, and block validation prefetch threads. It also raises the default maximum number of peer connections from 125 to 200 on new installs. Existing nodes keep their current setting.
+
+
+  Private transaction broadcasting is now only available on Bitcoin Core v32.1, which fixes an IP address leak that was not fixed in v31.x. If you have chosen to stay on Bitcoin Core v31.x, private transaction broadcasting will be turned off.
+
+
+  The app now shows a warning if the version you have chosen to stay on is missing security fixes or no longer receives them.
 widgets:
   - id: "stats"
     type: "four-stats"

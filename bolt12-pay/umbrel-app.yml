@@ -5,7 +5,7 @@ storage:
 name: BOLT12 Pay
 tagline: Self-hosted Lightning payments and identity with BOLT12, BIP353, LNURL, and Nostr
 category: bitcoin
-version: 0.3.15
+version: 0.3.16
 port: 8367
 description: |-
   BOLT12 Pay is a self-hosted Lightning payments and identity app for LND nodes.
@@ -84,13 +84,15 @@ submission: https://github.com/getumbrel/umbrel-apps/pull/5429
 repo: https://github.com/Alex71btc/lndk-pay
 support: https://github.com/Alex71btc/lndk-pay/issues
 releaseNotes: |
-  Incoming BOLT12 payment messages now appear in Lightning Activity separately from the offer memo, including messages sent by Phoenix and phoenixd.
+  Security maintenance release updating Rust TLS and networking dependencies.
 
-  Payer notes are saved by payment hash, remain searchable after restarts, and preserve Unicode, emojis and line breaks without additional app-level truncation. Messages are displayed safely as text.
+  Updated rustls-webpki to 0.103.16 to incorporate the eMudhra certificate distrust fix. Also updated rustls, h2, tokio and anyhow. Both the LNDK server and CLI have been rebuilt for AMD64 and ARM64.
 
-  Includes matching multi-architecture LNDK server and CLI builds while retaining native onion messaging, amountless offers, offer memos and invoice reuse for repeated requests. Run only one LNDK instance per LND node to avoid competing invoice responses.
+  No feature changes or manual data migration required. Existing BOLT12 Offers, payment history, Lightning Addresses, Nostr identities, NWC connections and other application data are preserved. The Android Companion remains unchanged.
 
-  Existing data, payment history, NWC connections, aliases, identities and Keysend messages are preserved. Migration is automatic; notes discarded by older versions cannot be recovered. The existing signed Android Companion is unchanged and remains available.
+  Verified with 98 Rust tests, 51 Python tests per architecture, successful incoming and outgoing BOLT12 payments, Phoenix payer notes and NWC balance queries.
+
+  Updating to v0.3.16 is recommended for the included security fixes. Previous releases remain available for emergency rollback.
 
 dependencies:
   - lightning
