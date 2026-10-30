@@ -1,0 +1,73 @@
+manifestVersion: 1
+id: bitcoin-lab
+storage:
+  dataRoot: data
+category: bitcoin
+name: Bitcoin Lab
+version: "2.1.1"
+tagline: See which peers bring you new blocks first
+description: >-
+  Every new block reaches your node through one of your peers. Some peers are first again and again, others never. Bitcoin Lab notes for every block who was first and ranks your peers by it. Keep the fast ones as manual peers, drop the ones that never deliver and get fresh ones to rank, or let rotation do it for you.
+
+
+  Rotation only works on the outbound peers Core picks for you. Inbound peers are ranked too, but never kept or dropped automatically. Many of them don't accept connections at all, and the port you see is only the one they called from, so there is no address to dial back.
+
+
+  Mining solo? Stratum Race times how fast your own pool turns a new block into fresh work, side by side with public pools. Rotation and Stratum Race are both off by default, and Bitcoin Lab never touches bitcoin.conf, wallets or keys.
+
+
+releaseNotes: ""
+developer: benunskilled
+website: https://github.com/benunskilled/bitcoin-lab
+dependencies:
+  - bitcoin
+repo: https://github.com/benunskilled/bitcoin-lab
+support: https://github.com/benunskilled/bitcoin-lab/issues
+
+port: 8790
+gallery: []
+path: ""
+
+defaultUsername: ""
+defaultPassword: ""
+
+widgets:
+  - id: "stats"
+    type: "four-stats"
+    refresh: "60s"
+    endpoint: "dashboard:8788/api/widget/stats"
+    link: ""
+    example:
+      type: "four-stats"
+      link: ""
+      items:
+        - title: "Live Peers"
+          text: "42"
+          subtext: "connected"
+        - title: "Best Peer"
+          text: "33%"
+          subtext: "203.0.113.12:8333"
+        - title: "Fastest Pool"
+          text: "80ms"
+          subtext: "AtlasPool"
+        - title: "Manual"
+          text: "8/8"
+          subtext: "manual peers online"
+  - id: "traffic"
+    type: "three-stats"
+    refresh: "3600s"
+    endpoint: "dashboard:8788/api/widget/traffic"
+    link: ""
+    example:
+      type: "three-stats"
+      link: ""
+      items:
+        - text: "8.4 GB"
+          subtext: "sent today"
+        - text: "1.9 GB"
+          subtext: "received today"
+        - text: "312 GB"
+          subtext: "last 30 days"
+
+submitter: benunskilled
+submission: https://github.com/getumbrel/umbrel-apps/pull/6186
