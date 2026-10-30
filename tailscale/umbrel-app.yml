@@ -4,7 +4,7 @@ storage:
   dataRoot: data
 category: networking
 name: Tailscale
-version: "v1.104.2"
+version: "v1.104.4"
 tagline: Zero config VPN to access your Umbrel from anywhere
 description: >-
   Tailscale is zero config VPN that creates a secure network between
@@ -32,10 +32,22 @@ torOnly: false
 submitter: Umbrel
 submission: https://github.com/getumbrel/umbrel/pull/1248
 releaseNotes: >-
-  This update includes a Go runtime security update.
+  This update includes security fixes for Tailscale SSH and Tailscale Serve.
 
 
-  Full release notes can be found at https://github.com/tailscale/tailscale/releases/tag/v1.104.2
+  These features are not enabled by default in the Umbrel app, so default installations were not affected by these vulnerabilities. If you enabled either feature yourself, this update includes the following fixes:
+
+
+  - Prevents SSH Unix socket forwarding from accessing sockets with root privileges.
+
+  - Fixes excessive memory usage from malicious SSH session requests.
+
+  - Restricts Serve access to privileged Unix sockets.
+
+  - Prevents access capabilities from leaking between Serve requests.
+
+
+  Full release notes can be found at https://github.com/tailscale/tailscale/releases/tag/v1.104.4
 
 
   Tip: You can use Tailscale to back up one Umbrel to another. When adding the backup destination, enter its Tailscale IP address shown in the Tailscale app; device names aren't currently supported.
