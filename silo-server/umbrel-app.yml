@@ -1,0 +1,64 @@
+manifestVersion: 1.1
+id: silo-server
+storage:
+  dataRoot: data
+folderAccess:
+  - id: umbrel-downloads
+    name: Downloads
+    note: Media files for your Silo libraries. Available inside Silo at /downloads.
+    mounts:
+      - service: server
+        targetPath: /downloads
+  - id: media-library
+    name: Media Library
+    note: Select an additional folder containing media, then add /media as a library folder in Silo. Access is read-only to protect the original files.
+    mounts:
+      - service: server
+        targetPath: /media
+        readOnly: true
+category: media
+name: Silo Server
+version: "365e3d4"
+tagline: Self-hosted media streaming server
+description: >-
+  Silo is a self-hosted media streaming server. Point it at your movies and
+  series, then watch them in a browser, on a phone, or on a TV through its
+  Jellyfin and Emby compatible APIs.
+
+
+  This package runs Silo together with its own PostgreSQL (with pgvector) and
+  Redis, so there is nothing else to install. Give Silo your media before or
+  after installing: use the Media Library setting to pick any folder, or drop
+  files into Umbrel's Downloads folder. Inside Silo those appear at /media and
+  /downloads.
+
+
+  First run: open Silo and create your admin account, then add a library and
+  point it at /media or /downloads. Silo downloads its metadata plugins from the
+  internet on first start, so the first scan needs a working connection. Database
+  setup on first start can take a few minutes, during which Silo reports itself
+  as starting rather than healthy. Let it finish and do not restart it.
+
+
+  Jellyfin and Emby clients can connect on port 18096. Audiobookshelf clients can
+  connect on port 13379. Those are remapped from Silo's defaults (8096 and 13378)
+  because other Umbrel apps already use them.
+
+
+  This package does not configure hardware transcoding. Video conversion uses the
+  CPU unless you set up acceleration inside Silo yourself.
+developer: Silo
+website: https://siloserver.org
+dependencies: []
+repo: https://github.com/Silo-Server/silo-server
+support: https://github.com/Silo-Server/silo-server/issues
+port: 8104
+gallery: []
+path: ""
+defaultUsername: ""
+defaultPassword: ""
+releaseNotes: ""
+permissions:
+  - STORAGE_DOWNLOADS
+submitter: Pasithea0
+submission: https://github.com/getumbrel/umbrel-apps/pull/6220
