@@ -1,0 +1,18 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: portal_web_1
+      APP_PORT: 3000
+
+  web:
+    image: stark3k/openswap:0.1.0
+    restart: on-failure
+    environment:
+      PORTAL_BIND: 0.0.0.0:3000
+      PORTAL_ASSETS_DIR: /opt/portal/web
+      PORTAL_ACCESS_PROFILE: trusted-http-proxy
+      PORTAL_PUBLIC_ORIGIN: http://${DEVICE_DOMAIN_NAME}:${APP_PROXY_PORT}
+      PORTAL_SHUTDOWN_TIMEOUT_SECS: "110"
+    volumes:
+      - ${APP_DATA_DIR}/data/portal:/data
+    stop_grace_period: 120s
