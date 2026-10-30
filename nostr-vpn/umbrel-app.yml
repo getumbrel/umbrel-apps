@@ -1,16 +1,22 @@
-manifestVersion: 1
+manifestVersion: 1.1
 id: nostr-vpn
 storage:
   dataRoot: data
 category: networking
 name: Nostr VPN
-version: "v4.1.18"
+version: "v4.1.19"
 tagline: Admin-approved mesh VPN over Nostr
 description: >-
   Nostr VPN turns your Umbrel into a private mesh VPN node for your own devices
   and trusted groups. Approve signed join-request QRs, manage peers, and route
   traffic through trusted exit nodes without relying on a hosted VPN provider
   or a central control server.
+
+
+  Before updating or uninstalling this app, turn VPN off using the switch inside
+  Nostr VPN and wait until it shows "VPN off". This releases connection protection
+  so Umbrel can access the Internet. VPN routing and protection are paused until
+  you turn VPN back on. Use a local connection to Umbrel for these steps.
 
 
   To connect a device, choose Join on the device you want to add so it displays
@@ -33,20 +39,28 @@ gallery:
   - 2.webp
   - 3.webp
 releaseNotes: >-
-  This release improves peer discovery, network joining, and connection recovery.
+  ⚠️ Before updating, open Nostr VPN and turn VPN off using its VPN switch. Wait
+  until it shows "VPN off", then install this update. After updating, open Nostr
+  VPN and turn VPN back on. Your VPN settings are kept, but VPN routing and
+  connection protection are paused while VPN is off. Use a local connection to
+  Umbrel, since turning VPN off disconnects access through Nostr VPN. Stopping
+  the app from Umbrel does not release connection protection.
 
 
-  - Preserve approved network membership after restarting.
-
-  - Recover from temporary network failures without stopping the background service.
-
-  - Reduce background CPU usage and discovery-cache disk writes.
-
-  - Improve paid Internet provider selection and payment recovery.
-
-  - Include TLS and networking security fixes.
+  This release improves connection reliability, the web interface, and security.
 
 
-  Full release notes can be found at https://github.com/mmalmi/nostr-vpn/releases/tag/v4.1.18
+  - Recover network updates after bursts of relay traffic.
+
+  - Preserve newer settings and edits when older web requests finish.
+
+  - Keep firewall protection state when the app container is recreated.
+
+  - Prevent paid Internet buyers from accessing a seller's private network or other mesh routes.
+
+  - Include TLS, WebRTC cryptography, and networking security fixes.
+
+
+  Full release notes can be found at https://github.com/mmalmi/nostr-vpn/releases/tag/v4.1.19
 submitter: mmalmi
 submission: https://github.com/getumbrel/umbrel-apps/pull/5678
