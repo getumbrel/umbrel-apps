@@ -1,0 +1,42 @@
+# Umbrel packaging. `app_proxy` is Umbrel's own reverse-proxy sidecar —
+# naming a service `app_proxy` and pointing it at our container via
+# APP_HOST/APP_PORT is how Umbrel apps expose a web UI on the dashboard;
+# the app itself does not publish a port directly. RPC connection details
+# come from Umbrel's Bitcoin Node app via the `dependencies` declaration
+# in umbrel-app.yml, injected here as $APP_BITCOIN_* env vars.
+#
+# This file is Umbrel-specific. For plain desktop use, see the Dockerfile
+# and `docker run` instructions in the README instead.
+
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: click-miner_app_1
+      APP_PORT: 3000
+
+  app:
+    # Multi-arch (linux/amd64 + linux/arm64) image built and pushed by
+    # .github/workflows/docker-publish.yml from the v0.1.0 tag. Pinned to
+    # the manifest-list digest, not an arch-specific one, per Umbrel's
+    # image-pinning rule. Bump the tag, re-run the workflow, and update
+    # this line for future releases. (This file is Umbrel-only — plain
+    # desktop use builds straight from the Dockerfile, see the README's
+    # "Quick start" section, so removing `build:` here doesn't affect it.)
+    image: ghcr.io/owencoles/click-miner:0.1.0@sha256:8070ccc2c169a267e0e11143fc026c9c1f7b862c07046e18963b7030243df675
+    restart: on-failure
+    stop_grace_period: 30s
+    environment:
+      PORT: 3000
+      DATA_DIR: /data
+      # app_proxy is a separate container, so the app must listen on the
+      # container network rather than loopback. Umbrel does not publish
+      # this port to the host; app_proxy is the only way in.
+      HOST: 0.0.0.0
+      RPC_HOST: $APP_BITCOIN_NODE_IP
+      RPC_PORT: $APP_BITCOIN_RPC_PORT
+      RPC_USER: $APP_BITCOIN_RPC_USER
+      RPC_PASSWORD: $APP_BITCOIN_RPC_PASS
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
