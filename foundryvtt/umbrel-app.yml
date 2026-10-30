@@ -26,8 +26,9 @@ environment:
   - name: FOUNDRY_HOSTNAME
     services:
       - server
+      - web
     default: umbrel.local
-    note: Hostname used in public invitation links. Set it to your domain when Foundry is reachable through a tunnel or reverse proxy, such as foundry.example.com. Enter the hostname only, without https://. This does not expose Foundry by itself.
+    note: Hostname used in public invitation links. Set it to your domain when Foundry is reachable through a tunnel or reverse proxy, such as foundry.example.com. Enter the hostname only, such as foundry.example.com. Opening the app from umbrelOS then goes to https://foundry.example.com. This does not expose Foundry by itself.
   - name: FOUNDRY_PROXY_SSL
     services:
       - server
@@ -39,6 +40,7 @@ environment:
   - name: FOUNDRY_PROXY_PORT
     services:
       - server
+      - web
     note: Optional. External port used in invitation links. When empty, it is 443 if FOUNDRY_HOSTNAME is your own domain, as with an HTTPS reverse proxy or tunnel, and the app port 30000 on your Umbrel's address.
   - name: FOUNDRY_LOCAL_HOSTNAME
     services:
