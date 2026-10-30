@@ -4,7 +4,7 @@ storage:
   dataRoot: data
 category: files
 name: HermitStash
-version: "1.15.12"
+version: "1.15.13"
 tagline: Post-quantum encrypted self-hosted file sharing
 description: >-
   HermitStash is a self-hosted file upload server with post-quantum encryption. Every file and database field is sealed with an ML-KEM-1024 + ECDH P-384 hybrid envelope and XChaCha20-Poly1305 before touching disk; passwords use Argon2id. Nothing is stored in plaintext, including database fields the operator never thinks of as sensitive.
@@ -33,14 +33,17 @@ defaultPassword: ""
 submitter: dotCooCoo
 submission: https://github.com/getumbrel/umbrel-apps/pull/5378
 releaseNotes: >-
-  This update fixes offline vault-key rotation and verification, including rotation with Docker-mounted data, and improves protection against malicious archives and TLS certificates. It also fixes IP blocking and rejects unsafe stash logo URLs.
+  This update checks every name an uploaded archive entry can be extracted under, stops the server from decompressing a connecting client's certificate before it has been verified, and keeps connections to S3 storage open between requests. Full vault key rotation now works when the data directory is a Docker volume, and the key-check tool no longer reports a healthy database as corrupted.
 
 
-  S3 and other HTTP/1.1 integrations now use a separate TLS connection for each request, which can increase latency. GNU tar archives with long-name records are no longer accepted; create compatible archives with tar --format=posix instead.
+  Uploads are now refused if an archive holds a Windows device name such as aux.c or CON, a name that ends in a dot or a space, or two spellings of the same path.
 
 
-  If you moved files from local storage to S3 on 1.15.9, check the bucket for objects of 0 bytes and restore those files from a backup. The first start of this version rebuilds the database once, which needs free space of about the database's size.
+  If you moved files from local storage to S3 on 1.15.9, check the bucket for objects of 0 bytes and restore those files from a backup.
 
 
-  Full release notes can be found at https://github.com/dotCooCoo/hermitstash/releases/tag/v1.15.12
+  If you are updating from 1.15.9 or earlier, the first start rebuilds the database once, which needs free space of about the database's size.
+
+
+  Full release notes can be found at https://github.com/dotCooCoo/hermitstash/releases/tag/v1.15.13
 dependencies: []
