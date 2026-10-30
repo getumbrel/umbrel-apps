@@ -1,4 +1,4 @@
-manifestVersion: 1
+manifestVersion: 2.0
 id: ddns-updater
 storage:
   dataRoot: data
@@ -20,6 +20,12 @@ environment:
     services:
       - server
     note: IANA time zone used for the times shown in the web UI, such as Europe/Rome or America/New_York.
+  - name: SHOUTRRR_ADDRESSES
+    services:
+      - server
+    note: >-
+      Optional. Comma-separated Shoutrrr URLs to be notified of updates and errors, such as telegram://token@telegram?chats=123.
+      Supported services are listed at https://containrrr.dev/shoutrrr/services/overview/.
 category: networking
 name: DDNS Updater
 version: "2.10.0"
@@ -41,7 +47,7 @@ description: >-
 
   - A web UI showing each record, its IP address history and update status
 
-  - Optional notifications through Shoutrrr (Discord, Telegram, email and more)
+  - Optional notifications through Shoutrrr (Discord, Telegram, email and more), set with SHOUTRRR_ADDRESSES in the app's settings
 releaseNotes: ""
 developer: Quentin McGaw
 website: https://github.com/qdm12/ddns-updater
