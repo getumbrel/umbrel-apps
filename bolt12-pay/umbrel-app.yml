@@ -5,7 +5,7 @@ storage:
 name: BOLT12 Pay
 tagline: Self-hosted Lightning payments and identity with BOLT12, BIP353, LNURL, and Nostr
 category: bitcoin
-version: 0.3.16
+version: 0.3.18
 port: 8367
 description: |-
   BOLT12 Pay is a self-hosted Lightning payments and identity app for LND nodes.
@@ -84,15 +84,36 @@ submission: https://github.com/getumbrel/umbrel-apps/pull/5429
 repo: https://github.com/Alex71btc/lndk-pay
 support: https://github.com/Alex71btc/lndk-pay/issues
 releaseNotes: |
-  Security maintenance release updating Rust TLS and networking dependencies.
+  This release combines all improvements from **v0.3.17 and v0.3.18**, bringing a smoother payment experience and faster authentication across desktop and mobile devices.
 
-  Updated rustls-webpki to 0.103.16 to incorporate the eMudhra certificate distrust fix. Also updated rustls, h2, tokio and anyhow. Both the LNDK server and CLI have been rebuilt for AMD64 and ARM64.
+  ### Payment UX — v0.3.17
 
-  No feature changes or manual data migration required. Existing BOLT12 Offers, payment history, Lightning Addresses, Nostr identities, NWC connections and other application data are preserved. The Android Companion remains unchanged.
+  - **Pay with Enter:** Submit payments directly from the keyboard without clicking the Pay button, while preserving validation and duplicate-payment protection.
+  - **Quick actions:** Compact QR scanner, clipboard and saved-contact controls directly beside the payment input.
+  - **Smart clipboard detection:** Recognizes BOLT12 offers, BOLT11 invoices, LNURL targets, Lightning Addresses and node public keys.
+  - **Easy copying:** Copy Lightning Addresses and BOLT12 offers directly from the Pay field.
+  - **Improved contacts:** Recognizes previously saved payment contacts without displaying duplicate addresses.
+  - **Better mobile feedback:** Payment notifications remain visible while scrolling or using the on-screen keyboard, with improved clipboard and HTTPS guidance.
 
-  Verified with 98 Rust tests, 51 Python tests per architecture, successful incoming and outgoing BOLT12 payments, Phoenix payer notes and NWC balance queries.
+  ### Login UX — v0.3.18
 
-  Updating to v0.3.16 is recommended for the included security fixes. Previous releases remain available for emergency rollback.
+  - **Login with Enter:** Submit the login form using Enter, the mobile keyboard action or the Login button.
+  - **Android password manager integration:** Improved automatic login after selecting saved credentials in Chrome on Android.
+  - **Safer form handling:** Prevents duplicate login requests and validates empty submissions.
+  - **Improved feedback:** Localized login errors, rate-limit messages and safe same-origin redirects.
+
+  ### Compatibility
+
+  - No manual data migration required.
+  - Existing BOLT12 offers, payment history, Lightning Addresses, Nostr identities and NWC connections are preserved.
+  - The bundled LNDK image remains unchanged at **0.3.16**.
+  - The Android Companion remains unchanged.
+
+  ### Verification
+
+  Successfully tested locally on desktop and Android, including Chrome password-manager login. The updated multiarch Docker image supports both AMD64 and ARM64.
+
+  The v0.3.18 Umbrel Community Store installation and upgrade were also successfully tested.
 
 dependencies:
   - lightning
