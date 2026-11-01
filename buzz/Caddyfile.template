@@ -1,0 +1,11 @@
+{
+	admin off
+	auto_https off
+}
+
+# Cloudflare Tunnel sends the community's domain here. Phones pair through /pair; everything
+# else is the relay.
+:80 {
+	reverse_proxy /pair* buzz_pair_1:5000
+	reverse_proxy buzz_relay_1:3000
+}
