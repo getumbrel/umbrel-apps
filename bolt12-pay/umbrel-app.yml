@@ -5,7 +5,7 @@ storage:
 name: BOLT12 Pay
 tagline: Self-hosted Lightning payments and identity with BOLT12, BIP353, LNURL, and Nostr
 category: bitcoin
-version: 0.3.18
+version: 0.3.19
 port: 8367
 description: |-
   BOLT12 Pay is a self-hosted Lightning payments and identity app for LND nodes.
@@ -84,36 +84,20 @@ submission: https://github.com/getumbrel/umbrel-apps/pull/5429
 repo: https://github.com/Alex71btc/lndk-pay
 support: https://github.com/Alex71btc/lndk-pay/issues
 releaseNotes: |
-  This release combines all improvements from **v0.3.17 and v0.3.18**, bringing a smoother payment experience and faster authentication across desktop and mobile devices.
+  BOLT12 Pay 0.3.19 - Lightning Activity & Mobile UX
 
-  ### Payment UX — v0.3.17
+  - Automatically expand and refresh Lightning Activity after successful payments.
+  - Keep the Pay UI responsive during BIP353 invoice timeouts.
+  - Reuse Lightning Addresses, BIP353 addresses, BOLT12 offers, LNURL-pay targets and Keysend pubkeys directly from payment history when available.
+  - Clear amount and payer note before preparing a new payment. No automatic repeat payments.
+  - Exclude single-use BOLT11 invoices and technical identifiers from Quick Repay.
+  - Prevent the Android keyboard from opening unnecessarily after inserting payment targets from contacts, clipboard, links or history.
+  - Dismiss the mobile keyboard after successful payments.
+  - Open Search Contacts without the Android keyboard; search starts when the user taps the field.
+  - Preserve desktop keyboard behavior.
 
-  - **Pay with Enter:** Submit payments directly from the keyboard without clicking the Pay button, while preserving validation and duplicate-payment protection.
-  - **Quick actions:** Compact QR scanner, clipboard and saved-contact controls directly beside the payment input.
-  - **Smart clipboard detection:** Recognizes BOLT12 offers, BOLT11 invoices, LNURL targets, Lightning Addresses and node public keys.
-  - **Easy copying:** Copy Lightning Addresses and BOLT12 offers directly from the Pay field.
-  - **Improved contacts:** Recognizes previously saved payment contacts without displaying duplicate addresses.
-  - **Better mobile feedback:** Payment notifications remain visible while scrolling or using the on-screen keyboard, with improved clipboard and HTTPS guidance.
-
-  ### Login UX — v0.3.18
-
-  - **Login with Enter:** Submit the login form using Enter, the mobile keyboard action or the Login button.
-  - **Android password manager integration:** Improved automatic login after selecting saved credentials in Chrome on Android.
-  - **Safer form handling:** Prevents duplicate login requests and validates empty submissions.
-  - **Improved feedback:** Localized login errors, rate-limit messages and safe same-origin redirects.
-
-  ### Compatibility
-
-  - No manual data migration required.
-  - Existing BOLT12 offers, payment history, Lightning Addresses, Nostr identities and NWC connections are preserved.
-  - The bundled LNDK image remains unchanged at **0.3.16**.
-  - The Android Companion remains unchanged.
-
-  ### Verification
-
-  Successfully tested locally on desktop and Android, including Chrome password-manager login. The updated multiarch Docker image supports both AMD64 and ARM64.
-
-  The v0.3.18 Umbrel Community Store installation and upgrade were also successfully tested.
+  No manual migration required. Existing application data is preserved.
+  LNDK and Android Companion remain unchanged.
 
 dependencies:
   - lightning
