@@ -4,7 +4,7 @@ storage:
   dataRoot: data
 category: files
 name: Vaultwarden
-version: "1.37.4"
+version: "1.37.5"
 tagline: Unofficial Bitwarden® compatible server
 description: >-
   Vaultwarden is an unofficial Bitwarden-compatible server for self-hosting your encrypted password vault on Umbrel. It works with many official Bitwarden clients and provides a lightweight alternative to the official Bitwarden server.
@@ -32,16 +32,22 @@ description: >-
   **Disclaimer:** Vaultwarden is not associated with Bitwarden or 8bit Solutions LLC. For Vaultwarden issues, contact Vaultwarden/Umbrel support rather than Bitwarden's official support channels.
 
 releaseNotes: >-
-  This release includes important security fixes for organization member revocation, two-factor authentication, organization invitations, attachments, event logs, cipher sharing, and organization API keys.
+  This update fixes security issues in website icons and emergency access, and updates the bundled Web Vault to 2026.10.1.
 
 
-  For shared organizations: if you have admins you don’t fully trust, rotate the organization’s API key after updating under Admin Console → Settings → Rotate API key.
+  It also improves two-step login compatibility, emergency account recovery, shared vault items and attachments, and fixes email two-factor authentication for SSO logins on iOS and Android.
 
 
-  No proxy changes are needed for standard Umbrel installations. If you have a custom setup using IP_HEADER=X-Forwarded-For with multiple reverse proxies, list all trusted proxies in IP_HEADER_TRUSTED_PROXIES so rate limiting and logs use the correct client IP address.
+  If you have customized Vaultwarden's configuration, check your settings before updating: invalid numeric values and schedules now prevent startup.
 
 
-  On umbrelOS 2.0 or later, Vaultwarden opens directly from your Umbrel dashboard over HTTPS, without needing Tor Browser. On older umbrelOS versions, continue using Tor Browser or your existing HTTPS setup.
+  For shared organizations upgrading from before 1.37.4: if you have admins you don’t fully trust, rotate the organization’s API key under Admin Console → Settings → Rotate API key.
+
+
+  For custom setups using IP_HEADER=X-Forwarded-For with multiple reverse proxies, list all trusted proxies in IP_HEADER_TRUSTED_PROXIES so rate limiting and logs use the correct client IP address. Standard Umbrel installations need no proxy changes.
+
+
+  Full release notes can be found at https://github.com/dani-garcia/vaultwarden/releases/tag/1.37.5
 developer: Daniel García
 website: https://github.com/dani-garcia
 dependencies: []
