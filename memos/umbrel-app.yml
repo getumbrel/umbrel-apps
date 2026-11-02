@@ -4,7 +4,7 @@ storage:
   dataRoot: data
 category: files
 name: Memos
-version: "0.31.0-patch.1"
+version: "26.10.0"
 tagline: Easily capture and share your great thoughts
 description: >-
   A privacy-first, lightweight note-taking service.
@@ -20,14 +20,21 @@ description: >-
 
   - RESTful API for third-party services. Embrace the power of integration and unleash new possibilities with our RESTful API support.
 releaseNotes: >-
-  This update includes important security improvements. We recommend updating as soon as possible.
+  Older installations are automatically upgraded through the required Memos 0.31.0 database checkpoint. A copy of the original database is retained before migration. Back up your data before upgrading.
 
 
-  If you're updating from before v0.31.0, instance administrators can read and manage individual private and Space-only memos, although list views still apply audience filtering. Existing Shortcuts are migrated to Views; integrations using the old Shortcut API need to use the new View operations. RSS feed support has been removed.
+  Memos now uses calendar versions. This release adds a rich-text editor with Markdown mode, improved browsing and attachment filters, and per-user usage limits. It also improves Markdown rendering, image previews, sign-in, and security.
 
 
-  Full upstream release notes: https://github.com/usememos/memos/releases/tag/v0.31.0
+  Important upgrade notes:
+    - Sign in again after updating; API clients must refresh access tokens or sign in again. Personal access tokens are unaffected
+    - API routes move from /api/v1/ to /api/; third-party integrations need updating
+    - Custom memo-length and upload-size limits are not carried over. Configure Settings → Usage limits again if needed; defaults are 8 KiB per memo and 32 MiB per file
+    - Memo export is now an administrator action
+    - Instance administrators can read and manage private and Space-only memos; users skipping 0.31.0 should also note that Shortcuts became Views and RSS support was removed
 
+
+  Full release notes are available at https://github.com/usememos/memos/releases/tag/26.10.0
 developer: Memos
 website: https://www.usememos.com/
 dependencies: []
