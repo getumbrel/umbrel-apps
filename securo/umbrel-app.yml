@@ -1,0 +1,87 @@
+manifestVersion: 1
+id: securo
+storage:
+  dataRoot: data
+environment:
+  - name: SIMPLEFIN_ENABLED
+    services:
+      - backend
+      - celery-worker
+      - celery-beat
+    default: "false"
+    options:
+      - "true"
+      - "false"
+    note: Set to true to connect US and international banks through SimpleFIN Bridge. Get a setup token at bridge.simplefin.org and paste it in Securo under Accounts, Connect Bank.
+  - name: ENABLE_BANKING_APP_ID
+    services:
+      - backend
+      - celery-worker
+      - celery-beat
+    note: European banks. Application ID of a Production app from the enablebanking.com Control Panel. Register the redirect URL below, then use Activate by linking accounts (free restricted mode for personal use).
+  - name: ENABLE_BANKING_PRIVATE_KEY
+    services:
+      - backend
+      - celery-worker
+      - celery-beat
+    note: Contents of the .pem file downloaded when you registered the Enable Banking app. Paste it on one line with each line break written as \n.
+  - name: ENABLE_BANKING_OAUTH_REDIRECT_URI
+    default: https://umbrel.local:3197/oauth/callback
+    services:
+      - backend
+      - celery-worker
+      - celery-beat
+    note: Must exactly match a redirect URL registered in Enable Banking and the HTTPS address you open Securo from, or you land on the login page. Use your Umbrel's IP or a domain if your devices can't resolve umbrel.local.
+  - name: PLUGGY_CLIENT_ID
+    services:
+      - backend
+      - celery-worker
+      - celery-beat
+    note: Brazilian banks only. Client ID from dashboard.pluggy.ai. Link your banks first at meu.pluggy.ai.
+  - name: PLUGGY_CLIENT_SECRET
+    services:
+      - backend
+      - celery-worker
+      - celery-beat
+    note: Brazilian banks only. Client secret from dashboard.pluggy.ai.
+category: finance
+name: Securo
+version: "0.16.3"
+tagline: Self-hosted personal finance manager
+description: >-
+  On first launch, Securo asks you to create the administrator account. The first account you create becomes the admin, and you can turn off open registration afterwards in the admin settings.
+
+
+  Securo is an open-source personal finance manager that keeps your money data on your own server. Track your accounts and assets, categorize transactions, plan budgets, and see where your money goes.
+
+
+  - Multiple accounts with running balances, search, filters, and CSV export
+
+  - File import from OFX, QIF, CAMT, and CSV
+
+  - Rules to categorize transactions automatically
+
+  - Recurring transactions, budgets, goals, and savings targets
+
+  - Net worth and income vs. expenses reports
+
+  - Multi-currency support, multiple users, and two-factor authentication
+
+
+  Bank synchronization is optional and requires an account with a supported provider: Enable Banking for European banks, Pluggy for Brazilian banks, or SimpleFIN for US and international banks. Add your provider credentials in the app's settings in umbrelOS. For Enable Banking, open Securo at https://umbrel.local:3197, the address registered as redirect URL, and finish the bank consent within 10 minutes. Availability depends on the provider and your bank.
+
+
+  Passkeys need a secure connection, so register them when opening Securo over HTTPS. Password login works over both HTTP and HTTPS.
+releaseNotes: ""
+developer: Securo
+website: https://usesecuro.com
+dependencies: []
+repo: https://github.com/securo-finance/securo
+support: https://github.com/securo-finance/securo/issues
+port: 3197
+gallery: []
+path: ""
+defaultUsername: ""
+defaultPassword: ""
+submitter: Aiacos
+submission: https://github.com/getumbrel/umbrel-apps/pull/6168
