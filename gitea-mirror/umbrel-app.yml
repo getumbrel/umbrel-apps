@@ -5,7 +5,7 @@ storage:
 name: Gitea Mirror
 tagline: Mirror your GitHub repositories to a Gitea instance automatically
 category: developer
-version: "3.51.0"
+version: "3.51.1"
 port: 4322
 description: >-
   Gitea Mirror automatically mirrors your GitHub repositories to a self-hosted Gitea instance. It supports mirroring public and private repositories, organizations, starred repos, issues, wikis, and pull requests.
@@ -47,11 +47,12 @@ releaseNotes: >-
   ⚠️ Back up your Gitea or Forgejo instance and review release limits and filters before upgrading. The next sync can delete older releases: retention and release filters now inspect all destination releases, not just the newest 30. Previously untrimmed releases beyond your limit or excluded by your filters will be removed.
 
   Key highlights:
-    - Get an Activity Log warning when Gitea or Forgejo has not run a requested mirror sync for over an hour, with guidance for checking its mirror queue. Sync-error notifications can also alert you, at most once every six hours.
-    - Dashboard repository and recent activity lists adapt to the screen height.
-    - Organization cards keep their destination and source buttons visible on large screens.
+    - Mirrors interrupted by a gateway timeout now finish syncing releases, issues, and other metadata instead of appearing complete with missing content. Imports still running in Gitea are given up to 30 minutes to finish before continuing.
+    - Release assets from private GitHub repositories now download correctly. These downloads use GitHub's API quota and pause when the rate limit is reached.
 
-  The stalled-sync check covers syncs requested by Gitea Mirror, not mirrors running only on Gitea's own schedule.
+  If a repository is already missing releases after a timeout, its next sync will catch up. With scheduling off, press Sync. Pressing Mirror on a repository already in Gitea now performs a full sync and ends with a synced status.
+
+  If you're updating from a version older than 3.51.0, you can also get Activity Log warnings and optional notifications when a requested mirror sync has stalled for over an hour. This covers syncs requested by Gitea Mirror, not mirrors running only on Gitea's own schedule.
 
   If you're updating from a version older than 3.50.0, you can also filter GitHub issues by state, optionally skip comments or media, and filter repositories by destination owner. Disabling media removes it from mirrored issue bodies on their next sync; existing comments keep their media.
 
@@ -81,5 +82,5 @@ releaseNotes: >-
 
   If you're updating from a version older than 3.17 and use OAuth provider clients registered in Gitea Mirror, rotate the client secret for each client after upgrading because OAuth application secrets are stored hashed after migration.
 
-  Full release notes can be found at https://github.com/RayLabsHQ/gitea-mirror/releases/tag/v3.51.0
+  Full release notes can be found at https://github.com/RayLabsHQ/gitea-mirror/releases/tag/v3.51.1
 path: ""
