@@ -1,0 +1,144 @@
+version: "3.7"
+
+x-backend-env: &backend-env
+  ENVIRONMENT: production
+  SECRET_KEY: ${APP_OPEN_WEARABLES_SECRET_KEY}
+  ADMIN_EMAIL: admin@admin.com
+  ADMIN_PASSWORD: ${APP_PASSWORD}
+  DB_HOST: open-wearables_db_1
+  DB_PORT: "5432"
+  DB_NAME: open-wearables
+  DB_USER: open-wearables
+  DB_PASSWORD: ${APP_OPEN_WEARABLES_DB_PASSWORD}
+  REDIS_HOST: open-wearables_redis_1
+  REDIS_PORT: "6379"
+  REDIS_PASSWORD: ${APP_OPEN_WEARABLES_REDIS_PASSWORD}
+  REDIS_SSL: "false"
+  FRONTEND_URL: https://${DEVICE_DOMAIN_NAME}:${APP_PROXY_PORT}
+  API_BASE_URL: http://${DEVICE_DOMAIN_NAME}:3494
+  CORS_ORIGINS: '["http://${DEVICE_DOMAIN_NAME}:${APP_PROXY_PORT}","https://${DEVICE_DOMAIN_NAME}:${APP_PROXY_PORT}"]'
+  OUTGOING_WEBHOOKS_ENABLED: "false"
+  TELEMETRY_ENABLED: "false"
+  SENTRY_ENABLED: "false"
+  LOG_FORMAT: json
+  INGEST_WORKOUT_SAMPLES: "false"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: open-wearables_frontend_1
+      APP_PORT: 3000
+      PROXY_AUTH_ADD: "false"
+
+  db:
+    image: postgres:18.3-bookworm@sha256:80630f83606d8db77d30b3851b16a9f78be2d0d4dda6f7b82a1fdca5ebe3acba
+    restart: on-failure
+    environment:
+      POSTGRES_DB: open-wearables
+      POSTGRES_USER: open-wearables
+      POSTGRES_PASSWORD: ${APP_OPEN_WEARABLES_DB_PASSWORD}
+    volumes:
+      - ${APP_DATA_DIR}/data/postgres:/var/lib/postgresql
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  redis:
+    image: redis:8.6.1-alpine@sha256:2afba59292f25f5d1af200496db41bea2c6c816b059f57ae74703a50a03a27d0
+    restart: on-failure
+    environment:
+      REDIS_PASSWORD: ${APP_OPEN_WEARABLES_REDIS_PASSWORD}
+    command:
+      - sh
+      - -ec
+      - exec redis-server --appendonly yes --appendfsync everysec --requirepass "$$REDIS_PASSWORD"
+    volumes:
+      - ${APP_DATA_DIR}/data/redis:/data
+    healthcheck:
+      test: [CMD-SHELL, 'REDISCLI_AUTH="$$REDIS_PASSWORD" redis-cli ping | grep -q PONG']
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  app:
+    image: themomentum/open-wearables-backend:0.10.0@sha256:c29677a20fd2f8b1e20157b6c55e75b75e25b452b2277cd6e0a193313af96e3e
+    restart: on-failure
+    command: scripts/start/app.sh
+    environment: *backend-env
+    # API clients, provider callbacks and mobile SDKs use application authentication.
+    ports:
+      - "3494:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/openapi.json', timeout=5)"]
+      interval: 15s
+      timeout: 10s
+      start_period: 120s
+      retries: 20
+
+  worker:
+    image: themomentum/open-wearables-backend:0.10.0@sha256:c29677a20fd2f8b1e20157b6c55e75b75e25b452b2277cd6e0a193313af96e3e
+    restart: on-failure
+    command: scripts/start/worker.sh
+    stop_grace_period: 5m
+    environment: *backend-env
+    depends_on:
+      app:
+        condition: service_healthy
+
+  beat:
+    image: themomentum/open-wearables-backend:0.10.0@sha256:c29677a20fd2f8b1e20157b6c55e75b75e25b452b2277cd6e0a193313af96e3e
+    restart: on-failure
+    command: scripts/start/beat.sh
+    environment: *backend-env
+    depends_on:
+      app:
+        condition: service_healthy
+
+  frontend:
+    image: themomentum/open-wearables-frontend:0.10.0@sha256:a418aaf25b6b037c588ffed9862ce1da86e9fb8567908bf6383e9a5fcf4e78b9
+    restart: on-failure
+    environment:
+      API_URL: http://open-wearables_app_1:8000
+      VITE_API_URL: http://${DEVICE_DOMAIN_NAME}:3494
+      # SvelteKit must see the browser's origin for proxied form submissions.
+      PROTOCOL_HEADER: x-forwarded-proto
+      HOST_HEADER: host
+    depends_on:
+      app:
+        condition: service_healthy
+
+  mcp:
+    # Reuse upstream's maintained Python/uv runtime; no custom registry image needed.
+    image: themomentum/open-wearables-backend:0.10.0@sha256:c29677a20fd2f8b1e20157b6c55e75b75e25b452b2277cd6e0a193313af96e3e
+    restart: on-failure
+    init: true
+    user: "1000:1000"
+    entrypoint: [python, /opt/umbrel/mcp-bootstrap.py]
+    working_dir: /tmp
+    environment:
+      HOME: /tmp
+      UV_CACHE_DIR: /tmp/uv-cache
+      UV_NO_SYNC: "false"
+      UV_PYTHON_DOWNLOADS: never
+      UV_PROJECT_ENVIRONMENT: /tmp/open-wearables-mcp/.venv
+      OPEN_WEARABLES_API_URL: http://open-wearables_app_1:8000
+      MCP_ALLOWED_HOSTS: ${DEVICE_DOMAIN_NAME}:3495,${DEVICE_HOSTNAME}:3495,localhost:3495,127.0.0.1:3495
+    ports:
+      - "3495:3495"
+    volumes:
+      - ${APP_DATA_DIR}/mcp-bootstrap.py:/opt/umbrel/mcp-bootstrap.py:ro
+      - ${APP_DATA_DIR}/mcp-http.py:/opt/umbrel/mcp-http.py:ro
+    depends_on:
+      app:
+        condition: service_healthy
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
