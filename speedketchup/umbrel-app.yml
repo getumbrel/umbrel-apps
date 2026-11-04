@@ -1,0 +1,66 @@
+manifestVersion: 1
+id: speedketchup
+storage:
+  dataRoot: data
+environment:
+  - name: SPEEDKETCHUP_INTERVAL
+    services:
+      - web
+    default: "10"
+    note: Minutes between the speed tests.
+  - name: SPEEDKETCHUP_SERVER
+    services:
+      - web
+    note: Speedtest server host[:port] to always test against. Empty picks the server with the lowest latency for every test.
+  - name: SPEEDKETCHUP_MQTT
+    services:
+      - web
+    note: MQTT broker host[:port] to also publish every result to, with Home Assistant discovery. Plain MQTT only, port 1883 by default. For the Mosquitto app use mosquitto_broker_1. Empty publishes nowhere.
+  - name: SPEEDKETCHUP_MQTT_USER
+    services:
+      - web
+    note: User name for the MQTT broker, if it needs one.
+  - name: SPEEDKETCHUP_MQTT_PASSWORD
+    services:
+      - web
+    note: Password for the MQTT broker, if it needs one.
+  - name: SPEEDKETCHUP_INFLUX_URL
+    services:
+      - web
+    note: InfluxDB line protocol write url to also write every result to, http only, for the InfluxDB 2 app eg http://influxdb2_app_1:8086/api/v2/write?org=home&bucket=speedketchup. Empty writes nowhere.
+  - name: SPEEDKETCHUP_INFLUX_TOKEN
+    services:
+      - web
+    note: Token for the InfluxDB write url.
+category: networking
+name: SpeedKetchup
+version: "0.4.0"
+tagline: Track your internet speed over time with periodic speed tests
+description: >-
+  SpeedKetchup runs an internet speed test every 10 minutes against the nearest speedtest.net server, stores the results and shows them in a builtin web page.
+
+
+  The web page has speed and latency charts with distributions of the displayed results, daily, monthly, time of day and time of week averages, and a sortable table of every result. It updates in place when a test finishes. There is nothing to set up: open the app and the first result shows up about a minute after install.
+
+
+  Results are kept in a human readable csv file in the app's data folder. Every result can also be published over MQTT with Home Assistant discovery, for example to the Mosquitto app, and written to InfluxDB, for example the InfluxDB 2 app. Set the broker or the write url, as well as the test interval and a fixed speedtest server, in the app's settings. Other apps can read Prometheus metrics of the last test at http://speedketchup_web_1:8080/metrics.
+
+
+  SpeedKetchup is a single statically linked binary of a few hundred kilobytes, the image has nothing else in it.
+releaseNotes: ""
+
+developer: Gatis Peisenieks
+website: https://speedketchup.com
+dependencies: []
+repo: https://github.com/gatispei/speedketchup
+support: https://github.com/gatispei/speedketchup/issues
+
+port: 8338
+gallery: []
+path: ""
+
+defaultUsername: ""
+defaultPassword: ""
+
+submitter: Gatis Peisenieks
+submission: https://github.com/getumbrel/umbrel-apps/pull/6248
