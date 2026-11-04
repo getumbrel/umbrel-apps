@@ -1,0 +1,23 @@
+version: '3.7'
+services:
+  app_proxy:
+    environment:
+      APP_HOST: handbrake
+      APP_PORT: 5800
+      PROXY_AUTH_ADD: 'false'
+    container_name: h-handbrake_app_proxy_1
+  app:
+    image: jlesage/handbrake:latest
+    container_name: handbrake
+    restart: unless-stopped
+    volumes:
+      - ${APP_DATA_DIR}/data/config:/config
+      - ${UMBREL_ROOT}/home/Downloads/movies-transcoded:/output
+      - ${UMBREL_ROOT}/home/Downloads/movies:/watch
+    devices:
+      - /dev/dri
+    environment:
+      USER_ID: '1000'
+      GROUP_ID: '1000'
+      UMASK: '0022'
+      DARK_MODE: '1'
