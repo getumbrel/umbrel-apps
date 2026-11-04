@@ -1,0 +1,57 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: kumbara_app_1
+      APP_PORT: 8080
+  app:
+    image: ghcr.io/armanckeser/kumbara:0.22.0@sha256:ac19dd9a501cc274af0eac3966fa4d28c7cd2067fda75eaa43c7852e0be5be96
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      DATABASE_URL: postgresql://postgres:${APP_KUMBARA_DB}@kumbara_postgres_1:5432/app
+      ELECTRIC_URL: http://kumbara_electric_1:3000
+    depends_on:
+      postgres:
+        condition: service_healthy
+      electric:
+        condition: service_started
+  postgres:
+    image: postgres:16.15-alpine@sha256:f4610795587492cd4fb887c2dc3de301b813278bb6f616992061141b5f15ac36
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      POSTGRES_DB: app
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${APP_KUMBARA_DB}
+    command:
+      - postgres
+      - -c
+      - wal_level=logical
+      - -c
+      - max_replication_slots=10
+      - -c
+      - max_wal_senders=10
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U postgres
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    volumes:
+      - ${APP_DATA_DIR}/data/pgdata:/var/lib/postgresql/data
+  electric:
+    image: electricsql/electric:1.7.6@sha256:4b0746aff922a3b05c631a71623636d5767792a9362f20a9710998781feb5436
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      DATABASE_URL: postgresql://postgres:${APP_KUMBARA_DB}@kumbara_postgres_1:5432/app?sslmode=disable
+      ELECTRIC_INSECURE: "true"
+      ELECTRIC_STORAGE_DIR: /var/lib/electric/persistent
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ${APP_DATA_DIR}/data/electricdata:/var/lib/electric/persistent
