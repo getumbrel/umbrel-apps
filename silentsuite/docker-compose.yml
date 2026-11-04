@@ -1,0 +1,89 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: silentsuite_router_1
+      APP_PORT: "8080"
+      # Native Etebase clients cannot send Umbrel login cookies: exempt only their protocol
+      # paths. Signup, the installation-owner login and Django admin stay behind Umbrel login.
+      PROXY_AUTH_WHITELIST: "/api/v1/authentication/is_etebase/,/api/v1/authentication/login_challenge/,/api/v1/authentication/login/,/api/v1/authentication/logout/,/api/v1/authentication/change_password/,/api/v1/authentication/dashboard_url/,/api/v1/collection/,/api/v1/collection/*,/api/v1/invitation/*,/api/v1/ws/*"
+      PROXY_AUTH_BLACKLIST: "/api/v1/owner/,/api/v1/owner/*,/admin/,/admin/*"
+
+  router:
+    image: nginxinc/nginx-unprivileged:1.30.5-alpine@sha256:15c994d10d6d78658721c3bcafff14cb281fba2a4bdf9d5ba92c416a472516e3
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data/router:/etc/nginx/conf.d:ro
+    depends_on:
+      web:
+        condition: service_started
+      server:
+        condition: service_healthy
+
+  web:
+    image: ghcr.io/silent-suite/silentsuite-web-selfhost:v0.5.16-beta@sha256:999974b2532e65a5c06d81422bd05de3a12664878f46918681c929d547a45a60
+    restart: on-failure
+
+  init:
+    # One-shot preparation of this app's bind-mounted server directories: ownership for the
+    # server image's own user and a private INI with the database password. No network.
+    image: ghcr.io/silent-suite/silentsuite-server:v0.5.16-beta@sha256:6c2c341169d71274348c2872c6e495950e28cd7b4d2e2d6dfa79f89a86826ea6
+    user: "0:0"
+    network_mode: none
+    restart: "no"
+    entrypoint: ["/bin/sh", "/bootstrap/init.sh"]
+    environment:
+      DATABASE_PASSWORD: ${APP_SILENTSUITE_DB_PASSWORD}
+    volumes:
+      - ${APP_DATA_DIR}/data/bootstrap:/bootstrap:ro
+      - ${APP_DATA_DIR}/data/server:/data
+      - ${APP_DATA_DIR}/data/server-config:/config
+
+  server:
+    image: ghcr.io/silent-suite/silentsuite-server:v0.5.16-beta@sha256:6c2c341169d71274348c2872c6e495950e28cd7b4d2e2d6dfa79f89a86826ea6
+    restart: on-failure
+    # Package-only startup wrapper: the same collectstatic/migrations/two-worker uvicorn
+    # lifecycle as the shared image entrypoint, with access logging disabled and a
+    # private umask for first-boot files.
+    entrypoint: ["/bin/sh", "/bootstrap/server-start.sh"]
+    depends_on:
+      init:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+    environment:
+      ETEBASE_EASY_CONFIG_PATH: /etc/etebase-server/etebase-server.ini
+      ETEBASE_OWNER_PASSWORD: ${APP_PASSWORD}
+      ETEBASE_REGISTRATION_TOKEN: ${APP_SILENTSUITE_REGISTRATION_SIGNING}
+      ETEBASE_DISABLE_DJANGO_ADMIN: "true"
+      CORS_ALLOWED_ORIGINS: ""
+      # TLS ends at the Umbrel gateway; the router reaches the server over the app network.
+      ETEBASE_SECURE_SSL_REDIRECT: "false"
+    volumes:
+      - ${APP_DATA_DIR}/data/server:/data
+      - ${APP_DATA_DIR}/data/server-config:/etc/etebase-server:ro
+      - ${APP_DATA_DIR}/data/bootstrap:/bootstrap:ro
+    healthcheck:
+      test: ["CMD", "python", "-c", "import http.client,sys; c=http.client.HTTPConnection('localhost',3735,timeout=5); c.request('GET','/api/v1/authentication/is_etebase/'); sys.exit(0 if c.getresponse().status<500 else 1)"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+
+  postgres:
+    image: postgres:16.9@sha256:7c688148e5e156d0e86df7ba8ae5a05a2386aaec1e2ad8e6d11bdf10504b1fb7
+    restart: on-failure
+    shm_size: 128mb
+    environment:
+      POSTGRES_DB: silentsuite
+      POSTGRES_USER: silentsuite
+      POSTGRES_PASSWORD: ${APP_SILENTSUITE_DB_PASSWORD}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - ${APP_DATA_DIR}/data/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "silentsuite", "-d", "silentsuite"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
