@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# pgautoupgrade/pgautoupgrade runs postgres as uid/gid 999 inside the container.
+# umbrelOS now owns app data dirs as uid 1000, so the directory must be
+# chowned back to 999 before the container starts.
+POSTGRES_DATA_DIR="${APP_DATA_DIR}/data/postgres"
+
+mkdir -p "${POSTGRES_DATA_DIR}"
+chown -R 999:999 "${POSTGRES_DATA_DIR}"
