@@ -1,0 +1,37 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: wishlist_app_1
+      APP_PORT: 8080
+  app:
+    image: ghcr.io/armanckeser/wishlist:0.33.0@sha256:30b8938a570fdb739c0752d85397129c62304d0194c25d9fdab98efe9a669dd7
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      POSTGRES_SERVER: wishlist_postgres_1
+      POSTGRES_DB: wishlist
+      POSTGRES_USER: wishlist
+      POSTGRES_PASSWORD: ${APP_WISHLIST_DB}
+    depends_on:
+      postgres:
+        condition: service_healthy
+  postgres:
+    image: postgres:17.11@sha256:b8faeff7712663c2773a190181e1246e37e364b887611c04658c28b44e2408fe
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      PGDATA: /var/lib/postgresql/data/pgdata
+      POSTGRES_DB: wishlist
+      POSTGRES_USER: wishlist
+      POSTGRES_PASSWORD: ${APP_WISHLIST_DB}
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U wishlist -d wishlist
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    volumes:
+      - ${APP_DATA_DIR}/data/pgdata:/var/lib/postgresql/data/pgdata
