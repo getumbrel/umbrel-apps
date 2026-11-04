@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: core-lightning
 category: bitcoin
 name: Core Lightning
-version: "26.06.9"
+version: "26.06.10"
 tagline: Run your personal Core Lightning node
 description: >-
   Get started with the Lightning network today with Core Lightning - a
@@ -32,17 +32,19 @@ defaultPassword: ""
 submitter: Blockstream
 submission: https://github.com/getumbrel/umbrel-apps/pull/475
 releaseNotes: >-
-  This update includes important security fixes and improvements for Core Lightning.
+  This update includes important security fixes and improvements for Core Lightning. The Core Lightning developers strongly recommend upgrading.
 
 
-  - Improves security across channel handling, payments, and node communication.
+  - Improves security across dual funding and splicing, on-chain HTLC resolution, gossip, peer connections, runes and commando, plugins, and the signer, plus several remote-crash fixes.
 
-  - Fixes a regression that could delay gossip, ping, onion, and channel traffic on busy nodes.
+  - Payments made with xpay now fail early when a route is too long to fit, and route finding slightly prefers shorter routes with fewer parts.
 
-  - Hides sensitive values such as wallet recovery and RPC credentials in listconfigs output.
+  - Channel opens from peers asking for an unusually high dust limit are now refused.
+
+  - Plugins that fail or crash while handling an event no longer crash or hang your node.
 
 
-  Full release notes are available at https://github.com/ElementsProject/lightning/releases/tag/v26.06.9
+  Full release notes are available at https://github.com/ElementsProject/lightning/releases/tag/v26.06.10
 
 backupIgnore:
   - data/lightningd/bitcoin/lightningd.sqlite3
