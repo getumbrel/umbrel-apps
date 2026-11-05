@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+APP_DIR="${APP_DATA_DIR:-$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")}"
+DATA_DIR="${APP_DATA_ROOT:-${APP_DIR}/data}"
+
+# New required bind-mount source. Fresh installs get it from the package, but
+# updates copy only the lifecycle files, so create it for existing installs.
+mkdir -p "${DATA_DIR}/relay"
+chown 1000:1000 "${DATA_DIR}/relay"
