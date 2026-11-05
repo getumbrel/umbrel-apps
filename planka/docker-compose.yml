@@ -5,14 +5,14 @@ services:
       APP_PORT: 1337
 
   app:
-    image: ghcr.io/plankanban/planka:2.3.0@sha256:13a3c60cb2303252fe2b9d412ae777c7f9c530c91492f50f3b505dc6040b9bc3
+    image: ghcr.io/plankanban/planka:2.3.1@sha256:f767ab97b878265ea1fff826867718d6ffa95dac04cd979fb5db82489806fb51
     user: "1000:1000"
     restart: on-failure
     depends_on:
       db:
         condition: service_healthy
     environment:
-      BASE_URL: http://${DEVICE_DOMAIN_NAME}:8546
+      BASE_URL: http://${DEVICE_DOMAIN_NAME}:8546,https://${DEVICE_DOMAIN_NAME}:8546
       DATABASE_URL: 'postgresql://postgres@planka_db_1/planka'
       DEFAULT_ADMIN_PASSWORD: ${APP_PASSWORD}
       DEFAULT_ADMIN_NAME: Umbrel
