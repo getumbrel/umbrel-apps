@@ -143,7 +143,7 @@ environment:
     note: Days of history to backfill on the first run. 0 copies all available history.
 category: social
 name: Ditto Relay
-version: "e897405-patch.4"
+version: "e897405-patch.5"
 tagline: Self-hosted Nostr relay with full-text search
 description: >-
   Ditto Relay is a high-performance Nostr relay backed by OpenSearch. It implements NIP-01 WebSocket relaying, NIP-50 full-text search with rich extensions, NIP-42 authenticated DMs and gift wraps, NIP-77 negentropy sync, NIP-85 trusted assertions, and trending content.
@@ -167,7 +167,7 @@ description: >-
   The relay signing key is generated on first start and stored in the app data folder as data/relay/nsec, with the matching npub in data/relay/npub. The npub is also advertised as the relay's self pubkey in NIP-11. Back up the app data to keep the relay identity, and never share the nsec. To use an existing key, set NOSTR_SECRET_KEY as a custom environment variable instead.
 
 
-  The relay includes a private single-node OpenSearch instance. The first start can take several minutes while OpenSearch initializes, and the relay waits for it automatically. Plan for roughly 1.5 GB of RAM in use.
+  The relay includes a private single-node OpenSearch instance, protected by a per-install generated admin password and reachable only on an internal network. The first start can take several minutes while OpenSearch initializes, and the relay waits for it automatically. Plan for roughly 1.5 GB of RAM in use.
 
 
   This is a public protocol endpoint, so the app does not require Umbrel login. The relay's own NIP-42 authentication still protects DMs, gift wraps, and other auth-gated event kinds.
