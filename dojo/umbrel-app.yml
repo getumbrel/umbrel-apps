@@ -1,0 +1,123 @@
+manifestVersion: 1
+id: dojo
+category: bitcoin
+name: Dojo
+version: "1.29.3-patch.13"
+tagline: Your own private backend for Ashigaru, Sentinel and Samourai
+description: >-
+  Dojo indexes your own wallets against your own Bitcoin node, so the addresses
+  and balances you look up never leave your Umbrel. Pair a wallet to it and
+  nobody else learns which coins are yours.
+
+
+  Requires a Bitcoin node, an Electrum server and Mempool — install those
+  first. Pick Fulcrum as the Electrum server: it answers batched requests, so
+  importing and rescanning an xpub takes a fraction of the time it does on
+  Electrs. Umbrel lists this requirement as Electrs, with Fulcrum among its
+  alternatives.
+
+
+  Dojo uses your Bitcoin node for everything else, and Mempool as the block
+  explorer your paired wallets open transactions in, so you are not handing
+  your transaction history to a public explorer either.
+
+
+  Open the app to pair a wallet. It shows a QR code you can scan from Ashigaru
+  Wallet, Samourai Wallet or Sentinel, and a Tor endpoint you can paste into
+  wallets that ask for a server URL. Tor means your wallet reaches your Dojo
+  from anywhere, not only at home.
+
+
+  Dojo also runs a Soroban node. Transactions you broadcast are handed to a
+  random node on the Soroban network, which relays them to Bitcoin — so the
+  node that announces your transaction is not your own, and cannot be linked
+  back to you.
+
+
+  Whirlpool is not included. Its coordinator was shut down in 2024 and the
+  service no longer exists.
+releaseNotes: ""
+developer: Dojo Open Source Project
+website: https://github.com/Dojo-Open-Source-Project
+dependencies:
+  - bitcoin
+  - electrs
+  - mempool
+repo: https://github.com/Dojo-Open-Source-Project/samourai-dojo
+support: https://github.com/Dojo-Open-Source-Project/samourai-dojo/issues
+
+port: 3023
+gallery: []
+path: ""
+
+# User-configurable settings, rendered by umbrelOS in this app's own settings.
+#
+# This is the only honest home for them: keys.index.js computes Dojo's PandoTx
+# configuration once at module load from these variables, and nothing in Dojo's
+# API can change it afterwards, so a control on the app's own page would do
+# nothing. umbrelOS stores the choice, injects it, and restarts the app -- which
+# is exactly what applying it requires.
+#
+# Both services are listed on purpose. umbrelOS injects an override only into
+# the services named, and the Connect page learns these values through nginx's
+# environment; naming only `node` would leave the page reporting a stale value
+# after a change.
+environment:
+  - name: NODE_PANDOTX_PUSH
+    services:
+      - node
+      - nginx
+    default: "on"
+    options:
+      - "on"
+      - "off"
+    note: Hand transactions you broadcast to a random node on the Soroban network, so the node that announces yours is not your own and cannot be linked to you. Turning this off means your own node announces them.
+  - name: NODE_PANDOTX_PROCESS
+    services:
+      - node
+      - nginx
+    default: "off"
+    options:
+      - "on"
+      - "off"
+    note: Relay other people's transactions as well as your own. This also requires SOROBAN_ANNOUNCE, since relaying means publishing an inbound Soroban address for other nodes to reach — it changes what this machine does on the network, so it is off by default.
+  - name: SOROBAN_ANNOUNCE
+    services:
+      - node
+      - soroban
+      - nginx
+    default: "off"
+    options:
+      - "on"
+      - "off"
+    note: Publish an inbound Soroban address so other nodes can reach this one. Needed only to relay other people's transactions; broadcasting your own works without it.
+
+widgets:
+  - id: "fees"
+    type: "three-stats"
+    # Dojo's estimator recomputes every 20 seconds (estimator/index.js sets
+    # refresh: 20), so polling faster than this only repeats an answer.
+    refresh: "30s"
+    # The compose service name, which umbrelOS resolves to this app's own
+    # container -- so it is correct under any app id. Port 3000 is not
+    # published to the host.
+    endpoint: "widget:3000/widgets/fees"
+    link: ""
+    # Shown in the widget picker, so it has to match what the endpoint really
+    # returns: three-stats puts subtext above text and has no title field.
+    example:
+      type: "three-stats"
+      link: ""
+      items:
+        - subtext: "Low 10%"
+          text: "1 sat/vB"
+        - subtext: "Med 50%"
+          text: "3 sat/vB"
+        - subtext: "High 99%"
+          text: "8 sat/vB"
+
+defaultUsername: ""
+defaultPassword: ""
+
+submitter: linkinparkrulz
+submission: https://github.com/getumbrel/umbrel-apps/pull/6177
