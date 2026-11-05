@@ -1,0 +1,42 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: msgvault_server_1
+      APP_PORT: 8080
+      # The msgvault CLI and MCP/API clients (e.g. `msgvault export-token` ->
+      # POST /api/v1/auth/token/{email}) cannot present Umbrel's browser session,
+      # so they must bypass app_proxy's session auth. These paths are all guarded
+      # by msgvault's own api_key, so this is safe; /docs stays behind Umbrel auth
+      # since it is a browser page.
+      PROXY_AUTH_WHITELIST: "/api/v1/*,/openapi.json,/openapi.yaml"
+
+  server:
+    image: ghcr.io/kenn-io/msgvault:0.18.0@sha256:0f8d8db70ca3b5a63ec049f017f86497be2d2b1748409afa4cd50619a6eae732
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      # Umbrel injects a deterministic per-install secret as APP_PASSWORD and
+      # shows it on the app's info screen. msgvault uses it as the API key that
+      # guards its non-loopback HTTP API (sent as Authorization: Bearer or
+      # X-Api-Key). /health stays public so the image healthcheck still works.
+      MSGVAULT_API_KEY: "${APP_PASSWORD}"
+    # The image entrypoint is `msgvault`, so override it to write a first-run
+    # config.toml before starting the daemon: bind on all interfaces so the
+    # app_proxy can reach the server, pin the API port to 8080 (the default is
+    # an ephemeral port), and set the API key. The file is only written when
+    # absent, so any later hand edits (extra sync schedules, etc.) survive.
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        set -e
+        CONFIG="$${MSGVAULT_HOME:-/data}/config.toml"
+        if [ ! -f "$$CONFIG" ]; then
+          umask 077
+          printf '[server]\nbind_addr = "0.0.0.0"\napi_port = 8080\napi_key = "%s"\n' "$$MSGVAULT_API_KEY" > "$$CONFIG"
+        fi
+        exec msgvault serve
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
