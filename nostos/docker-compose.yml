@@ -1,0 +1,22 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: nostos_web_1
+      APP_PORT: 8080
+      # E-reader apps cannot send the Umbrel login cookie. The catalog is
+      # read-only; everything else stays behind the Umbrel login.
+      PROXY_AUTH_WHITELIST: "/opds/*"
+
+  web:
+    image: ghcr.io/christian-gennari/nostos:v2026.10.25@sha256:5d37710ab5f38f6881526fcfe9a81b66490175fe2651b6d38c788378de4e7ef6
+    # Umbrel creates app data owned by 1000:1000. Nostos runs as any UID; its
+    # temporary folder must then be one that UID can write.
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      TMPDIR: /tmp
+    volumes:
+      - ${APP_DATA_DIR}/data/library:/data
