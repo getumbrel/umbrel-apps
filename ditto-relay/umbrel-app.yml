@@ -20,6 +20,10 @@ environment:
     services:
       - relay
     note: Optional operator contact shown in NIP-11 and the landing page. Use an email address or URL.
+  - name: WRITE_ALLOWED_PUBKEYS
+    services:
+      - relay
+    note: Comma-separated npub or hex pubkeys allowed to publish. When set, authors must also authenticate with NIP-42. Leave empty to accept events from any author.
   - name: AUTH_KINDS
     services:
       - relay
@@ -115,9 +119,31 @@ environment:
       - warn
       - error
     note: Relay log verbosity.
+  - name: SYNC_IDENTIFIERS
+    services:
+      - sync
+    note: Comma-separated npub, nprofile, or NIP-05 identifiers whose public-relay activity should be copied into this relay. Leave empty to disable syncing.
+  - name: SYNC_RELAYS
+    services:
+      - sync
+    note: Comma-separated public relay URLs to sync from. Leave empty to discover relays from NIP-05 and NIP-65, then fall back to popular relays.
+  - name: SYNC_KINDS
+    services:
+      - sync
+    note: Comma-separated event kinds to sync. Leave empty to sync all kinds.
+  - name: SYNC_INTERVAL_SECONDS
+    services:
+      - sync
+    default: "300"
+    note: Seconds between sync runs.
+  - name: SYNC_SINCE_DAYS
+    services:
+      - sync
+    default: "0"
+    note: Days of history to backfill on the first run. 0 copies all available history.
 category: social
 name: Ditto Relay
-version: "e897405-patch.1"
+version: "e897405-patch.2"
 tagline: Self-hosted Nostr relay with full-text search
 description: >-
   Ditto Relay is a high-performance Nostr relay backed by OpenSearch. It implements NIP-01 WebSocket relaying, NIP-50 full-text search with rich extensions, NIP-42 authenticated DMs and gift wraps, NIP-77 negentropy sync, NIP-85 trusted assertions, and trending content.
@@ -127,6 +153,12 @@ description: >-
 
 
   Configure the relay in the app settings under Advanced, then Environment variables. Settings cover the public URL, operator contact, auth-gated kinds, trends, moderation, and request limits. Add custom variables for any other upstream option.
+
+
+  To run a curated relay, set WRITE_ALLOWED_PUBKEYS to the npub or hex keys that may publish. The relay then requires those authors to authenticate with NIP-42 before accepting their events, and other authors are rejected. Clients must support NIP-42 AUTH to publish when this is set. Leave it empty to accept events from any author.
+
+
+  The optional sync worker copies past and future activity for the identifiers in SYNC_IDENTIFIERS from public relays. It discovers relays from NIP-05 and NIP-65, or uses SYNC_RELAYS when set. The worker writes through the relay's import path, so it can copy signed events without the authors' private keys.
 
 
   The relay signing key is generated on first start and stored in the app data folder as data/relay/nsec, with the matching npub in data/relay/npub. The npub is also advertised as the relay's self pubkey in NIP-11. Back up the app data to keep the relay identity, and never share the nsec. To use an existing key, set NOSTR_SECRET_KEY as a custom environment variable instead.

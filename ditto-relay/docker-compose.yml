@@ -10,7 +10,7 @@ services:
   relay:
     # Built by .github/workflows/ditto-relay-image.yml from the pinned upstream
     # commit. Bump the tag and digest together when the upstream SHA changes.
-    image: ghcr.io/advorzhak/ditto-relay:sha-e8974053dcf99ac952d1951deaffec105aeb08f1@sha256:f9c1077c6e0a5a6b3d119c2ad5246ca1ebc90d230dd23e7f3590d741b0fc8719
+    image: ghcr.io/advorzhak/ditto-relay:sha-e8974053dcf99ac952d1951deaffec105aeb08f1@sha256:48282f14555ab506d69f37545e601b8164268ae0e1b4381f4327812d7c2c4c39
     user: "1000:1000"
     restart: on-failure
     volumes:
@@ -25,6 +25,44 @@ services:
       - default
       - ditto-relay-internal
     depends_on:
+      opensearch:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - bun
+        - -e
+        - "fetch('http://127.0.0.1:13131/').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+
+  sync:
+    image: ghcr.io/advorzhak/ditto-relay:sha-e8974053dcf99ac952d1951deaffec105aeb08f1@sha256:48282f14555ab506d69f37545e601b8164268ae0e1b4381f4327812d7c2c4c39
+    user: "1000:1000"
+    restart: on-failure
+    command: ["bun", "scripts/sync.ts"]
+    volumes:
+      - ${APP_DATA_DIR}/data/relay:/keys
+      - ${APP_DATA_DIR}/data/sync:/sync
+    environment:
+      RELAY_URL: "ws://${DEVICE_DOMAIN_NAME}:${APP_PROXY_PORT}/"
+      OPENSEARCH_NODE: "http://opensearch:9200"
+      OPENSEARCH_INDEX: "nostr-events"
+      LOG_LEVEL: "warn"
+      SYNC_DATA_DIR: "/sync"
+      SYNC_IDENTIFIERS: ""
+      SYNC_RELAYS: ""
+      SYNC_KINDS: ""
+      SYNC_INTERVAL_SECONDS: "300"
+      SYNC_SINCE_DAYS: "0"
+    networks:
+      - default
+      - ditto-relay-internal
+    depends_on:
+      relay:
+        condition: service_healthy
       opensearch:
         condition: service_healthy
 
