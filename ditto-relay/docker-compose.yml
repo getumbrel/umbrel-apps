@@ -10,13 +10,16 @@ services:
   relay:
     # Built by .github/workflows/ditto-relay-image.yml from the pinned upstream
     # commit. Bump the tag and digest together when the upstream SHA changes.
-    image: ghcr.io/advorzhak/ditto-relay:sha-e8974053dcf99ac952d1951deaffec105aeb08f1@sha256:48282f14555ab506d69f37545e601b8164268ae0e1b4381f4327812d7c2c4c39
+    image: ghcr.io/advorzhak/ditto-relay:sha-e8974053dcf99ac952d1951deaffec105aeb08f1@sha256:263d239df9f241b669bc7167c9cd56bf8f8575f202dbea8a7b9f6bd0e4780893
     user: "1000:1000"
     restart: on-failure
     volumes:
       - ${APP_DATA_DIR}/data/relay:/keys
+      - ${APP_DATA_DIR}/data/sync:/sync
     environment:
       PORT: "13131"
+      APP_PASSWORD: "${APP_PASSWORD}"
+      SYNC_DATA_DIR: "/sync"
       RELAY_URL: "ws://${DEVICE_DOMAIN_NAME}:${APP_PROXY_PORT}/"
       OPENSEARCH_NODE: "http://opensearch:9200"
       OPENSEARCH_INDEX: "nostr-events"
@@ -39,7 +42,7 @@ services:
       start_period: 60s
 
   sync:
-    image: ghcr.io/advorzhak/ditto-relay:sha-e8974053dcf99ac952d1951deaffec105aeb08f1@sha256:48282f14555ab506d69f37545e601b8164268ae0e1b4381f4327812d7c2c4c39
+    image: ghcr.io/advorzhak/ditto-relay:sha-e8974053dcf99ac952d1951deaffec105aeb08f1@sha256:263d239df9f241b669bc7167c9cd56bf8f8575f202dbea8a7b9f6bd0e4780893
     user: "1000:1000"
     restart: on-failure
     command: ["bun", "scripts/sync.ts"]
