@@ -1,0 +1,78 @@
+manifestVersion: 1
+id: brollyzapper
+category: bitcoin
+name: BrollyZapper
+version: "0.1.18"
+tagline: Receive Nostr zaps and connect wallets to your own Lightning node
+description: >-
+  BrollyZapper adds Nostr zap receiving (NIP-57) and Nostr Wallet Connect
+  (NIP-47) to the Lightning node you already run.
+
+
+  It is receive-only until you turn sending on. A fresh install holds a macaroon
+  granting five RPC methods, none of which can move a satoshi, and enabling
+  sending bakes a second, separately revocable macaroon that expires on its own
+  and is locked to this app's own address. You can revoke it at any time, and
+  your node stops honouring it immediately.
+
+
+  Sending, when you enable it, is bounded by a spending ceiling you set. That
+  ceiling is bookkeeping this app applies to itself: it is not enforced by your
+  node, so an attacker who compromised this app while sending was enabled could
+  spend up to your node's outbound channel balance. The credentials live in a
+  second container with no network listener at all, which is what stops that
+  attacker obtaining anything wider.
+
+
+  A public domain is optional. Nostr Wallet Connect works without one; a
+  lightning address needs one, and BrollyZapper checks the domain actually
+  reaches this instance rather than assuming DNS is enough.
+# EMPTY AT SUBMISSION, and this is a rule rather than an oversight.
+# umbrel-package-app: "Use releaseNotes: '' for new packages." Verified against
+# the Opengist submission (getumbrel/umbrel-apps#5849, merged 24 Jul 2026), whose
+# diff shows releaseNotes: "" at version 1.14.0; the notes in the store today
+# arrived with later update PRs.
+#
+# It is the right shape as well as the required one: nobody installing this for
+# the first time has a previous version to be told what changed since.
+#
+# ON THE FIRST UPDATE PR, fill it in. There is deliberately no lint asserting
+# this stays empty — a lint that has to be deleted the week after it lands is
+# worse than the comment you are reading.
+releaseNotes: ""
+
+developer: davotoula
+website: https://github.com/davotoula/brollyzapper
+dependencies:
+  - lightning
+repo: https://github.com/davotoula/brollyzapper
+support: https://github.com/davotoula/brollyzapper/issues
+
+port: 3033
+gallery: []
+path: ""
+
+defaultUsername: ""
+defaultPassword: ""
+deterministicPassword: true
+
+# The credential volume is NOT backed up (spec §10, §11, d46.26).
+#
+# It holds recv.macaroon — an LND credential that, in a stolen backup, streams
+# every invoice on the node for every app over LND's Tor-published gRPC. The
+# caveats and the dedicated root key bound that; keeping it out of the backup
+# removes the copy entirely.
+#
+# Nothing is lost by it: the guard bakes on its own start (EnsureReceiveMacaroon,
+# §6), so a restore recovers unattended with a FRESH, correctly caveated
+# credential — better than restoring a stale one whose time-before may have
+# passed. guard-state.json lives in data/guard, not here, so the recorded root
+# key ids survive the restore and revocation still works afterwards.
+#
+# The database stays in backup: it holds the zap-receipt signing key, and losing
+# it changes the nostrPubkey the lightning address advertises.
+backupIgnore:
+  - data/credentials
+
+submitter: davotoula
+submission: https://github.com/getumbrel/umbrel-apps/pull/6049
