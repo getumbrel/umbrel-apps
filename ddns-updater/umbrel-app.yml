@@ -1,0 +1,63 @@
+manifestVersion: 2.0
+id: ddns-updater
+storage:
+  dataRoot: data
+environment:
+  - name: CONFIG
+    services:
+      - server
+    note: >-
+      Your records as one line of JSON, for example {"settings":[{"provider":"duckdns","domain":"sub.duckdns.org","token":"..."}]}.
+      The fields of each provider are listed at https://github.com/qdm12/ddns-updater#configuration.
+      When valid, it is saved to the app's data/config.json, so clearing this field later keeps the last records;
+      set it to {"settings":[]} to remove them. It holds your provider credentials.
+  - name: PERIOD
+    services:
+      - server
+    default: 5m
+    note: How often the public IP address is checked, such as 5m or 1h.
+  - name: TZ
+    services:
+      - server
+    note: IANA time zone used for the times shown in the web UI, such as Europe/Rome or America/New_York.
+  - name: SHOUTRRR_ADDRESSES
+    services:
+      - server
+    note: >-
+      Optional. Comma-separated Shoutrrr URLs to be notified of updates and errors, such as telegram://token@telegram?chats=123.
+      Supported services are listed at https://containrrr.dev/shoutrrr/services/overview/.
+category: networking
+name: DDNS Updater
+version: "2.10.0"
+tagline: Keep your DNS records pointed at your home IP address
+description: >-
+  ⚠️ After installing, open the app's settings in umbrelOS and set CONFIG to your records as one line of JSON
+  (the fields of each provider are in the upstream documentation). The web UI then lists every record,
+  its current IP address and the result of the last update.
+
+
+  DDNS Updater is a lightweight program that keeps DNS A and AAAA records updated for multiple DNS providers.
+  It checks your public IP address periodically and updates the records only when the address changes,
+  so a home server stays reachable at the same domain name.
+
+
+  - More than 50 providers, including Cloudflare, DuckDNS, Dynu, GoDaddy, Namecheap, No-IP, OVH, Porkbun and Route 53
+
+  - IPv4 and IPv6, with several public IP address sources checked in turn
+
+  - A web UI showing each record, its IP address history and update status
+
+  - Optional notifications through Shoutrrr (Discord, Telegram, email and more), set with SHOUTRRR_ADDRESSES in the app's settings
+releaseNotes: ""
+developer: Quentin McGaw
+website: https://github.com/qdm12/ddns-updater
+dependencies: []
+repo: https://github.com/qdm12/ddns-updater
+support: https://github.com/qdm12/ddns-updater/discussions
+port: 8007
+gallery: []
+path: ""
+defaultUsername: ""
+defaultPassword: ""
+submitter: Aiacos
+submission: https://github.com/getumbrel/umbrel-apps/pull/6284
