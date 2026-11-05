@@ -1,0 +1,68 @@
+name: Build ditto-relay image
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "ditto-relay/image/**"
+      - ".github/workflows/ditto-relay-image.yml"
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  UPSTREAM_REPO: https://gitlab.com/soapbox-pub/ditto-relay.git
+  UPSTREAM_SHA: e8974053dcf99ac952d1951deaffec105aeb08f1
+  IMAGE: ghcr.io/${{ github.repository_owner }}/ditto-relay
+
+jobs:
+  build:
+    name: Build and push multi-arch image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out package repository
+        uses: actions/checkout@v4
+
+      - name: Check out upstream at the pinned commit
+        run: |
+          git clone "$UPSTREAM_REPO" upstream
+          git -C upstream checkout "$UPSTREAM_SHA"
+
+      - name: Add the Umbrel entrypoint to the build context
+        run: cp ditto-relay/image/docker-entrypoint.sh upstream/docker-entrypoint.sh
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: upstream
+          file: ditto-relay/image/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ env.IMAGE }}:sha-${{ env.UPSTREAM_SHA }}
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ env.UPSTREAM_SHA }}
+
+      - name: Report digest
+        run: |
+          echo "### ditto-relay image" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Tags: \`${{ env.IMAGE }}:sha-${{ env.UPSTREAM_SHA }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Digest: \`${{ steps.build.outputs.digest }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Pin the digest in \`ditto-relay/docker-compose.yml\`, and make the GHCR package public so Umbrel can pull it." >> "$GITHUB_STEP_SUMMARY"

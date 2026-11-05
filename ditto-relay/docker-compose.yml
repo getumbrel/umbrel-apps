@@ -1,0 +1,64 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: ditto-relay_relay_1
+      APP_PORT: 13131
+      PROXY_AUTH_ADD: "false"
+
+  relay:
+    # Built by .github/workflows/ditto-relay-image.yml from the pinned upstream
+    # commit. Add the multi-arch digest (@sha256:...) printed by that workflow.
+    image: ghcr.io/advorzhak/ditto-relay:sha-e8974053dcf99ac952d1951deaffec105aeb08f1
+    user: "1000:1000"
+    restart: on-failure
+    environment:
+      PORT: "13131"
+      RELAY_URL: "ws://${DEVICE_DOMAIN_NAME}:${APP_PROXY_PORT}/"
+      OPENSEARCH_NODE: "http://opensearch:9200"
+      OPENSEARCH_INDEX: "nostr-events"
+      LOG_LEVEL: "info"
+      DITTO_RELAY_SECRET_SEED: "${APP_DITTO_RELAY_NOSTR_SECRET_SEED}"
+    networks:
+      - default
+      - ditto-relay-internal
+    depends_on:
+      opensearch:
+        condition: service_healthy
+
+  opensearch:
+    image: opensearchproject/opensearch:2.19.0@sha256:1f8b88245a6af61e7aa500afe0e87d43401e4b33140bb47230a919428ce3f7cb
+    user: "1000:1000"
+    restart: on-failure
+    networks:
+      - ditto-relay-internal
+    environment:
+      discovery.type: single-node
+      bootstrap.memory_lock: "true"
+      DISABLE_SECURITY_PLUGIN: "true"
+      DISABLE_INSTALL_DEMO_CONFIG: "true"
+      OPENSEARCH_JAVA_OPTS: "-Xms1g -Xmx1g"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    volumes:
+      - ${APP_DATA_DIR}/data/opensearch:/usr/share/opensearch/data
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          curl -fsS http://localhost:9200/_cluster/health
+          | grep -qE '"status":"(green|yellow)"'
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+
+networks:
+  ditto-relay-internal:
+    internal: true
