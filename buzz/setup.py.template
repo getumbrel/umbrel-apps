@@ -1,0 +1,1684 @@
+"""Buzz Relay on Umbrel: the setup and status page.
+
+A guided setup: the owner's public ID, how members' apps reach this Umbrel, and the community's
+address. Then it connects that address, checks it, and shows how to join, invite and pair phones.
+
+It has its own sign-in, with the password Umbrel shows for this app. Umbrel's login guards
+browsers, but every app on an Umbrel shares one Docker network, so other apps could reach this
+page directly; the password keeps them out. Umbrel renders this file from a template, so it must
+not contain a dollar sign.
+"""
+import concurrent.futures
+import hashlib
+import hmac
+import html
+import http.client
+import http.server
+import json
+import os
+import re
+import socket
+import ssl
+import threading
+import time
+import urllib.parse
+import urllib.request
+
+SETTINGS_DIR = "/settings"
+RELAY_ENV = os.path.join(SETTINGS_DIR, "relay.env")
+SETUP_JSON = os.path.join(SETTINGS_DIR, "setup.json")
+TAILSCALE_ON = os.path.join(SETTINGS_DIR, "tailscale-enabled")
+TAILSCALE_STATUS = os.path.join(SETTINGS_DIR, "tailscale-status.json")
+TAILSCALE_SERVE = os.path.join(SETTINGS_DIR, "tailscale-serve.txt")
+TAILSCALE_LOGS = ("tailscale-publish.log", "tailscale-funnel.log")
+# The app's own Cloudflare tunnel: the name it serves, where it stands, and its sign-in link
+CLOUDFLARE_ON = os.path.join(SETTINGS_DIR, "cloudflare-enabled")
+CLOUDFLARE_STATE = os.path.join(SETTINGS_DIR, "cloudflare-state")
+CLOUDFLARE_LOGIN = os.path.join(SETTINGS_DIR, "cloudflare-login.log")
+CLOUDFLARE_SETUP = os.path.join(SETTINGS_DIR, "cloudflare-setup.log")
+CLOUDFLARE_RESET = os.path.join(SETTINGS_DIR, "cloudflare-reset")
+GATEWAY_URL = "buzz-gateway:80"
+RELAY_HOST = "buzz_relay_1"
+BUZZ_APP = "https://github.com/block/buzz-app"
+TUNNEL_GUIDE = "https://github.com/Radiokot/umbrel-cloudflared/wiki/How-to-set-up-Cloudflare-Tunnel-on-your-Umbrel"
+TAILSCALE_ADMIN = "https://login.tailscale.com/admin/machines"
+TAILSCALE_ACCESS = "https://login.tailscale.com/admin/acls"
+
+PASSWORD = os.environ.get("APP_PASSWORD", "")
+SECRET = (os.environ.get("SETUP_SESSION_SECRET") or hashlib.sha256(("buzz-setup|" + PASSWORD).encode()).hexdigest()).encode()
+COOKIE = "buzz_setup"
+SESSION_SECONDS = 30 * 24 * 3600
+
+MODES = ("domain", "funnel", "private")
+MODE_NAMES = {"domain": "Your own domain", "funnel": "A free Tailscale address", "private": "Private Tailscale network"}
+
+BECH32 = "qpzry9x8gf2tvdw0s3jn54khce6mua7l"
+
+
+# ---------------------------------------------------------------- what the owner types
+
+
+def bech32_polymod(values):
+    generator = [0x3B6A57B2, 0x26508E6D, 0x1EA119FA, 0x3D4233DD, 0x2A1462B3]
+    check = 1
+    for value in values:
+        top = check >> 25
+        check = ((check & 0x1FFFFFF) << 5) ^ value
+        for i in range(5):
+            if (top >> i) & 1:
+                check ^= generator[i]
+    return check
+
+
+def owner_hex(text):
+    """The owner's 64-character hex key, from an npub (checksum verified) or hex."""
+    value = text.strip().lower()
+    if value.startswith("nostr:"):
+        value = value[6:]
+    if re.fullmatch(r"[0-9a-f]{64}", value):
+        return value
+    if value.startswith("nsec"):
+        raise ValueError("That's a private key. Keep it secret and don't paste it anywhere. Your public ID starts with npub1.")
+    if not value.startswith("npub1") or len(value) != 63:
+        raise ValueError("Paste your public ID from Buzz. It's under Settings, then Identity, then Nostr address. It starts with npub1 and is 63 characters long.")
+    data = []
+    for char in value[5:]:
+        if char not in BECH32:
+            raise ValueError("That public ID contains a character that isn't allowed. Copy it again from Buzz.")
+        data.append(BECH32.index(char))
+    expanded = [ord(c) >> 5 for c in "npub"] + [0] + [ord(c) & 31 for c in "npub"]
+    if bech32_polymod(expanded + data) != 1:
+        raise ValueError("That public ID has a wrong or missing character. Copy it again from Buzz.")
+    acc = bits = 0
+    key = bytearray()
+    for value5 in data[:-6]:
+        acc = (acc << 5) | value5
+        bits += 5
+        while bits >= 8:
+            bits -= 8
+            key.append((acc >> bits) & 0xFF)
+    if len(key) != 32:
+        raise ValueError("That public ID is the wrong length. Copy it again from Buzz.")
+    return key.hex()
+
+
+def clean_domain(text):
+    domain = re.sub(r"^[a-z]+://", "", text.strip().lower()).split("/")[0].rstrip(".")
+    label = r"[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?"
+    if not domain:
+        raise ValueError("Enter your domain, like yourteam.com.")
+    if len(domain) > 253 or not re.fullmatch(r"(" + label + r"\.)+[a-z][a-z0-9-]{0,61}[a-z0-9]", domain):
+        raise ValueError("That isn't a domain. Enter one like yourteam.com, with no port or path.")
+    if domain.endswith((".local", ".localhost", ".internal", ".lan", ".home.arpa")):
+        raise ValueError("That name only works on your home network. Use a public domain, "
+                         "or choose a Tailscale option.")
+    if domain.endswith(".ts.net"):
+        raise ValueError("For a Tailscale address, choose one of the Tailscale options instead. This app "
+                         "sets up that address itself.")
+    return domain
+
+
+# ---------------------------------------------------------------- settings on disk
+
+
+def read_json(path):
+    try:
+        with open(path) as f:
+            return json.load(f)
+    except (OSError, ValueError):
+        return None
+
+
+def read_text(path):
+    try:
+        with open(path) as f:
+            return f.read()
+    except OSError:
+        return ""
+
+
+def write_atomic(path, text):
+    temporary = path + ".tmp"
+    with open(temporary, "w") as f:
+        f.write(text)
+    os.replace(temporary, path)
+
+
+def norm_mode(mode):
+    # The first package called the public Tailscale address "tailscale".
+    return "funnel" if mode == "tailscale" else (mode if mode in MODES else "domain")
+
+
+def load_setup():
+    setup = read_json(SETUP_JSON)
+    if not isinstance(setup, dict) or not setup.get("owner_hex"):
+        return None
+    setup["mode"] = norm_mode(setup.get("mode"))
+    return setup
+
+
+def relay_domain():
+    """The address the relay runs at, once its settings are written."""
+    for line in read_text(RELAY_ENV).splitlines():
+        if line.startswith("BUZZ_DOMAIN="):
+            return line.split("=", 1)[1].strip()
+    return ""
+
+
+def push_on(setup):
+    """Phone notifications: on unless the owner turned them off."""
+    return (setup or {}).get("push") is not False
+
+
+def write_relay_env(key, domain, push):
+    # The relay watches this file and restarts when it changes.
+    write_atomic(RELAY_ENV, "\n".join([
+        "RELAY_OWNER_PUBKEY=" + key,
+        "BUZZ_DOMAIN=" + domain,
+        "RELAY_URL=wss://" + domain,
+        "BUZZ_MEDIA_BASE_URL=https://" + domain + "/media",
+        "BUZZ_MEDIA_SERVER_DOMAIN=" + domain,
+        "BUZZ_CORS_ORIGINS=https://" + domain + ",tauri://localhost,http://tauri.localhost",
+        "BUZZ_PAIRING_RELAY_URL=wss://" + domain + "/pair",
+        "BUZZ_PUSH_ENABLED=" + ("true" if push else "false"),
+    ]) + "\n")
+
+
+def save(owner_text, key, mode, domain, push=None):
+    if push is None:
+        push = push_on(load_setup())
+    write_atomic(SETUP_JSON, json.dumps({"owner": owner_text, "owner_hex": key, "mode": mode, "domain": domain,
+                                         "push": push}))
+    if mode == "domain":
+        if os.path.exists(TAILSCALE_ON):
+            os.remove(TAILSCALE_ON)
+        write_atomic(CLOUDFLARE_ON, domain + "\n")
+        write_relay_env(key, domain, push)
+        return
+    if os.path.exists(CLOUDFLARE_ON):
+        os.remove(CLOUDFLARE_ON)
+    # The Tailscale machine starts (or switches between Funnel and tailnet only); the watcher
+    # writes the relay's settings once the machine has its name.
+    write_atomic(TAILSCALE_ON, mode + "\n")
+    if domain:
+        write_relay_env(key, domain, push)
+    elif os.path.exists(RELAY_ENV):
+        os.remove(RELAY_ENV)
+
+
+def migrate():
+    """Settings from earlier versions of this package: "tailscale" is now "funnel", and a domain gets the
+    app's own Cloudflare tunnel."""
+    setup = read_json(SETUP_JSON)
+    if isinstance(setup, dict) and setup.get("mode") == "tailscale":
+        setup["mode"] = "funnel"
+        write_atomic(SETUP_JSON, json.dumps(setup))
+    if read_text(TAILSCALE_ON).strip() == "on":
+        write_atomic(TAILSCALE_ON, "funnel\n")
+    # A domain saved before this app ran its own Cloudflare tunnel: the tunnel starts for it too
+    if isinstance(setup, dict) and setup.get("mode") == "domain" and setup.get("domain") and not os.path.exists(CLOUDFLARE_ON):
+        write_atomic(CLOUDFLARE_ON, setup["domain"] + "\n")
+
+
+# ---------------------------------------------------------------- Tailscale
+
+
+def tailscale_state():
+    status = read_json(TAILSCALE_STATUS) or {}
+    me = status.get("Self") or {}
+    return {"backend": status.get("BackendState") or "", "name": (me.get("DNSName") or "").rstrip("."),
+            "auth_url": status.get("AuthURL") or "", "node": me.get("ID") or ""}
+
+
+def published():
+    """How the Tailscale machine publishes Buzz now: "funnel", "private" or ""."""
+    text = read_text(TAILSCALE_SERVE)
+    if "Funnel on" in text:
+        return "funnel"
+    return "private" if "tailnet only" in text else ""
+
+
+def consent_link():
+    """Tailscale's one-click link to turn on Funnel or HTTPS for this machine, if it printed one."""
+    for name in TAILSCALE_LOGS:
+        found = re.search(r"https://login\.tailscale\.com/f/\S+", read_text(os.path.join(SETTINGS_DIR, name)))
+        if found:
+            return found.group(0)
+    return ""
+
+
+def tailscale_watcher():
+    """Once the Tailscale machine is signed in, its name becomes the community's address. Only once:
+    a later rename of the machine would start a new community, so the address never moves by itself."""
+    while True:
+        try:
+            setup = load_setup()
+            if setup and setup["mode"] in ("funnel", "private") and not setup.get("domain"):
+                state = tailscale_state()
+                if state["backend"] == "Running" and state["name"].endswith(".ts.net"):
+                    save(setup["owner"], setup["owner_hex"], setup["mode"], state["name"])
+        except (OSError, KeyError, ValueError):
+            pass
+        time.sleep(3)
+
+
+def cloudflare_state():
+    """Where this app's Cloudflare tunnel stands, and Cloudflare's sign-in link while it waits for one."""
+    state = read_text(CLOUDFLARE_STATE).strip()
+    found = re.search(r"https://dash\.cloudflare\.com/argotunnel\?\S+", read_text(CLOUDFLARE_LOGIN)) if state == "signin" else None
+    return {"state": state, "link": found.group(0) if found else ""}
+
+
+def cloudflare_problem():
+    """The last thing Cloudflare's tool said, for an error the page can't put in its own words."""
+    lines = [line.strip() for line in read_text(CLOUDFLARE_SETUP).splitlines() if line.strip()]
+    return lines[-1][-240:] if lines else ""
+
+
+def cloudflare_step():
+    """Like tailscale_step: the page reloads when this changes, a new sign-in link included."""
+    cf = cloudflare_state()
+    if cf["state"] == "signin":
+        return "signin-" + (hashlib.sha256(cf["link"].encode()).hexdigest()[:8] if cf["link"] else "wait")
+    return cf["state"] or "starting"
+
+
+# ---------------------------------------------------------------- checks
+
+
+def request(host, port, path, tls=False, headers=None, timeout=6, addr=None):
+    """(status, body) or (None, reason). A WebSocket upgrade comes back 101 with no body. With addr, it
+    connects to that address while still asking for host, by its certificate and Host header."""
+    try:
+        context = ssl.create_default_context()
+        if tls:
+            conn = http.client.HTTPSConnection(host, port, timeout=timeout, context=context)
+        else:
+            conn = http.client.HTTPConnection(host, port, timeout=timeout)
+        if addr:
+            sock = socket.create_connection((addr, port), timeout=timeout)
+            conn.sock = context.wrap_socket(sock, server_hostname=host) if tls else sock
+        conn.request("GET", path, headers=headers or {})
+        response = conn.getresponse()
+        body = b"" if response.status == 101 else response.read(65536)
+        conn.close()
+        return response.status, body
+    except ssl.SSLError as error:
+        return None, ("tls " + str(error)).encode()
+    except (OSError, http.client.HTTPException) as error:
+        return None, str(error).encode()
+
+
+UPGRADE = {"Connection": "Upgrade", "Upgrade": "websocket", "Sec-WebSocket-Version": "13",
+           "Sec-WebSocket-Key": "dGhlIHNhbXBsZSBub25jZQ=="}
+NIP11 = {"Accept": "application/nostr+json"}
+
+
+def relay_self(status, body):
+    if status != 200:
+        return ""
+    try:
+        return json.loads(body.decode()).get("self") or ""
+    except (ValueError, UnicodeDecodeError, AttributeError):
+        return ""
+
+
+def resolves(name):
+    """The name's addresses as the internet sees them, from Cloudflare's public DNS: this Umbrel's own
+    resolver may still hold the "no such name" it got while the page checked a name not yet published."""
+    try:
+        query = urllib.request.Request("https://cloudflare-dns.com/dns-query?" + urllib.parse.urlencode({"name": name, "type": "A"}),
+                                       headers={"Accept": "application/dns-json"})
+        with urllib.request.urlopen(query, timeout=5) as response:
+            found = sorted({a["data"] for a in json.load(response).get("Answer") or [] if a.get("type") == 1})
+        if found:
+            return found
+    except (OSError, ValueError, KeyError, TypeError):
+        pass
+    try:
+        return sorted({info[4][0] for info in socket.getaddrinfo(name, 443)})
+    except OSError:
+        return []
+
+
+def item(key, state, text, hint=""):
+    return {"key": key, "state": state, "text": text, "hint": hint}
+
+
+def check(setup):
+    """The checks for the saved address, as (live, items). States: ok, wait, bad."""
+    mode = setup["mode"]
+    domain = relay_domain() or setup.get("domain") or ""
+    # The relay's main port, not its health port: the health and metrics ports listen on every
+    # address with no setting to change it yet (block/buzz#8004), and once they can be bound to the
+    # relay's own container, this page still works.
+    jobs = {"relay": lambda: request(RELAY_HOST, 3000, "/_readiness", headers={"Host": domain} if domain else None)}
+    if domain:
+        jobs["local_info"] = lambda: request(RELAY_HOST, 3000, "/", headers=dict(NIP11, Host=domain))
+    addresses = []
+    if domain and mode != "private":
+        # the public name, reached at the address the internet sees for it
+        addresses = resolves(domain)
+        addr = addresses[0] if addresses else None
+        jobs["live"] = lambda: request(domain, 443, "/_liveness", tls=True, addr=addr)
+        jobs["info"] = lambda: request(domain, 443, "/", tls=True, headers=NIP11, addr=addr)
+        jobs["pair"] = lambda: request(domain, 443, "/pair", tls=True, headers=UPGRADE, addr=addr)
+    with concurrent.futures.ThreadPoolExecutor(len(jobs)) as pool:
+        futures = {name: pool.submit(job) for name, job in jobs.items()}
+        got = {name: future.result() for name, future in futures.items()}
+    items = []
+    # Ready, and serving this address: right after an address change, the relay still running the
+    # old one answers readiness but knows no community at the new address until it restarts.
+    local_self = relay_self(*got["local_info"]) if domain else ""
+    relay_ok = got["relay"][0] == 200 and (bool(local_self) or not domain)
+    items.append(item("relay", "ok" if relay_ok else "wait",
+                      "Buzz is running on this Umbrel" if relay_ok else
+                      "Starting Buzz. The first start takes about a minute." if domain else
+                      "Buzz starts once the address is ready"))
+    if mode in ("funnel", "private"):
+        ts = tailscale_state()
+        signed_in = ts["backend"] == "Running"
+        items.append(item("tailscale", "ok" if signed_in else "wait",
+                          "Signed in to Tailscale as " + html.escape(ts["name"] or "buzz") if signed_in else
+                          "Waiting for you to sign in to Tailscale"))
+        on = published()
+        if mode == "funnel":
+            items.append(item("publish", "ok" if on == "funnel" else "wait",
+                              "Tailscale Funnel is on, so the address works from the internet" if on == "funnel" else
+                              "Waiting for Tailscale Funnel to be on",
+                              "" if on == "funnel" or not signed_in else
+                              "Tailscale asks you once to allow Funnel, and HTTPS certificates, for this machine. "
+                              "Use the button below."))
+        else:
+            items.append(item("publish", "ok" if on == "private" else "wait",
+                              "On your Tailscale network only, with a trusted HTTPS certificate" if on == "private" else
+                              "Waiting for the Tailscale address and its HTTPS certificate",
+                              "" if on == "private" or not signed_in else
+                              "Tailscale may ask you once to allow HTTPS certificates for your network. "
+                              "Use the button below."))
+    if not domain:
+        return False, items
+    if mode == "private":
+        live = relay_ok and tailscale_state()["backend"] == "Running" and published() == "private"
+        items.append(item("device", "wait", "Checking from this device...", ""))
+        return live, items
+    if not addresses:
+        items.append(item("dns", "wait",
+                          "The name <code>" + html.escape(domain) + "</code> isn't published yet",
+                          "Cloudflare publishes it a few seconds after the tunnel is set up." if mode == "domain" else
+                          "Tailscale publishes the name once Funnel is on."))
+    status, body = got["live"]
+    reach_ok = status == 200 and body.strip() == b"ok"
+    public_self = relay_self(*got["info"])
+    if reach_ok and local_self and public_self and local_self != public_self:
+        items.append(item("reach", "bad", "<code>" + html.escape(domain) + "</code> reaches a different Buzz relay",
+                          "The name points to another server, not this Umbrel. Check which tunnel or server it goes to."))
+        reach_ok = False
+    elif reach_ok:
+        items.append(item("reach", "ok", "This Umbrel's Buzz answers at <code>https://" + html.escape(domain) + "</code>"))
+    elif addresses:
+        items.append(item("reach", "bad" if status else "wait",
+                          "Not reachable at <code>https://" + html.escape(domain) + "</code> yet",
+                          reach_hint(mode, status, body)))
+    pair_ok = got["pair"][0] == 101
+    items.append(item("pair", "ok" if pair_ok else "wait",
+                      "Phones can pair" if pair_ok else "Phone pairing isn't reachable yet"))
+    if mode == "domain" and not reach_ok:
+        cf = cloudflare_state()["state"]
+        trouble = cf in ("taken", "wrong-domain", "error")
+        items.insert(1, item("cloudflare", "ok" if cf == "running" else "bad" if trouble else "wait",
+                             "This app's Cloudflare tunnel is set up" if cf == "running" else
+                             "Cloudflare needs your attention" if trouble else
+                             "Signed in to Cloudflare, setting up the tunnel" if cf in ("creating", "routing") else
+                             "Waiting for you to sign in to Cloudflare",
+                             "See below." if trouble else ""))
+    return relay_ok and reach_ok and pair_ok, items
+
+
+def reach_hint(mode, status, body):
+    text = body.decode(errors="replace").lower()
+    if mode == "funnel":
+        return "Tailscale is still turning Funnel on. This can take a minute after you allow it."
+    if status in (530, 1033) or "1033" in text:
+        return ("Cloudflare has no connected tunnel for this name yet. This app's tunnel connects a few seconds "
+                "after it's set up; with Umbrel's Cloudflare Tunnel app instead, is it running?")
+    if status in (502, 503, 504):
+        return ("The tunnel runs but can't reach Buzz. In Cloudflare, set the hostname's service to HTTP and "
+                "the URL to " + GATEWAY_URL + ".")
+    if status == 404 and "no community" in text:
+        return ("The name reaches Buzz, but it doesn't match the address saved here. Check that the hostname in "
+                "Cloudflare matches it exactly.")
+    if status:
+        return "The name answered with HTTP " + str(status) + ". Check the hostname and service in Cloudflare."
+    if text.startswith("tls"):
+        return "The name has no valid HTTPS certificate yet. In Cloudflare, set this name to Proxied."
+    return "Nothing answers yet. A new name can take a few minutes to work."
+
+
+CACHE = {"at": 0.0, "key": None, "value": None}
+CACHE_LOCK = threading.Lock()
+
+
+def cached_check(setup):
+    key = json.dumps(setup, sort_keys=True) + relay_domain() + read_text(TAILSCALE_SERVE)
+    with CACHE_LOCK:
+        if CACHE["key"] == key and time.time() - CACHE["at"] < 3:
+            return CACHE["value"]
+    value = check(setup)
+    with CACHE_LOCK:
+        CACHE.update(at=time.time(), key=key, value=value)
+    return value
+
+
+# ---------------------------------------------------------------- sign-in
+
+
+def sign(value):
+    return hmac.new(SECRET, value.encode(), hashlib.sha256).hexdigest()
+
+
+def new_session():
+    expires = str(int(time.time()) + SESSION_SECONDS)
+    return expires + "." + sign("session|" + expires)
+
+
+def session_ok(token):
+    try:
+        expires, signature = token.split(".", 1)
+        return int(expires) > time.time() and hmac.compare_digest(signature, sign("session|" + expires))
+    except (ValueError, AttributeError):
+        return False
+
+
+FAILURES = {}
+FAILURE_LOCK = threading.Lock()
+
+
+def too_many_failures(ip):
+    with FAILURE_LOCK:
+        recent = [t for t in FAILURES.get(ip, []) if time.time() - t < 600]
+        FAILURES[ip] = recent
+        return len(recent) >= 10
+
+
+def note_failure(ip):
+    with FAILURE_LOCK:
+        FAILURES.setdefault(ip, []).append(time.time())
+
+
+# ---------------------------------------------------------------- the page
+
+BEE = (
+    '<svg class="bee" viewBox="0 0 466 309" aria-hidden="true"><defs>'
+    '<mask id="bee-mask" maskUnits="userSpaceOnUse" x="0" y="0" width="466" height="309">'
+    '<circle cx="91.7" cy="154.5" r="91.7" fill="white"/><circle cx="374.3" cy="154.5" r="91.7" fill="white"/>'
+    '<rect x="128" y="0" width="210" height="309" rx="34" fill="white"/>'
+    '<circle cx="193.3" cy="84.4" r="27" fill="black"/><circle cx="276" cy="84.4" r="27" fill="black"/>'
+    '<rect x="166.3" y="157.2" width="136.9" height="38.3" rx="5" fill="black"/>'
+    '<rect x="166.9" y="235.1" width="136.2" height="37.6" rx="5" fill="black"/></mask></defs>'
+    '<rect width="466" height="309" mask="url(#bee-mask)" fill="currentColor"/></svg>'
+)
+
+STYLE = """
+:root { --ink: #231e1e; --ink-2: rgb(35 30 30 / 66%); --ink-3: rgb(35 30 30 / 46%); --line: rgb(35 30 30 / 8%);
+  --line-2: rgb(35 30 30 / 14%); --accent: #d7d72e; --accent-soft: rgb(215 215 46 / 28%); --chip: #f2f2ee;
+  --soft: #f7f7f4; --code: #171513; --bad: #b4233a; --olive: #55550a;
+  --sans: "Inter Variable", Inter, "Avenir Next", "Helvetica Neue", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+  --shadow-1: 0 1px 2px rgb(24 20 14 / 4%), 0 6px 22px rgb(24 20 14 / 5%); --ease: cubic-bezier(0.22, 1, 0.36, 1); }
+* { box-sizing: border-box; }
+body { margin: 0; background: #fff; color: var(--ink); font: 400 16px/1.6 var(--sans); letter-spacing: -0.011em;
+  -webkit-font-smoothing: antialiased; }
+a { color: inherit; text-decoration-color: var(--accent); text-decoration-thickness: 2px; text-underline-offset: 3px; }
+a:hover { text-decoration-color: var(--ink); }
+code { font: 0.86em var(--mono); letter-spacing: 0; background: var(--chip); border-radius: 6px; padding: 0.12em 0.38em; overflow-wrap: anywhere; }
+b { font-weight: 600; }
+[hidden] { display: none !important; }
+:is(a, button, input, summary):focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; border-radius: 8px; }
+.hd { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px clamp(16px, 4vw, 32px);
+  border-bottom: 1px solid var(--line); }
+.brand { display: flex; align-items: center; gap: 10px; font-size: 15px; font-weight: 500; letter-spacing: -0.02em; }
+.bee { width: 26px; color: var(--ink); }
+.hd form { margin: 0; }
+.link { background: none; border: 0; padding: 0; color: var(--ink-2); font: 500 13.5px var(--sans); cursor: pointer;
+  text-decoration: underline; text-decoration-color: var(--line-2); text-underline-offset: 3px; }
+.link:hover { color: var(--ink); text-decoration-color: var(--ink); }
+main { max-width: 700px; margin: 0 auto; padding: 48px clamp(16px, 4vw, 32px) 96px; }
+.eyebrow { font: 500 11px var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-3); }
+h1 { margin: 10px 0 0; font-weight: 400; font-size: clamp(34px, 6vw, 52px); line-height: 1.02; letter-spacing: -0.05em; }
+h1 mark, .hl { background: none; color: inherit; background-image: linear-gradient(var(--accent), var(--accent));
+  background-repeat: no-repeat; background-size: 100% 0.32em; background-position: 0 88%; }
+h2 { margin: 0; font-weight: 500; font-size: 21px; letter-spacing: -0.025em; }
+h3 { margin: 0; font-weight: 500; font-size: 17px; letter-spacing: -0.02em; }
+.lede { margin: 18px 0 0; font-size: 18.5px; line-height: 1.5; color: var(--ink-2); max-width: 34em; }
+p { margin: 10px 0 0; }
+.muted { color: var(--ink-2); }
+.small { font-size: 14px; }
+.step { position: relative; display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 0 16px; margin-top: 44px; }
+.num { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font: 500 13px var(--mono);
+  border: 1px solid var(--line-2); color: var(--ink-2); background: #fff; }
+.step.on .num { background: var(--accent); border-color: var(--accent); color: var(--ink); }
+.step-body > p:first-of-type { margin-top: 6px; }
+label.field { display: block; margin-top: 16px; font-size: 14px; font-weight: 500; }
+.tag { font: 500 10.5px var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); margin-left: 6px; }
+input[type=text], input[type=password] { width: 100%; margin-top: 7px; padding: 12px 14px; font: 15px var(--mono);
+  letter-spacing: 0; color: var(--ink); background: #fff; border: 1px solid var(--line-2); border-radius: 12px; outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s; }
+input[type=text]:focus, input[type=password]:focus { border-color: var(--ink); box-shadow: 0 0 0 3px rgb(215 215 46 / 45%); }
+.choices { display: grid; gap: 12px; margin-top: 16px; }
+.choice { position: relative; display: block; padding: 18px 20px; background: #fff; border: 1px solid var(--line-2);
+  border-radius: 18px; box-shadow: var(--shadow-1); cursor: pointer; transition: border-color 0.2s, box-shadow 0.2s, transform 0.3s var(--ease); }
+.choice:hover { border-color: rgb(35 30 30 / 28%); }
+.choice-head { display: block; cursor: pointer; }
+.choice-more { margin-top: 16px; padding-top: 4px; border-top: 1px solid var(--line); }
+.choice-more .small { margin-top: 10px; color: var(--ink-2); }
+.confirm-box { display: flex; gap: 12px; align-items: flex-start; margin-top: 16px; padding: 14px 16px; border-radius: 12px; background: rgb(215 215 46 / 32%); font-size: 14.5px; cursor: pointer; }
+.confirm-box input { width: 18px; height: 18px; margin: 2px 0 0; accent-color: var(--ink); flex: none; }
+.confirm-box b { font-weight: 500; }
+.confirm-box + .btn { margin-top: 18px; }
+.choice-head input { position: absolute; opacity: 0; pointer-events: none; }
+.choice:has(input:checked) { border-color: #bdbd1f; box-shadow: 0 0 0 3px var(--accent-soft), var(--shadow-1); }
+.choice:has(input:focus-visible) { outline: 2px solid var(--ink); outline-offset: 3px; }
+.choice .kicker { display: flex; justify-content: space-between; align-items: center; gap: 10px; font: 600 13px var(--sans);
+  color: var(--ink); }
+.choice .kicker .badge { margin-left: 8px; padding: 2px 9px; border-radius: 999px; background: var(--accent); font-size: 11.5px; }
+.choice .pick { width: 16px; height: 16px; border-radius: 50%; border: 1.5px solid var(--line-2); flex: none; }
+.choice:has(input:checked) .pick { border: 5px solid var(--ink); }
+.choice h3 { margin-top: 6px; font-size: 19px; }
+.choice p { margin-top: 4px; font-size: 14.5px; color: var(--ink-2); }
+.choice .needs { margin-top: 10px; font-size: 13px; color: var(--ink-2); }
+.choice .needs b { font: 600 13px var(--sans); color: var(--ink); margin-right: 6px; }
+.panel { margin-top: 14px; padding: 16px 18px; background: var(--soft); border: 1px solid var(--line); border-radius: 14px; font-size: 14.5px; }
+.panel p:first-child { margin-top: 0; }
+.panel ul { margin: 8px 0 0; padding-left: 18px; color: var(--ink-2); }
+.panel li { margin: 4px 0; }
+.opts { margin-top: 14px; border: 1px solid var(--line-2); border-radius: 12px; overflow: hidden; background: #fff; }
+.opt { display: flex; align-items: center; gap: 12px; padding: 11px 14px; cursor: pointer; }
+.opt + .opt { border-top: 1px solid var(--line); }
+.opt input { width: 16px; height: 16px; margin: 0; accent-color: var(--ink); flex: none; }
+.opt span { flex: 1; min-width: 0; }
+.opt b { display: block; font-size: 15px; font-weight: 500; }
+.opt small { display: block; font-size: 13px; color: var(--ink-2); }
+.opt em { font: 500 10.5px var(--mono); letter-spacing: 0.08em; text-transform: uppercase; font-style: normal; color: var(--ink-3); }
+.opt:has(input:checked) { background: rgb(215 215 46 / 16%); }
+.opt:has(input:disabled) { cursor: default; }
+.opt:has(input:disabled) :is(b, small) { color: var(--ink-3); }
+.split { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+.split input { flex: 1 1 auto; width: auto; min-width: 0; margin: 0; }
+.split input[name=subdomain] { flex: 0 0 28%; }
+.split span { font-size: 20px; color: var(--ink-3); }
+.heads-up { margin-top: 12px; padding: 10px 12px; border-radius: 10px; background: rgb(215 215 46 / 32%); font-size: 13.5px; color: var(--ink); }
+.check { display: flex; gap: 10px; align-items: flex-start; margin-top: 14px; font-size: 15px; cursor: pointer; }
+.check input { width: 18px; height: 18px; margin: 2px 0 0; accent-color: var(--ink); flex: none; }
+.btn { display: inline-flex; align-items: center; gap: 9px; margin-top: 22px; padding: 12px 22px; border-radius: 999px;
+  border: 1px solid var(--ink); background: var(--ink); color: #fff; font: 500 15px var(--sans); letter-spacing: -0.01em;
+  text-decoration: none; cursor: pointer; transition: transform 0.3s var(--ease), box-shadow 0.3s var(--ease); }
+.btn:hover { transform: translateY(-1px); box-shadow: 0 0 0 4px var(--accent-soft); }
+.btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; box-shadow: none; }
+.btn.ghost { background: #fff; color: var(--ink); border-color: var(--line-2); }
+.btn.small { margin-top: 12px; padding: 8px 16px; font-size: 14px; }
+.error { margin-top: 18px; padding: 12px 16px; border: 1px solid rgb(180 35 58 / 30%); background: rgb(180 35 58 / 5%);
+  border-radius: 12px; color: var(--bad); font-size: 15px; }
+.status { list-style: none; margin: 18px 0 0; padding: 0; border-top: 1px solid var(--line); }
+.status li { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 2px 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.status .icon { width: 20px; height: 20px; margin-top: 1px; border-radius: 50%; display: grid; place-items: center; }
+.status .ok .icon { background: var(--accent); }
+.status .ok .icon::after { content: ""; width: 8px; height: 4px; border-left: 1.8px solid var(--ink); border-bottom: 1.8px solid var(--ink);
+  transform: translateY(-1px) rotate(-45deg); }
+.status .wait .icon { border: 2px solid var(--line-2); border-top-color: var(--ink-2); animation: spin 1s linear infinite; }
+.status .bad .icon { background: rgb(180 35 58 / 12%); }
+.status .bad .icon::after { content: "!"; font: 700 12px var(--sans); color: var(--bad); }
+.status .hint { grid-column: 2; font-size: 14px; color: var(--ink-2); }
+.status .bad .hint { color: var(--ink); }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .status .wait .icon { animation: none; } * { transition: none !important; } }
+.address { display: flex; gap: 8px; align-items: center; margin-top: 16px; padding: 8px 8px 8px 16px; border: 1px solid var(--line-2);
+  border-radius: 14px; background: #fff; box-shadow: var(--shadow-1); }
+.address code { flex: 1; min-width: 0; padding: 0; background: none; font-size: 15px; }
+.address code span { background: rgb(215 215 46 / 45%); border-radius: 3px; padding: 0 2px; }
+.address .btn { margin: 0; padding: 8px 16px; font-size: 14px; }
+ol.do { margin: 12px 0 0; padding: 0; list-style: none; counter-reset: do; }
+ol.do > li { position: relative; padding: 0 0 0 34px; margin-top: 14px; counter-increment: do; }
+ol.do > li::before { content: counter(do); position: absolute; left: 0; top: 1px; width: 22px; height: 22px; border-radius: 50%;
+  display: grid; place-items: center; background: var(--chip); font: 500 11.5px var(--mono); color: var(--ink-2); }
+section.part { margin-top: 44px; padding-top: 28px; border-top: 1px solid var(--line); }
+details { margin-top: 14px; }
+details > summary { list-style: none; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 500; }
+details > summary::-webkit-details-marker { display: none; }
+details > summary::before { content: ""; width: 6px; height: 6px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor;
+  transform: rotate(-45deg); transition: transform 0.2s var(--ease); }
+details[open] > summary::before { transform: rotate(45deg); }
+details .inner { margin-top: 8px; padding-left: 14px; }
+.cards { display: grid; gap: 12px; margin-top: 16px; }
+.card { padding: 18px 20px; border: 1px solid var(--line-2); border-radius: 18px; background: #fff; }
+.card p { font-size: 14.5px; color: var(--ink-2); }
+.foot { margin-top: 56px; font-size: 13px; color: var(--ink-3); }
+dl.values { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px 16px; align-items: center; margin: 10px 0 0;
+  padding: 12px 14px; background: var(--soft); border: 1px solid var(--line); border-radius: 12px; font-size: 14px; }
+dl.values dt { font: 500 10.5px var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); }
+dl.values dd { margin: 0; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.copy-mini { padding: 3px 9px; border: 1px solid var(--line-2); border-radius: 999px; background: #fff; cursor: pointer;
+  font: 500 11px var(--mono); color: var(--ink-2); }
+.copy-mini:hover { border-color: var(--ink); color: var(--ink); }
+"""
+
+HOW_STYLE = """
+details.how { margin-top: 12px; }
+details.alt { margin-top: 22px; padding-top: 14px; border-top: 1px solid var(--line); }
+details.alt > summary { font-size: 14px; color: var(--ink-2); }
+details.how > summary { padding: 6px 13px 6px 11px; border: 1px solid var(--line-2); border-radius: 999px; background: #fff; font-size: 13.5px; color: var(--ink); }
+details.how > summary:hover { border-color: var(--ink); }
+details.how[open] > summary { background: var(--chip); }
+.next .step { margin-top: 26px; }
+.next .eyebrow + .step { margin-top: 14px; }
+.note { margin-top: 12px; font-size: 14px; color: var(--ink-2); }
+.set-card { margin-top: 14px; border: 1px solid var(--line-2); border-radius: 14px; background: #fff; overflow: hidden; }
+.set-card details { margin: 0; }
+.set-card details + details { border-top: 1px solid var(--line); }
+.set-card details > summary { display: flex; box-sizing: border-box; width: 100%; gap: 12px; padding: 14px 16px; }
+.set-card details > summary::before { display: none; }
+.set-card details > summary::after { content: ""; flex: none; width: 6px; height: 6px; margin: 0 2px 0 4px; border-right: 1.5px solid var(--ink-3); border-bottom: 1.5px solid var(--ink-3); transform: rotate(-45deg); }
+.set-card details[open] > summary::after { transform: rotate(45deg); }
+.set-card summary .val { margin-left: auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 400 13px var(--mono); color: var(--ink-2); }
+.set-card summary .val.word { font: 400 14px var(--sans); }
+.set-card .inner { margin: 0; padding: 0 16px 18px; }
+.how-b { margin-top: 12px; }
+.how-b > p { margin: 0; font-size: 14px; color: var(--ink-2); }
+.how-tabs { display: none; flex-wrap: wrap; gap: 6px; margin: 14px 0 10px; }
+.how.js .how-tabs { display: flex; }
+.how-tabs button { display: inline-flex; align-items: center; gap: 7px; padding: 5px 12px 5px 5px; border: 1px solid var(--line-2); border-radius: 999px; background: #fff; cursor: pointer; font: 500 13px var(--sans); color: var(--ink-2); }
+.how-tabs button span { display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--chip); font-size: 11.5px; }
+.how-tabs button[aria-selected="true"] { border-color: var(--ink); color: var(--ink); }
+.how-tabs button[aria-selected="true"] span { background: var(--accent); }
+.how-step { margin-top: 14px; }
+.how.js .how-tabs ~ .how-step { margin-top: 0; }
+.how-step > p { margin: 10px 0 0; font-size: 14px; color: var(--ink-2); }
+.how-step > p b { color: var(--ink); font-weight: 500; }
+.mb { --b1-base: #f5f5f6; --b1-line: #e8e8e8; --b1-citrus: #beda36; }
+.mb-modal-h b, .mb-dlg-h b {font-weight: 500; }
+.mb-nav-col .mb-nav-host {margin-bottom: 4px; }
+.mb-nav-host span {display: grid; place-items: center; width: 16px; height: 16px; border-radius: 5px; background: #f0f0f0; font-size: 8.5px; font-weight: 600; }
+.mb-btns {display: flex; justify-content: flex-end; gap: 6px; margin: 6px 0 2px; }
+.mb-btn.dark {background: #0f0f0f; color: #fff; }
+.mb h6 em {font-style: normal; color: #5f5f5f; }
+.mb-box {position: relative; padding: 8px 10px 4px; border: 1px solid #1f1f1f; border-radius: 14px; }
+.mb-canvas .mb-search {display: flex; align-items: center; gap: 6px; margin-bottom: 4px; padding: 5px 10px; border-radius: 999px; background: #f3f3f4; font-size: 10.5px; color: #6b6b6b; }
+.mb-row {display: flex; align-items: center; gap: 8px; padding: 4px 0; }
+.mb-who {flex: 1; min-width: 0; }
+.mb-who b {display: flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 400; white-space: nowrap; }
+.mb-who b em {font-style: normal; }
+.mb-who small {display: block; font-size: 10px; color: #5f5f5f; }
+.mb-who .tb-i {font-size: 11px; }
+.mb-shade.on-modal {z-index: 3; }
+.mb-dlg {position: absolute; top: 50%; left: 50%; z-index: 4; width: 330px; padding: 14px 16px 12px; transform: translate(-50%, -50%); border-radius: 18px; background: #fff; box-shadow: 0 18px 50px rgb(0 0 0 / 25%); }
+.mb-dlg-h {display: flex; align-items: center; justify-content: space-between; font-size: 13px; }
+.mb-line {display: flex; align-items: center; gap: 6px; margin: 5px 0 2px; }
+.mb-in {flex: 1; min-width: 0; display: flex; align-items: center; gap: 6px; padding: 6px 6px 6px 11px; border-radius: 999px; background: #f3f3f4; font-size: 10.5px; }
+.mb-in > span:first-child {flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mb-in .mono {font: 10px var(--mono); }
+.mb-choice {display: inline-flex; align-items: center; gap: 3px; padding: 0 4px; font-size: 10.5px; white-space: nowrap; }
+.mb-copy {padding: 1px 6px; border-radius: 999px; font-size: 10.5px; font-weight: 500; white-space: nowrap; }
+.mb-canvas .mb-opt {display: flex; align-items: center; justify-content: space-between; margin: 4px 2px 0; font-size: 10.5px; }
+.mb .mb-modal:has(.id-pair) {inset: 7px 16px; }
+.mb .id-pair {padding: 9px 18px; }
+.id-pair-b {display: grid; grid-template-columns: 116px minmax(0, 1fr); gap: 14px; align-items: center; margin-top: 10px; }
+.id-pair-code {padding: 8px; border-radius: 12px; background: #fff; box-shadow: 0 0 0 1px #e6e6e6; }
+.id-qr {display: block; width: 100%; fill: #0f0f0f; }
+.id-pair ol {display: grid; gap: 9px; margin: 0; padding: 0; list-style: none; }
+.id-pair li {display: flex; gap: 8px; }
+.id-pair li > span {flex: none; display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: #f0f0f1; font-size: 10px; font-weight: 600; }
+.id-pair li b {display: block; font-size: 11px; font-weight: 500; }
+.mb-canvas .id-pair li p {font-size: 9.5px; color: #5f5f5f; }
+.mb-av i {display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: #f0f0f1; font: 500 9.5px var(--sans); font-style: normal; color: #2b2b2b; }
+.mb-pmenu.sw-menu {right: 40px; width: 176px; }
+.jn-go {display: flex; justify-content: flex-end; margin-top: 10px; }
+.tb-i {width: 1em; height: 1em; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.mb-stage {--s: 1; position: relative; height: calc(340px * var(--s)); overflow: hidden; border-radius: 16px; background: #ecece8; }
+.mb-canvas {position: absolute; top: 0; left: calc(50% - 280px * var(--s)); width: 560px; height: 340px; overflow: hidden; transform: scale(var(--s)); transform-origin: 0 0; color: #0f0f0f; font-size: 11px; line-height: 1.35; text-align: left; }
+.mb-canvas p {margin: 0; }
+.mb-app {position: absolute; inset: 14px 14px -20px 60px; overflow: hidden; border-radius: 14px 14px 0 0; background: var(--b1-base); box-shadow: 0 0 0 1px #e3e3e5, 0 10px 30px rgb(24 20 14 / 10%); }
+.mb-top {display: flex; align-items: center; gap: 8px; height: 40px; padding-right: 12px; }
+.mb-track, .mb-track span {display: inline-flex; align-items: center; gap: 5px; }
+.mb-track {gap: 5px; margin-right: auto; padding: 5px 12px 5px 14px; border-radius: 0 999px 999px 0; background: var(--b1-line); font-size: 11.5px; color: #404040; }
+.mb-track span {margin-left: 12px; }
+.mb-track .tb-i {font-size: 13px; }
+.mb-me {position: relative; width: 26px; height: 26px; border-radius: 50%; }
+.mb-app-body {position: absolute; inset: 40px 7px 0; }
+.mb-app-main {height: 100%; padding: 12px 16px; border-radius: 12px 12px 0 0; background: #fff; box-shadow: 0 0 0 1px var(--b1-line); }
+.mb-app-main > p {margin-bottom: 14px; font-weight: 500; }
+.mb-app-main > span {display: block; width: 60%; height: 9px; margin-bottom: 12px; border-radius: 5px; background: #f1f1f2; }
+.mb-app-main > span.short {width: 38%; }
+.mb-pmenu {position: absolute; top: 44px; right: 8px; width: 214px; padding: 8px; border-radius: 16px; background: #fff; box-shadow: 0 0 0 1px #e8e8e8, 0 12px 32px rgb(0 0 0 / 14%); font-size: 12px; }
+.mb-pm-head {display: flex; align-items: center; gap: 10px; padding: 6px 6px 10px; }
+.mb-pm-av {position: relative; width: 34px; height: 34px; }
+.mb-pm-head b {display: block; font-size: 13px; font-weight: 500; }
+.mb-pmenu p {display: flex; align-items: center; gap: 9px; padding: 6px 8px; border-radius: 10px; }
+.mb-pmenu .tb-i {font-size: 14px; color: #404040; }
+.mb-pm-more {display: flex; margin-left: auto; }
+.mb-pmenu hr {margin: 6px 4px; border: 0; border-top: 1px solid #ececec; }
+.mb-pmenu p.on {border-radius: 999px; background: var(--b1-citrus); }
+.mb-shade {position: absolute; inset: 0; background: rgb(15 15 15 / 28%); }
+.mb-modal {position: absolute; inset: 14px 16px; display: flex; flex-direction: column; overflow: hidden; border-radius: 18px; background: #fff; box-shadow: 0 16px 48px rgb(0 0 0 / 22%); }
+.mb-modal-h {display: flex; align-items: center; justify-content: space-between; padding: 9px 12px 9px 16px; border-bottom: 1px solid #ececec; font-size: 13px; }
+.mb-modal-h b {font-weight: 500; }
+.mb-x {display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: #f3f3f4; font-size: 12px; color: #404040; }
+.mb-modal-b {position: relative; flex: 1; display: grid; grid-template-columns: 148px minmax(0, 1fr); min-height: 0; }
+.mb-nav-col {padding: 10px 8px; overflow: hidden; border-right: 1px solid #ececec; }
+.mb-nav-col p {display: flex; align-items: center; gap: 7px; padding: 3px 9px; border-radius: 999px; font-size: 11px; color: #2b2b2b; white-space: nowrap; }
+.mb-nav-col .tb-i {font-size: 12.5px; }
+.mb-nav-col .mb-nav-g {margin-top: 8px; color: #5f5f5f; }
+.mb-nav-col .mb-nav-i.on {background: var(--b1-citrus); }
+.mb-page {position: relative; padding: 14px 22px; overflow: hidden; }
+.mb h5 {margin: 0; font-size: 13px; font-weight: 500; }
+.mb-canvas .mb-sub {margin-top: 2px; font-size: 10.5px; color: #5f5f5f; }
+.mb-btn {display: inline-flex; align-items: center; padding: 6px 12px; border-radius: 999px; background: #f0f0f1; font-size: 11px; font-weight: 500; color: #0f0f0f; white-space: nowrap; }
+.mb h6 {margin: 8px 0 4px; font-size: 12.5px; font-weight: 500; }
+.mb .hot {box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--b1-citrus); }
+.id-comms {display: inline-flex; align-items: center; gap: 3px; padding: 4px 9px; border-radius: 999px; background: #fff; box-shadow: 0 0 0 1px #e3e3e5; font-size: 10.5px; font-weight: 500; }
+.mb .id-me {display: grid; place-items: center; border-radius: 50%; background: #f0f0f1; color: #5f5f5f; }
+.mb .id-me .tb-i {font-size: 13px; }
+.mb .id-empty {display: grid; place-content: center; justify-items: center; text-align: center; }
+.mb .id-empty p {margin: 0 0 12px; font-size: 14px; }
+.mb .id-empty span {width: 220px; }
+.mb .id-empty span.short {width: 150px; }
+.mb .mb-modal:has(.id-page) {inset: 7px 16px; }
+.mb .id-page {padding: 9px 18px; }
+.id-page .mb-sub {margin-bottom: 2px; }
+.id-group {margin-top: 6px; border: 1px solid #e6e6e6; border-radius: 12px; background: #fff; }
+.id-row {display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 5px 10px; }
+.id-row + .id-row {border-top: 1px solid #efefef; }
+.id-row b, .id-form > b {display: block; font-size: 11px; font-weight: 500; }
+.mb .id-row code {display: block; margin-top: 2px; padding: 0; background: none; font: 10px var(--mono); color: #5f5f5f; }
+.id-ic {display: grid; place-items: center; width: 24px; height: 24px; border-radius: 8px; font-size: 13px; color: #404040; }
+.id-form {padding: 7px 10px 8px; }
+.id-form .mb-btn {padding: 5px 11px; }
+.id-input {display: block; margin-top: 4px; padding: 5px 10px; border-radius: 9px; background: #f3f3f4; font: 10.5px var(--mono); letter-spacing: 0.1em; }
+.id-btns {display: flex; gap: 6px; margin-top: 5px; }
+.id-toast {position: absolute; right: 12px; bottom: 12px; display: flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 12px; background: #fff; box-shadow: 0 0 0 1px #e8e8e8, 0 10px 28px rgb(0 0 0 / 14%); font-size: 11px; font-weight: 500; }
+.id-toast .tb-i {color: #2f9e57; }
+.hw-page { position: absolute; inset: 18px 44px 0; padding: 16px 22px; border-radius: 14px 14px 0 0; background: #fff; box-shadow: 0 0 0 1px #e3e3e5, 0 10px 30px rgb(24 20 14 / 10%); }
+.mb .hw-brand { font-size: 10.5px; font-weight: 600; letter-spacing: -0.01em; }
+.mb .hw-page h6 { margin: 18px 0 0; font-size: 24px; font-weight: 400; letter-spacing: -0.03em; }
+.hw-step { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 0 12px; margin-top: 22px; }
+.hw-num { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: #d7d72e; font-size: 11px; font-weight: 500; }
+.hw-h { display: block; margin-top: 2px; font-size: 14px; font-weight: 500; }
+.mb .hw-label { margin-top: 14px; font-size: 11px; font-weight: 500; }
+.hw-input { display: flex; align-items: center; margin-top: 6px; padding: 9px 12px; border: 1px solid #231e1e; border-radius: 10px; box-shadow: 0 0 0 3px rgb(215 215 46 / 45%); font: 12px var(--mono); }
+.hw-input i { width: 1px; height: 14px; margin-left: 1px; background: #231e1e; }
+.hw-input em { margin-left: auto; padding: 2px 8px; border-radius: 999px; background: #eef5d0; font: normal 500 10px var(--sans); color: #55550a; }
+"""
+
+SCRIPT = """
+function copyText(button, text) {
+  var done = function () { button.textContent = "Copied"; setTimeout(function () { button.textContent = "Copy"; }, 1500); };
+  if (navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(text).then(done); return; }
+  var area = document.createElement("textarea");
+  area.value = text; document.body.appendChild(area); area.select(); document.execCommand("copy"); area.remove(); done();
+}
+function updateForm(form) {
+  var mode = form.querySelector("input[name=mode]:checked");
+  var chosen = mode ? mode.value : "";
+  form.querySelectorAll("[data-for]").forEach(function (el) {
+    el.hidden = el.getAttribute("data-for").split(" ").indexOf(chosen) < 0;
+  });
+  var save = form.querySelector("button[type=submit]");
+  var ack = form.querySelector("input[name=ack]");
+  var confirm = form.querySelector("input[name=confirm]");
+  var ready = Boolean(chosen) && (!ack || ack.checked);
+  if (confirm) { ready = ready && confirm.value.trim().toLowerCase() === confirm.getAttribute("data-expect"); }
+  if (save) { save.disabled = !ready; }
+  var sub = form.querySelector("input[name=subdomain]"), base = form.querySelector("input[name=base]");
+  var preview = form.querySelector("[data-preview]");
+  if (sub && base && preview) {
+    var b = base.value.trim().toLowerCase().replace(/^[a-z]+:[/][/]/, "").split("/")[0];
+    var s = sub.value.trim().toLowerCase();
+    while (s.slice(-1) === ".") { s = s.slice(0, -1); }
+    preview.textContent = b ? "Members will use https://" + (s ? s + "." : "") + b
+      : "Clear the first box to use the domain on its own.";
+  }
+}
+function reachFromHere(item) {
+  var host = item.getAttribute("data-host");
+  var text = item.querySelector(".text"), hint = item.querySelector(".hint");
+  var controller = new AbortController();
+  var timer = setTimeout(function () { controller.abort(); }, 6000);
+  fetch("https://" + host + "/_liveness", { mode: "no-cors", cache: "no-store", signal: controller.signal })
+    .then(function () {
+      item.className = "ok"; text.textContent = "This device reaches Buzz over your Tailscale network"; hint.textContent = "";
+    })
+    .catch(function () {
+      item.className = "bad"; text.textContent = "This device can't reach Buzz";
+      hint.textContent = "Check that Tailscale is on here, signed in to the same Tailscale network, and allowed to reach the buzz machine. Devices outside your network can't connect, which keeps this option private.";
+    })
+    .finally(function () { clearTimeout(timer); });
+}
+function poll() {
+  var list = document.querySelector("[data-poll]");
+  if (!list) { return; }
+  var phase = list.getAttribute("data-phase");
+  fetch("status.json", { cache: "no-store", credentials: "same-origin" }).then(function (r) { return r.json(); }).then(function (data) {
+    if (data.phase !== phase) { location.reload(); return; }
+    list.innerHTML = data.html;
+    list.querySelectorAll("[data-host]").forEach(reachFromHere);
+  }).catch(function () {}).finally(function () { setTimeout(poll, 5000); });
+}
+function howScale(how) {
+  how.querySelectorAll(".mb-stage").forEach(function (stage) {
+    if (stage.clientWidth) { stage.style.setProperty("--s", Math.min(1, stage.clientWidth / 560)); }
+  });
+}
+function howShow(how, n) {
+  how.querySelectorAll(".how-tabs button").forEach(function (b, i) { b.setAttribute("aria-selected", String(i === n)); });
+  how.querySelectorAll(".how-step").forEach(function (s, i) { s.hidden = i !== n; });
+  howScale(how);
+}
+document.addEventListener("DOMContentLoaded", function () {
+  document.querySelectorAll("details.how").forEach(function (how) {
+    how.classList.add("js");
+    how.querySelectorAll(".how-tabs button").forEach(function (b, i) { b.addEventListener("click", function () { howShow(how, i); }); });
+    how.addEventListener("toggle", function () { howScale(how); });
+    howShow(how, 0);
+  });
+  window.addEventListener("resize", function () { document.querySelectorAll("details.how[open]").forEach(howScale); });
+  document.querySelectorAll("form[data-guided]").forEach(function (form) {
+    form.addEventListener("input", function () { updateForm(form); });
+    form.addEventListener("change", function () { updateForm(form); });
+    updateForm(form);
+  });
+  document.querySelectorAll("[data-host]").forEach(reachFromHere);
+  setTimeout(poll, 5000);
+});
+"""
+
+
+def esc(text):
+    return html.escape(str(text), quote=True)
+
+
+def layout(body, signed_in=True, title="Buzz Relay"):
+    logout = ('<form method="post" action="logout"><button class="link" type="submit">Sign out</button></form>'
+              if signed_in else "")
+    return (
+        '<!doctype html><html lang="en"><head><meta charset="utf-8">'
+        '<meta name="viewport" content="width=device-width, initial-scale=1"><title>' + esc(title) + "</title>"
+        "<style>" + STYLE + HOW_STYLE + "</style><script>" + SCRIPT + "</script></head><body>"
+        '<header class="hd"><span class="brand">' + BEE + "<span>Buzz Relay</span></span>" + logout + "</header>"
+        "<main>" + body + '<p class="foot">Buzz is open source, from Block: '
+        '<a href="https://github.com/block/buzz" target="_blank" rel="noopener">github.com/block/buzz</a>.</p>'
+        "</main></body></html>"
+    )
+
+
+def error_box(error):
+    return '<div class="error" role="alert">' + esc(error) + "</div>" if error else ""
+
+
+def login_page(error=""):
+    return layout(
+        '<p class="eyebrow">Sign in</p><h1>Your <mark>Buzz</mark> community</h1>'
+        '<p class="lede">Enter this app\'s password to continue.</p>'
+        '<form method="post" action="login"><label class="field" for="password">Password</label>'
+        '<input type="password" id="password" name="password" autocomplete="current-password" autofocus>'
+        '<button class="btn" type="submit">Sign in</button></form>' + error_box(error) +
+        '<div class="panel" style="margin-top:28px"><p><b>Where to find it.</b> Umbrel shows the password when you '
+        "open Buzz Relay from the home screen. To see it again, right-click Buzz Relay on the home screen and "
+        "choose Settings, then Default credentials. On umbrelOS 1.7, right-click Buzz Relay and choose Show "
+        "default credentials.</p><p class=\"muted\">Why a second password? Umbrel's sign-in protects this page "
+        "in your browser. But all the apps on an Umbrel share one network, so another app could reach this page "
+        "directly. This password keeps other apps out. You stay signed in on this browser for 30 days.</p></div>",
+        signed_in=False)
+
+
+def choice(mode, kicker, badge, title, text, needs, checked, warning="", more=""):
+    """An option's card: what it is and needs, and once chosen, its own field or next step inside it."""
+    return (
+        '<div class="choice"><label class="choice-head"><input type="radio" name="mode" value="' + mode + '"'
+        + (" checked" if checked else "") + ">"
+        '<span class="kicker"><span>' + kicker + ('<span class="badge">' + badge + "</span>" if badge else "") + '</span><span class="pick"></span></span>'
+        "<h3>" + title + "</h3><p>" + text + "</p>" + ('<p class="heads-up">' + warning + "</p>" if warning else "")
+        + '<p class="needs"><b>Needs:</b>' + needs + "</p></label>"
+        + ('<div class="choice-more" data-for="' + mode + '">' + more + "</div>" if more else "") + "</div>"
+    )
+
+
+def domain_field(values, label):
+    """A name and a domain, as two boxes: the name is buzz unless the owner changes or clears it."""
+    sub = values.get("subdomain", "buzz")
+    return (
+        '<label class="field" for="domain-base">' + label + "</label>"
+        '<div class="split"><input type="text" name="subdomain" value="' + esc(sub) + '" aria-label="Name" '
+        'autocomplete="off" spellcheck="false"><span>.</span>'
+        '<input type="text" id="domain-base" name="base" placeholder="yourteam.com" aria-label="Domain" '
+        'autocomplete="off" spellcheck="false" value="' + esc(values.get("base", "")) + '"></div>'
+        '<p class="muted small" data-preview>Clear the first box to use the domain on its own.</p>'
+    )
+
+
+def posted_domain(values):
+    """The domain from a form: one field (earlier forms, and the tests), or a name and a domain."""
+    if values.get("domain", "").strip():
+        return values["domain"]
+    base = re.sub(r"^[a-z]+://", "", values.get("base", "").strip().lower()).split("/")[0]
+    sub = values.get("subdomain", "").strip().lower().strip(".")
+    return sub + "." + base if sub and base else base
+
+
+def address_fields(values, setup):
+    mode = values.get("mode") or (setup or {}).get("mode") or ""
+    return (
+        '<div class="choices">'
+        + choice("domain", "For hosting a community", "Recommended", "Your own domain",
+                 "A name you own, like <code>buzz.yourteam.com</code>. Anyone you invite can reach it from anywhere, "
+                 "and the address stays yours, even on another server.",
+                 "a domain (around 10 US dollars a year) on a free Cloudflare account.", mode == "domain",
+                 more=domain_field(values, "Your address")
+                 + '<p class="small">Next, you sign in to Cloudflare and choose your domain. This page sets up the rest and '
+                 "checks that it works. "
+                 "Cloudflare handles HTTPS, so it can see the traffic it carries, and uploads are limited to 100 MB.</p>")
+        + choice("funnel", "For trying Buzz out", "", "A free Tailscale address",
+                 "The quickest start. Tailscale gives this Umbrel an address like <code>buzz.tail1234.ts.net</code> "
+                 "that anyone you invite can reach. It's tied to your Tailscale account, not a name you own.",
+                 "a free Tailscale account for you, the owner.", mode == "funnel",
+                 "For now, if you change your community's address, its messages and members don't carry over to the "
+                 "new one. If you're building a community to keep, choose your own domain now.",
+                 more='<p class="small">Next, you sign in to Tailscale, and it gives you the address. It stays the same '
+                 "as long as you keep this Tailscale account.</p>")
+        + choice("private", "For a private group on a VPN", "", "A private Tailscale network",
+                 "Nothing is reachable from the internet. Only devices you allow on your Tailscale network can "
+                 "connect. Best for a small group that wants its server hidden.",
+                 "Tailscale on every member's device, phones included, and access to your Tailscale network.",
+                 mode == "private",
+                 more='<p class="small">Next, you sign in to Tailscale, and it gives you the address. To let someone in, '
+                 "invite them to your Tailscale network or share the <b>buzz</b> machine with them, then add them "
+                 "in Buzz.</p>")
+        + "</div>"
+    )
+
+
+# Where the owner finds their public ID: Buzz's own screens, adapted from the guide site's drawings
+# (site/src/scenes/identity.ts) to Buzz with a community joined. Tabler's outline icons (MIT) are the set
+# Buzz draws its interface with.
+TABLER = {
+    'messages': '<path d="M21 14l-3 -3h-7a1 1 0 0 1 -1 -1v-6a1 1 0 0 1 1 -1h9a1 1 0 0 1 1 1v10"/><path d="M14 15v2a1 1 0 0 1 -1 1h-7l-3 3v-10a1 1 0 0 1 1 -1h2"/>',
+    'robot': '<path d="M6 6a2 2 0 0 1 2 -2h8a2 2 0 0 1 2 2v4a2 2 0 0 1 -2 2h-8a2 2 0 0 1 -2 -2l0 -4"/><path d="M12 2v2"/><path d="M9 12v9"/><path d="M15 12v9"/><path d="M5 16l4 -2"/><path d="M15 14l4 2"/><path d="M9 18h6"/><path d="M10 8v.01"/><path d="M14 8v.01"/>',
+    'bolt': '<path d="M13 3l0 7l6 0l-8 11l0 -7l-6 0l8 -11"/>',
+    'chevron-down': '<path d="M6 9l6 6l6 -6"/>',
+    'user': '<path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0"/><path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2"/>',
+    'device-desktop': '<path d="M3 5a1 1 0 0 1 1 -1h16a1 1 0 0 1 1 1v10a1 1 0 0 1 -1 1h-16a1 1 0 0 1 -1 -1v-10"/><path d="M7 20h10"/><path d="M9 16v4"/><path d="M15 16v4"/>',
+    'chevron-right': '<path d="M9 6l6 6l-6 6"/>',
+    'layout-grid': '<path d="M4 5a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -4"/><path d="M14 5a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -4"/><path d="M4 15a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -4"/><path d="M14 15a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -4"/>',
+    'settings': '<path d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065"/><path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0"/>',
+    'message-circle': '<path d="M3 20l1.3 -3.9c-2.324 -3.437 -1.426 -7.872 2.1 -10.374c3.526 -2.501 8.59 -2.296 11.845 .48c3.255 2.777 3.695 7.266 1.029 10.501c-2.666 3.235 -7.615 4.215 -11.574 2.293l-4.7 1"/>',
+    'device-mobile': '<path d="M6 5a2 2 0 0 1 2 -2h8a2 2 0 0 1 2 2v14a2 2 0 0 1 -2 2h-8a2 2 0 0 1 -2 -2v-14"/><path d="M11 4h2"/><path d="M12 17v.01"/>',
+    'shield': '<path d="M12 3a12 12 0 0 0 8.5 3a12 12 0 0 1 -8.5 15a12 12 0 0 1 -8.5 -15a12 12 0 0 0 8.5 -3"/>',
+    'palette': '<path d="M12 21a9 9 0 0 1 0 -18c4.97 0 9 3.582 9 8c0 1.06 -.474 2.078 -1.318 2.828c-.844 .75 -1.989 1.172 -3.182 1.172h-2.5a2 2 0 0 0 -1 3.75a1.3 1.3 0 0 1 -1 2.25"/><path d="M7.5 10.5a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"/><path d="M11.5 7.5a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"/><path d="M15.5 10.5a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"/>',
+    'bell': '<path d="M10 5a2 2 0 1 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3h-16a4 4 0 0 0 2 -3v-3a7 7 0 0 1 4 -6"/><path d="M9 17v1a3 3 0 0 0 6 0v-1"/>',
+    'keyboard': '<path d="M2 8a2 2 0 0 1 2 -2h16a2 2 0 0 1 2 2v8a2 2 0 0 1 -2 2h-16a2 2 0 0 1 -2 -2l0 -8"/><path d="M6 10l0 .01"/><path d="M10 10l0 .01"/><path d="M14 10l0 .01"/><path d="M18 10l0 .01"/><path d="M6 14l0 .01"/><path d="M18 14l0 .01"/><path d="M10 14l4 .01"/>',
+    'x': '<path d="M18 6l-12 12"/><path d="M6 6l12 12"/>',
+    'copy': '<path d="M7 9.667a2.667 2.667 0 0 1 2.667 -2.667h8.666a2.667 2.667 0 0 1 2.667 2.667v8.666a2.667 2.667 0 0 1 -2.667 2.667h-8.666a2.667 2.667 0 0 1 -2.667 -2.667l0 -8.666"/><path d="M4.012 16.737a2.005 2.005 0 0 1 -1.012 -1.737v-10c0 -1.1 .9 -2 2 -2h10c.75 0 1.158 .385 1.5 1"/>',
+    'check': '<path d="M5 12l5 5l10 -10"/>',
+    'users': '<path d="M5 7a4 4 0 1 0 8 0a4 4 0 1 0 -8 0"/><path d="M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/><path d="M21 21v-2a4 4 0 0 0 -3 -3.85"/>',
+    'mood-smile': '<path d="M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"/><path d="M9 10l.01 0"/><path d="M15 10l.01 0"/><path d="M9.5 15a3.5 3.5 0 0 0 5 0"/>',
+    'logout': '<path d="M14 8v-2a2 2 0 0 0 -2 -2h-7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2 -2v-2"/><path d="M9 12h12l-3 -3"/><path d="M18 15l3 -3"/>',
+    'search': '<path d="M3 10a7 7 0 1 0 14 0a7 7 0 1 0 -14 0"/><path d="M21 21l-6 -6"/>',
+    'crown': '<path d="M12 6l4 6l5 -4l-2 10h-14l-2 -10l5 4l4 -6"/>',
+    'dots': '<path d="M4 12a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"/><path d="M11 12a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"/><path d="M18 12a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"/>',
+    'world': '<path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0"/><path d="M3.6 9h16.8"/><path d="M3.6 15h16.8"/><path d="M11.5 3a17 17 0 0 0 0 18"/><path d="M12.5 3a17 17 0 0 1 0 18"/>',
+    'users-plus': '<path d="M5 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0"/><path d="M3 21v-2a4 4 0 0 1 4 -4h4c.96 0 1.84 .338 2.53 .901"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/><path d="M16 19h6"/><path d="M19 16v6"/>',
+}
+
+
+def ti(name):
+    return '<svg class="tb-i" viewBox="0 0 24 24" aria-hidden="true">' + TABLER[name] + "</svg>"
+
+
+SAMPLE_NPUB = "npub1qm\u20268k3a"
+
+
+COMMUNITY_GROUPS = [
+    ("Community", [("user", "Profile"), ("settings", "Local settings"), ("mood-smile", "Custom emoji"),
+                   ("device-mobile", "Pair mobile"), ("logout", "Leave or remove")]),
+    ("Community admin", [("users", "Membership")]),
+    ("Buzz", [("shield", "Identity"), ("palette", "Appearance"), ("bell", "Notifications"), ("keyboard", "Shortcuts")]),
+]
+
+
+def settings_nav(groups, current, host=""):
+    """Settings' left column, open at one item; a community's Settings start with its address."""
+    top = '<p class="mb-nav-host"><span>' + esc(host[:1].upper()) + "</span>" + esc(host) + "</p>" if host else ""
+    return '<nav class="mb-nav-col">' + top + "".join(
+        '<p class="mb-nav-g">' + group + "</p>" + "".join(
+            '<p class="mb-nav-i' + (" on" if label == current else "") + '">' + ti(icon) + label + "</p>"
+            for icon, label in items)
+        for group, items in groups) + "</nav>"
+
+
+def settings_modal(nav, page, over=""):
+    return ('<div class="mb-shade"></div><div class="mb-modal"><div class="mb-modal-h"><b>Settings</b><span class="mb-x">'
+            + ti("x") + '</span></div><div class="mb-modal-b">' + nav + page + "</div>" + over + "</div>")
+
+
+def drawn_app(menu=""):
+    """Buzz's window before any community is open, with a menu open at the top right."""
+    return (
+        '<div class="mb-app"><div class="mb-top"><span class="mb-track">' + ti("messages") + "Messages<span>"
+        + ti("robot") + "Agents</span><span>" + ti("bolt") + 'Workflows</span></span><span class="id-comms">Communities'
+        + ti("chevron-down") + '</span><span class="mb-me id-me">' + ti("user") + "</span></div>"
+        '<div class="mb-app-body"><div class="mb-app-main id-empty"><p>Your channels, one conversation.</p><span></span>'
+        '<span class="short"></span></div></div>' + menu + "</div>"
+    )
+
+
+def drawn_switcher():
+    """The community menu, open, Join a community highlighted."""
+    return drawn_app('<div class="mb-pmenu sw-menu"><p>' + ti("world") + "Personal space</p>"
+                     '<p class="on">' + ti("users-plus") + "Join a community</p></div>")
+
+
+def drawn_join(url):
+    """Join a community, with the address pasted in."""
+    return drawn_app() + (
+        '<div class="mb-shade on-modal"></div><div class="mb-dlg"><div class="mb-dlg-h"><b>Join a community</b>'
+        '<span class="mb-x">' + ti("x") + "</span></div>"
+        '<p class="mb-sub">Use your identity across communities. Your profile and conversations stay separate in each '
+        "one.</p><h6>Community URL</h6>"
+        '<div class="mb-line"><span class="mb-in"><span class="typed">' + esc(url) + "</span></span></div>"
+        '<p class="mb-sub">Paste your community link. Continue shares your Buzz identity with the community so you can '
+        'preview it before joining.</p><div class="jn-go"><span class="mb-btn dark hot">Continue</span></div></div>'
+    )
+
+
+def drawn_membership(host, inviting=False):
+    """Settings, Membership, in a new community: the owner alone. Inviting opens Add or invite people over it."""
+    page = (
+        '<section class="mb-page"><h5>Membership</h5><p class="mb-sub">Manage members and access to ' + esc(host) + ".</p>"
+        '<div class="mb-btns"><span class="mb-btn">Refresh</span><span class="mb-btn dark' + ("" if inviting else " hot")
+        + '">Invite members</span></div><h6>Members <em>1</em></h6>'
+        '<div class="mb-box"><p class="mb-search">' + ti("search") + "Search members</p>"
+        '<div class="mb-row"><span class="mb-av"><i>Y</i></span><span class="mb-who"><b>You · <em>' + SAMPLE_NPUB
+        + "</em>" + ti("crown") + "</b><small>Owner</small></span></div></div></section>"
+    )
+    over = ""
+    if inviting:
+        over = (
+            '<div class="mb-shade on-modal"></div><div class="mb-dlg"><div class="mb-dlg-h"><b>Add or invite people</b>'
+            '<span class="mb-x">' + ti("x") + "</span></div>"
+            '<p class="mb-sub">Add someone by their exact identity, or share a link they can use to join.</p>'
+            "<h6>Add directly</h6><p class=\"mb-sub\">Paste the person's npub or 64-character public key.</p>"
+            '<div class="mb-line"><span class="mb-in"><span class="typed">npub1qk3f8w…7x2a</span>'
+            '<span class="mb-choice">Member' + ti("chevron-down") + '</span></span><span class="mb-btn dark hot">Add member'
+            "</span></div><h6>Invite with a link</h6>"
+            '<p class="mb-sub">Anyone with this link can use it to join until it expires.</p>'
+            '<div class="mb-line"><span class="mb-in"><span class="mono">https://' + esc(host) + "/invite/v2.nOvr6DwA6u"
+            '</span><span class="mb-copy hot">Copy link</span></span></div>'
+            '<p class="mb-opt">Expires after<span class="mb-choice">3 days' + ti("chevron-down") + "</span></p>"
+            '<p class="mb-opt">Limit number of uses<span class="mb-choice">No limit' + ti("chevron-down") + "</span></p></div>"
+        )
+    return settings_modal(settings_nav(COMMUNITY_GROUPS, "Membership", host), page, over)
+
+
+def qr_cells():
+    """A made-up code: a finder square in three corners, a quiet gap around each, a fixed scatter between."""
+    def finder(x, y, ox, oy):
+        dx, dy = x - ox, y - oy
+        if dx < -1 or dy < -1 or dx > 7 or dy > 7:
+            return None
+        if dx < 0 or dy < 0 or dx > 6 or dy > 6:
+            return False
+        return dx in (0, 6) or dy in (0, 6) or (2 <= dx <= 4 and 2 <= dy <= 4)
+    cells = []
+    for y in range(21):
+        for x in range(21):
+            found = [f for f in (finder(x, y, 0, 0), finder(x, y, 14, 0), finder(x, y, 0, 14)) if f is not None]
+            if (found[0] if found else (x * 31 + y * 17 + x * y * 7) % 11 < 5):
+                cells.append('<rect x="' + str(x) + '" y="' + str(y) + '" width="1" height="1"/>')
+    return "".join(cells)
+
+
+QR = ('<svg class="id-qr" viewBox="-1 -1 23 23" shape-rendering="crispEdges" aria-hidden="true">' + qr_cells()
+      + "</svg>")
+
+
+def drawn_pair(host):
+    """Settings, Pair mobile: the code to scan, beside the three steps Buzz lists."""
+    page = (
+        '<section class="mb-page id-pair"><h5>Pair mobile</h5><p class="mb-sub">Connect the Buzz mobile app to this '
+        "community. Pairing is secured with end-to-end encryption and a verification code.</p>"
+        '<div class="id-pair-b"><div class="id-pair-code">' + QR + "</div><ol>"
+        "<li><span>1</span><div><b>Scan QR code</b><p>Open Buzz on your phone and choose Add community to scan the "
+        "code shown here.</p></div></li>"
+        "<li><span>2</span><div><b>Enter code on your phone</b><p>After scanning, enter the six-digit code shown on "
+        "this desktop into your phone.</p></div></li>"
+        "<li><span>3</span><div><b>Pair your mobile app</b><p>Your mobile app will connect after you verify the "
+        "code.</p></div></li></ol></div></section>"
+    )
+    return settings_modal(settings_nav(COMMUNITY_GROUPS, "Pair mobile", host), page)
+
+
+def how_to(summary, steps, intro=""):
+    """A dropdown of Buzz's screens, drawn: one step, or tabs to move between several."""
+    tabs = ""
+    if len(steps) > 1:
+        tabs = '<div class="how-tabs" role="tablist">' + "".join(
+            '<button type="button" role="tab"><span>' + str(n) + "</span>" + title + "</button>"
+            for n, (title, _, _) in enumerate(steps, 1)) + "</div>"
+    return (
+        '<details class="how"><summary>' + summary + '</summary><div class="how-b">'
+        + ("<p>" + intro + "</p>" if intro else "") + tabs
+        + "".join('<div class="how-step"><div class="mb" aria-hidden="true"><div class="mb-stage"><div class="mb-canvas">'
+                  + frame + "</div></div></div><p>" + text + "</p></div>" for _, frame, text in steps)
+        + "</div></details>"
+    )
+
+
+def join_steps(domain):
+    return [
+        ("Open Join a community", drawn_switcher(),
+         "In Buzz, open the community menu at the top right, then <b>Join a community</b>."),
+        ("Paste the address", drawn_join("https://" + domain),
+         "Paste the address into <b>Community URL</b> and choose <b>Continue</b>. Leave the invite code blank, "
+         "because you're already the owner. Then set how you appear and open the community."),
+    ]
+
+
+def member_steps(domain):
+    return [
+        ("Open Membership", drawn_membership(domain),
+         "In Buzz, open <b>Settings</b>. Under <b>Community admin</b>, choose <b>Membership</b>, then <b>Invite "
+         "members</b>."),
+        ("Add someone, or send a link", drawn_membership(domain, inviting=True),
+         "Paste their public ID and choose <b>Add member</b>. Or copy the invite link and send it. Anyone with the "
+         "link can join until it expires. They open it and choose <b>Accept invite in Buzz</b>."),
+    ]
+
+
+def phone_steps(domain):
+    return [
+        ("Pair a phone", drawn_pair(domain),
+         "In Buzz on your computer, open <b>Settings</b>, then <b>Pair mobile</b>. On the phone, open Buzz, choose "
+         "<b>Add community</b>, scan the code, and type the six digits shown on your computer."),
+    ]
+
+
+def drawn_profile_menu():
+    """Buzz with the profile menu open, Settings highlighted."""
+    return drawn_app(
+        '<div class="mb-pmenu"><div class="mb-pm-head"><span class="mb-pm-av id-me">' + ti("user")
+        + "</span><span><b>Your profile</b></span></div><hr>"
+        "<p>" + ti("device-desktop") + 'Appearance<span class="mb-pm-more">' + ti("chevron-right") + "</span></p>"
+        "<p>" + ti("layout-grid") + "Plugins</p>"
+        '<p class="mb-pm-set on">' + ti("settings") + "Settings</p><hr>"
+        "<p>" + ti("message-circle") + "Send feedback</p></div>"
+    )
+
+
+def drawn_identity_settings():
+    """Settings, Identity, just after copying the Nostr address."""
+    groups = [("Community", [("user", "Profile"), ("device-mobile", "Pair mobile")]),
+              ("Buzz", [("shield", "Identity"), ("palette", "Appearance"), ("bell", "Notifications"),
+                        ("keyboard", "Shortcuts"), ("robot", "Agent setup")]),
+              ("Plugins", [("layout-grid", "Manage plugins")])]
+    page = (
+        '<section class="mb-page id-page"><h5>Identity</h5>'
+        '<p class="mb-sub">Your identity is shared across communities. Public keys are safe to share.</p>'
+        '<div class="id-group"><div class="id-row"><span><b>Public key (hex)</b><code>3f9c0a52\u202607e81b</code></span>'
+        '<span class="id-ic">' + ti("copy") + "</span></div>"
+        '<div class="id-row"><span><b>Nostr address (npub)</b><code>' + SAMPLE_NPUB + "</code></span>"
+        '<span class="id-ic hot">' + ti("copy") + "</span></div></div>"
+        '<div class="id-group id-form"><b>Private key (nsec)</b>'
+        '<p class="mb-sub">Anyone with this key can act as you. Never share it.</p>'
+        '<span class="id-input">\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022</span>'
+        '<div class="id-btns"><span class="mb-btn">Reveal private key</span><span class="mb-btn">Copy private key</span>'
+        "</div></div>"
+        '<div class="id-toast">' + ti("check") + "Nostr address copied.</div></section>"
+    )
+    return settings_modal(settings_nav(groups, "Identity"), page)
+
+
+def drawn_paste():
+    """This page's first step, with the public ID pasted in."""
+    return (
+        '<div class="hw-page"><p class="hw-brand">Buzz Relay</p><h6>Host your Buzz community</h6>'
+        '<div class="hw-step"><span class="hw-num">1</span><div><b class="hw-h">Owner</b>'
+        '<p class="hw-label">Public ID (npub)</p><span class="hw-input">' + SAMPLE_NPUB + "<i></i><em>Pasted</em></span>"
+        "</div></div></div>"
+    )
+
+
+def how_to_find_npub():
+    return how_to("Where to find your public ID", [
+        ("Open Settings", drawn_profile_menu(),
+         "In Buzz, click your profile icon at the top right, then <b>Settings</b>. You can also press \u2318, on a "
+         "Mac, or Ctrl+, on Windows and Linux."),
+        ("Copy your public ID", drawn_identity_settings(),
+         "Under <b>Buzz</b>, choose <b>Identity</b>. Click the copy button next to <b>Nostr address (npub)</b>. "
+         "That's your public ID."),
+        ("Paste it here", drawn_paste(), "Paste it into the box above. It starts with npub1."),
+    ], 'You need Buzz on your computer. If you don\'t have it yet, <a href="' + BUZZ_APP + '" target="_blank" '
+       'rel="noopener">install it</a> and choose <b>Create a new identity</b>.')
+
+
+def setup_page(error="", values=None):
+    values = values or {}
+    owner = values.get("owner", "")
+    body = (
+        '<p class="eyebrow">Set up</p><h1>Host your <mark>Buzz</mark> community</h1>'
+        + error_box(error) +
+        '<form method="post" action="save" data-guided>'
+        '<div class="step on"><span class="num">1</span><div class="step-body"><h2>Owner</h2>'
+        "<p class=\"muted\">A new community starts with no members, and you'll be the first. Enter your public ID "
+        "from Buzz: the relay records it as the owner when it starts. As the owner, you add the other members "
+        "and choose admins in Buzz.</p>"
+        '<label class="field" for="owner">Public ID (npub)</label>'
+        '<input type="text" id="owner" name="owner" placeholder="npub1..." autocomplete="off" spellcheck="false" '
+        'value="' + esc(owner) + '">' + how_to_find_npub() + "</div></div>"
+        '<div class="step on"><span class="num">2</span><div class="step-body"><h2>How members reach it</h2>'
+        "<p class=\"muted\">How you set this up depends on what it's for: trying Buzz out, hosting an existing "
+        "community, or a private group behind a VPN that only certain people can reach. Pick the option that fits "
+        "you best.</p>" + address_fields(values, None) + "</div></div>"
+        '<div class="step on"><span class="num">3</span><div class="step-body"><h2>Create it</h2>'
+        '<label class="confirm-box"><input type="checkbox" name="ack" value="yes"' + (" checked" if values.get("ack") == "yes" else "") + ">"
+        "<span><b>I understand that changing the address later starts a new, empty community.</b> Buzz can't move "
+        "a community to a new address yet. Switching back to an old address brings its community back.</span></label>"
+        '<button class="btn" type="submit">Create the community</button></div></div></form>'
+    )
+    return layout(body)
+
+
+def status_html(items):
+    out = []
+    for entry in items:
+        host = ""
+        if entry["key"] == "device":
+            host = ' data-host="' + esc(relay_domain()) + '"'
+        out.append('<li class="' + entry["state"] + '"' + host + '><span class="icon"></span><span class="text">'
+                   + entry["text"] + '</span><span class="hint">' + entry["hint"] + "</span></li>")
+    return "".join(out)
+
+
+def tailscale_step(mode):
+    """What the owner does next in Tailscale. The Connect section is drawn once per page load, so the
+    page reloads when this changes, and a restarted machine's new sign-in link counts as a change."""
+    state = tailscale_state()
+    if state["backend"] in ("", "NoState", "Starting") or (state["backend"] == "NeedsLogin" and not state["auth_url"]):
+        return "starting"
+    if state["backend"] == "NeedsLogin":
+        return "login-" + hashlib.sha256(state["auth_url"].encode()).hexdigest()[:8]
+    if state["backend"] == "NeedsMachineAuth":
+        return "approve"
+    if published() == mode:
+        return "published"
+    return "consent" if consent_link() else "consent-wait"
+
+
+def phase_of(setup, live):
+    step = "-"
+    if not live:
+        step = cloudflare_step() if setup["mode"] == "domain" else tailscale_step(setup["mode"])
+    return setup["mode"] + ":" + ("live" if live else "connecting") + ":" + (relay_domain() or "-") + ":" + step
+
+
+def copy_button(text):
+    return ('<button class="copy-mini" type="button" onclick="copyText(this, \'' + esc(text) + '\')">Copy</button>')
+
+
+def connect_steps(setup, domain):
+    mode = setup["mode"]
+    if mode == "domain":
+        cf = cloudflare_state()
+        state = cf["state"]
+        if state == "signin" and cf["link"]:
+            action = ("<p>Sign in to Cloudflare, or create a free account. When it asks which domain to authorize, "
+                      "choose the one <code>" + esc(domain) + "</code> is under. This app then creates its tunnel and the "
+                      "name in your Cloudflare account.</p>"
+                      '<a class="btn" href="' + esc(cf["link"]) + '" target="_blank" rel="noopener">Sign in to Cloudflare</a>'
+                      '<p class="muted small">The domain has to be on Cloudflare: buy one there, or add one you own to a '
+                      "free Cloudflare account. The link works for about ten minutes, and a new one appears here after "
+                      "that.</p>")
+        elif state in ("", "signin"):
+            action = "<p class=\"muted\">Starting Cloudflare's sign-in. This takes a few seconds.</p>"
+        elif state in ("creating", "routing"):
+            action = ("<p class=\"muted\">Signed in. Creating the tunnel and the name <code>" + esc(domain)
+                      + "</code> in Cloudflare.</p>")
+        elif state == "running":
+            action = ("<p class=\"muted\">Signed in, and the tunnel is set up. Cloudflare is publishing <code>" + esc(domain)
+                      + "</code>: a few minutes, or longer for a brand-new domain. This page checks every few "
+                      "seconds.</p>")
+        elif state == "taken":
+            action = ("<p><code>" + esc(domain) + "</code> already has a DNS record in Cloudflare. Delete it in "
+                      "Cloudflare's DNS settings, or change the address to another name. This page tries again every "
+                      "few seconds.</p>")
+        elif state == "wrong-domain":
+            action = ("<p>The domain you chose when signing in isn't the one <code>" + esc(domain) + "</code> is under. "
+                      "Sign in again and choose that one.</p>" + cloudflare_reset_button())
+        elif state == "error":
+            problem = cloudflare_problem()
+            action = ("<p>Cloudflare refused a step. This page tries again every few seconds.</p>"
+                      + ('<p class="muted small"><code>' + esc(problem) + "</code></p>" if problem else "")
+                      + cloudflare_reset_button())
+        else:
+            action = ""
+        # Only before the sign-in: for owners who already run Umbrel's Cloudflare Tunnel app
+        manual = "" if state != "signin" else (
+            "<details class=\"alt\"><summary>Already use Umbrel's Cloudflare Tunnel app?</summary><div class=\"inner\">"
+            '<p class="muted small">Then add a public hostname to your tunnel with these values instead of signing in. '
+            '<a href="' + TUNNEL_GUIDE + '" target="_blank" rel="noopener">The app\'s guide</a> shows each screen.</p>'
+            '<dl class="values"><dt>Hostname</dt><dd><code>' + esc(domain) + "</code>" + copy_button(domain) + "</dd>"
+            "<dt>Service type</dt><dd><code>HTTP</code></dd>"
+            "<dt>URL</dt><dd><code>" + GATEWAY_URL + "</code>" + copy_button(GATEWAY_URL) + "</dd></dl></div></details>"
+        )
+        return '<section class="part"><h2>Connect the name in Cloudflare</h2>' + action + manual + "</section>"
+    step = tailscale_step(mode)
+    if step == "starting":
+        action = "<p class=\"muted\">Starting Tailscale. This takes a few seconds.</p>"
+    elif step.startswith("login"):
+        action = ("<p>Sign in to Tailscale, or create a free account. The link works until you use it.</p>"
+                  '<a class="btn" href="' + esc(tailscale_state()["auth_url"]) + '" target="_blank" rel="noopener">'
+                  "Sign in to Tailscale</a>")
+    elif step == "approve":
+        action = ('<p>Your Tailscale network needs you to approve new machines. Approve <b>buzz</b> in '
+                  '<a href="' + TAILSCALE_ADMIN + '" target="_blank" rel="noopener">Tailscale\'s admin console</a>.</p>')
+    elif step == "published":
+        action = ""
+    else:
+        link = consent_link()
+        action = ("<p>Tailscale asks you once to allow " + ("Funnel and " if mode == "funnel" else "") +
+                  "HTTPS certificates for this machine.</p>" +
+                  ('<a class="btn" href="' + esc(link) + '" target="_blank" rel="noopener">Allow it in Tailscale</a>' if link else
+                   '<p class="muted small">Waiting for Tailscale to ask.</p>'))
+    title = "Connect through Tailscale" if mode == "funnel" else "Connect your private network"
+    return '<section class="part"><h2>' + title + "</h2>" + action + "</section>" if action else ""
+
+
+def cloudflare_reset_button():
+    return ('<form method="post" action="cloudflare-reset"><button class="btn small ghost" type="submit">'
+            "Sign in to Cloudflare again</button></form>")
+
+
+def private_members_note():
+    return (
+        '<div class="panel"><p><b>Each member needs:</b></p><ul>'
+        "<li>The Tailscale app on every device, signed in.</li>"
+        "<li>Access to your Tailscale network. Invite them, or share the <b>buzz</b> machine with them in "
+        '<a href="' + TAILSCALE_ADMIN + '" target="_blank" rel="noopener">the admin console</a>. If you\'ve changed '
+        'Tailscale\'s access rules, <a href="' + TAILSCALE_ACCESS + '" target="_blank" rel="noopener">allow them</a> '
+        "to reach the buzz machine on port 443.</li>"
+        "<li>Membership in the community, which you give in Buzz.</li></ul>"
+        "<p class=\"muted small\">Without the first two, a device can't connect at all. Without the third, it "
+        "connects but can't read or post.</p></div>"
+    )
+
+
+def notifications_note(setup):
+    if not push_on(setup):
+        return '<p class="note">Phone notifications are off. You can turn them on in Settings.</p>'
+    return '<p class="note">Phone notifications are on for iPhone. Android doesn\'t get them yet.</p>'
+
+
+def address_change(setup, values, current):
+    """What changing the address does, the three ways in a short list, and the address typed to confirm."""
+    now = setup["mode"]
+    chosen = values.get("mode", "")
+    rows = [("domain", "Your own domain", "For hosting a community"),
+            ("funnel", "A free Tailscale address", "For trying Buzz out"),
+            ("private", "A private Tailscale network", "For a private group on a VPN")]
+    options = "".join(
+        '<label class="opt"><input type="radio" name="mode" value="' + mode + '"' + (" checked" if mode == chosen else "")
+        # the same Tailscale option again changes nothing; another domain is a change
+        + (" disabled" if mode == now and mode != "domain" else "") + "><span><b>" + title + "</b><small>" + tag
+        + "</small></span>" + ("<em>Current</em>" if mode == now else "") + "</label>"
+        for mode, title, tag in rows)
+    note = ("Changing the address starts a new, empty community. The current one stays on your Umbrel. Switch back "
+            "to this address to bring it back.")
+    if now != "domain":
+        note += " Switching between the two Tailscale options keeps the same address."
+    confirm = (
+        '<label class="field" for="confirm">To confirm, type <code>' + esc(current) + "</code></label>"
+        '<input type="text" id="confirm" name="confirm" autocomplete="off" spellcheck="false" data-expect="' + esc(current) + '">'
+        if current else
+        '<label class="check"><input type="checkbox" name="ack" value="yes"><span>I understand this starts a new, empty '
+        "community.</span></label>")
+    return (
+        '<form method="post" action="address" data-guided><input type="hidden" name="owner" value="' + esc(setup["owner"]) + '">'
+        '<p class="heads-up">' + note + '</p><div class="opts">' + options + "</div>"
+        '<div data-for="domain">' + domain_field(values, "New address") + "</div>" + confirm
+        + '<button class="btn small ghost" type="submit">Change the address</button></form>'
+    )
+
+
+def settings_part(setup, error, values):
+    current = relay_domain() or setup.get("domain") or ""
+    owner = values.get("owner", "") if values.get("form") == "owner" else ""
+    owner_now = setup["owner"]
+    address_values = values if values.get("form") == "address" else {}
+    return (
+        '<section class="part"><h2>Settings</h2><div class="set-card">'
+        "<details" + (" open" if values.get("form") == "owner" else "") + "><summary>Owner<span class=\"val\">" + esc(owner_now[:10] + "\u2026" + owner_now[-4:]) + "</span></summary><div class=\"inner\">"
+        '<form method="post" action="owner"><p class="muted small">Make someone else the owner. The current owner '
+        "becomes an admin, which you can change in Buzz. The community and its address stay the same.</p>"
+        '<label class="field" for="new-owner">New owner\'s public ID (npub)</label>'
+        '<input type="text" id="new-owner" name="owner" autocomplete="off" spellcheck="false" placeholder="npub1..." value="' + esc(owner) + '">'
+        '<button class="btn small ghost" type="submit">Change the owner</button></form>'
+        + (error_box(error) if values.get("form") == "owner" else "") + "</div></details>"
+        "<details><summary>Phone notifications<span class=\"val word\">" + ("On" if push_on(setup) else "Off") + "</span></summary><div class=\"inner\">"
+        '<form method="post" action="notifications"><p class="muted small">When this is on, members\' iPhones get '
+        "notifications for direct messages and mentions, through Block's push service. Android phones don't "
+        "get notifications yet. Message text, senders and channels never leave this Umbrel. Block's service "
+        "does see this Umbrel's internet address, and which phones it wakes and when. Apple sees when a phone "
+        "is woken. Saving restarts Buzz for a few seconds.</p>"
+        '<label class="check"><input type="checkbox" name="push" value="on"' + (" checked" if push_on(setup) else "")
+        + "><span>Send phone notifications</span></label>"
+        '<button class="btn small ghost" type="submit">Save</button></form></div></details>'
+        "<details" + (" open" if values.get("form") == "address" else "") + "><summary>Address<span class=\"val\">" + esc(current or "none yet") + "</span></summary><div class=\"inner\">"
+        + address_change(setup, address_values, current)
+        + (error_box(error) if values.get("form") == "address" else "") + "</div></details></div></section>"
+    )
+
+
+def main_page(setup, error="", values=None):
+    values = values or {}
+    live, items = cached_check(setup)
+    mode = setup["mode"]
+    domain = relay_domain() or setup.get("domain") or ""
+    status = ('<ul class="status" data-poll data-phase="' + esc(phase_of(setup, live)) + '">' + status_html(items) + "</ul>")
+    if not live:
+        head = ('<p class="eyebrow">Connecting &middot; ' + MODE_NAMES[mode] + "</p><h1>Connect "
+                + ('<mark>' + esc(domain) + "</mark>" if domain else "your <mark>address</mark>") + "</h1>"
+                '<p class="lede">' + {
+                    "domain": "Your community is set up on this Umbrel. Next, connect its name in Cloudflare so members can reach it.",
+                    "funnel": "Your community is set up on this Umbrel. Next, Tailscale gives it a public address.",
+                    "private": "Your community is set up on this Umbrel. Next, Tailscale puts it on your private network.",
+                }[mode] + "</p>")
+        body = head + status + connect_steps(setup, domain)
+        if mode == "private" and domain:
+            body += '<section class="part"><h2>Who can connect</h2>' + private_members_note() + "</section>"
+        return layout(body + settings_part(setup, error, values))
+    reach = {"domain": "from anywhere",
+             "funnel": "from anywhere, without Tailscale",
+             "private": "from devices on your Tailscale network"}[mode]
+    body = (
+        '<p class="eyebrow">Live &middot; ' + MODE_NAMES[mode] + '</p><h1>Your community is <mark>live</mark></h1>'
+        '<p class="lede">Only people you add by their public ID, or who join with an invite link, can read or '
+        "post. They join in Buzz with this address, " + reach + ".</p>"
+        '<div class="address"><code><span>https://' + esc(domain) + "</span></code>"
+        '<button class="btn" type="button" onclick="copyText(this, \'https://' + esc(domain) + '\')">Copy</button></div>'
+        + status +
+        '<section class="part next"><p class="eyebrow">Next steps</p>'
+        '<div class="step on"><span class="num">1</span><div class="step-body"><h2>Join your community</h2>'
+        "<p class=\"muted\">Join in Buzz with this address, using the same identity you entered as the owner.</p>"
+        # Buzz 1.0's own link for a community's address (docs/deep-links.md in block/buzz-app): it opens
+        # the join screen with the address filled in, and joins nothing by itself
+        + ('<a class="btn" href="buzz://connect?relay=' + esc(urllib.parse.quote("wss://" + domain, safe="")) + '">Open in Buzz</a>'
+           '<p class="muted small">Opens Buzz on this computer with the address filled in.</p>' if domain else "")
+        + how_to("Show me how", join_steps(domain))
+        + ('<p class="muted small">Just bought the domain? Your computer can take a while to find it. If Buzz '
+           "can't connect, try again in a few minutes.</p>" if mode == "domain" else "") + "</div></div>"
+        '<div class="step on"><span class="num">2</span><div class="step-body"><h2>Add members</h2>'
+        '<p class="muted">Add people by their public ID, then send them this address. Or send them an invite '
+        "link, which lets them join in one step.</p>"
+        + how_to("Show me how", member_steps(domain)) + (private_members_note() if mode == "private" else "")
+        + "</div></div>"
+        '<div class="step on"><span class="num">3</span><div class="step-body"><h2>Pair your phone</h2>'
+        '<p class="muted">Pair Buzz on your phone with Buzz on your computer.'
+        + (" The phone needs Tailscale too." if mode == "private" else "") + "</p>"
+        + how_to("Show me how", phone_steps(domain)) + notifications_note(setup) + "</div></div></section>"
+    )
+    return layout(body + settings_part(setup, error, values))
+
+
+# ---------------------------------------------------------------- the server
+
+
+class Handler(http.server.BaseHTTPRequestHandler):
+    def send(self, status, data, kind="text/html; charset=utf-8", headers=None):
+        payload = data.encode() if isinstance(data, str) else data
+        self.send_response(status)
+        self.send_header("Content-Type", kind)
+        self.send_header("Content-Length", str(len(payload)))
+        self.send_header("Cache-Control", "no-store")
+        # same-origin, not no-referrer: with no-referrer, browsers send this page's own forms as Origin: null
+        self.send_header("Referrer-Policy", "same-origin")
+        self.send_header("X-Content-Type-Options", "nosniff")
+        for name, value in (headers or {}).items():
+            self.send_header(name, value)
+        self.end_headers()
+        self.wfile.write(payload)
+
+    def redirect(self, where, headers=None):
+        self.send_response(303)
+        self.send_header("Location", where)
+        for name, value in (headers or {}).items():
+            self.send_header(name, value)
+        self.end_headers()
+
+    def signed_in(self):
+        for part in (self.headers.get("Cookie") or "").split(";"):
+            name, _, value = part.strip().partition("=")
+            if name == COOKIE and session_ok(value):
+                return True
+        return False
+
+    def form(self):
+        length = min(int(self.headers.get("Content-Length") or 0), 20000)
+        fields = urllib.parse.parse_qs(self.rfile.read(length).decode(errors="replace"))
+        return {name: values[0] for name, values in fields.items()}
+
+    def same_origin(self):
+        """Refuses forms posted from other sites, and from other apps' pages on the same Umbrel (another
+        port on the same host is "same-site"). Browsers say where a request comes from in Sec-Fetch-Site,
+        whatever Host Umbrel's proxy passes on; Origin is the fallback for browsers that don't send it.
+        Not authentication: the session cookie is that."""
+        site = self.headers.get("Sec-Fetch-Site")
+        if site:
+            return site in ("same-origin", "none")
+        origin = self.headers.get("Origin")
+        if not origin:
+            return True
+        hosts = {self.headers.get("Host"), self.headers.get("X-Forwarded-Host")}
+        return urllib.parse.urlsplit(origin).netloc in hosts
+
+    def do_GET(self):
+        path = urllib.parse.urlsplit(self.path).path
+        if path == "/login":
+            return self.send(200, login_page())
+        if not self.signed_in():
+            if path == "/status.json":
+                return self.send(401, json.dumps({"error": "sign in"}), "application/json")
+            return self.redirect("./login")
+        setup = load_setup()
+        if path == "/status.json":
+            if not setup:
+                return self.send(200, json.dumps({"phase": "setup", "html": ""}), "application/json")
+            live, items = cached_check(setup)
+            return self.send(200, json.dumps({"phase": phase_of(setup, live), "live": live, "html": status_html(items)}),
+                             "application/json")
+        if path not in ("/", ""):
+            return self.send(404, layout("<h1>Not found</h1>"))
+        return self.send(200, main_page(setup) if setup else setup_page())
+
+    def do_POST(self):
+        path = urllib.parse.urlsplit(self.path).path
+        if not self.same_origin():
+            return self.send(403, "This page only accepts its own forms.", "text/plain")
+        if path == "/login":
+            ip = self.client_address[0]
+            if too_many_failures(ip):
+                return self.send(429, login_page("Too many tries. Wait ten minutes, then try again."))
+            password = self.form().get("password", "")
+            if PASSWORD and hmac.compare_digest(password.encode(), PASSWORD.encode()):
+                cookie = COOKIE + "=" + new_session() + "; Path=/; HttpOnly; SameSite=Strict; Max-Age=" + str(SESSION_SECONDS)
+                return self.redirect("./", {"Set-Cookie": cookie})
+            note_failure(ip)
+            return self.send(401, login_page("That password doesn't match. Copy it again from Umbrel."))
+        if path == "/logout":
+            return self.redirect("./login", {"Set-Cookie": COOKIE + "=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0"})
+        if not self.signed_in():
+            return self.send(401, layout("<h1>Sign in first</h1><p><a href=\"./login\">Sign in</a></p>", signed_in=False))
+        values = self.form()
+        setup = load_setup()
+        if path == "/save":
+            if setup:
+                return self.redirect("./")
+            try:
+                key, mode, domain = self.address(values)
+                if values.get("ack") != "yes":
+                    raise ValueError("Tick the box to confirm you understand that changing the address later "
+                                     "starts a new, empty community.")
+            except ValueError as error:
+                return self.send(400, setup_page(str(error), values))
+            save(values["owner"].strip(), key, mode, domain)
+            return self.redirect("./")
+        if not setup:
+            return self.redirect("./")
+        if path == "/owner":
+            values["form"] = "owner"
+            try:
+                key = owner_hex(values.get("owner", ""))
+            except ValueError as error:
+                return self.send(400, main_page(setup, str(error), values))
+            setup["owner"], setup["owner_hex"] = values["owner"].strip(), key
+            save(setup["owner"], key, setup["mode"], relay_domain() or setup.get("domain", ""))
+            return self.redirect("./")
+        if path == "/cloudflare-reset":
+            write_atomic(CLOUDFLARE_RESET, "1\n")
+            return self.redirect("./")
+        if path == "/notifications":
+            save(setup["owner"], setup["owner_hex"], setup["mode"], relay_domain() or setup.get("domain", ""),
+                 values.get("push") == "on")
+            return self.redirect("./")
+        if path == "/address":
+            values["form"] = "address"
+            current = relay_domain() or setup.get("domain") or ""
+            try:
+                if current and values.get("confirm", "").strip().lower() != current:
+                    raise ValueError("To confirm, type the current address exactly.")
+                if not current and values.get("ack") != "yes":
+                    raise ValueError("Tick the box to confirm you understand this starts a new, empty community.")
+                values["owner"] = setup["owner"]
+                key, mode, domain = self.address(values)
+                if mode != "domain" and setup["mode"] != "domain":
+                    domain = current  # the same Tailscale machine, published another way
+            except ValueError as error:
+                return self.send(400, main_page(setup, str(error), values))
+            save(setup["owner"], setup["owner_hex"], mode, domain)
+            return self.redirect("./")
+        return self.send(404, layout("<h1>Not found</h1>"))
+
+    def address(self, values):
+        key = owner_hex(values.get("owner", ""))
+        mode = values.get("mode", "")
+        if mode not in MODES:
+            raise ValueError("Choose how members reach the community.")
+        domain = clean_domain(posted_domain(values)) if mode == "domain" else ""
+        return key, mode, domain
+
+    def log_message(self, format, *args):
+        pass
+
+
+if __name__ == "__main__":
+    migrate()
+    if not PASSWORD:
+        print("APP_PASSWORD is not set: the setup page refuses every sign-in.", flush=True)
+    threading.Thread(target=tailscale_watcher, daemon=True).start()
+    http.server.ThreadingHTTPServer(("0.0.0.0", 8080), Handler).serve_forever()
