@@ -1,0 +1,24 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: ferret_web_1
+      APP_PORT: 8787
+      # The API, Ferret's MCP server and calendar feeds are used by scripts, AI assistants and calendar apps that
+      # can't sign in to Umbrel; each needs its own Ferret API key or calendar token.
+      PROXY_AUTH_WHITELIST: "/api/*,/mcp,/calendar/*"
+
+  web:
+    image: ghcr.io/ferret-project/ferret:2026.11.4@sha256:439abc208f6d586c62bacd09b486bc174ee26311c7af9598c180264123f22c7d
+    user: "1000:1000"
+    restart: on-failure
+    environment:
+      DATA_DIR: /data
+      # Empty: Ferret accepts sign-ins from whichever address it's opened at (umbrel.local, the IP, HTTPS).
+      PUBLIC_URL: ${PUBLIC_URL:-}
+      # Umbrel's proxy forwards visitors' addresses (sign-in limits are per address).
+      TRUSTED_PROXIES: ${NETWORK_IP}/16
+      # AUTH_SECRET, FILES_KEY and the push keys are made by Ferret on first start and kept in /data.
+    volumes:
+      - ${APP_DATA_DIR}/data/ferret:/data
