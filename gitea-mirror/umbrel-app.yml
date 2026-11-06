@@ -5,7 +5,7 @@ storage:
 name: Gitea Mirror
 tagline: Mirror your GitHub repositories to a Gitea instance automatically
 category: developer
-version: "3.51.2"
+version: "3.51.3"
 port: 4322
 description: >-
   Gitea Mirror automatically mirrors your GitHub repositories to a self-hosted Gitea instance. It supports mirroring public and private repositories, organizations, starred repos, issues, wikis, and pull requests.
@@ -44,7 +44,11 @@ defaultUsername: ""
 defaultPassword: ""
 dependencies: []
 releaseNotes: >-
-  🔒 This security update fixes source-token exposure when mirroring externally linked Forgejo release assets, strengthens protection against requests to private addresses, and prevents destination tokens from following redirects to another host.
+  🔒 This security update prevents externally linked Forgejo release assets from exhausting the mirror's memory. Linked downloads are now limited to 512 MB and 15 minutes; assets exceeding either limit are skipped with a warning. Assets hosted directly by the source have no size cap.
+
+  Release asset downloads now stop after two minutes without receiving data instead of leaving a sync stuck indefinitely. Failed downloads are retried on the next sync.
+
+  This update also includes the previous security fixes for source-token exposure when mirroring externally linked Forgejo release assets, requests to private addresses, and destination tokens following redirects to another host.
 
   If you mirror releases from a Forgejo source such as Codeberg using a token and mirror repositories you do not fully trust, rotate that source token. Externally linked assets on private or local addresses are now skipped with a warning.
 
@@ -86,5 +90,5 @@ releaseNotes: >-
 
   If you're updating from a version older than 3.17 and use OAuth provider clients registered in Gitea Mirror, rotate the client secret for each client after upgrading because OAuth application secrets are stored hashed after migration.
 
-  Full release notes can be found at https://github.com/RayLabsHQ/gitea-mirror/releases/tag/v3.51.2
+  Full release notes can be found at https://github.com/RayLabsHQ/gitea-mirror/releases/tag/v3.51.3
 path: ""
