@@ -1,0 +1,38 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: lyftr_frontend_1
+      APP_PORT: 80
+      # The Android app talks to /api with its own bearer token and cannot carry an Umbrel login.
+      PROXY_AUTH_WHITELIST: "/api/*"
+
+  backend:
+    image: cwlumm/lyftr-backend:v0.1.0-beta.9@sha256:4f45cfe71f1f59154e4848793878ac5819495d7f3eca38ecb65d61d1437df174
+    user: "1000:1000"
+    restart: on-failure
+    environment:
+      ENV: production
+      PORT: 3000
+      JWT_SECRET: ${APP_LYFTR_JWT_SECRET}
+      DB_TYPE: sqlite
+      DB_PATH: /app/data/lyftr.db
+      REGISTRATION: first-user
+      DEMO_MODE: "false"
+    volumes:
+      - ${APP_DATA_DIR}/data/db:/app/data
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  frontend:
+    image: cwlumm/lyftr-frontend:v0.1.0-beta.9@sha256:9428710c93bdcf03add1c78e43318b3f89ce36a8e4452e0c6bfd6e9f2f8ab292
+    restart: on-failure
+    environment:
+      # Injected container name, not the service name: every Umbrel app shares one Docker network.
+      BACKEND_ORIGIN: lyftr_backend_1:3000
+    depends_on:
+      backend:
+        condition: service_healthy
