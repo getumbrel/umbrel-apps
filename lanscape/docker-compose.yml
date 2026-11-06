@@ -1,0 +1,18 @@
+version: "3.7"
+
+services:
+  server:
+    image: ghcr.io/suarezluis/lanscape:1.14.1@sha256:0571438a3d1b5af68df325080815c1c9881ae430829eb6d8d4c38eac729066c6
+    restart: on-failure
+    # Node runs as PID 1; init reaps the speed test processes it starts
+    init: true
+    # Host network so ARP scans, mDNS, SSDP and DHCP listening see the real LAN, not a Docker bridge
+    network_mode: host
+    environment:
+      PORT: 4545
+      # Seeds LANscape's own login (host-network apps aren't behind Umbrel's login); shown via deterministicPassword
+      APP_PASSWORD: $APP_PASSWORD
+      # Umbrel wording for the password screens (vs plain Docker)
+      UMBREL: "true"
+    volumes:
+      - ${APP_DATA_DIR}/data/db:/data
