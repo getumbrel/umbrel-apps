@@ -1,0 +1,39 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: wandergrid_web_1
+      APP_PORT: 3000
+      # Calendar apps cannot send Umbrel's auth cookie, so the iCal feed stays reachable.
+      PROXY_AUTH_WHITELIST: "/api/calendar/*"
+
+  web:
+    image: ghcr.io/samerberjawi/wandergrid:1.1.0@sha256:55fffb1b6bec29787e998bea44a4362eacb0a45c8d2cb28ec22553a02e7bcd1f
+    restart: on-failure
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://wandergrid:${APP_WANDERGRID_DB_PASSWORD}@wandergrid_db_1:5432/wandergrid
+      JWT_SECRET: ${APP_WANDERGRID_JWT_SECRET}
+      PUBLIC_URL: http://${DEVICE_DOMAIN_NAME}:${APP_PROXY_PORT}
+
+  db:
+    image: postgres:15.19-alpine@sha256:a8e042598834300dfaa17a54f695b87b7f25d3490433bbbe2ef3bffbb9747f24
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      POSTGRES_USER: wandergrid
+      POSTGRES_PASSWORD: ${APP_WANDERGRID_DB_PASSWORD}
+      POSTGRES_DB: wandergrid
+      PGDATA: /data/pgdata
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U wandergrid -h localhost -d wandergrid"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    volumes:
+      - ${APP_DATA_DIR}/data/db:/data
