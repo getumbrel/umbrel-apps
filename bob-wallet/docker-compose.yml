@@ -1,0 +1,22 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: bob-wallet_server_1
+      APP_PORT: 3000
+
+  server:
+    image: ghcr.io/galetaire/bob-learnhns:2.3.19-web.2@sha256:bfd91f37782b6a9444ff745e7fec86d4597fdab65a12b0516e155d5f88ce9d6a
+    restart: on-failure
+    # Gives hsd time to flush its databases when the app stops
+    stop_grace_period: 1m
+    environment:
+      TZ: Etc/UTC
+      # Only accept connections routed by Umbrel. Older umbrelOS versions
+      # route through this app_proxy container; newer ones through the host.
+      BOB_WEB_PROXY_HOST: bob-wallet_app_proxy_1
+    volumes:
+      # Bob keeps its wallets, settings and the Handshake chain in
+      # /data/.config/Bob LearnHNS
+      - ${APP_DATA_DIR}/data/config:/data
