@@ -1,0 +1,44 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: kryspal-media_server_1
+      APP_PORT: 5797
+      # Emby and Jellyfin player apps (Infuse, SenPlayer, VidHub) connect on this port and cannot send
+      # the Umbrel login cookie. Kryspal Media has its own login, created in the setup wizard.
+      PROXY_AUTH_ADD: "false"
+
+  server:
+    image: ghcr.io/kryspal/kryspal-media:0.9.14@sha256:f049b062915a4e5842df7d7b50d2c288c1674f97a36b02bf84c73718d04721db
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 60s
+    environment:
+      # The mounted media folders, listed explicitly (/media is the Media Library folder chosen in the app settings).
+      MEDIA_ROOT: /media:/downloads
+    volumes:
+      - ${APP_DATA_DIR}/data/server:/var/lib/mediaserver
+      # The database container writes a generated password here on first start; the server only reads it.
+      - ${APP_DATA_DIR}/data/db:/var/lib/kryspal-db:ro
+      - ${UMBREL_ROOT}/data/storage/downloads:/downloads
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    # PostgreSQL 16 with the pg_bigm extension, which Kryspal Media needs.
+    image: ghcr.io/kryspal/kryspal-media-postgres:16-0.9.14@sha256:c5378cc83d993b569938f852e2839ecc7d458c00928f9863aa60847271f8690d
+    restart: on-failure
+    stop_grace_period: 60s
+    # No POSTGRES_PASSWORD: on its first start the image generates a password, keeps it in /var/lib/kryspal-db/password and creates the
+    # application role "kryspal" without superuser rights, as in the public compose file. The server connects to the service named "postgres".
+    volumes:
+      - ${APP_DATA_DIR}/data/postgres:/var/lib/postgresql/data
+      - ${APP_DATA_DIR}/data/db:/var/lib/kryspal-db
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "kryspal", "-d", "kryspal"]
+      interval: 5s
+      timeout: 5s
+      start_period: 10s
+      retries: 20
