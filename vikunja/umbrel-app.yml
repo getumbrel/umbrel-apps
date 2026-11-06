@@ -4,7 +4,7 @@ storage:
   dataRoot: data
 category: files
 name: Vikunja
-version: "2.7.1"
+version: "2.8.0"
 tagline: The open-source, self-hostable to-do app
 description: >-
   Think of Vikunja like the notebook you have with all your things to keep track of. But with superpowers.
@@ -24,21 +24,23 @@ description: >-
 
   You can view your tasks in the classic list view - or in a Gantt Chart, or Table view, or Kanban Board. Whatever you need!
 releaseNotes: >-
-  🚨 This release includes 41 security fixes covering access control, sharing, login sessions, and more. Upgrading is highly recommended.
+  🚨 This release fixes 19 security issues affecting file access, private data, login, imports, and more. Upgrading is highly recommended.
 
 
   Key highlights in this release:
-    - Reworks attachment previews to reduce memory usage and improve Kanban cover image loading
-    - Fixes bulk updates unexpectedly clearing assignees, reminders, or favorites
-    - Fixes monthly repeating tasks skipping months and improves CalDAV label syncing
-    - Improves the editor toolbar, time entry dates, and mobile Kanban dragging
-    - Fixes MySQL migrations failing on text-column indexes
+    - Adds a trash bin for tasks and projects, with undo and restore; trashed items are permanently deleted after 30 days
+    - Speeds up task creation with natural-language due dates, quick add in table view, and Android sharing
+    - Shows who logged time and lets you stop running timers directly from tasks
+    - Improves Kanban dragging, reminder subscriptions, and colorblind accessibility
 
 
-  Note: Existing API token permissions are migrated automatically. Integrations that create tokens must use the renamed permission keys. Views now allow up to 100 manual buckets and 50 filter buckets, and imports default to a 100,000-item limit. The v2 API uses a dedicated attachment preview route instead of preview_size on downloads.
+  Note: After 10 failed password attempts, accounts are locked until recovered. This Umbrel package does not configure email delivery, so recovery requires server command-line access unless you have configured SMTP. Existing task creators and assignees are resubscribed during the upgrade; unsubscribe again if you no longer want reminders. If you configured OpenID Connect, review the new explicit account linking and groups-claim behavior before updating.
 
 
-  Full release notes are available at https://vikunja.io/changelog/vikunja-2.7.1-was-released/
+  Existing API token permissions are migrated automatically when upgrading from before 2.7.1. Integrations that create tokens must use the renamed permission keys. Views allow up to 100 manual buckets and 50 filter buckets, and imports default to a 100,000-item limit. The v2 API uses a dedicated attachment preview route instead of preview_size on downloads.
+
+
+  Full release notes are available at https://vikunja.io/changelog/vikunja-2.8.0-was-released/
 developer: Vikunja
 website: https://vikunja.io/
 dependencies: []
