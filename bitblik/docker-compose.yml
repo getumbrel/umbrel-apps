@@ -1,0 +1,14 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: bitblik_server_1
+      APP_PORT: 80
+
+  server:
+    image: ghcr.io/bit-blik/app-web:bitblik-release-c426229d6d3755e90efac18bbf8a95ce7670d6c2@sha256:a4a86c75f16b98002d22c2c781c1ac9d14d6e6dc0405b1416d7f7d198d4b1979
+    init: true
+    restart: on-failure
+    environment:
+      PAYMENT_SYSTEM: blik
