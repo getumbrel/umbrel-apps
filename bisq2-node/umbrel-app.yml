@@ -4,7 +4,7 @@ storage:
   dataRoot: data
 category: bitcoin
 name: Bisq 2 Node
-version: "2.1.14.1"
+version: "2.1.15.0"
 tagline: Run your own Bisq 2 node for private Bitcoin trading
 description: >-
   Bisq Connect lets you buy and sell Bitcoin peer-to-peer from your phone. This
@@ -37,22 +37,18 @@ defaultPassword: ""
 submitter: rodvar
 submission: https://github.com/getumbrel/umbrel-apps/pull/5850
 releaseNotes: >-
-  **No action needed.** Bisq Connect stays paired.
+  **Security update. Update now to keep trading.** A Bisq security alert requires version 2.1.15 or newer for trading. Until this node is updated, Bisq Connect cannot take offers through it and asks you to have the node upgraded, and offers published through it cannot be taken. Bisq Connect stays paired and needs no update.
 
 
-  This maintenance update keeps the node on Bisq 2 API 2.1.14 and brings fixes for Bisq Connect.
+  This update moves the node to Bisq 2 API 2.1.15.
 
 
-  - **Banned account data:** The node can now check a seller's payment account data against the banned list, so the next Bisq Connect release can warn you not to pay a seller whose account data is banned and cancel the trade for your protection.
+  - **Tor:** The node now runs the Tor bundled with Bisq (Tor 0.4.9.15) inside a sandbox, instead of a Tor package installed in the image. The sandbox keeps a compromised Tor away from the node's files and keys.
 
-  - **Offerbook:** Offers from banned or ignored makers, and sell offers whose maker lacks the reputation for the amount, are no longer listed, and the offer counts match the list.
-
-  - **Restarts:** If the node fails to start, it now exits so it is restarted automatically instead of running without the API. A pairing code left over from an earlier run is deleted at startup.
-
-  - **Trades:** Cancelling or rejecting a trade no longer waits for the trade chat message to be delivered.
+  - **Hardening:** Oversized responses from the network are refused instead of using unbounded memory, and file cleanup no longer follows links.
 
 
-  It also includes storage pruning and performance fixes.
+  Bisq 2 release: https://github.com/bisq-network/bisq2/releases/tag/v2.1.15
 
 
-  Full changes: https://github.com/bisq-network/bisq2/compare/52f9141...7f68c09 (bisq2 @ 7f68c09)
+  Full changes: https://github.com/bisq-network/bisq2/compare/7f68c09...cfe8ab2 (bisq2 @ cfe8ab2)
