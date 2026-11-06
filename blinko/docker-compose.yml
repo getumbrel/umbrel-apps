@@ -24,9 +24,9 @@ services:
     restart: on-failure
 
   app:
-    image: blinkospace/blinko:1.8.8@sha256:31c3bc9f4fc00c82328c098c0c1120fe7fe43152a9f3cbc04b0303c32a2e60d3
+    image: blinkospace/blinko:1.8.9@sha256:ebbdcc375451570fad37319dea443c062d2a451a45d4f2ee0d98189d4b7615a5
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:1111"]
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:1111/"]
       interval: 30s 
       timeout: 10s
       retries: 5
