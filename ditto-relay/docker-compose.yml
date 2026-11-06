@@ -1,0 +1,110 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: ditto-relay_relay_1
+      APP_PORT: 13131
+      PROXY_AUTH_ADD: "false"
+
+  relay:
+    # Built by .github/workflows/ditto-relay-image.yml from the pinned upstream
+    # commit. Bump the tag and digest together when the upstream SHA changes.
+    image: ghcr.io/advorzhak/ditto-relay:sha-e8974053dcf99ac952d1951deaffec105aeb08f1@sha256:593bc58f681121312b1077bf14f9de5c63e946e903e29015c53c12317373195d
+    user: "1000:1000"
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data/relay:/keys
+      - ${APP_DATA_DIR}/data/sync:/sync
+    environment:
+      PORT: "13131"
+      APP_PASSWORD: "${APP_PASSWORD}"
+      SYNC_DATA_DIR: "/sync"
+      RELAY_URL: "ws://${DEVICE_DOMAIN_NAME}:${APP_PROXY_PORT}/"
+      OPENSEARCH_NODE: "http://opensearch:9200"
+      OPENSEARCH_INDEX: "nostr-events"
+      OPENSEARCH_USERNAME: "admin"
+      OPENSEARCH_PASSWORD: "${APP_DITTO_RELAY_OPENSEARCH_PASSWORD}"
+      LOG_LEVEL: "info"
+    networks:
+      - default
+      - ditto-relay-internal
+    depends_on:
+      opensearch:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - bun
+        - -e
+        - "fetch('http://127.0.0.1:13131/').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+
+  sync:
+    image: ghcr.io/advorzhak/ditto-relay:sha-e8974053dcf99ac952d1951deaffec105aeb08f1@sha256:593bc58f681121312b1077bf14f9de5c63e946e903e29015c53c12317373195d
+    user: "1000:1000"
+    restart: on-failure
+    command: ["bun", "scripts/sync.ts"]
+    volumes:
+      - ${APP_DATA_DIR}/data/relay:/keys
+      - ${APP_DATA_DIR}/data/sync:/sync
+    environment:
+      RELAY_URL: "ws://${DEVICE_DOMAIN_NAME}:${APP_PROXY_PORT}/"
+      OPENSEARCH_NODE: "http://opensearch:9200"
+      OPENSEARCH_INDEX: "nostr-events"
+      OPENSEARCH_USERNAME: "admin"
+      OPENSEARCH_PASSWORD: "${APP_DITTO_RELAY_OPENSEARCH_PASSWORD}"
+      LOG_LEVEL: "warn"
+      SYNC_DATA_DIR: "/sync"
+      SYNC_IDENTIFIERS: ""
+      SYNC_RELAYS: ""
+      SYNC_KINDS: ""
+      SYNC_INTERVAL_SECONDS: "300"
+      SYNC_SINCE_DAYS: "0"
+    networks:
+      - default
+      - ditto-relay-internal
+    depends_on:
+      relay:
+        condition: service_healthy
+      opensearch:
+        condition: service_healthy
+
+  opensearch:
+    image: opensearchproject/opensearch:2.19.0@sha256:1f8b88245a6af61e7aa500afe0e87d43401e4b33140bb47230a919428ce3f7cb
+    user: "1000:1000"
+    restart: on-failure
+    networks:
+      - ditto-relay-internal
+    environment:
+      discovery.type: single-node
+      bootstrap.memory_lock: "true"
+      OPENSEARCH_INITIAL_ADMIN_PASSWORD: "${APP_DITTO_RELAY_OPENSEARCH_PASSWORD}"
+      plugins.security.ssl.http.enabled: "false"
+      OPENSEARCH_JAVA_OPTS: "-Xms1g -Xmx1g"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    volumes:
+      - ${APP_DATA_DIR}/data/opensearch:/usr/share/opensearch/data
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          curl -fsS -u "admin:${APP_DITTO_RELAY_OPENSEARCH_PASSWORD}" http://localhost:9200/_cluster/health
+          | grep -qE '"status":"(green|yellow)"'
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+
+networks:
+  ditto-relay-internal:
+    internal: true
