@@ -1,0 +1,43 @@
+# Umbrel app compose for Sara. Umbrel's app_proxy serves the web UI on the port in umbrel-app.yml
+# and forwards to APP_HOST (<app id>_<service>_1).
+# Umbrel pins images by digest: scripts/update-packaging.ts --image-digest sha256:… adds it.
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: sara_server_1
+      APP_PORT: 7860
+      # Umbrel's login stays on for the web app (the default) and, above all, for /api/claim: Sara's
+      # first sign-in in the browser (SARA_SETUP=browser below) trusts that Umbrel already checked
+      # who is asking. Her phone apps, other apps (OpenAI-compatible /v1, MCP) and the sign-in API
+      # can't send Umbrel's cookie, so those paths skip it and use Sara's own sign-in (owner token,
+      # passkeys, device tokens, API keys).
+      PROXY_AUTH_WHITELIST: "/api/*,/v1/*,/mcp,/mcp/*"
+      PROXY_AUTH_BLACKLIST: "/api/claim"
+
+  server:
+    image: ghcr.io/farena-ai/sara:1.1.0@sha256:d5159629b59db067f772d99dd92032b5afa234dc09b86e9978937ebfac055677
+    restart: on-failure
+    environment:
+      # Phase 59: set up in the browser with one click (no setup code), because Umbrel's login is in
+      # front of /api/claim. Only while nobody has signed in yet and within an hour of each start.
+      # Never set this where no login proxy guards the app (docs/THREAT_MODEL.md).
+      SARA_SETUP: browser
+      # Proxy-secret mode (see proxyTrust in src/server.ts): X-Forwarded-For counts only on requests
+      # carrying X-Sara-Proxy with this per-install secret. Umbrel's app proxy can't add that header,
+      # so no address in X-Forwarded-For is ever believed: another container on the Umbrel network
+      # can't fake one to dodge the sign-in limit (attempts count for the proxy connection).
+      # X-Forwarded-Proto is still read. APP_SEED is Umbrel's per-install secret for this app.
+      SARA_TRUST_PROXY: "1"
+      SARA_PROXY_SECRET: ${APP_SEED}
+      SARA_SECURE_COOKIES: "0"
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+    # Root inside the container on purpose, with every capability dropped except the six her command
+    # sandbox needs (her shell commands run as a separate user that can't read her keys); see
+    # docs/PACKAGING.md, "Why the container starts as root".
+    cap_drop: [ALL]
+    cap_add: [SETUID, SETGID, CHOWN, FOWNER, DAC_OVERRIDE, KILL]
+    security_opt:
+      - no-new-privileges:true
