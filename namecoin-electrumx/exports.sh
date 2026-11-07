@@ -1,13 +1,16 @@
 # IP ADDRESSES
-export APP_NAMECOIN_ELECTRUMX_IP="10.21.22.20"
-export APP_NAMECOIN_ELECTRUMX_NODE_IP="10.21.21.20"
-export APP_NAMECOIN_ELECTRUMX_WEB_IP="10.21.22.21"
+export APP_NAMECOIN_ELECTRUMX_NODE_IP="10.21.21.32"
+export APP_NAMECOIN_ELECTRUMX_WEB_IP="10.21.21.33"
 
 # PORTS
 export APP_NAMECOIN_ELECTRUMX_TCP_PORT="50011"
 export APP_NAMECOIN_ELECTRUMX_SSL_PORT="50012"
+export APP_NAMECOIN_ELECTRUMX_WS_PORT="50013"
+export APP_NAMECOIN_ELECTRUMX_WSS_PORT="50014"
 export APP_NAMECOIN_ELECTRUMX_RPC_PORT="8010"
 
 # TOR HIDDEN SERVICE
 rpc_hidden_service_file="${EXPORTS_TOR_DATA_DIR}/app-${EXPORTS_APP_ID}-tcp/hostname"
 export APP_NAMECOIN_ELECTRUMX_HIDDEN_SERVICE="$(cat "${rpc_hidden_service_file}" 2>/dev/null || echo "notyetset.onion")"
+wss_hidden_service_file="${EXPORTS_TOR_DATA_DIR}/app-${EXPORTS_APP_ID}-wss/hostname"
+export APP_NAMECOIN_ELECTRUMX_WSS_HIDDEN_SERVICE="$(cat "${wss_hidden_service_file}" 2>/dev/null || echo "notyetset.onion")"
