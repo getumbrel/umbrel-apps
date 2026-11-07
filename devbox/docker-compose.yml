@@ -1,0 +1,27 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: devbox_server_1
+      APP_PORT: 7681
+
+  server:
+    image: debian:trixie-20261005-slim@sha256:a29215f6a35e51e22adffa17f89e9d2ef06214e64a2bad10d765c46aea49f11f
+    restart: on-failure
+    init: true
+    hostname: devbox
+    ports:
+      - "4222:22"
+    volumes:
+      - ${APP_DATA_DIR}/data/home:/home/dev
+      - ${APP_DATA_DIR}/data/hostkeys:/data/hostkeys
+      - ${APP_DATA_DIR}/entrypoint.sh:/entrypoint.sh:ro
+    environment:
+      PASSWORD: ${APP_PASSWORD}
+      SSH_HOST: ${DEVICE_DOMAIN_NAME}
+      SSH_PORT: "4222"
+    # Lower CPU priority than other apps when the Umbrel is busy
+    cpu_shares: 768
+    pids_limit: 2048
+    entrypoint: ["/bin/bash", "/entrypoint.sh"]
