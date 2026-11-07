@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+
+APP_DATA_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/../data")"
+DESIRED_OWNER="1000:1000"
+
+# Umbrel creates these bind-mount roots as root. ElectrumX runs as UID/GID
+# 1000 and must be able to create its LevelDB files and self-signed certificate.
+for dir in "${APP_DATA_DIR}/electrumx-db" "${APP_DATA_DIR}/ssl"; do
+	mkdir -p "${dir}"
+	chown "${DESIRED_OWNER}" "${dir}"
+done
+
+# Delay booting the full app until the Tor Hidden Service is ready
+
+HIDDEN_SERVICE_FILE="${TOR_DATA_DIR}/app-${APP_ID}-tcp/hostname"
+
+if [[ -f "${HIDDEN_SERVICE_FILE}" ]]; then
+	exit
+fi
+
+"${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" up --detach electrumx
+"${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" up --detach tor
+
+echo "App: ${APP_ID} - Generating Tor Hidden Service..."
+
+for attempt in $(seq 1 100); do
+	if [[ -f "${HIDDEN_SERVICE_FILE}" ]]; then
+		echo "App: ${APP_ID} - Hidden service file created successfully!"
+		break
+	fi
+	sleep 0.1
+done
+
+if [[ ! -f "${HIDDEN_SERVICE_FILE}" ]]; then
+	echo "App: ${APP_ID} - Hidden service file wasn't created"
+fi
