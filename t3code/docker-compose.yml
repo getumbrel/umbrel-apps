@@ -1,0 +1,17 @@
+services:
+
+  app_proxy:
+    environment:
+      APP_HOST: t3code_app_1
+      APP_PORT: 3000
+
+  app:
+    image: ghcr.io/whatanpersonalemail-prog/t3code-umbrel:0.1.7@sha256:7a409d7e53587a9fa50f9593f3fa289d391fab253f5ea6b6acd15ce553f83ad8
+    restart: on-failure
+    init: true
+    environment:
+      HOME: /home/t3code
+    volumes:
+      - ${APP_DATA_DIR}/data/home:/home/t3code
+      - ${APP_DATA_DIR}/data/projects:/workspace
+    working_dir: /workspace
