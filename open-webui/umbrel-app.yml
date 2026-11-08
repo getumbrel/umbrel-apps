@@ -5,7 +5,7 @@ storage:
 name: Open WebUI
 tagline: Chat with Ollama models like DeepSeek-R1 and LLama, or use an OpenAI API key
 category: ai
-version: "0.13.0"
+version: "0.13.2"
 port: 2876
 description: >-
   Open WebUI lets you chat with advanced AI models running locally on your own device or connect to online models using an API key.
@@ -44,11 +44,15 @@ releaseNotes: >-
 
   Key highlights:
     - Includes security fixes
-    - Adds a tabbed chat workspace for files, previews, terminals, and side conversations
-    - Introduces optional comment threads and a notification inbox
-    - Improves note editing with draggable blocks and copyable code
-    - Fixes chat synchronization, restored drafts, model selection, and interrupted voice calls
-    - Improves accessibility and streaming compatibility for API clients
+    - Fixes chats, comments, and Markdown editing over plain HTTP
+    - Speeds up large chats, sidebar loading, and workspace search
+    - Adds split workspace panes and remembers tabs separately for each chat
+    - Improves tool-call reliability and reduces repeated context in tool chats
+    - Adds optional coding-agent models through compatible Open Terminal connections and the Tether desktop companion
+    - Fixes OpenAI image generation defaults, side-chat approvals, and notification navigation
+
+
+  Attached files are no longer preloaded by default with native function calling. If your model lacks file tools, enable Preload files in the model's Capabilities. Side chats are now saved as regular chats unless Temporary Chat is enabled. Custom pipes should support context arriving as hidden tool results.
 
 
   Chat files, system prompts, and advanced parameters are now in Controls next to the message input. Desktop and browser tabs require a separately configured compatible Open Terminal connection. Sub-agent limits now default to unlimited; review these limits in Admin Settings if you use agent workflows.
@@ -63,5 +67,5 @@ releaseNotes: >-
   Selected and model-attached skills still send their full instructions by default. Enable on-demand skill loading in Admin Settings > General to avoid unnecessary prompt length.
 
 
-  Full release notes are available at https://github.com/open-webui/open-webui/releases/tag/v0.13.0
+  Full release notes are available at https://github.com/open-webui/open-webui/releases/tag/v0.13.2
 path: ""
