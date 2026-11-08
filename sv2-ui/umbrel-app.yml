@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: sv2-ui
 category: bitcoin
 name: Stratum V2 UI
-version: "0.8.1"
+version: "0.8.2"
 tagline: Setup and monitor Stratum V2 mining
 description: >-
   Stratum V2 UI is a setup wizard and monitoring dashboard for running a
@@ -27,15 +27,10 @@ path: ""
 defaultUsername: ""
 defaultPassword: ""
 releaseNotes: |-
-  - Fixed an issue where found blocks could fail to submit if your node moved to Bitcoin Core 32 after you set up the app. The app now reads your node's version every time it starts mining and updates it by itself, so there's nothing for you to do.
-  - Added support for Bitcoin Core 32.x, the version Bitcoin Node uses by default.
-  - The setup wizard now shows the Bitcoin Core version your node reports instead of asking you to choose one.
-  - The dashboard now tells you when a found block could not be submitted, and when mining switches to a fallback pool.
-  - You can now add several custom pools, and edit settings in place on the review step before you start mining.
-  - Added experimental Telegram notifications for found blocks, best difficulty and worker connections.
-  - Updated the bundled Stratum V2 apps (Translator Proxy and Job Declarator Client) to sv2-apps v0.9.1.
+  - In Job Declaration mode, mining no longer leaves your pool when the pool can't find some of a job's transactions in its own node: the app drops that job and keeps mining on the same pool. It still leaves a pool that keeps refusing jobs.
+  - Updated the bundled Stratum V2 apps (Translator Proxy and Job Declarator Client) to sv2-apps v0.9.2.
 
-  Full release notes: https://github.com/stratum-mining/sv2-ui/releases/tag/v0.8.1
+  Full release notes: https://github.com/stratum-mining/sv2-ui/releases/tag/v0.8.2
 dependencies:
   - bitcoin
 developer: "The Stratum V2 Developers"
