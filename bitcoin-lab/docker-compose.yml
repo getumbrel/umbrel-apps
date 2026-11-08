@@ -63,7 +63,7 @@ services:
       APP_PORT: 8788
 
   dashboard:
-    image: ghcr.io/benunskilled/bitcoin-lab:2.1.2@sha256:f0433f814b47a1d1dc518c798464126ab3e667a74b11f62413cc8f3ccb703d0a
+    image: ghcr.io/benunskilled/bitcoin-lab:2.5.0@sha256:c429d975d82c12f88b9658f205989008ceaf25e659b2a2788fdfd18c39f1bf9e
     user: "1000:1000"
     init: true
     restart: on-failure
@@ -88,6 +88,7 @@ services:
       APP_BITCOIN_NETWORK: $APP_BITCOIN_NETWORK
       DATA_DIR: /data
       DASHBOARD_PORT: "8788"
+      TRUSTED_PROXY_HOST: bitcoin-lab_app_proxy_1   # writes only through the app's own proxy (umbrelOS 1.x)
       PEERMAP_HEALTH_URL: http://peer-map_web_1:8789/api/health
     healthcheck:
       # Double-quoted deliberately: the JavaScript contains ": " (in the
@@ -106,7 +107,7 @@ services:
       start_period: 30s
 
   peer-profiler:
-    image: ghcr.io/benunskilled/bitcoin-lab:2.1.2@sha256:f0433f814b47a1d1dc518c798464126ab3e667a74b11f62413cc8f3ccb703d0a
+    image: ghcr.io/benunskilled/bitcoin-lab:2.5.0@sha256:c429d975d82c12f88b9658f205989008ceaf25e659b2a2788fdfd18c39f1bf9e
     user: "1000:1000"
     init: true
     restart: on-failure
@@ -142,7 +143,7 @@ services:
       start_period: 60s
 
   relay-profiler:
-    image: ghcr.io/benunskilled/bitcoin-lab:2.1.2@sha256:f0433f814b47a1d1dc518c798464126ab3e667a74b11f62413cc8f3ccb703d0a
+    image: ghcr.io/benunskilled/bitcoin-lab:2.5.0@sha256:c429d975d82c12f88b9658f205989008ceaf25e659b2a2788fdfd18c39f1bf9e
     user: "1000:1000"
     init: true
     restart: on-failure
@@ -178,7 +179,7 @@ services:
       start_period: 60s
 
   stratum-race:
-    image: ghcr.io/benunskilled/bitcoin-lab:2.1.2@sha256:f0433f814b47a1d1dc518c798464126ab3e667a74b11f62413cc8f3ccb703d0a
+    image: ghcr.io/benunskilled/bitcoin-lab:2.5.0@sha256:c429d975d82c12f88b9658f205989008ceaf25e659b2a2788fdfd18c39f1bf9e
     user: "1000:1000"
     init: true
     restart: on-failure
