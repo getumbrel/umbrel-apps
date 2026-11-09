@@ -8,7 +8,7 @@ services:
       PROXY_AUTH_ADD: "false"
 
   ord:
-    image: nmfretz/ord:0.27.1@sha256:241db02d32ab66012724a680b471460ec4d87076aba102013371223d143ec159
+    image: nmfretz/ord:0.29.1@sha256:7b61a250a00871ce834388ee7b483b2fbbef2248d0b5a42f2799b467cdc2da63
     # This needs to run as root
     # user: "1000:1000"
     restart: on-failure
@@ -26,4 +26,5 @@ services:
       ORD_BITCOIN_RPC_URL: "${APP_BITCOIN_NODE_IP}:${APP_BITCOIN_RPC_PORT}"
       ORD_CHAIN: "${APP_BITCOIN_NETWORK}"
       ORD_INDEX_RUNES: "true"
-      # TODO: consider index-sats
+      # Optional indexes are unset (off) by default; app settings add only "true".
+      # ord treats any nonempty value, including "false", as enabled.
