@@ -1,0 +1,71 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: $APP_NAMECOIN_ELECTRUMX_WEB_IP
+      APP_PORT: 18081
+
+  electrumx:
+    image: ghcr.io/mstrofnone/namecoin-electrumx:1.16.0-umbrel.1@sha256:e763e767020124456e0d80d4c15ecd36c09825dfb2fb3d6f8c5f493399dcfe74
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 5m
+    # Electrum clients require direct non-HTTP access over LAN; web traffic
+    # continues to use app_proxy and remote clients can use the Tor services.
+    ports:
+      - "${APP_NAMECOIN_ELECTRUMX_TCP_PORT}:${APP_NAMECOIN_ELECTRUMX_TCP_PORT}"
+      - "${APP_NAMECOIN_ELECTRUMX_SSL_PORT}:${APP_NAMECOIN_ELECTRUMX_SSL_PORT}"
+      - "${APP_NAMECOIN_ELECTRUMX_WS_PORT}:${APP_NAMECOIN_ELECTRUMX_WS_PORT}"
+      - "${APP_NAMECOIN_ELECTRUMX_WSS_PORT}:${APP_NAMECOIN_ELECTRUMX_WSS_PORT}"
+    volumes:
+      - ${APP_DATA_DIR}/data/electrumx-db:/data/electrumx-db
+      - ${APP_DATA_DIR}/data/ssl:/data/ssl
+    environment:
+      COIN: "Namecoin"
+      NET: "mainnet"
+      DB_ENGINE: "leveldb"
+      DB_DIRECTORY: "/data/electrumx-db"
+      DAEMON_URL: "http://${APP_NAMECOIN_RPC_USER}:${APP_NAMECOIN_RPC_PASS}@${APP_NAMECOIN_NODE_IP}:${APP_NAMECOIN_RPC_PORT}/"
+      SERVICES: "tcp://0.0.0.0:${APP_NAMECOIN_ELECTRUMX_TCP_PORT},ssl://0.0.0.0:${APP_NAMECOIN_ELECTRUMX_SSL_PORT},ws://0.0.0.0:${APP_NAMECOIN_ELECTRUMX_WS_PORT},wss://0.0.0.0:${APP_NAMECOIN_ELECTRUMX_WSS_PORT},rpc://0.0.0.0:${APP_NAMECOIN_ELECTRUMX_RPC_PORT}"
+      SSL_CERTFILE: "/data/ssl/electrumx.crt"
+      SSL_KEYFILE: "/data/ssl/electrumx.key"
+      CACHE_MB: "400"
+      MAX_SESSIONS: "200"
+      BANNER_FILE: "/opt/electrumx/banner.txt"
+      REQUEST_TIMEOUT: "30"
+      INITIAL_CONCURRENT: "20"
+    networks:
+      default:
+        ipv4_address: $APP_NAMECOIN_ELECTRUMX_NODE_IP
+
+  web:
+    image: ghcr.io/mstrofnone/namecoin-electrumx-umbrel-web:1.16.0-umbrel.1@sha256:fbdd0bdfee29c275c73b33119169b880cec6e00803b8246f0d51eeeb8befe01b
+    user: "1000:1000"
+    restart: on-failure
+    environment:
+      ELECTRUMX_RPC_HOST: "${APP_NAMECOIN_ELECTRUMX_NODE_IP}"
+      ELECTRUMX_RPC_PORT: "${APP_NAMECOIN_ELECTRUMX_RPC_PORT}"
+      ELECTRUMX_TCP_PORT: "${APP_NAMECOIN_ELECTRUMX_TCP_PORT}"
+      ELECTRUMX_SSL_PORT: "${APP_NAMECOIN_ELECTRUMX_SSL_PORT}"
+      ELECTRUMX_WS_PORT: "${APP_NAMECOIN_ELECTRUMX_WS_PORT}"
+      ELECTRUMX_WSS_PORT: "${APP_NAMECOIN_ELECTRUMX_WSS_PORT}"
+      ELECTRUM_HIDDEN_SERVICE: "${APP_NAMECOIN_ELECTRUMX_HIDDEN_SERVICE}"
+      ELECTRUM_WSS_HIDDEN_SERVICE: "${APP_NAMECOIN_ELECTRUMX_WSS_HIDDEN_SERVICE}"
+      ELECTRUM_LOCAL_SERVICE: "${DEVICE_DOMAIN_NAME}"
+      PORT: 18081
+    depends_on:
+      - electrumx
+    networks:
+      default:
+        ipv4_address: $APP_NAMECOIN_ELECTRUMX_WEB_IP
+
+  tor:
+    image: ghcr.io/getumbrel/tor:0.4.9.11@sha256:e382b8629c0dfef6ceb396b062622d4e4e955b19d6f16b883fd2c0723ad5671a
+    user: "1000:1000"
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/torrc:/etc/tor/torrc:ro
+      - ${TOR_DATA_DIR}:/data
+    environment:
+      HOME: "/tmp"
