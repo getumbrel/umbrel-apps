@@ -24,22 +24,27 @@ import time
 import urllib.parse
 import urllib.request
 
+# The relay's settings and this page's own. Only this page writes them; the relay and the gateway read them.
 SETTINGS_DIR = "/settings"
 RELAY_ENV = os.path.join(SETTINGS_DIR, "relay.env")
 SETUP_JSON = os.path.join(SETTINGS_DIR, "setup.json")
-TAILSCALE_ON = os.path.join(SETTINGS_DIR, "tailscale-enabled")
-TAILSCALE_STATUS = os.path.join(SETTINGS_DIR, "tailscale-status.json")
-TAILSCALE_SERVE = os.path.join(SETTINGS_DIR, "tailscale-serve.txt")
+# Shared with the app's Tailscale machine alone: how to publish, and what it reports back
+TAILSCALE_DIR = "/tailscale"
+TAILSCALE_ON = os.path.join(TAILSCALE_DIR, "tailscale-enabled")
+TAILSCALE_STATUS = os.path.join(TAILSCALE_DIR, "tailscale-status.json")
+TAILSCALE_SERVE = os.path.join(TAILSCALE_DIR, "tailscale-serve.txt")
 TAILSCALE_LOGS = ("tailscale-publish.log", "tailscale-funnel.log")
-# The app's own Cloudflare tunnel: the name it serves, where it stands, and its sign-in link
-CLOUDFLARE_ON = os.path.join(SETTINGS_DIR, "cloudflare-enabled")
-CLOUDFLARE_STATE = os.path.join(SETTINGS_DIR, "cloudflare-state")
-CLOUDFLARE_LOGIN = os.path.join(SETTINGS_DIR, "cloudflare-login.log")
-CLOUDFLARE_SETUP = os.path.join(SETTINGS_DIR, "cloudflare-setup.log")
-CLOUDFLARE_RESET = os.path.join(SETTINGS_DIR, "cloudflare-reset")
+# Shared with the app's Cloudflare tunnel alone: the name it serves, where it stands, and its sign-in link
+CLOUDFLARE_DIR = "/cloudflare"
+CLOUDFLARE_ON = os.path.join(CLOUDFLARE_DIR, "cloudflare-enabled")
+CLOUDFLARE_STATE = os.path.join(CLOUDFLARE_DIR, "cloudflare-state")
+CLOUDFLARE_LOGIN = os.path.join(CLOUDFLARE_DIR, "cloudflare-login.log")
+CLOUDFLARE_SETUP = os.path.join(CLOUDFLARE_DIR, "cloudflare-setup.log")
+CLOUDFLARE_RESET = os.path.join(CLOUDFLARE_DIR, "cloudflare-reset")
 GATEWAY_URL = "buzz-gateway:80"
 RELAY_HOST = "buzz_relay_1"
 BUZZ_APP = "https://github.com/block/buzz-app"
+NAK = "https://github.com/fiatjaf/nak"
 TUNNEL_GUIDE = "https://github.com/Radiokot/umbrel-cloudflared/wiki/How-to-set-up-Cloudflare-Tunnel-on-your-Umbrel"
 TAILSCALE_ADMIN = "https://login.tailscale.com/admin/machines"
 TAILSCALE_ACCESS = "https://login.tailscale.com/admin/acls"
@@ -53,6 +58,8 @@ MODES = ("domain", "funnel", "private")
 MODE_NAMES = {"domain": "Your own domain", "funnel": "A free Tailscale address", "private": "Private Tailscale network"}
 
 BECH32 = "qpzry9x8gf2tvdw0s3jn54khce6mua7l"
+LABEL = r"[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?"
+HOST = r"(" + LABEL + r"\.)+[a-z][a-z0-9-]{0,61}[a-z0-9]"
 
 
 # ---------------------------------------------------------------- what the owner types
@@ -104,10 +111,9 @@ def owner_hex(text):
 
 def clean_domain(text):
     domain = re.sub(r"^[a-z]+://", "", text.strip().lower()).split("/")[0].rstrip(".")
-    label = r"[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?"
     if not domain:
         raise ValueError("Enter your domain, like yourteam.com.")
-    if len(domain) > 253 or not re.fullmatch(r"(" + label + r"\.)+[a-z][a-z0-9-]{0,61}[a-z0-9]", domain):
+    if len(domain) > 253 or not re.fullmatch(HOST, domain):
         raise ValueError("That isn't a domain. Enter one like yourteam.com, with no port or path.")
     if domain.endswith((".local", ".localhost", ".internal", ".lan", ".home.arpa")):
         raise ValueError("That name only works on your home network. Use a public domain, "
@@ -116,6 +122,13 @@ def clean_domain(text):
         raise ValueError("For a Tailscale address, choose one of the Tailscale options instead. This app "
                          "sets up that address itself.")
     return domain
+
+
+def tailscale_name(text):
+    """The machine's name as Tailscale reports it, if it's a plain ts.net host name, or "". It becomes the
+    community's address, in the relay's settings and on this page."""
+    name = str(text or "").rstrip(".").lower()
+    return name if len(name) <= 253 and re.fullmatch(r"(" + LABEL + r"\.)+ts\.net", name) else ""
 
 
 # ---------------------------------------------------------------- settings on disk
@@ -151,7 +164,7 @@ def norm_mode(mode):
 
 def load_setup():
     setup = read_json(SETUP_JSON)
-    if not isinstance(setup, dict) or not setup.get("owner_hex"):
+    if not isinstance(setup, dict) or not re.fullmatch(r"[0-9a-f]{64}", str(setup.get("owner_hex") or "")):
         return None
     setup["mode"] = norm_mode(setup.get("mode"))
     return setup
@@ -171,7 +184,10 @@ def push_on(setup):
 
 
 def write_relay_env(key, domain, push):
-    # The relay watches this file and restarts when it changes.
+    # The relay watches this file and restarts when it changes. It reads plain KEY=value lines, never
+    # runs them, and these are the only values in them.
+    if not re.fullmatch(r"[0-9a-f]{64}", key) or len(domain) > 253 or not re.fullmatch(HOST, domain):
+        raise ValueError("The relay's settings take a key and a host name.")
     write_atomic(RELAY_ENV, "\n".join([
         "RELAY_OWNER_PUBKEY=" + key,
         "BUZZ_DOMAIN=" + domain,
@@ -182,6 +198,11 @@ def write_relay_env(key, domain, push):
         "BUZZ_PAIRING_RELAY_URL=wss://" + domain + "/pair",
         "BUZZ_PUSH_ENABLED=" + ("true" if push else "false"),
     ]) + "\n")
+
+
+# The watcher and the forms both read the settings and write them back: one at a time, so an owner's
+# change can't be lost to the watcher writing what it read a moment before
+SETUP_LOCK = threading.Lock()
 
 
 def save(owner_text, key, mode, domain, push=None):
@@ -224,10 +245,15 @@ def migrate():
 
 
 def tailscale_state():
-    status = read_json(TAILSCALE_STATUS) or {}
-    me = status.get("Self") or {}
-    return {"backend": status.get("BackendState") or "", "name": (me.get("DNSName") or "").rstrip("."),
-            "auth_url": status.get("AuthURL") or "", "node": me.get("ID") or ""}
+    status = read_json(TAILSCALE_STATUS)
+    status = status if isinstance(status, dict) else {}
+    me = status.get("Self") if isinstance(status.get("Self"), dict) else {}
+    auth = str(status.get("AuthURL") or "")
+    # The name becomes the community's address and the link a button: only a plain ts.net name, and
+    # only Tailscale's own sign-in links
+    return {"backend": str(status.get("BackendState") or ""), "name": tailscale_name(me.get("DNSName")),
+            "auth_url": auth if re.fullmatch(r"https://login\.tailscale\.com/[A-Za-z0-9/_.?=&%-]+", auth) else "",
+            "node": str(me.get("ID") or "")}
 
 
 def published():
@@ -241,7 +267,7 @@ def published():
 def consent_link():
     """Tailscale's one-click link to turn on Funnel or HTTPS for this machine, if it printed one."""
     for name in TAILSCALE_LOGS:
-        found = re.search(r"https://login\.tailscale\.com/f/\S+", read_text(os.path.join(SETTINGS_DIR, name)))
+        found = re.search(r"https://login\.tailscale\.com/f/[A-Za-z0-9/_.?=&%-]+", read_text(os.path.join(TAILSCALE_DIR, name)))
         if found:
             return found.group(0)
     return ""
@@ -252,20 +278,26 @@ def tailscale_watcher():
     a later rename of the machine would start a new community, so the address never moves by itself."""
     while True:
         try:
-            setup = load_setup()
-            if setup and setup["mode"] in ("funnel", "private") and not setup.get("domain"):
-                state = tailscale_state()
-                if state["backend"] == "Running" and state["name"].endswith(".ts.net"):
-                    save(setup["owner"], setup["owner_hex"], setup["mode"], state["name"])
+            adopt_tailscale_name()
         except (OSError, KeyError, ValueError):
             pass
         time.sleep(3)
 
 
+def adopt_tailscale_name():
+    """One look: a Tailscale option still without an address takes the signed-in machine's name."""
+    with SETUP_LOCK:
+        setup = load_setup()
+        if setup and setup["mode"] in ("funnel", "private") and not setup.get("domain"):
+            state = tailscale_state()
+            if state["backend"] == "Running" and state["name"]:
+                save(setup["owner"], setup["owner_hex"], setup["mode"], state["name"])
+
+
 def cloudflare_state():
     """Where this app's Cloudflare tunnel stands, and Cloudflare's sign-in link while it waits for one."""
     state = read_text(CLOUDFLARE_STATE).strip()
-    found = re.search(r"https://dash\.cloudflare\.com/argotunnel\?\S+", read_text(CLOUDFLARE_LOGIN)) if state == "signin" else None
+    found = re.search(r"https://dash\.cloudflare\.com/argotunnel\?[A-Za-z0-9/_.?=&%:-]+", read_text(CLOUDFLARE_LOGIN)) if state == "signin" else None
     return {"state": state, "link": found.group(0) if found else ""}
 
 
@@ -483,10 +515,12 @@ def new_session():
 
 
 def session_ok(token):
+    if not PASSWORD:
+        return False  # no sign-in, so no session either, whatever signed the cookie
     try:
         expires, signature = token.split(".", 1)
         return int(expires) > time.time() and hmac.compare_digest(signature, sign("session|" + expires))
-    except (ValueError, AttributeError):
+    except (ValueError, AttributeError, TypeError):
         return False
 
 
@@ -1255,7 +1289,25 @@ def how_to_find_npub():
          "That's your public ID."),
         ("Paste it here", drawn_paste(), "Paste it into the box above. It starts with npub1."),
     ], 'You need Buzz on your computer. If you don\'t have it yet, <a href="' + BUZZ_APP + '" target="_blank" '
-       'rel="noopener">install it</a> and choose <b>Create a new identity</b>.')
+       'rel="noopener">install it</a>.')
+
+
+def no_identity():
+    """For owners new to Buzz. Buzz 1.0 on a computer makes a key only with a Builderlab account, Block's,
+    so the other way is a key of their own. Either way this page gets only the public ID."""
+    return (
+        '<details class="alt"><summary>No Buzz identity yet?</summary><div class="inner">'
+        "<p><b>Your own key (recommended).</b> Make one on your computer with an open-source tool like "
+        '<a href="' + NAK + '" target="_blank" rel="noopener">nak</a>, or use a Nostr key you already have. Paste '
+        "its public ID (npub) here. When you join in Buzz, choose <b>Use an existing key</b> and paste the "
+        "private key (nsec) there, never here.</p>"
+        "<p><b>Sign in with Builderlab.</b> Block's account, and the quickest way: Buzz makes your key and "
+        "Builderlab keeps a backup, so you can recover it by signing in. Your messages and files stay on your "
+        "Umbrel. Block can decrypt that backup, though. Your key isn't your data, but with it someone could "
+        "sign in to your community as you. Block also sees which communities you join.</p>"
+        '<p class="muted small">Lost your key later? Come back to this page and use <b>Change the owner</b> in '
+        "Settings.</p></div></details>"
+    )
 
 
 def setup_page(error="", values=None):
@@ -1268,10 +1320,10 @@ def setup_page(error="", values=None):
         '<div class="step on"><span class="num">1</span><div class="step-body"><h2>Owner</h2>'
         "<p class=\"muted\">A new community starts with no members, and you'll be the first. Enter your public ID "
         "from Buzz: the relay records it as the owner when it starts. As the owner, you add the other members "
-        "and choose admins in Buzz.</p>"
+        "and choose admins in Buzz. Your Umbrel never sees your private key.</p>"
         '<label class="field" for="owner">Public ID (npub)</label>'
         '<input type="text" id="owner" name="owner" placeholder="npub1..." autocomplete="off" spellcheck="false" '
-        'value="' + esc(owner) + '">' + how_to_find_npub() + "</div></div>"
+        'value="' + esc(owner) + '">' + how_to_find_npub() + no_identity() + "</div></div>"
         '<div class="step on"><span class="num">2</span><div class="step-body"><h2>How members reach it</h2>'
         "<p class=\"muted\">How you set this up depends on what it's for: trying Buzz out, hosting an existing "
         "community, or a private group behind a VPN that only certain people can reach. Pick the option that fits "
@@ -1319,7 +1371,7 @@ def phase_of(setup, live):
 
 
 def copy_button(text):
-    return ('<button class="copy-mini" type="button" onclick="copyText(this, \'' + esc(text) + '\')">Copy</button>')
+    return ('<button class="copy-mini" type="button" data-copy="' + esc(text) + '" onclick="copyText(this, this.dataset.copy)">Copy</button>')
 
 
 def connect_steps(setup, domain):
@@ -1501,7 +1553,7 @@ def main_page(setup, error="", values=None):
         '<p class="lede">Only people you add by their public ID, or who join with an invite link, can read or '
         "post. They join in Buzz with this address, " + reach + ".</p>"
         '<div class="address"><code><span>https://' + esc(domain) + "</span></code>"
-        '<button class="btn" type="button" onclick="copyText(this, \'https://' + esc(domain) + '\')">Copy</button></div>'
+        '<button class="btn" type="button" data-copy="https://' + esc(domain) + '" onclick="copyText(this, this.dataset.copy)">Copy</button></div>'
         + status +
         '<section class="part next"><p class="eyebrow">Next steps</p>'
         '<div class="step on"><span class="num">1</span><div class="step-body"><h2>Join your community</h2>'
@@ -1530,6 +1582,9 @@ def main_page(setup, error="", values=None):
 
 
 class Handler(http.server.BaseHTTPRequestHandler):
+    # Seconds a connection may sit idle: a half-sent request doesn't hold its thread for good
+    timeout = 20
+
     def send(self, status, data, kind="text/html; charset=utf-8", headers=None):
         payload = data.encode() if isinstance(data, str) else data
         self.send_response(status)
@@ -1539,6 +1594,9 @@ class Handler(http.server.BaseHTTPRequestHandler):
         # same-origin, not no-referrer: with no-referrer, browsers send this page's own forms as Origin: null
         self.send_header("Referrer-Policy", "same-origin")
         self.send_header("X-Content-Type-Options", "nosniff")
+        # Never inside another page: another app's page on this Umbrel counts as the same site
+        self.send_header("X-Frame-Options", "DENY")
+        self.send_header("Content-Security-Policy", "frame-ancestors 'none'")
         for name, value in (headers or {}).items():
             self.send_header(name, value)
         self.end_headers()
@@ -1559,8 +1617,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
         return False
 
     def form(self):
-        length = min(int(self.headers.get("Content-Length") or 0), 20000)
-        fields = urllib.parse.parse_qs(self.rfile.read(length).decode(errors="replace"))
+        fields = urllib.parse.parse_qs(self.rfile.read(self.length).decode(errors="replace"))
         return {name: values[0] for name, values in fields.items()}
 
     def same_origin(self):
@@ -1598,6 +1655,13 @@ class Handler(http.server.BaseHTTPRequestHandler):
 
     def do_POST(self):
         path = urllib.parse.urlsplit(self.path).path
+        try:
+            self.length = int(self.headers.get("Content-Length") or 0)
+        except ValueError:
+            self.length = -1
+        # The page's forms are small; anything else is refused before it's read, signed in or not
+        if not 0 <= self.length <= 20000:
+            return self.send(413, "That's more than this page's forms send.", "text/plain")
         if not self.same_origin():
             return self.send(403, "This page only accepts its own forms.", "text/plain")
         if path == "/login":
@@ -1615,6 +1679,10 @@ class Handler(http.server.BaseHTTPRequestHandler):
         if not self.signed_in():
             return self.send(401, layout("<h1>Sign in first</h1><p><a href=\"./login\">Sign in</a></p>", signed_in=False))
         values = self.form()
+        with SETUP_LOCK:
+            return self.change(path, values)
+
+    def change(self, path, values):
         setup = load_setup()
         if path == "/save":
             if setup:
@@ -1640,7 +1708,9 @@ class Handler(http.server.BaseHTTPRequestHandler):
             save(setup["owner"], key, setup["mode"], relay_domain() or setup.get("domain", ""))
             return self.redirect("./")
         if path == "/cloudflare-reset":
-            write_atomic(CLOUDFLARE_RESET, "1\n")
+            # Only where the page offers it: a working tunnel deleted here would leave its DNS name behind
+            if cloudflare_state()["state"] in ("error", "wrong-domain"):
+                write_atomic(CLOUDFLARE_RESET, "1\n")
             return self.redirect("./")
         if path == "/notifications":
             save(setup["owner"], setup["owner_hex"], setup["mode"], relay_domain() or setup.get("domain", ""),

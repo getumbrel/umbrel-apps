@@ -21,11 +21,40 @@ services:
     volumes:
       - ${APP_DATA_DIR}/setup.py:/app/setup.py:ro
       - ${APP_DATA_DIR}/data/settings:/settings
+      # One folder shared with each helper, so neither can touch the relay's settings
+      - ${APP_DATA_DIR}/data/tailscale-control:/tailscale
+      - ${APP_DATA_DIR}/data/cloudflare-control:/cloudflare
     restart: on-failure
 
-  # What Cloudflare Tunnel points at: http://buzz-gateway:80
+  # What Cloudflare Tunnel and Tailscale point at: http://buzz-gateway:80. On the owner's own domain it
+  # answers only the community's current address, so an old address that still points at the tunnel
+  # reaches nothing. It starts again when the address changes.
   gateway:
     image: caddy:2.10.2-alpine@sha256:4c6e91c6ed0e2fa03efd5b44747b625fec79bc9cd06ac5235a779726618e530d
+    init: true
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        set -u
+        settings=/settings/relay.env
+        caddy=
+        trap '[ -n "$$caddy" ] && kill -TERM "$$caddy" 2> /dev/null; wait; exit 0' TERM INT
+        while :; do
+          stamp=$$(cksum "$$settings" 2> /dev/null || echo none)
+          host=$$(sed -n 's/^BUZZ_DOMAIN=//p' "$$settings" 2> /dev/null | head -n 1)
+          case "$$host" in *[!a-z0-9.-]*) host= ;; esac
+          # A Tailscale address, or none yet: every request, as Tailscale passes it on
+          case "$$host" in ""|*.ts.net) site=":80" ;; *) site="http://$$host:80" ;; esac
+          sed "s|COMMUNITY_SITE|$$site|" /etc/caddy/Caddyfile > /tmp/Caddyfile
+          [ "$$site" = ":80" ] || printf '\n:80 {\n\trespond 404\n}\n' >> /tmp/Caddyfile
+          caddy run --config /tmp/Caddyfile --adapter caddyfile &
+          caddy=$$!
+          while kill -0 "$$caddy" 2> /dev/null && [ "$$(cksum "$$settings" 2> /dev/null || echo none)" = "$$stamp" ]; do
+            sleep 3
+          done
+          kill -TERM "$$caddy" 2> /dev/null; wait "$$caddy" 2> /dev/null; caddy=
+        done
     networks:
       default:
         aliases:
@@ -33,10 +62,11 @@ services:
           - buzz-gateway
     volumes:
       - ${APP_DATA_DIR}/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ${APP_DATA_DIR}/data/settings:/settings:ro
     restart: on-failure
 
   relay:
-    image: ghcr.io/block/buzz:sha-a38fedb@sha256:ec4e4b1cf56507af53804418a20df733ddaf70f7df3c5c0060cc6df746e724a2
+    image: ghcr.io/block/buzz:sha-744f394@sha256:b67a32b7b2a274cdbd9a685fe996657fa544a3e981284ab3a8c660a128f36a3d
     init: true
     # Generates the relay's own key on first start, waits for the setup page, then runs the
     # relay. When the setup page changes the settings, it exits so the relay restarts with them.
@@ -58,10 +88,18 @@ services:
         done
         # The content, not the time: two saves within a second have the same modification time.
         stamp=$$(cksum "$$settings")
-        set -a
-        . "$$key"
-        . "$$settings"
-        set +a
+        # Plain KEY=value lines, never run as a script, and only the names this app writes, so nothing
+        # in a settings file can run a command or turn off the relay's checks
+        load() {
+          while IFS= read -r line || [ -n "$$line" ]; do
+            case "$${line%%=*}" in
+              BUZZ_RELAY_PRIVATE_KEY|RELAY_OWNER_PUBKEY|BUZZ_DOMAIN|RELAY_URL|BUZZ_MEDIA_BASE_URL|BUZZ_MEDIA_SERVER_DOMAIN|BUZZ_CORS_ORIGINS|BUZZ_PAIRING_RELAY_URL|BUZZ_PUSH_ENABLED)
+                export "$$line" ;;
+            esac
+          done < "$$1"
+        }
+        load "$$key"
+        load "$$settings"
         /usr/local/bin/buzz-relay &
         pid=$$!
         trap 'kill -TERM "$$pid" 2>/dev/null || true; wait "$$pid" || true; exit 0' TERM INT
@@ -100,7 +138,8 @@ services:
       # Cloudflare's free plan refuses uploads over 100 MB.
       BUZZ_MAX_FILE_BYTES: "100000000"
       BUZZ_MAX_VIDEO_BYTES: "100000000"
-      RUST_LOG: buzz_relay=info,buzz_db=info,buzz_auth=info,buzz_pubsub=info,tower_http=info
+      # Routine access lines name members on every request; warn keeps refusals, errors and aborted requests
+      RUST_LOG: buzz_relay=info,buzz_relay::access=warn,buzz_db=info,buzz_auth=info,buzz_pubsub=info,tower_http=info
     volumes:
       - ${APP_DATA_DIR}/data/git:/data/git
       - ${APP_DATA_DIR}/data/secrets:/data/secrets
@@ -149,11 +188,13 @@ services:
           until [ -S "$$sock" ]; do sleep 1; done
           # Waits for the sign-in with no time limit; the setup page shows the link from the status.
           ts up --hostname=buzz --accept-dns=false > /dev/null 2>&1 &
+          pub= pubmode=
           # Reports the machine's state to the setup page, and publishes the gateway the way the owner
           # chose once signed in.
           while kill -0 "$$daemon" 2> /dev/null; do
             mode=$$(want)
             if [ -z "$$mode" ]; then
+              [ -n "$$pub" ] && kill -TERM "$$pub" 2> /dev/null
               ts serve reset > /dev/null 2>&1
               kill -TERM "$$daemon"; wait "$$daemon"
               rm -f /settings/tailscale-status.json /settings/tailscale-serve.txt /settings/tailscale-publish.log
@@ -163,14 +204,22 @@ services:
               mv -f /settings/tailscale-status.json.tmp /settings/tailscale-status.json
             ts serve status > /settings/tailscale-serve.txt.tmp 2>&1 &&
               mv -f /settings/tailscale-serve.txt.tmp /settings/tailscale-serve.txt
+            # A publish still waiting on Tailscale, for the owner to allow Funnel, is dropped when the owner
+            # picks the other option: allowing its old link can't turn Funnel on for a private network
+            if [ -n "$$pub" ] && kill -0 "$$pub" 2> /dev/null && [ "$$pubmode" != "$$mode" ]; then
+              kill -TERM "$$pub" 2> /dev/null; wait "$$pub" 2> /dev/null; pub=
+              : > /settings/tailscale-publish.log
+            fi
             if grep -q '"BackendState": "Running"' /settings/tailscale-status.json 2> /dev/null &&
-              ! pgrep -f "funnel --bg" > /dev/null && ! pgrep -f "serve --bg" > /dev/null; then
+              { [ -z "$$pub" ] || ! kill -0 "$$pub" 2> /dev/null; }; then
               if [ "$$mode" = funnel ] && ! grep -q "Funnel on" /settings/tailscale-serve.txt; then
                 ts serve reset > /dev/null 2>&1
-                ts funnel --bg http://buzz-gateway:80 > /settings/tailscale-publish.log 2>&1 &
+                tailscale --socket="$$sock" funnel --bg http://buzz-gateway:80 > /settings/tailscale-publish.log 2>&1 &
+                pub=$$! pubmode=funnel
               elif [ "$$mode" = private ] && ! grep -q "tailnet only" /settings/tailscale-serve.txt; then
                 ts serve reset > /dev/null 2>&1
-                ts serve --bg http://buzz-gateway:80 > /settings/tailscale-publish.log 2>&1 &
+                tailscale --socket="$$sock" serve --bg http://buzz-gateway:80 > /settings/tailscale-publish.log 2>&1 &
+                pub=$$! pubmode=private
               fi
             fi
             sleep 5
@@ -178,7 +227,8 @@ services:
         done
     volumes:
       - ${APP_DATA_DIR}/data/tailscale:/var/lib/tailscale
-      - ${APP_DATA_DIR}/data/settings:/settings
+      # Shared with the setup page alone: which way to publish, and the machine's status for the page
+      - ${APP_DATA_DIR}/data/tailscale-control:/settings
     restart: on-failure
 
   # Your own domain: this app's own Cloudflare tunnel. The owner signs in to Cloudflare from the
@@ -270,12 +320,13 @@ services:
       HOME: /cloudflare
     volumes:
       - ${APP_DATA_DIR}/data/cloudflare:/cloudflare
-      - ${APP_DATA_DIR}/data/settings:/settings
+      # Shared with the setup page alone: the name to serve, and where the tunnel stands
+      - ${APP_DATA_DIR}/data/cloudflare-control:/settings
     restart: on-failure
 
   # Phones pair with Buzz Desktop through this service, at wss://<domain>/pair.
   pair:
-    image: ghcr.io/block/buzz:sha-a38fedb@sha256:ec4e4b1cf56507af53804418a20df733ddaf70f7df3c5c0060cc6df746e724a2
+    image: ghcr.io/block/buzz:sha-744f394@sha256:b67a32b7b2a274cdbd9a685fe996657fa544a3e981284ab3a8c660a128f36a3d
     init: true
     entrypoint: ["/usr/local/bin/buzz-pair-relay"]
     environment:
