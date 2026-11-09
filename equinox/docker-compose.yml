@@ -1,0 +1,39 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: equinox_server_1
+      APP_PORT: 8080
+
+  server:
+    image: ghcr.io/ozzvin/equinox:1.1.2@sha256:64096b6718271106f677c3daa8fb62270ccb16adb8ec78b7355a7a548516a745
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 1m
+    # -open: Umbrel's app proxy signs the user in, so Equinox asks for no key of its own.
+    command:
+      - -open
+      - -listen
+      - 0.0.0.0:8080
+      - -no-browser
+      - -state
+      - /data
+      # its own folder in Downloads: downloading into incomplete, finished torrents moved to complete
+      - -downloads
+      - /downloads/Equinox/incomplete
+      - -completed
+      - /downloads/Equinox/complete
+      # the one port published below: the page cannot move the program off it (51413 is Transmission's)
+      - -torrent-port
+      - "51420"
+      # folders by the names Umbrel shows them under: Downloads, and a folder added in the app's settings as Umbrel
+      # shows it, RAID/Torrents for RAID › Torrents (hooks/pre-start hands Equinox the app's settings, where Umbrel keeps it)
+      - -place
+      - Downloads=/downloads
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+      - ${UMBREL_ROOT}/data/storage/downloads:/downloads
+    ports:
+      - 51420:51420/tcp
+      - 51420:51420/udp
