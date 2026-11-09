@@ -7,7 +7,7 @@ services:
       APP_PORT: 3001
 
   web:
-    image: ghcr.io/opensourceminers/lightningmate:v0.7.7@sha256:917fa062d9520ea5bf92fb94bbe12b2947ed025c2bd8b82b3dcd5435127392ce
+    image: ghcr.io/opensourceminers/lightningmate:v0.9.1@sha256:ca6881ea393a491ef6b92961193253af06b8f292dfdc463cb336a202ba0ea63d
     user: "1000:1000"
     restart: on-failure
     stop_grace_period: 1m
@@ -41,3 +41,6 @@ services:
       LND_WRITE_MACAROON_PATH: "/lnd/data/chain/bitcoin/$APP_BITCOIN_NETWORK/admin.macaroon"
       LM_SELL_FEE_BPS: "100"
       LM_SELL_FEE_ADDRESS: "lightningmate@btcpay.opensourceminers.de"
+      # Umbrel's Tor proxy (SOCKS5): every third-party lookup goes through it.
+      TOR_PROXY_IP: "$TOR_PROXY_IP"
+      TOR_PROXY_PORT: "$TOR_PROXY_PORT"
