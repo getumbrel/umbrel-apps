@@ -1,0 +1,53 @@
+version: '3.7'
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: overleaf_server_1
+      APP_PORT: 80
+
+  server:
+    image: ghcr.io/makrron/overleaf:6.3.0@sha256:7790ba03aac2d771010251301ce8d14178b329f91444e9eb45cac44d0c3dd740
+    restart: on-failure
+    depends_on:
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    volumes:
+      - ${APP_DATA_DIR}/data/overleaf:/var/lib/overleaf
+    environment:
+      OVERLEAF_APP_NAME: Overleaf Community Edition
+      OVERLEAF_SITE_URL: http://${DEVICE_DOMAIN_NAME}:${APP_PROXY_PORT}
+      OVERLEAF_NAV_TITLE: Overleaf
+      OVERLEAF_MONGO_URL: mongodb://overleaf_mongo_1:27017/sharelatex?replicaSet=rs
+      OVERLEAF_REDIS_HOST: overleaf_redis_1
+      OVERLEAF_REDIS_PORT: 6379
+      REDIS_HOST: overleaf_redis_1
+      REDIS_PORT: 6379
+      ENABLED_LINKED_FILE_TYPES: 'project_file,project_output_file'
+      ENABLE_CONVERSIONS: 'true'
+      EMAIL_CONFIRMATION_DISABLED: 'true'
+      TEXMFVAR: /var/lib/overleaf/tmp/texmf-var
+      OVERLEAF_BEHIND_PROXY: 'true'
+      OVERLEAF_INVITE_TOKEN_SECRET: ${APP_OVERLEAF_INVITE_SECRET}
+
+  mongo:
+    image: mongo:8.0@sha256:4a0f30875898413139bec44c73c02a05fed172578de65b644dcdcee143ae7306
+    restart: on-failure
+    command: ["--replSet", "rs", "--bind_ip_all", "--port", "27017"]
+    volumes:
+      - ${APP_DATA_DIR}/data/mongo:/data/db
+    healthcheck:
+      test: >
+        echo "try { rs.status() } catch (err) { rs.initiate({ _id: 'rs', members: [{ _id: 0, host: 'overleaf_mongo_1:27017' }] }) }"
+        | mongosh --port 27017 --quiet
+      interval: 10s
+      timeout: 30s
+      retries: 30
+
+  redis:
+    image: redis:7.2-alpine@sha256:ccd6aa8d45ff3f033d6fa15b8cc1a50579f65c89f38cf9bb607a954c4f2128ed
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data/redis:/data
