@@ -1,0 +1,33 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: twingate_web_1
+      APP_PORT: 80
+
+  web:
+    image: nginx:1.27.4-alpine@sha256:4ff102c5d78d254a6f0da062b3cf39eaf07f01eec0927fd21e219d0af8bc0591
+    restart: on-failure
+    depends_on:
+      - connector
+    environment:
+      - TWINGATE_NETWORK=${TWINGATE_NETWORK:-}
+    volumes:
+      - ${APP_DATA_DIR}/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ${APP_DATA_DIR}/index.html:/usr/share/nginx/html/index.html:ro
+
+  connector:
+    image: twingate/connector:1.93.0@sha256:44e0ac9385438966a3b476c381ff23e432cf85fd419b8f839cbd8f00dd4d07e4
+    restart: on-failure
+    environment:
+      - TWINGATE_NETWORK=${TWINGATE_NETWORK:-}
+      - TWINGATE_ACCESS_TOKEN=${TWINGATE_ACCESS_TOKEN:-}
+      - TWINGATE_REFRESH_TOKEN=${TWINGATE_REFRESH_TOKEN:-}
+      - TWINGATE_LABEL_HOSTNAME=${DEVICE_HOSTNAME:-umbrel}
+      - TWINGATE_LOG_ANALYTICS=v3
+      - TWINGATE_METRICS_PORT=9999
+    sysctls:
+      - net.ipv4.ping_group_range=0 2147483647
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
