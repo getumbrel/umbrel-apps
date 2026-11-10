@@ -1,6 +1,12 @@
 manifestVersion: 1
 id: ordinals
 environment:
+  - name: ORD_COMMIT_INTERVAL
+    services:
+      - ord
+    default: "100"
+    note: >-
+      Blocks to process between saves while catching up. Recommended: 100. Lower values save more often and can reduce memory use. Higher values may improve speed but can use more memory. Enter a whole number of 1 or more. Applying changes restarts Ordinals without rebuilding your index.
   - name: ORD_INDEX_ADDRESSES
     services:
       - ord
@@ -27,7 +33,7 @@ environment:
       Store inscription transactions locally to reduce requests to Bitcoin Node. Off by default. Select true to enable for a new index. Uses more disk space. To apply a change, rebuild the index using Files; see the App Store description for steps.
 category: bitcoin
 name: Ordinals
-version: "0.29.1"
+version: "0.29.1-patch.1"
 tagline: Run your own index, block explorer, and command-line wallet for Ordinals
 description: >
   Run your own index, block explorer, and command-line wallet for Ordinals. The app automatically connects to your Bitcoin node on umbrelOS for trustless operation. Simply install the app and wait for Ordinals to index inscriptions and runes.
@@ -39,13 +45,16 @@ description: >
   Advanced users can use the command line to create wallets, create and manage inscriptions, and more.
 
 
+  You can adjust how often Ordinals saves progress while catching up with the Bitcoin blockchain. On umbrelOS 2.0 or later, open Ordinals' Settings → Advanced → Environment variables and look for ORD_COMMIT_INTERVAL. We recommend leaving it at 100 blocks for most setups. Lower values save more often and can reduce memory use; higher values may improve speed but can use more memory. Applying a change restarts Ordinals and keeps your existing index.
+
+
   Optional indexes (umbrelOS 2.0 or later): Open Ordinals' app settings, then Advanced → Environment variables. Address lookups, individual satoshi tracking and local inscription transaction storage are off by default. Select true for the features you want, or App default (off) to turn them off for your next index. Inscriptions and runes stay on.
 
 
   Rebuilding the Ordinals index (umbrelOS 2.0 or later)
 
 
-  Changing these options requires rebuilding the index, even if indexing has not finished. Rebuilding starts from scratch and may take several days. Saving a setting and restarting alone will keep the existing index.
+  Changing the optional indexes requires rebuilding the index, even if indexing has not finished. Rebuilding starts from scratch and may take several days. Saving a setting and restarting alone will keep the existing index.
 
 
   1. Right-click Ordinals on your home screen and choose Settings → Advanced → Environment variables. Choose your options, click Apply and restart, and wait for the restart to finish.
@@ -65,19 +74,19 @@ description: >
 
   Disclaimer: The Ordinals app does not control, filter, or moderate the content hosted on the Bitcoin blockchain. Consequently, you may come across NSFW (Not Safe For Work), objectionable, or unlawful material while using the app.
 releaseNotes: >-
-  This update adds sat luck information and fixes an issue indexing certain Bitcoin transactions.
+  Ordinals now saves progress more often while catching up with the Bitcoin blockchain: every 100 blocks instead of 5,000. Smaller batches can reduce memory use and shorten long pauses when saving progress.
 
 
-  On umbrelOS 2.0 or later, you can also choose optional address lookups, satoshi tracking and local inscription transaction storage in the app settings. These stay off by default. Changing them requires rebuilding the Ordinals index; saving or restarting does not do this. Rebuild steps using Files are in the App Store description.
+  On umbrelOS 2.0 or later, you can adjust this in Ordinals' Settings → Advanced → Environment variables under ORD_COMMIT_INTERVAL. Most users can leave it at the recommended default of 100. Changing this setting keeps your existing index.
 
 
-  Updating from Ordinals 0.27.1 preserves your existing index. Updating from an earlier version will automatically rebuild the index, which may take several days depending on your hardware.
+  Updating from Ordinals 0.27.1 or later keeps your existing index. Updating from an earlier version rebuilds the index automatically, which may take several days depending on your hardware.
 
 
   ⚠️ If you use a command-line wallet created with Ordinals 0.23.3 or earlier, it may not work after updating. This update does not automatically convert older wallet databases. Back up your wallet data before updating, and do not delete wallet files containing pending etchings. More details: https://github.com/ordinals/ord/issues/4443
 
 
-  ⏳ If Ordinals is currently indexing, shutting down safely before the update may take several minutes.
+  ⏳ If Ordinals is still catching up, let it finish saving progress before updating. If the latest app log message says "Committing at block height", wait for block processing to resume. Large saves can take a long time.
 
 
   Full release notes can be found at https://github.com/ordinals/ord/releases/tag/0.29.1
