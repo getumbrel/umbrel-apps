@@ -1,0 +1,18 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: bitrom-miner_server_1
+      APP_PORT: 8080
+
+  server:
+    # Store gates: prebuilt multi-arch image (linux/amd64 + linux/arm64),
+    # pinned by digest, no "build:" key. Build + publish first (see README.md),
+    # then replace the digest below.
+    image: ghcr.io/bitromno/bitrom-miner:1.2.2@sha256:4f8978caeefb96dcb9184468d985b84d1a2cd4b6e665b115c22798257bd44c58
+    restart: on-failure
+    init: true
+    stop_grace_period: 30s
+    volumes:
+      - ${APP_DATA_DIR}/data:/app/data
