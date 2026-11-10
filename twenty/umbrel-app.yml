@@ -3,7 +3,7 @@ id: twenty
 name: Twenty
 tagline: An adaptable CRM solution for seamless team collaboration and growth
 category: files
-version: "2.50.1"
+version: "2.56.1"
 port: 2020
 description: >-
   Twenty is the leading open-source CRM, built by a community of hundreds of contributors to meet the unique needs of your business. Designed for flexibility, it helps businesses of all sizes efficiently manage customer relationships and streamline workflows.
@@ -45,10 +45,25 @@ gallery:
   - 3.jpg
   - 4.jpg
 releaseNotes: >-
-  This update includes the latest Node.js security fixes for Twenty's underlying runtime.
+  This update includes a new rich-text editor, personal app connection settings, private records, and improvements to imports, workflows, and permissions. Existing rich-text content and AI workflow steps are migrated automatically; allow extra time for Twenty to start after updating.
 
 
-  Full changes can be found at https://github.com/twentyhq/twenty/compare/twenty/v2.50.0...twenty/v2.50.1
+  ⚠️ Some older application connections are removed if their personal/workspace scope differs from their provider's scope. Affected accounts need to be connected again. Connections to workspace-scoped providers are shared with the workspace.
+
+
+  ⚠️ Existing restricted records become private. Records previously set to view-only for everyone return to role-based access, so review their sharing settings after updating.
+
+
+  To restore a personal application connection, a server administrator can enable IS_FEATURE_FLAG_MANAGEMENT_ENABLED in Settings → Admin Panel → Config. Refresh the page, open the workspace under Admin Panel → General, and enable App preferences in its Feature Flags tab. Refresh again, then reconnect under Settings → Apps preferences. This feature is opt-in and is not enabled automatically by this update.
+
+
+  API integrations should use markdown or tiptap rich-text fields instead of the deprecated blocknote field. Creating webhooks now requires a roleId and the ROLES permission. Record-sharing and metadata APIs have also changed; review the upstream release notes before updating custom integrations.
+
+
+  Full release notes: https://github.com/twentyhq/twenty/releases/tag/twenty%2Fv2.56.0
+
+
+  All changes since the previous version: https://github.com/twentyhq/twenty/compare/twenty/v2.50.1...twenty/v2.56.1
 dependencies: []
 path: ""
 defaultUsername: ""
