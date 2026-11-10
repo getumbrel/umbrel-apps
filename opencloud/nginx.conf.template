@@ -1,0 +1,49 @@
+worker_processes auto;
+pid /tmp/nginx.pid;
+error_log /dev/stderr warn;
+
+events {
+    worker_connections 1024;
+}
+
+http {
+    # Do not log OAuth codes, share tokens or filenames in access logs.
+    access_log off;
+    client_body_temp_path /tmp/client_temp;
+    proxy_temp_path /tmp/proxy_temp;
+    fastcgi_temp_path /tmp/fastcgi_temp;
+    uwsgi_temp_path /tmp/uwsgi_temp;
+    scgi_temp_path /tmp/scgi_temp;
+
+    server {
+        listen 8080;
+        server_name _;
+        client_max_body_size 0;
+
+        # A fixed origin is required by OpenCloud's built-in OIDC provider.
+        if (${APP_OPENCLOUD_NGINX_DOLLAR}http_host != "${APP_DOMAIN}:${APP_PROXY_PORT}") {
+            return 308 https://${APP_DOMAIN}:${APP_PROXY_PORT}${APP_OPENCLOUD_NGINX_DOLLAR}request_uri;
+        }
+        if (${APP_OPENCLOUD_NGINX_DOLLAR}http_x_forwarded_proto != "https") {
+            return 308 https://${APP_DOMAIN}:${APP_PROXY_PORT}${APP_OPENCLOUD_NGINX_DOLLAR}request_uri;
+        }
+
+        location / {
+            # Resolve at request time so a backend container replacement is safe.
+            resolver 127.0.0.11 valid=30s ipv6=off;
+            set ${APP_OPENCLOUD_NGINX_DOLLAR}opencloud_backend opencloud_web_1:9200;
+            proxy_pass http://${APP_OPENCLOUD_NGINX_DOLLAR}opencloud_backend;
+            proxy_http_version 1.1;
+            proxy_set_header Host "${APP_DOMAIN}:${APP_PROXY_PORT}";
+            proxy_set_header X-Forwarded-Host "${APP_DOMAIN}:${APP_PROXY_PORT}";
+            proxy_set_header X-Forwarded-Proto https;
+            proxy_set_header X-Forwarded-For ${APP_OPENCLOUD_NGINX_DOLLAR}proxy_add_x_forwarded_for;
+            proxy_set_header Connection "";
+            proxy_request_buffering off;
+            proxy_buffering off;
+            proxy_read_timeout 3600s;
+            proxy_send_timeout 3600s;
+            client_body_timeout 3600s;
+        }
+    }
+}
