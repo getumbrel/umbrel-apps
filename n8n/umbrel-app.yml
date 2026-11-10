@@ -13,7 +13,7 @@ environment:
     note: Only set this if n8n is already reachable through a public tunnel or reverse proxy. Enter the complete HTTPS base URL, such as https://n8n.example.com/. This setting does not expose n8n by itself.
 category: automation
 name: n8n
-version: "2.46.7"
+version: "2.47.3"
 releaseNotes: >-
   ⚠️ If you're updating from n8n 2.27.3 or earlier, this update includes the database index migration for workflow executions introduced in 2.27.4. Large n8n instances may take several minutes to finish the migration.
 
@@ -21,10 +21,15 @@ releaseNotes: >-
   Deprecated Function, Function Item, and LangChain Code nodes can no longer be added or edited. Replace them with supported nodes before importing older workflows. Existing saved workflows can continue running.
 
 
-  This update limits repeated attempts to resume waiting or queued executions, helping prevent workflows with oversized execution data from repeatedly crashing n8n.
+  This update improves workflow reliability, migration reports, and the editor:
+    - Improves expression handling and prevents self-referencing parameter expressions from crashing n8n on startup.
+    - Reconnects the editor automatically when the backend comes back online.
+    - Improves migration report performance, filtering, and guidance, and restricts finding ownership to users who can edit the workflow.
+    - Improves credential loading and reduces database locking when reading Data Table rows.
+    - Fixes workflow and execution access checks and limits internal details in error responses.
 
 
-  Full release notes can be found at https://github.com/n8n-io/n8n/releases/tag/n8n%402.46.7
+  Full release notes can be found at https://github.com/n8n-io/n8n/releases/tag/n8n%402.47.3
 tagline: Build complex workflows, really fast
 description: >-
   n8n is an extendable workflow automation tool. With a fair-code distribution model, n8n will always have visible source code, 
