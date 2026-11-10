@@ -18,6 +18,28 @@ services:
     volumes:
       - ${APP_DATA_DIR}/data/app_data:/var/lib/netbird:rw
 
+  # Marks the app page as connected once the device has been activated.
+  # hooks/post-start only reads the activation code once, when the app starts.
+  status:
+    image: ghcr.io/netbirdio/netbird:0.82.0-rootless@sha256:0549219a011305cfdad65d779e37fd2e5f1ac0d1378d3be344ee350efa31663e
+    restart: on-failure
+    user: "1000:1000"
+    entrypoint: ["/bin/bash", "-c"]
+    command:
+      - |
+        trap 'exit 0' TERM INT
+        while true; do
+          if netbird status --json 2>/dev/null | grep -q '"daemonStatus": *"Connected"' \
+            && ! grep -q '"status":"connected"' /www/status.json 2>/dev/null; then
+            echo '{"status":"connected","message":"Connected to NetBird"}' > /www/status.json.tmp
+            mv -f /www/status.json.tmp /www/status.json
+          fi
+          sleep 5 & wait $$!
+        done
+    volumes:
+      - ${APP_DATA_DIR}/data/app_data:/var/lib/netbird:ro
+      - ${APP_DATA_DIR}/data/www:/www
+
   web:
     image: nginx:1.27@sha256:124b44bfc9ccd1f3cedf4b592d4d1e8bddb78b51ec2ed5056c52d3692baebc19
     restart: on-failure
