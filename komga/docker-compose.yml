@@ -7,17 +7,14 @@ services:
       APP_PORT: 25600
 
   komga:
-    image: ghcr.io/gotson/komga:1.25.0@sha256:c4f9885fc077e2e9cd684dc95e8f6cfa5e33b100b46712b2de7f5cc2ff59e6fb
+    image: ghcr.io/gotson/komga:1.30.1@sha256:d43bb3b57aeeafd274ea805214f5da71ff9306accf012fb14cc13dedc3307212
+    user: "1000:1000"
     restart: on-failure
     stop_grace_period: 1m
-    environment:
-      TZ: UTC
-      # Raise if large libraries cause OutOfMemoryException, e.g. "-Xmx4g".
-      # JAVA_TOOL_OPTIONS: "-Xmx2g"
     volumes:
-      - ${APP_DATA_DIR}/config:/config
-      - ${APP_DATA_DIR}/data:/data
-      - ${UMBREL_ROOT}/home/Downloads:/downloads
+      - ${APP_DATA_DIR}/data/config:/config
+      - ${APP_DATA_DIR}/data/library:/data
+      - ${UMBREL_ROOT}/data/storage/downloads:/downloads
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:25600/actuator/health"]
       interval: 30s
