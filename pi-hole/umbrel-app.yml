@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: pi-hole
 category: networking
 name: Pi-hole
-version: "2026.10.1"
+version: "2026.10.1-patch.1"
 tagline: Block ads on your entire network
 description: >-
   Instead of browser plugins or other software on each computer,
@@ -36,12 +36,12 @@ releaseNotes: >-
   To avoid issues, temporarily set a backup DNS server (e.g., 1.1.1.1) on your router before updating— or configure a permanent fallback DNS to prevent future issues.
 
 
-  This update refreshes the underlying Alpine Linux system to include security fixes. Pi-hole's core, web interface, and DNS engine versions are unchanged.
+  This update lets Pi-hole's DHCP server run alongside Machines on umbrelOS 2.0. Previously, enabling Pi-hole DHCP stopped Machines from creating virtual machines. Pi-hole now leaves DHCP on the Machines network to Machines, and your existing custom dnsmasq settings are kept.
 
 
-  Old query records beyond your configured retention period are now removed correctly. Invalid custom configuration values may reset to defaults, and custom symlinked data or log files may require ownership adjustments.
+  Also included from Pi-hole 2026.10.1: the underlying Alpine Linux system is refreshed with security fixes, and old query records beyond your configured retention period are now removed correctly.
 
 
-  Full release notes can be found at https://github.com/pi-hole/docker-pi-hole/releases/tag/2026.10.1
+  Full release notes for Pi-hole 2026.10.1 can be found at https://github.com/pi-hole/docker-pi-hole/releases/tag/2026.10.1
 submitter: Umbrel
 submission: https://github.com/getumbrel/umbrel/commit/9ca55a25e043dcd50d5cb92c6ec756d368bb4794
