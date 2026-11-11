@@ -5,10 +5,14 @@ services:
       APP_PORT: 8080
 
   web:
-    image: ghcr.io/tom-morrow15/sat-sorter:1.0.0@sha256:433600a30420977dab46524c4aab9c1db5535c6ca02866800a8853d70ebcb806
+    image: ghcr.io/tom-morrow15/sat-sorter:1.1.0@sha256:afdfb68611c36925780e5bbf84653bf75e04203149904cb7e1dddac58b4e3b85
     restart: on-failure
+    user: "1000:1000"
     environment:
       MAPLE_UPSTREAM: http://maple-proxy:8080/
+      GUEST_BUDGET_FILE: /data/guest-budget.json
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
     depends_on:
       - maple-proxy
 
