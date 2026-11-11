@@ -1,8 +1,30 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Paperless 3.0.2 and later restore the released paperless_mail.0002 migration
-# graph, so the temporary 3.0.1 migration-history backfill must not run for
-# users who skip directly from that package. Keep this no-op hook so updates
-# overwrite the old copied hook in existing app data.
-echo "paperless pre-start: upstream 3.0.2+ migration fix active; no migration-history backfill needed"
+APP_DIR="${APP_DATA_DIR:-$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")}"
+DATA_ROOT="${APP_DATA_ROOT:-${APP_DIR}/data}"
+CONSUME_DIR="${DATA_ROOT}/consume"
+EXPORT_DIR="${DATA_ROOT}/export"
+# Package-local so moving app data never reruns the migration.
+MIGRATION_MARKER="${APP_DIR}/.consume-moved-to-app-data"
+
+# Paperless runs as uid/gid 1000.
+mkdir -p "${CONSUME_DIR}" "${EXPORT_DIR}"
+chown 1000:1000 "${CONSUME_DIR}" "${EXPORT_DIR}"
+
+if [[ -f "${MIGRATION_MARKER}" ]]; then
+  exit 0
+fi
+
+# Before 3.4.2-patch.2 the consume folder lived in Home (or the older
+# data/storage path). Move documents still waiting there so Paperless
+# imports them. Earlier exports stay in Home/paperless/export untouched.
+for legacy_consume_dir in "${UMBREL_ROOT}/home/paperless/consume" "${UMBREL_ROOT}/data/storage/paperless/consume"; do
+  if [[ -d "${legacy_consume_dir}" ]]; then
+    echo "paperless pre-start: moving pending documents from ${legacy_consume_dir}"
+    find "${legacy_consume_dir}" -mindepth 1 -maxdepth 1 -exec mv -n -t "${CONSUME_DIR}" {} +
+  fi
+done
+chown -R 1000:1000 "${CONSUME_DIR}"
+
+touch "${MIGRATION_MARKER}"

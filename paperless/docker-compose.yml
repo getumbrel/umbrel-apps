@@ -34,10 +34,10 @@ services:
     volumes:
       - ${APP_DATA_DIR}/data/data:/usr/src/paperless/data
       - ${APP_DATA_DIR}/data/media:/usr/src/paperless/media
-      # TODO(#1466): default these to Paperless app data once users can remap app
-      # folders to shared storage, preserving network-share workflows.
-      - ${UMBREL_ROOT}/data/storage/paperless/export:/usr/src/paperless/export
-      - ${UMBREL_ROOT}/data/storage/paperless/consume:/usr/src/paperless/consume
+      # Defaults for the consume and export folder settings in umbrel-app.yml.
+      # Users can point them at Home, external drives or network shares.
+      - ${APP_DATA_DIR}/data/export:/usr/src/paperless/export
+      - ${APP_DATA_DIR}/data/consume:/usr/src/paperless/consume
     environment:
       PAPERLESS_REDIS: redis://paperless_broker_1:6379
       PAPERLESS_DBHOST: paperless_db_1

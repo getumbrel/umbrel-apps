@@ -1,14 +1,36 @@
 manifestVersion: 1.1
 id: paperless
+storage:
+  dataRoot: data
+folderAccess:
+  - id: consume
+    name: Consume
+    note: >-
+      Drop files in this folder and Paperless-ngx adds them to your documents. By default it's inside the app's own storage. To add files from a scanner or another device, choose a folder in Home, on a drive or on a network share.
+    mounts:
+      - service: webserver
+        targetPath: /usr/src/paperless/consume
+  - id: export
+    name: Export
+    note: >-
+      Where Paperless-ngx saves a full copy of your documents when you run its document exporter. By default it's inside the app's own storage. Choose a folder in Home, on a drive or on a network share to open exports from another device.
+    mounts:
+      - service: webserver
+        targetPath: /usr/src/paperless/export
 environment:
   - name: PAPERLESS_OCR_LANGUAGES
     services:
       - webserver
     note: >-
-      Extra OCR languages to install, separated by spaces, such as ces tur chi-sim. English, German, French, Italian and Spanish are included. They download each time Paperless starts. Keep a language here while Paperless's OCR language setting uses it.
+      Extra languages Paperless-ngx can read in your documents, separated by spaces, for example: ces tur chi-sim. English, German, French, Italian and Spanish are already included. Extra languages download each time the app starts. Keep a language here while Paperless-ngx's OCR settings use it.
+  - name: PAPERLESS_CONSUMER_POLLING
+    services:
+      - webserver
+    note: >-
+      Only needed if the Consume folder is on a network share, because Paperless-ngx can't notice new files there on its own. Enter how often to check for new files, in seconds, for example 60. Leave empty otherwise.
 category: files
 name: Paperless-ngx
-version: "3.4.2-patch.1"
+version: "3.4.2-patch.2"
 tagline: Transform your physical documents into a searchable online archive
 description: >-
   Paperless-ngx is a community-supported open-source document management system that transforms your physical documents into a searchable online archive so you can keep, well, less paper.
@@ -25,11 +47,20 @@ description: >-
 
   - Uses machine-learning to automatically add tags, correspondents and document types to your documents.
 
-  - Supports PDF documents, images, plain text files, Office documents (Word, Excel, Powerpoint, and LibreOffice equivalents)1 and more.
+  - Supports PDF documents, images, plain text files, Office documents (Word, Excel, PowerPoint, and LibreOffice equivalents) and more.
 
   - Paperless stores your documents plain on disk. Filenames and folders are managed by paperless and their format can be configured freely with different configurations assigned to different documents.
 releaseNotes: >-
-  This update lets you install extra OCR languages in Paperless-ngx's app settings on umbrelOS 2.0.
+  This update adds support for new storage management and configuration options introduced with umbrelOS 2.0.
+
+
+  Paperless-ngx's consume and export folders have moved into the app's own storage, so they're now included in your backups. Any files still waiting in Home/paperless/consume are moved across and imported. Your earlier exports stay in Home/paperless/export.
+
+
+  If a scanner or another device saves files to Home/paperless/consume, open Paperless-ngx's app settings and choose that folder as the Consume folder so it keeps working. You can also choose a folder on a drive or a network share.
+
+
+  The previous update added extra OCR languages to Paperless-ngx's app settings.
 
 
   Previous Paperless-ngx 3.4.2 release notes:
