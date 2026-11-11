@@ -5,7 +5,7 @@ storage:
 name: Gitea Mirror
 tagline: Mirror your GitHub repositories to a Gitea instance automatically
 category: developer
-version: "3.51.5"
+version: "3.51.6"
 port: 4322
 description: >-
   Gitea Mirror automatically mirrors your GitHub repositories to a self-hosted Gitea instance. It supports mirroring public and private repositories, organizations, starred repos, issues, wikis, and pull requests.
@@ -44,6 +44,8 @@ defaultUsername: ""
 defaultPassword: ""
 dependencies: []
 releaseNotes: >-
+  This update fixes imports timing out on slow self-hosted GitLab instances. Projects are fetched in smaller batches, reducing the time needed for each request. Imports make more requests overall; no configuration changes are needed.
+
   This update fixes backup configuration handling, including disabled backups being re-enabled on restart when using environment-based configuration. Existing configurations keep their saved backup settings; change them on the Configuration page.
 
   It also fixes database selection for custom deployments with a non-SQLite database URL. The standard Umbrel package already uses the supported SQLite path and needs no configuration changes.
@@ -94,5 +96,5 @@ releaseNotes: >-
 
   If you're updating from a version older than 3.17 and use OAuth provider clients registered in Gitea Mirror, rotate the client secret for each client after upgrading because OAuth application secrets are stored hashed after migration.
 
-  Full release notes can be found at https://github.com/RayLabsHQ/gitea-mirror/releases/tag/v3.51.5
+  Full release notes can be found at https://github.com/RayLabsHQ/gitea-mirror/releases/tag/v3.51.6
 path: ""
