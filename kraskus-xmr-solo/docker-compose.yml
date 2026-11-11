@@ -1,0 +1,197 @@
+services:
+  mempool-metrics:
+    image: ghcr.io/kraskuscrypto/kraskus-kaspa-solo-adapter:metrics-0.5.4@sha256:1a0efc2e5728a88568f1052283fce46e96adb8d32751f04c176201af1351dec1
+    restart: unless-stopped
+    environment:
+      METRICS_COIN: xmr
+    read_only: true
+    user: 10001:10001
+    cap_drop:
+    - ALL
+    security_opt:
+    - no-new-privileges:true
+    mem_limit: 96m
+    cpus: 0.15
+    pids_limit: 48
+    networks:
+    - xmr_api
+    - xmr_private
+    healthcheck:
+      test:
+      - CMD
+      - python
+      - -c
+      - import urllib.request;urllib.request.urlopen('http://127.0.0.1:18429/healthz',timeout=3).read()
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+  app_proxy:
+    environment:
+      APP_HOST: kraskus-xmr-solo_ui_1
+      APP_PORT: 8080
+  monerod:
+    image: ghcr.io/kraskuscrypto/kraskus-5trat-xmr-ui:node-0.3.5@sha256:e0f6b573c1c307e50564ff664d32e0c3b6222446392bb297acfc1981e176ee0c
+    restart: unless-stopped
+    stop_grace_period: 2m
+    depends_on:
+      state-init:
+        condition: service_completed_successfully
+    command:
+    - --data-dir=/data
+    - --non-interactive
+    - --prune-blockchain
+    - --p2p-bind-ip=0.0.0.0
+    - --p2p-bind-port=18080
+    - --rpc-bind-ip=0.0.0.0
+    - --rpc-bind-port=18081
+    - --confirm-external-bind
+    - --no-igd
+    - --log-level=0
+    volumes:
+    - ${APP_DATA_DIR}/data/blockchain:/data
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - 'curl -fsS -H ''Content-Type: application/json'' -d ''{"jsonrpc":"2.0","id":"0","method":"get_info"}'' http://127.0.0.1:18081/json_rpc >/dev/null'
+      interval: 30s
+      timeout: 30s
+      retries: 5
+      start_period: 2m
+    security_opt:
+    - no-new-privileges:true
+    networks:
+    - xmr_public
+    - xmr_private
+  gateway:
+    image: ghcr.io/kraskuscrypto/kraskus-5trat-xmr-miner-gateway:0.3.0@sha256:26bccd495c14e557a084525de7655be7ad1caa6dfb34f209c4e7669dd6d4b862
+    restart: unless-stopped
+    user: 1000:1000
+    depends_on:
+      monerod:
+        condition: service_healthy
+      adapter:
+        condition: service_healthy
+    environment:
+      KRASKUS_XMR_STRATUM_HOST: 0.0.0.0
+      KRASKUS_XMR_STRATUM_PORT: '1921'
+      KRASKUS_XMR_TELEMETRY_PORT: '1924'
+      KRASKUS_XMR_SHARE_DIFF: '1000'
+      KRASKUS_XMR_FALLBACK_PAYOUT_ADDRESS: ''
+      KRASKUS_XMR_MONEROD_BASE: http://monerod:18081
+      KRASKUS_XMR_SUBMISSION_LOG: /runtime/block-submissions.jsonl
+      KRASKUS_XMR_EVENT_LOG: /runtime/events.jsonl
+      KRASKUS_XMR_PAYOUT_ADDRESS_FILE: /runtime/payout-address
+      KRASKUS_XMR_EXTERNAL_WALLET: '1'
+      KRASKUS_XMR_RUNTIME: /runtime
+      KRASKUS_XMR_NETWORK: mainnet
+    volumes:
+    - ${APP_DATA_DIR}/data/runtime:/runtime
+    ports:
+    - 1921:1921/tcp
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - python3 -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:1924/health', timeout=5).read()"
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    security_opt:
+    - no-new-privileges:true
+    networks:
+    - xmr_public
+    - xmr_private
+    - xmr_core
+  adapter:
+    image: ghcr.io/kraskuscrypto/kraskus-5trat-xmr-adapter:0.3.0@sha256:1bd172371988a46eb5683c9b1e163df322d50e0104554f5a61fe8e49fa0f0299
+    restart: unless-stopped
+    stop_grace_period: 20s
+    depends_on:
+      monerod:
+        condition: service_started
+      state-init:
+        condition: service_completed_successfully
+    environment:
+      KRASKUS_XMR_ADAPTER_HOST: 0.0.0.0
+      KRASKUS_XMR_ADAPTER_PORT: '18410'
+      KRASKUS_XMR_RPC_URL: http://monerod:18081/json_rpc
+      KRASKUS_XMR_RPC_TIMEOUT_SECONDS: '30'
+      KRASKUS_XMR_STATUS_POLL_SECONDS: '5'
+      KRASKUS_XMR_RUNTIME: /runtime
+      KRASKUS_XMR_GATEWAY_URL: http://gateway:1924
+      KRASKUS_APP_TOKEN_FILE: /runtime/app-token/token
+      KRASKUS_XMR_EXTERNAL_WALLET: '1'
+      KRASKUS_XMR_NETWORK: mainnet
+    volumes:
+    - ${APP_DATA_DIR}/data/runtime:/runtime
+    healthcheck:
+      test:
+      - CMD
+      - python
+      - -c
+      - import urllib.request; urllib.request.urlopen('http://127.0.0.1:18410/livez', timeout=5).read()
+      interval: 20s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+    read_only: true
+    tmpfs:
+    - /tmp
+    security_opt:
+    - no-new-privileges:true
+    cap_drop:
+    - ALL
+    networks:
+    - xmr_api
+    - xmr_core
+    - xmr_private
+  ui:
+    image: ghcr.io/kraskuscrypto/kraskus-5trat-xmr-ui:0.3.7@sha256:9eebdf4da3f1171cf6f3141c0bd2dc175c8d16d28ce118f0c6ecf70568f5ea10
+    restart: unless-stopped
+    depends_on:
+      adapter:
+        condition: service_healthy
+    environment:
+      ADAPTER_HOST: adapter
+    volumes:
+    - ${APP_DATA_DIR}/data/runtime/app-token:/run/kraskus-app-token:ro
+    stop_grace_period: 5s
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - wget -q --spider http://127.0.0.1:8080/index.html
+      interval: 20s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+    security_opt:
+    - no-new-privileges:true
+    networks:
+    - xmr_api
+  state-init:
+    image: ghcr.io/kraskuscrypto/kraskus-5trat-xmr-ui:node-0.3.5@sha256:e0f6b573c1c307e50564ff664d32e0c3b6222446392bb297acfc1981e176ee0c
+    restart: 'no'
+    user: 0:0
+    command:
+    - mkdir -p /blockchain /runtime /runtime/security /runtime/app-token; chown 1000:1000 /blockchain /runtime /runtime/security /runtime/app-token; chmod 700 /runtime/security /runtime/app-token
+    volumes:
+    - ${APP_DATA_DIR}/data/blockchain:/blockchain
+    - ${APP_DATA_DIR}/data/runtime:/runtime
+    security_opt:
+    - no-new-privileges:true
+    entrypoint:
+    - /bin/sh
+    - -ec
+    network_mode: none
+networks:
+  xmr_public:
+    driver: bridge
+  xmr_private:
+    driver: bridge
+    internal: true
+  xmr_api:
+    driver: bridge
+  xmr_core:
+    driver: bridge
+    internal: true
