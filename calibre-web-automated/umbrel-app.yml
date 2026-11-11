@@ -5,42 +5,64 @@ storage:
 folderAccess:
   - id: calibre-library
     name: Calibre library
-    note: CWA reads and updates books in this library folder.
+    note: Leave unconnected to keep the library in the app's own storage. Connect a folder with an existing Calibre library to use it, or an empty folder to start a new one.
     mounts:
       - service: server
         targetPath: /calibre-library
   - id: book-ingest
     name: Book ingest folder
-    note: Books placed here are processed and removed from this folder. Do not use it as a download destination.
+    note: Leave unconnected to use the app's own storage. Books added here are imported into your library and then deleted from this folder, so don't use it as a download folder.
     mounts:
       - service: server
         targetPath: /cwa-book-ingest
-name: Calibre-Web Automated
-tagline: An automated, all-in-one e-book library
+environment:
+  - name: TZ
+    services:
+      - server
+    note: IANA time zone for scheduled tasks and log times, such as Europe/London. Leave empty to use UTC.
+  - name: NETWORK_SHARE_MODE
+    services:
+      - server
+    default: "false"
+    options:
+      - "false"
+      - "true"
+    note: Turn on if the ingest folder is on a network share (NFS/SMB). CWA then checks the folder for new books regularly, so books added from other devices are picked up without a restart. Leave off for folders on this Umbrel.
 category: files
+name: Calibre-Web Automated
 version: v4.0.8
-port: 8186
+tagline: An automated, all-in-one e-book library
 description: >-
   Calibre-Web Automated combines Calibre-Web with automated e-book ingest,
   conversion, metadata management, and library tools.
 
 
-  Sign in with the upstream default credentials `admin` / `admin123` and
-  change the password after your first login.
+  Sign in with the default credentials shown by Umbrel and change the
+  password after your first login.
 
 
-  The library is available inside the app at `/calibre-library`. Add books
-  to `/cwa-book-ingest` for processing. CWA removes files from the ingest
-  folder after processing, so do not download directly into that folder.
+  Add books by uploading them in the app or by dropping them into the book
+  ingest folder. CWA imports them into your library and then deletes them
+  from the ingest folder, so don't download directly into it. By default the
+  library and ingest folder live in the app's own storage. You can point
+  either one at a folder of your own in the app's settings.
 releaseNotes: ""
+
 developer: Crocodile Sticks
 website: https://github.com/crocodilestick/Calibre-Web-Automated
 dependencies: []
 repo: https://github.com/crocodilestick/Calibre-Web-Automated
 support: https://github.com/crocodilestick/Calibre-Web-Automated/issues
-gallery: []
+
+port: 8186
+gallery:
+  - 1.webp
+  - 2.webp
+  - 3.webp
 path: ""
+
 defaultUsername: admin
 defaultPassword: admin123
+
 submitter: telskamp
 submission: https://github.com/getumbrel/umbrel-apps/pull/6189
