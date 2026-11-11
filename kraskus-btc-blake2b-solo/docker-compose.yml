@@ -1,0 +1,175 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: kraskus-btc-blake2b-solo_ui_1
+      APP_PORT: '8080'
+  runtime-init:
+    image: ghcr.io/kraskuscrypto/kraskus-xbt-ui:init-0.3.3@sha256:bcbdb6a0151c839c908263cde1ca93bddeba9c28626656acadb498a9de50de4c
+    restart: 'no'
+    security_opt:
+    - no-new-privileges:true
+    user: 0:0
+    entrypoint:
+    - python
+    - -c
+    command:
+    - "\"\"\"Initialize wallet-free runtime while leaving all legacy wallet files untouched.\"\"\"\nimport os,pathlib,secrets,json\nroot=pathlib.Path('/appdata');public=root/'runtime'/'external-030';secret=root/'secrets';events=root/'events'\n# Existing blockchain ownership remains Knots UID1000; it is not traversed.\nfor p,uid,gid,mode in [(root/'blockchain',1000,999,0o750),(public,65532,2000,0o2770),(secret,0,2000,0o750),(events,0,2000,0o2770),(events/'submitblocks',2100,2000,0o2770),(public/'app-token',65532,2000,0o700)]:\n if p.is_symlink():raise SystemExit('Refusing symlink in managed runtime')\n p.mkdir(parents=True,exist_ok=True,mode=mode);os.chown(p,uid,gid);os.chmod(p,mode)\nfor path,value,uid,gid,mode in [(secret/'rpc-user','kraskus\\n',0,2000,0o640),(secret/'rpc-password',secrets.token_hex(32)+'\\n',0,2000,0o640),(secret/'datum-admin-password',secrets.token_hex(32)+'\\n',0,2000,0o640),(public/'app-token/token',secrets.token_hex(32)+'\\n',65532,2000,0o400)]:\n if path.is_symlink():raise\
+      \ SystemExit('Refusing runtime file symlink')\n if not path.exists():\n  fd=os.open(path,os.O_CREAT|os.O_EXCL|os.O_WRONLY,mode)\n  with os.fdopen(fd,'w') as f:f.write(value)\n if not path.is_file() or not path.stat().st_size:raise SystemExit('Managed credential must be a nonempty regular file')\n os.chown(path,uid,gid);os.chmod(path,mode)\n# Carry only public pruning/difficulty settings into the separate runtime; never wallet state or payout.\nfor name,default,valid in [('prune_target_mib','102400\\n',{'0','25600','51200','102400','204800'}),('vardiff_min','16384\\n',{'1','4','16','64','256','1024','4096','16384'})]:\n dest=public/name;old=root/'runtime'/name\n if not dest.exists():\n  value=old.read_text().strip() if old.is_file() and not old.is_symlink() else default.strip()\n  if value not in valid:raise SystemExit('Existing public setting requires review: '+name)\n  dest.write_text(value+'\\n')\n os.chown(dest,65532,2000);os.chmod(dest,0o640)\n# These three files contain only public\
+      \ block/share evidence, never wallet state.\nfor name in ['blocks-v2.json','blocks.json','mining_round.json']:\n    old=root/'runtime'/name;dest=public/name\n    if not dest.exists() and old.is_file() and not old.is_symlink():\n        if old.stat().st_size>64*1024*1024:raise SystemExit('Public mining history requires a separate copy: '+name)\n        raw=old.read_bytes();json.loads(raw)\n        fd=os.open(dest,os.O_CREAT|os.O_EXCL|os.O_WRONLY,0o600)\n        with os.fdopen(fd,'wb') as out:out.write(raw);out.flush();os.fsync(out.fileno())\n        os.chown(dest,65532,2000)\n"
+    volumes:
+    - ${APP_DATA_DIR}/data:/appdata
+    network_mode: none
+    mem_limit: 64m
+    cpus: 0.25
+    read_only: true
+  knots:
+    image: ghcr.io/kraskuscrypto/kraskus-xbt-ui:node-0.3.3@sha256:846c962b76e563eb731d5a9cb692e44f65233b23b6f4284fe0b857026308157a
+    restart: unless-stopped
+    security_opt:
+    - no-new-privileges:true
+    group_add:
+    - '2000'
+    depends_on:
+      runtime-init:
+        condition: service_completed_successfully
+    volumes:
+    - ${APP_DATA_DIR}/data/blockchain:/data
+    - ${APP_DATA_DIR}/data/runtime/external-030:/runtime:ro
+    - ${APP_DATA_DIR}/data/secrets:/secrets:ro
+    mem_limit: 4g
+    memswap_limit: 4g
+    cpus: 2
+    stop_grace_period: 600s
+    networks:
+    - b2b_public
+    - b2b_private
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - bitcoin-cli -conf=/tmp/knots-config/bitcoin.conf -datadir=/data getblockchaininfo >/dev/null
+      interval: 15s
+      timeout: 8s
+      retries: 20
+      start_period: 600s
+  datum:
+    image: ghcr.io/kraskuscrypto/kraskus-xbt-ui:gateway-0.3.3@sha256:ffa7b4e81acaebb1f4bc8321a80333758c7181108f0e267f26455c833c993316
+    restart: unless-stopped
+    security_opt:
+    - no-new-privileges:true
+    group_add:
+    - '2000'
+    depends_on:
+      runtime-init:
+        condition: service_completed_successfully
+      knots:
+        condition: service_healthy
+    entrypoint:
+    - /bin/sh
+    - -ec
+    - export KNOTS_RPC_USER="$$(cat /secrets/rpc-user)"; export KNOTS_RPC_PASSWORD="$$(cat /secrets/rpc-password)"; export DATUM_ADMIN_PASSWORD="$$(cat /secrets/datum-admin-password)"; exec /usr/local/bin/datum-entrypoint
+    environment:
+      BLAKE2B_PAYOUT_FILE: /runtime/mining_payout_address
+      BLAKE2B_VARDIFF_MIN_FILE: /runtime/vardiff_min
+      KRASKUS_STRATUM_PORT: '1923'
+      KRASKUS_EVENTS_DIR: /events
+    volumes:
+    - ${APP_DATA_DIR}/data/runtime/external-030:/runtime:ro
+    - ${APP_DATA_DIR}/data/secrets:/secrets:ro
+    - ${APP_DATA_DIR}/data/events:/events
+    ports:
+    - 1923:1923/tcp
+    networks:
+    - b2b_private
+    - b2b_api
+    mem_limit: 1g
+    memswap_limit: 1g
+    cpus: 2
+    stop_grace_period: 60s
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - test -f /tmp/datum-waiting || curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:7152/ | grep -Eq '^(200|401)$'
+      interval: 15s
+      timeout: 5s
+      retries: 8
+  adapter:
+    image: ghcr.io/kraskuscrypto/kraskus-xbt-ui:adapter-0.3.3@sha256:d8d3dbf3e1d00fa4595f331659f65419eaa942a6369b0b46de3196d22bf9e83b
+    restart: unless-stopped
+    security_opt:
+    - no-new-privileges:true
+    group_add:
+    - '2000'
+    init: true
+    depends_on:
+      runtime-init:
+        condition: service_completed_successfully
+      knots:
+        condition: service_started
+    environment:
+      KRASKUS_B2B_RPC_URL: http://knots:8332
+      KRASKUS_B2B_RPC_USER_FILE: /secrets/rpc-user
+      KRASKUS_B2B_RPC_PASSWORD_FILE: /secrets/rpc-password
+      KRASKUS_B2B_DATUM_ADMIN_PASSWORD_FILE: /secrets/datum-admin-password
+      KRASKUS_B2B_RUNTIME_DIR: /runtime
+      KRASKUS_B2B_DATUM_HOST: datum
+      KRASKUS_B2B_STRATUM_PORT: '1923'
+      KRASKUS_B2B_BLOCK_EVENTS_FILE: /events/block-events.jsonl
+      KRASKUS_APP_TOKEN_FILE: /run/kraskus-app-token/token
+      KRASKUS_XBT_PUBLIC_CONFIG: /runtime
+      KRASKUS_XBT_MINING_CAPABLE: '1'
+    volumes:
+    - ${APP_DATA_DIR}/data/runtime/external-030:/runtime
+    - ${APP_DATA_DIR}/data/runtime/external-030/app-token:/run/kraskus-app-token:ro
+    - ${APP_DATA_DIR}/data/secrets:/secrets:ro
+    - ${APP_DATA_DIR}/data/events:/events:ro
+    networks:
+    - b2b_private
+    - b2b_api
+    read_only: true
+    tmpfs:
+    - /tmp:size=8m
+    mem_limit: 256m
+    memswap_limit: 256m
+    cpus: 0.5
+    stop_grace_period: 30s
+    healthcheck:
+      test:
+      - CMD
+      - python
+      - -c
+      - import urllib.request;urllib.request.urlopen('http://127.0.0.1:18430/livez',timeout=3).read()
+      interval: 15s
+      timeout: 5s
+      retries: 6
+  ui:
+    image: ghcr.io/kraskuscrypto/kraskus-xbt-ui:ui-0.3.4@sha256:ff4d115afd80e0db881f249bd3d4dfaeb1d76c1e3cc86228f776ea4320315a60
+    restart: unless-stopped
+    security_opt:
+    - no-new-privileges:true
+    depends_on:
+      adapter:
+        condition: service_healthy
+    volumes:
+    - ${APP_DATA_DIR}/data/runtime/external-030/app-token:/run/kraskus-app-token:ro
+    networks:
+    - b2b_api
+    - b2b_public
+    mem_limit: 128m
+    memswap_limit: 128m
+    cpus: 0.25
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - wget -q --spider http://127.0.0.1:8080/index.html
+      interval: 15s
+      timeout: 5s
+      retries: 6
+networks:
+  b2b_public:
+    driver: bridge
+  b2b_private:
+    driver: bridge
+    internal: true
+  b2b_api:
+    driver: bridge
+    internal: true
