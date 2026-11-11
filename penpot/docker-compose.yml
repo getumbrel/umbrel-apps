@@ -9,7 +9,7 @@ services:
       PROXY_AUTH_WHITELIST: "/api/*"
 
   penpot-frontend:
-    image: penpotapp/frontend:2.19.0@sha256:20d98bed840ba947af25f0c634c1cf0913ca3d02e27eb9cb7f7f6569b65e2b78
+    image: penpotapp/frontend:2.19.1@sha256:b5b363a4bd38bf2aa781c6255e5208b4b305fa3f12fae1170abeb705ce510032
     volumes:
       - ${APP_DATA_DIR}/data/assets:/opt/data/assets
     environment:
@@ -23,7 +23,7 @@ services:
     restart: on-failure
 
   penpot-backend:
-    image: penpotapp/backend:2.19.0@sha256:b2dc4f516de4aab825f1804211e4124f93bafd40bb848822ab303f162cb3b187
+    image: penpotapp/backend:2.19.1@sha256:bc26c263b33f107a63868ed298bebd9089f252c3799872c31ec1266fef321d29
     # user 1000:1000 to avoid permission issues when importing libraries and templates
     user: "1000:1000"
     volumes:
@@ -47,7 +47,7 @@ services:
     restart: on-failure
 
   penpot-exporter:
-    image: penpotapp/exporter:2.19.0@sha256:63b9f5d23c80f3b952f5d7feba71a45ac8bb05281e877071f6bba625bb51db66
+    image: penpotapp/exporter:2.19.1@sha256:bb25e0ee63ec37228848c714c7b60998d9c9d07f998ab7aebe2e3281d39b2962
     user: "1000:1000"
     environment:
       - PENPOT_SECRET_KEY=${APP_SEED}
@@ -57,12 +57,12 @@ services:
     restart: on-failure
 
   penpot-mcp:
-    image: penpotapp/mcp:2.19.0@sha256:83f87b53be118fd3b2a98159c2e77585859195b0f99b6edeb5b73fca642a75d8
+    image: penpotapp/mcp:2.19.1@sha256:ebcd8f119d46e706a94bfae678a0d1a05f713080a9565f310de39c246667dbd1
     user: "1000:1000"
     restart: on-failure
 
   penpot-admin-console:
-    image: penpotapp/admin-console:2.19.0@sha256:219be5299f1f3f5a201a06778816801db09e77d55d1d4b7bf370a933c76c573e
+    image: penpotapp/admin-console:2.19.1@sha256:27c7ae5d7c061f2e07ddbad393316fa50e3d1d6873f1c5c807740316f29f3715
     environment:
       - PENPOT_PUBLIC_URI=http://${DEVICE_DOMAIN_NAME}:${APP_PENPOT_UI_PORT}
       - PENPOT_INTERNAL_URI=http://penpot-frontend:8080
