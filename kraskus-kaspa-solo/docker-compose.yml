@@ -1,0 +1,192 @@
+services:
+  mempool-metrics:
+    image: ghcr.io/kraskuscrypto/kraskus-kaspa-solo-adapter:metrics-0.5.4@sha256:1a0efc2e5728a88568f1052283fce46e96adb8d32751f04c176201af1351dec1
+    restart: unless-stopped
+    environment:
+      METRICS_COIN: kaspa
+    read_only: true
+    user: 10001:10001
+    cap_drop:
+    - ALL
+    security_opt:
+    - no-new-privileges:true
+    mem_limit: 96m
+    cpus: 0.15
+    pids_limit: 48
+    networks:
+    - internal
+    healthcheck:
+      test:
+      - CMD
+      - python
+      - -c
+      - import urllib.request;urllib.request.urlopen('http://127.0.0.1:18429/healthz',timeout=3).read()
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+  app_proxy:
+    environment:
+      APP_HOST: kraskus-kaspa-solo_ui_1
+      APP_PORT: 80
+  init:
+    image: ghcr.io/kraskuscrypto/kraskus-kaspa-solo-adapter:wallet-0.5.4@sha256:2c40bfc9fdac5cbbf08d360ae10244033456ba2bac921930d6afb5bbb912a786
+    restart: 'no'
+    user: 0:0
+    entrypoint:
+    - python
+    - -m
+    - kraskus_foundation.service_init
+    - --data
+    - /wallet
+    - --private
+    - /wallet/.kraskus:0o711
+    - --private
+    - /wallet/.kraskus/app-token:0o700
+    - --uid
+    - '10001'
+    - --gid
+    - '10001'
+    - --
+    - 'true'
+    volumes:
+    - ${APP_DATA_DIR}/data/wallet:/wallet
+    network_mode: none
+    security_opt:
+    - no-new-privileges:true
+  kaspad:
+    image: ghcr.io/kraskuscrypto/kraskus-kaspa-solo-adapter:node-0.5.4@sha256:b286aea4732568e3aaa8c05a0fd25fb533b43cf1ed484edbc4765f805bba2adf
+    restart: unless-stopped
+    command:
+    - kaspad
+    - --yes
+    - --nologfiles
+    - --disable-upnp
+    - --utxoindex
+    - --rpclisten=0.0.0.0:16110
+    - --rpclisten-borsh=0.0.0.0:17110
+    - --rpclisten-json=0.0.0.0:18110
+    volumes:
+    - ${APP_DATA_DIR}/data/node:/app/data
+    stop_grace_period: 300s
+    init: true
+    networks:
+    - public
+    - internal
+  stratum:
+    image: ghcr.io/kraskuscrypto/kraskus-kaspa-solo-adapter:stratum-0.5.4@sha256:40969eb0a1369758551f389a715b5020b76979901600dcfcdb447e77d2f0b4d7
+    restart: unless-stopped
+    command:
+    - /app/stratum-bridge
+    - --config
+    - /config/config.yaml
+    - --node-mode
+    - external
+    environment:
+      KRASKUS_SOLO_PAYOUT_FILE: /run/kraskus/solo-payout-address
+    volumes:
+    - ${APP_DATA_DIR}/data/wallet/.kraskus:/run/kraskus:ro
+    networks:
+    - public
+    - internal
+    depends_on:
+    - kaspad
+    stop_grace_period: 5s
+  adapter:
+    image: ghcr.io/kraskuscrypto/kraskus-kaspa-solo-adapter:0.5.4@sha256:859ce7db4a4435cbafa631e835d8bc445f16e14121aa9ebc4e5ce6d23463d6af
+    restart: unless-stopped
+    user: 10001:10001
+    environment:
+      KASPA_STRATUM_API: http://stratum:3030
+      LISTEN_PORT: '18420'
+      KASPA_MINER_PORT: '1900'
+      KASPAD_GRPC_ADDR: kaspad:16110
+      KASPA_WALLET_API: http://wallet-api:18422
+      KRASKUS_APP_TOKEN_FILE: /wallet/.kraskus/app-token/token
+    volumes:
+    - ${APP_DATA_DIR}/data/wallet:/wallet
+    ports:
+    - 1900:5556/tcp
+    networks:
+    - public
+    - internal
+    depends_on:
+      init:
+        condition: service_completed_successfully
+      stratum:
+        condition: service_started
+      kaspad:
+        condition: service_started
+    stop_grace_period: 5s
+    healthcheck:
+      test:
+      - CMD
+      - python
+      - -c
+      - import urllib.request; urllib.request.urlopen('http://127.0.0.1:18420/livez', timeout=4)
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+  wallet-api:
+    image: ghcr.io/kraskuscrypto/kraskus-kaspa-solo-adapter:wallet-0.5.4@sha256:2c40bfc9fdac5cbbf08d360ae10244033456ba2bac921930d6afb5bbb912a786
+    restart: unless-stopped
+    user: 10001:10001
+    environment:
+      LISTEN_PORT: '18422'
+      KASPA_NETWORK: mainnet
+      KASPA_WALLET_NAME: kraskus
+      KASPA_WALLET_SERVER: ws://kaspad:17110
+      KRASKUS_DEV_FEE_AUTO_PAY: 'false'
+      KRASKUS_SETTLEMENT_ENABLED: 'true'
+      KRASKUS_SETTLEMENT_WALLET_NAME: kraskus-settlement
+      KRASKUS_APP_TOKEN_FILE: /wallet/.kraskus/app-token/token
+      HOME: /wallet
+    volumes:
+    - ${APP_DATA_DIR}/data/wallet:/wallet
+    networks:
+    - internal
+    depends_on:
+      init:
+        condition: service_completed_successfully
+      kaspad:
+        condition: service_started
+    stop_grace_period: 60s
+    healthcheck:
+      test:
+      - CMD
+      - python
+      - -c
+      - import urllib.request; urllib.request.urlopen('http://127.0.0.1:18422/livez', timeout=4)
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+  ui:
+    image: ghcr.io/kraskuscrypto/kraskus-kaspa-solo-ui:ui-0.5.5@sha256:0f52ed6c47afbd40c08fbbda357724044c37e39dfeb1a70a1fc30c6bca37f2a5
+    restart: unless-stopped
+    networks:
+    - public
+    - internal
+    volumes:
+    - ${APP_DATA_DIR}/data/wallet/.kraskus/app-token:/run/kraskus-app-token:ro
+    depends_on:
+    - adapter
+    stop_grace_period: 5s
+    healthcheck:
+      test:
+      - CMD
+      - wget
+      - -q
+      - --spider
+      - http://127.0.0.1/index.html
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+networks:
+  public:
+    driver: bridge
+  internal:
+    driver: bridge
+    internal: true
