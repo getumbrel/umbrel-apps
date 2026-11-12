@@ -5,7 +5,7 @@ storage:
 name: Papra
 tagline: The minimalistic document archiving platform
 category: files
-version: "26.6.2-patch.1"
+version: "26.7.1"
 description: >-
   Papra is a minimalistic document management and archiving platform. It is designed to be simple to use and accessible to everyone. 
   
@@ -26,19 +26,24 @@ gallery:
   - 2.webp
   - 3.webp
 releaseNotes: >-
-  This update adds support for new storage management and configuration options being introduced with umbrelOS 2.0.
+  This update improves document search and processing and includes security fixes.
 
 
-  Previous Papra 26.6.2 release notes:
+  - Search across all pages in the advanced PDF viewer with Ctrl+F or Cmd+F, including match highlighting and navigation.
+
+  - Reprocess existing documents to run content extraction and tagging again.
+
+  - Use Papra offline without downloading fonts from an external service.
+
+  - Improved OCR for rotated images and fixed reinviting users to organizations.
+
+  - Security fixes for registration through custom OAuth providers, email intake webhook validation, and the underlying runtime.
 
 
-  This update adds security fixes for session revocation after password resets, deleted-organization share links, registration API enforcement when registration is disabled, and Stripe webhook validation when webhook secrets are not configured.
+  If you have manually enabled email intake, you must explicitly configure INTAKE_EMAILS_WEBHOOK_SECRET. API integrations should also account for document deletion returning HTTP 204 with no response body and profile updates returning only public user fields.
 
 
-  It also adds database indexes for better performance, fixes PDF preview rendering after navigation, improves batch document selection and tag deletion confirmations, and increases OCR/content extraction timeouts for supported external services.
-
-
-  Full release notes can be found at https://github.com/papra-hq/papra/releases/tag/%40papra/app%4026.6.2
+  Full release notes can be found at https://github.com/papra-hq/papra/releases/tag/%40papra/app%4026.7.1
 dependencies: []
 path: ""
 defaultUsername: ""
