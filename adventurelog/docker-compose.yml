@@ -11,7 +11,8 @@ services:
     restart: on-failure
     environment:
       PUBLIC_SERVER_URL: "http://adventurelogserver1:8000"
-      ORIGIN: "http://${DEVICE_DOMAIN_NAME}:8015"
+      PROTOCOL_HEADER: "x-forwarded-proto"
+      HOST_HEADER: "x-forwarded-host"
       BODY_SIZE_LIMIT: "Infinity"
     depends_on:
       - server
@@ -39,7 +40,7 @@ services:
       - DJANGO_ADMIN_PASSWORD=admin
       - DJANGO_ADMIN_EMAIL=admin@example.com
       - PUBLIC_URL=http://${DEVICE_DOMAIN_NAME}:8016
-      - CSRF_TRUSTED_ORIGINS=http://${DEVICE_DOMAIN_NAME}:8015
+      - CSRF_TRUSTED_ORIGINS=http://${DEVICE_DOMAIN_NAME}:8015,https://${DEVICE_DOMAIN_NAME}:8015,http://${DEVICE_HOSTNAME}:8015,https://${DEVICE_HOSTNAME}:8015,${APP_ADVENTURELOG_LOCAL_URLS}
       - DEBUG=False
       - FRONTEND_URL=http://${DEVICE_DOMAIN_NAME}:8015
     ports:
