@@ -156,11 +156,23 @@ services:
       timeout: 3s
       retries: 30
 
+  # Umbrel bind-mounts APP_DATA_DIR as the device user (usually 1000:1000).
+  # Valkey itself runs as 999:1000 with cap_drop ALL, so it cannot chown /data.
+  valkey-init:
+    image: valkey/valkey:9.1.3-alpine@sha256:bf09d58e96d6b4524a15396b65b242bbe18beebbcc15a04d8ee75ddac62fae0b
+    user: "0:0"
+    restart: "no"
+    volumes:
+      - ${APP_DATA_DIR}/data/valkey:/data
+    command: ["sh", "-c", "chown -R 999:1000 /data"]
+
   valkey:
     image: valkey/valkey:9.1.3-alpine@sha256:bf09d58e96d6b4524a15396b65b242bbe18beebbcc15a04d8ee75ddac62fae0b
     restart: on-failure
-    # The image's own valkey user, so the entrypoint never needs root to walk /data.
     user: "999:1000"
+    depends_on:
+      valkey-init:
+        condition: service_completed_successfully
     security_opt: [no-new-privileges:true]
     cap_drop: [ALL]
     mem_limit: 1g
