@@ -1,8 +1,44 @@
 manifestVersion: 1.1
 id: romm
+environment:
+  - name: IGDB_CLIENT_ID
+    services:
+      - server
+    note: >-
+      IGDB client ID, for game metadata and cover art. IGDB uses Twitch developer credentials: register an application at https://dev.twitch.tv/console and enter its client ID here and its client secret below.
+  - name: IGDB_CLIENT_SECRET
+    services:
+      - server
+    note: >-
+      IGDB client secret, from the same Twitch application as the client ID above.
+  - name: SCREENSCRAPER_USER
+    services:
+      - server
+    note: >-
+      Your ScreenScraper username, for metadata, artwork and screenshots. Also enter your ScreenScraper password below.
+  - name: SCREENSCRAPER_PASSWORD
+    services:
+      - server
+    note: >-
+      Your ScreenScraper password.
+  - name: MOBYGAMES_API_KEY
+    services:
+      - server
+    note: >-
+      MobyGames API key, for extra metadata, cover art and screenshots. MobyGames API access is a paid feature of your MobyGames account.
+  - name: STEAMGRIDDB_API_KEY
+    services:
+      - server
+    note: >-
+      SteamGridDB API key, for alternative cover art. Create one in your SteamGridDB account preferences.
+  - name: RETROACHIEVEMENTS_API_KEY
+    services:
+      - server
+    note: >-
+      RetroAchievements Web API key, for achievement data. Find it in your RetroAchievements account settings. Each RomM user then adds their own RetroAchievements username in their RomM profile.
 category: media
 name: RomM
-version: "5.4.1"
+version: "5.4.1-patch.1"
 tagline: A beautiful, powerful, self-hosted rom manager
 description: >-
   👾 RomM (ROM Manager) allows you to scan, enrich, browse and play your game collection with a clean and responsive interface.
@@ -36,6 +72,12 @@ path: ""
 defaultUsername: ""
 defaultPassword: ""
 releaseNotes: >-
+  This update lets you add metadata provider credentials, such as IGDB, ScreenScraper, SteamGridDB and RetroAchievements, in RomM's app settings on umbrelOS 2.0, so RomM can fetch game metadata, artwork and achievements.
+
+
+  Previous RomM 5.4.1 release notes:
+
+
   RomM 5.4 includes database migrations that may take 15-20 minutes on large libraries. Do not restart RomM while the first start after upgrading is still migrating.
 
 
