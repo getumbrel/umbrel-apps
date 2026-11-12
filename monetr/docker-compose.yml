@@ -9,6 +9,7 @@ services:
   db:
     image: postgres:17.9@sha256:7ad98329d513dd497293b951c195ca354274a77f12ddbbbbf85e68a811823d72
     user: "1000:1000"
+    restart: on-failure
     environment:
       POSTGRES_PASSWORD: m0netrPass123
       POSTGRES_USER: postgres
@@ -24,6 +25,7 @@ services:
   valkey:
     image: valkey/valkey:9@sha256:3b55fbaa0cd93cf0d9d961f405e4dfcc70efe325e2d84da207a0a8e6d8fde4f9
     user: "1000:1000"
+    restart: on-failure
     volumes:
       - ${APP_DATA_DIR}/data/valkey:/data
     healthcheck:
@@ -33,8 +35,9 @@ services:
       retries: 10
 
   monetr:
-    image: ghcr.io/monetr/monetr:1.22.0@sha256:194387ae7ec127c706db65d73a0939532d1c7f23709c8c9d70b776d271e5f996
+    image: ghcr.io/monetr/monetr:1.22.1@sha256:b761df02afd63d6da5c16f309b00628023c713ba1e0c9c7038af16771628d021
     user: "1000:1000"
+    restart: on-failure
     command:
       - serve
       - --migrate
