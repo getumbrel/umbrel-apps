@@ -2,9 +2,53 @@ manifestVersion: 1
 id: vikunja
 storage:
   dataRoot: data
+environment:
+  - name: VIKUNJA_MAILER_ENABLED
+    services:
+      - web
+    default: "false"
+    options:
+      - "true"
+    note: >-
+      Select true to send reminders, notifications and password reset emails, then fill in the settings below. While enabled, new accounts must confirm their email address before they can sign in.
+  - name: VIKUNJA_MAILER_HOST
+    services:
+      - web
+    note: >-
+      SMTP server host name, such as smtp.example.com.
+  - name: VIKUNJA_MAILER_PORT
+    services:
+      - web
+    default: "587"
+    note: >-
+      SMTP server port. Use 587 for most providers, or 465 with the SSL setting below.
+  - name: VIKUNJA_MAILER_FORCESSL
+    services:
+      - web
+    default: "false"
+    options:
+      - "true"
+    note: >-
+      Select true only if your provider uses port 465. Leave empty for port 587, which still upgrades to an encrypted connection when available.
+  - name: VIKUNJA_MAILER_USERNAME
+    services:
+      - web
+    note: >-
+      SMTP username.
+  - name: VIKUNJA_MAILER_PASSWORD
+    services:
+      - web
+    note: >-
+      SMTP password or app password.
+  - name: VIKUNJA_MAILER_FROMEMAIL
+    services:
+      - web
+    default: "mail@vikunja"
+    note: >-
+      Sender address, such as vikunja@example.com. Use an address your SMTP provider lets you send from.
 category: files
 name: Vikunja
-version: "2.8.0"
+version: "2.8.0-patch.1"
 tagline: The open-source, self-hostable to-do app
 description: >-
   Think of Vikunja like the notebook you have with all your things to keep track of. But with superpowers.
@@ -24,6 +68,12 @@ description: >-
 
   You can view your tasks in the classic list view - or in a Gantt Chart, or Table view, or Kanban Board. Whatever you need!
 releaseNotes: >-
+  This update lets you connect an SMTP email provider in Vikunja's app settings on umbrelOS 2.0, for reminders, notifications and password resets.
+
+
+  Previous Vikunja 2.8.0 release notes:
+
+
   🚨 This release fixes 19 security issues affecting file access, private data, login, imports, and more. Upgrading is highly recommended.
 
 

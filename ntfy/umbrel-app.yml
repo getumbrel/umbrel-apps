@@ -1,9 +1,30 @@
 manifestVersion: 1
 id: ntfy
+environment:
+  - name: NTFY_SMTP_SENDER_ADDR
+    services:
+      - app
+    note: >-
+      SMTP server and port, such as smtp.example.com:587, to let signed-in users forward notifications by email. Also set the sender address below, or ntfy won't start. Port 465 isn't supported.
+  - name: NTFY_SMTP_SENDER_USER
+    services:
+      - app
+    note: >-
+      SMTP username.
+  - name: NTFY_SMTP_SENDER_PASS
+    services:
+      - app
+    note: >-
+      SMTP password or app password.
+  - name: NTFY_SMTP_SENDER_FROM
+    services:
+      - app
+    note: >-
+      Sender address, such as ntfy@example.com. Required with an SMTP server. Use an address your SMTP provider lets you send from.
 name: ntfy
 tagline: Send notifications to your phone or desktop via scripts from any computer, and/or using a REST API
 category: automation
-version: "2.37.2"
+version: "2.37.2-patch.1"
 port: 13119
 description: >-
   ntfy (pronounced notify) is a simple HTTP-based pub-sub notification service. It allows you to send notifications to
@@ -52,6 +73,12 @@ gallery:
   - 2.jpg
   - 3.jpg
 releaseNotes: >-
+  This update lets you connect an SMTP email provider in ntfy's app settings on umbrelOS 2.0, so signed-in users can forward notifications by email.
+
+
+  Previous ntfy 2.37.2 release notes:
+
+
   This maintenance release improves reliability and monitoring for custom PostgreSQL deployments and makes cluster status easier to read. The default Umbrel setup continues to use SQLite.
 
 
