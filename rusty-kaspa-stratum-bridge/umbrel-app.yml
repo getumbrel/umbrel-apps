@@ -1,0 +1,79 @@
+manifestVersion: 1
+id: rusty-kaspa-stratum-bridge
+category: crypto
+name: Kaspa Stratum Bridge
+version: "v2.0.1"
+tagline: Solo mine Kaspa with your own node
+description: >-
+  ⚙️ Please read the setup instructions at the bottom of this page. This bridge is currently
+  in BETA upstream.
+
+
+  The Kaspa Stratum Bridge is the official in-house stratum bridge from the Rusty Kaspa
+  project. It sits between your stratum-based miners (IceRiver, Bitmain/Antminer, Goldshell,
+  BzMiner and more — miner type is auto-detected) and your own Rusty Kaspad node, letting you
+  solo mine KAS without trusting a third-party pool or public node.
+
+
+  It includes a built-in web dashboard with real-time statistics: total blocks and shares,
+  active workers, network hashrate, per-worker difficulty and uptime, recently found blocks,
+  and a Prometheus-compatible metrics endpoint. Variable difficulty (VarDiff) automatically
+  tunes each worker independently.
+
+
+  🛠️ SET-UP INSTRUCTIONS
+
+
+  ### Kaspa Node:
+
+
+  This app connects automatically to your Rusty Kaspad app, which is installed alongside it.
+  Wait for your node to fully sync before mining — the node is synced when its log shows a
+  steady stream of "Accepted block" lines.
+
+
+  ### Connecting Your Miner:
+
+
+  Refer to your miner's documentation for specific setup details. In general:
+
+  - Pool URL / Stratum host: your umbrelOS device's IP address (found in Settings on the
+  umbrelOS home screen) and port 5555, e.g. stratum+tcp://192.168.4.56:5555
+
+  - Username / Worker: your Kaspa wallet address, optionally followed by a period and a
+  worker name, e.g. kaspa:qr0abc...xyz.worker1
+
+  - Password: leave blank or enter any value if your miner requires one.
+
+
+  Mining rewards for blocks you find are paid directly to the wallet address your miner
+  submits — this app never holds your funds.
+
+
+  ### Configuration:
+
+
+  Bridge settings (difficulty, VarDiff, extra stratum instances) can be viewed and edited
+  from the Config section of the web dashboard. Note that comments in the config file are
+  not preserved when saving from the dashboard.
+
+
+  For more information visit https://github.com/kaspanet/rusty-kaspa
+releaseNotes: ""
+
+developer: Kaspa developers
+website: https://kaspa.org
+dependencies:
+  - rusty-kaspad
+repo: https://github.com/kaspanet/rusty-kaspa
+support: https://github.com/kaspanet/rusty-kaspa/issues
+
+port: 3646
+gallery: []
+path: ""
+
+defaultUsername: ""
+defaultPassword: ""
+
+submitter: jagraba
+submission: https://github.com/getumbrel/umbrel-apps/pull/5878
