@@ -1,0 +1,178 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: kaeso_edge_1
+      APP_PORT: 8080
+      # Official API, MCP and OAuth paths cannot send Umbrel auth cookies.
+      PROXY_AUTH_WHITELIST: "/v1/*,/v1beta/*,/v2/*,/platform/*,/mcp,/mcp/*,/oauth/*,/.well-known/oauth-authorization-server,/.well-known/oauth-protected-resource,/.well-known/oauth-protected-resource/*"
+
+  # Official Coolify/Dokploy platform edge: path-splits to the gateway and console
+  # behind the existing proxy (here, Umbrel app_proxy).
+  edge:
+    image: ghcr.io/logicplanes/kaeso-console:0.6.0@sha256:d02de7fd59d73077da7a44cedda2c4dc16a9e987b2d323e3c54104dc68e4dd9b
+    restart: on-failure
+    command: ["kaeso-edge"]
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    read_only: true
+    tmpfs: ["/tmp:mode=1777", "/var/lib/console/data:mode=1777", "/var/lib/console/config:mode=1777"]
+    mem_limit: 256m
+    pids_limit: 128
+    environment:
+      KAESO_GATEWAY_UPSTREAM: gateway:8080
+      KAESO_CONSOLE_UPSTREAM: console:3000
+    # The image's own health check asks the console's port, which the edge doesn't listen on.
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/kaeso-edge/healthz"]
+      interval: 5s
+      timeout: 3s
+      start_period: 10s
+      retries: 6
+    depends_on:
+      gateway:
+        condition: service_healthy
+      console:
+        condition: service_healthy
+
+  gateway:
+    image: ghcr.io/logicplanes/kaeso-gateway:0.6.0@sha256:2c29fd981f2583daaed92579eb76c8cb364f24e9ef8768a00f09cd802ff98a34
+    restart: on-failure
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    read_only: true
+    mem_limit: 2g
+    pids_limit: 1024
+    # KAESO_SHUTDOWN_GRACE (30s), then up to 10s each to record outcomes, write logs and send mail.
+    stop_grace_period: 75s
+    ulimits:
+      nofile: { soft: 65536, hard: 65536 }
+    # Official gateway image HEALTHCHECK (deploy/gateway.Dockerfile).
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/kaeso", "healthcheck"]
+      interval: 10s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+    environment:
+      KAESO_PUBLIC_URL: https://${DEVICE_DOMAIN_NAME}:${APP_PROXY_PORT}
+      KAESO_MASTER_KEYS: ${APP_KAESO_MASTER_KEYS}
+      KAESO_POSTGRES_URL: postgres://kaeso:${APP_KAESO_POSTGRES_PASSWORD}@postgres:5432/kaeso
+      KAESO_CLICKHOUSE_URL: http://kaeso:${APP_KAESO_CLICKHOUSE_PASSWORD}@clickhouse:8123
+      KAESO_VALKEY_URL: redis://:${APP_KAESO_VALKEY_PASSWORD}@valkey:6379
+      KAESO_MAIL_TRANSPORT: ${KAESO_MAIL_TRANSPORT:-log}
+      KAESO_SETUP_EMAIL: ${KAESO_SETUP_EMAIL:-}
+      KAESO_SMTP_HOST: ${KAESO_SMTP_HOST:-}
+      KAESO_SMTP_PORT: ${KAESO_SMTP_PORT:-587}
+      KAESO_SMTP_TLS: ${KAESO_SMTP_TLS:-starttls}
+      KAESO_SMTP_USER: ${KAESO_SMTP_USER:-}
+      KAESO_SMTP_PASSWORD: ${KAESO_SMTP_PASSWORD:-}
+      KAESO_SMTP_FROM: ${KAESO_SMTP_FROM:-}
+      # Official Coolify/Dokploy trusted proxies when the edge and the platform proxy
+      # share the stack network with the gateway.
+      KAESO_TRUSTED_PROXIES: 10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,fc00::/7,127.0.0.0/8,::1/128
+      KAESO_METRICS_LISTEN: 127.0.0.1:9100
+      KAESO_LOG_FORMAT: json
+    depends_on:
+      postgres:
+        condition: service_healthy
+      valkey:
+        condition: service_healthy
+      clickhouse:
+        condition: service_started
+
+  console:
+    image: ghcr.io/logicplanes/kaeso-console:0.6.0@sha256:d02de7fd59d73077da7a44cedda2c4dc16a9e987b2d323e3c54104dc68e4dd9b
+    restart: on-failure
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    read_only: true
+    tmpfs: ["/tmp:mode=1777", "/var/lib/console/data:mode=1777", "/var/lib/console/config:mode=1777"]
+    mem_limit: 256m
+    pids_limit: 128
+    # Official console image HEALTHCHECK (deploy/console.Dockerfile).
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/healthz"]
+      interval: 15s
+      timeout: 3s
+      start_period: 5s
+
+  postgres:
+    image: postgres:18.6-alpine@sha256:9ba53c7d41ea093baf5c1ba635ba5434c4f979880527d49bb7d9237d3193085b
+    restart: on-failure
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETUID]
+    mem_limit: 2g
+    pids_limit: 512
+    # The gateway signs in as kaeso, which owns its database but isn't a superuser, as in the Compose package.
+    # PostgreSQL's sizing advice: a quarter of the memory for shared buffers, three quarters as the planner's cache estimate.
+    command:
+      - sh
+      - -c
+      - |
+        cat >/docker-entrypoint-initdb.d/kaeso.sh <<'EOF'
+        psql -v ON_ERROR_STOP=1 --username "$$POSTGRES_USER" --dbname "$$POSTGRES_DB" -v password="$$KAESO_POSTGRES_PASSWORD" <<'SQL'
+        CREATE ROLE kaeso LOGIN PASSWORD :'password';
+        CREATE DATABASE kaeso OWNER kaeso;
+        SQL
+        EOF
+        limit=$$(cat /sys/fs/cgroup/memory.max 2>/dev/null || cat /sys/fs/cgroup/memory/memory.limit_in_bytes 2>/dev/null)
+        case "$$limit" in ''|*[!0-9]*) limit=2147483648 ;; esac
+        [ "$$limit" -le 1099511627776 ] || limit=2147483648
+        mb=$$((limit / 1048576))
+        exec docker-entrypoint.sh postgres -c shared_buffers=$$((mb / 4))MB -c effective_cache_size=$$((mb * 3 / 4))MB
+    environment:
+      POSTGRES_PASSWORD: ${APP_KAESO_POSTGRES_SUPERUSER_PASSWORD}
+      KAESO_POSTGRES_PASSWORD: ${APP_KAESO_POSTGRES_PASSWORD}
+    volumes:
+      - ${APP_DATA_DIR}/data/postgres:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD", "pg_isready", "-h", "127.0.0.1", "-U", "kaeso", "-d", "kaeso"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:26.3.62.3-alpine@sha256:1d45e52080e6ed136a6377863046a0e53d69fb0418d799f12e23184ed6460c55
+    restart: on-failure
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, KILL, SETGID, SETUID]
+    mem_limit: 4g
+    pids_limit: 4096
+    environment:
+      CLICKHOUSE_USER: kaeso
+      CLICKHOUSE_PASSWORD: ${APP_KAESO_CLICKHOUSE_PASSWORD}
+      CLICKHOUSE_DB: kaeso
+    volumes:
+      - ${APP_DATA_DIR}/data/clickhouse:/var/lib/clickhouse
+    ulimits:
+      nofile: { soft: 262144, hard: 262144 }
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8123/ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  valkey:
+    image: valkey/valkey:9.1.3-alpine@sha256:bf09d58e96d6b4524a15396b65b242bbe18beebbcc15a04d8ee75ddac62fae0b
+    restart: on-failure
+    # The image's own valkey user, so the entrypoint never needs root to walk /data.
+    user: "999:1000"
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    mem_limit: 1g
+    pids_limit: 128
+    # Never evict, so a full Valkey refuses writes instead of dropping limit counters.
+    command: ["valkey-server", "--appendonly", "yes", "--requirepass", "${APP_KAESO_VALKEY_PASSWORD}", "--maxmemory", "512mb", "--maxmemory-policy", "noeviction"]
+    environment:
+      VALKEYCLI_AUTH: ${APP_KAESO_VALKEY_PASSWORD}
+    volumes:
+      - ${APP_DATA_DIR}/data/valkey:/data
+    healthcheck:
+      test: ["CMD-SHELL", "valkey-cli ping | grep -qx PONG"]
+      interval: 5s
+      timeout: 3s
+      retries: 30

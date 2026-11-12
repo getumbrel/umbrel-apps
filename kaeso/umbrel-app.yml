@@ -1,0 +1,114 @@
+manifestVersion: 2.0
+id: kaeso
+storage:
+  dataRoot: data
+environment:
+  - name: KAESO_MAIL_TRANSPORT
+    services:
+      - gateway
+    default: "log"
+    options:
+      - "log"
+      - "smtp"
+    note: >-
+      How the gateway sends email. log only records the kind of each email in the
+      gateway log, never the recipient or content. smtp sends mail through the
+      SMTP settings below. Password sign-in and the setup link still work with
+      log; sign-in links and invitations are not delivered until smtp is set up.
+  - name: KAESO_SETUP_EMAIL
+    services:
+      - gateway
+    default: ""
+    note: >-
+      Optional. While no user exists, every start of the gateway emails the
+      one-time setup link to this address, the official path when there is no
+      shell. Requires KAESO_MAIL_TRANSPORT=smtp and working SMTP settings.
+  - name: KAESO_SMTP_HOST
+    services:
+      - gateway
+    default: ""
+    note: SMTP host used when KAESO_MAIL_TRANSPORT is smtp.
+  - name: KAESO_SMTP_PORT
+    services:
+      - gateway
+    default: "587"
+    note: SMTP port. Official default is 587.
+  - name: KAESO_SMTP_TLS
+    services:
+      - gateway
+    default: "starttls"
+    options:
+      - "starttls"
+      - "tls"
+      - "none"
+    note: SMTP TLS mode. Official values are starttls, tls (implicit TLS, usually port 465), or none (local mail catcher only). Official default is starttls.
+  - name: KAESO_SMTP_USER
+    services:
+      - gateway
+    default: ""
+    note: SMTP username, when your mail server requires one.
+  - name: KAESO_SMTP_PASSWORD
+    services:
+      - gateway
+    default: ""
+    note: SMTP password, when your mail server requires one.
+  - name: KAESO_SMTP_FROM
+    services:
+      - gateway
+    default: ""
+    note: >-
+      From address for mail the gateway sends, for example Kaeso <kaeso@example.com>.
+category: ai
+name: Kaeso
+version: "0.6.0"
+tagline: The open-source AI gateway you run yourself
+description: >-
+  This package ships Kaeso 0.6.0, the current stable release.
+
+
+  Kaeso is a heavy multi-container stack: the official edge router, gateway and
+  console, plus PostgreSQL, ClickHouse and Valkey. Official requirements are a
+  4 GB memory minimum and 2 vCPUs. The official Compose package also sets
+  container memory limits of 2 GB for the gateway, 2 GB for PostgreSQL, 4 GB
+  for ClickHouse, 1 GB for Valkey, and 256 MB each for the edge and console.
+  Give the device enough free memory before installing.
+
+
+  MIT-licensed, self-hosted AI gateway in Rust, with OpenAI- and
+  Anthropic-compatible APIs, SSO, budgets and request logs.
+
+
+  Kaeso has no default login. After the app is healthy, create the first user
+  with the official setup link. In the Umbrel terminal or over SSH, run
+  `docker exec kaeso_gateway_1 kaeso setup-link` and open the printed link. It
+  works once, for 24 hours. You can also set SMTP and KAESO_SETUP_EMAIL in the
+  app settings so the gateway emails the link on start. Until SMTP is
+  configured, this package uses KAESO_MAIL_TRANSPORT=log, so password sign-in
+  and the setup link still work, but sign-in links and invitations are not
+  delivered.
+
+
+  The app opens over HTTPS because Kaeso requires a https public URL except on
+  loopback for development. This package needs umbrelOS 2.0 or newer.
+
+
+  The official in-app updater is omitted because it needs access to the Docker
+  socket, which Umbrel App Store packages must not mount.
+releaseNotes: ""
+
+developer: Logicplanes
+website: https://kaeso.app
+dependencies: []
+repo: https://github.com/logicplanes/kaeso
+support: https://github.com/logicplanes/kaeso/discussions
+
+port: 3101
+gallery: []
+path: ""
+requiresHttps: true
+
+defaultUsername: ""
+defaultPassword: ""
+
+submitter: Devin Oldenburg
+submission: ""
