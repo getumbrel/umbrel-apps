@@ -1,0 +1,45 @@
+services:
+  server:
+    image: mbentley/omada-controller:6.3.0.111@sha256:10a6e4d3bdae2fa4d9d6f54fe5f2b5758b672227b1dda28137e89fc6b4ddd8b0
+    restart: on-failure
+    stop_grace_period: 60s
+    # Host networking is required so the controller can discover and adopt Omada devices on the local network
+    network_mode: host
+    ulimits:
+      nofile:
+        soft: 4096
+        hard: 8192
+    environment:
+      PUID: 1000
+      PGID: 1000
+      MANAGE_HTTP_PORT: 8072
+      PORTAL_HTTP_PORT: 8072
+    volumes:
+      - ${APP_DATA_DIR}/data/config:/opt/tplink/EAPController/data
+      - ${APP_DATA_DIR}/data/logs:/opt/tplink/EAPController/logs
+
+  # Omada always redirects its HTTP port to its own self-signed HTTPS port.
+  # This proxy serves the web UI as plain HTTP on the app port, so umbrelOS can add its own HTTPS in front.
+  web:
+    image: caddy:2.11.9-alpine@sha256:0bbb055bda6793c999bde78b1b5ce3e89f829fb031af2cf50056ea1246559fee
+    user: "1000:1000"
+    restart: on-failure
+    network_mode: host
+    command:
+      - sh
+      - -c
+      - |
+        cat > /tmp/Caddyfile <<'CADDY'
+        {
+          admin off
+        }
+        :8074 {
+          reverse_proxy https://127.0.0.1:8043 {
+            transport http {
+              tls_insecure_skip_verify
+            }
+            header_down Location ^https?://[^/]+:(8043|8072) ""
+          }
+        }
+        CADDY
+        exec caddy run --config /tmp/Caddyfile --adapter caddyfile
