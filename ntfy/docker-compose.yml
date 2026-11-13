@@ -8,7 +8,7 @@ services:
       PROXY_AUTH_ADD: "false"
 
   app:
-    image: binwiederhier/ntfy:v2.34.0@sha256:901e14503d3f605f445be0e68f2ac71f0aa73391897ce6ceb599f8c48d8b3792
+    image: binwiederhier/ntfy:v2.37.2@sha256:1875ddcf815c8a3c981d6d78c67a93452d0abba79b1ab9520b1f5f5238902bd7
     user: "1000:1000"
     restart: on-failure
     stop_grace_period: 1m
@@ -19,6 +19,7 @@ services:
       - ${APP_DATA_DIR}/data/data:/etc/ntfy
       - ${APP_DATA_DIR}/data/lib:/var/lib/ntfy
     environment:
+      GODEBUG: "multipathtcp=0"
       NTFY_BASE_URL: http://${DEVICE_DOMAIN_NAME}:${APP_PROXY_PORT}
       NTFY_UPSTREAM_BASE_URL: https://ntfy.sh
       NTFY_CACHE_FILE: /var/cache/ntfy/cache.db

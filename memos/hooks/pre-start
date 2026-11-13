@@ -1,0 +1,190 @@
+#!/usr/bin/env python3
+"""Upgrade SQLite databases through the upstream checkpoints before 26.10+."""
+
+import fcntl
+from contextlib import closing
+import hashlib
+import json
+import os
+from pathlib import Path
+import re
+import signal
+import sqlite3
+import subprocess
+import tempfile
+import time
+
+
+# Frozen historical checkpoints; do not bump these with normal app updates.
+# Keep this hook for users who skip releases or restore an older database.
+# Upstream baseline policy: https://github.com/usememos/memos/blob/26.10.0/store/migration/README.md
+CHECKPOINT = "neosmemo/memos:0.31.0@sha256:24c2707ddd8fbd2ceaa7a61ecab86a53cdcde640b24ce572b73da14b00b5785f"
+LEGACY_CHECKPOINT = "neosmemo/memos:0.25.3@sha256:40db300a188ede0c2cf1fc0c49741a03077478d6891fd3ace05c16d702b536a6"
+BASELINE = (0, 31, 8)
+LABEL = "org.getumbrel.memos.checkpoint"
+
+
+def database(path):
+    return sqlite3.connect(path.as_uri() + "?mode=ro", uri=True, timeout=30)
+
+
+def schema(path):
+    if not path.exists() or path.stat().st_size == 0:
+        return None
+    with closing(database(path)) as connection:
+        tables = {row[0] for row in connection.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+        if not tables:
+            return None
+        if "system_setting" not in tables:
+            raise RuntimeError("Unrecognized database; refusing to migrate it.")
+        row = connection.execute("SELECT value FROM system_setting WHERE name='BASIC'").fetchone()
+        value = json.loads(row[0]).get("schemaVersion", "") if row else ""
+        # The shipped 0.22.0 image still uses migration_history. 0.25.3 transfers
+        # those records into BASIC.schemaVersion; 0.31.0 no longer does that.
+        if value in ("", "0.0.0") and "migration_history" in tables:
+            if connection.execute("SELECT version FROM migration_history LIMIT 1").fetchone():
+                return (0, 0, 0)
+    if not isinstance(value, str) or not re.fullmatch(r"(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)", value):
+        raise RuntimeError("Missing or invalid database schema version; refusing to migrate it.")
+    return tuple(map(int, value.split(".")))
+
+
+def snapshot(source, target):
+    # SQLite's backup API includes committed WAL data, unlike copying the .db file.
+    with closing(database(source)) as original, closing(sqlite3.connect(target)) as copy:
+        original.backup(copy)
+        # Keep snapshots self-contained, with no WAL/SHM files to copy or replace.
+        copy.execute("PRAGMA journal_mode=DELETE")
+    os.chmod(target, 0o600)
+
+
+def checkpoint_wal(path):
+    with closing(sqlite3.connect(path, timeout=30)) as connection:
+        if connection.execute("PRAGMA wal_checkpoint(TRUNCATE)").fetchone()[0] != 0:
+            raise RuntimeError("Database is still in use; refusing to replace it.")
+        if connection.execute("PRAGMA quick_check").fetchall() != [("ok",)]:
+            raise RuntimeError("Database integrity check failed.")
+        connection.execute("PRAGMA journal_mode=DELETE")
+
+
+def docker(*args, check=True):
+    return subprocess.run(["docker", *args], check=check, text=True, capture_output=True, timeout=600)
+
+
+def cleanup_worker(name, identity):
+    result = docker("container", "inspect", name, check=False)
+    if result.returncode:
+        if "No such container" in result.stderr or "No such object" in result.stderr:
+            return
+        raise RuntimeError("Could not inspect the migration container.")
+    container = json.loads(result.stdout)[0]
+    if container["Config"].get("Labels", {}).get(LABEL) != identity:
+        raise RuntimeError("Unexpected migration container; refusing to remove it.")
+    docker("stop", "--time", "30", name)
+    docker("rm", name)
+
+
+def run_checkpoint(stage, image, name, identity):
+    print("Memos: running checkpoint " + image.split("@", 1)[0] + "...", flush=True)
+    try:
+        # No published ports or network access: only the private database copy is mounted.
+        docker("run", "--detach", "--name", name, "--label", LABEL + "=" + identity,
+               "--network", "none", "--user", "1000:1000",
+               "--env", "GODEBUG=multipathtcp=0", "--env", "MEMOS_MODE=prod",
+               "--env", "MEMOS_ADDR=127.0.0.1", "--env", "MEMOS_PORT=5230",
+               "--mount", 'type=bind,"src=' + str(stage).replace('"', '""') + '",dst=/var/opt/memos', image)
+        deadline = time.monotonic() + 600
+        while True:
+            if docker("inspect", "--format", "{{.State.Running}}", name).stdout.strip() != "true":
+                raise RuntimeError("The checkpoint exited before becoming ready.")
+            if docker("exec", name, "wget", "-q", "-T", "3", "-O", "/dev/null",
+                      "http://127.0.0.1:5230/healthz", check=False).returncode == 0:
+                break
+            if time.monotonic() >= deadline:
+                raise RuntimeError("The checkpoint did not become ready within ten minutes.")
+            time.sleep(2)
+        docker("stop", "--time", "30", name)
+        if docker("inspect", "--format", "{{.State.ExitCode}}", name).stdout.strip() != "0":
+            raise RuntimeError("The checkpoint did not shut down cleanly.")
+    finally:
+        cleanup_worker(name, identity)
+
+
+def migrate(data_root, source, version):
+    identity = str(data_root)
+    name = "memos-checkpoint-" + hashlib.sha256(identity.encode()).hexdigest()[:12]
+    cleanup_worker(name, identity)
+
+    # A pre-start hook normally runs with the app stopped. Do not risk concurrent writes.
+    running = docker("ps", "--filter", "label=com.docker.compose.project=memos",
+                     "--filter", "label=com.docker.compose.service=main", "--format", "{{.ID}}")
+    if running.stdout.strip():
+        raise RuntimeError("Memos is still running; stop it before retrying the migration.")
+
+    print("Memos: preparing the 0.31.0 database checkpoint...", flush=True)
+    images = [LEGACY_CHECKPOINT, CHECKPOINT] if version < (0, 22, 0) else [CHECKPOINT]
+    for image in images:
+        docker("pull", image)
+    original_stat = source.stat()
+    with tempfile.TemporaryDirectory(prefix=".memos-checkpoint-", dir=data_root) as temporary:
+        stage = Path(temporary)
+        candidate = stage / "memos_prod.db"
+        snapshot(source, candidate)
+
+        backup = data_root / "memos_prod.db.pre-0.31.0"
+        if not backup.exists():
+            backup_tmp = stage / "backup.db"
+            snapshot(source, backup_tmp)
+            os.chown(backup_tmp, original_stat.st_uid, original_stat.st_gid)
+            with backup_tmp.open("rb") as file:
+                os.fsync(file.fileno())
+            os.replace(backup_tmp, backup)
+
+        os.chown(stage, 1000, 1000)
+        os.chown(candidate, 1000, 1000)
+        for image in images:
+            run_checkpoint(stage, image, name, identity)
+
+        checkpoint_wal(candidate)
+        if schema(candidate) != BASELINE:
+            raise RuntimeError("The checkpoint did not produce schema 0.31.8.")
+        # Flush the original WAL before replacement; its committed contents are in the snapshot.
+        checkpoint_wal(source)
+        os.chown(candidate, original_stat.st_uid, original_stat.st_gid)
+        os.chmod(candidate, original_stat.st_mode & 0o777)
+        with candidate.open("rb") as file:
+            os.fsync(file.fileno())
+        os.replace(candidate, source)
+        directory_fd = os.open(data_root, os.O_RDONLY | os.O_DIRECTORY)
+        try:
+            os.fsync(directory_fd)
+        finally:
+            os.close(directory_fd)
+    print("Memos: checkpoint complete; the original database backup is memos_prod.db.pre-0.31.0.", flush=True)
+
+
+def main():
+    app_dir = Path(os.environ.get("APP_DATA_DIR", Path(__file__).resolve().parent.parent))
+    data_root = Path(os.environ.get("APP_DATA_ROOT", app_dir / "data")).resolve()
+    source = data_root / "memos_prod.db"
+    if not source.exists():
+        return
+    with (data_root / ".memos-checkpoint.lock").open("w") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        version = schema(source)
+        if version is None or version >= BASELINE:
+            return
+        migrate(data_root, source, version)
+
+
+if __name__ == "__main__":
+    def interrupted(_signum, _frame):
+        raise RuntimeError("Migration interrupted.")
+
+    signal.signal(signal.SIGTERM, interrupted)
+    try:
+        main()
+    except Exception as error:
+        # Umbrel may continue after a failed hook. Memos 26.10 independently refuses schemas
+        # below 0.31.8, so a failed checkpoint cannot serve an unmigrated database.
+        raise SystemExit("Memos checkpoint failed: " + str(error) + " Restart the app to retry.")

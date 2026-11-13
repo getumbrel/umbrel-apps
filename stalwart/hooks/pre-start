@@ -39,12 +39,6 @@ RECOVERY_CONTAINER="stalwart-v016-recovery"
 RECOVERY_PORT="38080"
 OLD_APP_STARTED=0
 
-# App updates copy/merge the hooks directory but do not prune hooks that were
-# deleted from the package. Older Stalwart installs can still have the v0.15
-# post-start password mutator in app-data; remove it before the app start gets
-# far enough to execute post-start for the new v0.16 layout.
-rm -f "${APP_DIR}/hooks/post-start"
-
 restore_compose() {
   if [[ -f "${APP_COMPOSE_BACKUP_FILE}" ]]; then
     cp "${APP_COMPOSE_BACKUP_FILE}" "${APP_COMPOSE_FILE}"
@@ -76,6 +70,124 @@ cleanup() {
   rm -f "${LOCK_FILE}"
 }
 
+# ---------------------------------------------------------------------------
+# v0.16 -> v1
+# Stalwart v1 refuses to open a v0.16 datastore. Upstream's stalwart-migrate
+# copies it into a new v1 store and verifies every account. The v0.16 store is
+# opened read-only and kept in server-v0.16.
+V1_MIGRATE_IMAGE="stalwartlabs/stalwart-migrate:1.0.7@sha256:368725b2d5e0ff2ea673e51d5c39cddc7cc8bfbc6c88cb46b9d627039862f27b"
+V1_READY_FILE="${LEGACY_ROOT}/.v1_ready"
+V1_VERIFIED_FILE="${LEGACY_ROOT}/.v1_verified"
+V1_TARGET_DIR="${LEGACY_ROOT}/server-v1"
+V1_ORIGINAL_DIR="${LEGACY_ROOT}/server-v0.16"
+V1_STATE_DIR="${LEGACY_ROOT}/migration-v1"
+
+v1_migrate() {
+  docker run --rm --network none --user 1000:1000 \
+    -v "${FINAL_ETC_DIR}:/etc/stalwart" \
+    -v "${FINAL_ETC_DIR}:/etc/stalwart-v1" \
+    -v "${FINAL_SERVER_DIR}:/var/lib/stalwart" \
+    -v "${V1_TARGET_DIR}:/var/lib/stalwart-v1" \
+    -v "${V1_STATE_DIR}:/var/lib/stalwart-migrate" \
+    "${V1_MIGRATE_IMAGE}" "$@" --state /var/lib/stalwart-migrate
+}
+
+run_v1_migration() {
+  if [[ -f "${V1_VERIFIED_FILE}" ]]; then
+    # Finish a folder swap that was interrupted after verification.
+    if [[ -d "${V1_TARGET_DIR}" ]]; then
+      [[ -d "${V1_ORIGINAL_DIR}" ]] || mv "${FINAL_SERVER_DIR}" "${V1_ORIGINAL_DIR}"
+      mv "${V1_TARGET_DIR}" "${FINAL_SERVER_DIR}"
+    fi
+    touch "${V1_READY_FILE}"
+    return
+  fi
+
+  if [[ ! -s "${FINAL_CONFIG_JSON}" ]]; then
+    # A fresh install, or a v0.16 install that never finished setup: no mail to
+    # migrate. Set aside any v0.16 setup-mode store so v1 can start its own.
+    if [[ -n "$(ls -A "${FINAL_SERVER_DIR}" 2>/dev/null)" ]]; then
+      mv "${FINAL_SERVER_DIR}" "${V1_ORIGINAL_DIR}"
+    fi
+    mkdir -p "${FINAL_SERVER_DIR}"
+    chown 1000:1000 "${FINAL_SERVER_DIR}"
+    touch "${V1_READY_FILE}"
+    return
+  fi
+
+  echo "Migrating Stalwart mail and settings to v1. Large mailboxes take longer..."
+  local needed_kb available_kb questions
+  needed_kb="$(du -sk "${FINAL_SERVER_DIR}" | cut -f1)"
+  available_kb="$(df -Pk "${LEGACY_ROOT}" | awk 'NR==2 {print $4}')"
+  if (( available_kb < needed_kb + 524288 )); then
+    echo "Error: not enough free space. The migration needs a second copy of the mail store ($(( needed_kb / 1024 + 512 )) MiB)."
+    return 1
+  fi
+
+  docker image inspect "${V1_MIGRATE_IMAGE}" >/dev/null 2>&1 || docker pull "${V1_MIGRATE_IMAGE}" >/dev/null
+  rm -rf "${V1_TARGET_DIR}" "${V1_STATE_DIR}"
+  mkdir -p "${V1_TARGET_DIR}" "${V1_STATE_DIR}"
+  chmod 700 "${V1_STATE_DIR}"
+  chown 1000:1000 "${V1_TARGET_DIR}" "${V1_STATE_DIR}"
+
+  # Answers to the questions upstream's `prepare` asks interactively: migrate
+  # everything and keep the behaviour the v0.16 install had.
+  cat > "${V1_STATE_DIR}/answers.toml" <<'ANSWERS'
+version = 1
+[global.categories]
+include = ["settings", "principals", "mail", "calendars", "contacts", "files", "sieve", "identities", "push_subscriptions", "spam_samples", "reports", "archive", "spam_model", "queue", "tasks", "telemetry"]
+[global.changed_defaults]
+policy = "pin"
+[global.new_permissions]
+action = "none"
+[global.oauth_client_scopes]
+scopes = "interoperable"
+[global.encryption_at_rest]
+header_protection = "none"
+ANSWERS
+  chown 1000:1000 "${V1_STATE_DIR}/answers.toml"
+
+  # The first pass lists any per-install questions. Only the OAuth client
+  # re-registration notice is accepted here; anything else (OIDC directories,
+  # proxies, AI models) needs a person and fails the second pass.
+  v1_migrate prepare --source /etc/stalwart/config.json --non-interactive > "${V1_STATE_DIR}/prepare.log" 2>&1 || true
+  questions="$(sed -n 's/^# \[\(instance\.oauth_registration\..*\)\]$/[\1]\naction = "accept"/p' "${V1_STATE_DIR}/answers.toml")"
+  [[ -z "${questions}" ]] || printf '%s\n' "${questions}" >> "${V1_STATE_DIR}/answers.toml"
+  v1_migrate prepare --source /etc/stalwart/config.json --non-interactive >> "${V1_STATE_DIR}/prepare.log" 2>&1
+
+  v1_migrate run --source /etc/stalwart/config.json --target /etc/stalwart-v1/config.json \
+    --target-path-map /var/lib/stalwart=/var/lib/stalwart-v1 --final --yes --verify-full \
+    > "${V1_STATE_DIR}/run.log" 2>&1
+
+  touch "${V1_VERIFIED_FILE}"
+  mv "${FINAL_SERVER_DIR}" "${V1_ORIGINAL_DIR}"
+  mv "${V1_TARGET_DIR}" "${FINAL_SERVER_DIR}"
+  touch "${V1_READY_FILE}"
+  echo "Stalwart v1 migration verified and completed. The v0.16 data is kept in ${V1_ORIGINAL_DIR}."
+}
+
+# Runs once the data is in the v0.16 layout (or there is no data yet).
+migrate_to_v1() {
+  trap - EXIT
+  rm -f "${LOCK_FILE}"
+  [[ ! -f "${V1_READY_FILE}" ]] || exit 0
+
+  local status=0
+  set +e
+  ( set -euo pipefail; run_v1_migration )
+  status=$?
+  set -e
+  if [[ ${status} -ne 0 ]]; then
+    echo "Stalwart v1 migration failed. Your v0.16 data is untouched and the server stays stopped."
+    echo "See ${V1_STATE_DIR}/prepare.log and run.log, then restart the app to retry."
+    tail -n 20 "${V1_STATE_DIR}/prepare.log" "${V1_STATE_DIR}/run.log" 2>/dev/null || true
+    block_production_start
+    exit 1
+  fi
+  exit 0
+}
+# ---------------------------------------------------------------------------
+
 # The nested v0.15 start must not install the outer migration's cleanup trap:
 # otherwise its successful exit removes the lock while migration is running.
 if [[ -f "${LOCK_FILE}" ]]; then
@@ -103,18 +215,18 @@ fi
 if [[ -f "${DONE_FILE}" ]]; then
   restore_compose
   rm -f "${APP_COMPOSE_BACKUP_FILE}"
-  exit 0
+  migrate_to_v1
 fi
 
 if [[ -f "${FINAL_CONFIG_JSON}" && ! -f "${LEGACY_CONFIG_TOML}" && ! -d "${LEGACY_DATA_DIR}" && ! -f "${RECOVERY_STARTED_FILE}" ]]; then
   touch "${DONE_FILE}"
-  exit 0
+  migrate_to_v1
 fi
 
 if [[ ! -f "${LEGACY_CONFIG_TOML}" && ! -d "${LEGACY_DATA_DIR}" && ! -f "${RECOVERY_STARTED_FILE}" ]]; then
   mkdir -p "${FINAL_ETC_DIR}" "${FINAL_SERVER_DIR}"
   touch "${DONE_FILE}"
-  exit 0
+  migrate_to_v1
 fi
 
 trap cleanup EXIT
@@ -457,7 +569,7 @@ if [[ -f "${APPLY_DONE_FILE}" ]]; then
   touch "${DONE_FILE}"
   restore_compose
   rm -f "${APP_COMPOSE_BACKUP_FILE}"
-  exit 0
+  migrate_to_v1
 fi
 
 if [[ -f "${RECOVERY_STARTED_FILE}" ]] ||
@@ -497,3 +609,4 @@ restore_compose
 rm -f "${APP_COMPOSE_BACKUP_FILE}"
 
 echo "Stalwart v0.16 migration completed."
+migrate_to_v1

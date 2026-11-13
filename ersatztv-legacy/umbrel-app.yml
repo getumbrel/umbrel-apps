@@ -4,7 +4,7 @@ storage:
   dataRoot: data
 category: media
 name: ErsatzTV Legacy
-version: "26.11.5"
+version: "26.12.0"
 tagline: Build your own live TV channels
 description: >-
   ErsatzTV Legacy transforms your personal media library into custom live TV channels with IPTV, XMLTV guide data, channel scheduling, and browser playback.
@@ -18,9 +18,21 @@ description: >-
 
   This package uses the ErsatzTV Legacy release stream, which upstream continues to maintain for security updates while ErsatzTV Next remains an experimental rewrite.
 releaseNotes: >-
-  Fixes a startup crash when running as a non-root user or with a read-only root filesystem. ErsatzTV now uses a lock file in its configuration folder to prevent multiple instances from sharing the same configuration.
+  All channels now use the Next streaming engine. Existing legacy channels migrate automatically on startup: MPEG-TS (Legacy) becomes MPEG-TS, and HLS Direct becomes HLS Segmenter. Existing legacy playlist and lineup URLs redirect to the Next engine. Check channel playback after updating.
 
-  Full release notes can be found at https://github.com/ErsatzTV/legacy/releases/tag/v26.11.5
+
+  - Fixes QSV streams failing shortly after playback starts on older Intel GPUs, and improves playback when video color information changes mid-stream.
+
+  - Adds a unified hardware troubleshooting view and clearer hardware-acceleration compatibility warnings in FFmpeg profiles.
+
+  - Fixes disappearing watermarks, subtitle problems during filler playback, and several hardware-encoding failures.
+
+  - Prevents one invalid media item from breaking an entire channel's playout.
+
+  - Applies watermark and decoration changes sooner and reduces unnecessary disk writes when syncing playouts.
+
+
+  Full release notes can be found at https://github.com/ErsatzTV/legacy/releases/tag/v26.12.0
 developer: ErsatzTV
 website: https://ersatztv.org
 dependencies: []

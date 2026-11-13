@@ -4,7 +4,7 @@ storage:
   dataRoot: data
 category: files
 name: Yuvomi
-version: "2.81.2"
+version: "2.89.1"
 tagline: Self-hosted family planner — calendar, tasks, shopping, meals & budget
 description: >-
   Yuvomi is a self-hosted, privacy-focused family planner that bundles everything
@@ -53,24 +53,22 @@ description: >-
   Open Yuvomi from your Umbrel dashboard and create the first account — that
   account becomes the family admin and can invite the rest of the household.
 releaseNotes: >-
-  This is a security release, and it changes nothing about how Yuvomi looks or
-  works day to day. It completes the Web Push fix from 2.81.1: a specially
-  crafted push address could still get past the new check and make the server
-  connect into your own network. Push addresses are now checked the same way the
-  push library reads them.
+  This update closes a gap for signed-in devices. A phone that is signed in to
+  Yuvomi with the app could change the email address stored for its own
+  household member, and that address is where a password reset is sent. A
+  signed-in device can no longer change it; everything else on the contact stays
+  editable from the device, and the address can still be changed in the browser.
 
 
-  Push notifications to phones and browsers keep working as before. A stored
-  push subscription with an unusual address is removed on its next delivery,
-  like an expired one.
+  If you use the app on a phone, nothing else changes there. If nobody in your
+  household does, this update changes nothing you would notice.
 
 
-  Nothing changes in the database with this update, so it is a plain container
-  swap with no migration to wait for.
+  This update does not change the database. No action is needed from you.
 
 
   Full release notes are available at
-  https://github.com/ulsklyc/yuvomi/releases/tag/v2.81.2
+  https://github.com/ulsklyc/yuvomi/releases/tag/v2.89.1
 backupIgnore:
   - data/app/yuvomi.db.plaintext-backup*
   - data/backups/*.db

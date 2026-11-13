@@ -2,10 +2,37 @@ manifestVersion: 1
 id: linkwarden
 storage:
   dataRoot: data
+environment:
+  - name: OPENAI_API_KEY
+    services:
+      - app
+    note: >-
+      API key for AI tagging, from OpenAI or another OpenAI-compatible provider. Also set the model below, then choose an AI tagging option in Linkwarden's preferences.
+  - name: OPENAI_MODEL
+    services:
+      - app
+    note: >-
+      Model used for AI tagging with your API key, such as gpt-4o-mini. Required when you set an API key.
+  - name: CUSTOM_OPENAI_BASE_URL
+    services:
+      - app
+    default: "https://api.openai.com/v1"
+    note: >-
+      Leave empty for OpenAI. For other OpenAI-compatible providers, enter their base URL, such as https://openrouter.ai/api/v1.
+  - name: NEXT_PUBLIC_OLLAMA_ENDPOINT_URL
+    services:
+      - app
+    note: >-
+      To use Ollama instead of an API key, enter its URL and set the Ollama model below. For the Ollama app on this Umbrel, use http://ollama_ollama_1:11434. An OpenAI API key, if set, takes precedence.
+  - name: OLLAMA_MODEL
+    services:
+      - app
+    note: >-
+      Ollama model used for AI tagging, such as phi3:mini-4k. Download it in Ollama first.
 name: Linkwarden
 tagline: Bookmark Preservation for Individuals and Teams
 category: social
-version: "2.16.3-patch.1"
+version: "2.17.0-patch.1"
 port: 8233
 description: >-
   📚 Linkwarden is a self-hosted, open-source collaborative bookmark manager to collect, organize and archive webpages.
@@ -22,21 +49,30 @@ submission: https://github.com/getumbrel/umbrel-apps/pull/1817
 repo: https://github.com/linkwarden/linkwarden
 support: https://discord.gg/CtuYV47nuJ
 gallery:
-  - 1.jpg
-  - 2.jpg
-  - 3.jpg
+  - 1.webp
+  - 2.webp
+  - 3.webp
 defaultUsername: ""
 defaultPassword: ""
 dependencies: []
 releaseNotes: >-
-  This update adds support for new storage management and configuration options being introduced with umbrelOS 2.0.
+  This update lets you connect an AI provider, such as OpenAI or the Ollama app, in Linkwarden's app settings on umbrelOS 2.0 for automatic tagging.
 
 
-  Previous Linkwarden 2.16.3 release notes:
+  Previous Linkwarden 2.17.0 release notes:
 
 
-  This release significantly improves performance for link, search, tag, collection, and dashboard queries at scale.
+  This release adds custom link ordering, smoother browsing of large collections, and security improvements.
 
 
-  Full release notes can be found at https://github.com/linkwarden/linkwarden/releases/tag/v2.16.3
+  - Drag links into a custom order within collections.
+  - Browse large lists of links, collections, and tags more smoothly.
+  - Import bookmarks more reliably while preserving their original dates.
+  - Benefit from stronger password protection and other security fixes.
+
+
+  Changing your password now signs out other devices and revokes access tokens. Sign back into browser extensions and integrations after changing your password.
+
+
+  Full release notes can be found at https://github.com/linkwarden/linkwarden/releases/tag/v2.17.0
 path: ""

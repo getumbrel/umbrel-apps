@@ -7,11 +7,12 @@ services:
       APP_PORT: 8175 # ui
 
   fedimintd:
-    image: fedimint/fedimintd:v0.12.2@sha256:5402c17a8195ccf368a334ddf864fb72a9368dcdddbdf5dffb6f7c94529b0a3c
+    image: fedimint/fedimintd:v0.13.0@sha256:9bc451298a9cf34f982379754386aa446b72cb00dca5d25ad57d41429f247119
     ports:
       - 8173:8173/tcp # p2p tls
       - 8173:8173/udp # p2p iroh
       - 8174:8174/udp # api iroh
+      - 8184:8184/udp # transitional Iroh 1.0 api
     volumes:
       - ${APP_DATA_DIR}/data:/data
     environment:

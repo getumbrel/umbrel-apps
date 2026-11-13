@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-APP_DATA_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")"
+APP_DIR="${APP_DATA_DIR:-$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")}"
+DATA_ROOT="${APP_DATA_ROOT:-${APP_DIR}/data}"
 
 # Remove .gitignore file from data directories if they exist
 
-[ -f "${APP_DATA_DIR}/data/app/.gitignore" ] && rm -f "${APP_DATA_DIR}/data/app/.gitignore"
-[ -f "${APP_DATA_DIR}/data/db/.gitignore" ] && rm -f "${APP_DATA_DIR}/data/db/.gitignore"
+[ -f "${DATA_ROOT}/app/.gitignore" ] && rm -f "${DATA_ROOT}/app/.gitignore"
+[ -f "${DATA_ROOT}/db/.gitignore" ] && rm -f "${DATA_ROOT}/db/.gitignore"

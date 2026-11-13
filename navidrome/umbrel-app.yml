@@ -1,8 +1,19 @@
 manifestVersion: 1.1
 id: navidrome
+environment:
+  - name: ND_LASTFM_APIKEY
+    services:
+      - server
+    note: >-
+      Last.fm API key, for artist bios, images and scrobbling. Create an API account at https://www.last.fm/api/account/create and also enter its shared secret below. Each user then links their own Last.fm account in Navidrome.
+  - name: ND_LASTFM_SECRET
+    services:
+      - server
+    note: >-
+      Last.fm shared secret, from the same API account as the key above.
 category: media
 name: Navidrome
-version: "0.64.2"
+version: "0.64.2-patch.2"
 tagline: Your personal streaming service
 description: >-
   Navidrome is an open source web-based music collection server and streamer.
@@ -44,23 +55,19 @@ repo: https://github.com/navidrome/navidrome
 support: https://github.com/navidrome/discussions
 port: 4533
 gallery:
-  - 1.jpg
-  - 2.jpg
-  - 3.jpg
+  - 1.webp
+  - 2.webp
+  - 3.webp
 path: ""
 permissions:
   - STORAGE_DOWNLOADS
 releaseNotes: >-
-  This bug fix and security release reduces database lock contention during library scans, especially on slower storage, and fixes scan failures on 32-bit systems with invalid track, disc, or BPM metadata.
+  This update lets you add Last.fm API credentials in Navidrome's app settings on umbrelOS 2.0, for artist info and scrobbling.
 
 
-  Highlights include:
-    - Sanitizes download filenames generated from user-controlled music and playlist names
-    - Prevents failed first-admin creation from leaving the server marked as already set up
-    - Fixes invalid JSON in some delete responses and missing content type on shared playlist downloads
-    - Honors Jellyfin playlist visibility when playlists are created through the Jellyfin API
+  Previous Navidrome 0.64.2 release notes:
 
 
-  Full release notes can be found at https://github.com/navidrome/navidrome/releases/tag/v0.64.2
+  This update includes important security improvements. We recommend updating as soon as possible.
 submitter: owmsoton
 submission: https://github.com/getumbrel/umbrel-apps/pull/1232

@@ -4,7 +4,7 @@ storage:
   dataRoot: data
 category: bitcoin
 name: Fedimint
-version: "v0.12.2"
+version: "v0.13.0"
 tagline: Federated Chaumian E-Cash Mint for Bitcoin
 description: >-
   Fedimint is a federated Chaumian E-Cash Mint to custody and transact bitcoin in a community. It allows groups of trusted individuals,
@@ -58,16 +58,19 @@ repo: https://github.com/fedimint/fedimint
 support: https://github.com/fedimint/fedimint/issues
 port: 8175
 gallery:
-  - 1.jpg
-  - 2.jpg
-  - 3.jpg
+  - 1.webp
+  - 2.webp
+  - 3.webp
 path: ""
 defaultUsername: ""
 deterministicPassword: true
 submitter: Fedimint Developers
 submission: https://github.com/getumbrel/umbrel-apps/pull/3371
 releaseNotes: >-
-  This update fixes a networking deadlock that could stall communication between guardians and federation setup, and improves connection recovery.
+  ⚠️ This update enables a new Iroh 1.0 client API alongside the existing API. Once its identity is advertised, keep the new listener enabled and reachable; downgrading or disabling it is unsupported.
+
+
+  This release improves guardian connection recovery when peer sends stall, adds timeouts for Iroh API requests, and hardens validation of malformed amounts and mint fee configurations.
 
 
   ⚠️ If upgrading from a version earlier than v0.12.0, coordinate with the other guardians: the Iroh networking change is incompatible with older releases, so consensus may pause until enough guardians upgrade. Rolling back after the new Iroh identity is published is unsupported. Your guardian admin password also changes to the unique password provided by Umbrel, available when opening the app or through its credentials menu.
@@ -76,7 +79,7 @@ releaseNotes: >-
   All guardians must run the same release when setting up a new federation.
 
 
-  Full changes: https://github.com/fedimint/fedimint/compare/v0.12.0...v0.12.2
+  Full changes: https://github.com/fedimint/fedimint/compare/v0.12.2...v0.13.0
 
 
-  Upgrade guidance: https://github.com/fedimint/fedimint/releases/tag/v0.12.0
+  Upgrade guidance: https://github.com/fedimint/fedimint/blob/v0.13.0/docs/networking.md

@@ -2,46 +2,53 @@ manifestVersion: 1
 id: gupt
 category: social
 name: Gupt
-version: "5.1.2"
+version: "6.0.0"
 releaseNotes: >-
-  Gupt 5.1.2 improves attachment reliability with automatic preview retries, clearer retry status in the feed, and more consistent handling of sent media.
+  ⚠️ Important: your existing Gupt data will not carry over to this update. Gupt 6 moves from Nostr to a new protocol called Rabta, and everyone starts with a new identity. Your current chats, contacts, groups, notes, passwords, bookmarks, and attachments won't appear in Gupt 6.
 
 
-  This update adds encrypted location attachments with approximate location sharing by default, and improves domain-based contact lookup with confirmation and changed-key warnings.
+  Before updating, open Gupt and copy anything you want to keep, such as notes, passwords, and bookmarks, somewhere safe. After updating, you'll need to share your new profile with your contacts again.
 
 
-  Browser security policies have been tightened, deprecated IPFS gateways removed, and gateway performance checks improved.
+  Signing in has also changed. Memory anchors are gone, and you now sign in with a secret or a secret file plus a PIN of at least 6 characters. Keep your secret and PIN safe, because you'll need them every time you open Gupt in a new tab.
 
 
-  If you're updating from a pre-v2 version, your Gupt identity will remain, but conversations, Vault entries, and groups created in Gupt v1 will not be available in Gupt v2 or later. Gupt v2+ also cannot communicate with Gupt v1 clients, so your contacts will need to update as well.
+  Gupt moved off Nostr to make syncing and file storage more reliable, and older data can't be brought across to the new protocol.
 
 
-  Before updating from a pre-v2 version, open Gupt v1 and copy anything you need from your chats, Vault, and groups, and back up your private key.
+  Also in this update:
+    - Your data is stored on your device first, so Gupt keeps working offline
+    - Encrypted file uploads go directly to Rabta nodes
+    - Invite codes replace the old share and invite links
+    - Faster call setup and a refreshed conversation list and settings
 
 
-  Gupt 3 and 4 replace the old Vault with separate encrypted Bookmarks, Passwords, and Notes sections. Legacy Vault entries are no longer supported, so before updating, open Vault and back up any important entries, especially entries that may not have synced to relays.
+  If you used custom relays, replace them with Rabta node addresses (starting with http:// or https://) in Settings → Relays. Nostr relay addresses (wss://) no longer work.
 
 
-  Encrypted chats, groups, Bookmarks, Passwords, Notes, and Share work on current Umbrel LAN URLs. Voice and video calls, screen sharing, and offline notifications require HTTPS and will become available once built-in HTTPS support lands.
+  If Gupt still shows the old sign-in screen right after updating, reload the page once.
 
 
-  Full release notes can be found at https://github.com/besoeasy/gupt/releases/tag/5.1.2
-tagline: Encrypted chat, passwords, notes, bookmarks, and ephemeral sharing
+  Voice and video calls, screen sharing, and offline notifications require HTTPS.
+
+
+  Full release notes can be found at https://github.com/besoeasy/gupt/releases/tag/6.0.0
+tagline: Encrypted chat, passwords, notes, bookmarks, and file sharing
 description: >-
-  Encrypted chat, passwords, notes, bookmarks, and ephemeral sharing — with no phone number, no email, no account, and no central server.
+  Encrypted chat, passwords, notes, bookmarks, and file sharing — with no phone number, no email, no account, and no central server.
 
 
   Key features include:
     - Anonymous — no phone number, no email, no account required
     - End-to-end encrypted direct messages
     - WebRTC voice & video calls
-    - Encrypted media uploads via decentralized file storage
-    - Group rooms via Nostr relays
+    - Encrypted media uploads via Rabta nodes
+    - Group rooms via Rabta relays
     - Local-first with offline cache (IndexedDB)
     - Separate encrypted Bookmarks, Passwords, and Notes
-    - Anonymous file sharing
+    - Invite codes to connect with contacts
 
-  Gupt is fully client-side with no backend — it connects directly to public or private Nostr relays. Your keys, your messages, your privacy.
+  Gupt is fully client-side with no backend — it connects directly to public or private Rabta nodes. Your keys, your messages, your privacy.
 developer: "besoeasy"
 website: https://github.com/besoeasy/gupt
 dependencies: []

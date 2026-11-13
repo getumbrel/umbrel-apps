@@ -2,10 +2,52 @@ manifestVersion: 1
 id: ghost
 storage:
   dataRoot: data
+environment:
+  - name: mail__transport
+    services:
+      - web
+    options:
+      - "SMTP"
+    note: >-
+      Select SMTP to send sign-in links, staff invitations and password resets through your email provider, then fill in the settings below. Newsletters use the Mailgun settings in Ghost's admin instead.
+  - name: mail__options__host
+    services:
+      - web
+    note: >-
+      SMTP server host name, such as smtp.example.com.
+  - name: mail__options__port
+    services:
+      - web
+    default: "587"
+    note: >-
+      SMTP server port. Use 587 for most providers, or 465 with the secure connection setting below.
+  - name: mail__options__secure
+    services:
+      - web
+    default: "false"
+    options:
+      - "true"
+    note: >-
+      Select true only if your provider uses port 465. Leave empty for port 587, which still upgrades to an encrypted connection.
+  - name: mail__options__auth__user
+    services:
+      - web
+    note: >-
+      SMTP username.
+  - name: mail__options__auth__pass
+    services:
+      - web
+    note: >-
+      SMTP password or app password.
+  - name: mail__from
+    services:
+      - web
+    note: >-
+      Sender address, such as noreply@example.com. Use an address your SMTP provider lets you send from.
 name: Ghost
 tagline: A platform for creators to publish, grow, and monetize their content
 category: files
-version: "6.73.0"
+version: "6.77.0-patch.1"
 port: 3368
 description: >-
   Ghost is a powerful, open-source content management system (CMS) primarily designed for professional bloggers, journalists, and content creators. Unlike more traditional CMS platforms like WordPress, which offer a wide range of plugins and customization options, Ghost focuses on providing a streamlined, fast, and minimalist platform that prioritizes the writing and publishing experience. It was initially created with bloggers in mind, but over time, it has evolved to include more features such as membership management, email newsletters, and monetization tools.
@@ -31,18 +73,24 @@ submission: https://github.com/getumbrel/umbrel-apps/pull/2178
 repo: https://github.com/TryGhost/Ghost
 support: https://github.com/TryGhost/Ghost/issues
 gallery:
-  - 1.jpg
-  - 2.jpg
-  - 3.jpg
-  - 4.jpg
-  - 5.jpg
-  - 6.jpg
-  - 7.jpg
+  - 1.webp
+  - 2.webp
+  - 3.webp
+  - 4.webp
+  - 5.webp
+  - 6.webp
+  - 7.webp
 releaseNotes: >-
-  Ghost 6.73.0 fixes gallery image reordering, improves member import performance, and corrects tag filtering. It also fixes paid members losing their tier when complimentary access expires, checkout sign-in redirects, Transistor embeds, and newsletter click counts inflated by email link checkers.
+  This update lets you connect an SMTP email provider in Ghost's app settings on umbrelOS 2.0, so Ghost can send member sign-in links, staff invitations and password resets. Newsletters still use the Mailgun settings in Ghost's admin.
 
 
-  Full release notes can be found at https://github.com/TryGhost/Ghost/releases/tag/v6.73.0
+  Previous Ghost 6.77.0 release notes:
+
+
+  Ghost 6.77.0 adds files to the welcome and automation email editor and shows how members joined in activity feeds. It also fixes saving design settings after uploading a theme, importing Ghost(Pro) exports, and custom field form layout.
+
+
+  Full release notes can be found at https://github.com/TryGhost/Ghost/releases/tag/v6.77.0
 dependencies: []
 path: "/ghost"
 defaultUsername: ""

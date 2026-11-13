@@ -28,12 +28,21 @@ services:
     volumes:
       - ${APP_DATA_DIR}/entrypoint.sh:/entrypoint.sh
       - ${APP_DATA_DIR}/data/docker:/data
+    # Arcane picks up the socket's group only once at startup, so it must not
+    # start before dockerd has created the socket.
+    healthcheck:
+      test: ["CMD", "docker", "--host", "unix:///data/docker.sock", "version"]
+      interval: 5s
+      timeout: 10s
+      retries: 6
+      start_period: 5m
 
   arcane:
-    image: ghcr.io/getarcaneapp/arcane:v2.17.1@sha256:3d7057b7e3b3e0be4b3ba34dd1b137b02a055f97ddc232c32817666658643842
+    image: ghcr.io/getarcaneapp/arcane:v2.17.3@sha256:2e0dc9f5ef03599181a49baf6470055d82e24d9cb15bbc62498ea642c0f882a7
     stop_grace_period: 15s
     depends_on:
-      - docker
+      docker:
+        condition: service_healthy
     restart: on-failure
     environment:
       APP_URL: http://${DEVICE_DOMAIN_NAME}:3552

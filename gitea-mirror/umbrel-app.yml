@@ -5,7 +5,7 @@ storage:
 name: Gitea Mirror
 tagline: Mirror your GitHub repositories to a Gitea instance automatically
 category: developer
-version: "3.46.0"
+version: "3.51.7"
 port: 4322
 description: >-
   Gitea Mirror automatically mirrors your GitHub repositories to a self-hosted Gitea instance. It supports mirroring public and private repositories, organizations, starred repos, issues, wikis, and pull requests.
@@ -37,19 +37,46 @@ submission: https://github.com/getumbrel/umbrel-apps/pull/4721
 repo: https://github.com/raylabshq/gitea-mirror
 support: https://github.com/raylabshq/gitea-mirror/issues
 gallery:
-  - 1.jpg
-  - 2.jpg
-  - 3.jpg
+  - 1.webp
+  - 2.webp
+  - 3.webp
 defaultUsername: ""
 defaultPassword: ""
 dependencies: []
 releaseNotes: >-
-  This update adds an MCP endpoint and read-only API keys.
+  GitLab imports are fast again on responsive instances while still adapting to slow servers. Listings start with larger batches and automatically reduce the batch size after a timeout, continuing from the same position. No configuration changes are needed.
 
-  Key highlights:
-    - Connect MCP clients to inspect mirrors, find failures, add repositories and organizations, and start syncs or retries.
-    - Create read-only API keys for monitoring and integrations that should not change your configuration or mirrors.
-    - Existing API keys keep full access.
+  This update fixes backup configuration handling, including disabled backups being re-enabled on restart when using environment-based configuration. Existing configurations keep their saved backup settings; change them on the Configuration page.
+
+  It also fixes database selection for custom deployments with a non-SQLite database URL. The standard Umbrel package already uses the supported SQLite path and needs no configuration changes.
+
+  🔒 This update also includes the earlier security fix that prevents externally linked Forgejo release assets from exhausting the mirror's memory. Linked downloads are limited to 512 MB and 15 minutes; assets exceeding either limit are skipped with a warning. Assets hosted directly by the source have no size cap.
+
+  Release asset downloads now stop after two minutes without receiving data instead of leaving a sync stuck indefinitely. Failed downloads are retried on the next sync.
+
+  This update also includes the previous security fixes for source-token exposure when mirroring externally linked Forgejo release assets, requests to private addresses, and destination tokens following redirects to another host.
+
+  If you mirror releases from a Forgejo source such as Codeberg using a token and mirror repositories you do not fully trust, rotate that source token. Externally linked assets on private or local addresses are now skipped with a warning.
+
+  ⚠️ Back up your Gitea or Forgejo instance and review release limits and filters before upgrading. The next sync can delete older releases: retention and release filters now inspect all destination releases, not just the newest 30. Previously untrimmed releases beyond your limit or excluded by your filters will be removed.
+
+  If you're updating from a version older than 3.51.1:
+    - Mirrors interrupted by a gateway timeout now finish syncing releases, issues, and other metadata instead of appearing complete with missing content. Imports still running in Gitea are given up to 30 minutes to finish before continuing.
+    - Release assets from private GitHub repositories now download correctly. These downloads use GitHub's API quota and pause when the rate limit is reached.
+
+  If a repository is already missing releases after a timeout, its next sync will catch up. With scheduling off, press Sync. Pressing Mirror on a repository already in Gitea now performs a full sync and ends with a synced status.
+
+  If you're updating from a version older than 3.51.0, you can also get Activity Log warnings and optional notifications when a requested mirror sync has stalled for over an hour. This covers syncs requested by Gitea Mirror, not mirrors running only on Gitea's own schedule.
+
+  If you're updating from a version older than 3.50.0, you can also filter GitHub issues by state, optionally skip comments or media, and filter repositories by destination owner. Disabling media removes it from mirrored issue bodies on their next sync; existing comments keep their media.
+
+  If you're updating from a version older than 3.49.0, you can also optionally remove attachments from older mirrored releases to reclaim storage. This setting is off by default; enabling it deletes attachments beyond each repository's asset limit while keeping release notes and tags. The Activity Log also loads correctly after release-filter warnings.
+
+  If you're updating from a version older than 3.48.0, you can also refresh storage sizes on demand, navigate between cached pages, and browse large lists more smoothly. Release retention and filters now inspect every destination release, and authenticated MCP tools include a security fix for oversized lists.
+
+  If you're updating from a version older than 3.47.0, the Storage page also shows total storage and a breakdown by owner and repository. GitHub and GitLab push destinations are not measured.
+
+  If you're updating from a version older than 3.46.0, Gitea Mirror also includes an MCP endpoint and read-only API keys. Existing API keys keep full access.
 
   Reminder: release filters added in 3.44.0 delete already-mirrored releases that no longer match on the next sync. Preview the affected releases in the tag rules dialog before saving, and back up your Gitea instance. Existing configurations keep mirroring all releases until you enable a filter.
 
@@ -69,5 +96,5 @@ releaseNotes: >-
 
   If you're updating from a version older than 3.17 and use OAuth provider clients registered in Gitea Mirror, rotate the client secret for each client after upgrading because OAuth application secrets are stored hashed after migration.
 
-  Full release notes can be found at https://github.com/RayLabsHQ/gitea-mirror/releases/tag/v3.46.0
+  Full release notes can be found at https://github.com/RayLabsHQ/gitea-mirror/releases/tag/v3.51.7
 path: ""
