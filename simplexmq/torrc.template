@@ -1,0 +1,16 @@
+# SOCKS proxy for the SMP server to forward messages to other .onion relays
+SocksPort 0.0.0.0:9050
+SocksPolicy accept $APP_SIMPLEXMQ_SMP_IP
+SocksPolicy reject *
+DataDirectory /data
+Log notice stdout
+
+# SMP relay hidden service
+HiddenServiceDir /data/smp
+HiddenServicePort 5223 $APP_SIMPLEXMQ_SMP_IP:5223
+# SimpleX clients will default to port 443 for SMP in a future release
+HiddenServicePort 443 $APP_SIMPLEXMQ_SMP_IP:5223
+
+# XFTP file server hidden service
+HiddenServiceDir /data/xftp
+HiddenServicePort 5443 $APP_SIMPLEXMQ_XFTP_IP:5443
