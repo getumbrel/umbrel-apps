@@ -1,0 +1,28 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: homedex_web_1
+      APP_PORT: 7377
+
+  web:
+    image: ghcr.io/harshshah0203/homedex:0.2.3@sha256:4a0dad1cc6b4dd6585596904d0562f4e5e0d0a4daad11be613a545430e4380d5
+    user: "1000:1000"
+    restart: on-failure
+    environment:
+      HOMEDEX_DATA_DIR: /data
+      HOMEDEX_LISTEN: ":7377"
+      # Umbrel's per-install app password becomes the Homedex admin password on
+      # the first start (Homedex stores only its Argon2id hash and ignores the
+      # value once an admin exists), so the setup page is never left open.
+      HOMEDEX_ADMIN_PASSWORD: ${APP_PASSWORD}
+    volumes:
+      - ${APP_DATA_DIR}/data/homedex:/data
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
