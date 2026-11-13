@@ -1,0 +1,44 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: aldine_app_1
+      APP_PORT: 3000
+
+  app:
+    image: ghcr.io/trahloff/aldine-app:1.11.0@sha256:af205a8a937aba188c7d40c400faa245598ac503810017b1aff126d7b8a9a316
+    init: true
+    restart: on-failure
+    environment:
+      # The container name, not the service name: a bare "compiler" could
+      # resolve to another app's service on the shared Umbrel network.
+      COMPILER_URL: http://aldine_compiler_1:4020
+    volumes:
+      - ${APP_DATA_DIR}/data/data:/data
+      - ${APP_DATA_DIR}/data/secrets:/secrets
+    networks:
+      - default
+      - compiler
+
+  compiler:
+    image: ghcr.io/trahloff/aldine-compiler:1.11.0@sha256:6a06ab9f86317eba194075d5b26e2c3bd25196ca3773fc965b34e11461fcba3b
+    init: true
+    restart: on-failure
+    # The compiler runs untrusted LaTeX. It is only on the internal network
+    # below, so it has no route to the internet or to other Umbrel apps, and
+    # it never mounts /secrets (accounts, sessions, API keys).
+    volumes:
+      - ${APP_DATA_DIR}/data/data:/data
+    networks:
+      - compiler
+    mem_limit: 2g
+    pids_limit: 256
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+
+networks:
+  compiler:
+    internal: true
