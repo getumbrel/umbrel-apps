@@ -1,0 +1,59 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: pages_web_1
+      APP_PORT: 3000
+      PROXY_AUTH_ADD: "false"
+
+  tor:
+    image: dennysubke/pages-tor:0.1.2@sha256:75d8ae51f56485c80b9ee611aec7311229f3958af9b253f676af3086b384fd38
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      PUID: "1000"
+      PGID: "1000"
+    volumes:
+      - ${APP_DATA_DIR}/tor/state:/var/lib/tor
+      - ${APP_DATA_DIR}/tor/control:/run/tor-control
+      - ${APP_DATA_DIR}/tor/site:/site-socket:ro
+    healthcheck:
+      test: ["CMD-SHELL", "test -S /run/tor-control/control && test -s /run/tor-control/control.authcookie"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  web:
+    image: dennysubke/pages:0.1.2@sha256:ef4c8d9f6fb1c4af68616f4e7cfdb2f32c195bb0e35bcd41e5c31b86c1cc48ee
+    restart: on-failure
+    stop_grace_period: 1m
+    depends_on:
+      - tor
+    environment:
+      PORT: "3000"
+      DATA_DIR: "/data"
+      PUID: "1000"
+      PGID: "1000"
+      PAGES_ADMIN_PASSWORD: "${APP_PASSWORD}"
+      APP_HIDDEN_SERVICE: "${APP_HIDDEN_SERVICE}"
+      DEVICE_DOMAIN_NAME: "${DEVICE_DOMAIN_NAME}"
+      PAGES_PUBLIC_PORT: "8377"
+      TOR_CONTROL_SOCKET: "/tor-control/control"
+      TOR_CONTROL_COOKIE: "/tor-control/control.authcookie"
+      TOR_ONION_TARGET: "unix:/site-socket/pages.sock"
+      TOR_SITE_SOCKET_DIR: "/site-socket"
+      TOR_RECONCILE_INTERVAL_MS: "30000"
+      MAX_UPLOAD_BYTES: "104857600"
+      MAX_EXTRACTED_BYTES: "524288000"
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+      - ${APP_DATA_DIR}/tor/control:/tor-control:ro
+      - ${APP_DATA_DIR}/tor/site:/site-socket
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
