@@ -1,0 +1,32 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: opengym_web_1
+      APP_PORT: 80
+      PROXY_AUTH_ADD: "false"
+
+  api:
+    image: ghcr.io/duartesantos8/opengym-api:1.4.2@sha256:57f4dd3fb9e4a6f48aa139b09de60398098ba85457f9498c1bcd4ac86c948f12
+    restart: on-failure
+    environment:
+      PORT: 3000
+      DATA_DIR: /data
+      RP_ID: ${DEVICE_DOMAIN_NAME}
+      ORIGIN: https://${DEVICE_DOMAIN_NAME}:${APP_PROXY_PORT}
+      RP_NAME: openGym
+      PASSWORD_LOGIN: "1"
+      FIRST_USER_ADMIN: "1"
+      TRUST_PROXY: "1"
+    volumes:
+      - ${APP_DATA_DIR}/data/api:/data
+
+  web:
+    image: ghcr.io/duartesantos8/opengym-web:1.4.2@sha256:748c77417d40969d9840f064fd0cafecd84e47ac786d424688d0cff0d6b53299
+    restart: on-failure
+    depends_on:
+      - api
+    environment:
+      BACKEND: api
+      PORT: 3000
