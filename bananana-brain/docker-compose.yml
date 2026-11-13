@@ -1,0 +1,32 @@
+services:
+  app_proxy:
+    environment:
+      # The brain serves its dashboard only over HTTPS with a self-signed certificate,
+      # so the web service below terminates plain HTTP for umbrelOS and forwards it.
+      APP_HOST: bananana-brain_web_1
+      APP_PORT: 8080
+
+  server:
+    image: romanvaxman/bananana-brain:2026.11.5@sha256:d92fe4a5bf4851b94822f402b38e8fcfc001278be05acc42d5a3089a099b10c4
+    # The image starts as root only to give /data to its own user (uid 10001), then drops to it.
+    restart: on-failure
+    stop_grace_period: 30s
+    volumes:
+      - ${APP_DATA_DIR}/data/brain:/data
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request,ssl;urllib.request.urlopen('https://127.0.0.1:18771/login',context=ssl._create_unverified_context(),timeout=3)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  web:
+    image: caddy:2.10.2@sha256:c3d7ee5d2b11f9dc54f947f68a734c84e9c9666c92c88a7f30b9cba5da182adb
+    # Plain HTTP in, HTTPS to the brain's LAN dashboard. The certificate is the brain's own
+    # self-signed one on the internal Docker network, so it is not verified. The Host header is
+    # passed through unchanged; the brain accepts the dashboard on hosts ending in :18771,
+    # which is why the manifest port is 18771.
+    restart: on-failure
+    command: caddy reverse-proxy --from :8080 --to https://bananana-brain_server_1:18771 --insecure
+    depends_on:
+      - server
