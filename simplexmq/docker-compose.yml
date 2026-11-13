@@ -1,0 +1,101 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: simplexmq_smp-server_1
+      APP_PORT: 8000
+
+  tor:
+    image: ghcr.io/getumbrel/tor:0.4.9.11@sha256:e382b8629c0dfef6ceb396b062622d4e4e955b19d6f16b883fd2c0723ad5671a
+    user: "1000:1000"
+    restart: on-failure
+    environment:
+      HOME: /tmp
+    volumes:
+      - ${APP_DATA_DIR}/torrc:/etc/tor/torrc:ro
+      - ${APP_DATA_DIR}/data/tor:/data
+    networks:
+      default:
+        ipv4_address: ${APP_SIMPLEXMQ_TOR_IP}
+
+  smp-server:
+    image: simplexchat/smp-server:v7.0.1@sha256:7d825822839a9d5ee9e9a99563d77a319816c7a8e0b4b7bf4dcebe448897af54
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 1m
+    depends_on:
+      - tor
+    environment:
+      PASS: ${APP_PASSWORD}
+    # Upstream's entrypoint only sets the server address once, at init. This
+    # initializes the server with its onion address, then keeps the address
+    # (plus the optional PUBLIC_ADDRESS setting) and the info page port
+    # current in smp-server.ini on every start.
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        set -eu
+        ini=/etc/opt/simplex/smp-server.ini
+        i=0
+        until [ -s /tor/smp/hostname ]; do i=$$((i + 1)); [ "$$i" -le 60 ] || { echo "Tor onion address not ready"; exit 1; }; sleep 1; done
+        onion="$$(cat /tor/smp/hostname)"
+        pub="$$(printf '%s' "$${PUBLIC_ADDRESS:-}" | tr -d '[:space:]' | tr -s ',' | sed 's/^,//; s/,$$//')"
+        hosts="$$onion$${pub:+,$$pub}"
+        [ -f "$$ini" ] || smp-server init --yes --store-log --daily-stats --source-code --disable-web --hosting-type owned --fqdn "$$onion" --password "$$PASS" --socks-proxy="${APP_SIMPLEXMQ_TOR_IP}:9050"
+        sed -i "s|^host = .*|host = $$hosts|" "$$ini"
+        sed -i "s|^port = .*|port = 5223|" "$$ini"
+        sed -i "s|^#* *http = .*|http = 8000|" "$$ini"
+        sed -i "s|^#* *socks_proxy = .*|socks_proxy = ${APP_SIMPLEXMQ_TOR_IP}:9050|" "$$ini"
+        exec /usr/local/bin/entrypoint
+    volumes:
+      - ${APP_DATA_DIR}/data/smp/config:/etc/opt/simplex
+      - ${APP_DATA_DIR}/data/smp/state:/var/opt/simplex
+      - ${APP_DATA_DIR}/data/tor:/tor:ro
+    ports:
+      - "5223:5223"
+    networks:
+      default:
+        ipv4_address: ${APP_SIMPLEXMQ_SMP_IP}
+
+  xftp-server:
+    image: simplexchat/xftp-server:v7.0.1@sha256:69a7f95746bb3c094ac36154ee8e7a8f552b5d9231587b88e6699d089003d26b
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 1m
+    depends_on:
+      - tor
+    environment:
+      PASS: ${APP_PASSWORD}
+      QUOTA: 10gb
+    # Same approach as smp-server. XFTP uses port 5443 over both Tor and
+    # clearnet so one address works for both (umbrelOS uses 443). Upstream
+    # logs the address without its password, so the full one is printed here.
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        set -eu
+        ini=/etc/opt/simplex-xftp/file-server.ini
+        i=0
+        until [ -s /tor/xftp/hostname ]; do i=$$((i + 1)); [ "$$i" -le 60 ] || { echo "Tor onion address not ready"; exit 1; }; sleep 1; done
+        onion="$$(cat /tor/xftp/hostname)"
+        pub="$$(printf '%s' "$${PUBLIC_ADDRESS:-}" | tr -d '[:space:]' | tr -s ',' | sed 's/^,//; s/,$$//')"
+        hosts="$$onion$${pub:+,$$pub}"
+        QUOTA="$$(printf '%s' "$${QUOTA:-10gb}" | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]')"
+        [ -f "$$ini" ] || xftp-server init --store-log --path /srv/xftp --fqdn "$$onion" --quota "$$QUOTA"
+        sed -i "/^create_password =/d; /^# create_password =/a create_password = $$PASS" "$$ini"
+        sed -i "s|^host = .*|host = $$hosts|" "$$ini"
+        sed -i "s|^port = .*|port = 5443|" "$$ini"
+        sed -i "s|^storage_quota = .*|storage_quota = $$QUOTA|" "$$ini"
+        echo "XFTP server address with password: xftp://$$(cat /etc/opt/simplex-xftp/fingerprint):$$PASS@$$hosts:5443"
+        exec /usr/local/bin/entrypoint
+    volumes:
+      - ${APP_DATA_DIR}/data/xftp/config:/etc/opt/simplex-xftp
+      - ${APP_DATA_DIR}/data/xftp/state:/var/opt/simplex-xftp
+      - ${APP_DATA_DIR}/data/xftp/files:/srv/xftp
+      - ${APP_DATA_DIR}/data/tor:/tor:ro
+    ports:
+      - "5443:5443"
+    networks:
+      default:
+        ipv4_address: ${APP_SIMPLEXMQ_XFTP_IP}

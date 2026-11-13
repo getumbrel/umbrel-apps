@@ -4,7 +4,7 @@ storage:
   dataRoot: data
 category: networking
 name: MailFlow
-version: "4.3.0"
+version: "4.4.0"
 tagline: Unified self-hosted webmail client
 description: >-
   MailFlow is a self-hosted unified webmail client. Connect multiple IMAP/SMTP
@@ -16,21 +16,22 @@ description: >-
   multiple themes, user management, SSO/OIDC support, and Microsoft 365 OAuth2
   support.
 releaseNotes: >-
-  Reload open MailFlow tabs after updating.
+  You will be signed out once after updating. Reload open MailFlow tabs and sign in again.
+  Single sign-on users with a MailFlow authenticator will now be asked for its code.
 
 
-  - Create scoped personal API tokens for scripts and tools. An administrator must enable tokens first; tokens cannot send or delete mail or change settings.
-  - Linking a single sign-on provider now requires additional confirmation to protect your account.
-  - Reopened drafts retain their attachments, and the session-authenticated draft API now supports attachments.
-  - Deleting an Inbox conversation no longer permanently deletes its messages already in Trash.
-  - Improved Gmail message identity across labels and sign-in after an expired screen-lock session.
+  - Fixed security issues that could bypass two-factor sign-in through recovery email or single sign-on.
+  - Changing a recovery email now requires confirmation, and administrators can indicate when an identity provider already enforces multi-factor authentication.
+  - MailFlow now runs without Redis, with sessions and temporary data stored in PostgreSQL.
+  - Added spam controls on phones and clearer folder-search scope.
+  - Improved the composer toolbar, large-text menus, message-list layout, and Proton Mail Bridge message previews.
 
 
   Since version 4.0, contacts apps using passwords can no longer sign in through
   CardDAV when SSO-only or required two-factor authentication is enabled.
 
 
-  Full release notes can be found at https://github.com/maathimself/mailflow/releases/tag/v4.3.0
+  Full release notes can be found at https://github.com/maathimself/mailflow/releases/tag/v4.4.0
 
 developer: maathimself
 website: https://mailflow.sh

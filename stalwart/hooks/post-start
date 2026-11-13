@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Stalwart v1 only trusts its built-in admin UI over HTTPS. Umbrel serves the
+# app over HTTP, so register the admin UI as an OAuth client for each address
+# Umbrel serves it on. Until setup is completed the server rejects this call,
+# so it takes effect on the first restart after setup.
+APP_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")"
+[[ -f "${APP_DATA_ROOT:-${APP_DIR}/data}/.v1_ready" ]] || exit 0
+
+origins=("http://${DEVICE_DOMAIN_NAME}:8745")
+primary_ip="$(ip -4 route get 1.1.1.1 2>/dev/null | sed -n 's/.* src \([^ ]*\).*/\1/p' | head -n1 || true)"
+[[ -z "${primary_ip}" ]] || origins+=("http://${primary_ip}:8745")
+if [[ "${APP_HIDDEN_SERVICE:-}" == *.onion && "${APP_HIDDEN_SERVICE}" != not-enabled.onion && "${APP_HIDDEN_SERVICE}" != notyetset.onion ]]; then
+  origins+=("http://${APP_HIDDEN_SERVICE}")
+fi
+
+for _ in {1..30}; do
+  docker exec stalwart_server_1 curl -fsS -o /dev/null http://127.0.0.1:8080/healthz/live 2>/dev/null && break
+  sleep 2
+done
+
+# Creating a client that already exists is rejected by the server and ignored here.
+for origin in "${origins[@]}"; do
+  docker exec -i stalwart_server_1 curl -sS -o /dev/null -u "admin:${APP_PASSWORD}" \
+    -H "Content-Type: application/json" --data-binary @- http://127.0.0.1:8080/jmap/ <<JSON || true
+{"using": ["urn:ietf:params:jmap:core", "urn:stalwart:jmap"], "methodCalls": [["x:OAuthClient/set", {"create": {"ui": {
+  "clientId": "${origin}/admin/oauth-client.json",
+  "description": "Umbrel admin UI",
+  "redirectUris": {"${origin}/admin/oauth/callback": true},
+  "postLogoutRedirectUris": {"${origin}/admin/login": true},
+  "grantTypes": {"authorizationCode": true, "refreshToken": true},
+  "scopes": {"full": true}}}}, "0"]]}
+JSON
+done

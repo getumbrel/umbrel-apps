@@ -1,0 +1,64 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Let Pi-hole's DHCP server run alongside umbrelOS Machines, whose own dnsmasq
+# serves DHCP on the umbrel-vm bridge. By default Pi-hole binds the wildcard
+# DHCP socket, so Machines can't bind UDP 67. We add these dnsmasq lines to
+# Pi-hole's config, keeping any lines the user already has:
+#   bind-dynamic                 bind per interface so both can coexist
+#   no-dhcp-interface=umbrel-vm  never serve DHCP on the Machines bridge
+# Only one of bind-interfaces and bind-dynamic may be set, or Pi-hole's DNS won't
+# start. So a user's own bind mode is left as it is, whether it's set in
+# pihole.toml or in a custom dnsmasq.d file.
+
+APP_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")"
+PIHOLE_DIR="${APP_DIR}/data/pihole"
+TOML="${PIHOLE_DIR}/pihole.toml"
+
+wanted=()
+if ! grep -qsE '"bind-(dynamic|interfaces)"' "${TOML}" &&
+	! grep -rqsE '^[[:space:]]*bind-(dynamic|interfaces)' "${APP_DIR}/data/dnsmasq"; then
+	wanted+=('"bind-dynamic"')
+fi
+if ! grep -q '"no-dhcp-interface=umbrel-vm"' "${TOML}" 2>/dev/null; then
+	wanted+=('"no-dhcp-interface=umbrel-vm"')
+fi
+[[ ${#wanted[@]} -eq 0 ]] && exit 0
+
+items="$(IFS=,; echo "${wanted[*]}" | sed 's/,/, /g')"
+
+if [[ ! -f "${TOML}" ]]; then
+	# A v5 install is migrated by Pi-hole on this start; we add the lines next start.
+	[[ -f "${PIHOLE_DIR}/setupVars.conf" ]] && exit 0
+	# Fresh install: Pi-hole fills in every other setting with its defaults.
+	mkdir -p "${PIHOLE_DIR}"
+	printf '[misc]\n  dnsmasq_lines = [ %s ]\n' "${items}" > "${TOML}"
+	echo "Created ${TOML} with Machines DHCP compatibility lines"
+	exit 0
+fi
+
+# Add our items to the start of misc.dnsmasq_lines, adding the key or [misc]
+# table if they're missing. TOML allows a trailing comma in arrays.
+tmp="$(mktemp "${TOML}.XXXXXX")"
+awk -v items="${items}" '
+	function add_key() { print "  dnsmasq_lines = [ " items " ]"; done = 1 }
+	/^[[:space:]]*\[[A-Za-z0-9_.]+\][[:space:]]*(#.*)?$/ {
+		if (in_misc && !done) add_key()
+		in_misc = ($0 ~ /^[[:space:]]*\[misc\]/)
+		if (in_misc) seen_misc = 1
+		print; next
+	}
+	in_misc && !done && /^[[:space:]]*dnsmasq_lines[[:space:]]*=[[:space:]]*\[/ {
+		sub(/\[/, "[ " items ",")
+		done = 1
+	}
+	{ print }
+	END {
+		if (in_misc && !done) add_key()
+		if (!seen_misc) { print ""; print "[misc]"; add_key() }
+	}
+' "${TOML}" > "${tmp}"
+chown --reference="${TOML}" "${tmp}"
+chmod --reference="${TOML}" "${tmp}"
+mv "${tmp}" "${TOML}"
+echo "Added Machines DHCP compatibility lines to ${TOML}"

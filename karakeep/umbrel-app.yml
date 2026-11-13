@@ -2,10 +2,34 @@ manifestVersion: 1
 id: karakeep
 storage:
   dataRoot: data
+environment:
+  - name: OPENAI_API_KEY
+    services:
+      - web
+    note: >-
+      API key for AI tagging and summaries, from OpenAI or another OpenAI-compatible provider. To use the Ollama app instead, enter any text, such as ollama, and set the base URL below. A value here takes precedence over settings.env.
+  - name: OPENAI_BASE_URL
+    services:
+      - web
+    default: "https://api.openai.com/v1"
+    note: >-
+      Leave empty for OpenAI. For the Ollama app on this Umbrel, use http://ollama_ollama_1:11434/v1. For other OpenAI-compatible providers, enter their base URL.
+  - name: INFERENCE_TEXT_MODEL
+    services:
+      - web
+    default: "gpt-6-luna"
+    note: >-
+      Model used for tagging and summarizing text. With Ollama, enter a model you've downloaded in Ollama, such as gemma3.
+  - name: INFERENCE_IMAGE_MODEL
+    services:
+      - web
+    default: "gpt-4o-mini"
+    note: >-
+      Model used for tagging images. It must support image input. With Ollama, enter a vision model you've downloaded in Ollama, such as llava.
 name: Karakeep
 tagline: A bookmark-everything app
 category: files
-version: "0.34.1"
+version: "0.34.1-patch.1"
 port: 8620
 description: >-
   📒 Karakeep is a modern application designed to help users collect, organize, and rediscover information in a way that feels natural and effortless. It blends the functions of a bookmarking tool, a note-taking app, and an image archive, enhanced by intelligent automation that makes managing digital content simple and intuitive. Users can save links, jot down ideas, or store visual inspiration, and Karakeep immediately processes this input to make it more accessible and useful. With the help of built-in artificial intelligence, the app automatically assigns relevant tags based on content, so users can stay organized without needing to manually sort or categorize their entries.
@@ -22,11 +46,17 @@ submission: https://github.com/getumbrel/umbrel-apps/pull/2762
 repo: https://github.com/karakeep-app/karakeep
 support: https://github.com/karakeep-app/karakeep/issues
 gallery:
-  - 1.jpg
-  - 2.jpg
-  - 3.jpg
-  - 4.jpg
+  - 1.webp
+  - 2.webp
+  - 3.webp
+  - 4.webp
 releaseNotes: >-
+  This update lets you connect an AI provider, such as OpenAI or the Ollama app, in Karakeep's app settings on umbrelOS 2.0 for automatic tagging and summaries.
+
+
+  Previous Karakeep 0.34.1 release notes:
+
+
   ⚠️ This update changes Karakeep's sign-in system. All web users will need to sign in again; mobile sessions and API keys are unaffected. Before updating, resolve any accounts whose email addresses differ only by capitalization by deleting the unused duplicate account, or those accounts may be locked out.
 
 

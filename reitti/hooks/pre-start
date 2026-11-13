@@ -5,7 +5,8 @@ set -euo pipefail
 # Redis 8, whose RDB snapshots cannot be loaded by Redis 7. Run this migration
 # once per install so future Redis bumps are not affected by this compatibility
 # cleanup.
-redis_dir="${APP_DATA_DIR}/data/redis"
+DATA_ROOT="${APP_DATA_ROOT:-${APP_DATA_DIR}/data}"
+redis_dir="${DATA_ROOT}/redis"
 rdb_file="${redis_dir}/dump.rdb"
 migration_marker="${APP_DATA_DIR}/.reitti-redis8-rdb-reset-complete"
 

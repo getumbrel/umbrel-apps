@@ -2,10 +2,38 @@ manifestVersion: 1
 id: bookstack
 storage:
   dataRoot: data
+environment:
+  - name: MAIL_HOST
+    services:
+      - server
+    note: >-
+      SMTP server host name, such as smtp.example.com. After saving, use Send a Test Email under Settings > Maintenance in BookStack to check your settings.
+  - name: MAIL_PORT
+    services:
+      - server
+    default: "587"
+    note: >-
+      SMTP server port. Use 587 for most providers, or 465 for providers that require an encrypted connection from the start.
+  - name: MAIL_USERNAME
+    services:
+      - server
+    note: >-
+      SMTP username.
+  - name: MAIL_PASSWORD
+    services:
+      - server
+    note: >-
+      SMTP password or app password.
+  - name: MAIL_FROM
+    services:
+      - server
+    default: "bookstack@example.com"
+    note: >-
+      Sender address, such as bookstack@example.com. Use an address your SMTP provider lets you send from.
 name: BookStack
 tagline: A simple, self-hosted platform for organizing documentation
 category: files
-version: "26.09.2-patch.1"
+version: "26.09.3-patch.1"
 port: 6875
 description: >-
   BookStack is a free and open source platform for creating and organizing documentation. It provides a familiar book, chapter, and page structure that makes it easy to build wikis, knowledge bases, manuals, and internal documentation.
@@ -31,10 +59,20 @@ gallery:
   - 4.webp
   - 5.webp
 releaseNotes: >-
-  This update includes PHP security fixes for two critical vulnerabilities (CVE-2026-109618 and CVE-2026-109619). Updating is strongly recommended. BookStack remains at version 26.09.2.
+  This update lets you connect an SMTP email provider in BookStack's app settings on umbrelOS 2.0, for notifications, invitations and password resets.
 
 
-  Full security advisory can be found at https://www.php.net/archive/2026.php#2026-10-21-5
+  Previous BookStack 26.09.3 release notes:
+
+
+  This security update improves protection of private content. Updating is recommended.
+    - Fixed access to images and drawings attached to inaccessible draft or deleted pages.
+    - Fixed personal editor drafts being visible to other users in certain situations.
+    - Fixed book and chapter conversions incorrectly deleting content in the recycle bin.
+    - Prevented attachment responses from revealing whether inaccessible pages exist.
+
+
+  Full release notes can be found at https://github.com/BookStackApp/BookStack/releases/tag/v26.09.3
 dependencies: []
 path: ""
 defaultUsername: "admin@admin.com"

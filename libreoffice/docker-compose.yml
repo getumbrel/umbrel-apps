@@ -7,7 +7,8 @@ services:
       APP_PORT: 3000
 
   server:
-    image: linuxserver/libreoffice:7.6.7@sha256:a62c7f094f2a7ed8145983d04f54ca80d85b557bbdda0f9aa784ccb6267b70e8
+    image: linuxserver/libreoffice:25.8.7@sha256:cd95f41ecfc36dab3af29eb9dba21271a0d828dc512f2c46294cf3341e0cd0c3
+    hostname: libreoffice
     restart: on-failure
     stop_grace_period: 1m
     environment:
@@ -15,3 +16,4 @@ services:
       - PGID=1000
     volumes:
       - ${APP_DATA_DIR}/data/config:/config
+    shm_size: "1gb"

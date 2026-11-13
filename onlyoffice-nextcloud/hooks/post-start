@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# ONLYOFFICE's Nextcloud connector 10.2+ rejects local addresses unless this
+# scoped Nextcloud setting is on. This app is reached over Docker hostnames,
+# so enable it (only for ONLYOFFICE, not allow_local_remote_servers).
+# https://github.com/ONLYOFFICE/onlyoffice-nextcloud/blob/v10.2.1/CHANGELOG.md
+occ() { docker exec --user www-data nextcloud_web_1 php occ "$@"; }
+
+for _ in {1..30}; do
+  occ status --output=json 2>/dev/null | grep -q '"installed":true' && break
+  sleep 2
+done
+
+if [[ "$(occ config:system:get onlyoffice allow_local_address 2>/dev/null || true)" != true ]]; then
+  occ config:system:set onlyoffice allow_local_address --type=boolean --value=true ||
+    echo "Could not update Nextcloud. Restart ONLYOFFICE Docs once Nextcloud is running." >&2
+fi

@@ -11,6 +11,9 @@ services:
     restart: on-failure
     stop_grace_period: 1m
     init: true
+    # The bundled Tor (0.4.8.x) can no longer join the Tor network, so turn off the
+    # image's own Tor service and use the tor sidecar below instead.
+    entrypoint: ["tini", "-g", "--", "sh", "-c", "echo 'type = internal' > /etc/dinit.d/tor && exec /jam-entrypoint.sh"]
     volumes:
       - ${APP_DATA_DIR}/data/joinmarket:/root/.joinmarket
     environment:
@@ -25,3 +28,15 @@ services:
       jm_rpc_user: $APP_BITCOIN_RPC_USER
       jm_rpc_password: "${APP_BITCOIN_RPC_PASS}"
       jm_rpc_wallet_file: jam_default
+
+  # Shares the web container's network namespace, so JoinMarket reaches it on
+  # localhost:9050 (SOCKS) and localhost:9051 (control), like the bundled Tor.
+  # The control port only listens inside that private namespace.
+  tor:
+    image: ghcr.io/getumbrel/tor:0.4.9.14@sha256:7663d18fe37b3edd97c859aa36bb5eeaa328d86c57729db0433dff430e8abd8d
+    user: "1000:1000"
+    restart: on-failure
+    network_mode: "service:web"
+    command: ["--SocksPort", "127.0.0.1:9050 IsolateDestAddr IsolateDestPort", "--ControlPort", "127.0.0.1:9051", "--CookieAuthentication", "0"]
+    environment:
+      HOME: "/tmp"
