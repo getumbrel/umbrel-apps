@@ -1,0 +1,41 @@
+load_module /usr/lib/nginx/modules/ngx_http_acme_module.so;
+
+pid /tmp/nginx.pid;
+error_log /dev/stderr info;
+
+events {
+    worker_connections 1024;
+}
+
+http {
+    include /etc/nginx/mime.types;
+    default_type application/octet-stream;
+    include /etc/nginx/monkeyai/logging.conf;
+
+    client_body_temp_path /tmp/client_body;
+    proxy_temp_path /tmp/proxy;
+    fastcgi_temp_path /tmp/fastcgi;
+    uwsgi_temp_path /tmp/uwsgi;
+    scgi_temp_path /tmp/scgi;
+    client_max_body_size 100m;
+    proxy_read_timeout 90s;
+    proxy_send_timeout 90s;
+    include /tmp/nginx/real-ip.conf;
+
+    sendfile on;
+    tcp_nopush on;
+    keepalive_timeout 65;
+    gzip on;
+    gzip_vary on;
+    gzip_min_length 1024;
+    gzip_types text/plain text/css application/json application/javascript application/xml image/svg+xml;
+
+    # 使用 Umbrel 注入的唯一容器名，避免共享网络中的 backend 别名冲突。
+    upstream monkeyai_backend {
+        server baizhi_backend_1:8080;
+        keepalive 32;
+    }
+
+    include /tmp/nginx/preview-site.conf;
+    include /tmp/nginx/site.conf;
+}
