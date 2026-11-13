@@ -1,0 +1,48 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: hedgedoc_app_1
+      APP_PORT: 3000
+
+  app:
+    image: quay.io/hedgedoc/hedgedoc:1.12.0@sha256:1df4cbc99611ccc9761fd46b08b91e4fc787e9adc5b3f190d1b897a29b825452
+    restart: on-failure
+    depends_on:
+      db:
+        condition: service_healthy
+    # HedgeDoc builds upload links from CMD_DOMAIN, which would pin the app to one
+    # hostname. Without it upstream throws on image upload, so return a relative
+    # /uploads/ link instead. Everything else already works with relative URLs.
+    command:
+      - sh
+      - -c
+      - sed -i "s|(new URL(fileName, config.serverURL + '/uploads/')).href|config.serverURL + '/uploads/' + fileName|" lib/web/imageRouter/filesystem.js && exec node app.js
+    environment:
+      CMD_DB_URL: postgres://hedgedoc:${APP_HEDGEDOC_DB_PASSWORD}@hedgedoc_db_1:5432/hedgedoc
+      CMD_SESSION_SECRET: ${APP_HEDGEDOC_SESSION_SECRET}
+      CMD_IMAGE_UPLOAD_TYPE: filesystem
+      # umbrelOS serves the app on a port of the device hostname, so an HSTS header
+      # over HTTPS would force HTTPS for every other app on that hostname.
+      CMD_HSTS_ENABLE: "false"
+      # Don't send a hash of each user's email to libravatar.org for avatars.
+      CMD_ALLOW_GRAVATAR: "false"
+    volumes:
+      - ${APP_DATA_DIR}/data/uploads:/hedgedoc/public/uploads
+
+  db:
+    image: postgres:18.7-alpine@sha256:75dcac3dfb1cd01ca3536910bbc84128759362f8b118bf8c55b38a94f68f3b73
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      POSTGRES_DB: hedgedoc
+      POSTGRES_USER: hedgedoc
+      POSTGRES_PASSWORD: ${APP_HEDGEDOC_DB_PASSWORD}
+      PGDATA: /data/pgdata
+    healthcheck:
+      test: "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    volumes:
+      - ${APP_DATA_DIR}/data/db:/data
