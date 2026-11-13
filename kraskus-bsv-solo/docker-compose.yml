@@ -1,0 +1,182 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: kraskus-bsv-solo_ui_1
+      APP_PORT: 8080
+  init:
+    image: ghcr.io/kraskuscrypto/kraskus-bsv-external-backend:0.6.1@sha256:b0fe13d0a00213e52622ce08033421342dcc34ff70fb916a372138080fec8908
+    restart: 'no'
+    user: 0:0
+    command:
+    - python3
+    - /app/init.py
+    volumes:
+    - ${APP_DATA_DIR}/data/external-060:/data/external
+    - ${APP_DATA_DIR}/data/secrets:/data/secrets
+    - ${APP_DATA_DIR}/data/runtime:/legacy-runtime:ro
+    network_mode: none
+    security_opt:
+    - no-new-privileges:true
+  svnode:
+    image: ghcr.io/kraskuscrypto/kraskus-bsv-external-node:0.6.1@sha256:cc0e8d3f83c8c0f2925378188c9ac8b27b256ea3d21f011954b70d7f419fe82e
+    restart: unless-stopped
+    depends_on:
+      init:
+        condition: service_completed_successfully
+    command:
+    - -assumevalid=000000000000000002177a2c23a3b7e00e3d406de4d523e55cc29db20de8edb3
+    - -dbcache=2048
+    - -maxparallelblocks=2
+    - -maxparallelblocksperpeer=1
+    - -blockdownloadlowerwindow=32
+    - -addnode=57.128.233.172:8333
+    - -addnode=195.144.22.198:8333
+    - -addnode=135.125.170.182:8333
+    - -addnode=15.235.232.121:8333
+    - -addnode=99.127.49.102:8333
+    environment: {}
+    volumes:
+    - ${APP_DATA_DIR}/data/node:/data
+    - ${APP_DATA_DIR}/data/secrets:/run/kraskus-bsv/secrets:ro
+    - ${APP_DATA_DIR}/data/external-060:/public:ro
+    - ${APP_DATA_DIR}/data/external-node-state:/node-meta
+    stop_grace_period: 660s
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - bitcoin-cli -datadir=/data -conf=/data/bitcoin.conf getblockcount >/dev/null 2>&1
+      interval: 30s
+      timeout: 15s
+      retries: 20
+      start_period: 600s
+    networks:
+    - bsv
+    security_opt:
+    - no-new-privileges:true
+    mem_limit: 4g
+    memswap_limit: 4g
+    cpus: 2
+  controller:
+    image: ghcr.io/kraskuscrypto/kraskus-bsv-external-backend:0.6.1@sha256:b0fe13d0a00213e52622ce08033421342dcc34ff70fb916a372138080fec8908
+    restart: unless-stopped
+    user: 10001:10001
+    command:
+    - python3
+    - -m
+    - kraskus_solo.coins.bsv.main
+    depends_on:
+      init:
+        condition: service_completed_successfully
+      svnode:
+        condition: service_started
+      api:
+        condition: service_healthy
+    environment:
+      KRASKUS_BSV_RPC_URL: http://svnode:8332/
+      KRASKUS_BSV_RPC_USER_FILE: /data/secrets/rpc-user
+      KRASKUS_BSV_RPC_PASSWORD_FILE: /data/secrets/rpc-password
+      KRASKUS_BSV_SETTINGS_FILE: /data/external/settings.json
+      KRASKUS_BSV_STATUS_FILE: /data/external/status.json
+      KRASKUS_BSV_TELEMETRY_FILE: /data/external/share-events.jsonl
+      KRASKUS_BSV_BLOCK_LEDGER_FILE: /data/external/blocks.jsonl
+      KRASKUS_BSV_STRATUM_PORT: '1922'
+      KRASKUS_BSV_SHARE_DIFFICULTY: '16384'
+    volumes:
+    - ${APP_DATA_DIR}/data/external-060:/data/external
+    - ${APP_DATA_DIR}/data/secrets:/data/secrets:ro
+    ports:
+    - 1922:1922
+    networks:
+    - bsv
+    stop_grace_period: 60s
+    read_only: true
+    tmpfs:
+    - /tmp:size=8m,mode=1777
+    cap_drop:
+    - ALL
+    security_opt:
+    - no-new-privileges:true
+    mem_limit: 256m
+    memswap_limit: 256m
+    cpus: 1
+    init: true
+  api:
+    image: ghcr.io/kraskuscrypto/kraskus-bsv-external-backend:0.6.2@sha256:668cbc477cc806a60c03715a91eb308a057aca6e5b191e115e3b4f08bdb8a2fc
+    restart: unless-stopped
+    user: 10001:10001
+    command:
+    - python3
+    - -m
+    - kraskus_solo.coins.bsv.external_api
+    depends_on:
+      init:
+        condition: service_completed_successfully
+      svnode:
+        condition: service_started
+    environment:
+      KRASKUS_BSV_RPC_URL: http://svnode:8332/
+      KRASKUS_BSV_PUBLIC_CONFIG: /data/external
+      KRASKUS_BSV_SECRET_DIR: /data/secrets
+      KRASKUS_BSV_MINING_CAPABLE: '1'
+      KRASKUS_APP_TOKEN_FILE: /run/kraskus-app-token/token
+      KRASKUS_PLATFORM: umbrel
+    volumes:
+    - ${APP_DATA_DIR}/data/external-060:/data/external
+    - ${APP_DATA_DIR}/data/secrets:/data/secrets:ro
+    - ${APP_DATA_DIR}/data/external-060/app-token:/run/kraskus-app-token/token:ro
+    networks:
+    - bsv
+    stop_grace_period: 60s
+    read_only: true
+    tmpfs:
+    - /tmp:size=8m,mode=1777
+    cap_drop:
+    - ALL
+    security_opt:
+    - no-new-privileges:true
+    healthcheck:
+      test:
+      - CMD
+      - python3
+      - -c
+      - import urllib.request;urllib.request.urlopen('http://127.0.0.1:18421/livez',timeout=3)
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
+    mem_limit: 256m
+    memswap_limit: 256m
+    cpus: 0.5
+    init: true
+  ui:
+    image: ghcr.io/kraskuscrypto/kraskus-bsv-external-ui:ui-0.6.4@sha256:5595ab8e97f42594965c9c0404a41eb21c125eb4bbab5d6d7f7070bcb9e419ac
+    restart: unless-stopped
+    depends_on:
+      init:
+        condition: service_completed_successfully
+      api:
+        condition: service_started
+    volumes:
+    - ${APP_DATA_DIR}/data/external-060/app-token:/run/kraskus-app-token/token:ro
+    stop_grace_period: 5s
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - wget -q --spider http://127.0.0.1:8080/index.html
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+    - bsv
+    security_opt:
+    - no-new-privileges:true
+    environment:
+      KRASKUS_APP_TOKEN_FILE: /run/kraskus-app-token/token
+      KRASKUS_TOKEN_READY_URL: http://api:18421/livez
+    mem_limit: 128m
+    memswap_limit: 128m
+    cpus: 0.25
+networks:
+  bsv:
+    name: kraskus-bsv-solo
