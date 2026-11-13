@@ -1,0 +1,16 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: bloglite_web_1
+      APP_PORT: 3000
+      # Posts and the RSS feed are public by design; writing needs the bloglite login
+      PROXY_AUTH_ADD: "false"
+
+  web:
+    image: zot.huijzer.xyz/bloglite:3.1.0@sha256:a882a57e230e59abf5a77891e8bff3364703c4134774dcff4c5b8d4b4ca78130
+    user: "1000:1000"
+    restart: on-failure
+    environment:
+      BLOGLITE_PASSWORD: ${APP_PASSWORD}
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
