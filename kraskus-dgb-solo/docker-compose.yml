@@ -1,0 +1,271 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: kraskus-dgb-solo_ui_1
+      APP_PORT: 8080
+  init:
+    image: ghcr.io/kraskuscrypto/kraskus-dgb-solo-ui:adapter-0.3.1@sha256:f4f64948413e6532515974587cd616a75a23e189bb23fe8afed419e06833a59a
+    pull_policy: missing
+    restart: 'no'
+    user: 0:0
+    command:
+    - python
+    - /app/dgb_init.py
+    environment:
+      DGB_DATA_ROOT: /data-root
+    volumes:
+    - ${APP_DATA_DIR}/data/node:/data-root/node
+    - ${APP_DATA_DIR}/data/runtime:/data-root/runtime
+    - ${APP_DATA_DIR}/data/stratum:/data-root/stratum
+    - ${APP_DATA_DIR}/data/secrets:/data-root/secrets
+    network_mode: none
+    security_opt:
+    - no-new-privileges:true
+  node:
+    command:
+    - -disablewallet=1
+    image: ghcr.io/kraskuscrypto/kraskus-dgb-solo-ui:node-0.3.1@sha256:3cdd8eca974ab94d9ab0485475fe8880f594cc8627080a95474fe387aec5ae20
+    pull_policy: missing
+    restart: unless-stopped
+    stop_grace_period: 10m
+    depends_on:
+      init:
+        condition: service_completed_successfully
+    environment:
+      DGB_CHAIN: main
+    volumes:
+    - ${APP_DATA_DIR}/data/node:/data
+    - ${APP_DATA_DIR}/data/runtime/node:/runtime/node:ro
+    - ${APP_DATA_DIR}/data/secrets/node:/secrets:ro
+    ports:
+    - 12024:12024/tcp
+    healthcheck:
+      test:
+      - CMD
+      - /usr/local/bin/dgb-healthcheck
+      interval: 30s
+      timeout: 25s
+      retries: 10
+      start_period: 15m
+    security_opt:
+    - no-new-privileges:true
+    cap_drop:
+    - ALL
+    networks:
+    - dgb_public
+    - dgb_private
+  stratum-sha256d:
+    image: ghcr.io/kraskuscrypto/kraskus-dgb-solo-ui:gateway-0.3.1@sha256:087a14560a2710b5ae1c3acf9d284c3426c495368354377b464ddf6f4c19afdb
+    pull_policy: missing
+    restart: unless-stopped
+    stop_grace_period: 30s
+    depends_on:
+      init:
+        condition: service_completed_successfully
+      node:
+        condition: service_started
+    environment:
+      DGB_ALGO: sha256d
+      DGB_CHAIN: main
+      DGB_RPC_URL: http://node:14022
+      DGB_RPC_USER: stratum_sha256d
+      DGB_RPC_PASSWORD_FILE: /secrets/rpc-password
+      DGB_GATE_FILE: /runtime/mining-gate.json
+      DGB_STATE_DIR: /state
+    volumes:
+    - ${APP_DATA_DIR}/data/stratum/sha256d:/state
+    - ${APP_DATA_DIR}/data/runtime:/runtime:ro
+    - ${APP_DATA_DIR}/data/secrets/stratum-sha256d:/secrets:ro
+    ports:
+    - 1928:1928/tcp
+    healthcheck:
+      test:
+      - CMD
+      - python
+      - -c
+      - import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/health', timeout=5).read()
+      interval: 20s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+    read_only: true
+    tmpfs:
+    - /tmp
+    security_opt:
+    - no-new-privileges:true
+    cap_drop:
+    - ALL
+    networks:
+    - dgb_public
+    - dgb_private
+  stratum-scrypt:
+    image: ghcr.io/kraskuscrypto/kraskus-dgb-solo-ui:gateway-0.3.1@sha256:087a14560a2710b5ae1c3acf9d284c3426c495368354377b464ddf6f4c19afdb
+    pull_policy: missing
+    restart: unless-stopped
+    stop_grace_period: 30s
+    depends_on:
+      init:
+        condition: service_completed_successfully
+      node:
+        condition: service_started
+    environment:
+      DGB_ALGO: scrypt
+      DGB_CHAIN: main
+      DGB_RPC_URL: http://node:14022
+      DGB_RPC_USER: stratum_scrypt
+      DGB_RPC_PASSWORD_FILE: /secrets/rpc-password
+      DGB_GATE_FILE: /runtime/mining-gate.json
+      DGB_STATE_DIR: /state
+    volumes:
+    - ${APP_DATA_DIR}/data/stratum/scrypt:/state
+    - ${APP_DATA_DIR}/data/runtime:/runtime:ro
+    - ${APP_DATA_DIR}/data/secrets/stratum-scrypt:/secrets:ro
+    ports:
+    - 1929:1929/tcp
+    healthcheck:
+      test:
+      - CMD
+      - python
+      - -c
+      - import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/health', timeout=5).read()
+      interval: 20s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+    read_only: true
+    tmpfs:
+    - /tmp
+    security_opt:
+    - no-new-privileges:true
+    cap_drop:
+    - ALL
+    networks:
+    - dgb_public
+    - dgb_private
+  stratum-skein:
+    image: ghcr.io/kraskuscrypto/kraskus-dgb-solo-ui:gateway-0.3.1@sha256:087a14560a2710b5ae1c3acf9d284c3426c495368354377b464ddf6f4c19afdb
+    pull_policy: missing
+    restart: unless-stopped
+    stop_grace_period: 30s
+    depends_on:
+      init:
+        condition: service_completed_successfully
+      node:
+        condition: service_started
+    environment:
+      DGB_ALGO: skein
+      DGB_CHAIN: main
+      DGB_RPC_URL: http://node:14022
+      DGB_RPC_USER: stratum_skein
+      DGB_RPC_PASSWORD_FILE: /secrets/rpc-password
+      DGB_GATE_FILE: /runtime/mining-gate.json
+      DGB_STATE_DIR: /state
+    volumes:
+    - ${APP_DATA_DIR}/data/stratum/skein:/state
+    - ${APP_DATA_DIR}/data/runtime:/runtime:ro
+    - ${APP_DATA_DIR}/data/secrets/stratum-skein:/secrets:ro
+    ports:
+    - 1930:1930/tcp
+    healthcheck:
+      test:
+      - CMD
+      - python
+      - -c
+      - import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/health', timeout=5).read()
+      interval: 20s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+    read_only: true
+    tmpfs:
+    - /tmp
+    security_opt:
+    - no-new-privileges:true
+    cap_drop:
+    - ALL
+    networks:
+    - dgb_public
+    - dgb_private
+  adapter:
+    image: ghcr.io/kraskuscrypto/kraskus-dgb-solo-ui:adapter-0.3.1@sha256:f4f64948413e6532515974587cd616a75a23e189bb23fe8afed419e06833a59a
+    pull_policy: missing
+    restart: unless-stopped
+    stop_grace_period: 20s
+    command:
+    - python
+    - -m
+    - kraskus_foundation.service_init
+    - --uid
+    - '65532'
+    - --gid
+    - '2000'
+    - --
+    - python
+    - /app/adapter.py
+    depends_on:
+      init:
+        condition: service_completed_successfully
+      node:
+        condition: service_started
+    environment:
+      DGB_CHAIN: main
+      KRASKUS_DGB_RPC_URL: http://node:14022
+      KRASKUS_DGB_RPC_USER: adapter
+      KRASKUS_DGB_RPC_PASSWORD_FILE: /secrets/rpc-password
+      KRASKUS_DGB_RUNTIME_DIR: /runtime
+      KRASKUS_DGB_STRATUM_DIR: /stratum
+      KRASKUS_APP_TOKEN_FILE: /runtime/app-token/token
+    volumes:
+    - ${APP_DATA_DIR}/data/runtime:/runtime
+    - ${APP_DATA_DIR}/data/stratum:/stratum:ro
+    - ${APP_DATA_DIR}/data/secrets/adapter:/secrets:ro
+    healthcheck:
+      test:
+      - CMD
+      - python
+      - -c
+      - import urllib.request; urllib.request.urlopen('http://127.0.0.1:18460/livez', timeout=5).read()
+      interval: 20s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+    read_only: true
+    tmpfs:
+    - /tmp
+    security_opt:
+    - no-new-privileges:true
+    cap_drop:
+    - ALL
+    networks:
+    - dgb_private
+  ui:
+    image: ghcr.io/kraskuscrypto/kraskus-dgb-solo-ui:ui-0.3.2@sha256:dec49aee468dfc1c5b57f2dea659d4f03a8081edacf02320da421415ee1a4da0
+    pull_policy: missing
+    restart: unless-stopped
+    depends_on:
+      adapter:
+        condition: service_healthy
+    environment:
+      ADAPTER_HOST: adapter
+    volumes:
+    - ${APP_DATA_DIR}/data/runtime/app-token:/run/kraskus-app-token:ro
+    stop_grace_period: 5s
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - wget -q --spider http://127.0.0.1:8080/index.html
+      interval: 20s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+    security_opt:
+    - no-new-privileges:true
+    networks:
+    - dgb_private
+    - dgb_public
+networks:
+  dgb_public:
+    driver: bridge
+  dgb_private:
+    driver: bridge
+    internal: true
