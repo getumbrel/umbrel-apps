@@ -1,0 +1,193 @@
+networks:
+  internal:
+    driver: bridge
+    internal: true
+  public:
+    driver: bridge
+services:
+  api:
+    depends_on:
+      pearld:
+        condition: service_healthy
+      init:
+        condition: service_completed_successfully
+    environment:
+      KRASKUS_API_PORT: '18441'
+      KRASKUS_PRL_RPC_URL: http://pearld:44107/
+      KRASKUS_PRL_RPC_USER_FILE: /run/secrets/rpc-user
+      KRASKUS_PRL_RPC_PASSWORD_FILE: /run/secrets/rpc-password
+      KRASKUS_PRL_GATEWAY_URL: http://gateway:1903
+      KRASKUS_PRL_BLOCK_LEDGER: /mining/blocks.jsonl
+      KRASKUS_PRL_PUBLIC_CONFIG: /runtime/payout
+      KRASKUS_APP_TOKEN_FILE: /run/kraskus-app-token/token
+      KRASKUS_PRL_MINING_CAPABLE: '1'
+    healthcheck:
+      test:
+      - CMD
+      - python
+      - -c
+      - import urllib.request;urllib.request.urlopen('http://127.0.0.1:18441/livez',timeout=3).read()
+      interval: 15s
+      timeout: 5s
+      retries: 6
+    image: ghcr.io/kraskuscrypto/kraskus-prl-solo-ui:api-0.6.4@sha256:f622bfa701a9c92f8ea217ff902318c8ea773bc791f14cb7cda84ee32d5a0bf3
+    networks:
+      internal: null
+    restart: unless-stopped
+    security_opt:
+    - no-new-privileges:true
+    volumes:
+    - ${APP_DATA_DIR}/data/external-060/payout:/runtime/payout
+    - ${APP_DATA_DIR}/data/external-060/mining:/mining:ro
+    - ${APP_DATA_DIR}/data/external-060/app-token:/run/kraskus-app-token:ro
+    - ${APP_DATA_DIR}/data/external-060/secrets:/run/secrets:ro
+    mem_limit: 256m
+    memswap_limit: 256m
+    cpus: 0.5
+    read_only: true
+    tmpfs:
+    - /tmp:size=8m
+    init: true
+  gateway:
+    depends_on:
+      pearld:
+        condition: service_healthy
+      init:
+        condition: service_completed_successfully
+    environment:
+      KRASKUS_PRL_BLOCK_LEDGER: /mining/blocks.jsonl
+      KRASKUS_PRL_MINING_ADDRESS_FILE: /payout/payout-address
+      KRASKUS_PRL_RPC_PASSWORD_FILE: /run/secrets/rpc-password
+      KRASKUS_PRL_RPC_USER_FILE: /run/secrets/rpc-user
+      KRASKUS_PRL_STRATUM_HOST: 0.0.0.0
+      KRASKUS_PRL_STRATUM_PORT: '1902'
+      KRASKUS_PRL_TELEMETRY_HOST: 0.0.0.0
+      KRASKUS_PRL_TELEMETRY_PORT: '1903'
+      PEARLD_RPC_URL: http://pearld:44107/
+      KRASKUS_PRL_SHARE_DIFFICULTY: '500000'
+      RAYON_NUM_THREADS: '1'
+    healthcheck:
+      interval: 10s
+      retries: 30
+      start_period: 20s
+      test:
+      - CMD
+      - python
+      - -c
+      - import urllib.request; urllib.request.urlopen('http://127.0.0.1:1903/health', timeout=2).read()
+      timeout: 5s
+    image: ghcr.io/kraskuscrypto/kraskus-prl-solo-ui:gateway-0.6.4@sha256:91ac1ee8f286a2423bdff8ad3c5dc398e45dd5a9f2a3ae94d02c28ebd06065e9
+    networks:
+      internal: null
+      public: null
+    ports:
+    - mode: ingress
+      protocol: tcp
+      published: '1902'
+      target: 1902
+    restart: unless-stopped
+    security_opt:
+    - no-new-privileges:true
+    volumes:
+    - ${APP_DATA_DIR}/data/external-060/payout:/payout:ro
+    - ${APP_DATA_DIR}/data/external-060/mining:/mining
+    - ${APP_DATA_DIR}/data/external-060/secrets:/run/secrets:ro
+    mem_limit: 6g
+    memswap_limit: 6g
+    cpus: 1.5
+    stop_grace_period: 600s
+  pearld:
+    healthcheck:
+      interval: 15s
+      retries: 20
+      start_period: 20s
+      test:
+      - CMD-SHELL
+      - prlctl --notls --rpcserver=127.0.0.1:44107 --rpcuser=$$(cat /run/secrets/rpc-user) --rpcpass=$$(cat /run/secrets/rpc-password) getblockcount >/dev/null 2>&1
+      timeout: 8s
+    image: ghcr.io/kraskuscrypto/kraskus-prl-solo-ui:node-0.6.2@sha256:97111ac5c612835902e8387a10594b9a95bececf7de6cfe3eed6f00d3b111285
+    networks:
+      internal: null
+      public: null
+    ports:
+    - mode: ingress
+      protocol: tcp
+      published: '44108'
+      target: 44108
+    restart: unless-stopped
+    security_opt:
+    - no-new-privileges:true
+    stop_grace_period: 120s
+    volumes:
+    - ${APP_DATA_DIR}/data/node-155:/data
+    - ${APP_DATA_DIR}/data/external-060/logs:/logs
+    - ${APP_DATA_DIR}/data/external-060/secrets:/run/secrets:ro
+    mem_limit: 2g
+    memswap_limit: 2g
+    cpus: 1.5
+    tmpfs:
+    - /tmp:size=8m
+    read_only: true
+    depends_on:
+      init:
+        condition: service_completed_successfully
+    entrypoint:
+    - /bin/sh
+    - -ec
+    - RPC_USER="$$(cat /run/secrets/rpc-user)"; RPC_PASS="$$(cat /run/secrets/rpc-password)"; exec /usr/local/bin/pearld --configfile=/dev/null --datadir=/data --logdir=/logs --notls --rpcuser="$$RPC_USER" --rpcpass="$$RPC_PASS" --rpclisten=0.0.0.0:44107 --listen=0.0.0.0:44108 --txindex --addrindex --maxpeers=32 --utxocachemaxsize=256 --rpcmaxclients=40 --debuglevel=info
+  ui:
+    depends_on:
+      api:
+        condition: service_healthy
+        required: true
+      init:
+        condition: service_completed_successfully
+    environment:
+      BACKEND_HOST: api
+      BACKEND_PORT: '18441'
+      UI_PORT: '8080'
+      KRASKUS_APP_TOKEN_FILE: /run/kraskus-app-token/token
+      KRASKUS_TOKEN_READY_URL: http://api:18441/livez
+    healthcheck:
+      interval: 30s
+      retries: 3
+      start_period: 10s
+      test:
+      - CMD-SHELL
+      - wget -q --spider http://127.0.0.1:8080/index.html
+      timeout: 10s
+    image: ghcr.io/kraskuscrypto/kraskus-prl-solo-ui:ui-0.6.5@sha256:69271100ffcab4a32362c2cb716c2c26cf04030dad755e94f599badae9dd93fe
+    networks:
+      internal: null
+      public: null
+    restart: unless-stopped
+    security_opt:
+    - no-new-privileges:true
+    stop_grace_period: 5s
+    volumes:
+    - ${APP_DATA_DIR}/data/external-060/app-token:/run/kraskus-app-token:ro
+    mem_limit: 128m
+    memswap_limit: 128m
+    cpus: 0.25
+  init:
+    image: ghcr.io/kraskuscrypto/kraskus-prl-solo-ui:api-0.6.4@sha256:f622bfa701a9c92f8ea217ff902318c8ea773bc791f14cb7cda84ee32d5a0bf3
+    entrypoint:
+    - python
+    - -c
+    command:
+    - "\"\"\"Initialize new external-wallet runtime only; never open legacy wallet directories.\"\"\"\nimport os,pathlib,secrets,json\nroot=pathlib.Path('/appdata');runtime=root/'external-060'\nfor d in [root/'node-155',runtime,*[runtime/s for s in ['logs','payout','mining','secrets','app-token']]]:\n if d.is_symlink():raise SystemExit('Refusing symlink in new runtime')\n d.mkdir(mode=0o700,parents=True,exist_ok=True);os.chown(d,10001,10001);os.chmod(d,0o700)\nfor name,value,mode in [('secrets/rpc-user','kraskus-prl-'+secrets.token_hex(8)+'\\n',0o400),('secrets/rpc-password',secrets.token_hex(32)+'\\n',0o400),('app-token/token',secrets.token_hex(32)+'\\n',0o400),('payout/external-payout.json',json.dumps({'mode':'external','address':None,'enabled':False})+'\\n',0o600)]:\n f=runtime/name\n if f.is_symlink():raise SystemExit('Refusing runtime file symlink')\n if f.is_dir():\n  try:f.rmdir()\n  except OSError:raise SystemExit('Refusing nonempty directory at a runtime file path')\n if not f.exists():\n\
+      \  fd=os.open(f,os.O_WRONLY|os.O_CREAT|os.O_EXCL,mode)\n  with os.fdopen(fd,'w') as out:out.write(value)\n os.chown(f,10001,10001);os.chmod(f,mode)\n"
+    user: 0:0
+    restart: 'no'
+    network_mode: none
+    read_only: true
+    volumes:
+    - ${APP_DATA_DIR}/data:/appdata
+    security_opt:
+    - no-new-privileges:true
+    mem_limit: 64m
+    cpus: 0.25
+  app_proxy:
+    environment:
+      APP_HOST: kraskus-prl-solo_ui_1
+      APP_PORT: '8080'
