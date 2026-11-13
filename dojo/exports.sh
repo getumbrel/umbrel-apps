@@ -33,7 +33,7 @@ esac
 # Static addresses. Only the nginx container needs a fixed IP: Tor's
 # HiddenServicePort target is resolved from torrc, where a container name is
 # not dependable. Everything else talks over Docker DNS.
-export APP_DOJO_NGINX_IP="10.21.21.31"
+export APP_DOJO_NGINX_IP="10.21.21.34"
 
 # The block explorer a paired wallet opens transactions in, when the user does
 # not yet have one of their own.
