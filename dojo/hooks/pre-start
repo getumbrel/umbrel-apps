@@ -1,0 +1,89 @@
+#!/usr/bin/env bash
+#
+# Create the Tor hidden-service directory before any container starts.
+#
+# The node container bind-mounts this directory read-only at
+# /var/lib/tor/hsv3dojo, which is where Dojo looks for its own onion address.
+# If Docker has to create the host path for that mount it makes it root-owned,
+# and the Tor container -- which runs as 1000:1000 -- can then never write the
+# hostname file into it, leaving the app without a hidden service for good.
+#
+# Mode 0700 matches what Tor creates for itself; it refuses to use a hidden
+# service directory that is more permissive than that.
+set -euo pipefail
+
+HS_DIR="${TOR_DATA_DIR}/app-${APP_ID}-api"
+
+mkdir -p "${HS_DIR}"
+chmod 700 "${HS_DIR}"
+chown 1000:1000 "${HS_DIR}" 2>/dev/null || true
+
+# Mempool's onion, for the explorer entry in the wallet pairing payload.
+#
+# Dojo derives that URL from a Tor hostname file and nothing else -- there is no
+# environment variable for it -- so the only way to point it at Umbrel's Mempool
+# app is to put Mempool's onion where Dojo expects to find its own. The read in
+# keys.index.js is wrapped in try/catch, so an absent file means "no explorer",
+# which is what we want before Mempool has published.
+#
+# Mempool's export falls back to an empty string rather than notyetset.onion the
+# way bitcoin and electrs do, so the guard tests for empty.
+EXPLORER_DIR="${APP_DATA_DIR}/data/explorer"
+
+mkdir -p "${EXPLORER_DIR}"
+chmod 700 "${EXPLORER_DIR}"
+chown 1000:1000 "${EXPLORER_DIR}" 2>/dev/null || true
+
+if [[ -n "${APP_MEMPOOL_HIDDEN_SERVICE:-}" ]]; then
+	printf '%s\n' "${APP_MEMPOOL_HIDDEN_SERVICE}" > "${EXPLORER_DIR}/hostname"
+	chown 1000:1000 "${EXPLORER_DIR}/hostname" 2>/dev/null || true
+elif [[ -n "${APP_DOJO_PUBLIC_EXPLORER:-}" ]]; then
+	# No Mempool onion of their own yet: umbrelOS only creates one once Tor is
+	# switched on, and Dojo reads it at startup, so it takes that plus a
+	# restart. Point wallets at mempool.space's onion until then -- see the
+	# reasoning beside APP_DOJO_PUBLIC_EXPLORER in exports.sh. The Connect page
+	# compares against the same value and says which one is in force.
+	printf '%s\n' "${APP_DOJO_PUBLIC_EXPLORER}" > "${EXPLORER_DIR}/hostname"
+	chown 1000:1000 "${EXPLORER_DIR}/hostname" 2>/dev/null || true
+else
+	# Both empty. Keep "no explorer at all" reachable rather than making it
+	# unrepresentable: Dojo's read is wrapped in try/catch and an absent file
+	# is how it is told there is none.
+	rm -f "${EXPLORER_DIR}/hostname"
+fi
+
+# Keep each chain's indexed data apart.
+#
+# Dojo's network follows the Bitcoin Node's, so it can change under us when the
+# user switches their node. The database holds blocks and transactions indexed
+# for one specific chain; starting Dojo on another against the same MariaDB
+# would not fail cleanly, it would write one chain's history into the other's.
+#
+# The mount path stays fixed at data/mysql, because Umbrel's linter requires
+# every bind-mount source to be committed in the package and a path with a
+# variable in it cannot be. So instead of moving the mount, we move the data:
+# the chain in use lives at data/mysql, and every other chain's data is parked
+# beside it under data/mysql.<chain> until it is needed again. Nothing is ever
+# deleted -- switch back and your old index is still there.
+DATA_DIR="${APP_DATA_DIR}/data"
+CHAIN_MARKER="${DATA_DIR}/chain"
+CHAIN="${APP_DOJO_CHAIN:-mainnet}"
+
+mkdir -p "${DATA_DIR}/mysql"
+previous="$(cat "${CHAIN_MARKER}" 2>/dev/null || true)"
+
+if [[ -z "${previous}" ]]; then
+	# First run after this change. Whatever is in data/mysql was indexed for
+	# the chain we are on now -- there was no way to have run another one.
+	printf '%s\n' "${CHAIN}" > "${CHAIN_MARKER}"
+elif [[ "${previous}" != "${CHAIN}" ]]; then
+	echo "Info (${APP_ID}): Bitcoin Node moved from ${previous} to ${CHAIN}; parking the ${previous} index and switching to ${CHAIN}."
+	mv "${DATA_DIR}/mysql" "${DATA_DIR}/mysql.${previous}"
+	if [[ -d "${DATA_DIR}/mysql.${CHAIN}" ]]; then
+		mv "${DATA_DIR}/mysql.${CHAIN}" "${DATA_DIR}/mysql"
+	else
+		mkdir -p "${DATA_DIR}/mysql"
+	fi
+	chown 1000:1000 "${DATA_DIR}/mysql" 2>/dev/null || true
+	printf '%s\n' "${CHAIN}" > "${CHAIN_MARKER}"
+fi
