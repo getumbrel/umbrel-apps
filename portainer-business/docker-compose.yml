@@ -1,0 +1,40 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: portainer-business_portainer_1
+      APP_PORT: 9000
+      PROXY_AUTH_ADD: "false"
+
+  docker:
+    image: docker:27.2.0-dind@sha256:f9f72ad901a78f27be922b2d320bbc263174f12919c1b37e6a01f828fa904565
+    privileged: true
+    network_mode: host
+    stop_grace_period: 1m
+    restart: on-failure
+    environment:
+      # Own bridge and range so containers here don't clash with the dind0
+      # bridge (10.32.0.0/16) that the Portainer CE app and other dind apps share.
+      DOCKER_ENSURE_BRIDGE: "dind1:10.33.0.1/16"
+      # Keep Docker on the nftables backend selected by entrypoint.sh.
+      # An empty value disables legacy auto-selection; "false" enables it.
+      DOCKER_IPTABLES_LEGACY: ""
+    entrypoint: /entrypoint.sh
+    command: >
+      dockerd
+        --bridge dind1
+        --data-root /data/data
+        --exec-root /data/exec
+        --host unix:///data/docker.sock
+        --pidfile /data/docker.pid
+    volumes:
+      - ${APP_DATA_DIR}/entrypoint.sh:/entrypoint.sh
+      - ${APP_DATA_DIR}/data/docker:/data
+
+  portainer:
+    image: portainer/portainer-ee:2.45.3-alpine@sha256:4e706af52d7455c995b41ba8e05585ffa965e0a80adecb32d2fef14d68eb0f79
+    command: --host unix:///var/run/docker.sock --admin-password-file=/default-password
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/default-password:/default-password
+      - ${APP_DATA_DIR}/data/portainer:/data
+      - ${APP_DATA_DIR}/data/docker:/var/run
