@@ -62,7 +62,7 @@ export APP_DOJO_PUBLIC_EXPLORER="${dojo_public_explorer}"
 
 # Host port for the Dojo API, so wallets on the same network can reach it
 # without going through Tor or Umbrel's app proxy.
-export APP_DOJO_API_PORT="3024"
+export APP_DOJO_API_PORT="3028"
 
 # Soroban RPC, internal to the app.
 export APP_DOJO_SOROBAN_PORT="4242"
