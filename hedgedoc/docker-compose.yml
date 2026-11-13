@@ -10,13 +10,21 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    # HedgeDoc builds upload links from CMD_DOMAIN, which would pin the app to one
-    # hostname. Without it upstream throws on image upload, so return a relative
-    # /uploads/ link instead. Everything else already works with relative URLs.
+    # HedgeDoc builds upload links and its CSP script/style sources from
+    # CMD_DOMAIN, which would pin the app to one hostname. Without it, image
+    # upload throws and browsers reject the CSP paths, so patch both to work on
+    # any hostname. Stop with an error if upstream changes these lines.
     command:
       - sh
       - -c
-      - sed -i "s|(new URL(fileName, config.serverURL + '/uploads/')).href|config.serverURL + '/uploads/' + fileName|" lib/web/imageRouter/filesystem.js && exec node app.js
+      - |
+        set -e
+        U=lib/web/imageRouter/filesystem.js
+        grep -qF "new URL(fileName, config.serverURL + '/uploads/')" "$$U" || grep -qF "config.serverURL + '/uploads/' + fileName" "$$U" || { echo "Upload patch no longer matches" >&2; exit 1; }
+        grep -qF "config.serverURL + '/build/'" lib/csp.js || grep -qF "\"'self'\"" lib/csp.js || { echo "CSP patch no longer matches" >&2; exit 1; }
+        sed -i "s|(new URL(fileName, config.serverURL + '/uploads/')).href|config.serverURL + '/uploads/' + fileName|" "$$U"
+        sed -i -e "s|config.serverURL + '/build/'|\"'self'\"|g" -e "s|config.serverURL + '/js/'|\"'self'\"|" -e "s|config.serverURL + '/css/'|\"'self'\"|" -e "s|config.serverURL + '/config'|\"'self'\"|" lib/csp.js
+        exec node app.js
     environment:
       CMD_DB_URL: postgres://hedgedoc:${APP_HEDGEDOC_DB_PASSWORD}@hedgedoc_db_1:5432/hedgedoc
       CMD_SESSION_SECRET: ${APP_HEDGEDOC_SESSION_SECRET}
