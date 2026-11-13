@@ -2,9 +2,53 @@ manifestVersion: 1
 id: vikunja
 storage:
   dataRoot: data
+environment:
+  - name: VIKUNJA_MAILER_ENABLED
+    services:
+      - web
+    default: "false"
+    options:
+      - "true"
+    note: >-
+      Select true to send reminders, notifications and password reset emails, then fill in the settings below. While enabled, new accounts must confirm their email address before they can sign in.
+  - name: VIKUNJA_MAILER_HOST
+    services:
+      - web
+    note: >-
+      SMTP server host name, such as smtp.example.com.
+  - name: VIKUNJA_MAILER_PORT
+    services:
+      - web
+    default: "587"
+    note: >-
+      SMTP server port. Use 587 for most providers, or 465 with the SSL setting below.
+  - name: VIKUNJA_MAILER_FORCESSL
+    services:
+      - web
+    default: "false"
+    options:
+      - "true"
+    note: >-
+      Select true only if your provider uses port 465. Leave empty for port 587, which still upgrades to an encrypted connection when available.
+  - name: VIKUNJA_MAILER_USERNAME
+    services:
+      - web
+    note: >-
+      SMTP username.
+  - name: VIKUNJA_MAILER_PASSWORD
+    services:
+      - web
+    note: >-
+      SMTP password or app password.
+  - name: VIKUNJA_MAILER_FROMEMAIL
+    services:
+      - web
+    default: "mail@vikunja"
+    note: >-
+      Sender address, such as vikunja@example.com. Use an address your SMTP provider lets you send from.
 category: files
 name: Vikunja
-version: "2.7.0"
+version: "2.8.0-patch.1"
 tagline: The open-source, self-hostable to-do app
 description: >-
   Think of Vikunja like the notebook you have with all your things to keep track of. But with superpowers.
@@ -24,21 +68,29 @@ description: >-
 
   You can view your tasks in the classic list view - or in a Gantt Chart, or Table view, or Kanban Board. Whatever you need!
 releaseNotes: >-
-  🚨 This release includes six security fixes. Upgrading is highly recommended.
+  This update lets you connect an SMTP email provider in Vikunja's app settings on umbrelOS 2.0, for reminders, notifications and password resets.
+
+
+  Previous Vikunja 2.8.0 release notes:
+
+
+  🚨 This release fixes 19 security issues affecting file access, private data, login, imports, and more. Upgrading is highly recommended.
 
 
   Key highlights in this release:
-    - Adds an MCP server so AI assistants can work with tasks using scoped tokens
-    - Introduces a redesigned date picker across due dates, reminders, filters, and Gantt views
-    - Adds outgoing proxy support for webhooks, avatars, migrations, OpenID Connect, and Pro license checks
-    - Improves performance for task and project access queries, database connections, and API token checks
-    - Fixes and improvements for CalDAV, Todoist imports, checklists, rich-text descriptions, table view priorities, and OpenID account linking
+    - Adds a trash bin for tasks and projects, with undo and restore; trashed items are permanently deleted after 30 days
+    - Speeds up task creation with natural-language due dates, quick add in table view, and Android sharing
+    - Shows who logged time and lets you stop running timers directly from tasks
+    - Improves Kanban dragging, reminder subscriptions, and colorblind accessibility
 
 
-  Note: The login cookie security fix can require older Vikunja desktop apps to log in more often.
+  Note: After 10 failed password attempts, accounts are locked until recovered. This Umbrel package does not configure email delivery, so recovery requires server command-line access unless you have configured SMTP. Existing task creators and assignees are resubscribed during the upgrade; unsubscribe again if you no longer want reminders. If you configured OpenID Connect, review the new explicit account linking and groups-claim behavior before updating.
 
 
-  Full release notes are available at https://vikunja.io/changelog/vikunja-2.7.0-was-released/
+  Existing API token permissions are migrated automatically when upgrading from before 2.7.1. Integrations that create tokens must use the renamed permission keys. Views allow up to 100 manual buckets and 50 filter buckets, and imports default to a 100,000-item limit. The v2 API uses a dedicated attachment preview route instead of preview_size on downloads.
+
+
+  Full release notes are available at https://vikunja.io/changelog/vikunja-2.8.0-was-released/
 developer: Vikunja
 website: https://vikunja.io/
 dependencies: []
@@ -46,9 +98,9 @@ repo: https://github.com/go-vikunja/vikunja
 support: https://community.vikunja.io/
 port: 4523
 gallery:
-  - 1.jpg
-  - 2.jpg
-  - 3.jpg
+  - 1.webp
+  - 2.webp
+  - 3.webp
 path: ""
 deterministicPassword: false
 submitter: Pranshu Agrawal

@@ -4,7 +4,8 @@ set -euo pipefail
 # App updates do not copy newly added data directories, so ensure BookDrop's
 # bind-mount source exists before Docker starts the container.
 APP_DIR="${APP_DATA_DIR:-$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")}"
-BOOKDROP_DIR="${APP_DIR}/data/bookdrop"
+DATA_ROOT="${APP_DATA_ROOT:-${APP_DIR}/data}"
+BOOKDROP_DIR="${DATA_ROOT}/bookdrop"
 
 mkdir -p "${BOOKDROP_DIR}"
 chown 1000:1000 "${BOOKDROP_DIR}"

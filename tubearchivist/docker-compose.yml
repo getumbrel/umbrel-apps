@@ -7,15 +7,14 @@ services:
       PROXY_AUTH_ADD: "false"
 
   server:
-    image: bbilly1/tubearchivist:v0.5.12@sha256:ba1c846ddd0c6fdd0f040727129d2466e03b7a0c26499223839d450c7586ac09
+    image: bbilly1/tubearchivist:v0.6.0@sha256:0cbc18aa953c72ec7dfdd6f8fa7c2fe89b5d04489857d7baa354fecbd6181e69
+    user: "1000:1000"
     volumes:
       - ${APP_DATA_DIR}/data/media:/youtube
       - ${APP_DATA_DIR}/data/cache:/cache
     environment:
       - ES_URL=http://tubearchivist_elasticsearch_1:9200
       - REDIS_CON=redis://tubearchivist_redis_1:6379
-      - HOST_UID=1000
-      - HOST_GID=1000
       - TA_HOST=http://${DEVICE_DOMAIN_NAME}:8079
       - TA_USERNAME=admin
       - TA_PASSWORD=${APP_PASSWORD}

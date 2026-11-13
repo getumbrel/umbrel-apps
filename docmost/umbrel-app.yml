@@ -2,10 +2,53 @@ manifestVersion: 1
 id: docmost
 storage:
   dataRoot: data
+environment:
+  - name: MAIL_DRIVER
+    services:
+      - web
+    default: "log"
+    options:
+      - "smtp"
+    note: >-
+      Select smtp to send invitations and password resets through your email provider, then fill in the settings below. Without it, Docmost doesn't send emails.
+  - name: SMTP_HOST
+    services:
+      - web
+    note: >-
+      SMTP server host name, such as smtp.example.com.
+  - name: SMTP_PORT
+    services:
+      - web
+    default: "587"
+    note: >-
+      SMTP server port. Use 587 for most providers, or 465 with the secure connection setting below.
+  - name: SMTP_SECURE
+    services:
+      - web
+    default: "false"
+    options:
+      - "true"
+    note: >-
+      Select true only if your provider uses port 465. Leave empty for port 587, which still upgrades to an encrypted connection.
+  - name: SMTP_USERNAME
+    services:
+      - web
+    note: >-
+      SMTP username.
+  - name: SMTP_PASSWORD
+    services:
+      - web
+    note: >-
+      SMTP password or app password.
+  - name: MAIL_FROM_ADDRESS
+    services:
+      - web
+    note: >-
+      Sender address, such as docmost@example.com. Use an address your SMTP provider lets you send from.
 name: Docmost
 tagline: An collaborative wiki and documentation software
 category: files
-version: "0.96.0-patch.1"
+version: "0.97.0-patch.1"
 port: 8941
 description: >-
   Docmost is an open source collaborative documentation and knowledge management platform designed to help teams create and maintain structured content together. It serves as a modern alternative to tools like Notion and Confluence with a strong focus on real time collaboration and ease of use.
@@ -34,26 +77,26 @@ submission: https://github.com/getumbrel/umbrel-apps/pull/2870
 repo: https://github.com/docmost/docmost
 support: https://github.com/docmost/docmost/issues
 gallery:
-  - 1.jpg
-  - 2.jpg
-  - 3.jpg
-  - 4.jpg
-  - 5.jpg
-  - 6.jpg
+  - 1.webp
+  - 2.webp
+  - 3.webp
+  - 4.webp
+  - 5.webp
+  - 6.webp
 releaseNotes: >-
-  This update adds support for new storage management and configuration options being introduced with umbrelOS 2.0.
+  This update lets you connect an SMTP email provider in Docmost's app settings on umbrelOS 2.0, for workspace invitations and password resets.
 
 
-  Previous Docmost 0.96.0 release notes:
+  Previous Docmost 0.97.0 release notes:
 
 
-  This release adds footnotes, page version comparison, an attachments gallery, enhanced page search filters, a media lightbox, right-to-left text support, and jump-to-result search navigation.
+  This release adds page presentation mode, tabs blocks, comment deep links, improved subpage sorting, and a template option for empty pages.
 
 
-  It also includes performance improvements, bug fixes, and security fixes. Upgrade is recommended.
+  It also improves search performance, page duplication, Markdown and document exports, and includes security fixes.
 
 
-  Full release notes can be found at https://github.com/docmost/docmost/releases/tag/v0.96.0
+  Full release notes can be found at https://github.com/docmost/docmost/releases/tag/v0.97.0
 dependencies: []
 path: ""
 defaultUsername: ""

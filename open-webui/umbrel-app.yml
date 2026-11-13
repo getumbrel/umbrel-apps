@@ -5,7 +5,7 @@ storage:
 name: Open WebUI
 tagline: Chat with Ollama models like DeepSeek-R1 and LLama, or use an OpenAI API key
 category: ai
-version: "0.12.3"
+version: "0.13.3"
 port: 2876
 description: >-
   Open WebUI lets you chat with advanced AI models running locally on your own device or connect to online models using an API key.
@@ -31,9 +31,9 @@ submission: https://github.com/getumbrel/umbrel-apps/pull/1977
 repo: https://github.com/open-webui/open-webui
 support: https://github.com/open-webui/open-webui/issues
 gallery:
-  - 1.jpg
-  - 2.jpg
-  - 3.jpg
+  - 1.webp
+  - 2.webp
+  - 3.webp
 defaultUsername: ""
 defaultPassword: ""
 dependencies:
@@ -43,14 +43,28 @@ releaseNotes: >-
 
 
   Key highlights:
-    - Adds workspace search across chats, shared folders, channel messages, and notes
-    - Adds optional end-to-end encrypted channel chats, disabled by default
-    - Improves revision comparisons, document previews, and collaboration in shared chats
-    - Fixes PDF exports of long chats and notes, imported chat tags, and shared-folder access settings
-    - Improves OAuth token refresh, tool behavior, and read-aloud playback
+    - Adds coding agents to scheduled automations when a compatible terminal connection is configured
+    - Lets you change terminals and working folders during chats, keeping file tabs and agent lists in sync
+    - Fixes copy buttons and clipboard feedback over plain HTTP
+    - Improves tool-call labels and knowledge searches containing punctuation
+    - Fixes DeepSeek thinking-mode chats with skills, knowledge, and memories on llama.cpp connections
+    - Fixes side chats when Temporary Chat is disabled
 
 
-  Model-attached and selected skills now send their full instructions with each message. Remove skills attached only for discovery to avoid extra prompt length.
+  Attached files are no longer preloaded by default with native function calling. If your model lacks file tools, enable Preload files in the model's Capabilities. Side chats are now saved as regular chats unless Temporary Chat is enabled. Custom pipes should support context arriving as hidden tool results.
 
-  Full release notes are available at https://github.com/open-webui/open-webui/releases/tag/v0.12.3
+
+  Chat files, system prompts, and advanced parameters are now in Controls next to the message input. Desktop and browser tabs require a separately configured compatible Open Terminal connection. Sub-agent limits now default to unlimited; review these limits in Admin Settings if you use agent workflows.
+
+
+  Existing note attachments move to the end of the note's first page.
+
+
+  Direct tool and terminal integrations now require Direct Integrations to be enabled in Admin Settings > Connections. Change sharing through each item's Access settings. Custom functions, tools, and Python packages must support Python 3.12.
+
+
+  Selected and model-attached skills still send their full instructions by default. Enable on-demand skill loading in Admin Settings > General to avoid unnecessary prompt length.
+
+
+  Full release notes are available at https://github.com/open-webui/open-webui/releases/tag/v0.13.3
 path: ""

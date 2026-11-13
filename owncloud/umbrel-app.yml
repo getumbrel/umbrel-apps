@@ -5,7 +5,7 @@ storage:
 name: ownCloud
 tagline: A smart cloud for your files
 category: files
-version: "11.0.1"
+version: "11.1.0"
 port: 8666
 description: >-
   ☁️ ownCloud is a comprehensive software application designed to provide users with a personal cloud storage solution that combines file management, collaboration, and organizational tools in one platform. It allows users to upload, store, and organize their files in a secure, centralized environment, making it easy to keep track of documents, photos, videos, and other types of data. With OwnCloud, files can be synchronized seamlessly across multiple devices such as computers, smartphones, and tablets, ensuring that users always have access to the most up-to-date versions no matter where they are or what device they are using.
@@ -28,21 +28,26 @@ submission: https://github.com/getumbrel/umbrel-apps/pull/3532
 repo: https://github.com/owncloud-docker/server
 support: https://github.com/owncloud-docker/server/issues
 gallery:
-  - 1.jpg
-  - 2.jpg
-  - 3.jpg
-  - 4.jpg
+  - 1.webp
+  - 2.webp
+  - 3.webp
+  - 4.webp
 releaseNotes: >-
-  This update includes security fixes for ownCloud's ImageMagick/Imagick preview handling and appconfig path handling.
+  This update improves account security and certificate handling:
+
+  - Temporarily locks local accounts for ten minutes after five repeated failed login attempts.
+  - Verifies signatures when installing or updating ownCloud app packages.
+  - Refreshes trusted certificates and rebuilds certificate bundles during upgrades.
+  - Fixes errors when accessing Google Drive external storage.
 
 
-  It also fixes federated share/address book behavior, improves preview fallbacks, avoids echoing secrets from occ config commands, and updates PHP dependencies.
+  The updated certificate store removes older trusted roots. External HTTPS services relying only on a removed root may require certificate updates or an administrator-managed certificate import.
 
 
   If you are upgrading from an older 10.x package, review the ownCloud 11 release notes before updating if you rely on group-admin/subadmin behavior or deprecated occ commands.
 
 
-  Full release notes can be found at https://github.com/owncloud/core/releases/tag/v11.0.1
+  Full release notes: https://github.com/owncloud/core/releases/tag/v11.1.0
 dependencies: []
 path: ""
 defaultUsername: "admin"

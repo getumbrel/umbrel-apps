@@ -2,10 +2,17 @@ manifestVersion: 1
 id: blinko
 storage:
   dataRoot: data
+environment:
+  - name: BLINKO_MCP_STDIO_ALLOWLIST
+    services:
+      - app
+    default: "[]"
+    note: >-
+      Optional: only needed for MCP integrations that run local commands (stdio). Enter a JSON array with each integration’s exact command, args, and env. Only approve commands you trust: they can access your Blinko data. Leave empty or use [] to keep local commands blocked.
 name: Blinko
 tagline: An AI-powered hub for your ideas and notes
 category: files
-version: "1.8.8-patch.1"
+version: "1.8.9"
 port: 1111
 description: >-
   😉 Blinko is an open-source application that combines note-taking, microblogging, pastebin functionality, task management, and AI-powered features in a self-hosted environment. The platform allows users to quickly and efficiently capture their thoughts, with full Markdown support for easy formatting.
@@ -27,30 +34,31 @@ submission: https://github.com/getumbrel/umbrel-apps/pull/2183
 repo: https://github.com/blinko-space/blinko
 support: https://github.com/blinko-space/blinko/issues
 gallery:
-  - 1.jpg
-  - 2.jpg
-  - 3.jpg
-  - 4.jpg
-  - 5.jpg
+  - 1.webp
+  - 2.webp
+  - 3.webp
+  - 4.webp
+  - 5.webp
 releaseNotes: >-
-  This update adds support for new storage management and configuration options being introduced with umbrelOS 2.0.
+  This update improves Blinko’s security and compatibility. No extra setup is needed for regular note-taking or AI features.
 
 
-  Previous Blinko 1.8.8 release notes:
+  If you use Blinko’s desktop or mobile apps, update those too. If you were halfway through signing in with two-factor authentication, start the sign-in again.
 
 
-  This update includes new features, bug fixes, and improvements.
+  🔧 **Only for users of MCP integrations that run local commands (stdio):** These integrations now need your approval before they can run. MCP integrations that connect through a URL (HTTP) are unaffected.
 
 
-  Key highlights in this version:
-    - Added LiteLLM as an AI gateway provider option
-    - Added streamable HTTP MCP support
-    - Upgraded MiniMax provider models to M3 and removed older M2.5 options
-    - Fixed note editor behavior, chat state resets, embedding delete errors, and Qwen prompt compatibility
-    - Added Ukrainian localization and refreshed Japanese and German translations
+  To approve a local integration, open Blinko’s app settings **in Umbrel** → Advanced → Environment variables. Set `BLINKO_MCP_STDIO_ALLOWLIST` to a JSON array containing the integration’s exact `command`, `args`, and `env` values. Only approve commands you trust, as they can access your Blinko data.
 
 
-  Full release notes are available at https://github.com/blinko-space/blinko/releases/tag/1.8.8
+  Saving restarts Blinko. Your approvals are kept across restarts and app updates. This setting requires umbrelOS 2.0 or later.
+
+
+  Back up your Blinko data before updating.
+
+
+  [Full release notes](https://github.com/blinko-space/blinko/releases/tag/1.8.9)
 dependencies: []
 path: ""
 defaultUsername: ""

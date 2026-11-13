@@ -1,12 +1,13 @@
-manifestVersion: 1
+manifestVersion: 2.0
 id: paperclip
 storage:
   dataRoot: data
 name: Paperclip
 tagline: A team of AI agents for every person
 category: ai
-version: "2026.1012.0"
+version: "2026.1106.0"
 port: 8860
+requiresHttps: true
 description: >-
   Paperclip is a self-hosted control center for running AI agents like a team.
   Create a company, set a goal, hire agents with roles and reporting lines, then
@@ -40,13 +41,21 @@ gallery:
   - 4.webp
   - 5.webp
 releaseNotes: |-
-  - Adds experimental Assistant Connection (MCP) support so external tools like Claude Code, Codex, OpenCode, and other MCP clients can connect to Paperclip as signed-in users.
-  - Adds Agent Chat-first navigation, a unified Connections catalog, connection instructions for agents, safer company skill updates, and refreshed Claude/Codex/OpenCode model/runtime support.
-  - Improves Codex run recovery across server restarts, capacity-limit handling, workspace restore locking, sandbox/workspace reliability, and task creation flows.
-  - Stored tool grants are now enforced more strictly; review custom grants if an agent loses access to a tool or connection after updating.
-  - Workspace restore locks now use SQLite file locks. Stop old Paperclip processes before upgrading or rolling back, and do not delete the new `.lock.sqlite` files.
+  Paperclip now opens over HTTPS and requires umbrelOS 2.0 or later because its setup interface needs a secure browser context. Sign in again after updating.
 
-  Full release notes can be found at https://github.com/paperclipai/paperclip/releases/tag/v2026.1012.0
+  Private tasks are optional and off by default. Some private tasks may not run after this update. If you rely on them, consider waiting to update. Regular tasks are unaffected.
+
+  The experimental Pipelines feature has been removed; existing records are preserved, and Cases and Routines remain available. All active human members can now view Audit → Commentary, subject to source-task privacy.
+
+  - New agents use the Paperclip Runner on supported hosts; existing agents keep their current runner and can opt into an upgrade.
+  - Adds automatic skill imports from project repositories and bulk model/connection changes for agents.
+  - Adds optional model-backed prompt-injection checks and agent observability connections.
+  - Improves task recovery, workspace preservation, startup speed, and task-page performance.
+  - Finished task workspaces now discard regenerable, ignored build files after one hour while keeping source changes.
+
+  For upgrades from older versions, review member roles and stored tool grants: Operators gain broader editing and administration permissions, and omitted agent execution settings may enable full-auto operation. Budget policies pause unpriced usage by default. Stop old Paperclip processes before upgrading or rolling back; do not delete `.lock.sqlite` files. Legacy Composio broker integrations require reconnecting through MCP aggregators.
+
+  Full release notes can be found at https://github.com/paperclipai/paperclip/releases/tag/v2026.1106.0
 dependencies: []
 path: ""
 defaultUsername: ""

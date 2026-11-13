@@ -5,7 +5,7 @@ storage:
 name: Matter Server
 tagline: A Matter Controller Server over WebSockets
 category: automation
-version: "1.5.0"
+version: "1.5.5"
 port: 5580
 description: >-
   🛜 Matter Server connects Matter devices to Home Assistant and other compatible applications through a WebSocket API. Built on matter.js and maintained by the Open Home Foundation, it supports commissioning, device control, firmware updates, and network diagnostics.
@@ -19,21 +19,19 @@ submitter: al-lac
 submission: https://github.com/getumbrel/umbrel-apps/pull/1866
 support: https://github.com/matter-js/matterjs-server/issues
 gallery:
-  - 1.jpg
-  - 2.jpg
-  - 3.jpg
+  - 1.webp
+  - 2.webp
+  - 3.webp
 releaseNotes: >-
   If you're updating from the retired Python Matter Server (8.x), your fabric and paired devices migrate automatically on first start, which may take several minutes. Back up your Umbrel before updating; restoring that backup is the safest way to roll back.
 
 
-  Key improvements:
-    - Adds Matter 1.6.1 support and expands device controls in the dashboard
-    - Improves camera streaming and adds two-way audio for compatible cameras (microphone access requires HTTPS or localhost)
-    - Fixes device discovery, pairing error reporting, and handling of devices and bridge endpoints that change
-    - Improves Thread network diagnostics and reliability for connected WebSocket clients
-    - Redacts additional sensitive fields from debug logs, including door-lock PINs
+  If a previous Python migration failed and the logs report conflicting controller data, restore your backup from before migration and try again.
 
 
-  Full release notes are available at https://github.com/matter-js/matterjs-server/blob/v1.5.0/CHANGELOG.md
+  This update restores devices that could fail to load because of damaged discovery data, preventing them from also blocking other devices at startup. It also improves recognition of the custom cluster shared by Aqara LED devices.
+
+
+  Full release notes are available at https://github.com/matter-js/matterjs-server/blob/v1.5.5/CHANGELOG.md
 dependencies: []
 path: ""

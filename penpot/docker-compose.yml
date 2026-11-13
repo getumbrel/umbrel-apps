@@ -9,19 +9,21 @@ services:
       PROXY_AUTH_WHITELIST: "/api/*"
 
   penpot-frontend:
-    image: penpotapp/frontend:2.18.3@sha256:bb8abe27d53de84c95597f2c02c0e702b2779971fb0703e543f9ecf183e999f6
+    image: penpotapp/frontend:2.19.1@sha256:b5b363a4bd38bf2aa781c6255e5208b4b305fa3f12fae1170abeb705ce510032
     volumes:
       - ${APP_DATA_DIR}/data/assets:/opt/data/assets
     environment:
       - PENPOT_FLAGS=enable-registration enable-login-with-password
+      - PENPOT_ADMIN_CONSOLE_URI=http://penpot-admin-console:3000
     depends_on:
       - penpot-backend
       - penpot-exporter
       - penpot-mcp
+      - penpot-admin-console
     restart: on-failure
 
   penpot-backend:
-    image: penpotapp/backend:2.18.3@sha256:2df1b3440d2a82cc3571db211b4ffdfa2b89ccc910759e8d5e9387fb62971b5c
+    image: penpotapp/backend:2.19.1@sha256:bc26c263b33f107a63868ed298bebd9089f252c3799872c31ec1266fef321d29
     # user 1000:1000 to avoid permission issues when importing libraries and templates
     user: "1000:1000"
     volumes:
@@ -29,6 +31,7 @@ services:
     environment:
       - PENPOT_FLAGS=enable-registration enable-login-with-password disable-email-verification disable-smtp enable-prepl-server disable-secure-session-cookies
       - PENPOT_SECRET_KEY=${APP_SEED}
+      - PENPOT_ADMIN_CONSOLE_URI=http://penpot-admin-console:3000
       - PENPOT_DATABASE_URI=postgresql://penpot-postgres/penpot
       - PENPOT_DATABASE_USERNAME=penpot
       - PENPOT_DATABASE_PASSWORD=penpot
@@ -44,7 +47,7 @@ services:
     restart: on-failure
 
   penpot-exporter:
-    image: penpotapp/exporter:2.18.3@sha256:418232d6ca3120b1c2bfde298a56a05a1f41f567cd8494deac3fe7fbc186cfbd
+    image: penpotapp/exporter:2.19.1@sha256:bb25e0ee63ec37228848c714c7b60998d9c9d07f998ab7aebe2e3281d39b2962
     user: "1000:1000"
     environment:
       - PENPOT_SECRET_KEY=${APP_SEED}
@@ -54,8 +57,21 @@ services:
     restart: on-failure
 
   penpot-mcp:
-    image: penpotapp/mcp:2.18.3@sha256:5e811e6eeb179d80d8781fb0ffd2991560785d150b3676f1ac5e28d63ba9f7c2
+    image: penpotapp/mcp:2.19.1@sha256:ebcd8f119d46e706a94bfae678a0d1a05f713080a9565f310de39c246667dbd1
     user: "1000:1000"
+    restart: on-failure
+
+  penpot-admin-console:
+    image: penpotapp/admin-console:2.19.1@sha256:27c7ae5d7c061f2e07ddbad393316fa50e3d1d6873f1c5c807740316f29f3715
+    environment:
+      - PENPOT_PUBLIC_URI=http://${DEVICE_DOMAIN_NAME}:${APP_PENPOT_UI_PORT}
+      - PENPOT_INTERNAL_URI=http://penpot-frontend:8080
+      - PENPOT_SECRET_KEY=${APP_SEED}
+      - PENPOT_DATABASE_URI=postgresql://penpot-postgres/penpot
+      - PENPOT_DATABASE_USERNAME=penpot
+      - PENPOT_DATABASE_PASSWORD=penpot
+    depends_on:
+      - penpot-postgres
     restart: on-failure
 
   penpot-postgres:

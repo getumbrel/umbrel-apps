@@ -7,10 +7,11 @@ services:
       APP_PORT: 8181
 
   web:
-    image: linuxserver/tautulli:2.18.2@sha256:9e7b476ef14ae44a043b446614b5354777605eb9cb2bdbb2dbd1f99df031ac17
+    image: linuxserver/tautulli:2.19.1@sha256:5e8f80cc18f03c606a3567c8a9b37d80812ed8017d2e2f8ff2e2a91b54a3aef1
     volumes:
       - ${APP_DATA_DIR}/data/config:/config
     restart: on-failure
     environment:
       - PUID=1000
       - PGID=1000
+      - TAUTULLI_HTTP_PROXY=1

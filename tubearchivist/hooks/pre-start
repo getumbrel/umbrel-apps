@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Tube Archivist no longer changes ownership inside the container.
+APP_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")"
+DATA_DIR="${APP_DATA_ROOT:-${APP_DIR}/data}"
+OWNERSHIP_MARKER="${DATA_DIR}/.tubearchivist-ownership-1000-v1"
+
+# Recreate missing directories with usable ownership, including after a restore.
+for directory in cache media; do
+  if [[ ! -d "${DATA_DIR}/${directory}" ]]; then
+    install -d -o 1000 -g 1000 "${DATA_DIR}/${directory}"
+  fi
+done
+
+# Keep the marker with the data so moves preserve it and new data roots migrate.
+if [[ ! -f "${OWNERSHIP_MARKER}" ]]; then
+  chown -R 1000:1000 "${DATA_DIR}/cache" "${DATA_DIR}/media"
+  touch "${OWNERSHIP_MARKER}"
+fi

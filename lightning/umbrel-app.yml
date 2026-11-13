@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: lightning
 category: bitcoin
 name: Lightning Node
-version: "0.21.4-beta"
+version: "0.21.8-beta"
 tagline: Run your personal Lightning Network node
 description: >-
   Run your personal Lightning Network node, and join the future of Bitcoin today.
@@ -22,13 +22,16 @@ description: >-
 
   An official app from Umbrel.
 releaseNotes: >-
-  This update fixes bugs that could leave payments stuck or cause channels to close unnecessarily.
+  This update improves channel recovery, payment reliability, and on-chain transaction handling.
 
 
-  Your existing channels are unaffected. If you’re opening a new channel to someone running older Lightning software, they may need to update their node first.
+  - Fixes peer disconnections while channel funding is still unconfirmed and improves payment recovery after reconnects.
+  - Improves retries and fee handling for on-chain sweeps and force-close transactions.
+  - Preserves pending channel funding state after broadcast errors and improves recovery of settled AMP payments.
+  - Adds safeguards for channel updates, restored channels, and persisted channel data.
 
 
-  Full LND release notes: https://github.com/lightningnetwork/lnd/blob/v0.21.4-beta/docs/release-notes/release-notes-0.21.4.md
+  Full release notes: https://github.com/lightningnetwork/lnd/releases/tag/v0.21.8-beta
 developer: Umbrel
 website: https://umbrel.com
 dependencies:
@@ -37,11 +40,11 @@ repo: https://github.com/getumbrel/umbrel-lightning
 support: https://community.getumbrel.com/c/bitcoin-and-lightning
 port: 2101
 gallery:
-  - 1.jpg
-  - 2.jpg
-  - 3.jpg
-  - 4.jpg
-  - 5.jpg
+  - 1.webp
+  - 2.webp
+  - 3.webp
+  - 4.webp
+  - 5.webp
 path: ""
 defaultPassword: ""
 widgets:

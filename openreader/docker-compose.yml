@@ -22,7 +22,7 @@ services:
       - ${APP_DATA_DIR}/nginx.conf:/etc/nginx/nginx.conf:ro
 
   web:
-    image: ghcr.io/richardr1126/openreader:5.2.0@sha256:b1eb966127d5b624caa4a2172b51eb2984812074935f6cfb7bcf439b661c5311
+    image: ghcr.io/richardr1126/openreader:5.4.1@sha256:96f4351cd57adeb718707d8647bb5cef73ece71bbb66361024e8b6771f525352
     user: "1000:1000"
     environment:
       - API_BASE=http://kokoro_web_1:8880/v1 #Set the TTS API_BASE URL and/or API_KEY as the default for all devices. These values can also be overridden in the UI.
@@ -30,7 +30,7 @@ services:
       - BASE_URL=http://${DEVICE_DOMAIN_NAME}:3391
       - AUTH_SECRET=${APP_SEED}
       # Allows auth requests from the primary .local URL, device hostname, Tailscale FQDNs, and host IP URLs.
-      - AUTH_TRUSTED_ORIGINS=http://${DEVICE_DOMAIN_NAME}:3391,http://${DEVICE_HOSTNAME}:3391,http://*.ts.net:3391,https://*.ts.net:3391,${APP_OPENREADER_LOCAL_URLS}
+      - AUTH_TRUSTED_ORIGINS=http://${DEVICE_DOMAIN_NAME}:3391,https://${DEVICE_DOMAIN_NAME}:3391,http://${DEVICE_HOSTNAME}:3391,https://${DEVICE_HOSTNAME}:3391,http://*.ts.net:3391,https://*.ts.net:3391,${APP_OPENREADER_LOCAL_URLS}
       - USE_ANONYMOUS_AUTH_SESSIONS=true
       - TTS_PLAYBACK_TOKEN_SECRET=${APP_OPENREADER_PLAYBACK_SECRET}
       - COMPUTE_WORKER_HOST=0.0.0.0

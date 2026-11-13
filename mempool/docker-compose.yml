@@ -7,7 +7,7 @@ services:
       APP_PORT: $APP_MEMPOOL_PORT
       PROXY_AUTH_ADD: "false"
   web:
-    image: mempool/frontend:v3.3.1@sha256:0a162e7e0d26a01e9686ddf69c96c4beae5fe10b0daa1020f3d392e033c058f1
+    image: mempool/frontend:v3.3.2@sha256:83c5d1e20cd4fad358584f5921ca547d69ab80162d0e2f3138c2d142a91dbadd
     user: "1000:1000"
     init: true
     restart: on-failure
@@ -23,7 +23,7 @@ services:
       default:
         ipv4_address: $APP_MEMPOOL_IP
   api:
-    image: mempool/backend:v3.3.1@sha256:358c0a517c8dcf26e7f5c02447de5bab33ec7e3fa6318685cf8012ce36098e3a
+    image: mempool/backend:v3.3.2@sha256:c358a20591285f77fb11e6f2502441e6b15bc7dd8282433e09bfd948b8ab0aa8
     user: "1000:1000"
     init: true
     restart: on-failure
@@ -114,7 +114,7 @@ services:
        default:
          ipv4_address: $APP_MEMPOOL_DB_IP
   widget-server:
-    image: getumbrel/umbrel-mempool-widget-server:v1.0.0@sha256:099846e613c7310deba842241477737babcdf78250fba6edf39d456712eeefc3
+    image: ghcr.io/getumbrel/umbrel-mempool-widget:v1.0.1@sha256:39ee4568cb51f19f2907b9ca9a361bc8e9ac38783d05acff07171e610b564ec9
     environment:
       MEMPOOL_API_URL: "http://$APP_MEMPOOL_IP:$APP_MEMPOOL_PORT/api/v1/fees/recommended"
     restart: on-failure
