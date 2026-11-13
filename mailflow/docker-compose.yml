@@ -6,21 +6,24 @@ services:
       APP_PORT: 80
 
   frontend:
-    image: ghcr.io/maathimself/mailflow-frontend:4.3.1@sha256:3c8a42715cec8726bd370f4e724d630a4f2271ca95d25dcf92fa34956a9803f6
+    image: ghcr.io/maathimself/mailflow-frontend:4.4.0@sha256:74be6c108479985214fe54ac30c14fabe64c7a80a54100f80ad2b89b45fa6f43
     restart: on-failure
     stop_grace_period: 1m
+    environment:
+      TLS_MODE: "off"
+      BACKEND_HOST: mailflow_backend_1
     depends_on:
       backend:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO/dev/null http://127.0.0.1:80/ || exit 1"]
+      test: ["CMD-SHELL", "wget -qO/dev/null http://127.0.0.1:2080/healthz || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 3
       start_period: 20s
 
   backend:
-    image: ghcr.io/maathimself/mailflow-backend:4.3.1@sha256:36d35701354936797edb92b30ad6a998d52fcad03dace08e758a5bdd2a86e943
+    image: ghcr.io/maathimself/mailflow-backend:4.4.0@sha256:db540d4bc86da0de6e3c8fe86b0b0b79b42caeb245beb8231d7a4b4428306e5d
     restart: on-failure
     stop_grace_period: 1m
     environment:
@@ -35,7 +38,6 @@ services:
       DB_NAME: mailflow
       DB_USER: mailflow
       DB_PASSWORD: mailflow
-      REDIS_URL: redis://mailflow_redis_1:6379
       GOOGLE_CLIENT_ID: ""
       GOOGLE_CLIENT_SECRET: ""
       VAPID_PUBLIC_KEY: ""
@@ -45,8 +47,6 @@ services:
       TRUST_PROXY_HOPS: 2
     depends_on:
       postgres:
-        condition: service_healthy
-      redis:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:3000/api/health || exit 1"]
@@ -71,17 +71,3 @@ services:
       timeout: 5s
       retries: 5
       start_period: 20s
-
-  redis:
-    image: redis:7-alpine@sha256:6ab0b6e7381779332f97b8ca76193e45b0756f38d4c0dcda72dbb3c32061ab99
-    user: "1000:1000"
-    restart: on-failure
-    command: redis-server --save 60 1 --loglevel warning
-    volumes:
-      - ${APP_DATA_DIR}/data/redis:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 3s
-      retries: 5
-      start_period: 10s
