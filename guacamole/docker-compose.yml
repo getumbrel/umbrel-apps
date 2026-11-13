@@ -1,0 +1,51 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: guacamole_web_1
+      APP_PORT: 8080
+
+  web:
+    image: guacamole/guacamole:1.6.0@sha256:f344085e618bb05e22b964b0208dbd06d3468275bac70206f93805245e067b40
+    restart: on-failure
+    depends_on:
+      - guacd
+      - postgres
+    environment:
+      WEBAPP_CONTEXT: ROOT
+      GUACD_HOSTNAME: guacd
+      POSTGRESQL_HOSTNAME: postgres
+      POSTGRESQL_DATABASE: guacamole
+      POSTGRESQL_USERNAME: guacamole
+      POSTGRESQL_PASSWORD: ${APP_GUACAMOLE_DB_PASSWORD}
+      # umbrelOS proxies every client from the same address, so failed logins
+      # from anyone would lock everyone out. Umbrel auth already guards the app.
+      BAN_ENABLED: "false"
+
+  guacd:
+    image: guacamole/guacd:1.6.0@sha256:8974eaa9ba32f713daf311e7cc8cd7e4cdfba1edea39eed75524e78ef4b08f4f
+    restart: on-failure
+
+  # Writes Guacamole's database schema for Postgres to run on first start.
+  # Postgres only reads it while creating an empty database.
+  db-init:
+    image: guacamole/guacamole:1.6.0@sha256:f344085e618bb05e22b964b0208dbd06d3468275bac70206f93805245e067b40
+    user: "1000:1000"
+    restart: on-failure
+    entrypoint: ["/bin/sh", "-c", "/opt/guacamole/bin/initdb.sh --postgresql > /initdb/001-schema.sql"]
+    volumes:
+      - ${APP_DATA_DIR}/data/initdb:/initdb
+
+  postgres:
+    image: postgres:18.7-alpine@sha256:75dcac3dfb1cd01ca3536910bbc84128759362f8b118bf8c55b38a94f68f3b73
+    restart: on-failure
+    depends_on:
+      db-init:
+        condition: service_completed_successfully
+    environment:
+      POSTGRES_DB: guacamole
+      POSTGRES_USER: guacamole
+      POSTGRES_PASSWORD: ${APP_GUACAMOLE_DB_PASSWORD}
+      GUACADMIN_PASSWORD: ${APP_PASSWORD}
+    volumes:
+      - ${APP_DATA_DIR}/data/db:/var/lib/postgresql
+      - ${APP_DATA_DIR}/data/initdb:/docker-entrypoint-initdb.d:ro
