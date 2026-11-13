@@ -2,18 +2,51 @@ manifestVersion: 2.0
 id: baizhi
 storage:
   dataRoot: data
-category: developer
+environment:
+  - name: MONKEYAI_PUBLIC_URL
+    services:
+      - admin
+      - backend
+    note: 仅在使用自定义域名或 HTTPS 时修改，填写带端口的完整访问地址，并让客户端使用同一地址。
+category: ai
 name: 百智办公
-version: "26102802"
-tagline: Open-source team AI workspace
+version: "v26111301"
+tagline: 面向团队的开源 AI 办公工作台
 description: >-
-  面向团队的开源 AI 办公工作台。官网 https://work.baizhi.cloud/ 。官方镜像目前在私有仓库，匿名拉取可能失败。
+  首次打开后进入管理后台，使用 admin@umbrel.local 和 Umbrel 显示的专属密码登录，再配置团队成员、模型服务和客户端。实际任务执行需要连接兼容客户端或执行端；本包不包含本地大模型、桌面客户端或云电脑。
+
+
+  百智办公（MonkeyAI）是一款面向团队的开源 AI 办公工作台。用自然语言描述需求，让 AI 执行办公、编程与设计任务，交付文档、表格、演示文稿、代码及设计成果，而不只是回答问题。
+
+
+  办公场景涵盖 PPT 制作、文档撰写、表格处理和文件整理；编程场景涵盖架构设计、代码编写和问题修复；设计场景涵盖海报、平面设计、交互设计和短剧制作，具体能力取决于所配置的模型、工具和执行环境。
+
+
+  团队可以共享大模型、知识库、技能、专家、MCP 连接器与规则，并统一管理资源权限、使用审计、计费和统计。服务器支持 amd64 和 arm64，桌面客户端的可用平台请以官网为准。
+
+
+  团队数据库、对象存储及服务身份保存在自己的 Umbrel 上。调用外部模型或工具时，相关内容仍会发送到所配置的服务。官方发行镜像还包含厂商用量统计与授权机制，不代表完全离线或零外传。官网免费方案最多 10 个席位，付费方案、云电脑和发行镜像的授权条件请向上游确认。
+
+
+  默认保留 Umbrel 登录保护。桌面客户端和其他无法携带 Umbrel 登录 Cookie 的连接尚待验证，不会通过默认开放全部 API 来绕过保护。使用 HTTPS 或自定义域名时，在应用设置中同步修改 MONKEYAI_PUBLIC_URL。
+releaseNotes: ""
+
 developer: 长亭科技
 website: https://work.baizhi.cloud/
 dependencies: []
 repo: https://github.com/chaitin/MonkeyCode
 support: https://work.docs.baizhi.cloud/
-port: 8080
+
+port: 31457
+gallery: []
 path: ""
-defaultUsername: ""
+
+defaultUsername: admin@umbrel.local
 defaultPassword: ""
+deterministicPassword: true
+backupIgnore:
+  - data/import-tmp/*
+  - data/rustfs-logs/*
+
+submitter: nghiemphucminh7215-ops
+submission: https://github.com/getumbrel/umbrel-apps/pull/6280

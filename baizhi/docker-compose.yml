@@ -1,9 +1,138 @@
 version: "3.7"
+
 services:
   app_proxy:
     environment:
-      APP_HOST: baizhi_web_1
-      APP_PORT: 80
-  web:
-    image: chaitin-registry.cn-hangzhou.cr.aliyuncs.com/monkeycode/monkeyai-frontend:latest
+      APP_HOST: baizhi_admin_1
+      APP_PORT: 8080
+
+  admin:
+    image: chaitin-registry.cn-hangzhou.cr.aliyuncs.com/monkeycode/monkeyai-admin:v26111301@sha256:a2b0e00c90a7cefc54ccf6b09f39ddfc9b4097a2da52f5a25d73b23f3d16a44f
     restart: on-failure
+    init: true
+    read_only: true
+    tmpfs:
+      - /tmp
+    environment:
+      MONKEYAI_PUBLIC_URL: http://${DEVICE_DOMAIN_NAME}:${APP_PROXY_PORT}
+      MONKEYAI_TLS_ENABLED: "false"
+      MONKEYAI_AUTO_TLS_ENABLED: "false"
+    volumes:
+      - ${APP_DATA_DIR}/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-Y", "off", "-q", "--spider", "http://127.0.0.1:8080/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+  permissions:
+    image: chaitin-registry.cn-hangzhou.cr.aliyuncs.com/basic/postgres:18.6@sha256:74e3ced35d4926573b24fbcc473f1fb9a06a48bba4209e1f2e3286be356baa84
+    restart: on-failure
+    user: "0:0"
+    entrypoint: ["/bin/sh", "-ec"]
+    # 只调整本应用目录的所有者，不访问宿主机 Docker 或其他应用。
+    command:
+      - chown 10001:10001 /app/license /app/runtime /app/import-tmp /data /logs && chmod 700 /app/license /app/runtime /app/import-tmp /data /logs
+    volumes:
+      - ${APP_DATA_DIR}/data/license:/app/license
+      - ${APP_DATA_DIR}/data/runtime:/app/runtime
+      - ${APP_DATA_DIR}/data/import-tmp:/app/import-tmp
+      - ${APP_DATA_DIR}/data/rustfs:/data
+      - ${APP_DATA_DIR}/data/rustfs-logs:/logs
+
+  backend:
+    image: chaitin-registry.cn-hangzhou.cr.aliyuncs.com/monkeycode/monkeyai-backend:v26111301@sha256:76003116cc9b17d41dd9080480255baf86678f5a0a7cabe9bf5740ec1919130a
+    restart: on-failure
+    init: true
+    read_only: true
+    tmpfs:
+      - /tmp
+    environment:
+      MONKEYAI_PUBLIC_URL: http://${DEVICE_DOMAIN_NAME}:${APP_PROXY_PORT}
+      MONKEYAI_DATABASE_URL: postgres://monkeyai:${APP_BAIZHI_DATABASE_PASSWORD}@baizhi_db_1:5432/monkeyai?sslmode=disable
+      MONKEYAI_HTTP_ADDR: :8080
+      MONKEYAI_LOG_LEVEL: warn
+      MONKEYAI_INITIAL_ADMIN_NAME: Umbrel 管理员
+      MONKEYAI_INITIAL_ADMIN_EMAIL: admin@umbrel.local
+      MONKEYAI_INITIAL_ADMIN_PASSWORD: ${APP_PASSWORD}
+      MONKEYAI_RUNTIME_STATE_DIR: /app/runtime
+      MONKEYAI_S3_ENDPOINT: http://baizhi_rustfs_1:9000
+      MONKEYAI_S3_REGION: us-east-1
+      MONKEYAI_S3_BUCKET: monkeyai-resources
+      MONKEYAI_S3_ACCESS_KEY: ${APP_BAIZHI_S3_ACCESS_KEY}
+      MONKEYAI_S3_SECRET_KEY: ${APP_BAIZHI_S3_SECRET_KEY}
+      MONKEYAI_S3_FORCE_PATH_STYLE: "true"
+      MONKEYAI_DESIGN_MEDIA_JWT_SECRET: ${APP_BAIZHI_MEDIA_JWT_SECRET}
+      TMPDIR: /app/import-tmp
+    volumes:
+      - ${APP_DATA_DIR}/data/license:/app/license
+      - ${APP_DATA_DIR}/data/runtime:/app/runtime
+      - ${APP_DATA_DIR}/data/import-tmp:/app/import-tmp
+    depends_on:
+      permissions:
+        condition: service_completed_successfully
+      migrate:
+        condition: service_completed_successfully
+      rustfs:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-Y", "off", "-q", "--spider", "http://127.0.0.1:8080/readyz"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 90s
+
+  db:
+    image: chaitin-registry.cn-hangzhou.cr.aliyuncs.com/basic/postgres:18.6@sha256:74e3ced35d4926573b24fbcc473f1fb9a06a48bba4209e1f2e3286be356baa84
+    restart: on-failure
+    environment:
+      POSTGRES_DB: monkeyai
+      POSTGRES_USER: monkeyai
+      POSTGRES_PASSWORD: ${APP_BAIZHI_DATABASE_PASSWORD}
+    volumes:
+      - ${APP_DATA_DIR}/data/postgres:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  migrate:
+    image: chaitin-registry.cn-hangzhou.cr.aliyuncs.com/monkeycode/monkeyai-migrate:v26111301@sha256:9a6ea88ed0c7b7695c1074f4e787e785924389ee004b4f91b0a2abeba0e587cf
+    restart: "no"
+    command:
+      - -path=/migrations
+      - -database
+      - postgres://monkeyai:${APP_BAIZHI_DATABASE_PASSWORD}@baizhi_db_1:5432/monkeyai?sslmode=disable
+      - up
+    depends_on:
+      db:
+        condition: service_healthy
+
+  rustfs:
+    image: chaitin-registry.cn-hangzhou.cr.aliyuncs.com/basic/rustfs:v1.0.0-rc.5@sha256:b7014e0ce2bc703c1316b3ef760e29dfae61fe4a50d1a66fa89638e0f8ea211f
+    restart: on-failure
+    user: "10001:10001"
+    environment:
+      RUSTFS_ACCESS_KEY: ${APP_BAIZHI_S3_ACCESS_KEY}
+      RUSTFS_SECRET_KEY: ${APP_BAIZHI_S3_SECRET_KEY}
+      RUSTFS_VOLUMES: /data
+      RUSTFS_OBS_LOG_DIRECTORY: /logs
+      RUSTFS_CONSOLE_ENABLE: "false"
+    depends_on:
+      permissions:
+        condition: service_completed_successfully
+    volumes:
+      - ${APP_DATA_DIR}/data/rustfs:/data
+      - ${APP_DATA_DIR}/data/rustfs-logs:/logs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:9000/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 20s
