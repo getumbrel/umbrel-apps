@@ -1,0 +1,409 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: buzz_web_1
+      APP_PORT: 8080
+
+  # Setup and status page: the owner's public ID, the community's domain, and checks.
+  web:
+    image: python:3.13.16-alpine3.24@sha256:2d9aefe2fef018a7eb2c13064c89c71929800fd2e5dccdbf52ea5da5bb8d929a
+    init: true
+    user: "1000:1000"
+    command: ["python3", "-u", "/app/setup.py"]
+    environment:
+      # The page's own sign-in: Umbrel shows APP_PASSWORD to the owner (deterministicPassword).
+      # Umbrel's login guards browsers, but other apps on the shared network could reach this
+      # page directly.
+      APP_PASSWORD: ${APP_PASSWORD}
+      SETUP_SESSION_SECRET: ${APP_BUZZ_SETUP_SECRET}
+    volumes:
+      - ${APP_DATA_DIR}/setup.py:/app/setup.py:ro
+      - ${APP_DATA_DIR}/data/settings:/settings
+      # One folder shared with each helper, so neither can touch the relay's settings
+      - ${APP_DATA_DIR}/data/tailscale-control:/tailscale
+      - ${APP_DATA_DIR}/data/cloudflare-control:/cloudflare
+    restart: on-failure
+
+  # What Cloudflare Tunnel and Tailscale point at: http://buzz-gateway:80. On the owner's own domain it
+  # answers only the community's current address, so an old address that still points at the tunnel
+  # reaches nothing. It starts again when the address changes.
+  gateway:
+    image: caddy:2.10.2-alpine@sha256:4c6e91c6ed0e2fa03efd5b44747b625fec79bc9cd06ac5235a779726618e530d
+    init: true
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        set -u
+        settings=/settings/relay.env
+        caddy=
+        trap '[ -n "$$caddy" ] && kill -TERM "$$caddy" 2> /dev/null; wait; exit 0' TERM INT
+        while :; do
+          stamp=$$(cksum "$$settings" 2> /dev/null || echo none)
+          host=$$(sed -n 's/^BUZZ_DOMAIN=//p' "$$settings" 2> /dev/null | head -n 1)
+          case "$$host" in *[!a-z0-9.-]*) host= ;; esac
+          # A Tailscale address, or none yet: every request, as Tailscale passes it on
+          case "$$host" in ""|*.ts.net) site=":80" ;; *) site="http://$$host:80" ;; esac
+          sed "s|COMMUNITY_SITE|$$site|" /etc/caddy/Caddyfile > /tmp/Caddyfile
+          [ "$$site" = ":80" ] || printf '\n:80 {\n\trespond 404\n}\n' >> /tmp/Caddyfile
+          caddy run --config /tmp/Caddyfile --adapter caddyfile &
+          caddy=$$!
+          while kill -0 "$$caddy" 2> /dev/null && [ "$$(cksum "$$settings" 2> /dev/null || echo none)" = "$$stamp" ]; do
+            sleep 3
+          done
+          kill -TERM "$$caddy" 2> /dev/null; wait "$$caddy" 2> /dev/null; caddy=
+        done
+    networks:
+      default:
+        aliases:
+          # Container names have underscores, which aren't valid in hostnames.
+          - buzz-gateway
+    volumes:
+      - ${APP_DATA_DIR}/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ${APP_DATA_DIR}/data/settings:/settings:ro
+    restart: on-failure
+
+  relay:
+    image: ghcr.io/block/buzz:sha-744f394@sha256:b67a32b7b2a274cdbd9a685fe996657fa544a3e981284ab3a8c660a128f36a3d
+    init: true
+    # Generates the relay's own key on first start, waits for the setup page, then runs the
+    # relay. When the setup page changes the settings, it exits so the relay restarts with them.
+    entrypoint:
+      - /bin/bash
+      - -c
+      - |
+        set -euo pipefail
+        key=/data/secrets/relay.env
+        settings=/data/settings/relay.env
+        if [ ! -s "$$key" ]; then
+          umask 077
+          printf 'BUZZ_RELAY_PRIVATE_KEY=%s\n' "$$(od -An -tx1 -N32 /dev/urandom | tr -d ' \n')" > "$$key.tmp"
+          mv "$$key.tmp" "$$key"
+        fi
+        until [ -s "$$settings" ]; do
+          echo "Waiting for setup: open Buzz from the Umbrel home screen."
+          sleep 5
+        done
+        # The content, not the time: two saves within a second have the same modification time.
+        stamp=$$(cksum "$$settings")
+        # Plain KEY=value lines, never run as a script, and only the names this app writes, so nothing
+        # in a settings file can run a command or turn off the relay's checks
+        load() {
+          while IFS= read -r line || [ -n "$$line" ]; do
+            case "$${line%%=*}" in
+              BUZZ_RELAY_PRIVATE_KEY|RELAY_OWNER_PUBKEY|BUZZ_DOMAIN|RELAY_URL|BUZZ_MEDIA_BASE_URL|BUZZ_MEDIA_SERVER_DOMAIN|BUZZ_CORS_ORIGINS|BUZZ_PAIRING_RELAY_URL|BUZZ_PUSH_ENABLED)
+                export "$$line" ;;
+            esac
+          done < "$$1"
+        }
+        load "$$key"
+        load "$$settings"
+        /usr/local/bin/buzz-relay &
+        pid=$$!
+        trap 'kill -TERM "$$pid" 2>/dev/null || true; wait "$$pid" || true; exit 0' TERM INT
+        while kill -0 "$$pid" 2>/dev/null; do
+          sleep 3
+          if [ "$$(cksum "$$settings" 2> /dev/null || echo gone)" != "$$stamp" ]; then
+            echo "Settings changed: restarting the relay."
+            kill -TERM "$$pid" || true
+            wait "$$pid" || true
+            exit 1
+          fi
+        done
+        wait "$$pid"
+    environment:
+      BUZZ_BIND_ADDR: 0.0.0.0:3000
+      BUZZ_HEALTH_PORT: "8080"
+      BUZZ_METRICS_PORT: "9102"
+      DATABASE_URL: postgres://buzz:${APP_BUZZ_POSTGRES_PASSWORD}@buzz_postgres_1:5432/buzz
+      REDIS_URL: redis://:${APP_BUZZ_REDIS_PASSWORD}@buzz_redis_1:6379
+      BUZZ_S3_ENDPOINT: http://buzz-silo:9000
+      BUZZ_S3_ADDRESSING_STYLE: path
+      BUZZ_S3_ACCESS_KEY: ${APP_BUZZ_S3_ACCESS_KEY}
+      BUZZ_S3_SECRET_KEY: ${APP_BUZZ_S3_SECRET_KEY}
+      BUZZ_S3_BUCKET: buzz-media
+      BUZZ_GIT_REPO_PATH: /data/git
+      BUZZ_GIT_HOOK_HMAC_SECRET: ${APP_BUZZ_GIT_HOOK_HMAC_SECRET}
+      BUZZ_AUTO_MIGRATE: "true"
+      BUZZ_GIT_CONFORMANCE_PROBE: "true"
+      BUZZ_REQUIRE_AUTH_TOKEN: "true"
+      BUZZ_REQUIRE_RELAY_MEMBERSHIP: "true"
+      BUZZ_ALLOW_NIP_OA_AUTH: "true"
+      # Phone notifications, through Block's push service: it passes Apple a fixed "reconnect"
+      # signal, never a message. The setup page's own setting, in its settings file, wins.
+      BUZZ_PUSH_ENABLED: "true"
+      BUZZ_PUSH_GATEWAY_DELIVERY_URL: https://push.buzz.xyz/v1/deliveries/apns
+      # Cloudflare's free plan refuses uploads over 100 MB.
+      BUZZ_MAX_FILE_BYTES: "100000000"
+      BUZZ_MAX_VIDEO_BYTES: "100000000"
+      # Routine access lines name members on every request; warn keeps refusals, errors and aborted requests
+      RUST_LOG: buzz_relay=info,buzz_relay::access=warn,buzz_db=info,buzz_auth=info,buzz_pubsub=info,tower_http=info
+    volumes:
+      - ${APP_DATA_DIR}/data/git:/data/git
+      - ${APP_DATA_DIR}/data/secrets:/data/secrets
+      - ${APP_DATA_DIR}/data/settings:/data/settings:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      silo:
+        condition: service_healthy
+      silo-init:
+        condition: service_completed_successfully
+    healthcheck:
+      # Healthy while it waits for setup, so the app can install before the page is filled in.
+      test: ["CMD", "bash", "-c", "[ -s /data/settings/relay.env ] || exit 0; exec 3<>/dev/tcp/127.0.0.1/8080; printf 'GET /_readiness HTTP/1.1\\r\\nHost: 127.0.0.1\\r\\nConnection: close\\r\\n\\r\\n' >&3; head -n 1 <&3 | grep -q ' 200 '"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
+    restart: on-failure
+
+  # The Tailscale addresses, only when the owner picks one on the setup page: this app's own
+  # Tailscale machine, publishing the gateway either to the internet with Tailscale Funnel
+  # ("funnel") or to the owner's tailnet alone ("private"). It never touches Umbrel's Tailscale
+  # app, and it runs in userspace, so it needs no extra privileges. It starts tailscaled itself:
+  # the image's containerboot restarts after 60 seconds without a sign-in.
+  tailscale:
+    image: tailscale/tailscale:v1.104.2@sha256:b11583ad2e93e4671128538c88cf11f460444a5d7e449311dd1933a400ab849d
+    init: true
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        set -u
+        want() { m=$$([ -f /settings/tailscale-enabled ] && tr -d ' \n' < /settings/tailscale-enabled); [ "$$m" = on ] && m=funnel; echo "$$m"; }
+        sock=/tmp/tailscaled.sock
+        ts() { tailscale --socket="$$sock" "$$@"; }
+        trap '[ -n "$${daemon:-}" ] && kill -TERM "$$daemon" 2> /dev/null; wait; exit 0' TERM INT
+        # Runs Tailscale while the owner has a Tailscale option chosen, and waits otherwise, so the
+        # owner can switch back and forth from the setup page.
+        while :; do
+          until [ -n "$$(want)" ]; do sleep 5; done
+          tailscaled --tun=userspace-networking --statedir=/var/lib/tailscale --socket="$$sock" &
+          daemon=$$!
+          until [ -S "$$sock" ]; do sleep 1; done
+          # Waits for the sign-in with no time limit; the setup page shows the link from the status.
+          ts up --hostname=buzz --accept-dns=false > /dev/null 2>&1 &
+          pub= pubmode=
+          # Reports the machine's state to the setup page, and publishes the gateway the way the owner
+          # chose once signed in.
+          while kill -0 "$$daemon" 2> /dev/null; do
+            mode=$$(want)
+            if [ -z "$$mode" ]; then
+              [ -n "$$pub" ] && kill -TERM "$$pub" 2> /dev/null
+              ts serve reset > /dev/null 2>&1
+              kill -TERM "$$daemon"; wait "$$daemon"
+              rm -f /settings/tailscale-status.json /settings/tailscale-serve.txt /settings/tailscale-publish.log
+              break
+            fi
+            ts status --json > /settings/tailscale-status.json.tmp 2> /dev/null &&
+              mv -f /settings/tailscale-status.json.tmp /settings/tailscale-status.json
+            ts serve status > /settings/tailscale-serve.txt.tmp 2>&1 &&
+              mv -f /settings/tailscale-serve.txt.tmp /settings/tailscale-serve.txt
+            # A publish still waiting on Tailscale, for the owner to allow Funnel, is dropped when the owner
+            # picks the other option: allowing its old link can't turn Funnel on for a private network
+            if [ -n "$$pub" ] && kill -0 "$$pub" 2> /dev/null && [ "$$pubmode" != "$$mode" ]; then
+              kill -TERM "$$pub" 2> /dev/null; wait "$$pub" 2> /dev/null; pub=
+              : > /settings/tailscale-publish.log
+            fi
+            if grep -q '"BackendState": "Running"' /settings/tailscale-status.json 2> /dev/null &&
+              { [ -z "$$pub" ] || ! kill -0 "$$pub" 2> /dev/null; }; then
+              if [ "$$mode" = funnel ] && ! grep -q "Funnel on" /settings/tailscale-serve.txt; then
+                ts serve reset > /dev/null 2>&1
+                tailscale --socket="$$sock" funnel --bg http://buzz-gateway:80 > /settings/tailscale-publish.log 2>&1 &
+                pub=$$! pubmode=funnel
+              elif [ "$$mode" = private ] && ! grep -q "tailnet only" /settings/tailscale-serve.txt; then
+                ts serve reset > /dev/null 2>&1
+                tailscale --socket="$$sock" serve --bg http://buzz-gateway:80 > /settings/tailscale-publish.log 2>&1 &
+                pub=$$! pubmode=private
+              fi
+            fi
+            sleep 5
+          done
+        done
+    volumes:
+      - ${APP_DATA_DIR}/data/tailscale:/var/lib/tailscale
+      # Shared with the setup page alone: which way to publish, and the machine's status for the page
+      - ${APP_DATA_DIR}/data/tailscale-control:/settings
+    restart: on-failure
+
+  # Your own domain: this app's own Cloudflare tunnel. The owner signs in to Cloudflare from the
+  # setup page and chooses the domain; then it creates the tunnel and the DNS name, and connects
+  # the gateway. With another option chosen, it waits. The image is the connector of Umbrel's
+  # Cloudflare Tunnel app (Radiokot/umbrel-cloudflared): Alpine with Cloudflare's own cloudflared.
+  cloudflared:
+    image: ghcr.io/radiokot/umbrel-cloudflared-connector:1.1.0-cf.2026.10.4@sha256:2d56d59924d5b91a75ea4263b377330b0d90892bd9e09ab0230d298f9d409915
+    user: "1000:1000"
+    entrypoint:
+      - /sbin/tini
+      - -g
+      - --
+      - /bin/sh
+      - -c
+      - |
+        set -u
+        cf=/cloudflared
+        # Its sign-in certificate and tunnel token stay in its own folder, which no other service mounts
+        mkdir -p "$$HOME" && chmod 700 "$$HOME"
+        want() { [ -f /settings/cloudflare-enabled ] && tr -d ' \n' < /settings/cloudflare-enabled; }
+        state() { printf '%s\n' "$$1" > /settings/cloudflare-state.tmp && mv -f /settings/cloudflare-state.tmp /settings/cloudflare-state; }
+        job=
+        trap '[ -n "$$job" ] && kill -TERM "$$job" 2> /dev/null; wait; exit 0' TERM INT
+        while :; do
+          host=$$(want)
+          if [ -z "$$host" ]; then
+            rm -f /settings/cloudflare-state /settings/cloudflare-login.log
+            until [ -n "$$(want)" ]; do sleep 5; done
+            continue
+          fi
+          # The page's "Sign in again": a new sign-in, and a new tunnel in whichever account it's for
+          if [ -e /settings/cloudflare-reset ]; then
+            [ -s "$$HOME/.cloudflared/cert.pem" ] && [ -s "$$HOME/tunnel-name" ] &&
+              $$cf tunnel delete -f "$$(cat "$$HOME/tunnel-name")" > /dev/null 2>&1
+            rm -rf "$$HOME/.cloudflared" "$$HOME/tunnel.token" "$$HOME/tunnel-name" "$$HOME/routed" /settings/cloudflare-reset
+          fi
+          # Tunnel names are unique within a Cloudflare account, so this one is made once
+          [ -s "$$HOME/tunnel-name" ] || echo "buzz-relay-$$(od -An -tx1 -N3 /dev/urandom | tr -d ' \n')" > "$$HOME/tunnel-name"
+          name=$$(cat "$$HOME/tunnel-name")
+          # 1. Cloudflare's own sign-in, where the owner chooses the domain. Its link lasts about ten
+          # minutes; a new one then takes its place on the page.
+          if [ ! -s "$$HOME/.cloudflared/cert.pem" ]; then
+            state signin
+            $$cf tunnel login > /settings/cloudflare-login.log 2>&1 &
+            job=$$!
+            while kill -0 "$$job" 2> /dev/null && [ "$$(want)" = "$$host" ] && [ ! -e /settings/cloudflare-reset ]; do sleep 3; done
+            kill -TERM "$$job" 2> /dev/null; wait "$$job" 2> /dev/null; job=
+            continue
+          fi
+          rm -f /settings/cloudflare-login.log
+          # 2. The tunnel, once, and the token that runs it
+          if [ ! -s "$$HOME/tunnel.token" ]; then
+            state creating
+            if ! $$cf tunnel create "$$name" > /settings/cloudflare-setup.log 2>&1 &&
+              ! grep -q "already exists" /settings/cloudflare-setup.log; then
+              state error; sleep 30; continue
+            fi
+            if ! $$cf tunnel token "$$name" > "$$HOME/tunnel.token.tmp" 2>> /settings/cloudflare-setup.log; then
+              state error; sleep 30; continue
+            fi
+            mv -f "$$HOME/tunnel.token.tmp" "$$HOME/tunnel.token"
+          fi
+          # 3. The address: a DNS name for the tunnel, in the domain chosen at sign-in
+          if [ "$$(cat "$$HOME/routed" 2> /dev/null)" != "$$host" ]; then
+            state routing
+            if ! $$cf tunnel route dns "$$name" "$$host" > /settings/cloudflare-setup.log 2>&1; then
+              if grep -q "already exists" /settings/cloudflare-setup.log; then state taken; else state error; fi
+              sleep 20; continue
+            fi
+            # Cloudflare names the record within the chosen domain, so a name from another domain comes out wrong
+            if ! grep -q -F -e "CNAME $$host which" -e "$$host updated to route" -e "$$host is already configured" /settings/cloudflare-setup.log; then
+              state wrong-domain
+              until [ "$$(want)" != "$$host" ] || [ -e /settings/cloudflare-reset ]; do sleep 5; done
+              continue
+            fi
+            echo "$$host" > "$$HOME/routed"
+          fi
+          # 4. The tunnel, to the gateway, until the owner chooses something else
+          state running
+          $$cf --no-autoupdate tunnel run --token-file "$$HOME/tunnel.token" --url http://buzz-gateway:80 &
+          job=$$!
+          while kill -0 "$$job" 2> /dev/null && [ "$$(want)" = "$$host" ] && [ ! -e /settings/cloudflare-reset ]; do sleep 5; done
+          kill -TERM "$$job" 2> /dev/null; wait "$$job" 2> /dev/null; job=
+          # a tunnel that stopped by itself starts again after a pause
+          if [ "$$(want)" = "$$host" ]; then sleep 5; fi
+        done
+    environment:
+      HOME: /cloudflare
+    volumes:
+      - ${APP_DATA_DIR}/data/cloudflare:/cloudflare
+      # Shared with the setup page alone: the name to serve, and where the tunnel stands
+      - ${APP_DATA_DIR}/data/cloudflare-control:/settings
+    restart: on-failure
+
+  # Phones pair with Buzz Desktop through this service, at wss://<domain>/pair.
+  pair:
+    image: ghcr.io/block/buzz:sha-744f394@sha256:b67a32b7b2a274cdbd9a685fe996657fa544a3e981284ab3a8c660a128f36a3d
+    init: true
+    entrypoint: ["/usr/local/bin/buzz-pair-relay"]
+    environment:
+      BUZZ_PAIR_RELAY_BIND_ADDR: 0.0.0.0:5000
+    restart: on-failure
+
+  postgres:
+    image: postgres:17.10-alpine@sha256:742f40ea20b9ff2ff31db5458d127452988a2164df9e17441e191f3b72252193
+    user: "1000:1000"
+    environment:
+      POSTGRES_DB: buzz
+      POSTGRES_USER: buzz
+      POSTGRES_PASSWORD: ${APP_BUZZ_POSTGRES_PASSWORD}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - ${APP_DATA_DIR}/data/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U buzz -d buzz"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+    restart: on-failure
+
+  redis:
+    image: redis:7.4.9-alpine@sha256:6ab0b6e7381779332f97b8ca76193e45b0756f38d4c0dcda72dbb3c32061ab99
+    user: "1000:1000"
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "${APP_BUZZ_REDIS_PASSWORD}"]
+    environment:
+      REDISCLI_AUTH: ${APP_BUZZ_REDIS_PASSWORD}
+    volumes:
+      - ${APP_DATA_DIR}/data/redis:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep -q PONG"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 5s
+    restart: on-failure
+
+  # Uploaded files. Silo is the S3 server Block's own bundle uses.
+  silo:
+    image: pgsty/silo:RELEASE.2026-09-16T00-00-00Z@sha256:635197cb9f36d01bee221d34d1c7d7960f6a95c48b0b6c01d99cd13bdae51a46
+    user: "1000:1000"
+    command: ["server", "/data"]
+    networks:
+      default:
+        aliases:
+          # Silo refuses requests to a hostname with underscores, like its container name.
+          - buzz-silo
+    environment:
+      MINIO_ROOT_USER: ${APP_BUZZ_S3_ACCESS_KEY}
+      MINIO_ROOT_PASSWORD: ${APP_BUZZ_S3_SECRET_KEY}
+    volumes:
+      - ${APP_DATA_DIR}/data/silo:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:9000/minio/health/live"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+    restart: on-failure
+
+  # Creates the private bucket for uploads, then exits.
+  silo-init:
+    image: pgsty/mc:RELEASE.2026-09-16T00-00-00Z@sha256:cfc83108c3abb371f8fb84d99c1fdc88f8c237e022409b0081fb7c0a3be634dd
+    depends_on:
+      silo:
+        condition: service_healthy
+    environment:
+      S3_ACCESS_KEY: ${APP_BUZZ_S3_ACCESS_KEY}
+      S3_SECRET_KEY: ${APP_BUZZ_S3_SECRET_KEY}
+    entrypoint:
+      - /bin/sh
+      - -euc
+      - |
+        mc alias set local http://buzz-silo:9000 "$$S3_ACCESS_KEY" "$$S3_SECRET_KEY" > /dev/null
+        mc mb --ignore-existing local/buzz-media
+        mc anonymous set none local/buzz-media
+    restart: on-failure
