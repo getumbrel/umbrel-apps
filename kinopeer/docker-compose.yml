@@ -1,0 +1,28 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: kinopeer_web_1
+      APP_PORT: 8080
+
+  web:
+    image: ghcr.io/kinopeer/kinopeer:1.0.0@sha256:d2a6ff5dea53e36e5afdb4760c591ca54fbaa1ebaa638e7d535200c01da5ecc2
+    restart: on-failure
+    user: "1000:1000"
+    environment:
+      # Umbrel's qBittorrent app. admin/adminadmin is its default login: if it was
+      # changed, Kinopeer asks for the login once and keeps it in /data.
+      QBITTORRENT_URL: http://qbittorrent_server_1:8080
+      QBITTORRENT_USERNAME: admin
+      QBITTORRENT_PASSWORD: adminadmin
+      # Umbrel's Prowlarr app. Its API key is read from its config.xml (mounted read-only below).
+      # Without it, the key can be entered in Kinopeer's Settings → Connections.
+      PROWLARR_URL: http://prowlarr_server_1:9696
+      PROWLARR_CONFIG_XML: /prowlarr/config.xml
+    volumes:
+      # Settings saved from the app (a TMDB key of your own, the qBittorrent login,
+      # download defaults) and which movie or series each torrent is.
+      - ${APP_DATA_DIR}/data:/data
+      # The folder, not the file: a file mount would keep the old file after Prowlarr rewrites it.
+      - ${UMBREL_ROOT}/app-data/prowlarr/data/config:/prowlarr:ro
