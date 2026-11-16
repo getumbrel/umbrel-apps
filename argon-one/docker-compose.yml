@@ -1,0 +1,44 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: argon-one_web_1
+      APP_PORT: 8080
+
+  web:
+    image: ghcr.io/aiacos/argon-one:1.0.4@sha256:2c3f0532e611c632d6f5f0917ebf3e9969074a2b8d021e6505c245025fbbd4a7
+    restart: on-failure
+    command: ["python3", "-u", "/app/web.py"]
+    user: "1000:1000"
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 128m
+    volumes:
+      - ${APP_DATA_DIR}/data/config:/data/config
+      - ${APP_DATA_DIR}/data/run:/data/run
+      - ${APP_DATA_DIR}/data/staging:/data/staging
+      - ${APP_DATA_DIR}/data/argon:/data/argon:ro
+
+  daemon:
+    image: ghcr.io/aiacos/argon-one:1.0.4@sha256:2c3f0532e611c632d6f5f0917ebf3e9969074a2b8d021e6505c245025fbbd4a7
+    restart: on-failure
+    command: ["python3", "-u", "/app/supervisor.py"]
+    network_mode: none
+    read_only: true
+    cap_drop: [ALL]
+    # Lets root in this container write the data folder, which stays owned by the umbrel user.
+    cap_add: [DAC_OVERRIDE]
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 128m
+    # I2C and the GPIO chip only. Mounting /dev instead of listing devices lets the app start, and
+    # say the case is missing, on boards that do not have them.
+    device_cgroup_rules:
+      - "c 89:* rw"
+      - "c ${APP_ARGON_ONE_GPIO_MAJOR}:* rw"
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+      - /dev:/host-dev:ro
+      - /run/dbus/system_bus_socket:/run/dbus/system_bus_socket
+      - /usr/lib/systemd/system-shutdown:/host-shutdown
