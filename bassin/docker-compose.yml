@@ -11,11 +11,11 @@ services:
     image: alpine:3.22.1@sha256:4bcff63911fcb4448bd4fdacec207030997caf25e9bea4045fa6c8c44de311d1
     entrypoint: >-
       /bin/sh -c '
-        apk add --no-cache envsubst &&
         if [ ! -f /config/ckpool.conf ]; then
-          envsubst < /config/ckpool.conf.template > /config/ckpool.conf &&
-          chown 1000:1000 /config/ckpool.conf
-        fi
+          apk add --no-cache envsubst &&
+          envsubst < /config/ckpool.conf.template > /config/ckpool.conf
+        fi &&
+        chown 1000:1000 /config/ckpool.conf
       '
     volumes:
       - ${APP_DATA_DIR}/data/config:/config
@@ -27,8 +27,36 @@ services:
       - APP_BITCOIN_ZMQ_HASHBLOCK_PORT=${APP_BITCOIN_ZMQ_HASHBLOCK_PORT}
 
   ckpool:
-    image: ghcr.io/getumbrel/docker-ckpool-solo:v1.1.1@sha256:499f0d4f72b93130bde06463b6aab25fa80f1f2349bab0e28f1c9a59b02f745b
-    command: '-k -B -c /config/ckpool.conf'
+    image: ghcr.io/blockdyor/docker-ckpool-solo:v1.2.0-1@sha256:ac630bfd6675cb512317f3a75edff7940dcf0378dc8aeb61ba9ac592aa6bdb87
+    # Keep the startup wrapper in Compose so existing installs receive it on update.
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        # Export the compiled CKPool version, then replace this shell with the pool process.
+        # CKPool embeds PACKAGE "/" VERSION in its Stratum implementation.
+        set -u
+        binary=$${CKPOOL_BINARY:-/app/bin/ckpool}
+        output=$${CKPOOL_VERSION_FILE:-/www/pool/version.json}
+        version=$$(LC_ALL=C grep -aoE 'ckpool/[0-9]+(\.[0-9]+){1,3}([+-][0-9A-Za-z.-]+)?' "$$binary" 2>/dev/null | head -n 1)
+        version=$${version#ckpool/}
+
+        # Publish null if the binary no longer provides this identifier; never retain an old version.
+        metadata=null
+        if [ -n "$$version" ] && [ "$${#version}" -le 64 ]; then
+            metadata=$$(printf '{"software":"ckpool","version":"%s"}' "$$version")
+        fi
+        if mkdir -p "$$(dirname "$$output")" && temporary=$$(mktemp "$${output}.XXXXXX"); then
+            if printf '%s\n' "$$metadata" > "$$temporary" && chmod 644 "$$temporary"; then
+                mv -f "$$temporary" "$$output" || rm -f "$$temporary"
+            else
+                rm -f "$$temporary"
+            fi
+        fi
+        # Metadata failure must not prevent mining or change CKPool's arguments/signals.
+        exec "$$binary" "$$@"
+      - bassin-ckpool
+    command: ["-k", "-B", "-c", "/config/ckpool.conf"]
     user: "1000:1000"
     depends_on:
       init:
@@ -42,10 +70,14 @@ services:
       - ${APP_DATA_DIR}/data/www:/www
 
   ui:
-    image: ghcr.io/blockdyor/bassin-ui:0e779e6@sha256:d8febed17f9b63f85227f3168ff2d7b15f9c430402866ad06237cebb4dc9dc68
-    entrypoint: /bin/sh -c "cp -r /ui/* /www/"
+    image: ghcr.io/blockdyor/bassin-ui:af433d3@sha256:bc889247d9aaab8c709ad7abed9aa7a9fcd4342930f6531d76e490399173c7b7
+    entrypoint: /bin/sh -c "cp -r /ui/* /www/ && exec python3 /opt/bassin/pool-location.py"
     user: "1000:1000"
+    depends_on:
+      init:
+        condition: service_completed_successfully
     volumes:
+      - ${APP_DATA_DIR}/data/config:/config:ro
       - ${APP_DATA_DIR}/data/www:/www
     restart: on-failure
 
