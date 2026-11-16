@@ -5,20 +5,17 @@ services:
     environment:
       APP_HOST: romarr_web_1
       APP_PORT: 6868
+      PROXY_AUTH_WHITELIST: "/api/*"
 
   web:
-    image: ghcr.io/blizzhacker/romarr:0.7.0@sha256:106b336bf174813e1f2a6f610b567f9b384efba2ac2563ccc415015703786cbe
+    image: ghcr.io/blizzhacker/romarr:1.10.0@sha256:f16e7fa86b43202ff0991e94100acee71719cccebeb39ccaaa48fd3f7d844727
     restart: on-failure
     stop_grace_period: 1m
     volumes:
-      # Settings, history and indexer configuration.
       - ${APP_DATA_DIR}/data/config:/config
-      # Where finished ROMs are filed.
       - ${UMBREL_ROOT}/data/storage/downloads:/downloads
-      - ${APP_DATA_DIR}/data/roms:/roms
     environment:
       PUID: "1000"
       PGID: "1000"
       TZ: ${TZ}
-      LIBRARY_KIND: romm
-      LIBRARY_PATH: /roms
+      LIBRARY_PATH: /downloads/roms

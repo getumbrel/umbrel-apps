@@ -1,46 +1,48 @@
-manifestVersion: 1.1
+manifestVersion: 1
 id: romarr
 category: media
 name: ROMarr
-version: "0.7.0"
+version: "1.10.0"
 tagline: The *arr for games
 description: >-
   Request a title and ROMarr searches your indexers through Prowlarr, hands the
-  winner to your download client, and files the ROM into your game library where
-  it can actually be played. If you run Radarr for films and Sonarr for TV, this
-  is the missing one.
+  winner to your download client, verifies what arrived and files the game into
+  your library where it can actually be played. If you run Radarr for films and
+  Sonarr for TV, this is the missing one.
 
 
   ROMarr is not tied to one library. RomM, Gaseous and Retrom are all supported
   and chosen with a single setting. There is also a folder mode that writes a
   plain directory tree laid out by platform, which is what Batocera, RetroPie,
-  EmulationStation, ES-DE, EmuDeck, Pegasus, Lakka, muOS and LaunchBox all read
-  — no URL and no account needed.
+  ES-DE, EmuDeck, Pegasus, muOS and LaunchBox all read, with no URL and no
+  account needed.
 
 
-  Releases are scored and the reasoning is shown, so a wrong pick is a click to
-  correct rather than a bug report. Interactive search lists every candidate
-  with its score and a Grab button.
+  Releases are scored for games rather than video: region, revision and
+  verified No-Intro and Redump dumps count, prototypes, hacks and cross-console
+  mismatches are rejected, and every score shows its reasoning so a wrong pick
+  is a click to correct.
 
 
   🛠️ SETUP INSTRUCTIONS
 
 
-  ROMarr needs three things: a Prowlarr instance, at least one download client
-  (qBittorrent, SABnzbd or NZBGet), and somewhere to put the ROMs. Install
-  Prowlarr and a download client from the Umbrel App Store first, then open
-  ROMarr and fill in the Settings page.
+  ROMarr needs a Prowlarr instance and at least one download client
+  (qBittorrent, Transmission, SABnzbd or NZBGet). Install them from the Umbrel
+  App Store first, then open ROMarr, set its password on the first visit and
+  fill in the Settings page.
 
 
-  A download client is genuinely required rather than merely recommended: a
-  release found with no client that speaks its protocol is ranked and then
-  refused.
+  Finished games are filed into the "roms" folder inside your Downloads storage,
+  so they show up in the Files app and over the network.
 
 
-  ⚠️ Unofficial. ROMarr is not affiliated with RomM, Gaseous or Retrom.
-developer: Move Weight Foundation
-website: https://foundation.moveweight.com
-dependencies: []
+  ⚠️ ROMarr includes no games or BIOS files. It is not affiliated with RomM,
+  Gaseous or Retrom.
+developer: Move Weight
+website: https://romarr.app
+dependencies:
+  - prowlarr
 repo: https://github.com/BlizzHacker/romarr
 support: https://github.com/BlizzHacker/romarr/issues
 port: 6868
@@ -49,9 +51,18 @@ gallery:
   - 2.jpg
   - 3.jpg
 path: ""
+defaultUsername: ""
+defaultPassword: ""
 releaseNotes: >-
-  Interactive search — every release scored with its reasoning shown, then a
-  Grab button — and a folder library backend for setups that are just a
-  directory tree laid out by platform.
+  ROMarr 1.10.0 adds Reports and Help (review a suspicious library file, keep
+  scanner evidence with its SHA-256, quarantine or restore it), library audits
+  that verify ordinary ZIPs against the ROMs inside, indexer Retry-After
+  cooldowns and configurable timeouts.
+
+
+  Full release notes can be found at https://github.com/BlizzHacker/romarr/releases/tag/v1.10.0
+torOnly: false
+permissions:
+  - STORAGE_DOWNLOADS
 submitter: BlizzHacker
 submission: https://github.com/getumbrel/umbrel-apps/pull/5947
