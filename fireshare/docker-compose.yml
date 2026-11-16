@@ -1,0 +1,30 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: fireshare_fireshare_1
+      APP_PORT: 80
+      # Fireshare's main purpose is sharing videos with people outside Umbrel,
+      # so shared links cannot sit behind Umbrel login. The app has its own auth.
+      PROXY_AUTH_ADD: "false"
+
+  fireshare:
+    image: shaneisrael/fireshare:1.9.0-lite@sha256:6199cf2d47a8d8fa98fea6bb2544b4e3cd1aa28d7fa28ed9a6516cd8aef1c23b
+    restart: on-failure
+    stop_grace_period: 30s
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - ADMIN_PASSWORD=${APP_PASSWORD}
+    volumes:
+      - ${APP_DATA_DIR}/data/db:/data
+      - ${APP_DATA_DIR}/data/processed:/processed
+      - ${APP_DATA_DIR}/data/videos:/videos
+      - ${APP_DATA_DIR}/data/images:/images
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1/').read()\""]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
