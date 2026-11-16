@@ -1,0 +1,53 @@
+manifestVersion: 1
+id: peer-lab
+storage:
+  dataRoot: data
+category: bitcoin
+name: Peer Lab
+version: "1.0.0"
+tagline: Who your node talks to, and who brings it blocks first
+description: >-
+  Your node talks to strangers all day. Each one says what software it runs, but is it telling the truth? Peer Lab takes a closer look: what a peer offers, whether it wants your transactions, which chain it is on. A normal node, a wallet, a crawler, or a spy in disguise? The map shows where they are and who hosts them.
+
+
+  Every new block reaches your node through one of these peers. Peer Lab notes for every block who was first, and each peer carries its count, like 43 of 1,693 blocks. Open a peer to see everything else: its traffic, what it announced, and the buttons to keep it or let it go.
+
+
+  Core has eight manual slots it never fills on its own. Slot Fill uses them for spread: other regions, other providers. Stratum Race times how fast your own pool turns a new block into fresh work, next to public solo pools. Both are off by default. Peer Lab never touches bitcoin.conf, wallets or keys, and no peer address goes to any outside service.
+
+
+  IP geolocation and network data by DB-IP (https://db-ip.com), licensed CC BY 4.0. Map data from Natural Earth.
+releaseNotes: ""
+developer: benunskilled
+website: https://github.com/benunskilled/peer-lab
+dependencies:
+  - bitcoin
+repo: https://github.com/benunskilled/peer-lab
+support: https://github.com/benunskilled/peer-lab/issues
+
+port: 8797
+gallery: []
+path: ""
+
+defaultUsername: ""
+defaultPassword: ""
+
+widgets:
+  - id: traffic
+    type: three-stats
+    refresh: 60s
+    endpoint: dashboard:8788/api/widget/traffic
+    link: ""
+    example:
+      type: three-stats
+      link: ""
+      items:
+        - text: 8.4 GB
+          subtext: sent today
+        - text: 1.9 GB
+          subtext: received today
+        - text: 8 / 10
+          subtext: peers in / out
+
+submitter: benunskilled
+submission: https://github.com/getumbrel/umbrel-apps/pull/6186

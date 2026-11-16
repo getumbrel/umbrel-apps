@@ -1,0 +1,180 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: peer-lab_dashboard_1
+      APP_PORT: 8788
+  dashboard:
+    image: ghcr.io/benunskilled/peer-lab:1.0.0@sha256:a0a6c68af1cee0c6d47691e6fab211387b91ad16b26ad2974f9931a632225a1f
+    user: 1000:1000
+    init: true
+    restart: on-failure
+    read_only: true
+    tmpfs:
+    - /tmp
+    security_opt:
+    - no-new-privileges:true
+    cap_drop:
+    - ALL
+    command:
+    - node
+    - src/dashboard-server.js
+    volumes:
+    - ${APP_DATA_DIR}/data:/data
+    environment:
+      APP_BITCOIN_NODE_IP: $APP_BITCOIN_NODE_IP
+      APP_BITCOIN_RPC_PORT: $APP_BITCOIN_RPC_PORT
+      APP_BITCOIN_RPC_USER: $APP_BITCOIN_RPC_USER
+      APP_BITCOIN_RPC_PASS: $APP_BITCOIN_RPC_PASS
+      APP_BITCOIN_ZMQ_HASHBLOCK_PORT: $APP_BITCOIN_ZMQ_HASHBLOCK_PORT
+      APP_BITCOIN_NETWORK: $APP_BITCOIN_NETWORK
+      DATA_DIR: /data
+      DASHBOARD_PORT: '8788'
+      TRUSTED_PROXY_HOST: peer-lab_app_proxy_1
+      PEERS_HEALTH_URL: http://peer-lab_peers_1:8789/api/health
+      PEERS_URL: http://peer-lab_peers_1:8789
+    healthcheck:
+      test:
+      - CMD
+      - node
+      - -e
+      - 'require(''http'').get(''http://127.0.0.1:8788/api/health'', (r) => process.exit(r.statusCode
+        === 200 ? 0 : 1)).on(''error'', () => process.exit(1))'
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+  peer-profiler:
+    image: ghcr.io/benunskilled/peer-lab:1.0.0@sha256:a0a6c68af1cee0c6d47691e6fab211387b91ad16b26ad2974f9931a632225a1f
+    user: 1000:1000
+    init: true
+    restart: on-failure
+    read_only: true
+    tmpfs:
+    - /tmp
+    security_opt:
+    - no-new-privileges:true
+    cap_drop:
+    - ALL
+    command:
+    - node
+    - src/peer-profiler.js
+    volumes:
+    - ${APP_DATA_DIR}/data:/data
+    environment:
+      APP_BITCOIN_NODE_IP: $APP_BITCOIN_NODE_IP
+      APP_BITCOIN_RPC_PORT: $APP_BITCOIN_RPC_PORT
+      APP_BITCOIN_RPC_USER: $APP_BITCOIN_RPC_USER
+      APP_BITCOIN_RPC_PASS: $APP_BITCOIN_RPC_PASS
+      APP_BITCOIN_ZMQ_HASHBLOCK_PORT: $APP_BITCOIN_ZMQ_HASHBLOCK_PORT
+      APP_BITCOIN_NETWORK: $APP_BITCOIN_NETWORK
+      DATA_DIR: /data
+      PEERS_URL: http://peer-lab_peers_1:8789
+    healthcheck:
+      test:
+      - CMD
+      - node
+      - -e
+      - require('/app/src/lib/health').assertFresh('peer-profiler', 120000)
+      interval: 60s
+      timeout: 10s
+      retries: 2
+      start_period: 60s
+  relay-profiler:
+    image: ghcr.io/benunskilled/peer-lab:1.0.0@sha256:a0a6c68af1cee0c6d47691e6fab211387b91ad16b26ad2974f9931a632225a1f
+    user: 1000:1000
+    init: true
+    restart: on-failure
+    read_only: true
+    tmpfs:
+    - /tmp
+    security_opt:
+    - no-new-privileges:true
+    cap_drop:
+    - ALL
+    command:
+    - node
+    - src/relay-profiler.js
+    volumes:
+    - ${APP_DATA_DIR}/data:/data
+    environment:
+      APP_BITCOIN_NODE_IP: $APP_BITCOIN_NODE_IP
+      APP_BITCOIN_RPC_PORT: $APP_BITCOIN_RPC_PORT
+      APP_BITCOIN_RPC_USER: $APP_BITCOIN_RPC_USER
+      APP_BITCOIN_RPC_PASS: $APP_BITCOIN_RPC_PASS
+      APP_BITCOIN_ZMQ_HASHBLOCK_PORT: $APP_BITCOIN_ZMQ_HASHBLOCK_PORT
+      APP_BITCOIN_NETWORK: $APP_BITCOIN_NETWORK
+      DATA_DIR: /data
+    healthcheck:
+      test:
+      - CMD
+      - node
+      - -e
+      - require('/app/src/lib/health').assertFresh('relay-profiler', 120000)
+      interval: 60s
+      timeout: 10s
+      retries: 2
+      start_period: 60s
+  stratum-race:
+    image: ghcr.io/benunskilled/peer-lab:1.0.0@sha256:a0a6c68af1cee0c6d47691e6fab211387b91ad16b26ad2974f9931a632225a1f
+    user: 1000:1000
+    init: true
+    restart: on-failure
+    read_only: true
+    tmpfs:
+    - /tmp
+    security_opt:
+    - no-new-privileges:true
+    cap_drop:
+    - ALL
+    command:
+    - node
+    - src/stratum-race.js
+    volumes:
+    - ${APP_DATA_DIR}/data:/data
+    environment:
+      APP_BITCOIN_NODE_IP: $APP_BITCOIN_NODE_IP
+      APP_BITCOIN_RPC_PORT: $APP_BITCOIN_RPC_PORT
+      APP_BITCOIN_RPC_USER: $APP_BITCOIN_RPC_USER
+      APP_BITCOIN_RPC_PASS: $APP_BITCOIN_RPC_PASS
+      APP_BITCOIN_ZMQ_HASHBLOCK_PORT: $APP_BITCOIN_ZMQ_HASHBLOCK_PORT
+      APP_BITCOIN_NETWORK: $APP_BITCOIN_NETWORK
+      DATA_DIR: /data
+    healthcheck:
+      test:
+      - CMD
+      - node
+      - -e
+      - require('/app/src/lib/health').assertFresh('stratum-race', 120000)
+      interval: 60s
+      timeout: 10s
+      retries: 2
+      start_period: 60s
+  peers:
+    image: ghcr.io/benunskilled/peer-lab:1.0.0@sha256:a0a6c68af1cee0c6d47691e6fab211387b91ad16b26ad2974f9931a632225a1f
+    user: 1000:1000
+    restart: on-failure
+    read_only: true
+    security_opt:
+    - no-new-privileges:true
+    cap_drop:
+    - ALL
+    environment:
+      APP_BITCOIN_NODE_IP: $APP_BITCOIN_NODE_IP
+      APP_BITCOIN_RPC_PORT: $APP_BITCOIN_RPC_PORT
+      APP_BITCOIN_RPC_USER: $APP_BITCOIN_RPC_USER
+      APP_BITCOIN_RPC_PASS: $APP_BITCOIN_RPC_PASS
+      APP_BITCOIN_TOR_PROXY_IP: $APP_BITCOIN_TOR_PROXY_IP
+      APP_BITCOIN_I2P_DAEMON_IP: $APP_BITCOIN_I2P_DAEMON_IP
+      PEERS_PORT: '8789'
+      DASHBOARD_HEALTH_URL: http://peer-lab_dashboard_1:8788/api/health
+    healthcheck:
+      test:
+      - CMD
+      - /peers
+      - healthcheck
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    command:
+    - /peers
