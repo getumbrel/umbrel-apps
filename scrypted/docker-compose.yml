@@ -1,0 +1,20 @@
+version: "3.7"
+
+services:
+  scrypted:
+    image: ghcr.io/koush/scrypted:v0.143.0-noble-full@sha256:f23251dad07cf02b4b6b2e364e7948ab9fb77656e31f226186c2ba5304ebd2cd
+    network_mode: host
+    restart: on-failure
+    stop_grace_period: 1m
+
+    environment:
+      SCRYPTED_SECURE_PORT: "11443"
+      SCRYPTED_INSECURE_PORT: "11080"
+      SCRYPTED_DOCKER_AVAHI: "true"
+      # Uncomment to add the optional paid Scrypted NVR plugin for 24/7 local recording.
+      # SCRYPTED_NVR_VOLUME: /nvr
+
+    volumes:
+      - ${APP_DATA_DIR}/data/volume:/server/volume
+      # Uncomment to add the optional paid Scrypted NVR plugin for 24/7 local recording.
+      # - ${APP_DATA_DIR}/data/nvr:/nvr
