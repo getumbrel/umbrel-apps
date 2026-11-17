@@ -3,7 +3,7 @@ id: twenty
 name: Twenty
 tagline: An adaptable CRM solution for seamless team collaboration and growth
 category: files
-version: "2.59.1"
+version: "2.59.3"
 port: 2020
 description: >-
   Twenty is the leading open-source CRM, built by a community of hundreds of contributors to meet the unique needs of your business. Designed for flexibility, it helps businesses of all sizes efficiently manage customer relationships and streamline workflows.
@@ -45,16 +45,12 @@ gallery:
   - 3.webp
   - 4.webp
 releaseNotes: >-
-  This update improves messaging, record permissions, and custom fields.
+  This update fixes SSO invitations and upgrades from older Twenty versions.
 
 
-  - Direct messages have their own sidebar section, with inline image previews and more reliable chat drafts.
+  - Existing accounts can join another workspace through SSO using their personal invitation link.
 
-  - Application-defined record restrictions are preserved when applications are synced, and unlisted views are hidden from other members and API keys.
-
-  - Custom role creation is no longer restricted by the CUSTOM_ROLES feature flag.
-
-  - Select-field labels, colors, and ordering can be customized without being reset by application updates.
+  - Fixed upgrades from versions older than 2.48 failing when widget views contain morph-relation fields.
 
 
   ⚠️ Standard and application-owned select options must now be deactivated instead of deleted or assigned a different API value. Records with deactivated options remain available in tables and filters but disappear from the corresponding board column. Review custom-field integrations before updating.
@@ -63,7 +59,7 @@ releaseNotes: >-
   ⚠️ Unlisted views created through the REST API without a creator are now hidden from all readers. Integrations needing shared views should use workspace-visible views.
 
 
-  ⚠️ Existing Twenty accounts must already be workspace members to sign in through SSO. Join through an invitation using password, Google, or Microsoft sign-in first. Existing non-members cannot currently join SSO-only workspaces. Custom HTML routes now run in a sandbox without access to cookies or browser storage.
+  ⚠️ Existing accounts joining through SSO must use a valid personal invitation; public invite links alone are not sufficient. Accounts with administrator-panel or impersonation access must join using another sign-in method, and unverified password accounts must verify their email or reset their password first. With SAML, new users following expired or revoked personal invitations should request a new invitation or use the workspace's public invite link directly. Custom HTML routes run in a sandbox without access to cookies or browser storage.
 
 
   ⚠️ The legacy workflow and automated-trigger objects are removed from the record APIs. Update integrations using these APIs before upgrading. Favorites and attachment/timeline links to legacy workflow records are removed; review existing workflows and related links before updating.
@@ -84,7 +80,7 @@ releaseNotes: >-
   API integrations should use markdown or tiptap rich-text fields instead of the deprecated blocknote field. Creating webhooks now requires a roleId and the ROLES permission. Record-sharing and metadata APIs have also changed; review the upstream release notes before updating custom integrations.
 
 
-  Full changelog: https://github.com/twentyhq/twenty/compare/twenty/v2.58.2...twenty/v2.59.1
+  Full changelog: https://github.com/twentyhq/twenty/compare/twenty/v2.59.1...twenty/v2.59.3
 dependencies: []
 path: ""
 defaultUsername: ""
