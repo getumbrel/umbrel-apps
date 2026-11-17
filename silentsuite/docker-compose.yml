@@ -11,7 +11,7 @@ services:
       PROXY_AUTH_BLACKLIST: "/api/v1/owner/,/api/v1/owner/*,/admin/,/admin/*"
 
   router:
-    image: nginxinc/nginx-unprivileged:1.30.5-alpine@sha256:15c994d10d6d78658721c3bcafff14cb281fba2a4bdf9d5ba92c416a472516e3
+    image: nginxinc/nginx-unprivileged:1.30.6-alpine@sha256:f5116ed4606f3eb015dd4a8e28cb9b351476dc0ad4bc6e9f93b19cec130cdf03
     restart: on-failure
     volumes:
       - ${APP_DATA_DIR}/data/router:/etc/nginx/conf.d:ro
@@ -22,13 +22,13 @@ services:
         condition: service_healthy
 
   web:
-    image: ghcr.io/silent-suite/silentsuite-web-selfhost:v0.5.16-beta@sha256:999974b2532e65a5c06d81422bd05de3a12664878f46918681c929d547a45a60
+    image: ghcr.io/silent-suite/silentsuite-web-selfhost:v0.5.20-beta@sha256:5156f5d9b67db5c7a6dcdf51c603b104e4c3ec6e2789ad2a6552431fd66e8088
     restart: on-failure
 
   init:
     # One-shot preparation of this app's bind-mounted server directories: ownership for the
     # server image's own user and a private INI with the database password. No network.
-    image: ghcr.io/silent-suite/silentsuite-server:v0.5.16-beta@sha256:6c2c341169d71274348c2872c6e495950e28cd7b4d2e2d6dfa79f89a86826ea6
+    image: ghcr.io/silent-suite/silentsuite-server:v0.5.20-beta@sha256:6a5ab47d21feeed4fc05379258e8c2686e1fa67138dbd6570900eea732b0c7bb
     user: "0:0"
     network_mode: none
     restart: "no"
@@ -41,7 +41,7 @@ services:
       - ${APP_DATA_DIR}/data/server-config:/config
 
   server:
-    image: ghcr.io/silent-suite/silentsuite-server:v0.5.16-beta@sha256:6c2c341169d71274348c2872c6e495950e28cd7b4d2e2d6dfa79f89a86826ea6
+    image: ghcr.io/silent-suite/silentsuite-server:v0.5.20-beta@sha256:6a5ab47d21feeed4fc05379258e8c2686e1fa67138dbd6570900eea732b0c7bb
     restart: on-failure
     # Package-only startup wrapper: the same collectstatic/migrations/two-worker uvicorn
     # lifecycle as the shared image entrypoint, with access logging disabled and a
@@ -72,7 +72,7 @@ services:
       start_period: 60s
 
   postgres:
-    image: postgres:16.9@sha256:7c688148e5e156d0e86df7ba8ae5a05a2386aaec1e2ad8e6d11bdf10504b1fb7
+    image: postgres:16.16-alpine@sha256:81e77a4833487b8132fe4b00bedd39dc3f74b8641e387f19312a48f7de218c2e
     restart: on-failure
     shm_size: 128mb
     environment:
