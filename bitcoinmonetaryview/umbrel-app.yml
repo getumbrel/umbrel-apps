@@ -1,0 +1,52 @@
+manifestVersion: 1
+id: bitcoinmonetaryview
+storage:
+  dataRoot: data
+category: bitcoin
+name: Monetary View
+version: "0.3.14"
+tagline: See how much spam your Bitcoin node stores
+description: >-
+  Monetary View analyses the blocks and the UTXO set of your own Bitcoin node with the Monetary Node spam
+  rules: inscriptions, oversized OP_RETURN outputs, fake-key multisig (Stamps) and oversized scriptSigs.
+
+
+  It shows how much spam your node stores per block and over the whole chain, how much storage a Monetary
+  Node would save, and how much spam sits in the current UTXO set. A whole-chain estimate appears within
+  minutes; the exact figures follow as the history scan runs. You can look up any block, analyse a period of
+  your choice and share a summary card.
+
+
+  Monetary View is an independent project, not affiliated with or endorsed by the Monetary Node project;
+  it uses its published spam rules unchanged.
+
+
+  Strictly read-only: the app only reads blocks through a whitelist of read-only RPC calls, never changes
+  your node or its files, and makes no external requests. Works with Umbrel's Bitcoin Node and with Bitcoin
+  Knots. Once a week it asks your node for the size of its UTXO set; to answer, Bitcoin writes the part of
+  the UTXO set it holds in memory to disk. The dashboard is available in English, German, Spanish, French and
+  Polish.
+
+
+  The scan results are rebuilt from your node if needed, so they are left out of Umbrel backups; your
+  settings are kept.
+releaseNotes: ""
+developer: Mark Sierra
+website: https://github.com/MarkSierra/BitcoinMonetaryView
+dependencies:
+  - bitcoin
+repo: https://github.com/MarkSierra/BitcoinMonetaryView
+support: https://github.com/MarkSierra/BitcoinMonetaryView/issues
+port: 8338
+gallery: []
+path: ""
+defaultUsername: ""
+defaultPassword: ""
+backupIgnore:
+  - data/app/mainnet
+  - data/app/testnet3
+  - data/app/testnet4
+  - data/app/signet
+  - data/app/regtest
+submitter: Mark Sierra
+submission: https://github.com/getumbrel/umbrel-apps/pull/6328
