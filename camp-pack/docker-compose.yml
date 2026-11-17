@@ -1,0 +1,16 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: camp-pack_web_1
+      APP_PORT: 3000
+
+  web:
+    image: ghcr.io/campkitchenus-maker/camp-pack:1.0.0@sha256:164a2a1d56706f367c0bfd64920ed6fc35fc3aa7ff339c03789f20ded3b96cb6
+    user: "1000:1000"
+    restart: on-failure
+    environment:
+      DATA_DIR: /data
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
