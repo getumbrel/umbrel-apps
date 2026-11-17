@@ -30,7 +30,7 @@ environment:
       Only needed if the Consume folder is on a network share, because Paperless-ngx can't notice new files there on its own. Enter how often to check for new files, in seconds, for example 60. Leave empty otherwise.
 category: files
 name: Paperless-ngx
-version: "3.4.2-patch.2"
+version: "3.5.0"
 tagline: Transform your physical documents into a searchable online archive
 description: >-
   Paperless-ngx is a community-supported open-source document management system that transforms your physical documents into a searchable online archive so you can keep, well, less paper.
@@ -51,31 +51,19 @@ description: >-
 
   - Paperless stores your documents plain on disk. Filenames and folders are managed by paperless and their format can be configured freely with different configurations assigned to different documents.
 releaseNotes: >-
-  This update adds support for new storage management and configuration options introduced with umbrelOS 2.0.
+  This update adds manually triggered workflows and Markdown document notes, and runs bulk operations in the background so larger changes don't hold up the interface.
 
 
-  Paperless-ngx's consume and export folders have moved into the app's own storage, so they're now included in your backups. Any files still waiting in Home/paperless/consume are moved across and imported. Your earlier exports stay in Home/paperless/export.
+  It also improves tag hierarchy performance and permissions, restores thumbnail generation for images without archive versions, and fixes scheduled workflow filename filters.
 
 
-  If a scanner or another device saves files to Home/paperless/consume, open Paperless-ngx's app settings and choose that folder as the Consume folder so it keeps working. You can also choose a folder on a drive or a network share.
+  Paperless-ngx's consume and export folders now live in the app's own storage and are included in backups. Pending files in Home/paperless/consume move across automatically; earlier exports remain in Home/paperless/export. If a scanner or another device saves files to Home/paperless/consume, choose that folder as the Consume folder in the app's settings so it keeps working.
 
 
-  The previous update added extra OCR languages to Paperless-ngx's app settings.
+  If you're updating from a pre-3.0 version, API v1 compatibility has been removed, legacy document/thumbnail encryption is no longer supported, and pre/post-consume scripts no longer receive positional arguments.
 
 
-  Previous Paperless-ngx 3.4.2 release notes:
-
-
-  This update improves the mobile document view and save button, preserves saved-view names when saving and closing, and adds tag names to document history.
-
-
-  It also fixes bulk document edits, prevents PDF zoom buttons from submitting forms, and improves startup reliability when installing OCR languages.
-
-
-  This update keeps the recent Paperless-ngx 3.0 major-update caveats: if you're updating from a pre-3.0 version, API v1 compatibility has been removed, legacy document/thumbnail encryption is no longer supported, and pre/post-consume scripts no longer receive positional arguments.
-
-
-  Full release notes can be found at https://github.com/paperless-ngx/paperless-ngx/releases/tag/v3.4.2
+  Full release notes can be found at https://github.com/paperless-ngx/paperless-ngx/releases/tag/v3.5.0
 backupIgnore:
   - data/redisdata/*
 developer: Paperless-ngx Community
