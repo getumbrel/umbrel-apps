@@ -3,7 +3,7 @@ id: twenty
 name: Twenty
 tagline: An adaptable CRM solution for seamless team collaboration and growth
 category: files
-version: "2.58.2"
+version: "2.59.1"
 port: 2020
 description: >-
   Twenty is the leading open-source CRM, built by a community of hundreds of contributors to meet the unique needs of your business. Designed for flexibility, it helps businesses of all sizes efficiently manage customer relationships and streamline workflows.
@@ -45,7 +45,22 @@ gallery:
   - 3.webp
   - 4.webp
 releaseNotes: >-
-  This update strengthens email-verification checks for two-factor authentication, tightens SSO workspace membership checks, and adds browser security protections to custom HTTP routes.
+  This update improves messaging, record permissions, and custom fields.
+
+
+  - Direct messages have their own sidebar section, with inline image previews and more reliable chat drafts.
+
+  - Application-defined record restrictions are preserved when applications are synced, and unlisted views are hidden from other members and API keys.
+
+  - Custom role creation is no longer restricted by the CUSTOM_ROLES feature flag.
+
+  - Select-field labels, colors, and ordering can be customized without being reset by application updates.
+
+
+  ⚠️ Standard and application-owned select options must now be deactivated instead of deleted or assigned a different API value. Records with deactivated options remain available in tables and filters but disappear from the corresponding board column. Review custom-field integrations before updating.
+
+
+  ⚠️ Unlisted views created through the REST API without a creator are now hidden from all readers. Integrations needing shared views should use workspace-visible views.
 
 
   ⚠️ Existing Twenty accounts must already be workspace members to sign in through SSO. Join through an invitation using password, Google, or Microsoft sign-in first. Existing non-members cannot currently join SSO-only workspaces. Custom HTML routes now run in a sandbox without access to cookies or browser storage.
@@ -69,7 +84,7 @@ releaseNotes: >-
   API integrations should use markdown or tiptap rich-text fields instead of the deprecated blocknote field. Creating webhooks now requires a roleId and the ROLES permission. Record-sharing and metadata APIs have also changed; review the upstream release notes before updating custom integrations.
 
 
-  Full changelog: https://github.com/twentyhq/twenty/compare/twenty/v2.58.0...twenty/v2.58.2
+  Full changelog: https://github.com/twentyhq/twenty/compare/twenty/v2.58.2...twenty/v2.59.1
 dependencies: []
 path: ""
 defaultUsername: ""
