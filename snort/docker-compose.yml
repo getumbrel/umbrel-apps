@@ -4,10 +4,10 @@ services:
   app_proxy:
     environment:
       APP_HOST: snort_web_1
-      APP_PORT: 8080
+      APP_PORT: 3000
 
   web:
-    image: voidic/snort:v0.5.4@sha256:9ea5f2d60108984cb56992c7842950e02a3b31d610a6cb79ca9c43b46cbc1057
+    image: voidic/snort:v0.5.6@sha256:b680ecc8ccf7a76a59b61a403204dc2c796c8b7a013afd754e9e4df2bfa4c6ef
     init: true
-    volumes:
-      - ${APP_DATA_DIR}/mime-types.conf:/etc/nginx/conf.d/00-mjs.conf:ro
+    user: "101:101"
+    restart: on-failure
