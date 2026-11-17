@@ -4,7 +4,7 @@ storage:
   dataRoot: data
 category: ai
 name: Ekko Studio
-version: "0.8.24"
+version: "0.8.25"
 tagline: Manage your AI agent from your browser
 description: >-
   Ekko Studio is a browser workspace for AI agents, with conversations, file tools, persistent memory, skills, and model settings. It includes both the Ekko and Hermes runtimes so you can choose an agent for each conversation.
@@ -21,19 +21,19 @@ description: >-
 
   This package provides the browser interface. Native-app cloud connectivity, peer-to-peer connections, and preview-server ports are not exposed. Optional subscription sign-in requires approval with the provider; API-key setup is available in the browser.
 releaseNotes: >-
-  This update adds a Plugin Center for installing, updating, configuring, and rolling back plugins, including plugins installed straight from a public GitHub repository. Plugin pages now load correctly when Ekko Studio is opened over plain HTTP on your local network.
+  ⚠️ Providers are now shared across all Profiles within a Studio account. Providers with the same name are merged, preferring the default Profile even if endpoints or credentials differ. Before updating, give providers distinct names if you need to keep different endpoints. Existing conversations with merged providers will use the retained endpoint.
 
 
-  A new Navigation setting in the avatar menu lets you add, remove, and reorder sidebar entries, and sign-in opens your first saved entry (the Bots page by default). Completed and stopped collaborations restore their task plans and return cards, and conversation history loads more reliably when switching Profiles or reconnecting.
+  ⚠️ Trusted plugin pages can now access the host page and browser-stored login credentials. Only install plugins you trust.
 
 
-  Fixes include custom-provider credential detection, cancellation while attachments or models are still preparing, and preserving unrelated voice settings when changing speech providers.
+  This update introduces a unified model gateway and fixes Bot model selection, context compression, and credential detection. Clarification and approval replies now wait for server confirmation and preserve failed submissions for retry.
 
 
-  Existing custom plugins may need updates for the new v1 permissions and data contracts, and must declare navigation entries explicitly to retain their sidebar links.
+  Existing custom plugins may need updates for the v1 permissions and data contracts, and must declare navigation entries explicitly to retain their sidebar links.
 
 
-  Full release notes can be found at https://github.com/EKKOLearnAI/ekko-studio/releases
+  Full release notes can be found at https://github.com/EKKOLearnAI/ekko-studio/releases/tag/v0.8.25
 developer: EKKOLearnAI
 website: https://github.com/EKKOLearnAI/ekko-studio
 dependencies: []
