@@ -5,11 +5,15 @@ storage:
 name: BOLT12 Pay
 tagline: Self-hosted Lightning payments and identity with BOLT12, BIP353, LNURL, and Nostr
 category: bitcoin
-version: 0.3.24
+version: 0.3.26
 port: 8367
 description: |-
-  BOLT12 Pay is a self-hosted Lightning payments and identity app for LND nodes.
-  It supports BOLT12 Offers, BIP353 and LNURL Lightning Addresses, optional BOLT11 fallback invoices, Nostr identities, NIP-05 and Zaps.
+  BOLT12 Pay brings BOLT12 Offers to your LND node.
+  Create and receive Lightning payments using BOLT12, BIP353 and LNURL Lightning Addresses, BOLT11 fallback invoices, Nostr identities, NIP-05, Zaps and NWC.
+
+  **New in 0.3.26: Phoenixd support.** Connect an existing Phoenixd wallet as an alternative or additional payment backend. Switch between LND and Phoenixd while preserving the original wallet assignments of Offers, aliases, payment history and NWC connections.
+
+  On Umbrel, the Lightning Node app is still required. Phoenixd is optional and may run on another server.
 
   ## 🚀 Before you install
 
@@ -59,7 +63,7 @@ description: |-
 
   BOLT12 Pay sends each notification as an encrypted NIP-04 self-DM from that same Nostr profile through the relays saved with the Identity. This keeps Zap notifications in the familiar private-message flow without introducing a second visible sender profile. The public Zap receipt still uses the relays requested by the paying client.
 
-  LND unlocks both encrypted keys automatically after app or node restarts. The private app-signer `nsec` is never displayed. **Show app signer** reveals only its public `npub`. Existing plaintext Nostr keys are encrypted during this update.
+  LND-backed keys are unlocked through LND after restarts. New standalone keys can use local encryption. The private app-signer `nsec` is never displayed. **Show app signer** reveals only its public `npub`. Existing plaintext Nostr keys are encrypted during this update.
 
   The saved notification `nsec` is never loaded back into the input field. To replace it, enter a new `nsec` and select **Save new notification nsec**. **Regenerate app signer** replaces only the internal signer key pair.
 
@@ -84,12 +88,17 @@ submission: https://github.com/getumbrel/umbrel-apps/pull/5429
 repo: https://github.com/Alex71btc/lndk-pay
 support: https://github.com/Alex71btc/lndk-pay/issues
 releaseNotes: |
-  BOLT12 Pay 0.3.24
+  BOLT12 Pay 0.3.26
 
-  - Live payment notifications with amount, payment type and optional comment.
-  - Tap or click satoshi amounts in Lightning Activity to copy them.
-  - Improved PWA cache handling and automatic updates.
-  - Android Companion 1.1.3 remains unchanged.
+  - Phoenixd wallet support alongside LND + LNDK.
+  - Switch payment backends while preserving existing wallet assignments.
+  - Wallet-specific NWC connections and unified transaction history.
+  - Lightning Activity wallet filters and CSV export with date ranges.
+  - Improved BOLT11, BOLT12, BIP353, LNURL and Nostr Zap support.
+  - Android Companion 1.1.4 with payment-specific notification links.
+  - Improved setup, payment notifications and five-language interface.
+  - Existing aliases, configuration and history are preserved.
+  - Umbrel still requires the Lightning Node app; Phoenixd is optional.
 
   LNDK remains unchanged.
 
