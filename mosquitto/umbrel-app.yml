@@ -3,7 +3,7 @@ id: mosquitto
 name: Mosquitto
 tagline: An open source MQTT broker
 category: automation
-version: "2.1.2"
+version: "2.1.4"
 port: 9021
 description: >-
   Eclipse Mosquitto is an open source (EPL/EDL licensed) message broker that implements the MQTT protocol versions 5.0, 3.1.1 and 3.1. Mosquitto is lightweight and is suitable for use on all devices from low power single board computers to full servers.
@@ -24,28 +24,18 @@ gallery:
   - 2.webp
   - 3.webp
 releaseNotes: >-
-  This is a major new release with many new features and improvements:
-    - Added built-in WebSockets support that no longer requires libwebsockets
-    - Added support for PROXY protocol v1 and v2
-    - Added broker-created topic aliases for MQTT v5
-    - Added new `global_plugin`, `global_max_clients`, and `global_max_connections` options
-    - Added `accept_protocol_versions` option to limit which MQTT versions are allowed per listener
-    - Added `--test-config` option to validate configuration before going live
-    - Added support for PUID/PGID environment variables for setting user/group privileges
-    - Added `bridge_receive_maximum` and `bridge_session_expiry_interval` options for MQTT v5 bridges
-    - Improved idle performance by reducing unnecessary process wakeups
-    - Added new acl-file, password-file, persist-sqlite, and sparkplug-aware plugins
-    - Dynamic security plugin now generates an initial configuration if none is present
-    - ⚠️ `max_packet_size` now defaults to 2,000,000 bytes instead of 256MB - update your config if you use large payloads
-    - ⚠️ The `acl_file` and `password_file` options are deprecated in favour of the new plugins
-    - ⚠️ Support for TLS v1.1 has been removed
-    - ⚠️ Support for OpenSSL versions older than 3.0 has been removed
-    - Fixed PUID/PGID checking for Docker
-    - Fixed persistence plugin conflict when used alongside `persistence true`
-    - Various build fixes including missing libedit in Docker builds
+  If you're upgrading from Mosquitto 2.0, note that `max_packet_size` now defaults to 2,000,000 bytes. Adjust your configuration if you use larger packets. The `acl_file` and `password_file` options are deprecated in favour of plugins, and the bundled clients no longer support TLS v1.1.
 
 
-  Full release notes can be found at https://mosquitto.org/blog/
+  This update includes security and reliability fixes:
+    - Fixed a built-in WebSocket handling vulnerability that could allow remote code execution
+    - Fixed delayed will messages being suppressed or delivered at the wrong time
+    - Fixed incorrect packet-size restrictions for incoming and outgoing messages
+    - Fixed password-hashing checks and restored compatibility with legacy SHA-512 password hashes
+    - Fixed crashes in the dynamic security plugin and management client
+
+
+  Full release notes can be found at https://github.com/eclipse-mosquitto/mosquitto/blob/v2.1.4/ChangeLog.txt
 dependencies: []
 path: ""
 defaultUsername: ""
