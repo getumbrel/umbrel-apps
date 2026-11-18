@@ -4,7 +4,7 @@ storage:
   dataRoot: data
 category: social
 name: Buzz Relay
-version: "744f394"
+version: "0.3.0"
 tagline: Host a Buzz community on your Umbrel
 description: >-
   Buzz is Block's open-source team workspace for people and AI agents, where each community lives
@@ -20,7 +20,8 @@ description: >-
   - Your own domain (recommended), for a lasting community. Use a domain you already own or buy
   one. You sign in to Cloudflare from the app's page and choose the domain; the app sets up its own
   Cloudflare tunnel and the name, with no router changes, and the address stays yours if you move
-  to another server. Cloudflare handles HTTPS, so it can see the traffic it carries.
+  to another server. The app keeps your Cloudflare sign-in only until the name is set up.
+  Cloudflare handles HTTPS, so it can see the traffic it carries.
 
   - A free Tailscale address, for trying Buzz out. Members don't need Tailscale. The address is
   tied to your Tailscale account, so moving to your own domain later means starting over.
@@ -39,6 +40,15 @@ description: >-
   phone is woken. A setting on the app's page turns them off. Android doesn't get notifications yet.
 
 
+  With your own domain, you can turn on moderation from the app's page, to review reports and ban
+  members in Buzz on a computer. It's off by default.
+
+
+  Most agents in Buzz run on their owners' computers and can use the files there. If anyone can
+  join your community, treat it as public, and keep agents that run on personal computers out of
+  it. The app's page has more tips.
+
+
   Uninstalling deletes the community from your Umbrel, but leaves its tunnel and name in your
   Cloudflare account, or the buzz machine in Tailscale. Remove them there before installing again.
 releaseNotes: ""
@@ -53,5 +63,8 @@ path: ""
 defaultUsername: ""
 defaultPassword: ""
 deterministicPassword: true
+backupIgnore:
+  - data/cloudflare/.cloudflared/*
+  - data/cloudflare-control/cloudflare-upload.pem*
 submitter: Beige-Coffee
 submission: https://github.com/getumbrel/umbrel-apps/pull/6291

@@ -6,12 +6,13 @@ services:
       APP_HOST: buzz_web_1
       APP_PORT: 8080
 
-  # Setup and status page: the owner's public ID, the community's domain, and checks.
+  # Setup and status page: the owner's public ID, the community's domain, and checks. Its image is
+  # built from umbrel/setup-page in github.com/Beige-Coffee/buzz-selfhost by GitHub Actions, after
+  # the page's tests pass, with build provenance: one Python file on the official Python image.
   web:
-    image: python:3.13.16-alpine3.24@sha256:2d9aefe2fef018a7eb2c13064c89c71929800fd2e5dccdbf52ea5da5bb8d929a
+    image: ghcr.io/beige-coffee/buzz-umbrel-setup:1.1.0@sha256:8c16f8c2a05b8822c0228e5132947799ddbefc384a9d0b7532ce7540de4c8eb6
     init: true
     user: "1000:1000"
-    command: ["python3", "-u", "/app/setup.py"]
     environment:
       # The page's own sign-in: Umbrel shows APP_PASSWORD to the owner (deterministicPassword).
       # Umbrel's login guards browsers, but other apps on the shared network could reach this
@@ -19,7 +20,6 @@ services:
       APP_PASSWORD: ${APP_PASSWORD}
       SETUP_SESSION_SECRET: ${APP_BUZZ_SETUP_SECRET}
     volumes:
-      - ${APP_DATA_DIR}/setup.py:/app/setup.py:ro
       - ${APP_DATA_DIR}/data/settings:/settings
       # One folder shared with each helper, so neither can touch the relay's settings
       - ${APP_DATA_DIR}/data/tailscale-control:/tailscale
@@ -28,7 +28,8 @@ services:
 
   # What Cloudflare Tunnel and Tailscale point at: http://buzz-gateway:80. On the owner's own domain it
   # answers only the community's current address, so an old address that still points at the tunnel
-  # reaches nothing. It starts again when the address changes.
+  # reaches nothing. It starts again when the address changes. Caddy matches the name without its
+  # port, so moderation's requests, for <address>:8443, reach the relay with that Host.
   gateway:
     image: caddy:2.10.2-alpine@sha256:4c6e91c6ed0e2fa03efd5b44747b625fec79bc9cd06ac5235a779726618e530d
     init: true
@@ -66,7 +67,7 @@ services:
     restart: on-failure
 
   relay:
-    image: ghcr.io/block/buzz:sha-744f394@sha256:b67a32b7b2a274cdbd9a685fe996657fa544a3e981284ab3a8c660a128f36a3d
+    image: ghcr.io/block/buzz:0.3.0@sha256:84f34c5b801192665b1a05939518d746f25184babf4d6e927d0de7e12e9c5674
     init: true
     # Generates the relay's own key on first start, waits for the setup page, then runs the
     # relay. When the setup page changes the settings, it exits so the relay restarts with them.
@@ -93,13 +94,25 @@ services:
         load() {
           while IFS= read -r line || [ -n "$$line" ]; do
             case "$${line%%=*}" in
-              BUZZ_RELAY_PRIVATE_KEY|RELAY_OWNER_PUBKEY|BUZZ_DOMAIN|RELAY_URL|BUZZ_MEDIA_BASE_URL|BUZZ_MEDIA_SERVER_DOMAIN|BUZZ_CORS_ORIGINS|BUZZ_PAIRING_RELAY_URL|BUZZ_PUSH_ENABLED)
+              BUZZ_RELAY_PRIVATE_KEY|RELAY_OWNER_PUBKEY|BUZZ_DOMAIN|RELAY_URL|BUZZ_MEDIA_BASE_URL|BUZZ_MEDIA_SERVER_DOMAIN|BUZZ_CORS_ORIGINS|BUZZ_PAIRING_RELAY_URL|BUZZ_PUSH_ENABLED|BUZZ_ADMIN_HOST)
                 export "$$line" ;;
             esac
           done < "$$1"
         }
+        # Moderation, the relay's admin API, comes from the setup page's switch alone: signed (nip98, the
+        # default), with the owner as the only built-in operator (the relay's owner fallback), and without
+        # the browser dashboard the image turns on
+        unset BUZZ_ADMIN_HOST BUZZ_ADMIN_AUTH BUZZ_ADMIN_TOKEN RELAY_OPERATOR_PUBKEYS BUZZ_ADMIN_WEB_DIR
         load "$$key"
         load "$$settings"
+        # and only at the address the gateway serves, on port 8443: its first BUZZ_DOMAIN line, with its
+        # own test, and the relay's own address too. So a Tailscale name, an old address or another host
+        # never gets one
+        site=$$(sed -n 's/^BUZZ_DOMAIN=//p' "$$settings" | head -n 1) || site=
+        case "$$site" in
+          ""|*[!a-z0-9.-]*|*.ts.net) unset BUZZ_ADMIN_HOST ;;
+          *) [ "$${BUZZ_ADMIN_HOST:-}" = "$$site:8443" ] && [ "$${BUZZ_DOMAIN:-}" = "$$site" ] || unset BUZZ_ADMIN_HOST ;;
+        esac
         /usr/local/bin/buzz-relay &
         pid=$$!
         trap 'kill -TERM "$$pid" 2>/dev/null || true; wait "$$pid" || true; exit 0' TERM INT
@@ -175,7 +188,7 @@ services:
       - -c
       - |
         set -u
-        want() { m=$$([ -f /settings/tailscale-enabled ] && tr -d ' \n' < /settings/tailscale-enabled); [ "$$m" = on ] && m=funnel; echo "$$m"; }
+        want() { [ -f /settings/tailscale-enabled ] && tr -d ' \n' < /settings/tailscale-enabled; }
         sock=/tmp/tailscaled.sock
         ts() { tailscale --socket="$$sock" "$$@"; }
         trap '[ -n "$${daemon:-}" ] && kill -TERM "$$daemon" 2> /dev/null; wait; exit 0' TERM INT
@@ -232,8 +245,9 @@ services:
     restart: on-failure
 
   # Your own domain: this app's own Cloudflare tunnel. The owner signs in to Cloudflare from the
-  # setup page and chooses the domain; then it creates the tunnel and the DNS name, and connects
-  # the gateway. With another option chosen, it waits. The image is the connector of Umbrel's
+  # setup page and chooses the domain, or uploads the file Cloudflare saved instead; then it creates
+  # the tunnel and the DNS name, deletes the sign-in, and runs the tunnel to the gateway with its
+  # token alone. With another option chosen, it waits. The image is the connector of Umbrel's
   # Cloudflare Tunnel app (Radiokot/umbrel-cloudflared): Alpine with Cloudflare's own cloudflared.
   cloudflared:
     image: ghcr.io/radiokot/umbrel-cloudflared-connector:1.1.0-cf.2026.10.4@sha256:2d56d59924d5b91a75ea4263b377330b0d90892bd9e09ab0230d298f9d409915
@@ -247,35 +261,95 @@ services:
       - |
         set -u
         cf=/cloudflared
-        # Its sign-in certificate and tunnel token stay in its own folder, which no other service mounts
+        # Its tunnel token, and the sign-in while it sets up a name, stay in its own folder, which no
+        # other service mounts
         mkdir -p "$$HOME" && chmod 700 "$$HOME"
         want() { [ -f /settings/cloudflare-enabled ] && tr -d ' \n' < /settings/cloudflare-enabled; }
-        state() { printf '%s\n' "$$1" > /settings/cloudflare-state.tmp && mv -f /settings/cloudflare-state.tmp /settings/cloudflare-state; }
+        # A sign-in the owner uploaded on the setup page, when Cloudflare's page saved it in the browser
+        # instead of passing it to tunnel login (cloudflare/cloudflared#1252). It's kept only while a
+        # sign-in is awaited: reporting any other state deletes it.
+        up=/settings/cloudflare-upload.pem
+        state() { printf '%s\n' "$$1" > /settings/cloudflare-state.tmp && mv -f /settings/cloudflare-state.tmp /settings/cloudflare-state; [ "$$1" = signin ] || rm -f "$$up"; }
+        # Set up for this address: the tunnel has its token and this DNS name, all that running it needs
+        ready() { [ -s "$$HOME/tunnel.token" ] && [ "$$(cat "$$HOME/routed" 2> /dev/null)" = "$$1" ]; }
+        # The sign-in (cert.pem) can create, route and delete tunnels in the owner's account, more than
+        # running one needs, so it goes once the name is set up, with the credentials file that tunnel
+        # create writes beside it. A new address asks for a new sign-in.
+        signout() { rm -rf "$$HOME/.cloudflared"; }
+        # A sign-in file, checked as the setup page checks an upload before saving it (cloudflare_cert in
+        # setup.py): both take exactly the same files, so change them together. At most 16 KB of plain
+        # text with Unix line breaks, one ARGO TUNNEL TOKEN block alone, and in it padded base64 of a
+        # flat JSON object of text values with a zoneID, an accountID and an apiToken, no name twice.
+        signin_file() (
+          export LC_ALL=C
+          [ -f "$$1" ] && [ ! -L "$$1" ] && [ -s "$$1" ] || exit 1
+          [ "$$(head -c 16385 "$$1" | wc -c | tr -d ' ')" -le 16384 ] || exit 1
+          [ "$$(tr -d 'A-Za-z0-9+/= \n\055' < "$$1" | wc -c | tr -d ' ')" = 0 ] || exit 1
+          [ "$$(head -n 1 "$$1")" = "-----BEGIN ARGO TUNNEL TOKEN-----" ] || exit 1
+          [ "$$(tail -n 1 "$$1")" = "-----END ARGO TUNNEL TOKEN-----" ] || exit 1
+          [ "$$(sed '1d;$$d' "$$1" | grep -c -v -E '^[A-Za-z0-9+/=]+$$')" = 0 ] || exit 1
+          b64=$$(sed '1d;$$d' "$$1" | tr -d '\n')
+          printf '%s\n' "$$b64" | grep -q -E '^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/][AQgw]==|[A-Za-z0-9+/]{2}[AEIMQUYcgkosw048]=)?$$' || exit 1
+          # JSON's tabs and line breaks count as spaces; nothing else that isn't plain text
+          [ "$$(printf '%s' "$$b64" | base64 -d | tr -d '\t\n\r\040-\176' | wc -c | tr -d ' ')" = 0 ] || exit 1
+          json=$$(printf '%s' "$$b64" | base64 -d | tr '\t\n\r' '   ')
+          printf '%s\n' "$$json" | grep -q -E '^ *[{] *"[A-Za-z0-9_]+" *: *"[^"\\]*" *(, *"[A-Za-z0-9_]+" *: *"[^"\\]*" *)*[}] *$$' || exit 1
+          for k in zoneID accountID apiToken; do
+            printf '%s\n' "$$json" | grep -q -E '"'"$$k"'" *: *"[^" \\]+"' || exit 1
+          done
+          [ -z "$$(printf '%s\n' "$$json" | grep -o -E '"[A-Za-z0-9_]+" *:' | tr -d ' :' | tr 'A-Z' 'a-z' | sort | uniq -d)" ]
+        )
+        # True once there's a sign-in: one already here came first and stays. Otherwise an upload becomes
+        # cert.pem, byte for byte. The copy is what's checked, so what's checked is what's used. Only a
+        # plain file is read, at most 16 KB and a byte of it, and anything else is dropped. The folder is
+        # shared, so a pipe or a link could take the file's place after that test: the read gets 5 seconds,
+        # so a pipe can't hold this loop, and a link's target lands only in this service's own folder,
+        # where the check drops it.
+        take() {
+          [ -s "$$HOME/.cloudflared/cert.pem" ] && return 0
+          [ -e "$$up" ] || [ -L "$$up" ] || return 1
+          new=$$HOME/.cloudflared/cert.pem.tmp
+          if [ -f "$$up" ] && [ ! -L "$$up" ] && mkdir -p "$$HOME/.cloudflared" && chmod 700 "$$HOME/.cloudflared" &&
+            (umask 077 && timeout 5 head -c 16385 "$$up" > "$$new") && signin_file "$$new" && mv -f "$$new" "$$HOME/.cloudflared/cert.pem"; then
+            return 0
+          fi
+          echo "Dropped an uploaded file that isn't a Cloudflare sign-in."
+          rm -rf "$$up" "$$new"
+          return 1
+        }
         job=
         trap '[ -n "$$job" ] && kill -TERM "$$job" 2> /dev/null; wait; exit 0' TERM INT
         while :; do
           host=$$(want)
           if [ -z "$$host" ]; then
-            rm -f /settings/cloudflare-state /settings/cloudflare-login.log
+            signout
+            rm -f /settings/cloudflare-state /settings/cloudflare-login.log "$$up"
             until [ -n "$$(want)" ]; do sleep 5; done
             continue
           fi
-          # The page's "Sign in again": a new sign-in, and a new tunnel in whichever account it's for
+          # The page's "Sign in again", offered only after an error, while the sign-in is still here: a
+          # new sign-in, and a new tunnel in whichever account it's for
           if [ -e /settings/cloudflare-reset ]; then
             [ -s "$$HOME/.cloudflared/cert.pem" ] && [ -s "$$HOME/tunnel-name" ] &&
               $$cf tunnel delete -f "$$(cat "$$HOME/tunnel-name")" > /dev/null 2>&1
-            rm -rf "$$HOME/.cloudflared" "$$HOME/tunnel.token" "$$HOME/tunnel-name" "$$HOME/routed" /settings/cloudflare-reset
+            signout
+            rm -f "$$HOME/tunnel.token" "$$HOME/tunnel-name" "$$HOME/routed" /settings/cloudflare-reset "$$up"
           fi
           # Tunnel names are unique within a Cloudflare account, so this one is made once
           [ -s "$$HOME/tunnel-name" ] || echo "buzz-relay-$$(od -An -tx1 -N3 /dev/urandom | tr -d ' \n')" > "$$HOME/tunnel-name"
           name=$$(cat "$$HOME/tunnel-name")
-          # 1. Cloudflare's own sign-in, where the owner chooses the domain. Its link lasts about ten
-          # minutes; a new one then takes its place on the page.
-          if [ ! -s "$$HOME/.cloudflared/cert.pem" ]; then
+          # 1. Cloudflare's own sign-in, where the owner chooses the domain, unless the tunnel is set up for
+          # this address. Its link lasts about ten minutes; a new one then takes its place on the page. Or
+          # the file Cloudflare saved instead, uploaded on the page: looked for before each sign-in starts,
+          # since a file saved during an expired link still works, and every few seconds while one waits.
+          # A sign-in the login itself wrote is left for it to finish.
+          if ! ready "$$host" && [ ! -s "$$HOME/.cloudflared/cert.pem" ]; then
+            take && continue
             state signin
             $$cf tunnel login > /settings/cloudflare-login.log 2>&1 &
             job=$$!
-            while kill -0 "$$job" 2> /dev/null && [ "$$(want)" = "$$host" ] && [ ! -e /settings/cloudflare-reset ]; do sleep 3; done
+            while kill -0 "$$job" 2> /dev/null && [ "$$(want)" = "$$host" ] && [ ! -e /settings/cloudflare-reset ] &&
+              { [ -s "$$HOME/.cloudflared/cert.pem" ] || ! take; }; do sleep 3; done
             kill -TERM "$$job" 2> /dev/null; wait "$$job" 2> /dev/null; job=
             continue
           fi
@@ -296,6 +370,12 @@ services:
           if [ "$$(cat "$$HOME/routed" 2> /dev/null)" != "$$host" ]; then
             state routing
             if ! $$cf tunnel route dns "$$name" "$$host" > /settings/cloudflare-setup.log 2>&1; then
+              # A tunnel from an earlier sign-in that this account doesn't have (the owner signed in to
+              # another account for the new address, or deleted it there): a new tunnel in this one
+              if [ "$$HOME/tunnel.token" -ot "$$HOME/.cloudflared/cert.pem" ] &&
+                grep -q "neither the ID nor the name" /settings/cloudflare-setup.log; then
+                rm -f "$$HOME/tunnel.token" "$$HOME/tunnel-name"; continue
+              fi
               if grep -q "already exists" /settings/cloudflare-setup.log; then state taken; else state error; fi
               sleep 20; continue
             fi
@@ -307,7 +387,8 @@ services:
             fi
             echo "$$host" > "$$HOME/routed"
           fi
-          # 4. The tunnel, to the gateway, until the owner chooses something else
+          # 4. The tunnel, to the gateway, until the owner chooses something else. Its token is enough.
+          signout
           state running
           $$cf --no-autoupdate tunnel run --token-file "$$HOME/tunnel.token" --url http://buzz-gateway:80 &
           job=$$!
@@ -320,13 +401,14 @@ services:
       HOME: /cloudflare
     volumes:
       - ${APP_DATA_DIR}/data/cloudflare:/cloudflare
-      # Shared with the setup page alone: the name to serve, and where the tunnel stands
+      # Shared with the setup page alone: the name to serve, where the tunnel stands, and a sign-in the
+      # owner uploaded, for the seconds before the tunnel takes it
       - ${APP_DATA_DIR}/data/cloudflare-control:/settings
     restart: on-failure
 
   # Phones pair with Buzz Desktop through this service, at wss://<domain>/pair.
   pair:
-    image: ghcr.io/block/buzz:sha-744f394@sha256:b67a32b7b2a274cdbd9a685fe996657fa544a3e981284ab3a8c660a128f36a3d
+    image: ghcr.io/block/buzz:0.3.0@sha256:84f34c5b801192665b1a05939518d746f25184babf4d6e927d0de7e12e9c5674
     init: true
     entrypoint: ["/usr/local/bin/buzz-pair-relay"]
     environment:
