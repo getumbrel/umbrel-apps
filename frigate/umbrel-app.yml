@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: frigate
 category: automation
 name: Frigate
-version: "0.18.2"
+version: "0.18.3"
 tagline: A complete and local NVR
 description: >-
   A complete and local NVR designed for Home Assistant with AI object detection. 
@@ -20,13 +20,19 @@ releaseNotes: >-
   Frigate 0.18 is a major upgrade. Back up your Frigate config and database before upgrading; Frigate will attempt to migrate existing configs automatically, but some setups may need manual changes.
 
 
-  - Fixes security issues that could allow authenticated users to execute commands through camera stream configuration or live-stream WebSocket endpoints.
+  - Fixes a critical security vulnerability in the bundled web server.
 
 
-  - Fixes media access checks for specially formatted request paths.
+  - Tightens security for go2rtc stream configuration and checks permissions before stopping camera watches from chat.
 
 
-  Full release notes can be found at https://github.com/blakeblackshear/frigate/releases/tag/v0.18.2
+  - Fixes repeated web server warnings.
+
+
+  Custom go2rtc FFmpeg binaries, ngrok commands, and streams using ${VAR} expansion are now restricted by default. Review custom stream configurations after upgrading.
+
+
+  Full release notes can be found at https://github.com/blakeblackshear/frigate/releases/tag/v0.18.3
 developer: Blake Blackshear
 website: https://frigate.video/
 repo: https://github.com/blakeblackshear/frigate
