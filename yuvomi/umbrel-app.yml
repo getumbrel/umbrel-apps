@@ -4,7 +4,7 @@ storage:
   dataRoot: data
 category: files
 name: Yuvomi
-version: "2.89.1"
+version: "2.93.0"
 tagline: Self-hosted family planner — calendar, tasks, shopping, meals & budget
 description: >-
   Yuvomi is a self-hosted, privacy-focused family planner that bundles everything
@@ -53,22 +53,27 @@ description: >-
   Open Yuvomi from your Umbrel dashboard and create the first account — that
   account becomes the family admin and can invite the rest of the household.
 releaseNotes: >-
-  This update closes a gap for signed-in devices. A phone that is signed in to
-  Yuvomi with the app could change the email address stored for its own
-  household member, and that address is where a password reset is sent. A
-  signed-in device can no longer change it; everything else on the contact stays
-  editable from the device, and the address can still be changed in the browser.
+  This update is about the API. If you use it with your own scripts or
+  integrations: the inventory, housekeeping, rewards, waste collection and the
+  shift schedule now check every request against the published API description,
+  like the modules before them. Input that was quietly accepted or reinterpreted
+  before, such as an id like "12abc", a number sent as text or "true" as text
+  for a switch, is now refused with a 400 that names the field. The app itself
+  sends nothing that is refused.
 
 
-  If you use the app on a phone, nothing else changes there. If nobody in your
-  household does, this update changes nothing you would notice.
+  Some requests could change data by accident and are refused now instead.
+  Saving waste reminder settings without the "enabled" field switched the
+  reminder off; it now needs all three fields. Saving a reward participant
+  without "enabled" switched the participation off. Replacing an inventory item
+  with a wrong value for its tracked dates or documents removed them all.
 
 
   This update does not change the database. No action is needed from you.
 
 
   Full release notes are available at
-  https://github.com/ulsklyc/yuvomi/releases/tag/v2.89.1
+  https://github.com/ulsklyc/yuvomi/releases/tag/v2.93.0
 backupIgnore:
   - data/app/yuvomi.db.plaintext-backup*
   - data/backups/*.db

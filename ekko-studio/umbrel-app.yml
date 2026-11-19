@@ -4,7 +4,7 @@ storage:
   dataRoot: data
 category: ai
 name: Ekko Studio
-version: "0.8.21"
+version: "0.8.28"
 tagline: Manage your AI agent from your browser
 description: >-
   Ekko Studio is a browser workspace for AI agents, with conversations, file tools, persistent memory, skills, and model settings. It includes both the Ekko and Hermes runtimes so you can choose an agent for each conversation.
@@ -21,19 +21,24 @@ description: >-
 
   This package provides the browser interface. Native-app cloud connectivity, peer-to-peer connections, and preview-server ports are not exposed. Optional subscription sign-in requires approval with the provider; API-key setup is available in the browser.
 releaseNotes: >-
-  This update keeps completed, stopped, and failed Bot collaborations as cards in the originating chat, with access to the participating Bots' visible replies.
+  ⚠️ Providers are now shared across all Profiles within a Studio account. Providers with the same name are merged, preferring the default Profile even if endpoints or credentials differ. Before updating, give providers distinct names if you need to keep different endpoints. Existing conversations with merged providers will use the retained endpoint.
 
 
-  Conversation history and collaboration cards now restore and paginate together. Reading older messages is more stable when switching Bots, reconnecting, or receiving background updates.
+  ⚠️ Trusted plugin pages can now access the host page and browser-stored login credentials. Only install plugins you trust.
 
 
-  Tasks are now available in the Tasks tab in settings. OpenAI-compatible speech transcription also handles successful empty transcripts without reporting an error.
+  This update improves workspace file handling, provider compatibility, and scheduled tasks:
 
 
-  Group chats continue to recommend moving existing work to Bots. No retirement date is set, and your data is not migrated automatically.
+  - File creation and renaming now warn about conflicts, and editor saves stay tied to the original Profile or workspace.
+  - Downloads stream from disk, broken links no longer hide neighboring files, and concurrent uploads keep their own contents.
+  - Workflow and Bot schedules respect the selected timezone, leap days, and daylight saving changes; invalid schedules pause without stopping other tasks.
+  - Providers with Chinese or special-character names work correctly with the model gateway, and model discovery supports more compatible catalogs.
+  - Hermes and Bot clarification replies are confirmed reliably after reconnecting, and expired questions are cleared.
+  - Fixes saving Bot agents when an existing Hermes preset uses a different model protocol.
 
 
-  Full release notes can be found at https://github.com/EKKOLearnAI/ekko-studio/releases/tag/v0.8.21
+  Full release notes can be found at https://github.com/EKKOLearnAI/ekko-studio/releases/tag/v0.8.28
 developer: EKKOLearnAI
 website: https://github.com/EKKOLearnAI/ekko-studio
 dependencies: []

@@ -5,7 +5,7 @@ storage:
 name: InfluxDB 2
 tagline: The leading platform for time series data
 category: developer
-version: "2.9.1-patch.1"
+version: "2.10.1"
 port: 8886
 description: >-
   Purpose built for real-time analytics at any scale.
@@ -35,17 +35,18 @@ gallery:
   - 2.webp
   - 3.webp
 releaseNotes: >-
-  This update adds support for new storage management and configuration options being introduced with umbrelOS 2.0.
+  If upgrading from a version older than 2.9.0, save any API tokens you still need before updating. Tokens are hashed on startup and their original values can no longer be recovered. Full backup restores require the operator token.
 
 
-  Previous InfluxDB 2 2.9.1 release notes:
+  This update improves database reliability and startup diagnostics.
+
+  - Improved health and readiness checks with clearer startup failure details
+  - Added configurable storage compaction throughput and query time-range limits
+  - Improved query and write statistics, caching, and partial measurement results
+  - Fixed compaction, shard loading, and cancelled query resource handling
 
 
-  This release updates InfluxDB to v2.9.1.
-
-  - Fixed an issue that could prevent level 3 storage compactions from running
-  - Improved compaction queue accounting by separating queued work from active running compactions
-  - Updated the Go toolchain used to build InfluxDB
+  Full release notes can be found at https://github.com/influxdata/influxdb/releases/tag/v2.10.1
 dependencies: []
 path: ""
 submitter: dirstel
