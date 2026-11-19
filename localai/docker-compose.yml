@@ -7,7 +7,8 @@ services:
       APP_PORT: 8080
       PROXY_AUTH_WHITELIST: "/v1/*"
   api:
-    image: localai/localai:v4.12.1@sha256:c8556c4f7b6dd9b76e915d515ab5cfe5a765d8ea8fd3f0cf563f9c690b48a7f4
+    image: localai/localai:v5.0.0@sha256:4ef0d723ccb18cdd653cf7416d548cb6add42d1fcc6459d655d4c9f803d03dea
+    restart: on-failure
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/readyz"]
       interval: 1m
@@ -17,6 +18,8 @@ services:
       - MODELS_PATH=/models
       - LOCALAI_BACKENDS_PATH=/backends
       - LOCALAI_EXTERNAL_BACKENDS=cpu-llama-cpp
+      # Honor the external HTTPS scheme forwarded by the Umbrel app gateway.
+      - LOCALAI_TRUSTED_PROXIES=${GATEWAY_IP}
       # The image pins its backend capability to CPU; point the override file at a missing path so
       # LocalAI detects the host GPU and offers matching CUDA/ROCm/SYCL backends in its gallery
       - LOCALAI_FORCE_META_BACKEND_CAPABILITY_RUN_FILE=/nonexistent
