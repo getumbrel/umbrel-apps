@@ -1,0 +1,27 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: mainspring_server_1
+      APP_PORT: 8317
+      # Tools on other machines call the API and /mcp with a sk-ms- key, so these paths
+      # skip Umbrel's login. Mainspring checks the key on every request.
+      # The panel at / stays behind Umbrel's login.
+      # The docs (/docs, /llms.txt) and their stylesheets are public.
+      PROXY_AUTH_WHITELIST: "/v1,/v1/*,/v0/management/*,/mcp,/health,/docs,/docs/*,/llms.txt,/llms-full.txt,/assets/*"
+
+  server:
+    image: ghcr.io/kacperkwapisz/mainspring:1.7.1@sha256:10036ab0f4636497a8b2c33814a963d988039ecdab33648f75cac14579bc4998
+    user: "1000:1000"
+    init: true
+    restart: on-failure
+    stop_grace_period: 15s
+    environment:
+      # Umbrel's login already protects the panel. Security keys can be added
+      # on top from Settings once the panel is opened over trusted HTTPS.
+      MAINSPRING_AUTH: proxy
+      # Update instructions in the panel point at the Umbrel App Store.
+      MAINSPRING_INSTALL: umbrel
+    volumes:
+      - ${APP_DATA_DIR}/data/data:/data
