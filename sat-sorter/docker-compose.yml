@@ -1,0 +1,26 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: sat-sorter_web_1
+      APP_PORT: 8080
+
+  web:
+    image: ghcr.io/tom-morrow15/sat-sorter:1.1.0@sha256:afdfb68611c36925780e5bbf84653bf75e04203149904cb7e1dddac58b4e3b85
+    restart: on-failure
+    user: "1000:1000"
+    environment:
+      MAPLE_UPSTREAM: http://maple-proxy:8080/
+      GUEST_BUDGET_FILE: /data/guest-budget.json
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+    depends_on:
+      - maple-proxy
+
+  maple-proxy:
+    image: ghcr.io/mapleprivacylabs/maple-proxy:0.5.0@sha256:d6165a34aa2ea50d206e57223a3016da4051ddf9f8bd87f8636c2d1b5ed9940a
+    restart: on-failure
+    environment:
+      # The image listens on 0.0.0.0:8080. Set both so another container can reach it.
+      MAPLE_HOST: 0.0.0.0
+      MAPLE_PORT: "8080"
+      MAPLE_ENABLE_CORS: "true"
