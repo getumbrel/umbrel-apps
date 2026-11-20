@@ -1,0 +1,13 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: embroidery-converter_app_1
+      APP_PORT: 8080
+
+  app:
+    image: mavenwright/embroidery-converter:1.0.0@sha256:fff4c9ac95a03ef86c1c601182032bdf40f0e26780670843ef43cd4bfa8a3a54
+    restart: on-failure
+    environment:
+      SHOW_CREDIT: "true"
