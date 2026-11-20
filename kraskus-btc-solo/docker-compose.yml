@@ -1,0 +1,161 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: kraskus-btc-solo_ui_1
+      APP_PORT: 8080
+  init:
+    image: ghcr.io/kraskuscrypto/kraskus-btc-solo-ui:adapter-0.5.6@sha256:5bdff8216eb7f09888323740905803fb7802e4611e1d01263e4fba70ca047509
+    user: 0:0
+    network_mode: none
+    entrypoint:
+    - python
+    - -c
+    command:
+    - import os; [(os.chown(p,10001,10001),os.chmod(p,0o700)) for p in ('/state','/node','/apptoken')]; from pathlib import Path; p=Path('/state/node-settings'); p.mkdir(mode=0o700,exist_ok=True); os.chown(p,10001,10001); f=p/'prune-mib'; f.exists() or f.write_text('30000\n'); os.chown(f,10001,10001); f.chmod(0o600)
+    volumes:
+    - ${APP_DATA_DIR}/data/state:/state
+    - ${APP_DATA_DIR}/data/node:/node
+    - ${APP_DATA_DIR}/data/apptoken:/apptoken
+    restart: 'no'
+  node:
+    image: ghcr.io/kraskuscrypto/kraskus-btc-solo-ui:node-0.5.6@sha256:81b0068708202f7fe8e6bd5957ddbe1d7714d9cb8d027dac4fb91bbfe95f7c18
+    user: 10001:10001
+    entrypoint:
+    - /bin/sh
+    - -c
+    command:
+    - prune=$$(cat /node-settings/prune-mib); case "$$prune" in ""|*[!0-9]*) exit 64;; esac; [ "$$prune" -ge 1024 ] && [ "$$prune" -le 1024000 ] || exit 64; exec bitcoind "$$@" "-prune=$$prune"
+    - node-pruning
+    - -datadir=/node
+    - -server=1
+    - -disablewallet=1
+    - -rpcbind=0.0.0.0
+    - -rpcallowip=10.66.43.0/24
+    - -rpcport=8332
+    - -listen=0
+    - -dbcache=1000
+    - -maxmempool=300
+    - -printtoconsole=0
+    init: true
+    stop_grace_period: 600s
+    read_only: true
+    tmpfs:
+    - /tmp:rw,noexec,nosuid,size=64m
+    cap_drop:
+    - ALL
+    security_opt:
+    - no-new-privileges:true
+    volumes:
+    - ${APP_DATA_DIR}/data/node:/node
+    - ${APP_DATA_DIR}/data/state/node-settings:/node-settings:ro
+    networks:
+    - rpc
+    - egress
+    cpus: 2
+    mem_limit: 2560m
+    memswap_limit: 2560m
+    restart: unless-stopped
+    depends_on:
+      init:
+        condition: service_completed_successfully
+  api:
+    command:
+    - --platform
+    - --http-host
+    - 0.0.0.0
+    - --port
+    - '8080'
+    - --data-dir
+    - /state
+    - --rpc-url
+    - http://node:8332
+    - --rpc-cookie
+    - /node/.cookie
+    - --enable-mining
+    - --allow-mainnet
+    - --stratum-host
+    - 0.0.0.0
+    - --stratum-port
+    - '1932'
+    ports:
+    - 1932:1932/tcp
+    image: ghcr.io/kraskuscrypto/kraskus-btc-solo-ui:adapter-0.5.6@sha256:5bdff8216eb7f09888323740905803fb7802e4611e1d01263e4fba70ca047509
+    user: 10001:10001
+    init: true
+    read_only: true
+    tmpfs:
+    - /tmp:rw,noexec,nosuid,size=32m
+    cap_drop:
+    - ALL
+    security_opt:
+    - no-new-privileges:true
+    environment:
+      KRASKUS_APP_TOKEN_FILE: /run/kraskus-app-token/token
+      KRASKUS_NODE_PRUNE_CONTROL: '1'
+    volumes:
+    - ${APP_DATA_DIR}/data/state:/state
+    - ${APP_DATA_DIR}/data/node:/node:ro
+    - ${APP_DATA_DIR}/data/apptoken:/run/kraskus-app-token
+    networks:
+    - rpc
+    - front
+    - publish
+    cpus: 1
+    mem_limit: 512m
+    pids_limit: 128
+    restart: unless-stopped
+    depends_on:
+      init:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+      - CMD
+      - python
+      - -c
+      - import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/livez',timeout=3)
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    stop_grace_period: 30s
+  ui:
+    image: ghcr.io/kraskuscrypto/kraskus-btc-solo-ui:ui-0.5.7@sha256:54e9c74f2b5bf9da6bb26cd20f268497ee0337c7cd0bb073c528077e76adc373
+    cap_drop:
+    - ALL
+    cap_add:
+    - CHOWN
+    - SETGID
+    - SETUID
+    - DAC_READ_SEARCH
+    security_opt:
+    - no-new-privileges:true
+    volumes:
+    - ${APP_DATA_DIR}/data/apptoken:/run/kraskus-app-token:ro
+    networks:
+    - front
+    - publish
+    cpus: 0.5
+    mem_limit: 128m
+    pids_limit: 64
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - wget -q -O /dev/null http://127.0.0.1:8080/livez
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    stop_grace_period: 10s
+networks:
+  rpc:
+    internal: true
+    ipam:
+      config:
+      - subnet: 10.66.43.0/24
+  front:
+    internal: true
+  publish: {}
+  egress: {}
