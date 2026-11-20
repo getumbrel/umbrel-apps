@@ -1,0 +1,23 @@
+version: "3.7"
+
+services:
+
+  app_proxy:
+    environment:
+      # The format here is: <app-id>_<docker-service-name>_1
+      APP_HOST: openfamily_app_1
+      APP_PORT: 3000
+      # Family members use their own OpenFamily accounts and invitations,
+      # without an Umbrel login. They need the complete web UI, so an API-only
+      # whitelist is insufficient. OpenFamily protects family data with its
+      # own account/token authentication.
+      PROXY_AUTH_ADD: "false"
+
+  app:
+    # The web interface, the API and PostgreSQL in one container. Its secrets
+    # are generated on the first start and kept in /data.
+    image: ghcr.io/nexaflowfrance/openfamily:2.2.0@sha256:111e6f95ab31082ce5ffab25501ec26142950cb42a6df6be6f2bee5a6c18af0e
+    restart: on-failure
+    stop_grace_period: 1m
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
