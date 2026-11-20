@@ -1,0 +1,67 @@
+manifestVersion: 1
+id: uchiyomi
+storage:
+  dataRoot: data
+folderAccess:
+  - id: umbrel-downloads:manga
+    name: Manga library
+    note: Your existing manga, manhwa and webtoons (CBZ, CBR, PDF, image EPUB or folders of images, any layout). Available inside Uchiyomi at /library.
+    mounts:
+      - service: server
+        targetPath: /library
+category: media
+name: Uchiyomi
+version: "0.61.2"
+tagline: Self-hosted manga server that downloads too
+description: >-
+  Uchiyomi is a self-hosted manga server that also downloads: it serves your manga, manhwa and webtoons
+  the way a library server does, and fetches and watches for new chapters the way a source app does, so
+  discover, grab, monitor, serve and read all happen in one app. Open it and create your admin account in
+  the browser; there is no default password. Put your existing CBZ, CBR, PDF or image EPUB files (any
+  folder layout) in the Downloads folder under "manga", using the Files app or a network share, or choose
+  another folder in the app's settings on umbrelOS 2.0. They appear after the first scan. The database runs
+  inside the app; there is nothing else to set up.
+
+
+  Read on any device through a true-black OLED interface built webtoon-first: continuous scroll that runs
+  straight into the next chapter, pinch zoom, wide pages split and borders cropped, per-series settings, and
+  double-page spreads for classic manga. Opened over HTTPS, it installs on your home screen and reads offline.
+  Reader apps such as Panels, Chunky and KOReader connect over OPDS, including page streaming, and Mihon or
+  Tachiyomi through Uchiyomi's own extension.
+
+
+  Unlike a plain library server it can follow series: add MangaDex or paste a site's address, and a
+  scheduled updater grabs new chapters as they appear, choosing between scanlation groups and trying another
+  source when one refuses. A Cloudflare solver is included for the many sites that need one. Health finds
+  chapter gaps, bad downloads and failing sources, and Fix everything works through them. Bring your
+  library over from a Mihon/Tachiyomi backup, a public MangaDex list, or your AniList, MyAnimeList or Kitsu
+  list, with every match reviewed before it lands. The optional Mihon extension engine (a separate 800 MB
+  Java server) is not part of this package.
+
+
+  Built for a household: per-user reading progress, favourites, history and a leaderboard, smart and shared
+  lists, age ratings, two-factor auth, single sign-on, an audit log, an admin panel, and nightly backups. No
+  account and no cloud; the update check can be turned off and the anonymous install count is off unless you
+  turn it on.
+releaseNotes: ""
+
+developer: AngeloSha
+website: https://uchiyomi.com
+dependencies: []
+repo: https://github.com/AngeloSha/uchiyomi
+support: https://github.com/AngeloSha/uchiyomi/issues
+
+port: 8110
+gallery: []
+path: ""
+
+defaultUsername: ""
+defaultPassword: ""
+
+permissions:
+  - STORAGE_DOWNLOADS
+backupIgnore:
+  - data/cache/*
+
+submitter: AngeloSha
+submission: https://github.com/getumbrel/umbrel-apps/pull/6055
