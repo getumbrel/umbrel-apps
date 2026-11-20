@@ -1,0 +1,109 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: pubky-homeserver_web_1
+      APP_PORT: 8812
+
+  postgres:
+    image: postgres:17.9-alpine@sha256:c7526c0f6c3f30260a563d7bcf8ad778effac59a44f8ffa86678c35418338609
+    restart: on-failure
+    stop_grace_period: 1m
+    user: "1000:1000"
+    environment:
+      POSTGRES_USER: pubky
+      POSTGRES_PASSWORD: ${APP_PUBKY_HOMESERVER_POSTGRES_PASSWORD}
+      POSTGRES_DB: pubky_homeserver
+    volumes:
+      - ${APP_DATA_DIR}/data/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pubky -d pubky_homeserver"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # One-shot: renders the homeserver's config.toml and exits. A template cannot
+  # do this, because the dashboard edits the same file and a re-rendered
+  # template would overwrite those edits on every start.
+  config:
+    image: synonymsoft/homeserver-umbrel-config-wrapper:v0.0.9@sha256:14e5ec26c363a5df3aef5111e69bfbab3eadfed48aa4942f88b4997c9298e2bf
+    restart: on-failure
+    environment:
+      POSTGRES_USER: pubky
+      POSTGRES_PASSWORD: ${APP_PUBKY_HOMESERVER_POSTGRES_PASSWORD}
+      ADMIN_PASSWORD: ${APP_PUBKY_HOMESERVER_ADMIN_PASSWORD}
+    volumes:
+      - ${APP_DATA_DIR}/data/homeserver:/data
+      - ${APP_DATA_DIR}/data/cloudflare:/etc/pubky-cloudflare
+
+  homeserver:
+    image: synonymsoft/homeserver:v0.16.1@sha256:1cd725cdae8942f9eeadec0b6929ab45129bad2fa1c0622bc7700fdb07b953a3
+    restart: on-failure
+    stop_grace_period: 1m
+    # The unprivileged user the config service hands /data to.
+    user: "100:101"
+    # Copies the homeserver's output into a file for the dashboard's
+    # Logs tab, trimmed on each start. exec keeps the homeserver as PID 1, so it still
+    # receives SIGTERM. $$ is a literal $ for the shell.
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        LOG=/data/homeserver.log
+        if [ -f "$$LOG" ] && [ "$$(wc -c < "$$LOG")" -gt 10485760 ]; then
+          tail -c 2097152 "$$LOG" > "$$LOG.tmp" && mv "$$LOG.tmp" "$$LOG"
+        fi
+        rm -f /tmp/log-fifo
+        mkfifo /tmp/log-fifo
+        tee -a "$$LOG" < /tmp/log-fifo &
+        exec homeserver --data-dir /data > /tmp/log-fifo 2>&1
+    volumes:
+      - ${APP_DATA_DIR}/data/homeserver:/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+      config:
+        condition: service_completed_successfully
+    healthcheck:
+      # 127.0.0.1, not localhost: the homeserver listens on IPv4 only.
+      test: ["CMD-SHELL", "nc -z 127.0.0.1 6288 || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 120s
+
+  web:
+    image: synonymsoft/homeserver-dashboard:v0.1.33@sha256:1a5e04274647e73fdba655fc892b33e6e6a1fd8fffab8f7945ce04c6023111a6
+    restart: on-failure
+    stop_grace_period: 1m
+    # The entrypoint starts as root only to fix ownership on the mounts it
+    # shares with the other services, then drops to an unprivileged user.
+    user: "0:0"
+    environment:
+      PORT: 8812
+      HOSTNAME: "0.0.0.0"
+      PLATFORM: umbrel
+      ADMIN_BASE_URL: http://homeserver:6288
+      ADMIN_TOKEN: ${APP_PUBKY_HOMESERVER_ADMIN_PASSWORD}
+      ADMIN_PASSWORD_MANAGED: "true"
+      # Other apps' containers can reach this port without the Umbrel login.
+      DASHBOARD_PASSWORD: ${APP_PASSWORD}
+      HOMESERVER_LOG_PATH: /app/homeserver-data/homeserver.log
+    volumes:
+      - ${APP_DATA_DIR}/data/homeserver:/app/homeserver-data
+      - ${APP_DATA_DIR}/data/cloudflare:/app/cloudflare-config
+    depends_on:
+      homeserver:
+        condition: service_healthy
+
+  # Cloudflare Tunnel to the homeserver, set up from the dashboard. It idles
+  # until a tunnel is configured. The image carries the official cloudflared
+  # binary; preview/ is the only path this service can write to.
+  tunnel:
+    image: synonymsoft/homeserver-umbrel-config-wrapper:v0.0.9@sha256:14e5ec26c363a5df3aef5111e69bfbab3eadfed48aa4942f88b4997c9298e2bf
+    restart: on-failure
+    stop_grace_period: 1m
+    user: "65532:65532"
+    entrypoint: /usr/local/bin/tunnel.sh
+    volumes:
+      - ${APP_DATA_DIR}/data/cloudflare:/etc/cloudflared-config:ro
+      - ${APP_DATA_DIR}/data/cloudflare/preview:/etc/cloudflared-config/preview
