@@ -4,7 +4,7 @@ storage:
   dataRoot: data
 category: media
 name: ErsatzTV Legacy
-version: "26.12.0"
+version: "26.13.0"
 tagline: Build your own live TV channels
 description: >-
   ErsatzTV Legacy transforms your personal media library into custom live TV channels with IPTV, XMLTV guide data, channel scheduling, and browser playback.
@@ -21,18 +21,21 @@ releaseNotes: >-
   All channels now use the Next streaming engine. Existing legacy channels migrate automatically on startup: MPEG-TS (Legacy) becomes MPEG-TS, and HLS Direct becomes HLS Segmenter. Existing legacy playlist and lineup URLs redirect to the Next engine. Check channel playback after updating.
 
 
-  - Fixes QSV streams failing shortly after playback starts on older Intel GPUs, and improves playback when video color information changes mid-stream.
+  - Fixes classic schedule timing, grouped playback, filler selection, and playout builds that could fail or never finish.
 
-  - Adds a unified hardware troubleshooting view and clearer hardware-acceleration compatibility warnings in FFmpeg profiles.
+  - Speeds up large smart-collection builds and channel startup, including GPU shader caching for non-root Docker users.
 
-  - Fixes disappearing watermarks, subtitle problems during filler playback, and several hardware-encoding failures.
+  - Fixes channels not staying active with Keep Running enabled, missing subtitles after library scans, and watermark playback problems.
 
-  - Prevents one invalid media item from breaking an entire channel's playout.
+  - Fixes missing date-added metadata for local media and playback of media from Jellyfin-compatible servers with external subtitles.
 
-  - Applies watermark and decoration changes sooner and reduces unnecessary disk writes when syncing playouts.
+  - Improves Arabic subtitle rendering.
 
 
-  Full release notes can be found at https://github.com/ErsatzTV/legacy/releases/tag/v26.12.0
+  Streaming JWT authentication has been removed upstream. Umbrel's standard package does not configure it and already allows IPTV clients to access streaming endpoints without login. If you manually configured JWT__ISSUERSIGNINGKEY, streams remain disabled until you remove it. Protect remote streaming access with a VPN or reverse proxy.
+
+
+  Full release notes can be found at https://github.com/ErsatzTV/legacy/releases/tag/v26.13.0
 developer: ErsatzTV
 website: https://ersatztv.org
 dependencies: []
