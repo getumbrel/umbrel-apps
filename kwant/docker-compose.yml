@@ -1,0 +1,20 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: kwant_web_1
+      APP_PORT: 8799
+
+  web:
+    image: ghcr.io/alexsergivan/kwnt:0.9.17@sha256:8ce673fe74fe309d408f0a93b3b55659d263a0aa5abbe17a202ffa07a7f62ae3
+    user: "1000:1000"
+    restart: on-failure
+    init: true
+    environment:
+      # The sign-in token is the password Umbrel shows for this app.
+      KWNT_API_TOKEN: ${APP_PASSWORD}
+      KWNT_SIGNIN_HINT: "Use the password Umbrel shows for kwant: right-click the app icon and choose Show default credentials."
+      HOME: /data/home
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
