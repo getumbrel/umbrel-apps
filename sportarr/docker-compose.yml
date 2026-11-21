@@ -1,0 +1,18 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: sportarr_server_1
+      APP_PORT: 1867
+      PROXY_AUTH_WHITELIST: "/api/*"
+
+  server:
+    image: sportarr/sportarr:4.1.7.1117@sha256:2264bc46951b5056d7900864ab7339e01c5a4c280286d72b6ef9e5473aca0390
+    environment:
+      - PUID=1000
+      - PGID=1000
+    volumes:
+      - ${APP_DATA_DIR}/data/config:/config
+      - ${UMBREL_ROOT}/data/storage/downloads:/downloads
+    restart: on-failure
