@@ -1,0 +1,18 @@
+version: "3.7"
+
+services:
+  server:
+    image: ghcr.io/yonikrispil/pellu-home:1.0.1@sha256:f225d9f61af323bc9a18bfa7d7f3c8cfb31a837d8d030b6cec575540ae3f9559
+    restart: on-failure
+    # Bonjour (_pellu-home._tcp) on the home network, so the Pellu apps find the server by
+    # themselves, and the device's real address for the Pellu account. Like Plex, no app_proxy.
+    network_mode: host
+    environment:
+      - PUID=1000
+      - PGID=1000
+      # The settings page's password is Umbrel's for this app (shown in the app's page), so no setup
+      # code from the log. Used on the first start only; it can be changed in the page later.
+      - PELLU_ADMIN_PASSWORD=${APP_PASSWORD}
+    volumes:
+      - ${APP_DATA_DIR}/data/config:/config
+      - ${UMBREL_ROOT}/data/storage/downloads:/media/Downloads:ro
