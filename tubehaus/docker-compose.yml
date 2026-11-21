@@ -1,0 +1,28 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: tubehaus_web_1
+      APP_PORT: 8080
+
+  # the web app and its router (Caddy); the server is reached by its Umbrel name
+  web:
+    image: ghcr.io/biolend83/tubehaus-web:1.6.4@sha256:9b11ac2b6656b06f808a4a27af34da4e4f20b3fd64e993358fc351a3cc5de744
+    restart: on-failure
+    environment:
+      TUBEHAUS_SITE: ":8080"
+      TUBEHAUS_AUTH: none
+      TUBEHAUS_SERVER: tubehaus_server_1:3010
+    depends_on:
+      - server
+
+  # the TubeHaus server: its own YouTube engine, the shared library, live streams and captions, offline saves.
+  # HT_WARP=0: on a home connection YouTube needs no detour, so no extra capabilities.
+  server:
+    image: ghcr.io/biolend83/tubehaus:1.6.4@sha256:d7ff9778fbce1050d2c3495b2db574cdbe488f9f395dd62812e5bc1cb99b948b
+    restart: on-failure
+    init: true
+    stop_grace_period: 30s
+    environment:
+      HT_WARP: "0"
+    volumes:
+      - ${APP_DATA_DIR}/data/tubehaus:/data
