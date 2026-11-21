@@ -7,10 +7,15 @@ services:
       APP_PORT: 8080
 
   web:
-    image: ghcr.io/kinopeer/kinopeer:1.0.0@sha256:d2a6ff5dea53e36e5afdb4760c591ca54fbaa1ebaa638e7d535200c01da5ecc2
+    image: ghcr.io/kinopeer/kinopeer:1.1.0@sha256:e6e5619c0f40b65b12697d8f4368cc394644d805e970f686287b33151d6203aa
     restart: on-failure
     user: "1000:1000"
     environment:
+      # Umbrel's app_proxy asks for Umbrel's login in front of Kinopeer, so Kinopeer's own login is off.
+      KINOPEER_AUTH: "off"
+      # Umbrel serves Kinopeer at umbrel.local, its IP, Tor and names of the owner's own (Tailscale, a
+      # reverse proxy); app_proxy's login already keeps a rebound page out, so every host is let in.
+      KINOPEER_ALLOWED_HOSTS: "*"
       # Umbrel's qBittorrent app. admin/adminadmin is its default login: if it was
       # changed, Kinopeer asks for the login once and keeps it in /data.
       QBITTORRENT_URL: http://qbittorrent_server_1:8080
