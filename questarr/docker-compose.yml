@@ -1,0 +1,21 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: questarr_web_1
+      APP_PORT: 5000
+
+  web:
+    image: ghcr.io/doezer/questarr:v1.6.0@sha256:495a1648f1ad8dddd4c7f96b4bf817d9d061bfd5608ef520522f0d891415e972
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      PORT: 5000
+      SQLITE_DB_PATH: /app/data/sqlite.db
+      PUID: 1000
+      PGID: 1000
+      UMASK: "022"
+    volumes:
+      - ${APP_DATA_DIR}/data/questarr:/app/data
+      - ${UMBREL_ROOT}/data/storage/downloads:/data
