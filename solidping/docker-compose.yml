@@ -1,0 +1,19 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: solidping_server_1
+      APP_PORT: 4000
+      PROXY_AUTH_ADD: "false"
+
+  server:
+    image: ghcr.io/fclairamb/solidping:0.51.0@sha256:da29fd41c40637bc616eee659a9b5bdce6747289c6ee5171d287cbc83ef1e27f
+    restart: on-failure
+    user: "1000:1000"
+    stop_grace_period: 1m
+    environment:
+      SP_BASE_URL: http://${DEVICE_DOMAIN_NAME}:${APP_PROXY_PORT}
+      SP_AUTH_JWT_SECRET: ${APP_SEED}
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
