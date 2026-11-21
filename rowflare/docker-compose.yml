@@ -1,0 +1,20 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: rowflare_web_1
+      APP_PORT: 8787
+      # Token-authenticated integration endpoints (REST API, MCP server, automation webhooks).
+      # Rowflare checks a personal access token or webhook token on each of these paths.
+      PROXY_AUTH_WHITELIST: "/api/v1/*,/mcp,/mcp/*,/api/hooks/*"
+
+  web:
+    image: rowflare/rowflare:0.1.0@sha256:9767136d308a6abe5a59ceb443729168c375cdad48f4c2db4bddaad0f192a1fc
+    restart: on-failure
+    environment:
+      MODE: selfhost
+      # The first account created becomes the owner; after that people join by invite.
+      ALLOW_SIGNUP: "false"
+      # Encrypts AI service keys and SMTP/Resend credentials that workspace owners save.
+      SECRET_KEY: ${APP_SEED}
+    volumes:
+      - ${APP_DATA_DIR}/data/rowflare:/data
