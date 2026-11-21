@@ -1,0 +1,26 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: cloudgate_web_1
+      APP_PORT: 8080
+      # PROXY_AUTH_ADD intentionally left unset (defaults to Umbrel auth
+      # enabled). CloudGate has its own login, but stacking Umbrel auth in
+      # front of it is the same pattern used by other apps that ship their
+      # own login (vaultwarden, nextcloud, immich, photoprism, jellyfin) —
+      # it is not broken by it, so there is no reason to bypass Umbrel auth.
+
+  web:
+    image: ghcr.io/elias02345/cloudgate:v0.6.1@sha256:e6a1ad446f666089a94c3b920488a6c5747cb86ef37fe2c6edc0e3dd341d12f5
+    restart: on-failure
+    environment:
+      # The platform (Umbrel) updates the image; CloudGate's own in-app
+      # updater must stay off so the two don't fight over /app.
+      CLOUDGATE_DISABLE_UPDATES: "true"
+      # Matches the UID:GID Umbrel owns ${APP_DATA_DIR} with, so files
+      # CloudGate writes under /data stay writable across restarts/updates.
+      PUID: "1000"
+      PGID: "1000"
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
