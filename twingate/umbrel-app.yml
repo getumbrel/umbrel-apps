@@ -1,0 +1,82 @@
+manifestVersion: 1
+id: twingate
+storage:
+  dataRoot: data
+environment:
+  - name: TWINGATE_NETWORK
+    services:
+      - connector
+      - web
+    default: ""
+    note: >-
+      Your Twingate Network name (e.g. "mycompany" if your admin console is mycompany.twingate.com).
+  - name: TWINGATE_ACCESS_TOKEN
+    services:
+      - connector
+    default: ""
+    note: >-
+      Access Token generated for this connector in the Twingate Admin Console.
+  - name: TWINGATE_REFRESH_TOKEN
+    services:
+      - connector
+    default: ""
+    note: >-
+      Refresh Token generated for this connector in the Twingate Admin Console.
+category: networking
+name: Twingate
+version: "1.93.0"
+tagline: Zero Trust Network Access (ZTNA) to securely connect to your Umbrel
+description: >-
+  Twingate provides fast, encrypted Zero Trust Network Access (ZTNA) to your Umbrel server and entire private network from anywhere in the world, without opening router ports or exposing your IP address.
+
+
+  Unlike traditional VPNs that grant broad, unrestricted access to your entire local network at once, Twingate implements modern zero-trust architecture. Traffic is routed through encrypted peer-to-peer and relay tunnels using modern cryptographic protocols, with granular access control and split tunneling.
+
+
+  Key Features:
+
+
+  - No Port Forwarding: Securely connect to your Umbrel from outside your home without punching holes in your firewall or exposing open ports to the internet.
+
+
+  - Outbound-Only Tunnels: The Twingate connector establishes outbound-only TLS and QUIC connections to Twingate's global relay network.
+
+
+  - True Zero Trust Access: Define exact access policies per user, device, and service.
+
+
+  - Seamless Client Experience: Native client applications for iOS, Android, macOS, Windows, and Linux that connect seamlessly in the background without battery drain.
+
+
+  - Multi-Service Access: Define your Umbrel's IP, specific web app ports, or entire home subnet CIDR as Twingate Resources.
+
+
+  Setup Instructions:
+
+
+  - 1. Sign up for a free account at https://www.twingate.com and log in to your Admin Console.
+
+
+  - 2. Navigate to "Remote Networks", create or select a network (e.g. "Home Network"), and click "Add Connector".
+
+
+  - 3. Select Docker deployment and click "Generate Tokens" to receive your Network Slug, Access Token, and Refresh Token.
+
+
+  - 4. In Umbrel, open App Settings for Twingate and enter your Network, Access Token, and Refresh Token.
+
+
+  - 5. In your Twingate Admin Console, add Umbrel as a Resource (using its local IP or your subnet) and assign user access.
+developer: Twingate Inc.
+website: https://www.twingate.com
+dependencies: []
+repo: https://github.com/Twingate/connector
+support: https://www.twingate.com/docs/
+port: 8250
+gallery: []
+path: ""
+defaultUsername: ""
+defaultPassword: ""
+submitter: Umbrel Community
+submission: https://github.com/getumbrel/umbrel-apps/pull/1250
+releaseNotes: ""

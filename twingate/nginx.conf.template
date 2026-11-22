@@ -1,0 +1,23 @@
+server {
+    listen 80;
+    server_name _;
+
+    root /usr/share/nginx/html;
+    index index.html;
+
+    # Internal Docker embedded DNS resolver for dynamically resolving the connector container
+    resolver 127.0.0.11 valid=10s ipv6=off;
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # Reverse proxy live Prometheus metrics from the Twingate connector
+    location /api/metrics {
+        set $connector_backend http://connector:9999/metrics;
+        proxy_pass $connector_backend;
+        proxy_connect_timeout 2s;
+        proxy_read_timeout 3s;
+        proxy_send_timeout 2s;
+    }
+}
