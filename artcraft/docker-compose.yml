@@ -1,0 +1,22 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: artcraft_desktop_1
+      APP_PORT: 3000
+
+  desktop:
+    image: ghcr.io/linuxserver/craft-apps:v0.16.0-ls9@sha256:4d4dbfc17ac7f8b2de44a146ce3dea853c4b17c43074f082198765d1c4f4ceba
+    restart: on-failure
+    shm_size: "1gb"
+    environment:
+      PUID: "1000"
+      PGID: "1000"
+      TZ: Etc/UTC
+      CUSTOM_USER: umbrel
+      PASSWORD: ${APP_PASSWORD}
+      DISABLE_SUDO: "true"
+      DISABLE_TERMINALS: "true"
+    volumes:
+      - ${APP_DATA_DIR}/data/config:/config
