@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+APP_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")"
+DOCKER_DIR="${APP_DIR}/data/docker"
+
+# Only disposable nested-daemon state is removed. Keep images, runtime
+# containers, build caches and all Appwrite user data intact.
+rm -f "${DOCKER_DIR}/docker.pid" "${DOCKER_DIR}/docker.sock" "${DOCKER_DIR}/run/docker.sock"
+rm -rf "${DOCKER_DIR}/exec"
