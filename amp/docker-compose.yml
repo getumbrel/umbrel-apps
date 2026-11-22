@@ -1,0 +1,26 @@
+version: "3.7"
+
+services:
+  amp:
+    image: mitchtalmadge/amp-dockerized:v28@sha256:49f765077094accde9dbcbab11f5f53ed817f40d1397e5f56efa3b2eebcdffd6
+    restart: on-failure
+    # host networking is required for a stable MAC address so that the hardware-
+    # locked licence persists; also lets game servers bind their own ports
+    # directly without pre-declaration
+    network_mode: host
+    stop_grace_period: 1m
+    volumes:
+      - ${APP_DATA_DIR}/data:/home/amp
+    environment:
+      # required so runtime-created files persist perms
+      - UID=1000
+      - GID=1000
+      - TZ=Etc/UTC
+      # seemingly unused port, no reason specifically for it
+      - PORT=7443
+      - USERNAME=admin
+      - PASSWORD=${APP_PASSWORD}
+      # the image ships without libicu on arm64, which makes ampinstmgr (a .NET
+      # app) abort at startup; invariant globalization is required for the app
+      # to run
+      - DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1
