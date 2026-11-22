@@ -1,0 +1,19 @@
+version: "3.7"
+
+# No app_proxy: MyNeS needs the host network namespace for ARP / mDNS / SSDP discovery,
+# so it serves its own UI on ${APP_PORT} directly - same pattern as the Home Assistant app.
+
+services:
+  server:
+    image: fxerkan/my_network_scanner:1.3.0@sha256:fcd085e7910d3adab1fb9c516136be809977ff2e45ae96cdd23c6b3d49eb22e9
+    network_mode: host
+    restart: on-failure
+    stop_grace_period: 1m
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    environment:
+      MYNES_PORT: 5883
+    volumes:
+      - ${APP_DATA_DIR}/data:/app/data
+      - ${APP_DATA_DIR}/config:/app/config
