@@ -1,0 +1,77 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: bookorbit_app_1
+      APP_PORT: 3000
+      # Kobo, KOReader, OPDS and the iPhone app call the API without the
+      # Umbrel login cookie. BookOrbit authenticates these routes itself.
+      PROXY_AUTH_WHITELIST: "/api/*"
+
+  app:
+    image: ghcr.io/bookorbit/bookorbit:3.7.0@sha256:0d5f4a31576a2bcd96afa77b8eac75c3b8df395f0f9b9215995de59236f22b95
+    # No user: the entrypoint starts as root, fixes /data ownership, then
+    # drops to PUID:PGID.
+    restart: on-failure
+    init: true
+    stop_grace_period: 30s
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      PUID: 1000
+      PGID: 1000
+      TZ: UTC
+      APP_URL: http://${DEVICE_DOMAIN_NAME}:${APP_PROXY_PORT}
+      POSTGRES_HOST: bookorbit_db_1
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: bookorbit
+      POSTGRES_PASSWORD: ${APP_BOOKORBIT_DB_PASSWORD}
+      POSTGRES_DB: bookorbit
+      JWT_SECRET: ${APP_BOOKORBIT_JWT_SECRET}
+      SETUP_BOOTSTRAP_TOKEN: ${APP_PASSWORD}
+      EMAIL_ENCRYPTION_KEY: ${APP_BOOKORBIT_EMAIL_KEY}
+      MIGRATION_ENCRYPTION_KEY: ${APP_BOOKORBIT_MIGRATION_KEY}
+      BOOK_REQUEST_ENCRYPTION_KEY: ${APP_BOOKORBIT_REQUEST_KEY}
+      LIBRARY_BROWSE_ROOT: /books
+    volumes:
+      - ${APP_DATA_DIR}/data/app:/data
+      - ${APP_DATA_DIR}/data/books:/books
+      # Umbrel's shared Downloads folder, where download clients such as
+      # Transmission and qBittorrent save finished book requests.
+      - ${UMBREL_ROOT}/data/storage/downloads:/downloads
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETGID
+      - SETUID
+    security_opt:
+      - no-new-privileges:true
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: pgvector/pgvector:0.8.7-pg18@sha256:c29f30688a9ad961691bdf0ec1650717cc132a5814619d80f80463d6e4c42e47
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      POSTGRES_USER: bookorbit
+      POSTGRES_PASSWORD: ${APP_BOOKORBIT_DB_PASSWORD}
+      POSTGRES_DB: bookorbit
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - ${APP_DATA_DIR}/data/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bookorbit -d bookorbit"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s

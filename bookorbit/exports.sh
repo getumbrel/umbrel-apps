@@ -1,0 +1,5 @@
+export APP_BOOKORBIT_DB_PASSWORD="$(derive_entropy "${app_entropy_identifier}-postgres-password")"
+export APP_BOOKORBIT_JWT_SECRET="$(derive_entropy "${app_entropy_identifier}-jwt-secret")"
+export APP_BOOKORBIT_EMAIL_KEY="$(derive_entropy "${app_entropy_identifier}-email-encryption-key")"
+export APP_BOOKORBIT_MIGRATION_KEY="$(derive_entropy "${app_entropy_identifier}-migration-encryption-key")"
+export APP_BOOKORBIT_REQUEST_KEY="$(derive_entropy "${app_entropy_identifier}-book-request-encryption-key")"

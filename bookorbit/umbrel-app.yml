@@ -1,0 +1,59 @@
+manifestVersion: 1
+id: bookorbit
+storage:
+  dataRoot: data
+folderAccess:
+  - id: books
+    name: Books library
+    note: This folder appears in BookOrbit as /books. Add /books as a library folder in BookOrbit.
+    mounts:
+      - service: app
+        targetPath: /books
+  - id: umbrel-downloads
+    name: Downloads
+    note: Used for book requests. Keep it on the same folder your download client saves to. It appears in BookOrbit as /downloads.
+    mounts:
+      - service: app
+        targetPath: /downloads
+environment:
+  - name: APP_URL
+    services:
+      - app
+    default: http://umbrel.local:2665
+    note: The address you open BookOrbit at. Change it if you use a Tailscale name, IP or domain, so Kobo links, emails and live updates use it.
+  - name: TZ
+    services:
+      - app
+    default: UTC
+    note: Your time zone, for example Europe/Ljubljana.
+category: files
+name: BookOrbit
+version: "3.7.0"
+tagline: Your self-hosted library for ebooks, comics and audiobooks
+description: >-
+  First-run setup: open BookOrbit, paste the password Umbrel shows for this app into the Setup token field, then create your own admin account with your own password.
+
+
+  BookOrbit organizes your ebooks, PDFs, comics and audiobooks and lets you read them anywhere: in the browser, on iPhone and Apple Watch, on Kobo e-readers, or in KOReader. Reading progress, highlights and status stay in sync across all of them.
+
+
+  It fetches metadata and covers from a dozen providers, tracks reading statistics, supports multiple users with OIDC sign-in, delivers books over OPDS and Send-to-Kindle, and syncs to Hardcover, Readwise and StoryGraph.
+
+
+  Coming from BookLore? BookOrbit includes a guided migration.
+releaseNotes: ""
+developer: BookOrbit
+website: https://bookorbit.app
+dependencies: []
+repo: https://github.com/bookorbit/bookorbit
+support: https://github.com/bookorbit/bookorbit/issues
+port: 2665
+gallery: []
+path: ""
+defaultUsername: ""
+defaultPassword: ""
+deterministicPassword: true
+permissions:
+  - STORAGE_DOWNLOADS
+submitter: Kamil Nader
+submission: https://github.com/getumbrel/umbrel-apps/pull/6326
