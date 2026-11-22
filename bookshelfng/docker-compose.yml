@@ -1,0 +1,15 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: bookshelfng_server_1
+      APP_PORT: 8787
+
+  server:
+    image: docker.io/snapetech/bookshelfng:hardcover-v0.4.21.37@sha256:728661a8f79ef97772eaf5b2d692420f80199df02a07b205b0f5c9d84c9a31fe
+    volumes:
+      - ${APP_DATA_DIR}/data/config:/config
+      - ${UMBREL_ROOT}/data/storage/downloads/books:/books
+      - ${UMBREL_ROOT}/data/storage/downloads:/downloads
+    restart: on-failure

@@ -1,0 +1,28 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: slskdn_server_1
+      APP_PORT: 5030
+      PROXY_AUTH_WHITELIST: "/api/*"
+
+  server:
+    image: docker.io/snapetech/slskdn:2026092517-slskdn.325@sha256:ceab59478d0a761305354fa562eb137e8dba05de8c6d4d887a09982b4c589524
+    environment:
+      SLSKD_HTTP_ADDRESS: 0.0.0.0
+      SLSKD_HTTP_PORT: 5030
+      SLSKD_HTTPS_PORT: 5031
+      SLSKD_SLSK_LISTEN_PORT: 50300
+      SLSKD_APP_DIR: /app
+      SLSKD_DOWNLOADS_DIR: /downloads
+      SLSKD_SHARED_DIR: /music
+      SLSKD_UMASK: "0022"
+    ports:
+      - "50300:50300/tcp"
+      - "50300:50300/udp"
+    volumes:
+      - ${APP_DATA_DIR}/data/app:/app
+      - ${UMBREL_ROOT}/data/storage/downloads:/downloads
+      - ${UMBREL_ROOT}/data/storage/music:/music:ro
+    restart: on-failure
