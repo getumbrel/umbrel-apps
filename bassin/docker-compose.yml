@@ -13,6 +13,9 @@ services:
       - /bin/sh
       - -ec
       - |
+        mkdir -p /sv2
+        chmod 700 /sv2
+        chown 1000:1000 /sv2
         if [ -f /config/ckpool.conf ]; then
           chown 1000:1000 /config/ckpool.conf
           exit 0
@@ -25,6 +28,7 @@ services:
         ln -T "$$tmp" /config/ckpool.conf
     volumes:
       - ${APP_DATA_DIR}/data/config:/config
+      - ${APP_DATA_DIR}/data/sv2:/sv2
     environment:
       - APP_BITCOIN_NODE_IP=${APP_BITCOIN_NODE_IP}
       - APP_BITCOIN_RPC_PORT=${APP_BITCOIN_RPC_PORT}
@@ -33,7 +37,7 @@ services:
       - APP_BITCOIN_ZMQ_HASHBLOCK_PORT=${APP_BITCOIN_ZMQ_HASHBLOCK_PORT}
 
   ckpool:
-    image: ghcr.io/blockdyor/docker-ckpool-solo:v1.2.0-1@sha256:ac630bfd6675cb512317f3a75edff7940dcf0378dc8aeb61ba9ac592aa6bdb87
+    image: ghcr.io/blockdyor/docker-ckpool-solo:v1.2.0-2@sha256:9a17c69583798c0ea4d79f754e7bb4298ee3dfe848a1bd5f2136ad2adf0d98b4
     # Keep the startup wrapper in Compose so existing installs receive it on update.
     entrypoint:
       - /bin/sh
@@ -71,12 +75,15 @@ services:
     stop_grace_period: 30s
     ports:
       - "3456:3333/tcp"
+      - "3457:3336/tcp"
+      - "3458:3337/tcp"
     volumes:
       - ${APP_DATA_DIR}/data/config:/config:ro
+      - ${APP_DATA_DIR}/data/sv2:/sv2
       - ${APP_DATA_DIR}/data/www:/www
 
   ui:
-    image: ghcr.io/blockdyor/bassin-ui:0243618@sha256:856f66c0f7e0d3b300ccd67469d462df1787f4df45685184d8db6a77f62f1fc6
+    image: ghcr.io/blockdyor/bassin-ui:fcfcac3@sha256:82f5b829bd046a427a9648e777b64ddc9d301bffbd3362e051a30d68b1e371a1
     entrypoint: /bin/sh -c "cp -r /ui/* /www/ && exec python3 /opt/bassin/pool-location.py"
     user: "1000:1000"
     depends_on:

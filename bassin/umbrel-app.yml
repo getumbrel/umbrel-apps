@@ -1,5 +1,5 @@
 manifestVersion: 1
-version: "2.1.13"
+version: "2.1.14"
 id: bassin
 name: Bassin
 tagline: Solo Bitcoin Mining Pool (ckPool)
@@ -21,11 +21,25 @@ category: bitcoin
 dependencies:
   - bitcoin
 releaseNotes: >-
-  Updates Bassin UI to 2.1.13 with reliability, performance, and security fixes:
-  handles CKPool scientific-notation hashrates (such as 1e+03G near 1 TH/s), empty
-  log files without HTTP 416 errors, and single-file worker read races; stops
-  unnecessary 1-second Home/Globe re-renders; tightens Settings validation and
-  fixes dark toast styling; and removes unused vulnerable dependencies.
+  Adds Noise-encrypted Stratum V2 support and updates CKPool to upstream revision
+  be3e1e07 (docker-ckpool-solo v1.2.0-2) with 90 upstream fixes including
+  multi-node block submission retries, workbase-matched network difficulty checks,
+  escaped RPC address validation, startup hashrate decay fixes, and optional
+  Mining IPC support. Standard JSON-RPC + ZMQ remains the default so Bitcoin Knots
+  29.3 and all Bitcoin Core versions continue working out of the box.
+
+
+  Bassin UI 2.1.14 adds a Connect → Stratum V2 tab with QR code and auto-detected
+  Base58Check authority public key (private keys stay in the private /sv2 mount),
+  Stratum V2 & Job Declaration telemetry in Insights, a dedicated Settings → Stratum V2
+  tab, and full CKPool configuration controls across Mining, Bitcoin Node, and Advanced.
+  Exposes host ports 3457 (SV2 Mining) and 3458 (SV2 Job Declaration) alongside 3456 (SV1).
+
+
+  Also includes UI 2.1.13 reliability, performance, and security fixes: CKPool
+  scientific-notation hashrates (such as 1e+03G near 1 TH/s), empty log HTTP 416
+  handling, single-file worker read resilience, elimination of 1-second Home/Globe
+  re-renders, dark toast styling, and 0 npm dependency vulnerabilities.
 
 
   Interrupted first-time setup can now retry without leaving a partial CKPool configuration.
@@ -48,12 +62,13 @@ releaseNotes: >-
   control, a grouped polling interval, and improved ZMQ endpoint validation and guidance.
 
 
-  Settings includes mining, Bitcoin RPC, and ZMQ notification options through a
-  configuration import/export editor. Configuration changes must still be applied manually.
-  Connect includes Stratum details, a QR code, and clearer worker and zero-fee reward instructions.
+  Settings includes mining, Stratum V2, Bitcoin RPC, ZMQ notification, and advanced CKPool
+  options through a configuration import/export editor. Configuration changes must still be
+  applied manually. Connect includes Stratum V1, Stratum V2, QR codes, and clearer worker
+  and zero-fee reward instructions.
 
 
-  This update also upgrades CKPool to 1.2.0 using the Bassin maintainer's multi-architecture
+  This update also upgrades CKPool using the Bassin maintainer's multi-architecture
   image, detects the running CKPool version automatically, and improves mobile graphics
   stability and small-screen layouts. The update uses the same configuration and pool data directories.
 
@@ -62,7 +77,7 @@ releaseNotes: >-
   Private and loopback connections can still use HTTP. This does not change how CKPool connects.
 
 
-  Full details: https://github.com/blockdyor/bassin-ui/blob/0243618a01a60b347de7734e650f10c172b5103c/README.md
+  Full details: https://github.com/blockdyor/bassin-ui/blob/fcfcac3856a65b2b83426e20e4ee718fb72eb4ec/README.md
 port: 5008
 submitter: duckaxe
 developer: blockdyor
