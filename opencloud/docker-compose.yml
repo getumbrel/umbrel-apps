@@ -1,0 +1,63 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: opencloud_gateway_1
+      APP_PORT: 8080
+      # OpenCloud authenticates users itself. OIDC discovery, token exchange,
+      # desktop/mobile clients and public shares must work without Umbrel cookies.
+      PROXY_AUTH_ADD: "false"
+
+  gateway:
+    image: nginxinc/nginx-unprivileged:1.30.0-alpine@sha256:808f7846d21a9c94cf53833e8807a00a33fd0b65cc47fb05b79efe366c2d201f
+    user: "1000:1000"
+    restart: on-failure
+    # Skip image entrypoint scripts; Umbrel renders the complete config.
+    entrypoint: ["nginx"]
+    command: ["-g", "daemon off;"]
+    volumes:
+      - ${APP_DATA_DIR}/nginx.conf:/etc/nginx/nginx.conf:ro
+
+  web:
+    image: opencloudeu/opencloud-rolling:8.0.1@sha256:1e78144071ab3fc20d2533dd4c5709d24b7e1669c96439fdf7c73cb2808a5d5e
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 1m
+    entrypoint: ["/bin/sh", "-ec"]
+    command:
+      - |
+        umask 077
+        if [ ! -e /etc/opencloud/opencloud.yaml ]; then
+          opencloud init --insecure=false --config-path /etc/opencloud --quiet
+        fi
+        exec opencloud server
+    environment:
+      OC_URL: https://${APP_DOMAIN}:${APP_PROXY_PORT}
+      OC_CONFIG_DIR: /etc/opencloud
+      OC_BASE_DATA_PATH: /var/lib/opencloud
+      OC_LOG_LEVEL: info
+      OC_LOG_COLOR: "false"
+      OC_LOG_PRETTY: "false"
+      OC_INSECURE: "false"
+      PROXY_HTTP_ADDR: 0.0.0.0:9200
+      PROXY_TLS: "false"
+      IDM_ADMIN_PASSWORD: ${APP_PASSWORD}
+      IDM_CREATE_DEMO_USERS: "false"
+      # Trust only the public Umbrel CA in addition to the image's system CAs.
+      SSL_CERT_FILE: /run/umbrel-ca.pem
+    extra_hosts:
+      # Containers do not resolve .local through mDNS. Reach Umbrel's HTTPS
+      # listener via the host while keeping the OIDC hostname and TLS SNI intact.
+      - ${APP_DOMAIN}:host-gateway
+    volumes:
+      - ${APP_DATA_DIR}/data/config:/etc/opencloud
+      - ${APP_DATA_DIR}/data/storage:/var/lib/opencloud
+      # Public certificate only; no CA key, host directory or Docker socket.
+      - ${UMBREL_ROOT}/lan-ingress/ca.pem:/run/umbrel-ca.pem:ro
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://127.0.0.1:9205/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 90s
