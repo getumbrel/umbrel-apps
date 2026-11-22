@@ -1,0 +1,39 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: openpost_server_1
+      APP_PORT: 8080
+      # Providers cannot send Umbrel cookies. OpenPost checks OAuth state,
+      # webhook signatures/secrets, and media access on these routes.
+      PROXY_AUTH_WHITELIST: >-
+        /media/*,
+        /api/v1/accounts/x/callback,
+        /api/v1/accounts/linkedin/callback,
+        /api/v1/accounts/threads/callback,
+        /api/v1/accounts/discord/callback,
+        /api/v1/accounts/facebook/callback,
+        /api/v1/accounts/googlebusiness/callback,
+        /api/v1/accounts/instagram/callback,
+        /api/v1/accounts/pinterest/callback,
+        /api/v1/accounts/tiktok/callback,
+        /api/v1/accounts/youtube/callback,
+        /api/v1/accounts/mastodon/callback,
+        /api/v1/webhooks/telegram,
+        /api/v1/webhooks/x/messaging
+
+  server:
+    image: ghcr.io/getopenpost/openpost:v7.39.0@sha256:8322f360f64d663e98fc0612a7d879847a6f0601a2c736f096853a18d86ff67d
+    user: "1000:1000"
+    init: true
+    restart: on-failure
+    stop_grace_period: 30s
+    environment:
+      OPENPOST_APP_URL: http://${DEVICE_DOMAIN_NAME}:3457
+      OPENPOST_EXTRA_CORS_ORIGINS: https://${DEVICE_DOMAIN_NAME}:3457
+      # umbrelOS 2 serves app_proxy from the host, via this bridge gateway.
+      # Other app containers on the shared network are not trusted proxies.
+      OPENPOST_TRUSTED_PROXY_CIDRS: ${GATEWAY_IP}/32
+      OPENPOST_JWT_SECRET: ${APP_OPENPOST_JWT_SECRET}
+      OPENPOST_ENCRYPTION_KEY: ${APP_OPENPOST_ENCRYPTION_KEY}
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
