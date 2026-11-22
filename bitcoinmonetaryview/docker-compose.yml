@@ -1,0 +1,34 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      # <app-id>_<service>_1
+      APP_HOST: bitcoinmonetaryview_web_1
+      APP_PORT: 8338
+
+  web:
+    image: ghcr.io/marksierra/bitcoinmonetaryview:0.3.14@sha256:8523028d9603977d65bbc85d38395ce326980c3c0112c30a84e1e35c67a0e598
+    user: "1000:1000"
+    init: true
+    restart: on-failure
+    stop_grace_period: 1m
+    # hardening: the app only writes its own data directory
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - ${APP_DATA_DIR}/data/app:/data
+    environment:
+      BMV_MANAGED_BY: umbrel
+      BMV_DATA_DIR: /data
+      BMV_BIND: 0.0.0.0
+      BMV_PORT: 8338
+      # Umbrel's Bitcoin Node app, or Bitcoin Knots (which implements it). Read-only RPC only.
+      BMV_RPC_URL: http://${APP_BITCOIN_NODE_IP}:${APP_BITCOIN_RPC_PORT}
+      BMV_RPC_USER: ${APP_BITCOIN_RPC_USER}
+      BMV_RPC_PASSWORD: ${APP_BITCOIN_RPC_PASS}
