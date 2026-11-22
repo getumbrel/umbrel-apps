@@ -11,7 +11,7 @@ services:
   # Official Coolify/Dokploy platform edge: path-splits to the gateway and console
   # behind the existing proxy (here, Umbrel app_proxy).
   edge:
-    image: ghcr.io/logicplanes/kaeso-console:0.6.0@sha256:d02de7fd59d73077da7a44cedda2c4dc16a9e987b2d323e3c54104dc68e4dd9b
+    image: ghcr.io/logicplanes/kaeso-console:0.7.0@sha256:b7a980fec6fd49ee10b6fb790620f03b0ff12b2d385ad8344767b8eb55ac122b
     restart: on-failure
     command: ["kaeso-edge"]
     security_opt: [no-new-privileges:true]
@@ -37,7 +37,7 @@ services:
         condition: service_healthy
 
   gateway:
-    image: ghcr.io/logicplanes/kaeso-gateway:0.6.0@sha256:2c29fd981f2583daaed92579eb76c8cb364f24e9ef8768a00f09cd802ff98a34
+    image: ghcr.io/logicplanes/kaeso-gateway:0.7.0@sha256:3d32fd7827417e49475b4ac9ad7d25f7daed28f02fa489ef4077ff501faaae1a
     restart: on-failure
     security_opt: [no-new-privileges:true]
     cap_drop: [ALL]
@@ -83,7 +83,7 @@ services:
         condition: service_started
 
   console:
-    image: ghcr.io/logicplanes/kaeso-console:0.6.0@sha256:d02de7fd59d73077da7a44cedda2c4dc16a9e987b2d323e3c54104dc68e4dd9b
+    image: ghcr.io/logicplanes/kaeso-console:0.7.0@sha256:b7a980fec6fd49ee10b6fb790620f03b0ff12b2d385ad8344767b8eb55ac122b
     restart: on-failure
     security_opt: [no-new-privileges:true]
     cap_drop: [ALL]
@@ -142,6 +142,40 @@ services:
     cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, KILL, SETGID, SETUID]
     mem_limit: 4g
     pids_limit: 4096
+    # ClickHouse's own diagnostics tables, which Kaeso never reads, as in the official Compose package.
+    command:
+      - sh
+      - -c
+      - |
+        cat >/etc/clickhouse-server/config.d/kaeso.xml <<'EOF'
+        <clickhouse>
+            <!-- Kaeso reads none of ClickHouse's own diagnostics tables. Writing and merging them took most
+            of an idle install's CPU and half its memory, and they were kept forever. -->
+            <asynchronous_metric_log remove="1"/>
+            <metric_log remove="1"/>
+            <part_log remove="1"/>
+            <processors_profile_log remove="1"/>
+            <query_metric_log remove="1"/>
+            <query_thread_log remove="1"/>
+            <query_views_log remove="1"/>
+            <trace_log remove="1"/>
+            <text_log remove="1"/>
+            <latency_log remove="1"/>
+            <session_log remove="1"/>
+            <opentelemetry_span_log remove="1"/>
+            <asynchronous_insert_log remove="1"/>
+            <background_schedule_pool_log remove="1"/>
+            <blob_storage_log remove="1"/>
+            <!-- Kept for an operator's questions: queries for a week, errors for a month. -->
+            <query_log>
+                <ttl>event_date + INTERVAL 7 DAY DELETE</ttl>
+            </query_log>
+            <error_log>
+                <ttl>event_date + INTERVAL 30 DAY DELETE</ttl>
+            </error_log>
+        </clickhouse>
+        EOF
+        exec /entrypoint.sh
     environment:
       CLICKHOUSE_USER: kaeso
       CLICKHOUSE_PASSWORD: ${APP_KAESO_CLICKHOUSE_PASSWORD}
