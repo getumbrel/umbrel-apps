@@ -1,0 +1,24 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: orca-server_server_1
+      APP_PORT: 8080
+
+  server:
+    image: ghcr.io/yanffernandes/umbrel-orca-server:1.4.224@sha256:3872c7c7315f3be831fbea2d9718a8a618eee1e0039128576ef323b27ff4be62
+    restart: on-failure
+    stop_grace_period: 30s
+    user: "1000:1000"
+    # Orca shows this as the server's machine name.
+    hostname: ${DEVICE_HOSTNAME}
+    ports:
+      # Orca Desktop dials the Orca runtime directly; every client authenticates with
+      # its own pairing token. The status page goes through app_proxy as usual.
+      - "6768:6768"
+    volumes:
+      - ${APP_DATA_DIR}/data/home:/home/orca
+    environment:
+      ORCA_PAIRING_HOST: ${DEVICE_DOMAIN_NAME}
+      ORCA_UMBREL_PASSWORD: ${APP_PASSWORD}
