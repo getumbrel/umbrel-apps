@@ -4,13 +4,13 @@ storage:
   dataRoot: data
 category: files
 name: HermitStash
-version: "1.15.13"
+version: "1.16.1"
 tagline: Post-quantum encrypted self-hosted file sharing
 description: >-
   HermitStash is a self-hosted file upload server with post-quantum encryption. Every file and database field is sealed with an ML-KEM-1024 + ECDH P-384 hybrid envelope and XChaCha20-Poly1305 before touching disk; passwords use Argon2id. Nothing is stored in plaintext, including database fields the operator never thinks of as sensitive.
 
 
-  Generate shareable download links with optional expiry, download limits, and per-bundle passwords. Sign in with WebAuthn passkeys, mTLS browser certificates issued by the built-in CA, or password + TOTP. A separately-installable desktop sync client watches a local folder and mirrors changes back to the server over a post-quantum WebSocket channel.
+  Generate shareable download links with optional expiry, download limits, and per-bundle passwords. Sign in with WebAuthn passkeys, mTLS browser certificates issued by the built-in CA, password + TOTP, or an OpenID Connect provider such as Keycloak, Authentik or Authelia. A separately-installable desktop sync client watches a local folder and mirrors changes back to the server over a post-quantum WebSocket channel.
 
 
   The admin panel covers users, uploads with per-user and per-stash size limits, webhooks, API keys, branding, a tamper-evident audit log (CSV/JSON/CADF export, plus syslog or webhook forwarding to a SIEM), mutual-TLS certificate-authority management, and storage backends — local disk by default, or any S3-compatible bucket (MinIO, Cloudflare R2, Backblaze B2) for off-device archives. Retry-safe writes via the standard Idempotency-Key header. RFC 9457 problem-details on every API error response.
@@ -33,17 +33,17 @@ defaultPassword: ""
 submitter: dotCooCoo
 submission: https://github.com/getumbrel/umbrel-apps/pull/5378
 releaseNotes: >-
-  This update checks every name an uploaded archive entry can be extracted under, stops the server from decompressing a connecting client's certificate before it has been verified, and keeps connections to S3 storage open between requests. Full vault key rotation now works when the data directory is a Docker volume, and the key-check tool no longer reports a healthy database as corrupted.
+  This update adds sign-in through any OpenID Connect provider, such as Keycloak, Authentik, Authelia, Pocket ID or VoidAuth. Set it up in Admin, Settings, Auth, and register http://umbrel.local:3081/auth/oidc/callback (with your device's address) as the redirect URI at your provider.
 
 
-  Uploads are now refused if an archive holds a Windows device name such as aux.c or CON, a name that ends in a dot or a space, or two spellings of the same path.
+  Senders can now give a bundle a download limit. Each file in the bundle is deleted after its last allowed download, and a download counts only once the whole file has been sent. A limited bundle needs an expiry.
 
 
-  If you moved files from local storage to S3 on 1.15.9, check the bucket for objects of 0 bytes and restore those files from a backup.
+  Google sign-in now checks a signed ID token. A Google account that Google does not report as verified can no longer sign in.
 
 
-  If you are updating from 1.15.9 or earlier, the first start rebuilds the database once, which needs free space of about the database's size.
+  The app now runs on Node.js 26.
 
 
-  Full release notes can be found at https://github.com/dotCooCoo/hermitstash/releases/tag/v1.15.13
+  Full release notes can be found at https://github.com/dotCooCoo/hermitstash/releases/tag/v1.16.1 and in the v1.16.0 entry of https://github.com/dotCooCoo/hermitstash/blob/main/CHANGELOG.md
 dependencies: []
