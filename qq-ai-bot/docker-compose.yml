@@ -1,0 +1,44 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: qq-ai-bot_napcat_1
+      APP_PORT: 6099
+
+  napcat:
+    image: mlikiowa/napcat-docker:v4.18.7@sha256:9254ec12af101576c5eeb4910847abd1d219297bc6d9a35c52511e12500f0f45
+    restart: on-failure
+    environment:
+      WEBUI_TOKEN: ${APP_PASSWORD}
+      NAPCAT_UID: "1000"
+      NAPCAT_GID: "1000"
+    depends_on:
+      - bot
+    volumes:
+      - ${APP_DATA_DIR}/data/napcat/config:/app/napcat/config
+      - ${APP_DATA_DIR}/data/napcat/QQ:/app/.config/QQ
+
+  bot:
+    image: ghcr.io/happysnaker/qq-ai-bot:v0.1.4@sha256:d22153f02459ff21f9a54b38d15fc6bf9b4cba190bdd6e91076ebf9186e80501
+    restart: on-failure
+    environment:
+      BOT_PORT: "8080"
+      DATA_DIR: /app/data
+      SESSION_FILE_PATH: /app/data/sessions.json
+      ONEBOT_MODE: reverse
+      ONEBOT_ACCESS_TOKEN: ${APP_QQ_AI_BOT_ONEBOT_TOKEN}
+      ONEBOT_REVERSE_WS_HOST: 0.0.0.0
+      ONEBOT_REVERSE_WS_PORT: "16700"
+      ONEBOT_REVERSE_WS_PATH: /onebot/v11/ws
+      ONEBOT_ALLOW_GROUP: "true"
+      ONEBOT_REQUIRE_MENTION_IN_GROUP: "true"
+      ONEBOT_ALLOW_PRIVATE: "true"
+      ONEBOT_PROGRESS_MODE: message
+      ACP_AGENT_COMMAND: node
+      ACP_AGENT_ARGS_JSON: '["dist/examples/mock-acp-agent.js"]'
+      ACP_AGENT_WORKDIR: /app
+      ACP_REUSE_SESSION: "true"
+      ACP_VERBOSE_MODE: verbose
+    volumes:
+      - ${APP_DATA_DIR}/data/qq-ai-bot:/app/data
