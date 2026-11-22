@@ -1,5 +1,5 @@
 manifestVersion: 1
-version: "2.1.16"
+version: "2.1.17"
 id: bassin
 name: Bassin
 tagline: Solo Bitcoin Mining Pool (ckPool)
@@ -21,42 +21,32 @@ category: bitcoin
 dependencies:
   - bitcoin
 releaseNotes: >-
-  Bassin 2.1.16 cuts RAM usage across the entire stack and adds new umbrelOS
-  dashboard widgets, including a Worker Best Diff Leaderboard! Eliminates the
-  separate static file server and widget-server containers (down to just ckpool
-  + ui), serves all three widgets directly from disk in ui:8080 with 256 KiB
-  thread stacks and python3 -O -B, caps glibc malloc arenas on ckpool
-  (MALLOC_ARENA_MAX=2), and code-splits the frontend with lazy-loaded routes.
+  Bassin 2.1.17 adds native Bitcoin Core v32+ IPC mining support, hardens the
+  Config API for safe use with active miners/rentals, reduces RAM across the
+  stack (2 app containers: ckpool + ui), and adds built-in Worker Best Diff
+  Leaderboard and Hashrate Averages widgets!
 
 
-  Includes live auto-saving Settings and automatic CKPool reloads: Settings loads
-  your running ckpool.conf automatically, valid changes save atomically (0600)
-  and reload CKPool within seconds, stored Bitcoin RPC passwords stay redacted on
-  the server and preserved on save, and Umbrel's built-in proxy authentication
-  protects the dashboard and live configuration API.
+  - Bitcoin Core IPC mining: mounts ${APP_BITCOIN_DATA_DIR}:/bitcoin:ro read-only
+    on ckpool (never on ui), sets ipcmining to /bitcoin/${APP_BITCOIN_IPC_SOCKET_RELATIVE_PATH:-node.sock}
+    on fresh installs with RPC + ZMQ fallback intact, and waits up to 30s at startup
+    only when APP_BITCOIN_IPC_ENABLED=true (zero delay on Bitcoin Knots or non-IPC).
+  - Hardened Config API: requires a per-app Bearer token (BASSIN_CONFIG_TOKEN via
+    deterministicPassword) on GET/PUT /api/config inside Umbrel's Docker network,
+    enforces a strict key allowlist blocking donation, btcaddress, logdir, proxy,
+    and redirecturl, and confines SV2/IPC paths to /sv2/ and /bitcoin/.
+  - Rental-safe Settings: explicit Save (no restart) and Save & Restart Pool
+    (confirms active workers and triggers gated .reload-trigger). Umbrel's built-in
+    proxy authentication protects the external dashboard.
+  - Low RAM & 3 built-in widgets: drops separate www and widget-server containers,
+    caps ckpool glibc arenas (MALLOC_ARENA_MAX=2), uses 256 KiB Python stacks and
+    lazy-loaded UI chunks, and serves Pool Overview, Worker Best Diff Leaderboard,
+    and Hashrate Averages directly from ui:8080.
+  - CKPool v1.2.0-2 (upstream be3e1e07) with Noise-encrypted Stratum V2 (ports
+    3457/3458 alongside 3456) and full compatibility with Bitcoin Core and Bitcoin Knots.
 
 
-  Adds Noise-encrypted Stratum V2 support and updates CKPool to upstream revision
-  be3e1e07 (docker-ckpool-solo v1.2.0-2) with 90 upstream fixes including
-  multi-node block submission retries, workbase-matched network difficulty checks,
-  escaped RPC address validation, startup hashrate decay fixes, and optional
-  Mining IPC support. Standard JSON-RPC + ZMQ remains the default so both Bitcoin
-  Core and Bitcoin Knots (including 29.3 and earlier versions) work out of the box.
-
-
-  Bassin UI adds a Connect → Stratum V2 tab with QR code and auto-detected
-  Base58Check authority public key (private keys stay isolated in data/sv2/, never
-  mounted in the UI container), Stratum V2 & Job Declaration telemetry in Insights,
-  a dedicated Settings → Stratum V2 tab, and full CKPool configuration controls
-  across Mining, Bitcoin Node, and Advanced. Exposes host ports 3457 (SV2 Mining)
-  and 3458 (SV2 Job Declaration) alongside 3456 (SV1).
-
-
-  Interrupted first-time setup can now retry without leaving a partial CKPool configuration.
-  Existing configurations are not regenerated.
-
-
-  Full details: https://github.com/blockdyor/bassin-ui/blob/e6915545dec52d86cd61f88aac5f950648174539/README.md
+  Full details: https://github.com/blockdyor/bassin-ui/blob/14967e5ae09b0513567f3ba384b471fa3bcfd239/README.md
 port: 5008
 submitter: duckaxe
 developer: blockdyor
@@ -70,7 +60,7 @@ gallery:
   - 3.webp
 path: ""
 defaultUsername: ""
-defaultPassword: ""
+deterministicPassword: true
 widgets:
   - id: "stats"
     type: "four-stats"
