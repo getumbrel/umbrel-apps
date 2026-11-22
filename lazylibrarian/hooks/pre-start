@@ -1,0 +1,130 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Current umbrelOS releases include python3. This block uses only Python's
+# standard library, so it has no third-party Python dependencies.
+#
+# Do not create or chown folders in Umbrel's shared Downloads storage here.
+# umbrelOS provisions that storage, and LazyLibrarian runs as UID/GID 1000
+# and creates its required subdirectories with its default 0755 permissions.
+python3 - "${APP_DATA_DIR}" "${UMBREL_ROOT}" <<'PY'
+import configparser
+import os
+from pathlib import Path
+import stat
+import sys
+import tempfile
+
+app_data_dir = Path(sys.argv[1])
+umbrel_root = Path(sys.argv[2])
+config_path = app_data_dir / "data/config/config.ini"
+torrent_flag = app_data_dir / "TORRENT_CLIENT_CONFIGURED_BY_UMBREL"
+sabnzbd_flag = app_data_dir / "SABNZBD_CONFIGURED_BY_UMBREL"
+
+installed_apps = {
+    app
+    for app in ("transmission", "qbittorrent", "sabnzbd")
+    if (umbrel_root / "app-data" / app / "umbrel-app.yml").is_file()
+}
+
+if not config_path.is_file():
+    print(f"{config_path} does not exist; skipping downloader setup.", file=sys.stderr)
+    sys.exit(0)
+
+config = configparser.RawConfigParser(strict=False)
+try:
+    config.read(config_path)
+except configparser.Error as error:
+    print(f"Unable to read {config_path}: {error}", file=sys.stderr)
+    sys.exit(0)
+
+
+def section(name):
+    for existing in config.sections():
+        if existing.casefold() == name.casefold():
+            return existing
+    config.add_section(name)
+    return name
+
+
+def enabled(section_name, prefix):
+    target = section(section_name)
+    return any(
+        key.casefold().startswith(prefix)
+        and value.strip().casefold() in {"1", "true", "yes", "on"}
+        for key, value in config.items(target)
+    )
+
+
+changed = False
+
+
+def set_value(section_name, key, value, *, only_if_empty=False):
+    global changed
+    target = section(section_name)
+    if only_if_empty and config.get(target, key, fallback="").strip():
+        return
+    if config.get(target, key, fallback=None) != value:
+        config.set(target, key, value)
+        changed = True
+
+
+mark_torrent_configured = False
+if not torrent_flag.exists():
+    if enabled("TORRENT", "tor_downloader_"):
+        mark_torrent_configured = True
+    else:
+        torrent_downloaders = {
+            "transmission": "tor_downloader_transmission",
+            "qbittorrent": "tor_downloader_qbittorrent",
+        }
+        installed_torrent_downloaders = [
+            downloader for downloader in torrent_downloaders if downloader in installed_apps
+        ]
+        if len(installed_torrent_downloaders) == 1:
+            downloader = installed_torrent_downloaders[0]
+            set_value("TORRENT", torrent_downloaders[downloader], "1")
+            mark_torrent_configured = True
+
+mark_sabnzbd_configured = False
+if not sabnzbd_flag.exists():
+    if enabled("USENET", "nzb_downloader_"):
+        mark_sabnzbd_configured = True
+    elif "sabnzbd" in installed_apps:
+        sabnzbd_section = section("SABnzbd")
+        api_key = config.get(sabnzbd_section, "sab_api", fallback="").strip()
+        try:
+            sabnzbd_config = (
+                umbrel_root / "app-data/sabnzbd/data/config/sabnzbd.ini"
+            ).read_text()
+            if not api_key:
+                for line in sabnzbd_config.splitlines():
+                    key, separator, value = line.partition("=")
+                    if separator and key.strip() == "api_key":
+                        api_key = value.strip()
+                        break
+        except OSError:
+            pass
+        if api_key:
+            set_value("USENET", "nzb_downloader_sabnzbd", "1")
+            set_value("SABnzbd", "sab_api", api_key, only_if_empty=True)
+            mark_sabnzbd_configured = True
+
+if changed:
+    original = config_path.stat()
+    with tempfile.NamedTemporaryFile(
+        "w",
+        dir=config_path.parent,
+        delete=False,
+    ) as temporary:
+        config.write(temporary)
+        temporary_path = Path(temporary.name)
+    os.chmod(temporary_path, stat.S_IMODE(original.st_mode))
+    os.chown(temporary_path, original.st_uid, original.st_gid)
+    os.replace(temporary_path, config_path)
+
+if mark_torrent_configured:
+    torrent_flag.touch()
+if mark_sabnzbd_configured:
+    sabnzbd_flag.touch()
+PY
