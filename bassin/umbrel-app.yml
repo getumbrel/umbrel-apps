@@ -1,5 +1,5 @@
 manifestVersion: 1
-version: "2.1.15"
+version: "2.1.16"
 id: bassin
 name: Bassin
 tagline: Solo Bitcoin Mining Pool (ckPool)
@@ -21,13 +21,19 @@ category: bitcoin
 dependencies:
   - bitcoin
 releaseNotes: >-
-  Bassin 2.1.15 introduces live auto-saving Settings and automatic CKPool reloads!
-  Settings loads your running ckpool.conf automatically — toggle Stratum V2 on or
-  adjust any mining or Bitcoin node option and valid changes save atomically (0600)
-  and reload CKPool within seconds, with no manual export or restart required.
-  Stored Bitcoin RPC passwords stay redacted on the server and are preserved
-  automatically on save, while Umbrel's built-in proxy authentication protects the
-  dashboard and live configuration API.
+  Bassin 2.1.16 cuts RAM usage across the entire stack and adds new umbrelOS
+  dashboard widgets, including a Worker Best Diff Leaderboard! Eliminates the
+  separate static file server and widget-server containers (down to just ckpool
+  + ui), serves all three widgets directly from disk in ui:8080 with 256 KiB
+  thread stacks and python3 -O -B, caps glibc malloc arenas on ckpool
+  (MALLOC_ARENA_MAX=2), and code-splits the frontend with lazy-loaded routes.
+
+
+  Includes live auto-saving Settings and automatic CKPool reloads: Settings loads
+  your running ckpool.conf automatically, valid changes save atomically (0600)
+  and reload CKPool within seconds, stored Bitcoin RPC passwords stay redacted on
+  the server and preserved on save, and Umbrel's built-in proxy authentication
+  protects the dashboard and live configuration API.
 
 
   Adds Noise-encrypted Stratum V2 support and updates CKPool to upstream revision
@@ -46,27 +52,11 @@ releaseNotes: >-
   and 3458 (SV2 Job Declaration) alongside 3456 (SV1).
 
 
-  Also includes UI reliability, performance, and security fixes: CKPool
-  scientific-notation hashrates (such as 1e+03G near 1 TH/s), empty log HTTP 416
-  handling, single-file worker read resilience, elimination of 1-second Home/Globe
-  re-renders, dark toast styling, and 0 npm dependency vulnerabilities.
-
-
   Interrupted first-time setup can now retry without leaving a partial CKPool configuration.
   Existing configurations are not regenerated.
 
 
-  Bassin has a new interface adapted from Umbrel's Bitcoin app, with familiar navigation
-  and controls in Bassin's water-inspired colors. Explore pool and worker insights,
-  round and all-time best shares, hashrate history, animated water-column hashrate
-  averages, UTC timestamps throughout, and searchable logs.
-
-
-  The map's location helper requires HTTPS for public Bitcoin RPC endpoints.
-  Private and loopback connections continue to use HTTP.
-
-
-  Full details: https://github.com/blockdyor/bassin-ui/blob/292838b1de742b8f1278548278fa87fd9d7a3ad0/README.md
+  Full details: https://github.com/blockdyor/bassin-ui/blob/e6915545dec52d86cd61f88aac5f950648174539/README.md
 port: 5008
 submitter: duckaxe
 developer: blockdyor
@@ -85,7 +75,7 @@ widgets:
   - id: "stats"
     type: "four-stats"
     refresh: "30s"
-    endpoint: "widget-server:3000/widgets/pool"
+    endpoint: "ui:8080/widgets/pool"
     link: ""
     example:
       type: "four-stats"
@@ -102,3 +92,39 @@ widgets:
         - title: "Total Shares"
           text: "210"
           subtext: "M"
+  - id: "workers-leaderboard"
+    type: "list"
+    refresh: "30s"
+    endpoint: "ui:8080/widgets/workers"
+    link: ""
+    example:
+      type: "list"
+      link: ""
+      items:
+        - text: "#1 nerdqaxe"
+          subtext: "Best ever: 2.5T · 4.80 Th/s"
+        - text: "#2 bitaxe-gamma"
+          subtext: "Best ever: 147M · 1.20 Th/s"
+        - text: "#3 bitaxe-ultra"
+          subtext: "Best ever: 17.4M · 555 Gh/s"
+  - id: "hashrate"
+    type: "four-stats"
+    refresh: "30s"
+    endpoint: "ui:8080/widgets/hashrate"
+    link: ""
+    example:
+      type: "four-stats"
+      link: ""
+      items:
+        - title: "1m Avg"
+          text: "2.15"
+          subtext: "Th/s"
+        - title: "5m Avg"
+          text: "2.10"
+          subtext: "Th/s"
+        - title: "1h Avg"
+          text: "2.05"
+          subtext: "Th/s"
+        - title: "24h Avg"
+          text: "1.98"
+          subtext: "Th/s"
