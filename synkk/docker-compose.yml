@@ -1,0 +1,41 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: synkk_web_1
+      APP_PORT: 80
+      PROXY_AUTH_WHITELIST: "/api/v1/*,/app/*"
+
+  web:
+    image: ghcr.io/tawandajosephmutsena/synkk:v1.0.1@sha256:eae3257921dffa101940ea76505cbc43d304864d1ab6095b65cec8fb3cbc5cfc
+    restart: on-failure
+    environment:
+      APP_NAME: Synkk
+      APP_ENV: production
+      APP_DEBUG: "false"
+      APP_URL: https://${DEVICE_DOMAIN_NAME}:${APP_PROXY_PORT}
+      APP_KEY: ${APP_SYNKK_APP_KEY}
+      TRUSTED_PROXIES: ${GATEWAY_IP}
+      SYNKK_BOOTSTRAP_EMAIL: admin@umbrel.local
+      SYNKK_BOOTSTRAP_PASSWORD: ${APP_PASSWORD}
+      SYNKK_BOOTSTRAP_PASSWORD_SOURCE: umbrel
+      SYNKK_BOOTSTRAP_NAME: Umbrel Admin
+      DB_CONNECTION: sqlite
+      DB_DATABASE: /var/www/html/storage/app/database.sqlite
+      QUEUE_CONNECTION: database
+      CACHE_STORE: database
+      SESSION_DRIVER: database
+      SESSION_ENCRYPT: "true"
+      SESSION_SECURE_COOKIE: "true"
+      SYNKK_STORAGE_DISK: local
+      FILESYSTEM_DISK: local
+      BROADCAST_CONNECTION: reverb
+      REVERB_SERVER_HOST: 127.0.0.1
+      REVERB_SERVER_PORT: 8080
+      REVERB_HOST: 127.0.0.1
+      REVERB_PORT: 8080
+      REVERB_SCHEME: http
+      REVERB_APP_ID: synkk-umbrel
+      REVERB_APP_KEY: ${APP_SYNKK_REVERB_KEY}
+      REVERB_APP_SECRET: ${APP_SYNKK_REVERB_SECRET}
+    volumes:
+      - ${APP_DATA_DIR}/data/storage:/var/www/html/storage
