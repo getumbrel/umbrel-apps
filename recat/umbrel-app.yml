@@ -1,0 +1,58 @@
+manifestVersion: 1
+id: recat
+category: finance
+name: Recat
+tagline: Self-hosted transaction categorization and review queue for QuickBooks Online
+description: >-
+  Recat gives your team a simple queue for categorizing uncategorized QuickBooks
+  Online transactions, without giving everyone a QuickBooks login.
+
+
+  A QuickBooks bank rule auto-adds bank feed items to a holding account. Recat
+  syncs that account to your Umbrel, your team categorizes in the web UI, and
+  Recat writes each transaction back to QuickBooks with the correct category,
+  splits, or transfers. Every write is recorded in an append-only audit log
+  before it happens, and dry-run mode is on by default until you turn it off.
+
+
+  Includes rules, splits, transfer detection, bulk posting, sales-tax handling,
+  reports rendered from QuickBooks' own Reports API, private tags, receipt
+  capture and matching, and an MCP server so an AI assistant can work the queue
+  through the same verified paths the UI uses.
+
+
+  Your credentials, your server, your data. No third-party service in the
+  middle, no telemetry. You supply your own free Intuit developer keys, and the
+  first-run wizard walks you through everything — including a built-in demo
+  QuickBooks if you want to try it before connecting real books.
+
+
+  Connecting real QuickBooks needs an HTTPS address. Intuit will not accept a
+  plain http redirect URI for a production app, so umbrel.local cannot be
+  registered with them. If you front your Umbrel with TLS — Tailscale Serve and
+  Cloudflare Tunnel both issue real certificates — set that address in the setup
+  wizard and register the redirect URI it shows you. Without one, the built-in
+  demo QuickBooks works fully and real books will not connect.
+
+
+  Note on first run: the wizard asks for the app password shown on this page, so
+  that nobody but you can set this instance up. It fills in the administrator
+  address for you, and that same password signs you in afterwards. Change the
+  address and the password stops working — Umbrel installs have no outbound
+  email, so until you add SMTP in Settings you would have to fetch each sign-in
+  link from this app's logs by hand.
+version: "0.1.5"
+releaseNotes: ""
+developer: Josh Goble
+website: https://github.com/tx-joshg/recat-qbo
+dependencies: []
+repo: https://github.com/tx-joshg/recat-qbo
+support: https://github.com/tx-joshg/recat-qbo/issues
+port: 3019
+path: ""
+gallery: []
+defaultUsername: admin@recat.local
+defaultPassword: ""
+deterministicPassword: true
+submitter: Josh Goble
+submission: https://github.com/getumbrel/umbrel-apps/pull/6019
