@@ -1,0 +1,59 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: frameleaf_server_1
+      APP_PORT: 2283
+      # Mobile, TV and desktop apps and the browser extension call the API with Frameleaf's own tokens.
+      PROXY_AUTH_WHITELIST: "/api/*"
+      # Keep first-admin creation behind Umbrel auth.
+      PROXY_AUTH_BLACKLIST: "/api/auth/admin-sign-up"
+
+  server:
+    image: ghcr.io/frameleaf/frameleaf-server:frameleaf-v1.2.3@sha256:cdfdcd65823670ab5f74eba6d6a4a03d89bd799972ab5c2bc22d4096b7359037
+    volumes:
+      - ${APP_DATA_DIR}/data/library:/data
+      # The bundled Studio render worker enrols from here; machine-learning mounts it read-only.
+      - ${APP_DATA_DIR}/data/studio-worker:/run/frameleaf/studio-worker
+    environment:
+      DB_HOSTNAME: frameleaf_postgres_1
+      DB_USERNAME: frameleaf
+      DB_PASSWORD: ${APP_FRAMELEAF_DB_PASSWORD}
+      DB_DATABASE_NAME: frameleaf
+      FRAMELEAF_MACHINE_LEARNING_URL: http://frameleaf_machine-learning_1:3003
+    depends_on:
+      postgres:
+        condition: service_healthy
+    # Encrypted Locked files are decrypted into /dev/shm for thumbnails, video and machine learning.
+    shm_size: 2gb
+    # Must exceed FRAMELEAF_SHUTDOWN_DEADLINE_SECONDS (9 s by default) so running jobs can stop cleanly.
+    stop_grace_period: 10s
+    restart: on-failure
+
+  machine-learning:
+    image: ghcr.io/frameleaf/frameleaf-machine-learning:frameleaf-v1.2.3@sha256:f881002a3cc643e4ab818c100c0f7438278e0bfd0580630ecb072f9ed7ad79cb
+    # No server environment here: the inference worker never receives database credentials.
+    # The entrypoint makes /cache writable and drops to its own unprivileged user.
+    volumes:
+      - ${APP_DATA_DIR}/data/model-cache:/cache
+      - ${APP_DATA_DIR}/data/studio-worker:/run/frameleaf/studio-worker:ro
+    environment:
+      FRAMELEAF_STUDIO_WORKER_SERVER_URL: http://frameleaf_server_1:2283
+    restart: on-failure
+
+  postgres:
+    image: ghcr.io/frameleaf/frameleaf-postgres:19beta4-pgvector0.8.7@sha256:7b155ed85302ab66c1022309f1f70f0b79f98f70bd52af8d7d3611a0cbf08cf0
+    environment:
+      POSTGRES_USER: frameleaf
+      POSTGRES_PASSWORD: ${APP_FRAMELEAF_DB_PASSWORD}
+      POSTGRES_DB: frameleaf
+      POSTGRES_INITDB_ARGS: "--data-checksums"
+    volumes:
+      # PostgreSQL 18+ layout: the data directory lives in a versioned folder below /var/lib/postgresql.
+      - ${APP_DATA_DIR}/data/postgres:/var/lib/postgresql
+    shm_size: 128mb
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready --host=127.0.0.1 --dbname=\"$${POSTGRES_DB}\" --username=\"$${POSTGRES_USER}\" && /usr/local/bin/healthcheck.sh"]
+      interval: 30s
+      start_period: 5m
+      start_interval: 5s
+    restart: on-failure
