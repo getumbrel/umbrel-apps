@@ -1,0 +1,31 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: juju_web_1
+      APP_PORT: 3000
+
+  web:
+    image: ghcr.io/daiqiongzhao-bit/juju:0.0.24@sha256:6781f5ed6c9b5db22a7abaa4940a04c91df7577f5cee454b34d6fbdfd4926fc3
+    restart: on-failure
+    stop_grace_period: 1m
+    # No `user:` override: the image entrypoint starts as root only to chown the
+    # app data and backup volumes, then drops to the unprivileged `node` user via gosu.
+    volumes:
+      - ${APP_DATA_DIR}/data/app:/data
+      - ${APP_DATA_DIR}/data/backups:/backups
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DB_PATH=/data/juju.db
+      - BACKUP_DIR=/backups
+      # Deterministic per-install secrets, derived from Umbrel's device seed in
+      # exports.sh. SESSION_SECRET and DB_ENCRYPTION_KEY are unrelated secret
+      # fields, so each gets its own derive_entropy label.
+      - SESSION_SECRET=${APP_JUJU_SESSION_SECRET}
+      # DB_ENCRYPTION_KEY enables Juju's SQLite (SQLCipher) encryption and must
+      # stay stable per install, or the existing database becomes unreadable.
+      - DB_ENCRYPTION_KEY=${APP_JUJU_DB_ENCRYPTION_KEY}
+      # Umbrel serves apps over plain HTTP on the LAN, so secure cookies stay off.
+      - SESSION_SECURE=false
