@@ -1,0 +1,18 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: tuxee_web_1
+      APP_PORT: 80
+
+  web:
+    image: agent0ai/tuxee:v1.0.2@sha256:706d9d2cf9d09c422c94ca9b20d254d57143ab228fe6b6edc6daee7cad44ffff
+    restart: on-failure
+    stop_grace_period: 30s
+    environment:
+      ROOT_PASSWORD: ${APP_PASSWORD}
+    volumes:
+      - ${APP_DATA_DIR}/data/state:/var/lib/tuxee
+      - ${APP_DATA_DIR}/data/root:/root
+      - ${APP_DATA_DIR}/data/init:/init
