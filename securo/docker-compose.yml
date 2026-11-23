@@ -1,0 +1,122 @@
+version: "3.7"
+
+x-backend-env: &backend-env
+  DATABASE_URL: postgresql+asyncpg://postgres:${APP_SECURO_DB_PASSWORD}@db:5432/securo
+  SECRET_KEY: ${APP_SECURO_SECRET_KEY}
+  DEBUG: "false"
+  FRONTEND_URL: http://${DEVICE_DOMAIN_NAME}:${APP_PROXY_PORT}
+  REDIS_URL: redis://redis:6379/0
+  # Umbrel's app proxy sits in front of this app's own nginx, which proxies
+  # /api to the backend: the visitor's address is two hops from the right.
+  TRUSTED_PROXY_HOPS: "2"
+  STORAGE_PROVIDER: local
+  STORAGE_LOCAL_PATH: /app/data/attachments
+  AGENTS_KNOWLEDGE_STORAGE_PATH: /app/data/agent_knowledge
+  TZ: ${TZ:-UTC}
+
+x-backend-base: &backend-base
+  image: ghcr.io/securo-finance/securo-backend:0.21.0@sha256:bc3ebd62ddd725c9a457c53b0973c841457ed24b4a599ece9b56eff3a677b371
+  environment: *backend-env
+  # Every backend process refuses to start until the schema is at head, so no
+  # worker races the migration job.
+  entrypoint: ["sh", "-c", 'alembic current --check-heads && exec "$$@"', "sh"]
+  volumes:
+    - ${APP_DATA_DIR}/data/secrets:/app/secrets:ro
+    - ${APP_DATA_DIR}/data/attachments:/app/data/attachments
+    - ${APP_DATA_DIR}/data/backups:/app/data/backups
+    - ${APP_DATA_DIR}/data/agent_knowledge:/app/data/agent_knowledge
+    - ${APP_DATA_DIR}/data/agent_embedding_models:/app/data/embedding_models
+  restart: on-failure
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: securo_frontend_1
+      APP_PORT: 8080
+
+  frontend:
+    image: ghcr.io/securo-finance/securo-frontend:0.21.0@sha256:a825f53458f97a4d8802b1e625547b9f851f6e6dfff60bfa6d2a24811c9eba82
+    restart: on-failure
+    environment:
+      BACKEND_URL: http://backend:8000
+    depends_on:
+      backend:
+        condition: service_healthy
+
+  backend:
+    <<: *backend-base
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=5)"]
+      interval: 10s
+      timeout: 10s
+      start_period: 60s
+      retries: 12
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+  celery-worker:
+    <<: *backend-base
+    command: celery -A app.worker worker --loglevel=info --concurrency=2
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+  celery-beat:
+    <<: *backend-base
+    command: celery -A app.worker beat --loglevel=info
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+  migrate:
+    <<: *backend-base
+    restart: "no"
+    entrypoint: ["alembic"]
+    command: upgrade head
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  db:
+    image: docker.io/pgvector/pgvector:pg16@sha256:484e838076e04939d27d3e176e91c86eea96236126023be8d3059761122e579f
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${APP_SECURO_DB_PASSWORD}
+      POSTGRES_DB: securo
+      # Keep PostgreSQL's files in a subfolder: umbrelOS may put lost+found
+      # in the mounted data directory, which initdb refuses to work around.
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - ${APP_DATA_DIR}/data/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+
+  redis:
+    image: docker.io/library/redis:8-alpine@sha256:7958cfbb9d152f87dadfbc89f1b0b15938f0b81ff8982feb327476f4911935c3
+    restart: on-failure
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
