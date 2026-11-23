@@ -4,6 +4,21 @@ APP_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")"
 DATA_ROOT="${APP_DATA_ROOT:-${APP_DIR}/data}"
 DESIRED_OWNER="1000:1000"
 
+# Why we clear i2pd's destinations/ directory on every start:
+# - By default this app runs Bitcoin Core with i2pacceptincoming=0, so Core opens a new
+#   throwaway (TRANSIENT) SAM session for each outbound I2P connection.
+# - i2pd treats every SAM session as public and saves its encryption keys to
+#   destinations/<address>.<keytype>.dat. A throwaway session has a new random address,
+#   so its file is never read again, and i2pd never deletes these files.
+# - On one long-running node this reached ~134k files and hit ext4's directory index limit.
+# - There is no i2pd option to turn this off, and i2pd 3.0.0.1 has the same code, so an
+#   update won't fix it. The proper fix is upstream in i2pd (related request:
+#   https://github.com/PurpleI2P/i2pd/issues/1024).
+# Removing the whole directory (not just its files) also resets ext4's index, which never
+# shrinks. i2pd recreates it empty. The node's I2P address is unaffected: Bitcoin Core
+# keeps its own key in i2p_private_key, and i2pd just generates fresh encryption keys.
+rm -rf "${APP_DIR:?}/data/i2pd/destinations" || true
+
 set_correct_permissions() {
 	local -r path="${1}"
 
