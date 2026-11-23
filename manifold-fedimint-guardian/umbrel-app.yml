@@ -2,7 +2,7 @@ manifestVersion: 1
 id: manifold-fedimint-guardian
 category: bitcoin
 name: Manifold Fedimint Guardian
-version: "0.1.18"
+version: "0.1.19"
 tagline: Run guardian seats across many federations from one machine.
 description: >-
   Manifold Fedimint Guardian lets you run guardian seats across multiple
@@ -19,15 +19,13 @@ description: >-
   Manifold Fedimint Guardian is part of Manifold, the protocol for accelerating
   the deployment and decentralisation of Fedimint federations.
 releaseNotes: |-
-  Your guardian now reports figures about its federation to the Federation Ambassador who runs it: the bitcoin the federation holds, how many wallets were active in the last 30 days, and its Lightning and on-chain payment volume. The Ambassador combines the reports from all guardians. Fedimint 0.12.0-fedi29 adds the volume counting.
+  Each guardian seat now writes much less to disk, which makes your SSD last longer. Fedimint 0.12.0-fedi30 saves each consensus round's data in one write instead of one write per message, and it reuses its log files instead of creating new ones. Running seats keep working with guardians on older versions, and nothing about your data changes.
 
-  The Overview and Payouts pages no longer stay stuck loading while a payment wallet is recovering. They now say the wallet is recovering. The Overview page also invites you to set up mobile notifications when they are available.
+  The guardian also trusts the new production PeerBadge issuer.
 
-  The temporary uptime reset added in 0.1.17 is removed.
+  There are no configuration changes, and you do not need to do anything special to update.
 
-  There are no configuration changes. The guardian adds two new database tables on its first start, and you do not need to do anything.
-
-  Image commit: 520189cfd333e3a94435ac7c7668443395aa2efa. Fedimint: 0.12.0-fedi29.
+  Image commit: 46eac0df8013c272ba032ee96ea2376b8f2910c3. Fedimint: 0.12.0-fedi30.
 developer: Fedi
 website: https://manifold.fedi.xyz/
 dependencies:
