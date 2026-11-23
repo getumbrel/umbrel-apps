@@ -2,7 +2,7 @@ manifestVersion: 1
 id: gupt
 category: social
 name: Gupt
-version: "6.1.32"
+version: "6.2.0"
 releaseNotes: >-
   ⚠️ If you're upgrading from Gupt 5 or earlier, your existing Gupt data will not carry over to this update. Gupt 6 moves from Nostr to a new protocol called Rabta, and everyone starts with a new identity. Your current chats, contacts, groups, notes, passwords, bookmarks, and attachments won't appear in Gupt 6.
 
@@ -10,7 +10,7 @@ releaseNotes: >-
   Before updating, open Gupt and copy anything you want to keep, such as notes, passwords, and bookmarks, somewhere safe. After updating, you'll need to share your new profile with your contacts again.
 
 
-  Signing in has also changed. Memory anchors are gone, and you now sign in with a secret or a secret file plus a PIN of at least 6 characters. Keep your secret and PIN safe, because you'll need them every time you open Gupt in a new tab.
+  Signing in has also changed. Memory anchors are gone, and you now sign in with a secret or a secret file plus a PIN of at least 6 characters. Keep your secret or secret file and PIN safe: you'll need them to recover your account when this browser no longer remembers it.
 
 
   Gupt moved off Nostr to make syncing and file storage more reliable, and older data can't be brought across to the new protocol.
@@ -20,8 +20,10 @@ releaseNotes: >-
 
 
   New in this update:
-    - The bot directory shows bots that announced in the last hour and lists each bot once by its public key
-    - The directory loads additional pages of bot announcements and refreshes automatically while open
+    - Over HTTPS, Gupt now remembers your account across tabs and browser restarts, until 30 hours of inactivity, logout, or choosing Forget this device
+    - Temporary accounts have been removed; back up anything important from an existing temporary session before updating
+    - Secret-file sign-in and authenticator codes now also work over plain HTTP, but HTTP does not remember your account between page loads
+    - The Integrations page offers a bot template and a prefilled prompt for building encrypted notification bots
 
 
   If you used custom relays, replace them with Rabta node addresses (starting with http:// or https://) in Settings → Relays. Nostr relay addresses (wss://) no longer work.
@@ -30,10 +32,10 @@ releaseNotes: >-
   If Gupt still shows the old sign-in screen right after updating, reload the page once.
 
 
-  Voice and video calls, screen sharing, offline notifications, and signing in with a secret file require HTTPS. Over plain http, sign in by pasting your secret instead.
+  Use HTTPS for remembered sign-in, voice and video calls, screen sharing, and offline notifications. After this update, you may need to sign in again with your existing secret or secret file and PIN.
 
 
-  Full release notes can be found at https://github.com/besoeasy/gupt/releases/tag/6.1.32
+  Full release notes can be found at https://github.com/besoeasy/gupt/releases/tag/6.2.0
 tagline: Encrypted chat, passwords, notes, bookmarks, and file sharing
 description: >-
   Encrypted chat, passwords, notes, bookmarks, and file sharing — with no phone number, no email, no account, and no central server.

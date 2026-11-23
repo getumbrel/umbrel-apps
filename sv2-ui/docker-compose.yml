@@ -25,10 +25,13 @@ services:
         --pidfile /data/docker.pid
     healthcheck:
       test: ["CMD-SHELL", "docker -H unix:///data/docker.sock volume inspect sv2-config >/dev/null"]
-      interval: 5s
+      # Each check is an exec into dind, which logs a cgroup warning in the system log.
+      # Check every 5s while starting, then only every 5 minutes once healthy.
+      start_period: 300s
+      start_interval: 5s
+      interval: 5m
       timeout: 5s
-      retries: 10
-      start_period: 180s
+      retries: 3
     volumes:
       - ${APP_DATA_DIR}/entrypoint.sh:/entrypoint.sh
       - ${APP_DATA_DIR}/data/docker:/data

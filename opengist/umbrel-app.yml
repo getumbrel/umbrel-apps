@@ -5,7 +5,7 @@ storage:
 name: Opengist
 tagline: A Git-powered pastebin for code snippets and notes
 category: developer
-version: "1.15.3"
+version: "1.16.0"
 port: 6157
 description: >-
   **Important:** After installation, create your account promptly. The first registered account becomes administrator. You can disable further registrations from the admin configuration.
@@ -34,13 +34,16 @@ gallery:
   - 4.webp
   - 5.webp
 releaseNotes: >-
-  This update adds a copy button to code blocks in rendered Markdown and supports OAuth sign-up through invitation links.
+  ⚠️ After updating, administrators should rebuild the search index from the admin panel. If you use multi-factor authentication, use an access token or SSH instead of your password for Git access over HTTP. Private and unlisted gists now require their full UUID or custom URL.
 
 
-  It also fixes Markdown list markers, Unicode topic links, uploaded file name rendering, user deletion, and missing notifications on HTTP deployments. Database migrations now run within their transactions, and oversized gist submissions receive a clearer error response.
+  This security release fixes unauthorized Git writes, private and expired gist exposure, authentication bypasses, and other vulnerabilities. It also adds gist comments and signs out other sessions when you change your password.
 
 
-  Full release notes can be found at https://github.com/thomiceli/opengist/releases/tag/v1.15.3
+  LDAP administrators should review upstream guidance for invalid usernames and manual cleanup. Custom logout or OAuth-unlink integrations must use POST requests with CSRF protection instead of GET.
+
+
+  Full release notes can be found at https://github.com/thomiceli/opengist/releases/tag/v1.16.0
 dependencies: []
 path: ""
 defaultUsername: ""

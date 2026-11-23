@@ -32,10 +32,13 @@ services:
     # start before dockerd has created the socket.
     healthcheck:
       test: ["CMD", "docker", "--host", "unix:///data/docker.sock", "version"]
-      interval: 5s
-      timeout: 10s
-      retries: 6
+      # Each check is an exec into dind, which logs a cgroup warning in the system log.
+      # Check every 5s while starting, then only every 5 minutes once healthy.
       start_period: 5m
+      start_interval: 5s
+      interval: 5m
+      timeout: 10s
+      retries: 3
 
   arcane:
     image: ghcr.io/getarcaneapp/arcane:v2.17.3@sha256:2e0dc9f5ef03599181a49baf6470055d82e24d9cb15bbc62498ea642c0f882a7

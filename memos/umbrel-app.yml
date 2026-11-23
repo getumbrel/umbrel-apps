@@ -4,7 +4,7 @@ storage:
   dataRoot: data
 category: files
 name: Memos
-version: "26.11.1"
+version: "26.11.2"
 tagline: Easily capture and share your great thoughts
 description: >-
   A privacy-first, lightweight note-taking service.
@@ -23,10 +23,14 @@ releaseNotes: >-
   Older installations are automatically upgraded through the required Memos 0.31.0 database checkpoint. A copy of the original database is retained before migration. Back up your data before upgrading.
 
 
-  This update adds drawings and image annotations, searchable emoji reactions, and a refreshed interface.
-    - Browse and reorder attachments more easily
-    - Enjoy more reliable editing, faster attachment searches, and improved sign-in forms
-    - Includes security fixes for link previews
+  This update improves memo browsing and editing.
+    - Optionally show comments alongside memos and use a full-width timeline
+    - Reorder saved Views and navigate the calendar more easily
+    - Enjoy faster long memos, clearer audience labels, and more reliable editing
+    - Fix attachment thumbnails, sharing links over HTTP, and duplicate links in large exports
+
+
+  API and MCP integrations must use the memo APIs for comments; the separate comment endpoints and tools have been removed. List queries now include comments unless filtered with parent == null. Compact mode moves to Settings → Preferences → This device.
 
 
   The database upgrades automatically on startup. Large attachment libraries may take longer to open; leave the app running until the update completes. Custom CSS may need updating for the new styles. Integrations using the removed MEMO_RELATED setting must stop using it; existing reactions are preserved.
@@ -40,7 +44,7 @@ releaseNotes: >-
     - Instance administrators can read and manage private and Space-only memos; users skipping 0.31.0 should also note that Shortcuts became Views and RSS support was removed
 
 
-  Full release notes are available at https://github.com/usememos/memos/releases/tag/26.11.1
+  Full release notes are available at https://github.com/usememos/memos/releases/tag/26.11.2
 developer: Memos
 website: https://www.usememos.com/
 dependencies: []

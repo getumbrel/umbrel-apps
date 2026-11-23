@@ -3,7 +3,7 @@ id: twenty
 name: Twenty
 tagline: An adaptable CRM solution for seamless team collaboration and growth
 category: files
-version: "2.59.3"
+version: "2.61.0"
 port: 2020
 description: >-
   Twenty is the leading open-source CRM, built by a community of hundreds of contributors to meet the unique needs of your business. Designed for flexibility, it helps businesses of all sizes efficiently manage customer relationships and streamline workflows.
@@ -45,12 +45,26 @@ gallery:
   - 3.webp
   - 4.webp
 releaseNotes: >-
-  This update fixes SSO invitations and upgrades from older Twenty versions.
+  This update improves table views, dashboards, workflows and everyday CRM reliability. Your workflows and records carry over automatically.
 
 
-  - Existing accounts can join another workspace through SSO using their personal invitation link.
+  ⚠️ If you use Twenty's API: the legacy workflowVersion object is removed from the record APIs, so update integrations that use workflowVersions before updating. Some timeline links and widgets tied to old workflow versions may be removed.
 
-  - Fixed upgrades from versions older than 2.48 failing when widget views contain morph-relation fields.
+
+  - Added lookup columns and multiple columns for the same field in table views, plus filtering and sorting for relation tables.
+
+  - The dashboard widget picker is now grouped by chart type, and workflow runs now start right away instead of being throttled.
+
+  - Recurring Google Calendar meetings are now imported up to 90 days ahead.
+
+  - App preferences are now available without enabling a feature flag, with connection health checks for members.
+
+  - Fixed trash cleanup removing records before their retention period ends, and preserved unsent email replies across reloads.
+
+  - Fixed an upgrade failure involving role-target constraints, and added invitation-email rate limits and workspace/member name limits.
+
+
+  ⚠️ Metadata API integrations must replace upsertRowLevelPermissionPredicates with upsertRowLevelPermissionRules and explicitly supply the required operation permissions. Omitted operations no longer preserve their previous values.
 
 
   ⚠️ Standard and application-owned select options must now be deactivated instead of deleted or assigned a different API value. Records with deactivated options remain available in tables and filters but disappear from the corresponding board column. Review custom-field integrations before updating.
@@ -74,13 +88,13 @@ releaseNotes: >-
   ⚠️ Existing restricted records become private. Records previously set to view-only for everyone return to role-based access, so review their sharing settings after updating.
 
 
-  To restore a personal application connection, a server administrator can enable IS_FEATURE_FLAG_MANAGEMENT_ENABLED in Settings → Admin Panel → Config. Refresh the page, open the workspace under Admin Panel → General, and enable App preferences in its Feature Flags tab. Refresh again, then reconnect under Settings → Apps preferences. This feature is opt-in and is not enabled automatically by this update.
+  To restore a personal application connection, reconnect under Settings → Apps preferences. App preferences no longer requires a feature flag.
 
 
   API integrations should use markdown or tiptap rich-text fields instead of the deprecated blocknote field. Creating webhooks now requires a roleId and the ROLES permission. Record-sharing and metadata APIs have also changed; review the upstream release notes before updating custom integrations.
 
 
-  Full changelog: https://github.com/twentyhq/twenty/compare/twenty/v2.59.1...twenty/v2.59.3
+  Full changelog: https://github.com/twentyhq/twenty/compare/twenty/v2.59.3...twenty/v2.61.0
 dependencies: []
 path: ""
 defaultUsername: ""
