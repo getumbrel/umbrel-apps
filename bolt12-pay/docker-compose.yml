@@ -7,13 +7,14 @@ services:
       APP_PORT: 8081
       PROXY_AUTH_WHITELIST: "/,/alias,/alias/*,/.well-known,/.well-known/*,/api/lnurl,/api/lnurl/*,/api/qr,/api/qr/*,/icon.svg,/icon.png,/service-worker.js,/public.webmanifest,/pay.webmanifest,/assets,/assets/*"
   web:
-    image: alex71btc/bolt12-pay:0.3.24@sha256:b5d0555925c963fbfeecb54d81743d6625d24fb093cc283ee0b505964b42b83d
+    image: alex71btc/bolt12-pay:0.3.30@sha256:285153a7dc399c7ae53b46c7aaeeb746fd5b7db629d8a714be32d97c026f0589
     restart: on-failure
     depends_on:
       - lndk
     environment:
       APP_DATA_DIR: /data
       APP_CONFIG_PATH: /data/config.json
+      BOLT12_PAY_INITIAL_PASSWORD: "${APP_PASSWORD:?Umbrel APP_PASSWORD is required}"
       CONFIG_JSON_PATH: /data/config.json
       SECRETS_JSON_PATH: /data/config/secrets.json
       PAY_UI_SESSION_TTL: "1800"
