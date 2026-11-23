@@ -1,11 +1,34 @@
 #!/usr/bin/env bash
 
+APP_DATA_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")"
+CKPOOL_CONFIG_FILE="${APP_DATA_DIR}/data/config/ckpool.conf"
+SV2_MIGRATION_FLAG="${APP_DATA_DIR}/SV2_MIGRATED"
+
+# Installs from before 2.1.17 keep their ckpool.conf, so add the Stratum V2 and IPC keys once.
+# Existing values win, and the flag keeps SV2 off if the user later removes it in Settings.
+if [[ ! -f "${SV2_MIGRATION_FLAG}" ]]; then
+	if [[ -f "${CKPOOL_CONFIG_FILE}" ]]; then
+		tmp="$(mktemp "${CKPOOL_CONFIG_FILE}.XXXXXX")"
+		if jq --arg ipc "/bitcoin/${APP_BITCOIN_IPC_SOCKET_RELATIVE_PATH:-node.sock}" '
+			{
+				"sv2url": ["0.0.0.0:3336"],
+				"sv2_authority_key": "/sv2/sv2_authority.key",
+				"sv2_static_key": "/sv2/sv2_static.key",
+				"ipcmining": $ipc
+			} + .
+		' "${CKPOOL_CONFIG_FILE}" > "${tmp}"; then
+			chmod 600 "${tmp}"
+			mv -f "${tmp}" "${CKPOOL_CONFIG_FILE}"
+		else
+			rm -f "${tmp}"
+		fi
+	fi
+	touch "${SV2_MIGRATION_FLAG}"
+fi
+
 # This script updates the btcsig in ckpool.conf for existing users
 # who installed when the default was "/mined by Bassin/"
 # Only runs once to avoid overriding user's intentional changes
-
-APP_DATA_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")"
-CKPOOL_CONFIG_FILE="${APP_DATA_DIR}/data/config/ckpool.conf"
 BTCSIG_MIGRATION_FLAG="${APP_DATA_DIR}/BTCSIG_MIGRATED"
 
 # Skip if migration has already run

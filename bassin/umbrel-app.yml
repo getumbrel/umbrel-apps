@@ -9,7 +9,8 @@ description: >-
 
   No setup, no hassle.
     - Make sure your Bitcoin Node is fully synchronized and running
-    - Install the app, then follow the on-screen instructions
+    - Install the app, then open Connect for Stratum V1 (port 3456) and Noise-encrypted Stratum V2 (port 3457) details
+    - Optional Stratum V2 Job Declaration (port 3458) can be enabled from Settings → Stratum V2 when Bitcoin Core's IPC Mining Interface is active
     - Be part of decentralized mining
 
 
@@ -21,32 +22,17 @@ category: bitcoin
 dependencies:
   - bitcoin
 releaseNotes: >-
-  Bassin 2.1.17 adds native Bitcoin Core v32+ IPC mining support, hardens the
-  Config API for safe use with active miners/rentals, reduces RAM across the
-  stack (2 app containers: ckpool + ui), and adds built-in Worker Best Diff
-  Leaderboard and Hashrate Averages widgets!
+  This update brings the redesigned Bassin interface, Stratum V2, and safer Settings while mining.
 
 
-  - Bitcoin Core IPC mining: mounts ${APP_BITCOIN_DATA_DIR}:/bitcoin:ro read-only
-    on ckpool (never on ui), sets ipcmining to /bitcoin/${APP_BITCOIN_IPC_SOCKET_RELATIVE_PATH:-node.sock}
-    on fresh installs with RPC + ZMQ fallback intact, and waits up to 30s at startup
-    only when APP_BITCOIN_IPC_ENABLED=true (zero delay on Bitcoin Knots or non-IPC).
-  - Hardened Config API: requires a per-app Bearer token (BASSIN_CONFIG_TOKEN via
-    deterministicPassword) on GET/PUT /api/config inside Umbrel's Docker network,
-    enforces a strict key allowlist blocking donation, btcaddress, logdir, proxy,
-    and redirecturl, and confines SV2/IPC paths to /sv2/ and /bitcoin/.
-  - Rental-safe Settings: explicit Save (no restart) and Save & Restart Pool
-    (confirms active workers and triggers gated .reload-trigger). Umbrel's built-in
-    proxy authentication protects the external dashboard.
-  - Low RAM & 3 built-in widgets: drops separate www and widget-server containers,
-    caps ckpool glibc arenas (MALLOC_ARENA_MAX=2), uses 256 KiB Python stacks and
-    lazy-loaded UI chunks, and serves Pool Overview, Worker Best Diff Leaderboard,
-    and Hashrate Averages directly from ui:8080.
-  - CKPool v1.2.0-2 (upstream be3e1e07) with Noise-encrypted Stratum V2 (ports
-    3457/3458 alongside 3456) and full compatibility with Bitcoin Core and Bitcoin Knots.
+  - Stratum V2 with encrypted connections on port 3457 (Stratum V1 stays on 3456; optional Job Declaration on 3458 can be enabled in Settings)
+  - Support for Bitcoin Core's mining interface (IPC) when enabled in Bitcoin Node, with automatic fallback to RPC and ZMQ (works with both Bitcoin Core and Bitcoin Knots)
+  - Settings now requires your Bassin app password and uses Save and Save & Restart Pool, so the pool only restarts when you choose
+  - New Worker Best Diff Leaderboard and Hashrate Averages widgets
+  - Lower memory use
 
 
-  Full details: https://github.com/blockdyor/bassin-ui/blob/14967e5ae09b0513567f3ba384b471fa3bcfd239/README.md
+  Full changelog: https://github.com/blockdyor/bassin/blob/main/docs/whats-new.md
 port: 5008
 submitter: duckaxe
 developer: blockdyor
