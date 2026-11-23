@@ -2,28 +2,22 @@
 
 APP_DATA_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")"
 CKPOOL_CONFIG_FILE="${APP_DATA_DIR}/data/config/ckpool.conf"
-SV2_MIGRATION_FLAG="${APP_DATA_DIR}/SV2_MIGRATED"
+IPC_MIGRATION_FLAG="${APP_DATA_DIR}/IPC_MIGRATED"
 SV1_MIGRATION_FLAG="${APP_DATA_DIR}/SV1_SERVERURL_MIGRATED"
 
-# Installs from before 2.1.17 keep their ckpool.conf, so add the Stratum V1, Stratum V2, and IPC keys once.
-# Existing values win, and the flag keeps SV2 off if the user later removes it in Settings.
-if [[ ! -f "${SV2_MIGRATION_FLAG}" ]]; then
+# Pre-2.1.17 installs keep their ckpool.conf, so add the default ipcmining path once (existing values win).
+# Stratum V2 stays opt-in via Settings -> Stratum V2.
+if [[ ! -f "${IPC_MIGRATION_FLAG}" ]]; then
 	if [[ ! -f "${CKPOOL_CONFIG_FILE}" ]]; then
-		touch "${SV2_MIGRATION_FLAG}"
+		touch "${IPC_MIGRATION_FLAG}"
 	else
 		tmp="$(mktemp "${CKPOOL_CONFIG_FILE}.XXXXXX")"
 		if jq --arg ipc "/bitcoin/${APP_BITCOIN_IPC_SOCKET_RELATIVE_PATH:-node.sock}" '
-			{
-				"serverurl": ["0.0.0.0:3333"],
-				"sv2url": ["0.0.0.0:3336"],
-				"sv2_authority_key": "/sv2/sv2_authority.key",
-				"sv2_static_key": "/sv2/sv2_static.key",
-				"ipcmining": $ipc
-			} + .
+			{"ipcmining": $ipc} + .
 		' "${CKPOOL_CONFIG_FILE}" > "${tmp}"; then
 			chmod 600 "${tmp}"
 			mv -f "${tmp}" "${CKPOOL_CONFIG_FILE}"
-			touch "${SV2_MIGRATION_FLAG}"
+			touch "${IPC_MIGRATION_FLAG}"
 		else
 			rm -f "${tmp}"
 		fi
