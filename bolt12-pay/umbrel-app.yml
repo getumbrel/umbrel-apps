@@ -5,10 +5,10 @@ storage:
 name: BOLT12 Pay
 tagline: Self-hosted Lightning payments and identity with BOLT12, BIP353, LNURL, and Nostr
 category: bitcoin
-version: 0.3.24
+version: 0.3.30
 port: 8367
 description: |-
-  BOLT12 Pay is a self-hosted Lightning payments and identity app for LND nodes.
+  BOLT12 Pay brings BOLT12 Offers to your LND node. You can connect an existing Phoenixd wallet as an additional payment backend.
   It supports BOLT12 Offers, BIP353 and LNURL Lightning Addresses, optional BOLT11 fallback invoices, Nostr identities, NIP-05 and Zaps.
 
   ## 🚀 Before you install
@@ -25,7 +25,7 @@ description: |-
 
   https://umbrel.local:8367
 
-  On first launch, the setup screen opens automatically.
+  For a fresh installation, find the initial BOLT12 Pay password under App settings → Default credentials. Existing installations keep their saved BOLT12 Pay password.
 
   UmbrelOS 2.0 uses local HTTPS. Install Umbrel's Local HTTPS CA on every computer that opens the app. Allow camera access for the address including port 8367 if you want to use the QR scanner.
 
@@ -84,14 +84,23 @@ submission: https://github.com/getumbrel/umbrel-apps/pull/5429
 repo: https://github.com/Alex71btc/lndk-pay
 support: https://github.com/Alex71btc/lndk-pay/issues
 releaseNotes: |
-  BOLT12 Pay 0.3.24
+  BOLT12 Pay 0.3.30
 
-  - Live payment notifications with amount, payment type and optional comment.
-  - Tap or click satoshi amounts in Lightning Activity to copy them.
-  - Improved PWA cache handling and automatic updates.
-  - Android Companion 1.1.3 remains unchanged.
+  - Connect an existing Phoenixd wallet alongside LND + LNDK and switch backends without changing the wallet assigned to Offers, aliases or NWC connections.
+  - Filter Lightning Activity by wallet and export a selected date range as CSV. View channel liquidity from Pay.
+  - Use LNURL-auth and LNURL-withdraw by scanning or pasting a link. Updated QR controls, grouped Offer decoding and BOLT12 minimum-amount previews simplify payments.
+  - Android Companion 1.1.4 shows the receiving wallet and opens the matching payment. Historical Phoenixd imports no longer replay old notifications.
+  - Pause/reactivate a Phoenixd connection, optionally hide alias pages, or remove saved credentials while choosing whether to retain local history.
+  - Optionally clean up that wallet's Offers, aliases and matching Cloudflare publications without removing the public Setup address. Recognize chunked DNS TXT records.
+  - Restore a missing public BIP353 record with LND after removing its former Phoenixd connection.
+  - Umbrel still requires the Lightning Node app. Phoenixd is optional and may run on another server.
 
-  LNDK remains unchanged.
+  - On fresh installs, Umbrel supplies the initial app password and displays it under Default credentials. Existing passwords are preserved.
+  - Changing the app password signs out existing Pay sessions and locks NWC admin controls until you unlock them again.
+
+  LNDK is unchanged.
+
+  https://github.com/Alex71btc/lndk-pay/releases/tag/v0.3.30
 
 dependencies:
   - lightning
@@ -104,5 +113,5 @@ gallery:
 
 path: ""
 defaultUsername: ""
-defaultPassword: ""
+deterministicPassword: true
 torOnly: false
