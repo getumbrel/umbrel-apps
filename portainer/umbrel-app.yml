@@ -2,7 +2,7 @@ manifestVersion: 1.1
 id: portainer
 category: developer
 name: Portainer
-version: "2.45.3"
+version: "2.45.4"
 tagline: Run custom Docker containers on your Umbrel
 description: >-
   ⚠️ Make sure to only use named Docker volumes for your stacks and containers. Data in bind-mounted volumes
@@ -54,13 +54,16 @@ releaseNotes: >-
   ⚠️ Portainer no longer trusts compromised eMudhra (emSign) certificates. Before upgrading, check certificates used by your login providers, registries, and Git hosts. Affected connections will fail; if your login provider is affected, only the initial administrator can sign in.
 
 
-  This release improves security by preventing restricted users from inheriting hidden bind mounts through stacks and limiting Kubernetes access tokens to their intended environment.
+  ⚠️ Stacks deployed by non-administrators now require access to every Docker network they use. If a deployment fails, grant the user or team access to the network, or deploy it as an administrator.
 
 
-  It also fixes container startup failures, overlapping GitOps deployments, and Docker Hub rate-limit detection on newer Docker engines.
+  This release strengthens access controls for stacks, containers, networks, and GitOps credentials, and prevents deleting or demoting the last administrator.
 
 
-  Full release notes can be found at https://github.com/portainer/portainer/releases/tag/2.45.3
+  It also fixes stopped Git-stack webhooks, team-leader user lists, and container consoles shrinking to a single line.
+
+
+  Full release notes can be found at https://github.com/portainer/portainer/releases/tag/2.45.4
 permissions:
   - GPU
 developer: Portainer
