@@ -3,7 +3,7 @@ id: twenty
 name: Twenty
 tagline: An adaptable CRM solution for seamless team collaboration and growth
 category: files
-version: "2.61.0"
+version: "2.62.2"
 port: 2020
 description: >-
   Twenty is the leading open-source CRM, built by a community of hundreds of contributors to meet the unique needs of your business. Designed for flexibility, it helps businesses of all sizes efficiently manage customer relationships and streamline workflows.
@@ -45,23 +45,22 @@ gallery:
   - 3.webp
   - 4.webp
 releaseNotes: >-
-  This update improves table views, dashboards, workflows and everyday CRM reliability. Your workflows and records carry over automatically.
+  This update restores missing sidebar items for restricted team members and improves messaging and access controls.
 
 
-  ⚠️ If you use Twenty's API: the legacy workflowVersion object is removed from the record APIs, so update integrations that use workflowVersions before updating. Some timeline links and widgets tied to old workflow versions may be removed.
+  ⚠️ The NOT_STARTED workflow-run status is removed. Existing runs are converted to ENQUEUED automatically; update custom integrations, filters and views that reference NOT_STARTED before upgrading.
 
 
-  - Added lookup columns and multiple columns for the same field in table views, plus filtering and sorting for relation tables.
+  - Restored Companies, People, Opportunities, Tasks, Notes and Dashboards for team members without the Applications permission.
 
-  - The dashboard widget picker is now grouped by chart type, and workflow runs now start right away instead of being throttled.
+  - Added emoji reactions to direct messages and fixed email-thread panels when channel visibility is enabled.
 
-  - Recurring Google Calendar meetings are now imported up to 90 days ahead.
+  - Fixed access revocation after group-member removal and access-group calculation for background writes.
 
-  - App preferences are now available without enabling a feature flag, with connection health checks for members.
+  - Prevented linking records that the acting role cannot read.
 
-  - Fixed trash cleanup removing records before their retention period ends, and preserved unsent email replies across reloads.
 
-  - Fixed an upgrade failure involving role-target constraints, and added invitation-email rate limits and workspace/member name limits.
+  ⚠️ For users skipping older versions: the legacy workflowVersion object is removed from the record APIs, so update integrations that use workflowVersions before updating. Some timeline links and widgets tied to old workflow versions may be removed.
 
 
   ⚠️ Metadata API integrations must replace upsertRowLevelPermissionPredicates with upsertRowLevelPermissionRules and explicitly supply the required operation permissions. Omitted operations no longer preserve their previous values.
@@ -94,7 +93,7 @@ releaseNotes: >-
   API integrations should use markdown or tiptap rich-text fields instead of the deprecated blocknote field. Creating webhooks now requires a roleId and the ROLES permission. Record-sharing and metadata APIs have also changed; review the upstream release notes before updating custom integrations.
 
 
-  Full changelog: https://github.com/twentyhq/twenty/compare/twenty/v2.59.3...twenty/v2.61.0
+  Full changelog: https://github.com/twentyhq/twenty/compare/twenty/v2.61.0...twenty/v2.62.2
 dependencies: []
 path: ""
 defaultUsername: ""
