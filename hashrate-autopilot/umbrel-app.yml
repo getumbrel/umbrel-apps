@@ -4,7 +4,7 @@ storage:
   dataRoot: data
 category: bitcoin
 name: Hashrate Autopilot
-version: "1.18.2-patch.1"
+version: "1.18.3"
 tagline: Autopilot for renting hashrate to mine on Ocean Mining
 
 description: >-
@@ -83,25 +83,10 @@ defaultPassword: ""
 submitter: Remco Douma
 submission: https://github.com/getumbrel/umbrel-apps/pull/5685
 releaseNotes: >-
-  This update adds support for new storage management and configuration options being introduced with umbrelOS 2.0.
+  v1.18.3 - security maintenance update. No new features and no behavior changes.
 
 
-  Previous Hashrate Autopilot 1.18.2 release notes:
+  Updates the app's software dependencies to their patched releases, clearing 28 published security advisories. The most relevant are in the web server and data-validation libraries the app uses (fastify, zod, fast-uri, js-yaml): request spoofing, URI confusion, and memory or CPU exhaustion from oversized input.
 
 
-  v1.18.2 - the autopilot now protects your account from marketplace penalties, and the dashboard always tells you why bidding stopped.
-
-
-  Fixed: when a bid action fails, the dashboard shows the marketplace's own error message next to the FAILED badge instead of leaving you guessing, and an alert fires after repeated failures with the reason in the Telegram message.
-
-
-  New protections against the failure chain that got one operator's pool target temporarily blacklisted by the marketplace: the autopilot stops re-creating bids after three create/cancel cycles that delivered nothing (resume manually once the cause is fixed), a marketplace blacklist is detected and waited out automatically with a countdown instead of a failing attempt every minute, and when your Bitcoin node goes unresponsive the autopilot cancels active bids and holds new ones - rented hashrate never burns against a pool that cannot produce work.
-
-
-  Periods where bidding was held or kept failing now draw a hatched band across the charts and appear on the Timeline; long-lived conditions no longer falsely show "Recovered" after six hours; and gaps in the unpaid-earnings history left by the v1.18.1 recovery are filled by interpolating strictly between adjacent real readings, never across a payout.
-
-
-  Project note: the README now carries a maintenance-mode notice for the project's current SHA-256 form. Everything keeps working and this update is safe from any 1.17.x or 1.18.x release; read the notice before planning around future feature work.
-
-
-  Migrating from the community-store version (rdouma-hashrate-autopilot)? One-time five-minute guide: https://github.com/rdouma/hashrate-autopilot/blob/main/docs/migrating-from-community-store.md
+  Safe to upgrade from any 1.17.x or 1.18.x release; no new settings.
