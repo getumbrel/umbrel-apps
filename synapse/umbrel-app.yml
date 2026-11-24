@@ -4,7 +4,7 @@ storage:
   dataRoot: data
 category: social
 name: Synapse
-version: "1.165.0"
+version: "1.166.0"
 tagline: Matrix homeserver
 description: >-
   Synapse is an open source Matrix homeserver implementation, written and maintained by Element. Matrix is the open standard for secure and interoperable real time communications.
@@ -46,12 +46,13 @@ submission: https://github.com/getumbrel/umbrel/commit/c9f0975e766e79d4bd6adf425
 releaseNotes: >-
   ⚠️ If you manually enabled limit_profile_requests_to_users_who_share_rooms in homeserver.yaml, also enable require_auth_for_profile_requests before updating, or remove the shared-room restriction option. Synapse will no longer start with the shared-room restriction enabled without authenticated profile requests. The default Umbrel configuration is unaffected.
 
-  This update improves room synchronization, federation reliability, and Matrix calling support.
+  This update improves room synchronization, media downloads, and membership handling.
 
-  - Fixes missing room memberships during initial synchronization.
-  - Improves verification of federated event signatures and error reporting for third-party invitations.
-  - Adds stable MatrixRTC transport discovery for compatible calling clients.
+  - Fixes missing room memberships and device-list updates during synchronization.
+  - Fixes failed remote media downloads and prevents failed downloads and URL previews from leaving empty files behind.
+  - Fixes errors when leaving, inviting, banning, or kicking users in certain rooms.
+  - Allows guest access to MatrixRTC transport discovery.
 
   If you manually configured LiveKit transports, add matching m.livekit entries alongside your existing livekit entries for compatibility with newer clients.
 
-  Full release notes can be found at https://github.com/element-hq/synapse/releases/tag/v1.165.0
+  Full release notes can be found at https://github.com/element-hq/synapse/releases/tag/v1.166.0
