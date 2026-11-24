@@ -2,7 +2,7 @@ manifestVersion: 1
 id: manifold-fedimint-guardian
 category: bitcoin
 name: Manifold Fedimint Guardian
-version: "0.1.19"
+version: "0.1.20"
 tagline: Run guardian seats across many federations from one machine.
 description: >-
   Manifold Fedimint Guardian lets you run guardian seats across multiple
@@ -19,13 +19,17 @@ description: >-
   Manifold Fedimint Guardian is part of Manifold, the protocol for accelerating
   the deployment and decentralisation of Fedimint federations.
 releaseNotes: |-
-  Each guardian seat now writes much less to disk, which makes your SSD last longer. Fedimint 0.12.0-fedi30 saves each consensus round's data in one write instead of one write per message, and it reuses its log files instead of creating new ones. Running seats keep working with guardians on older versions, and nothing about your data changes.
+  This release covers 0.1.19 and 0.1.20.
 
-  The guardian also trusts the new production PeerBadge issuer.
+  Each guardian seat now writes much less to disk, which makes your SSD last longer. Fedimint 0.12.0-fedi30 saves each consensus round's data in one write instead of one write per message, and it reuses its log files instead of creating new ones. Running seats keep working with guardians on older versions.
 
-  There are no configuration changes, and you do not need to do anything special to update.
+  The guardian now stops selling new seats while its own consensus is slow. It measures how long its seats take to order consensus items, and when the 6-hour average is over 5 seconds, the Health page shows the Consensus speed check as failing and no new seats are sold. Running seats are not affected, and this does not count against uptime.
 
-  Image commit: 46eac0df8013c272ba032ee96ea2376b8f2910c3. Fedimint: 0.12.0-fedi30.
+  It also fixes a memory leak that made some guardians use more and more memory over time, retries joining a payment federation that failed instead of waiting for a restart, and trusts the new production PeerBadge issuer.
+
+  There are no configuration changes. The guardian adds one database table on its first start, and you do not need to do anything.
+
+  Image commit: d5bb8092b8f8717cc4ef65f7bd7a201ebc0dce91. Fedimint: 0.12.0-fedi30.
 developer: Fedi
 website: https://manifold.fedi.xyz/
 dependencies:
