@@ -5,7 +5,7 @@ storage:
 name: Gitea Mirror
 tagline: Mirror your GitHub repositories to a Gitea instance automatically
 category: developer
-version: "3.55.0"
+version: "3.56.1"
 port: 4322
 description: >-
   Gitea Mirror automatically mirrors your GitHub repositories to a self-hosted Gitea instance. It supports mirroring public and private repositories, organizations, starred repos, issues, wikis, and pull requests.
@@ -44,9 +44,9 @@ defaultUsername: ""
 defaultPassword: ""
 dependencies: []
 releaseNotes: >-
-  You can now turn automatic repository discovery on or off from the Automation tab, separately from automatic mirroring. When discovery is off, scheduled and startup syncs only update repositories you have already imported.
+  You can now run database maintenance and repository cleanup immediately from the Automation tab and see their progress and results. Shortening the activity-log retention period now brings the next maintenance run forward, without repository cleanup postponing it.
 
-  This update also fixes disk-space leaks when release asset uploads are rejected, respects disabled auto-import at startup, and reconnects existing mirrors when their Gitea or Forgejo destination moves to a new address. Failed update checks no longer repeatedly contact GitHub on every health check.
+  Issue and pull request syncing now makes fewer GitHub requests that count against your rate limit. Issues without comments no longer trigger unnecessary comment requests.
 
   🔒 Saved source, destination, and notification secrets are now hidden from configuration and source API responses, including read-only API keys. Scripts that read these endpoints must keep their own credentials. Leaving a secret blank preserves it; changing its scheme, host, or port requires entering a new token.
 
@@ -62,5 +62,5 @@ releaseNotes: >-
 
   New configurations start with scheduling off unless enabled through environment variables. Repository cleanup no longer automatically archives or deletes destination copies when a source disappears. If updating from before 3.17 and using registered OAuth provider clients, rotate each client secret after upgrading.
 
-  Full release notes can be found at https://github.com/RayLabsHQ/gitea-mirror/releases/tag/v3.55.0
+  Full release notes can be found at https://github.com/RayLabsHQ/gitea-mirror/releases/tag/v3.56.1
 path: ""
