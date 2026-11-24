@@ -5,7 +5,7 @@ storage:
 name: Gitea Mirror
 tagline: Mirror your GitHub repositories to a Gitea instance automatically
 category: developer
-version: "3.54.0"
+version: "3.55.0"
 port: 4322
 description: >-
   Gitea Mirror automatically mirrors your GitHub repositories to a self-hosted Gitea instance. It supports mirroring public and private repositories, organizations, starred repos, issues, wikis, and pull requests.
@@ -44,6 +44,10 @@ defaultUsername: ""
 defaultPassword: ""
 dependencies: []
 releaseNotes: >-
+  You can now turn automatic repository discovery on or off from the Automation tab, separately from automatic mirroring. When discovery is off, scheduled and startup syncs only update repositories you have already imported.
+
+  This update also fixes disk-space leaks when release asset uploads are rejected, respects disabled auto-import at startup, and reconnects existing mirrors when their Gitea or Forgejo destination moves to a new address. Failed update checks no longer repeatedly contact GitHub on every health check.
+
   🔒 Saved source, destination, and notification secrets are now hidden from configuration and source API responses, including read-only API keys. Scripts that read these endpoints must keep their own credentials. Leaving a secret blank preserves it; changing its scheme, host, or port requires entering a new token.
 
   SSO now restricts new accounts and account linking to the provider's configured email domain. If you use SSO, check that each provider's Domain is your users' email domain, not the provider's hostname. Existing SSO users are unaffected.
@@ -58,5 +62,5 @@ releaseNotes: >-
 
   New configurations start with scheduling off unless enabled through environment variables. Repository cleanup no longer automatically archives or deletes destination copies when a source disappears. If updating from before 3.17 and using registered OAuth provider clients, rotate each client secret after upgrading.
 
-  Full release notes can be found at https://github.com/RayLabsHQ/gitea-mirror/releases/tag/v3.54.0
+  Full release notes can be found at https://github.com/RayLabsHQ/gitea-mirror/releases/tag/v3.55.0
 path: ""
