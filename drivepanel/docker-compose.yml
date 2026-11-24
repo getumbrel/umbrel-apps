@@ -1,0 +1,24 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: drivepanel_web_1
+      APP_PORT: 8090
+      # WebDAV clients (phone backup apps) and public share links cannot send the
+      # Umbrel login cookie. DrivePanel protects /dav with its own per-user login,
+      # and /s/<token> only serves files the owner chose to share by link.
+      PROXY_AUTH_WHITELIST: "/dav,/dav/*,/s/*"
+
+  web:
+    image: ghcr.io/pctecnikk/drivepanel:1.0.9@sha256:b1d64d6cd01357187652f46cefc541036c198b430e3ed5f6a4c6cd0d7a3cfd20
+    # The image starts as root only to fix ownership of /data, then drops to PUID:PGID.
+    restart: on-failure
+    stop_grace_period: 30s
+    environment:
+      PUID: "1000"
+      PGID: "1000"
+      DEFAULT_QUOTA_GB: "0"
+      ALLOW_REGISTER: "1"
+    volumes:
+      - ${APP_DATA_DIR}/data/drivepanel:/data
