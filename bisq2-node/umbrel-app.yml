@@ -4,7 +4,7 @@ storage:
   dataRoot: data
 category: bitcoin
 name: Bisq 2 Node
-version: "2.1.15.0"
+version: "2.1.16.0"
 tagline: Run your own Bisq 2 node for private Bitcoin trading
 description: >-
   Bisq Connect lets you buy and sell Bitcoin peer-to-peer from your phone. This
@@ -37,18 +37,24 @@ defaultPassword: ""
 submitter: rodvar
 submission: https://github.com/getumbrel/umbrel-apps/pull/5850
 releaseNotes: >-
-  **Security update. Update now to keep trading.** A Bisq security alert requires version 2.1.15 or newer for trading. Until this node is updated, Bisq Connect cannot take offers through it and asks you to have the node upgraded, and offers published through it cannot be taken. Bisq Connect stays paired and needs no update.
+  **Security update. Update now.** This update fixes a serious vulnerability in Java and brings the latest Tor security release. Bisq 2.1.16 is required to keep trading. Bisq Connect stays paired and needs no update.
 
 
-  This update moves the node to Bisq 2 API 2.1.15.
+  This update moves the node to Bisq 2 API 2.1.16.
 
 
-  - **Tor:** The node now runs the Tor bundled with Bisq (Tor 0.4.9.15) inside a sandbox, instead of a Tor package installed in the image. The sandbox keeps a compromised Tor away from the node's files and keys.
+  - **Java:** The node now runs on Amazon Corretto 21.0.13.1.2, which fixes Java4Shell (CVE-2026-114938), a vulnerability that could let an attacker run code on the node.
 
-  - **Hardening:** Oversized responses from the network are refused instead of using unbounded memory, and file cleanup no longer follows links.
+  - **Tor:** The node runs Tor 0.4.9.16 inside its sandbox.
+
+  - **Trades:** Trade messages that arrive before the node can process them are now kept with the trade, so a trade no longer waits without end after a restart. Closed trades no longer appear among the open trades.
+
+  - **Security alerts:** The node now follows the security alerts for mobile nodes, so an alert meant only for the desktop app no longer stops its trades. Bisq Connect now shows the alert that restricts the trades of its node.
+
+  - **Configuration:** If the bisq.conf file in the node's data folder is unreadable or invalid, the node now stops with an error that names the reason, instead of starting without its settings.
 
 
-  Bisq 2 release: https://github.com/bisq-network/bisq2/releases/tag/v2.1.15
+  Bisq 2 release: https://github.com/bisq-network/bisq2/releases/tag/v2.1.16
 
 
-  Full changes: https://github.com/bisq-network/bisq2/compare/7f68c09...cfe8ab2 (bisq2 @ cfe8ab2)
+  Full changes: https://github.com/bisq-network/bisq2/compare/cfe8ab2...85f4146 (bisq2 @ 85f4146)
