@@ -3,7 +3,7 @@ id: twenty
 name: Twenty
 tagline: An adaptable CRM solution for seamless team collaboration and growth
 category: files
-version: "2.62.2"
+version: "2.63.0"
 port: 2020
 description: >-
   Twenty is the leading open-source CRM, built by a community of hundreds of contributors to meet the unique needs of your business. Designed for flexibility, it helps businesses of all sizes efficiently manage customer relationships and streamline workflows.
@@ -45,19 +45,13 @@ gallery:
   - 3.webp
   - 4.webp
 releaseNotes: >-
-  This update restores missing sidebar items for restricted team members and improves messaging and access controls.
+  This update adds filtered related-record columns, custom column names and summaries to tables. It also improves access revocation for removed group members and protects unreadable records and message subjects.
+
+
+  ⚠️ Workflow integrations should use core workflow and version IDs. The workflow API uses isPrivate in place of visibility. View privacy is migrated automatically from visibility to isPrivate; integrations that manage views should use isPrivate.
 
 
   ⚠️ The NOT_STARTED workflow-run status is removed. Existing runs are converted to ENQUEUED automatically; update custom integrations, filters and views that reference NOT_STARTED before upgrading.
-
-
-  - Restored Companies, People, Opportunities, Tasks, Notes and Dashboards for team members without the Applications permission.
-
-  - Added emoji reactions to direct messages and fixed email-thread panels when channel visibility is enabled.
-
-  - Fixed access revocation after group-member removal and access-group calculation for background writes.
-
-  - Prevented linking records that the acting role cannot read.
 
 
   ⚠️ For users skipping older versions: the legacy workflowVersion object is removed from the record APIs, so update integrations that use workflowVersions before updating. Some timeline links and widgets tied to old workflow versions may be removed.
@@ -93,7 +87,7 @@ releaseNotes: >-
   API integrations should use markdown or tiptap rich-text fields instead of the deprecated blocknote field. Creating webhooks now requires a roleId and the ROLES permission. Record-sharing and metadata APIs have also changed; review the upstream release notes before updating custom integrations.
 
 
-  Full changelog: https://github.com/twentyhq/twenty/compare/twenty/v2.61.0...twenty/v2.62.2
+  Full changelog: https://github.com/twentyhq/twenty/compare/twenty/v2.62.2...twenty/v2.63.0
 dependencies: []
 path: ""
 defaultUsername: ""
