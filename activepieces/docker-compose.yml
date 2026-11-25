@@ -9,8 +9,9 @@ services:
   app:
     ## does not work rootless as of yet
     #user: "1000:1000"
-    image: ghcr.io/activepieces/activepieces:0.93.0@sha256:151c2a4326c30a6a8086297136644da9b58072212c35bca7c87dcb5724e7d687
+    image: ghcr.io/activepieces/activepieces:0.94.0@sha256:be0ff0426f5fa81e4c60d2ee8cef17bed2d5d053726b001949b4e5cd02c96f45
     restart: on-failure
+    stop_grace_period: 705s
     environment:
       AP_ENGINE_EXECUTABLE_PATH: dist/packages/engine/main.js
       AP_API_KEY: ${APP_PASSWORD}
