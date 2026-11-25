@@ -1,0 +1,17 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: horn-signal-studio_web_1
+      APP_PORT: 8080
+
+  web:
+    image: ghcr.io/bosshorncom-cmd/horn-signal-studio:1.0.0@sha256:9e79458e125cab1096de1722a37c4260b91add9eec8887f9be711d4d01bccbb9
+    user: "1000:1000"
+    restart: on-failure
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+    environment:
+      DATA_DIR: /data
+      PORT: 8080
