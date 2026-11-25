@@ -1,0 +1,95 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: hashforge_pool_1
+      APP_PORT: 8080
+
+  pool:
+    # Replace the tag and digest together when releasing; see the repository README.
+    image: ghcr.io/owenashurst/hashforge:0.1.2@sha256:64996be25b5bfafdaa8d3d7de8531d0341fa800e3b02a2cd831169db04d3bca2
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 30s
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      # Stratum is not HTTP, so miners connect to these directly rather than through Umbrel's proxy.
+      # 3342 is the solo pool; 3337-3341 are for pools added later from the pool's admin page.
+      - "3342:3342"
+      - "3337:3337"
+      - "3338:3338"
+      - "3339:3339"
+      - "3340:3340"
+      - "3341:3341"
+    volumes:
+      # Holds the keys that protect the web interface's forms, so they survive updates.
+      - ${APP_DATA_DIR}/data/pool:/data
+    environment:
+      HOME: /data
+      # The Bitcoin Node app supplies the node; the pool reads which network it is on from the node itself.
+      BitcoinNode__RpcUrl: "http://${APP_BITCOIN_NODE_IP}:${APP_BITCOIN_RPC_PORT}/"
+      BitcoinNode__RpcUser: ${APP_BITCOIN_RPC_USER}
+      BitcoinNode__RpcPassword: ${APP_BITCOIN_RPC_PASS}
+      # The node announces each new block here, so miners switch work without delay.
+      BitcoinNode__ZmqBlockUrl: "tcp://${APP_BITCOIN_NODE_IP}:${APP_BITCOIN_ZMQ_HASHBLOCK_PORT}"
+      Persistence__RedisConnectionString: "hashforge_redis_1:6379,password=${APP_HASHFORGE_REDIS_PASSWORD}"
+      Persistence__PostgresConnectionString: "Host=hashforge_db_1;Database=hashforge;Username=hashforge;Password=${APP_HASHFORGE_POSTGRES_PASSWORD}"
+      Mining__CoinbaseTag: "/HashForge/"
+      # Every payout output needs block space the node has kept free, and the Bitcoin Node app's setting
+      # for that cannot be changed from here. Ten outputs fit within Bitcoin Core's default; a block that
+      # outgrew it would be rejected and its reward lost.
+      Mining__MaxCoinbaseOutputsCeiling: 10
+      # One solo pool with no fee, ready to mine to as soon as the node has synchronised. Shared pools
+      # (PPLNS, proportional, finder bonus) and fees are set up from the pool's admin page.
+      Mining__Pools__0__Name: solo
+      Mining__Pools__0__Scheme: Solo
+      Mining__Pools__0__Enabled: "true"
+      Mining__Pools__0__Port: 3342
+      Mining__Pools__0__FeePercent: 0
+      # Shown on the pool's "Connect" page as the address miners should use.
+      Web__StratumHost: ${DEVICE_DOMAIN_NAME}
+      # The admin page is reached through Umbrel's proxy, which sits on Umbrel's app network and asks
+      # for the Umbrel login first. The web port itself is not published.
+      Admin__AllowedNetworks__0: "${NETWORK_IP}/16"
+      # Other apps share that network, so the admin page also asks for a password. It is this app's own
+      # password, which umbrelOS creates for each install and shows to the user.
+      Admin__Password: ${APP_PASSWORD}
+
+  db:
+    image: postgres:17.12@sha256:87c8b42f423b45d5247e6aa8fdb2e7762fec164c68a50fe3eb07e7bfcaf4dbcf
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      POSTGRES_DB: hashforge
+      POSTGRES_USER: hashforge
+      POSTGRES_PASSWORD: ${APP_HASHFORGE_POSTGRES_PASSWORD}
+    volumes:
+      - ${APP_DATA_DIR}/data/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hashforge -d hashforge"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7.4.12@sha256:6b645a37f49b0546582468706b32e71a8b7fbb5ba4583d0f9e27a8004716b738
+    user: "1000:1000"
+    restart: on-failure
+    # Append-only mode keeps the pool's state snapshots across a restart. The password matters because
+    # every Umbrel app shares one network.
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "${APP_HASHFORGE_REDIS_PASSWORD}"]
+    volumes:
+      - ${APP_DATA_DIR}/data/redis:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$${REDIS_PASSWORD}\" --no-auth-warning ping | grep -q PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    environment:
+      REDIS_PASSWORD: ${APP_HASHFORGE_REDIS_PASSWORD}
