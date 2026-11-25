@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Endurain no longer creates a default account. On a fresh install it prints a
+# one-time setup token in its logs and waits for someone to create the first
+# administrator. Do that here with the credentials Umbrel shows for the app, so
+# users don't have to dig through the logs. Once any account exists, this does
+# nothing.
+
+onboarding_required() {
+	docker exec endurain_app_1 python3 -c '
+import json, sys, urllib.request
+with urllib.request.urlopen("http://127.0.0.1:8080/api/v1/public/onboarding", timeout=5) as r:
+    sys.exit(0 if json.load(r).get("onboarding_required") else 1)
+' 2>/dev/null
+}
+
+for _ in $(seq 1 60); do
+	if docker exec endurain_app_1 python3 -c 'import urllib.request; urllib.request.urlopen("http://127.0.0.1:8080/api/v1/public/onboarding", timeout=5)' >/dev/null 2>&1; then
+		break
+	fi
+	sleep 5
+done
+
+onboarding_required || exit 0
+
+for _ in $(seq 1 12); do
+	token=$(docker logs endurain_app_1 2>&1 | grep -oE '"setup_token": *"[^"]+"|setup_token=[^ ,}]+' | tail -n 1 | sed -E 's/.*setup_token("?: *"|=)//; s/"$//') || token=""
+	if [[ -n "${token}" ]]; then
+		if SETUP_TOKEN="${token}" ADMIN_PASSWORD="${APP_PASSWORD}" docker exec -i -e SETUP_TOKEN -e ADMIN_PASSWORD endurain_app_1 python3 -c '
+import json, os, urllib.request
+body = json.dumps({
+    "token": os.environ["SETUP_TOKEN"],
+    "name": "Admin",
+    "username": "admin",
+    "email": "admin@example.com",
+    "password": os.environ["ADMIN_PASSWORD"],
+}).encode()
+request = urllib.request.Request("http://127.0.0.1:8080/api/v1/public/onboarding", data=body,
+                                 headers={"Content-Type": "application/json"}, method="POST")
+urllib.request.urlopen(request, timeout=30)
+'; then
+			echo "Created the Endurain administrator account."
+			exit 0
+		fi
+	fi
+	onboarding_required || exit 0
+	sleep 5
+done
+
+echo "Could not create the Endurain administrator automatically. Use the setup token from the app logs to finish setup."
+exit 0

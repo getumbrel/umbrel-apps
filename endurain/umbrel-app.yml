@@ -3,7 +3,7 @@ id: endurain
 name: Endurain
 tagline: Fitness tracking, Open Source, Self-Hosted
 category: social
-version: "0.20.2"
+version: "0.21.0"
 port: 8865
 requiresHttps: true
 description: >-
@@ -43,33 +43,36 @@ gallery:
   - 2.webp
   - 3.webp
 defaultUsername: "admin"
-defaultPassword: "admin"
+deterministicPassword: true
 dependencies: []
 releaseNotes: >-
   ⚠️ Requires umbrelOS 2.0 or later. Endurain now opens over HTTPS.
 
 
-  Back up Endurain before updating. This release migrates your database and files; restoring a backup is the only way back to 0.19.x. The first startup may take longer than usual.
+  Back up Endurain before updating. This release converts your activity data and renames stored files, and restoring that backup is the only way back. If you're updating from 0.19.x, Endurain first finishes the 0.20 data conversion, so the first start can take a while on large libraries. Keep the app running until it opens.
+
+
+  Everyone must sign in again after updating. Third-party API clients need updating, and the Endurain mobile app must be version 0.11.0 or later. Profile archives exported before this release cannot be imported; export them again after updating.
 
 
   What's new:
 
-  - Fixed pauses in GPX and TCX imports incorrectly adding to moving time, pace, and distance. Activity summaries now distinguish moving time from elapsed time.
+  - Added security notifications, an audit trail, known-device management, and stronger protection for sensitive account changes.
 
-  - Corrected per-lap elevation totals and handling of missing altitude data.
+  - Added administrator invitations and controls for requiring multi-factor authentication.
 
-  - Fixed timezones for indoor FIT workouts and imports with an unset effort rating.
+  - Moved email, session, reverse-geocoding, and retention settings into the administration interface.
 
-  - Fixed Strava export ZIP imports skipping compressed FIT files.
+  - Fixed privacy issues exposing account details and hidden activity metrics to other users.
 
-  - Fixed notification timestamps and errors when completing a fasting session.
+  - Improved TCX, FIT, and GPX imports, cadence calculations, swimming times, and health-data editing.
 
 
-  If you import files from disk, move pending bulk-import or Strava-export files into a subfolder named for your user ID before importing. You can also upload a Strava export ZIP from the Import page. Third-party REST API clients need updating for the new endpoints and response formats.
+  New installations no longer use admin/admin. Sign in as admin with the password shown in Umbrel. Existing accounts and passwords are unchanged.
 
 
   If Endurain asks you to reconnect Garmin Connect, reconnect it in Endurain's settings.
 
 
-  Full release notes can be found at https://github.com/endurain-project/endurain/releases/tag/v0.20.2
+  Full release notes can be found at https://github.com/endurain-project/endurain/releases/tag/v0.21.0
 path: ""

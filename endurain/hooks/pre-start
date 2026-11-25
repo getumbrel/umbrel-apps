@@ -153,4 +153,66 @@ if [[ -d "${APP_DATA_DIR}/logs" ]]; then
 	echo "Set recursive ownership of ${APP_DATA_DIR}/logs to ${DESIRED_OWNER}"
 fi
 
+# Endurain 0.21 only starts on a database whose 0.20 data migrations have all
+# finished, and refuses otherwise. Installs that skipped 0.20 (the store shipped
+# 0.19.x until October 2026) would be stuck, so run 0.20.2 once to finish them.
+# This is best effort: if it fails, 0.21 still refuses safely and the next start
+# retries. Fresh installs and installs that are already migrated skip it.
+BRIDGE_IMAGE="ghcr.io/endurain-project/endurain:v0.20.2@sha256:045af8835f82df64203b4e025baa2c603512da9c2e17babd0044533452cc20d6"
+BRIDGE_CONTAINER="endurain_v020_bridge"
+BRIDGE_DONE_FILE="${APP_DATA_DIR}/.v020-migrations-done"
+
+# Prints how many 0.20 data migrations are still pending (0 when there are no
+# users yet, or when 0.21 has already retired the migrations table).
+pending_migrations() {
+	local result
+	result=$(docker exec endurain_db_1 psql -U endurain -d endurain -tAc \
+		"SELECT CASE WHEN NOT EXISTS (SELECT 1 FROM users) THEN 0 ELSE 9 - (SELECT count(*) FROM migrations WHERE executed AND id IN (1,2,3,4,5,6,8,9,10)) END" 2>/dev/null) || result=0
+	[[ "${result}" =~ ^[0-9]+$ ]] || result=0
+	echo "${result}"
+}
+
+bridge_v020() {
+	"${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" up --detach --wait db || return 1
+	[[ "$(pending_migrations)" -gt 0 ]] || return 0
+
+	echo "Finishing Endurain 0.20 data migrations before starting 0.21. This can take a while on large libraries..."
+	local network bridge_env
+	network=$(docker inspect -f '{{range $name, $_ := .NetworkSettings.Networks}}{{$name}}{{end}}' endurain_db_1) || return 1
+	bridge_env=$(mktemp)
+	# docker run keeps quotes that Compose strips from settings.env, so strip them here.
+	sed -E "s/^([A-Za-z_][A-Za-z0-9_]*)=[[:space:]]*([\"']?)(.*)\2[[:space:]]*$/\1=\3/" "${ENV_FILE}" > "${bridge_env}"
+	docker rm -f "${BRIDGE_CONTAINER}" >/dev/null 2>&1 || true
+	docker run --detach --name "${BRIDGE_CONTAINER}" --network "${network}" \
+		--env-file "${bridge_env}" \
+		-e DB_TYPE=postgres -e DB_HOST=endurain_db_1 -e DB_PORT=5432 -e DB_PASSWORD=endurain \
+		-e SECRET_KEY="${APP_PASSWORD}" -e BEHIND_PROXY=true -e DEPLOYMENT_PROFILE=local -e WEB_WORKERS=1 \
+		-v "${APP_DATA_DIR}/app:/app/backend/data" -v "${APP_DATA_DIR}/logs:/app/backend/logs" \
+		"${BRIDGE_IMAGE}" >/dev/null
+	local status=$?
+	rm -f "${bridge_env}"
+	[[ ${status} -eq 0 ]] || return 1
+
+	# Wait up to 2 hours, or until 0.20 stops on its own.
+	for _ in $(seq 1 720); do
+		[[ "$(pending_migrations)" -eq 0 ]] && break
+		[[ "$(docker inspect -f '{{.State.Running}}' "${BRIDGE_CONTAINER}" 2>/dev/null)" == "true" ]] || break
+		sleep 10
+	done
+	docker logs --tail 20 "${BRIDGE_CONTAINER}" 2>&1 || true
+	docker rm -f "${BRIDGE_CONTAINER}" >/dev/null 2>&1 || true
+	[[ "$(pending_migrations)" -eq 0 ]]
+}
+
+if [[ ! -f "${BRIDGE_DONE_FILE}" ]]; then
+	if [[ ! -d "${APP_DATA_DIR}/db/pgdata" ]]; then
+		touch "${BRIDGE_DONE_FILE}"
+	elif bridge_v020; then
+		echo "Endurain 0.20 data migrations are complete."
+		touch "${BRIDGE_DONE_FILE}"
+	else
+		echo "Could not finish the Endurain 0.20 data migrations. Endurain 0.21 will refuse to start; restart the app to retry."
+	fi
+fi
+
 exit 0
