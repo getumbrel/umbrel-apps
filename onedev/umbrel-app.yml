@@ -3,7 +3,7 @@ id: onedev
 name: OneDev
 tagline: A streamlined server for code, builds, and packages
 category: developer
-version: "17.2.3"
+version: "17.2.4"
 port: 6610
 description: >-
   ⚠️ OneDev can use significant system resources. Its first launch may take a few minutes, especially on lower-powered devices.
@@ -43,7 +43,12 @@ releaseNotes: >-
   ⚠️ Before upgrading, update webhook receivers to verify X-OneDev-Signature as a lowercase hexadecimal HMAC-SHA256 of the raw request body using your webhook secret, instead of comparing the header directly with the secret. Existing receivers using the old comparison will reject deliveries until updated.
 
 
-  This update fixes a security vulnerability in SSH authentication that could allow remote code execution and administrator access. It also improves HTML escaping of file links in duplicate-code reports.
+  This update strengthens security for Git and pull requests:
+
+    - Prevents unauthorized writes to source projects when updating pull request branches.
+    - Prevents Git option injection in commit queries.
+    - Enforces project permissions for forwarded SSH Git requests.
+    - Ensures reopened pull requests respect branch protection rules.
 
 
   Important: Since OneDev 17.2.1, access tokens are stored as hashes. Copy newly created or rotated tokens immediately, as their values cannot be retrieved later. Integrations that create tokens through the REST API must use description instead of name and handle the response containing both id and value.
@@ -58,7 +63,7 @@ releaseNotes: >-
   Note: If you're updating from a pre-16.5.0 version, OneDev may regenerate the system GPG signing key when changing the default system signing email. Commits previously signed with the old system key may show as unverified.
 
 
-  Full release notes can be found at https://github.com/theonedev/onedev/releases/tag/v17.2.3
+  Full release notes can be found at https://github.com/theonedev/onedev/releases/tag/v17.2.4
 dependencies: []
 path: ""
 defaultUsername: ""
