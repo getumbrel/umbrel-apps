@@ -1,0 +1,35 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: delta_web_1
+      APP_PORT: 3000
+      # Agents call the MCP server and REST API with a Delta token (checked
+      # by the app), and can't send an Umbrel login cookie.
+      PROXY_AUTH_WHITELIST: "/api/v1/*"
+
+  web:
+    image: ghcr.io/zeapsu/delta:1.6.0@sha256:be7de0c1cde189179ee4969e6903c487fdeea6c99f9092a5edf109bea6ecbe49
+    user: "1000:1000"
+    restart: on-failure
+    environment:
+      # Who may call Delta's API: loopback plus private ranges, which covers
+      # Umbrel's app proxy and the jobs service on the app network.
+      DELTA_ALLOWED_NETWORKS: 10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,100.64.0.0/10
+      # Printed in the MCP configs `npm run token -- create` makes.
+      DELTA_URL: http://${DEVICE_DOMAIN_NAME}:3740
+      # Umbrel ships updates, so no in-app update notice.
+      DELTA_UPDATE_CHECK: "off"
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+
+  # Plaid refresh + sync every 6 hours and a daily database backup.
+  jobs:
+    image: ghcr.io/zeapsu/delta:1.6.0@sha256:be7de0c1cde189179ee4969e6903c487fdeea6c99f9092a5edf109bea6ecbe49
+    user: "1000:1000"
+    restart: on-failure
+    command: ["node", "scripts/jobs.mjs"]
+    depends_on: [web]
+    environment:
+      DELTA_INTERNAL_URL: http://delta_web_1:3000
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
