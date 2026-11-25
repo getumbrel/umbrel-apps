@@ -20,6 +20,13 @@ for _ in {1..30}; do
   sleep 2
 done
 
+# pre-start asked Stalwart to add new permissions to its default roles on this
+# start. Once the server is up that has happened, so don't ask again.
+if docker exec stalwart_server_1 curl -fsS -o /dev/null http://127.0.0.1:8080/healthz/live 2>/dev/null \
+  && grep -qs '^STALWART_UPDATE_ROLE_PERMISSIONS=true' "${APP_DATA_ROOT:-${APP_DIR}/data}/role-permissions.env"; then
+  touch "${APP_DATA_ROOT:-${APP_DIR}/data}/.role_permissions_updated"
+fi
+
 # Creating a client that already exists is rejected by the server and ignored here.
 for origin in "${origins[@]}"; do
   docker exec -i stalwart_server_1 curl -sS -o /dev/null -u "admin:${APP_PASSWORD}" \
@@ -33,3 +40,27 @@ for origin in "${origins[@]}"; do
   "scopes": {"full": true}}}}, "0"]]}
 JSON
 done
+
+# The WebUI requests only OpenID by default on Umbrel's HTTP origin. Without
+# its explicit full scope, login succeeds but account management stays loading.
+# Configure only the bundled WebUI with an empty scope list; keep custom apps
+# and administrator-selected scopes unchanged.
+applications="$(docker exec stalwart_server_1 curl -fsS -u "admin:${APP_PASSWORD}" \
+  -H "Content-Type: application/json" --data \
+  '{"using":["urn:ietf:params:jmap:core","urn:stalwart:jmap"],"methodCalls":[["x:Application/get",{},"0"]]}' \
+  http://127.0.0.1:8080/jmap/)" || exit 0
+updates="$(printf '%s' "${applications}" | jq -c '
+  [.methodResponses[] | select(.[0] == "x:Application/get") | .[1].list[]
+    | select(.resourceUrl == "https://github.com/stalwartlabs/webui/releases/download/v2/webui.zip")
+    | select(.urlPrefix["/admin"] == true and ((.oauthScopes // {}) | length) == 0)
+    | {key: .id, value: {oauthScopes: {"urn:stalwart:oauth:scope:full": true}}}]
+  | from_entries')"
+if [[ "${updates}" != "{}" ]]; then
+  # Refresh application bundles through Stalwart's supported action so the
+  # new OAuth metadata is served immediately, without a second app restart.
+  jq -nc --argjson updates "${updates}" \
+    '{using:["urn:ietf:params:jmap:core","urn:stalwart:jmap"],methodCalls:[["x:Application/set",{update:$updates},"0"],["x:Action/set",{create:{refresh:{"@type":"UpdateApps"}}},"1"]]}' \
+    | docker exec -i stalwart_server_1 curl -fsS -u "admin:${APP_PASSWORD}" \
+      -H "Content-Type: application/json" --data-binary @- http://127.0.0.1:8080/jmap/ \
+    | jq -e '.methodResponses | length == 2 and all(.[]; (.[0] != "error") and ((.[1].notUpdated // {}) | length == 0) and ((.[1].notCreated // {}) | length == 0))' >/dev/null
+fi

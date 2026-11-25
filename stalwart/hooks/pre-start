@@ -82,6 +82,20 @@ V1_TARGET_DIR="${LEGACY_ROOT}/server-v1"
 V1_ORIGINAL_DIR="${LEGACY_ROOT}/server-v0.16"
 V1_STATE_DIR="${LEGACY_ROOT}/migration-v1"
 
+# Stalwart creates its default roles only on a new install, so on an upgraded
+# server they miss permissions added by later releases (mail rules, sender
+# lists, calendar settings, passkeys). Ask Stalwart to add them on one start
+# only; post-start records that it ran, so a permission an administrator
+# removes later is not added back on every restart.
+ROLE_PERMISSIONS_ENV="${LEGACY_ROOT}/role-permissions.env"
+ROLE_PERMISSIONS_DONE="${LEGACY_ROOT}/.role_permissions_updated"
+mkdir -p "${LEGACY_ROOT}"
+if [[ -f "${ROLE_PERMISSIONS_DONE}" ]]; then
+  : > "${ROLE_PERMISSIONS_ENV}"
+else
+  echo "STALWART_UPDATE_ROLE_PERMISSIONS=true" > "${ROLE_PERMISSIONS_ENV}"
+fi
+
 v1_migrate() {
   docker run --rm --network none --user 1000:1000 \
     -v "${FINAL_ETC_DIR}:/etc/stalwart" \
