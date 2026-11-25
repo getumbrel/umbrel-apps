@@ -1,0 +1,17 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: c0mpute_worker_1
+      APP_PORT: 8080
+
+  worker:
+    image: ghcr.io/profullstack/c0mpute-worker:0.3.103@sha256:6e9443d62ac8721e9f6e41a7d7ab88c25c1da5c2b1ce95f909aeb6ae9e0b8719
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      C0MPUTE_UI_BIND: "0.0.0.0:8080"
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
