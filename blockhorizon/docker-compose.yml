@@ -1,0 +1,17 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: blockhorizon_web_1
+      APP_PORT: 80
+
+  web:
+    image: ghcr.io/random21m/blockhorizon:v0.15.0@sha256:18af13161c86d733760d5e9388917ac6185d45e4b797b995a892ac949dc051c8
+    init: true
+    restart: on-failure
+    stop_grace_period: 30s
+    environment:
+      # The Mempool app's web container (exported by the Mempool app, as its own widget server uses it):
+      # it serves the mempool REST API and live feed at /api, which this container proxies.
+      MEMPOOL_URL: http://${APP_MEMPOOL_IP}:${APP_MEMPOOL_PORT}
