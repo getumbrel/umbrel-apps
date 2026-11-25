@@ -5,7 +5,7 @@ storage:
 name: Open WebUI
 tagline: Chat with Ollama models like DeepSeek-R1 and LLama, or use an OpenAI API key
 category: ai
-version: "0.13.4"
+version: "0.13.5"
 port: 2876
 description: >-
   Open WebUI lets you chat with advanced AI models running locally on your own device or connect to online models using an API key.
@@ -39,16 +39,21 @@ defaultPassword: ""
 dependencies:
   - ollama
 releaseNotes: >-
-  This update includes database changes. Back up your Open WebUI data before updating.
+  Back up your Open WebUI database and associated data before updating. This release converts existing chat history to a new database format that is incompatible with older versions.
 
 
   Key highlights:
-    - Opens notes, channels, and workspace pages as tabs alongside chats
-    - Adds folder boards, chat statuses, colored tags, and folder automations
-    - Keeps queued messages on the server so you can leave the page during a reply
-    - Adds optional interactive visualizations and video generation
-    - Improves long replies, large PDF previews, and folder loading
-    - Shows a review of changed administrator settings before saving
+    - Includes security fixes; updating promptly is recommended
+    - Speeds up long chats, shared chat searches, and page loading
+    - Adds project folder workspaces and automatic model selection with routers
+    - Shows source excerpts and cited documents beside your conversation
+    - Fixes queued attachments, conversation branching, and PDF exports
+
+
+  Custom API clients must read messages from chat.history instead of the flat messages list. Terminal connections are now called Machines; existing permissions are preserved. Saved Arena configurations become routers; recreate the built-in Arena as a random router if you used it.
+
+
+  If you use Docling, confirm its server supports background conversion jobs before updating. Newly configured OpenAI connections default to the Responses API; select Chat Completions explicitly if your integration requires it.
 
 
   Direct Connections and Direct Integrations have been replaced by Tether. Models, tools, and terminals added in personal settings must be added again in the Tether app (0.1.14 or later; 0.1.16 for MCP servers). Server-managed model connections are unaffected.
@@ -75,5 +80,5 @@ releaseNotes: >-
   Selected and model-attached skills still send their full instructions by default. Enable on-demand skill loading in Admin Settings > General to avoid unnecessary prompt length.
 
 
-  Full release notes are available at https://github.com/open-webui/open-webui/releases/tag/v0.13.4
+  Full release notes are available at https://github.com/open-webui/open-webui/releases/tag/v0.13.5
 path: ""
