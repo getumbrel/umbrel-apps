@@ -8,6 +8,12 @@ set -euo pipefail
 APP_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")"
 APP_DATA_DIR="${APP_DIR}/data"
 
+# OpenClaw requires a private ancestor for temporary workspaces under /data.
+# Fix only the mount root so existing file permissions stay intact.
+if [[ -d "${APP_DATA_DIR}" && ! -L "${APP_DATA_DIR}" ]]; then
+  chmod go-w "${APP_DATA_DIR}"
+fi
+
 FILES_TO_REMOVE=(
   "${APP_DATA_DIR}/.openclaw/browser/openclaw/user-data/SingletonLock"
   "${APP_DATA_DIR}/.openclaw/browser/openclaw/user-data/SingletonCookie"
