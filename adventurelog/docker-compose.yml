@@ -7,7 +7,7 @@ services:
       PROXY_AUTH_ADD: "false"
 
   web:
-    image: ghcr.io/seanmorley15/adventurelog-frontend:v0.13.1@sha256:568b1be1c42f456df066a8bb55be8ce0046b2c6fc96b1650db5d2162eb4f1ce9
+    image: ghcr.io/seanmorley15/adventurelog-frontend:v0.14.0@sha256:f3f4642d8d09ebd04e23d54aa61f5892a5d6e20bd4285e34e1b761ee4935d23e
     restart: on-failure
     environment:
       PUBLIC_SERVER_URL: "http://adventurelogserver1:8000"
@@ -27,9 +27,10 @@ services:
       - ${APP_DATA_DIR}/data/db:/var/lib/postgresql/data/
 
   server:
-    image: ghcr.io/seanmorley15/adventurelog-backend:v0.13.1@sha256:8c45e21f95875ccd35a6e68f7da72504df9e837d6ee703379512cb8de6a67082
+    image: ghcr.io/seanmorley15/adventurelog-backend:v0.14.0@sha256:741a11ab16f53de555149f9750178873dd75b5ff1cb189fc6d55b577f26fbdc6
     container_name: adventurelogserver1 # needs to be set for the frontend to be able to connect (underline not supported)
     restart: on-failure
+    stop_grace_period: 70s
     environment:
       - PGHOST=adventurelog_db_1
       - PGDATABASE=database
@@ -37,7 +38,7 @@ services:
       - PGPASSWORD=adventure
       - SECRET_KEY=adventure
       - DJANGO_ADMIN_USERNAME=admin
-      - DJANGO_ADMIN_PASSWORD=admin
+      - DJANGO_ADMIN_PASSWORD=${APP_PASSWORD}
       - DJANGO_ADMIN_EMAIL=admin@example.com
       - PUBLIC_URL=http://${DEVICE_DOMAIN_NAME}:8016
       - CSRF_TRUSTED_ORIGINS=http://${DEVICE_DOMAIN_NAME}:8015,https://${DEVICE_DOMAIN_NAME}:8015,http://${DEVICE_HOSTNAME}:8015,https://${DEVICE_HOSTNAME}:8015,${APP_ADVENTURELOG_LOCAL_URLS}

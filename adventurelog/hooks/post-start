@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# One-time: older installs were created with the admin/admin default. If the
+# admin still uses it, switch it to the app password Umbrel shows for this app.
+# Accounts with any other password are left alone.
+
+APP_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")"
+MARKER="${APP_DIR}/.default-admin-password-checked"
+
+[ -f "${MARKER}" ] && exit 0
+
+# The script goes on stdin: umbrelOS's app script splits compose arguments on
+# spaces, so a multi-line `shell -c '...'` would arrive as separate words.
+for attempt in $(seq 1 60); do
+  if "${UMBREL_ROOT}/scripts/app" compose "${APP_ID}" exec -T server python manage.py shell --verbosity 0 <<'PY' 2>/dev/null; then
+import os
+from django.contrib.auth import get_user_model
+for user in get_user_model().objects.filter(is_superuser=True):
+    if user.check_password("admin"):
+        user.set_password(os.environ["DJANGO_ADMIN_PASSWORD"])
+        user.save(update_fields=["password"])
+        print(f"Replaced the default password of {user.username} with the Umbrel app password.")
+PY
+    touch "${MARKER}"
+    exit 0
+  fi
+  sleep 2
+done
+
+echo "AdventureLog is not ready yet; will check the default admin password on the next start."
