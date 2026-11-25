@@ -1,0 +1,66 @@
+manifestVersion: 1.1
+id: fireshare
+storage:
+  dataRoot: data
+folderAccess:
+  - id: video-library
+    name: Video Library
+    note: Select a folder containing videos to add to Fireshare, then scan it from the admin panel. Fireshare can also save new uploads here.
+    mounts:
+      - service: fireshare
+        targetPath: /videos
+  - id: image-library
+    name: Image Library
+    note: Select a folder containing images to add to Fireshare, then scan it from the admin panel. Fireshare can also save new image uploads here.
+    mounts:
+      - service: fireshare
+        targetPath: /images
+environment:
+  - name: ENABLE_TRANSCODING
+    services:
+      - fireshare
+    default: "false"
+    options:
+      - "false"
+      - "true"
+    note: Create lower-quality versions of your videos so viewers on slower connections can stream smoothly. This uses CPU and can take a long time on a large library. The lite image does not support GPU transcoding.
+  - name: MINUTES_BETWEEN_VIDEO_SCANS
+    services:
+      - fireshare
+    default: "5"
+    note: How often Fireshare checks the video library for new or removed files, in minutes. Set to 0 to disable automatic scans and scan manually from the admin panel.
+category: media
+name: Fireshare
+version: "v1.9.0"
+tagline: Self-host your videos and share them with unique links
+description: >-
+  Fireshare is a self-hosted media library for sharing game clips and other videos through unique links.
+
+
+  Point Fireshare at a folder of videos or upload clips from the web UI, and it automatically scans, indexes, and creates posters and thumbnails. Organize videos by game, folder, or tag, and choose whether each one is public or accessible only through its link. Uploads can be open to everyone, limited to signed-in users, or turned off.
+
+
+  On first launch, sign in with the username and password shown in Umbrel. The admin password is managed by Umbrel and stays the same across restarts.
+
+
+  Umbrel's login check is turned off for this app so shared video links open for anyone you send them to. Fireshare's own login protects the admin area; enable two-factor authentication in Settings → Security for extra protection.
+
+
+  Videos are stored in the Video Library folder. You can select a folder during install or later in the app's settings. Transcoding is off by default; enable it in the app's settings to create lower-quality versions for slower connections.
+releaseNotes: ""
+
+developer: Fireshare
+website: https://fireshare.net
+dependencies: []
+repo: https://github.com/fireshare-app/fireshare
+support: https://github.com/fireshare-app/fireshare/issues
+
+port: 8930
+gallery: []
+path: ""
+
+defaultUsername: admin
+deterministicPassword: true
+
+submitter: LittleBit
+submission: https://github.com/getumbrel/umbrel-apps/pull/6376
