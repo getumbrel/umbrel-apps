@@ -1,0 +1,21 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: nuvirahub_server_1
+      # The server's status page, on the same TCP port as its WebSocket and updates.
+      APP_PORT: 21216
+
+  server:
+    image: ghcr.io/nuvira-hub/nuvira-server:0.99.1@sha256:82cc14ae861ed1725622839454970bb9624b209ad54dce0223f40b999d13ae57
+    user: "1000:1000"
+    restart: on-failure
+    environment:
+      # 21216, not the default 21116: RustDesk Server uses 21116 on Umbrel.
+      NUVIRA_LISTEN: ":21216"
+      NUVIRA_WS_LISTEN: ":21216"
+    ports:
+      # The apps connect here directly (UDP; TCP for the WebSocket fallback and updates).
+      - "21216:21216/udp"
+      - "21216:21216/tcp"
+    volumes:
+      - ${APP_DATA_DIR}/data/server:/data
