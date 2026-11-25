@@ -5,7 +5,7 @@ storage:
 name: Duplicati
 tagline: Store securely encrypted backups in the cloud
 category: files
-version: "v2.4.1.0_stable_2026-10-29"
+version: "v2.4.1.1_stable_2026-11-25"
 port: 38476
 description: >-
   Pick your own backend and store encrypted backups of your umbrel files anywhere!
@@ -40,18 +40,19 @@ gallery:
   - 2.webp
   - 3.webp
 releaseNotes: >-
-  This release upgrades the local backup databases. To return to version 2.4.0.1, first downgrade the databases using Duplicati's DatabaseTool downgrade command.
+  If upgrading from 2.4.0.1 or earlier, this update upgrades the local backup databases. To return to 2.4.0.1, first use Duplicati's DatabaseTool downgrade command. The database format is unchanged from 2.4.1.0.
 
 
   Highlights:
-    - Added restore tests that recover and verify a sample of your backup, with an option to run them automatically after backups
-    - Added incremental change tracking for Microsoft 365 and Google Workspace backups
-    - Added labels for backup versions and saved logs for sync jobs
-    - Improved restore reliability, backup cancellation, scheduling, and file browsing
-    - Fixed reverse-proxy login cookies and hardened control-file restores and recovery tools
+    - Compare backup versions and search for files across all versions when restoring
+    - Run all backups from the home page and download job logs
+    - Improved restore, repair, scheduling, and SMB reliability
+    - Improved Microsoft 365 and Google Workspace backups
+    - Added S3 role assumption and WebDAV client certificate support
+    - Backups now stop when a source folder cannot be read, and incomplete restores report an error
 
 
-  Full release notes can be found at https://github.com/duplicati/duplicati/releases/tag/v2.4.1.0_stable_2026-10-29
+  Full release notes can be found at https://github.com/duplicati/duplicati/releases/tag/v2.4.1.1_stable_2026-11-25
 dependencies: []
 permissions:
   - STORAGE_DOWNLOADS
