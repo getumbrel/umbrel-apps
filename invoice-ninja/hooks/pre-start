@@ -74,14 +74,14 @@ fi
 NGINX_CONFIG_FILE="${APP_DIR}/config/nginx.conf"
 
 # We use a marker at the top of the file to identify the canonical nginx.conf for invoice-ninja
-MARKER_REGEX='^# Umbrel Invoice-Ninja canonical nginx.conf 27-May-2025'
+MARKER_REGEX='^# Umbrel Invoice-Ninja canonical nginx.conf 5.13.54'
 
 # We check if the nginx config file does not exist or if it exists and the marker is not up-to-date
 if [[ ! -f "${NGINX_CONFIG_FILE}" ]] || ! grep -qx "${MARKER_REGEX}" "${NGINX_CONFIG_FILE}"; then
   echo "Updating nginx configuration file for invoice-ninja."
   # Overwrite the nginx configuration file
   cat >"${NGINX_CONFIG_FILE}" <<'EOF'
-# Umbrel Invoice-Ninja canonical nginx.conf 27-May-2025
+# Umbrel Invoice-Ninja canonical nginx.conf 5.13.54
 
 # Invoice-Ninja recommended nginx.conf for Laravel
 # https://github.com/invoiceninja/dockerfiles/blob/ed9c23d9c74a2a9f47b9dcb54946726ab816b6bc/debian/nginx/laravel.conf
@@ -122,6 +122,9 @@ server {
 # https://github.com/invoiceninja/dockerfiles/blob/ed9c23d9c74a2a9f47b9dcb54946726ab816b6bc/debian/nginx/invoiceninja.conf
 
 # https://nginx.org/en/docs/http/ngx_http_core_module.html
+# Flutter web loads JavaScript modules with the .mjs extension.
+types { text/javascript mjs; }
+
 client_max_body_size 10M;
 client_body_buffer_size 10M;
 server_tokens off;
