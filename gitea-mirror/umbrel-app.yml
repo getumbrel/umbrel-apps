@@ -5,7 +5,7 @@ storage:
 name: Gitea Mirror
 tagline: Mirror your GitHub repositories to a Gitea instance automatically
 category: developer
-version: "3.56.1"
+version: "3.57.0"
 port: 4322
 description: >-
   Gitea Mirror automatically mirrors your GitHub repositories to a self-hosted Gitea instance. It supports mirroring public and private repositories, organizations, starred repos, issues, wikis, and pull requests.
@@ -44,9 +44,13 @@ defaultUsername: ""
 defaultPassword: ""
 dependencies: []
 releaseNotes: >-
-  You can now run database maintenance and repository cleanup immediately from the Automation tab and see their progress and results. Shortening the activity-log retention period now brings the next maintenance run forward, without repository cleanup postponing it.
+  🔒 Only the first account created can now manage SSO providers and OAuth applications. After upgrading a shared instance, review your SSO providers: providers added by other accounts stay disabled until the owner edits and saves them. Delete any you do not recognize. Affected accounts are signed out once, their OAuth tokens are removed, and their API keys are disabled.
 
-  Issue and pull request syncing now makes fewer GitHub requests that count against your rate limit. Issues without comments no longer trigger unnecessary comment requests.
+    - Enable authenticator-based two-factor authentication from the account menu, with backup codes for recovery.
+    - Preview and move existing mirrors to match your organization structure without downloading them again.
+    - Set a grace period before cleanup acts on missing sources, and optionally receive cleanup notifications.
+    - Limit pre-releases independently, mirror published GitHub security advisories as issues, and filter repositories by several statuses at once.
+    - Mirroring and cleanup now protect destination repositories that are not the expected mirror. Rate-limit handling and recovery of interrupted jobs are more reliable.
 
   🔒 Saved source, destination, and notification secrets are now hidden from configuration and source API responses, including read-only API keys. Scripts that read these endpoints must keep their own credentials. Leaving a secret blank preserves it; changing its scheme, host, or port requires entering a new token.
 
@@ -62,5 +66,5 @@ releaseNotes: >-
 
   New configurations start with scheduling off unless enabled through environment variables. Repository cleanup no longer automatically archives or deletes destination copies when a source disappears. If updating from before 3.17 and using registered OAuth provider clients, rotate each client secret after upgrading.
 
-  Full release notes can be found at https://github.com/RayLabsHQ/gitea-mirror/releases/tag/v3.56.1
+  Full release notes can be found at https://github.com/RayLabsHQ/gitea-mirror/releases/tag/v3.57.0
 path: ""
