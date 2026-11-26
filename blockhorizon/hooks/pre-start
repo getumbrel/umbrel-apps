@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+APP_DIR="${APP_DATA_DIR:-$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")}"
+DATA_ROOT="${APP_DATA_ROOT:-${APP_DIR}/data}"
+
+# 0.17.0 keeps alarms waiting to be sent to the phone in data/ (mounted at /var/lib/blockhorizon). Installs from
+# before 0.17.0 have no such folder: create it. The container gives it to its own nginx user on start.
+mkdir -p "${DATA_ROOT}"
