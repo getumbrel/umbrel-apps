@@ -1,58 +1,54 @@
 manifestVersion: 1
 id: wazuh
+storage:
+  dataRoot: data
+environment:
+  - name: OPENSEARCH_JAVA_OPTS
+    services:
+      - wazuh.indexer
+    default: "-Xms1g -Xmx1g"
+    note: >-
+      Memory for the Wazuh indexer. Raise both values together (for example "-Xms2g -Xmx2g") if you monitor many agents and have RAM to spare.
 category: networking
 name: Wazuh
-version: "4.14.5"
-tagline: Open source security platform for threat detection and response
+version: "4.14.11"
+tagline: Unified XDR and SIEM protection for endpoints and cloud workloads
 description: >-
-  Wazuh is a free and open source security platform that unifies XDR and SIEM
-  capabilities to protect your workloads across on-premises, virtualized,
-  containerized, and cloud environments.
+  Wazuh is a free and open source security platform that unifies XDR and SIEM protection for endpoints and cloud workloads.
 
 
-  Running on your Umbrel, Wazuh becomes the central brain of your home or small
-  business security: install lightweight Wazuh agents on your other machines and
-  they report back here for centralized monitoring, alerting, and analysis.
+  On your Umbrel, Wazuh becomes the security hub for your home or small business. Install the lightweight Wazuh agent on your computers and servers, point it at your Umbrel, and they report back here for monitoring, alerting, and analysis.
 
 
-  Core capabilities:
+  - Intrusion and threat detection, with a rule set mapped to MITRE ATT&CK
 
-  - Intrusion detection and log data analysis
-
-  - File integrity monitoring (FIM)
+  - Log data analysis and file integrity monitoring
 
   - Vulnerability detection on monitored endpoints
 
-  - Security configuration assessment (CIS benchmarks)
+  - Security configuration assessment against CIS benchmarks
 
-  - Threat hunting and an out-of-the-box rule set mapped to MITRE ATT&CK
-
-  - Regulatory compliance support (PCI DSS, GDPR, HIPAA, NIST 800-53)
+  - Regulatory compliance reports for PCI DSS, GDPR, HIPAA, and NIST 800-53
 
 
-  This app bundles the full single-node stack — the Wazuh indexer, manager, and
-  dashboard — preconfigured and ready to use.
+  This app runs the full single-node stack: the Wazuh indexer, server, and dashboard. Agents connect to your Umbrel on ports 1514 and 1515.
 
 
-  Wazuh agents can be installed on Linux, Windows, macOS, and more, and report
-  back to your Umbrel node for centralized monitoring.
-
-
-  Recommended: 4GB RAM minimum, 8GB+ for production use. The first start can
-  take a few minutes while the indexer initializes.
-
-
-  Default login: admin / SecretPassword (change it after first login).
+  ⚠️ Wazuh needs at least 4 GB of free RAM. The first start takes a few minutes while the indexer sets itself up.
 releaseNotes: ""
-developer: Wazuh, Inc.
+developer: Wazuh
 website: https://wazuh.com
 dependencies: []
 repo: https://github.com/wazuh/wazuh
 support: https://wazuh.com/community/
-port: 8401
-gallery: []
+port: 8402
+gallery:
+  - 1.webp
+  - 2.webp
+  - 3.webp
+  - 4.webp
 path: ""
 defaultUsername: "admin"
-defaultPassword: "SecretPassword"
+deterministicPassword: true
 submitter: gabrysh
 submission: https://github.com/getumbrel/umbrel-apps/pull/5715
