@@ -9,7 +9,7 @@ services:
       PROXY_AUTH_ADD: "false"
 
   gitlab:
-    image: gitlab/gitlab-ce:19.6.1-ce.0@sha256:d3727f8b1a1ee6de44916bb9113f3dc40339dba2d6a6ad6ef331d0f239004056
+    image: gitlab/gitlab-ce:19.6.2-ce.0@sha256:926ff73d53698c1e3724e65a8be5cc980bd18104f87db6d8d461c6f7a84d7bba
     restart: on-failure
     hostname: '${DEVICE_DOMAIN_NAME}:8929'
     ulimits:
@@ -25,6 +25,8 @@ services:
         gitlab_rails['gitlab_shell_ssh_port'] = 2424
         nginx['listen_port'] = 8929
         nginx['listen_https'] = false
+        # The container hostname includes GitLab's port; do not infer a second port from it.
+        prometheus['flags'] = { 'web.external-url' => 'http://localhost:9090' }
     ports:
       - '2424:22'
     volumes:
