@@ -1,0 +1,16 @@
+server {
+    listen 8080;
+
+    location = /setup/index.html {
+        auth_basic "FCaptcha setup";
+        auth_basic_user_file /tmp/fcaptcha-auth;
+        add_header Cache-Control "no-store" always;
+        alias /tmp/fcaptcha-setup.html;
+        default_type text/html;
+    }
+
+    location / {
+        proxy_set_header Host ${APP_FCAPTCHA_LITERAL_DOLLAR}host;
+        proxy_pass http://server:3000;
+    }
+}
