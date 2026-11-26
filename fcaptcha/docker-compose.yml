@@ -1,0 +1,22 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: fcaptcha_front_1
+      APP_PORT: 8080
+      PROXY_AUTH_WHITELIST: "/fcaptcha.js,/api/challenge,/api/pow/challenge,/api/verify,/api/score,/api/token/verify,/siteverify"
+  server:
+    image: ghcr.io/webdecoy/fcaptcha:1.52.0@sha256:b11a49f8fdc9a77e65a32ebc8dea8e04de32f7e472f39c61f3dcc04ab60cc301
+    restart: on-failure
+    environment:
+      FCAPTCHA_SECRET: "${APP_FCAPTCHA_SIGNING_SECRET}"
+      FCAPTCHA_VERIFY_SECRET: "${APP_FCAPTCHA_VERIFY_SECRET}"
+  front:
+    image: nginx:1.28-alpine@sha256:a8b39bd9cf0f83869a2162827a0caf6137ddf759d50a171451b335cecc87d236
+    restart: on-failure
+    entrypoint: ["/bin/sh", "/etc/fcaptcha/start-front.sh"]
+    environment:
+      APP_PASSWORD: "${APP_PASSWORD}"
+      FCAPTCHA_VERIFY_SECRET: "${APP_FCAPTCHA_VERIFY_SECRET}"
+    volumes:
+      - "${APP_DATA_DIR}/front.conf:/etc/nginx/conf.d/default.conf:ro"
+      - "${APP_DATA_DIR}/start-front.sh:/etc/fcaptcha/start-front.sh:ro"

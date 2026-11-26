@@ -1,0 +1,26 @@
+#!/bin/sh
+set -eu
+
+test -n "${APP_FCAPTCHA_LITERAL_DOLLAR}{APP_PASSWORD:?}"
+case "${APP_FCAPTCHA_LITERAL_DOLLAR}{FCAPTCHA_VERIFY_SECRET:?}" in
+    *[!0-9a-f]*) exit 1 ;;
+esac
+
+hash=${APP_FCAPTCHA_LITERAL_DOLLAR}(printf '%s' "${APP_FCAPTCHA_LITERAL_DOLLAR}APP_PASSWORD" | sha1sum | cut -d' ' -f1 | xxd -r -p | base64)
+printf 'admin:{SHA}%s\n' "${APP_FCAPTCHA_LITERAL_DOLLAR}hash" > /tmp/fcaptcha-auth
+cat > /tmp/fcaptcha-setup.html <<HTML
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FCaptcha setup</title>
+<h1>FCaptcha setup</h1>
+<p><a href="/demo/">Open the CAPTCHA demo</a></p>
+<h2>Verification key</h2>
+<p>Store this key in your form server's environment. Keep it out of browser code.</p>
+<pre>${APP_FCAPTCHA_LITERAL_DOLLAR}FCAPTCHA_VERIFY_SECRET</pre>
+<p><a href="https://docs.webdecoy.com/fcaptcha/quickstart/">Connect your form</a></p>
+</html>
+HTML
+
+exec nginx -g 'daemon off;'
