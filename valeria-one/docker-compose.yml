@@ -1,0 +1,38 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: valeria-one_server_1
+      APP_PORT: 8000
+
+  server:
+    image: ghcr.io/valeriaone/valeria-one@sha256:57fface45e24059f8d2242742432ce7f888a364860cdd63958b5a610817d027b
+    command: ["sh", "-c", "alembic upgrade head && exec uvicorn valeria_one.api:app --host 0.0.0.0 --port 8000 --proxy-headers --forwarded-allow-ips '*'"]
+    restart: on-failure
+    environment:
+      - VO_DATABASE_URL=postgresql+psycopg://vo:${APP_VALERIA_ONE_DB_PASSWORD}@valeria-one_db_1:5432/valeria_one
+      - VO_SECRET_KEY=${APP_VALERIA_ONE_SECRET_KEY}
+      - VO_PUBLIC_URL=http://${DEVICE_DOMAIN_NAME}:8571
+      - VO_SIGNUP=closed
+    depends_on:
+      - db
+
+  jobs:
+    image: ghcr.io/valeriaone/valeria-one@sha256:57fface45e24059f8d2242742432ce7f888a364860cdd63958b5a610817d027b
+    command: ["python", "-m", "valeria_one.jobs", "loop"]
+    restart: on-failure
+    environment:
+      - VO_DATABASE_URL=postgresql+psycopg://vo:${APP_VALERIA_ONE_DB_PASSWORD}@valeria-one_db_1:5432/valeria_one
+    depends_on:
+      - server
+
+  db:
+    image: postgres:16@sha256:07abc3f43c9395b0bdbbab36bc25ddb0e8d83cd4fcafb5fb7d6abe14ff156dd8
+    restart: on-failure
+    environment:
+      - POSTGRES_USER=vo
+      - POSTGRES_PASSWORD=${APP_VALERIA_ONE_DB_PASSWORD}
+      - POSTGRES_DB=valeria_one
+    volumes:
+      - ${APP_DATA_DIR}/data/db:/var/lib/postgresql/data
