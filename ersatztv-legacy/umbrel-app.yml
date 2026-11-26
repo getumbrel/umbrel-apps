@@ -4,7 +4,7 @@ storage:
   dataRoot: data
 category: media
 name: ErsatzTV Legacy
-version: "26.13.0"
+version: "26.14.0"
 tagline: Build your own live TV channels
 description: >-
   ErsatzTV Legacy transforms your personal media library into custom live TV channels with IPTV, XMLTV guide data, channel scheduling, and browser playback.
@@ -21,21 +21,17 @@ releaseNotes: >-
   All channels now use the Next streaming engine. Existing legacy channels migrate automatically on startup: MPEG-TS (Legacy) becomes MPEG-TS, and HLS Direct becomes HLS Segmenter. Existing legacy playlist and lineup URLs redirect to the Next engine. Check channel playback after updating.
 
 
-  - Fixes classic schedule timing, grouped playback, filler selection, and playout builds that could fail or never finish.
+  - Fixes frozen video or early fallback when seeking in MKV and MP4 files with video copy enabled.
 
-  - Speeds up large smart-collection builds and channel startup, including GPU shader caching for non-root Docker users.
+  - Fixes audio gradually drifting out of sync at item boundaries in MPEG-TS clients such as Plex Live TV and VLC.
 
-  - Fixes channels not staying active with Keep Running enabled, missing subtitles after library scans, and watermark playback problems.
-
-  - Fixes missing date-added metadata for local media and playback of media from Jellyfin-compatible servers with external subtitles.
-
-  - Improves Arabic subtitle rendering.
+  - Fixes H.264 encoding hangs with AMD VAAPI hardware acceleration in Docker.
 
 
   Streaming JWT authentication has been removed upstream. Umbrel's standard package does not configure it and already allows IPTV clients to access streaming endpoints without login. If you manually configured JWT__ISSUERSIGNINGKEY, streams remain disabled until you remove it. Protect remote streaming access with a VPN or reverse proxy.
 
 
-  Full release notes can be found at https://github.com/ErsatzTV/legacy/releases/tag/v26.13.0
+  Full release notes can be found at https://github.com/ErsatzTV/legacy/releases/tag/v26.14.0
 developer: ErsatzTV
 website: https://ersatztv.org
 dependencies: []
