@@ -4,7 +4,7 @@ storage:
   dataRoot: data
 category: bitcoin
 name: Hashrate Autopilot
-version: "1.18.3"
+version: "1.18.4"
 tagline: Autopilot for renting hashrate to mine on Ocean Mining
 
 description: >-
@@ -83,10 +83,13 @@ defaultPassword: ""
 submitter: Remco Douma
 submission: https://github.com/getumbrel/umbrel-apps/pull/5685
 releaseNotes: >-
-  v1.18.3 - security maintenance update. No new features and no behavior changes.
+  v1.18.4 - security update. Updating is strongly recommended.
 
 
-  Updates the app's software dependencies to their patched releases, clearing 28 published security advisories. The most relevant are in the web server and data-validation libraries the app uses (fastify, zod, fast-uri, js-yaml): request spoofing, URI confusion, and memory or CPU exhaustion from oversized input.
+  Fixes a flaw that let someone who could reach the dashboard on your network use its API without the dashboard password. Reported privately by a security researcher.
+
+
+  A saved node RPC password or DDNS credential can no longer be redirected to a new address: changing the address now asks you to enter the credential again. The first-run setup screen no longer returns stored credentials and no longer accepts requests from other websites.
 
 
   Safe to upgrade from any 1.17.x or 1.18.x release; no new settings.
