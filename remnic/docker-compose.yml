@@ -1,0 +1,21 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: remnic_server_1
+      APP_PORT: 4318
+      PROXY_AUTH_WHITELIST: "/mcp,/engram/v1/*,/remnic/v1/*"
+
+  server:
+    image: ghcr.io/joshuaswarren/remnic:sha-472d86b@sha256:6d02402a808a2d796476050434b935fbcc6691208722058eba547cd7ffa50a82
+    user: "1000:1000"
+    init: true
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      REMNIC_AUTH_TOKEN: ${APP_PASSWORD}
+      REMNIC_ADMIN_CONSOLE_ENABLED: "true"
+      REMNIC_ADMIN_CONSOLE_PREFILL_TOKEN: "true"
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
