@@ -1,0 +1,187 @@
+manifestVersion: 1
+id: ditto-relay
+storage:
+  dataRoot: data
+environment:
+  - name: RELAY_URL
+    services:
+      - relay
+    default: "ws://umbrel.local:13131/"
+    note: Public WebSocket URL that clients use to reach the relay. Change it for a custom hostname, tunnel, or Tor address.
+  - name: PUBLIC_URL
+    services:
+      - relay
+    note: Public HTTP URL used for icon and banner links in NIP-11. Leave empty to derive it from RELAY_URL.
+  - name: RELAY_PUBKEY
+    services:
+      - relay
+    note: Optional operator hex pubkey shown in NIP-11. This is not the relay signing key; leave empty to omit it.
+  - name: RELAY_CONTACT
+    services:
+      - relay
+    note: Optional operator contact shown in NIP-11 and the landing page. Use an email address or URL.
+  - name: WRITE_ALLOWED_PUBKEYS
+    services:
+      - relay
+    note: Comma-separated npub or hex pubkeys allowed to publish. When set, authors must also authenticate with NIP-42. Leave empty to accept events from any author.
+  - name: AUTH_KINDS
+    services:
+      - relay
+    default: "4,78,1059,30078"
+    note: Comma-separated event kinds that require NIP-42 authentication before clients can query them.
+  - name: MASTER_PUBKEYS
+    services:
+      - relay
+    note: Comma-separated hex pubkeys allowed to read every auth-gated event, including DMs. Set this only for a bridge or notification service you control.
+  - name: HISTORY_ENABLED
+    services:
+      - relay
+    default: "true"
+    options:
+      - "true"
+      - "false"
+    note: Keep previous versions of replaceable events so clients can read older revisions.
+  - name: STATS_ENABLED
+    services:
+      - relay
+    default: "true"
+    options:
+      - "true"
+      - "false"
+    note: Run the background worker that computes engagement scores, NIP-85 assertions, and trends.
+  - name: WOT_SEED_PUBKEYS
+    services:
+      - relay
+    note: Comma-separated hex pubkeys that seed the engagement web of trust. Leave empty to count every pubkey.
+  - name: TRENDS_INTERVAL_MS
+    services:
+      - relay
+    default: "900000"
+    note: Milliseconds between trend computations. Set 0 to disable trends.
+  - name: DITTO_LANGUAGES
+    services:
+      - relay
+    note: Comma-separated ISO 639-1 codes for per-language trends, such as en,de,ja.
+  - name: REJECTED_KINDS
+    services:
+      - relay
+    default: "13,9734,20013,20014,22242,24242,27235"
+    note: Comma-separated event kinds rejected at ingestion.
+  - name: BANNED_HASHTAGS
+    services:
+      - relay
+    note: Comma-separated t tag values rejected at ingestion.
+  - name: NSFW_HASHTAGS
+    services:
+      - relay
+    default: "nsfw,adult,nude,nudes,nudity,sex,xxx,onlyfans,porn,porno,boobs,tits,pussy,cock,milf,slut,fetish,hentai,loli"
+    note: Comma-separated t tag values that mark media events as NSFW. Leave empty to use this built-in list.
+  - name: REJECT_NSFW
+    services:
+      - relay
+    default: "false"
+    options:
+      - "true"
+      - "false"
+    note: Reject NSFW events at ingestion instead of indexing them with an NSFW marker.
+  - name: SPAM_THRESHOLD
+    services:
+      - relay
+    default: "0.99"
+    note: Raw spam score at or above which a reply is hidden from discovery. Set 0 to disable spam scoring.
+  - name: RELAY_MAX_MESSAGE_LENGTH
+    services:
+      - relay
+    default: "4000000"
+    note: Maximum size in bytes of a single inbound WebSocket message.
+  - name: RELAY_MAX_FILTER_VALUES
+    services:
+      - relay
+    default: "20000"
+    note: Maximum number of entries allowed in any single filter array, such as ids or authors.
+  - name: RELAY_MAX_LIMIT
+    services:
+      - relay
+    default: "1000"
+    note: Maximum number of events returned for one filter, regardless of the client-supplied limit.
+  - name: RELAY_DEFAULT_LIMIT
+    services:
+      - relay
+    default: "100"
+    note: Number of events returned when a filter omits limit.
+  - name: LOG_LEVEL
+    services:
+      - relay
+    default: "info"
+    options:
+      - debug
+      - info
+      - warn
+      - error
+    note: Relay log verbosity.
+  - name: SYNC_IDENTIFIERS
+    services:
+      - sync
+    note: Comma-separated npub, nprofile, or NIP-05 identifiers whose public-relay activity should be copied into this relay. Leave empty to disable syncing.
+  - name: SYNC_RELAYS
+    services:
+      - sync
+    note: Comma-separated public relay URLs to sync from. Leave empty to discover relays from NIP-05 and NIP-65, then fall back to popular relays.
+  - name: SYNC_KINDS
+    services:
+      - sync
+    note: Comma-separated event kinds to sync. Leave empty to sync all kinds.
+  - name: SYNC_INTERVAL_SECONDS
+    services:
+      - sync
+    default: "300"
+    note: Seconds between sync runs.
+  - name: SYNC_SINCE_DAYS
+    services:
+      - sync
+    default: "0"
+    note: Days of history to backfill on the first run. 0 copies all available history.
+category: social
+name: Ditto Relay
+version: "e897405-patch.5"
+tagline: Self-hosted Nostr relay with full-text search
+description: >-
+  Ditto Relay is a high-performance Nostr relay backed by OpenSearch. It implements NIP-01 WebSocket relaying, NIP-50 full-text search with rich extensions, NIP-42 authenticated DMs and gift wraps, NIP-77 negentropy sync, NIP-85 trusted assertions, and trending content.
+
+
+  Connect any Nostr client to ws://umbrel.local:13131, replacing umbrel.local with your device name if you use a different hostname. The same address serves the relay landing page and the NIP-11 relay information document, so you can open it in a browser to check that the relay is running.
+
+
+  Open the app to reach a dashboard with the relay URL, live event counts, recent activity, and a sync form. The sync form mirrors past and future activity for any npub, nprofile, or NIP-05 identifier you add from public relays, with no private key needed. Sync requires the admin password that Umbrel shows under Default credentials; the dashboard is read-only without it.
+
+
+  Relay behavior is configured in the app settings under Advanced, then Environment variables. Settings cover the public URL, operator contact, auth-gated kinds, trends, moderation, and request limits. Add custom variables for any other upstream option.
+
+
+  To run a curated relay, set WRITE_ALLOWED_PUBKEYS to the npub or hex keys that may publish. The relay then requires those authors to authenticate with NIP-42 before accepting their events, and other authors are rejected. Clients must support NIP-42 AUTH to publish when this is set. Leave it empty to accept events from any author.
+
+
+  The sync worker discovers relays from NIP-05 and NIP-65, or uses the relays you list, and writes through the relay's import path so it can copy signed events without the authors' private keys. SYNC_IDENTIFIERS and the other SYNC_ variables remain available for setting defaults from the app settings.
+
+
+  The relay signing key is generated on first start and stored in the app data folder as data/relay/nsec, with the matching npub in data/relay/npub. The npub is also advertised as the relay's self pubkey in NIP-11. Back up the app data to keep the relay identity, and never share the nsec. To use an existing key, set NOSTR_SECRET_KEY as a custom environment variable instead.
+
+
+  The relay includes a private single-node OpenSearch instance, protected by a per-install generated admin password and reachable only on an internal network. The first start can take several minutes while OpenSearch initializes, and the relay waits for it automatically. Plan for roughly 1.5 GB of RAM in use.
+
+
+  This is a public protocol endpoint, so the app does not require Umbrel login. The relay's own NIP-42 authentication still protects DMs, gift wraps, and other auth-gated event kinds.
+releaseNotes: ""
+developer: Ditto
+website: https://ditto.pub
+dependencies: []
+repo: https://gitlab.com/soapbox-pub/ditto-relay
+support: https://gitlab.com/soapbox-pub/ditto-relay/-/issues
+port: 13131
+gallery: []
+path: ""
+defaultUsername: admin
+defaultPassword: ""
+deterministicPassword: true
+submitter: advorzhak
+submission: "https://github.com/getumbrel/umbrel-apps/pull/6310"
