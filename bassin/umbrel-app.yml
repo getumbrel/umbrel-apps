@@ -1,5 +1,5 @@
 manifestVersion: 1
-version: "2.1.4"
+version: "2.1.20"
 id: bassin
 name: Bassin
 tagline: Solo Bitcoin Mining Pool (ckPool)
@@ -9,7 +9,8 @@ description: >-
 
   No setup, no hassle.
     - Make sure your Bitcoin Node is fully synchronized and running
-    - Install the app, then follow the on-screen instructions
+    - Install the app, then open Connect for Stratum V1 (port 3456) details
+    - Optional Noise-encrypted Stratum V2 (port 3457) and Job Declaration (port 3458, with Bitcoin Core's IPC Mining Interface) can be enabled from Settings → Stratum V2
     - Be part of decentralized mining
 
 
@@ -21,16 +22,20 @@ category: bitcoin
 dependencies:
   - bitcoin
 releaseNotes: >-
-  This update improves the reliability of the Bassin UI.
+  Bassin's mining engine (CKPool) is now maintained by blockdyor, Bassin's developer, who has taken over its upkeep from the Umbrel team. Your pool settings and payout address carry over unchanged.
 
 
-  Improvements:
-    - Prevent UI crashes caused by corrupted browser storage
-    - Ignore invalid, duplicate, and parent directory links when loading user data
-    - Update the footer link to the current Bassin repository and open it in a new tab
+  This update brings the redesigned Bassin interface, Stratum V2, and safer Settings while mining.
 
 
-  The underlying ckpool service is unchanged.
+  - Optional Noise-encrypted Stratum V2 (port 3457) and Job Declaration (port 3458) can be enabled anytime in Settings → Stratum V2 (Stratum V1 remains active by default on port 3456)
+  - Support for Bitcoin Core's mining interface (IPC) when enabled in Bitcoin Node, with automatic fallback to RPC and ZMQ (works with both Bitcoin Core and Bitcoin Knots)
+  - Settings now requires your Bassin app password and uses Save and Save & Restart Pool, so the pool only restarts when you choose
+  - New Worker Best Diff Leaderboard and Hashrate Averages widgets
+  - Lower memory use
+
+
+  Full changelog: https://github.com/blockdyor/bassin/blob/main/docs/whats-new.md
 port: 5008
 submitter: duckaxe
 developer: blockdyor
@@ -44,12 +49,12 @@ gallery:
   - 3.webp
 path: ""
 defaultUsername: ""
-defaultPassword: ""
+deterministicPassword: true
 widgets:
   - id: "stats"
     type: "four-stats"
     refresh: "30s"
-    endpoint: "widget-server:3000/widgets/pool"
+    endpoint: "ui:8080/widgets/pool"
     link: ""
     example:
       type: "four-stats"
@@ -66,3 +71,39 @@ widgets:
         - title: "Total Shares"
           text: "210"
           subtext: "M"
+  - id: "workers-leaderboard"
+    type: "list"
+    refresh: "30s"
+    endpoint: "ui:8080/widgets/workers"
+    link: ""
+    example:
+      type: "list"
+      link: ""
+      items:
+        - text: "#1 nerdqaxe"
+          subtext: "Best ever: 2.5T · 4.80 Th/s"
+        - text: "#2 bitaxe-gamma"
+          subtext: "Best ever: 147M · 1.20 Th/s"
+        - text: "#3 bitaxe-ultra"
+          subtext: "Best ever: 17.4M · 555 Gh/s"
+  - id: "hashrate"
+    type: "four-stats"
+    refresh: "30s"
+    endpoint: "ui:8080/widgets/hashrate"
+    link: ""
+    example:
+      type: "four-stats"
+      link: ""
+      items:
+        - title: "1m Avg"
+          text: "2.15"
+          subtext: "Th/s"
+        - title: "5m Avg"
+          text: "2.10"
+          subtext: "Th/s"
+        - title: "1h Avg"
+          text: "2.05"
+          subtext: "Th/s"
+        - title: "24h Avg"
+          text: "1.98"
+          subtext: "Th/s"

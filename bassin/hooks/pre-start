@@ -1,11 +1,51 @@
 #!/usr/bin/env bash
 
+APP_DATA_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")"
+CKPOOL_CONFIG_FILE="${APP_DATA_DIR}/data/config/ckpool.conf"
+IPC_MIGRATION_FLAG="${APP_DATA_DIR}/IPC_MIGRATED"
+SV1_MIGRATION_FLAG="${APP_DATA_DIR}/SV1_SERVERURL_MIGRATED"
+
+# Pre-2.1.17 installs keep their ckpool.conf, so add the default ipcmining path once (existing values win).
+# Stratum V2 stays opt-in via Settings -> Stratum V2.
+if [[ ! -f "${IPC_MIGRATION_FLAG}" ]]; then
+	if [[ ! -f "${CKPOOL_CONFIG_FILE}" ]]; then
+		touch "${IPC_MIGRATION_FLAG}"
+	else
+		tmp="$(mktemp "${CKPOOL_CONFIG_FILE}.XXXXXX")"
+		if jq --arg ipc "/bitcoin/${APP_BITCOIN_IPC_SOCKET_RELATIVE_PATH:-node.sock}" '
+			{"ipcmining": $ipc} + .
+		' "${CKPOOL_CONFIG_FILE}" > "${tmp}"; then
+			chmod 600 "${tmp}"
+			mv -f "${tmp}" "${CKPOOL_CONFIG_FILE}"
+			touch "${IPC_MIGRATION_FLAG}"
+		else
+			rm -f "${tmp}"
+		fi
+	fi
+fi
+
+# 2.1.17 added sv2url without an explicit serverurl, which makes CKPool run SV2-only and skip port 3333.
+# Restore serverurl once for installs that have SV2 enabled without serverurl; users can still clear it later.
+if [[ ! -f "${SV1_MIGRATION_FLAG}" ]]; then
+	if [[ ! -f "${CKPOOL_CONFIG_FILE}" ]]; then
+		touch "${SV1_MIGRATION_FLAG}"
+	elif jq -e '((.sv2url != null) or (.sv2jdurl != null)) and (.serverurl == null or .serverurl == "" or .serverurl == [])' "${CKPOOL_CONFIG_FILE}" >/dev/null 2>&1; then
+		tmp="$(mktemp "${CKPOOL_CONFIG_FILE}.XXXXXX")"
+		if jq '. + {"serverurl": ["0.0.0.0:3333"]}' "${CKPOOL_CONFIG_FILE}" > "${tmp}"; then
+			chmod 600 "${tmp}"
+			mv -f "${tmp}" "${CKPOOL_CONFIG_FILE}"
+			touch "${SV1_MIGRATION_FLAG}"
+		else
+			rm -f "${tmp}"
+		fi
+	elif jq -e 'type == "object"' "${CKPOOL_CONFIG_FILE}" >/dev/null 2>&1; then
+		touch "${SV1_MIGRATION_FLAG}"
+	fi
+fi
+
 # This script updates the btcsig in ckpool.conf for existing users
 # who installed when the default was "/mined by Bassin/"
 # Only runs once to avoid overriding user's intentional changes
-
-APP_DATA_DIR="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")"
-CKPOOL_CONFIG_FILE="${APP_DATA_DIR}/data/config/ckpool.conf"
 BTCSIG_MIGRATION_FLAG="${APP_DATA_DIR}/BTCSIG_MIGRATED"
 
 # Skip if migration has already run
