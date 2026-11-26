@@ -11,7 +11,6 @@ services:
     user: "1000:1000"
     restart: on-failure
     stop_grace_period: 15m30s
-    # Expose P2P and RPC ports for external connections to namecoind
     ports:
       - "${APP_NAMECOIN_P2P_PORT}:${APP_NAMECOIN_P2P_PORT}"
       - "${APP_NAMECOIN_RPC_PORT}:${APP_NAMECOIN_RPC_PORT}"
@@ -23,10 +22,8 @@ services:
       # Network settings
       NAMECOIND_IP: "${APP_NAMECOIN_NODE_IP}"
       P2P_PORT: "${APP_NAMECOIN_P2P_PORT}"
-      P2P_WHITEBIND_PORT: "${APP_NAMECOIN_P2P_WHITEBIND_PORT}"
       RPC_PORT: "${APP_NAMECOIN_RPC_PORT}"
       TOR_PORT: "${APP_NAMECOIN_TOR_PORT}"
-      APPS_SUBNET: "${NETWORK_IP}/16"
       # Tor proxy settings
       TOR_HOST: "${APP_NAMECOIN_TOR_PROXY_IP}"
       TOR_SOCKS_PORT: "9050"
@@ -35,12 +32,6 @@ services:
       # I2P settings
       I2P_HOST: "${APP_NAMECOIN_I2P_DAEMON_IP}"
       I2P_SAM_PORT: "7656"
-      # ZMQ settings
-      ZMQ_RAWBLOCK_PORT: "${APP_NAMECOIN_ZMQ_RAWBLOCK_PORT}"
-      ZMQ_RAWTX_PORT: "${APP_NAMECOIN_ZMQ_RAWTX_PORT}"
-      ZMQ_HASHBLOCK_PORT: "${APP_NAMECOIN_ZMQ_HASHBLOCK_PORT}"
-      ZMQ_SEQUENCE_PORT: "${APP_NAMECOIN_ZMQ_SEQUENCE_PORT}"
-      ZMQ_HASHTX_PORT: "${APP_NAMECOIN_ZMQ_HASHTX_PORT}"
       # Hidden services
       P2P_HIDDEN_SERVICE: "${APP_NAMECOIN_P2P_HIDDEN_SERVICE}"
       RPC_HIDDEN_SERVICE: "${APP_NAMECOIN_RPC_HIDDEN_SERVICE}"
