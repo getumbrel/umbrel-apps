@@ -1,6 +1,6 @@
 services:
   server:
-    image: mbentley/omada-controller:6.3.0.111@sha256:10a6e4d3bdae2fa4d9d6f54fe5f2b5758b672227b1dda28137e89fc6b4ddd8b0
+    image: mbentley/omada-controller:6.3.0.112@sha256:de268d09b258a53a167ec94492c44361df118a766832adb544f5d36d64d9e570
     restart: on-failure
     stop_grace_period: 60s
     # Host networking is required so the controller can discover and adopt Omada devices on the local network
@@ -33,12 +33,26 @@ services:
         {
           admin off
         }
-        :8074 {
+        (omada) {
           reverse_proxy https://127.0.0.1:8043 {
             transport http {
               tls_insecure_skip_verify
             }
             header_down Location ^https?://[^/]+:(8043|8072) ""
+            {block}
+          }
+        }
+        :8074 {
+          # Omada marks its session cookie Secure, so browsers drop it on plain http and login loops.
+          # Strip Secure only when the app is opened over plain http; https keeps it.
+          @plain_http not header X-Forwarded-Proto https
+          handle @plain_http {
+            import omada {
+              header_down Set-Cookie "(?i);\s*secure" ""
+            }
+          }
+          handle {
+            import omada
           }
         }
         CADDY
