@@ -1,0 +1,23 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: deepseek-harness_web_1
+      APP_PORT: 3080
+
+  web:
+    image: ghcr.io/nilsonpmjr/deepseek-harness-umbrel:0.2.2-rc.5-umbrel.3@sha256:50bc18a7356fbe955db17a75d73457db856bd7758b28ae9bdd92f3a591dc1a45
+    restart: on-failure
+    stop_grace_period: 30s
+    user: "1000:1000"
+    volumes:
+      - ${APP_DATA_DIR}/data/dsh-home:/data/dsh-home
+      - ${APP_DATA_DIR}/data/workspace:/data/workspace
+      - ${APP_DATA_DIR}/data/home:/data/home
+    environment:
+      DSH_HOME: /data/dsh-home
+      HOME: /data/home
+      XDG_CONFIG_HOME: /data/home/.config
+      XDG_CACHE_HOME: /data/home/.cache
+      DSH_UMBREL_APP_PROXY_AUTH: "1"
