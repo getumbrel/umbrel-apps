@@ -111,7 +111,7 @@ services:
     container_name: plane-minio-1
 
   api:
-    image: makeplane/plane-backend:v1.5.0@sha256:386f659e0e43c9cb29050fb71439f04f40c5c7e1d93cca2c810bc7e2b1134daf
+    image: makeplane/plane-backend:v1.5.1@sha256:d7b76302e6e3f9b79cde7fc55deb2731cab7f9d1bb699df85ac5710ab2c75ae0
     user: "1000:1000"
     restart: on-failure
     environment:
@@ -127,7 +127,7 @@ services:
         condition: service_started
 
   worker:
-    image: makeplane/plane-backend:v1.5.0@sha256:386f659e0e43c9cb29050fb71439f04f40c5c7e1d93cca2c810bc7e2b1134daf
+    image: makeplane/plane-backend:v1.5.1@sha256:d7b76302e6e3f9b79cde7fc55deb2731cab7f9d1bb699df85ac5710ab2c75ae0
     user: "1000:1000"
     restart: on-failure
     environment:
@@ -144,7 +144,7 @@ services:
     command: ["sh","-c","celery -A plane worker --loglevel=info"]
 
   beat-worker:
-    image: makeplane/plane-backend:v1.5.0@sha256:386f659e0e43c9cb29050fb71439f04f40c5c7e1d93cca2c810bc7e2b1134daf
+    image: makeplane/plane-backend:v1.5.1@sha256:d7b76302e6e3f9b79cde7fc55deb2731cab7f9d1bb699df85ac5710ab2c75ae0
     user: "1000:1000"
     restart: on-failure
     environment:
@@ -163,7 +163,7 @@ services:
     command: ["sh","-c","celery -A plane beat --loglevel=info"]
 
   migrator:
-    image: makeplane/plane-backend:v1.5.0@sha256:386f659e0e43c9cb29050fb71439f04f40c5c7e1d93cca2c810bc7e2b1134daf
+    image: makeplane/plane-backend:v1.5.1@sha256:d7b76302e6e3f9b79cde7fc55deb2731cab7f9d1bb699df85ac5710ab2c75ae0
     user: "1000:1000"
     restart: on-failure
     environment:
@@ -176,8 +176,12 @@ services:
     command: ["sh","-c","python manage.py wait_for_db && python manage.py migrate"]
 
   web:
-    image: makeplane/plane-frontend:v1.5.0@sha256:d6e8afb888431c8d2bc77d4ff7244a5cd28f8c674aa46f114315b8300014b8ce
+    image: makeplane/plane-frontend:v1.5.1@sha256:dc47b71df2f6099b71e0493cac94e2e5bf3a9ceef9abbe808fc55cb40d078eae
     restart: on-failure
+    # Plane's Caddy allows 300 static-file requests per minute per client. One
+    # cold page load fetches about 300 files, so pages stay blank behind Umbrel's
+    # proxy. Raise the limit when the server starts; the rest of the config is kept.
+    command: ["sh", "-c", "sed 's/events 300$$/events 3000/' /etc/caddy/Caddyfile > /tmp/Caddyfile && exec caddy run --config /tmp/Caddyfile"]
     environment:
       <<: *env
     env_file:
@@ -186,7 +190,7 @@ services:
       - api
 
   live:
-    image: makeplane/plane-live:v1.5.0@sha256:f285e6979ed213b39207fcdf62abee9b5bde5dcc3731b4346d71e3a4f595810f
+    image: makeplane/plane-live:v1.5.1@sha256:a48ff2cf146d5f3e247ee9260b81fe22c7afee18e286f7b0f0d5e584966a06aa
     stop_grace_period: 30s
     user: "1000:1000"
     restart: on-failure
@@ -198,7 +202,7 @@ services:
       - api
 
   space:
-    image: makeplane/plane-space:v1.5.0@sha256:e7fd925a61796c4e37c2c42b39bf0c660dd0d4ca220705df70bee9f5e28e9273
+    image: makeplane/plane-space:v1.5.1@sha256:981bb738cdd5771d7d0e93f1835064ab6439237b4a1f1f3cd56a80f066265ab3
     user: "1000:1000"
     restart: on-failure
     environment:
@@ -215,8 +219,12 @@ services:
       retries: 3
 
   admin:
-    image: makeplane/plane-admin:v1.5.0@sha256:3857dc1000f08446375c277674ccda119ab092562f454e935bdba3aca5c5f4ee
+    image: makeplane/plane-admin:v1.5.1@sha256:ffa3e414cdc1465f20fd445479d583015ce309e1f9fa2a293c86bb9144a6e004
     restart: on-failure
+    # Plane's Caddy allows 300 static-file requests per minute per client. One
+    # cold page load fetches about 300 files, so pages stay blank behind Umbrel's
+    # proxy. Raise the limit when the server starts; the rest of the config is kept.
+    command: ["sh", "-c", "sed 's/events 300$$/events 3000/' /etc/caddy/Caddyfile > /tmp/Caddyfile && exec caddy run --config /tmp/Caddyfile"]
     environment:
       <<: *env
     env_file:
