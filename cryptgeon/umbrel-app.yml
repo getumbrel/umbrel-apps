@@ -1,0 +1,80 @@
+manifestVersion: 2.0
+id: cryptgeon
+environment:
+  - name: SIZE_LIMIT
+    services:
+      - web
+    default: "4 MiB"
+    note: >-
+      Maximum size of a single note or file, such as 4 MiB or 100 MiB, up to 512 MiB. Notes are held in memory, so larger limits use more RAM.
+  - name: MAX_VIEWS
+    services:
+      - web
+    default: "100"
+    note: >-
+      Highest number of views that can be chosen for a note. Must be a whole number.
+  - name: MAX_EXPIRATION
+    services:
+      - web
+    default: "360"
+    note: >-
+      Longest expiration time that can be chosen for a note, in minutes. Must be a whole number.
+  - name: ALLOW_ADVANCED
+    services:
+      - web
+    default: "true"
+    options:
+      - "true"
+      - "false"
+    note: >-
+      Select false to hide the advanced options, so every note can only be viewed once.
+  - name: ALLOW_FILES
+    services:
+      - web
+    default: "true"
+    options:
+      - "true"
+      - "false"
+    note: >-
+      Select false to only allow text notes.
+category: files
+name: Cryptgeon
+version: "2.9.3"
+tagline: Share self-destructing encrypted notes and files
+description: >-
+  Cryptgeon is a secure, open source service for sharing notes and files that destroy themselves after being read.
+
+
+  Write a note or attach files, choose how many times it can be viewed or how long it should live, and share the generated link. Notes are encrypted in your browser before they are sent, so the server never sees the key and cannot read them.
+
+
+  - Send text or files
+
+  - Client-side encryption, so the server cannot decrypt your notes
+
+  - Limit notes by number of views or by time
+
+  - Light and dark mode
+
+
+  ⚠️ Notes are only stored in memory and are never written to disk. All notes are lost when the app or your Umbrel restarts.
+
+
+  ⚠️ Links only work for people who can reach your Umbrel, for example on your local network or over a VPN such as Tailscale.
+releaseNotes: ""
+developer: cupcakearmy
+website: https://cryptgeon.org
+dependencies: []
+repo: https://github.com/cupcakearmy/cryptgeon
+support: https://github.com/cupcakearmy/cryptgeon/issues
+port: 8760
+gallery:
+  - 1.webp
+  - 2.webp
+  - 3.webp
+path: ""
+requiresHttps: true
+defaultUsername: ""
+defaultPassword: ""
+submitter: Kanishk Pachauri
+submission: https://github.com/getumbrel/umbrel-apps/pull/4023

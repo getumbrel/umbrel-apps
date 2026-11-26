@@ -1,0 +1,26 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: cryptgeon_web_1
+      APP_PORT: 8000
+      # Recipients open note links without an Umbrel login
+      PROXY_AUTH_ADD: "false"
+
+  web:
+    image: cupcakearmy/cryptgeon:2.9.3@sha256:0344b34ba5375b9cb5bc6740fd35d075d2a581ddb0fcd30e0494c62ba3408e87
+    user: "1000:1000"
+    restart: on-failure
+    environment:
+      REDIS: redis://cryptgeon_redis_1/
+      SIZE_LIMIT: 4 MiB
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:7.4.12-alpine@sha256:7f7d30b7fdd09467bac58198a1f166dd69789d348d4fe859cccb20e0cf287fbe
+    user: "1000:1000"
+    restart: on-failure
+    # Keep notes in memory only, and drop the oldest ones if 1 GB fills up (upstream suggestion)
+    command: redis-server --save "" --appendonly no --maxmemory 1gb --maxmemory-policy allkeys-lru
+    tmpfs:
+      - /data
