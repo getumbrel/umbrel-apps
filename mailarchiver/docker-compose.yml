@@ -5,8 +5,14 @@ services:
       APP_PORT: 5000
 
   app:
-    image: ghcr.io/s1t5/mailarchiver:2611.2@sha256:4baca9cb9dc6f97f2824f62489ba649ededc1095c4555f4d8b87da71349f7ebc
+    image: ghcr.io/s1t5/mailarchiver:2611.3@sha256:5d1e1a2b210f92186aade29bfecbac9001733ae9f51ea7a8375c9d23df24caaa
     restart: on-failure
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/5000"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
     volumes:
       - ${APP_DATA_DIR}/data/data-protection-keys:/app/DataProtection-Keys
       - ${APP_DATA_DIR}/data/appsettings.json:/app/appsettings.json
