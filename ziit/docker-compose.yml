@@ -1,0 +1,36 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: ziit_app_1
+      APP_PORT: 3000
+      # Editor extensions and badges use API keys, not Umbrel login
+      PROXY_AUTH_WHITELIST: "/api/external/*,/api/public/*"
+
+  app:
+    image: ghcr.io/0pandadev/ziit:v1.3.3@sha256:dfd1d51d2096aef1675d9d99e08e698963691142ecfa7b1d58f9031b5c2cff93
+    restart: on-failure
+    environment:
+      ZIIT_DATABASE_URL: "postgresql://postgres:${APP_ZIIT_POSTGRES_PASSWORD}@ziit_postgres_1:5432/ziit"
+      ZIIT_PASETO_KEY: ${APP_ZIIT_PASETO_KEY}
+      # Umbrel proxies requests, so rate limits use the forwarded client IP
+      ZIIT_TRUST_PROXY: 1
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    image: timescale/timescaledb-ha:pg17.11-ts2.32.0@sha256:e801086738f54cd32949baae7c78033fb774bca3c3abb50e1af59a72caf745e9
+    restart: on-failure
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${APP_ZIIT_POSTGRES_PASSWORD}
+      POSTGRES_DB: ziit
+      PGDATA: /var/lib/postgresql/data
+    volumes:
+      - ${APP_DATA_DIR}/data/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d ziit"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
