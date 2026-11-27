@@ -1,0 +1,17 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: fedimintcard-till_server_1
+      APP_PORT: 9878
+  server:
+    image: ghcr.io/fedimintcard/till:0.1.0@sha256:6b6af105a2b3822a082c1d92ddc41c3d450b91543fc3b365d6ddbc2e31a519dd
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 60s
+    environment:
+      TILL_POS_PUBLIC_URL: "http://${APP_DOMAIN}:9877"
+      TILL_ADMIN_PASSWORD: ${APP_PASSWORD}
+    volumes:
+      - ${APP_DATA_DIR}/data/wallet:/data
+    ports:
+      - "9877:9877/tcp"
