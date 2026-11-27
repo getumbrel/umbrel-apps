@@ -4,58 +4,9 @@ services:
   app_proxy:
     environment:
       APP_HOST: lonestrike_ui_1
-      # v1.11.57: UI runs nginx-unprivileged (non-root, UID 101) on 8080.
       APP_PORT: 8080
-      # v1.8.4: narrow auth whitelist — exposes ONLY read-only stats and the
-      # home-screen widget endpoint without an Umbrel session token. The
-      # widget loader has no session, so without whitelisting /api/widget/*
-      # the home-screen widget shows dashes (this fixes the v1.7.7 widget
-      # bug for real). /metrics is whitelisted for Prometheus/Grafana.
-      # /api/state, /api/health*, and /api/stratum-health are read-only.
-      #
-      # NOT whitelisted (require Umbrel session):
-      #   /api/setup, /api/config, /api/reset-share-stats, /api/webhooks,
-      #   /api/network-stats/* (the POST endpoints under that prefix can
-      #   toggle the Pulse network broadcasting and need protection — and
-      #   the same data is exposed read-only inside /api/state anyway, so
-      #   nothing useful is lost by keeping the network-stats prefix gated).
-      #
-      # Important: Umbrel's app_proxy whitelist does PREFIX matching, so
-      # listing "/api/network-stats" would also expose "/api/network-stats/
-      # enable" etc. Each entry below is either an exact-match path or
-      # ends in /* to mean "this prefix is fine to expose entirely".
-      # v3.2.0: ONLY /metrics bypasses Umbrel auth. Previously /api/state,
-      # /api/health* and the widget endpoint were readable unauthenticated.
-      # The home-screen widget is fetched by umbreld directly at ui:8080
-      # (see `widgets.endpoint` in umbrel-app.yml), not via app_proxy, so it
-      # needs no whitelist entry.
       PROXY_AUTH_WHITELIST: /metrics
 
-  # ═════════════════════════════════════════════════════════════════════
-  # init-permissions — one-shot install bootstrap (v1.11.55 chown, v1.11.56 conf-gen)
-  # ═════════════════════════════════════════════════════════════════════
-  # Runs as root, does TWO things needed for fresh-install correctness,
-  # then exits. ckpool/api/stunnel wait for this to complete successfully
-  # via depends_on: condition: service_completed_successfully.
-  #
-  # 1. CHOWNS /data to UID 1000 — runtime containers run as 1000 (security
-  #    hardening) but Umbrel creates host dirs as root. Without chown,
-  #    ckpool/api hit permission denied on first boot.
-  #
-  # 2. GENERATES /data/ckpool/config/ckpool.conf if missing — ckpool exits
-  #    immediately if its config doesn't exist. The upstream ckpool-solo
-  #    image has no entrypoint script that creates this file. Without
-  #    this step, fresh installs would crash-loop ckpool forever.
-  #
-  # The btcaddress field is a placeholder; in --btcsolo mode (see ckpool
-  # `command:` below) the actual payout address is taken from each miner's
-  # stratum username (e.g., "bc1q...workername"). The wizard collects the
-  # display address and stores it in /data/config/persist.json; if that
-  # file exists from a previous install, we use its address here for
-  # cosmetic consistency, but mining still works regardless.
-  #
-  # Container exits in ~1 second and shows as "Exited (0)" in docker ps -a.
-  # Runs on every app boot — idempotent, safe to re-execute.
   init-permissions:
     image: alpine:3.20@sha256:d9e853e87e55526f6b2917df91a2115c36dd7c696a35be12163d44e6e2a4b6bc
     user: "0:0"
@@ -68,13 +19,6 @@ services:
       - BITCOIN_ZMQ_HASHBLOCK=tcp://${APP_BITCOIN_NODE_IP}:${APP_BITCOIN_ZMQ_HASHBLOCK_PORT}
     volumes:
       - ${APP_DATA_DIR}/data:/data
-    # IMPORTANT: every shell variable below uses $$ (double-dollar), not $.
-    # Docker Compose interpolates $VAR / ${VAR} in the compose file — including
-    # inside this command script — at parse time. A single $ would be eaten by
-    # Compose (resolved to empty) before the container runs. $$ escapes to a
-    # literal $ so the in-container shell does the expansion. The container env
-    # vars (BITCOIN_RPC_*) are defined in the `environment:` block above and are
-    # expanded by the shell at runtime via $${...}.
     command:
       - sh
       - -c
@@ -88,6 +32,8 @@ services:
         # chown -R 1000:1000 /data (v1.11.55-57) broke stunnel's cert
         # generation → TLS port 4333 down. Chown per-service instead.
         mkdir -p /data/ckpool/config /data/ckpool/logs /data/config /data/stunnel
+        # Fresh installs start with the Pulse relays and alias registry off; users can turn them on under Settings > Privacy.
+        [ -f /data/config/config.json ] || printf '{"privacy":{"pulse":false,"registry":false}}\n' > /data/config/config.json
         chown 1000:1000 /data
         chown -R 1000:1000 /data/ckpool /data/config
         chown -R 65534:65534 /data/stunnel
@@ -161,17 +107,7 @@ services:
 
   ckpool:
     image: ghcr.io/getumbrel/docker-ckpool-solo:590fb2a@sha256:4e6b8f4f9c7d74c2111a6e082a2bbdc936fa510989a81e7cef714d1da944336b
-    # v1.11.54: run ckpool as UID 1000 (matches api's `node` user) so sharelog
-    # files written by ckpool are readable by the api container. Without this,
-    # v1.11.53 broke dashboard stats: api (UID 1000) couldn't read sharelog
-    # files created by ckpool (UID 0). Both containers now share UID 1000 →
-    # api can read everything ckpool writes natively, no chown needed.
     user: "1000:1000"
-    # v1.11.55: wait for init-permissions to chown host dirs to 1000:1000
-    # AND generate ckpool.conf if missing. Required for fresh installs where
-    # (a) Umbrel creates host data dirs as root and (b) no ckpool.conf exists
-    # because the upstream ckpool-solo image has no config-generation
-    # entrypoint. Both are handled by init-permissions before ckpool starts.
     depends_on:
       init-permissions:
         condition: service_completed_successfully
@@ -180,15 +116,6 @@ services:
       - no-new-privileges:true
     stop_grace_period: 1m
     command: ["--btcsolo", "--log-shares", "--config", "/etc/ckpool/ckpool.conf"]
-    # v1.11.13 — Healthcheck verifies the pid file AND listener socket exist.
-    # Previous v1.11.12 attempt used `pgrep -f ckpool` to verify process
-    # liveness, but the upstream ckpool-solo image doesn't ship pgrep, so
-    # the test always errored out → container reported unhealthy even
-    # though mining was working fine. ckpool writes /tmp/ckpool/main.pid
-    # on startup and removes it on graceful shutdown, so its presence is a
-    # reliable process-liveness signal. Pairing it with the listener socket
-    # check still ensures the API only attaches when ckpool is fully ready
-    # for stratum traffic — same goal as v1.11.12, working implementation.
     healthcheck:
       test: ["CMD-SHELL", "test -f /tmp/ckpool/main.pid && test -S /tmp/ckpool/listener"]
       interval: 5s
@@ -202,43 +129,16 @@ services:
     volumes:
       - ${APP_DATA_DIR}/data/ckpool/config:/etc/ckpool
       - ${APP_DATA_DIR}/data/ckpool/logs:/var/log/ckpool
-    environment:
-      - BITCOIN_RPC_HOST=${APP_BITCOIN_NODE_IP}
-      - BITCOIN_RPC_PORT=${APP_BITCOIN_RPC_PORT}
-      - BITCOIN_RPC_USER=${APP_BITCOIN_RPC_USER}
-      - BITCOIN_RPC_PASS=${APP_BITCOIN_RPC_PASS}
-      - BITCOIN_ZMQ_HASHBLOCK=tcp://${APP_BITCOIN_NODE_IP}:${APP_BITCOIN_ZMQ_HASHBLOCK_PORT}
-      - POOL_SIGNATURE=LoneStrike on Umbrel/
-      - START_DIFFICULTY=10000
-      - MIN_DIFFICULTY=1
-      - MAX_DIFFICULTY=0
-      - BLOCKPOLL=50
-      - UPDATE_INTERVAL=20
 
-  # TLS stratum terminator (v1.5.3+)
-  # Accepts stratum+ssl connections on :4333, decrypts, forwards to ckpool:3333.
-  # Self-signed cert auto-generated on first run and persisted in /data/stunnel.
   stunnel:
-    # v1.11.1: PINNED by sha256 digest for supply-chain integrity.
-    # The :v1.11.1 tag is human-readable labeling; the @sha256: digest is
-    # the immutable contract — Docker pulls exactly these bytes regardless
-    # of what tag-pointer changes happen in the registry. To update on a
-    # new release: rebuild, push, capture the new digest with
-    # `docker inspect <image>:latest --format='{{index .RepoDigests 0}}'`,
-    # and replace below.
     image: ghcr.io/danhaus93-ops/solostrike-stunnel:v3.7.6@sha256:408c8d029404fed02013431ee46ddd57f62f76314fd3f1e79528d62e0d46c96d
     restart: on-failure
     security_opt:
       - no-new-privileges:true
-    # v1.8.4: wait for ckpool to be healthy. stunnel forwards to ckpool:3333
-    # so connecting to a half-booted ckpool would drop early SSL miners.
     depends_on:
       ckpool:
         condition: service_healthy
     environment:
-      # v3.2.0: full container name of our ckpool. The bare 'ckpool' alias is
-      # shared across apps on umbrel_main_network and could resolve to another
-      # app's pool — TLS miners must never be forwarded there.
       - CKPOOL_HOST=lonestrike_ckpool_1
     ports:
       - "32224:4333"
@@ -251,9 +151,6 @@ services:
     security_opt:
       - no-new-privileges:true
     stop_grace_period: 30s
-    # v1.8.4: wait for ckpool to be HEALTHY, not just started. Combined
-    # with the ckpool healthcheck above, this prevents the API from
-    # connecting to a half-booted ckpool socket on cold boot.
     depends_on:
       ckpool:
         condition: service_healthy
@@ -272,8 +169,6 @@ services:
       - CKPOOL_LOG_DIR=/var/log/ckpool
       - CKPOOL_CONFIG_DIR=/etc/ckpool
       - CONFIG_DIR=/app/config
-      # v3.6.2: authority pubkey for the alias registry. Bump here (no code
-      # release) whenever the Worker's signing key rotates.
       - SS_REGISTRY_PUBKEY=5bf81c72c7e55ccf53698185691e55a47159a5cce6343fa1f558405ea623a362
       - BITCOIN_RPC_HOST=${APP_BITCOIN_NODE_IP}
       - BITCOIN_RPC_PORT=${APP_BITCOIN_RPC_PORT}
@@ -298,8 +193,6 @@ services:
     security_opt:
       - no-new-privileges:true
     environment:
-      # v3.2.0: full container name of our API, substituted into nginx.conf at
-      # container start. Differs per store — never bake it into the image.
       - API_HOST=lonestrike_api_1
     depends_on:
       - api
