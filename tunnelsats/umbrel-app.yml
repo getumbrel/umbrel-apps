@@ -4,16 +4,16 @@ storage:
   dataRoot: data
 category: bitcoin
 name: TunnelSats
-version: "3.6.0"
+version: "3.6.1"
 tagline: Run your Lightning node on clearnet without exposing your home IP
 description: >-
   ⚠️ TunnelSats is a paid service. You buy and renew a subscription with Lightning inside the app. After you activate it, the app shows the settings to add to your Lightning Node or Core Lightning config, and you restart that app yourself.
 
 
-  ⚠️ As soon as TunnelSats starts, it blocks your Lightning node's clearnet connections so your home IP can't leak, even before you subscribe. Tor connections keep working. To lift the block without a subscription, use Uninstall > Restore Node Networking in the app.
+  ⚠️ Once you activate or import a WireGuard subscription, TunnelSats enables a fail-closed kill switch for your Lightning node's clearnet traffic so your home IP cannot leak if the tunnel drops. Before you activate a subscription, your node's networking is not touched. Tor connections always keep working.
 
 
-  ⚠️ Before uninstalling, open Uninstall in the app and follow its steps. They undo your node config changes and lift the block. If you skip them, your node stays off clearnet until you restart your Umbrel. Uninstalling also deletes your WireGuard config, so download a backup in the app first if you want to restore your subscription later.
+  ⚠️ Before uninstalling an active setup, open Uninstall in the app and follow its steps. They undo your node config changes and lift the kill switch. If you skip them after activating a subscription, your node stays off clearnet until you restart your Umbrel. Uninstalling also deletes your WireGuard config, so download a backup in the app first if you want to restore your subscription later.
 
 
   TunnelSats connects your Umbrel to a TunnelSats server over WireGuard and sends only your Lightning node's traffic through it. Other nodes reach you on the server's public IP address, so you get the speed and reliability of clearnet without revealing your home IP. The rest of your Umbrel's traffic is not touched.
@@ -27,7 +27,7 @@ description: >-
   - Choose from exit servers around the world
 
   - Home screen widgets for tunnel status, data used and days left
-releaseNotes: ""
+releaseNotes: "Arm the fail-closed kill switch only after a WireGuard subscription or TunnelSats node config is present (keeping fresh installs in non-blocking standby), and align Official Umbrel App Store promotion tooling with PR #6433"
 
 developer: TunnelSats Team
 website: https://tunnelsats.com
