@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+APP_DIR="${APP_DATA_DIR:-$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")}"
+DATA_DIR="${APP_DATA_ROOT:-${APP_DIR}/data}"
+
+# Equinox shows the folders by the paths of Umbrel's Files (a folder added under "Add your own folder" at /storage
+# from /External/RAID/Torrents reads as External/RAID/Torrents). Inside the container nothing tells those paths, the
+# app's settings do: hand Equinox a copy before every start, so a changed folder shows after the restart it causes.
+if [[ -f "${APP_DIR}/settings.yml" ]]; then
+	cp "${APP_DIR}/settings.yml" "${DATA_DIR}/umbrel-settings.yml"
+	chown 1000:1000 "${DATA_DIR}/umbrel-settings.yml" 2>/dev/null || true
+	chmod 644 "${DATA_DIR}/umbrel-settings.yml"
+else
+	rm -f "${DATA_DIR}/umbrel-settings.yml"
+fi
