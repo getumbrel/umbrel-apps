@@ -1,0 +1,13 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: iobroker_server_1
+      APP_PORT: 8081
+
+  server:
+    image: iobroker/iobroker:v12.0.0@sha256:a6c75195298a4f643a96236fcb3dd84ca88e68eac6684f2ab2e6fbc8dccd386d
+    restart: on-failure
+    environment:
+      IOB_ADMINPORT: 8081
+    volumes:
+      - ${APP_DATA_DIR}/data:/opt/iobroker
