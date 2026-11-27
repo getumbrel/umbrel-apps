@@ -5,6 +5,9 @@ services:
     environment:
       APP_HOST: hashforge_pool_1
       APP_PORT: 8080
+      # The JSON API is read-only and holds only what the public pages show, so apps that cannot sign
+      # in to Umbrel (a phone app following the pool, say) may read it without the Umbrel login.
+      PROXY_AUTH_WHITELIST: "/api/*"
 
   pool:
     # Replace the tag and digest together when releasing; see the repository README.
