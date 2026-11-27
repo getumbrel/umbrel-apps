@@ -1,0 +1,198 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: lonestrike_ui_1
+      APP_PORT: 8080
+      PROXY_AUTH_WHITELIST: /metrics
+
+  init-permissions:
+    image: alpine:3.20@sha256:d9e853e87e55526f6b2917df91a2115c36dd7c696a35be12163d44e6e2a4b6bc
+    user: "0:0"
+    restart: on-failure
+    environment:
+      - BITCOIN_RPC_HOST=${APP_BITCOIN_NODE_IP}
+      - BITCOIN_RPC_PORT=${APP_BITCOIN_RPC_PORT}
+      - BITCOIN_RPC_USER=${APP_BITCOIN_RPC_USER}
+      - BITCOIN_RPC_PASS=${APP_BITCOIN_RPC_PASS}
+      - BITCOIN_ZMQ_HASHBLOCK=tcp://${APP_BITCOIN_NODE_IP}:${APP_BITCOIN_ZMQ_HASHBLOCK_PORT}
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+    command:
+      - sh
+      - -c
+      - |
+        set -e
+        echo "[init-permissions] starting"
+
+        # Step 1: ensure data dirs exist and are owned by the correct UIDs.
+        # ckpool + api run as UID 1000; stunnel runs as UID 65534 (nobody) and
+        # must own /data/stunnel to write its TLS cert. A blanket
+        # chown -R 1000:1000 /data (v1.11.55-57) broke stunnel's cert
+        # generation → TLS port 4333 down. Chown per-service instead.
+        mkdir -p /data/ckpool/config /data/ckpool/logs /data/config /data/stunnel
+        # Fresh installs start with the Pulse relays and alias registry off; users can turn them on under Settings > Privacy.
+        [ -f /data/config/config.json ] || printf '{"privacy":{"pulse":false,"registry":false}}\n' > /data/config/config.json
+        chown 1000:1000 /data
+        chown -R 1000:1000 /data/ckpool /data/config
+        chown -R 65534:65534 /data/stunnel
+        echo "[init-permissions] chowned: ckpool+config=1000, stunnel=65534"
+
+        # Step 2: render ckpool.conf FRESH from the committed template every run.
+        # Rationale: the Bitcoin RPC host/port/credentials and ZMQ endpoint are
+        # Umbrel-provided exports that can change across updates or node
+        # reconfiguration. The previous "generate once, preserve forever"
+        # approach left ckpool pinned to stale connection details if those
+        # exports ever changed. We now regenerate the connection fields each
+        # init from the live env, and preserve ONLY btcaddress (install state).
+        #
+        # btcaddress precedence: (1) api's saved config.json payoutAddress, else
+        # (2) the btcaddress already inside an existing ckpool.conf, else
+        # (3) the unspendable genesis placeholder. In --btcsolo mode the real
+        # payout comes from each miner's stratum username, so the placeholder is
+        # never used for real payouts.
+        CONF=/data/ckpool/config/ckpool.conf
+        TPL=/data/ckpool/config/ckpool.conf.template
+
+        BTC_ADDR=""
+        if [ -f /data/config/config.json ]; then
+          BTC_ADDR=$$(grep -oE '"payoutAddress"[[:space:]]*:[[:space:]]*"[^"]+"' /data/config/config.json 2>/dev/null | sed -E 's/.*"payoutAddress"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/' || true)
+        fi
+        if [ -z "$$BTC_ADDR" ] && [ -f "$$CONF" ]; then
+          BTC_ADDR=$$(grep -oE '"btcaddress"[[:space:]]*:[[:space:]]*"[^"]+"' "$$CONF" 2>/dev/null | sed -E 's/.*"btcaddress"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/' || true)
+        fi
+        if [ -z "$$BTC_ADDR" ]; then
+          BTC_ADDR="1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"
+        fi
+
+        if [ ! -f "$$TPL" ]; then
+          echo "[init-permissions] template missing in /data — writing bundled default" >&2
+          printf '{\n  "btcd" : [\n    {\n      "url" : "__BITCOIN_RPC_HOST__:__BITCOIN_RPC_PORT__",\n      "auth" : "__BITCOIN_RPC_USER__",\n      "pass" : "__BITCOIN_RPC_PASS__"\n    }\n  ],\n  "btcaddress" : "__BTC_ADDR__",\n  "btcsig" : "LoneStrike on Umbrel/",\n  "blockpoll" : 50,\n  "update_interval" : 20,\n  "serverurl" : [\n    "0.0.0.0:3333",\n    "0.0.0.0:3334",\n    "0.0.0.0:4334"\n  ],\n  "mindiff" : 1,\n  "startdiff" : 10000,\n  "maxdiff" : 0,\n  "highdiff" : 500000,\n  "logdir" : "/var/log/ckpool",\n  "zmqblock" : "__BITCOIN_ZMQ_HASHBLOCK__"\n}\n' > "$$TPL"
+        fi
+
+        # Substitute placeholders with live values using awk index()/substr()
+        # LITERAL splicing (NOT sed or gsub): the RPC password is Umbrel
+        # auto-generated and may contain | & / \ which corrupt regex-based
+        # replacers. index()/substr() treats the replacement as an opaque
+        # literal. Tmp file + atomic mv so ckpool never reads a half-written conf.
+        TMP=$$(mktemp)
+          awk \
+          -v rpc_host="$${BITCOIN_RPC_HOST}" \
+          -v rpc_port="$${BITCOIN_RPC_PORT}" \
+          -v rpc_user="$${BITCOIN_RPC_USER}" \
+          -v rpc_pass="$${BITCOIN_RPC_PASS}" \
+          -v zmq="$${BITCOIN_ZMQ_HASHBLOCK}" \
+          -v addr="$${BTC_ADDR}" \
+          'function repl(line, ph, val,   p) {
+             p = index(line, ph);
+             if (p == 0) return line;
+             return substr(line, 1, p-1) val substr(line, p+length(ph));
+           }
+           {
+             $$0 = repl($$0, "__BITCOIN_RPC_HOST__", rpc_host);
+             $$0 = repl($$0, "__BITCOIN_RPC_PORT__", rpc_port);
+             $$0 = repl($$0, "__BITCOIN_RPC_USER__", rpc_user);
+             $$0 = repl($$0, "__BITCOIN_RPC_PASS__", rpc_pass);
+             $$0 = repl($$0, "__BITCOIN_ZMQ_HASHBLOCK__", zmq);
+             $$0 = repl($$0, "__BTC_ADDR__", addr);
+             print;
+           }' "$$TPL" > "$$TMP"
+        mv "$$TMP" "$$CONF"
+        chown 1000:1000 "$$CONF"
+        chmod 640 "$$CONF"
+        echo "[init-permissions] rendered ckpool.conf from template (btcaddress=$$BTC_ADDR)"
+
+        echo "[init-permissions] complete"
+
+  ckpool:
+    image: ghcr.io/getumbrel/docker-ckpool-solo:590fb2a@sha256:4e6b8f4f9c7d74c2111a6e082a2bbdc936fa510989a81e7cef714d1da944336b
+    user: "1000:1000"
+    depends_on:
+      init-permissions:
+        condition: service_completed_successfully
+    restart: on-failure
+    security_opt:
+      - no-new-privileges:true
+    stop_grace_period: 1m
+    command: ["--btcsolo", "--log-shares", "--config", "/etc/ckpool/ckpool.conf"]
+    healthcheck:
+      test: ["CMD-SHELL", "test -f /tmp/ckpool/main.pid && test -S /tmp/ckpool/listener"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 30s
+    ports:
+      - "32222:3333"
+      - "32223:3334"
+      - "32225:4334"
+    volumes:
+      - ${APP_DATA_DIR}/data/ckpool/config:/etc/ckpool
+      - ${APP_DATA_DIR}/data/ckpool/logs:/var/log/ckpool
+
+  stunnel:
+    image: ghcr.io/danhaus93-ops/solostrike-stunnel:v3.7.6@sha256:408c8d029404fed02013431ee46ddd57f62f76314fd3f1e79528d62e0d46c96d
+    restart: on-failure
+    security_opt:
+      - no-new-privileges:true
+    depends_on:
+      ckpool:
+        condition: service_healthy
+    environment:
+      - CKPOOL_HOST=lonestrike_ckpool_1
+    ports:
+      - "32224:4333"
+    volumes:
+      - ${APP_DATA_DIR}/data/stunnel:/certs
+
+  api:
+    image: ghcr.io/danhaus93-ops/solostrike-api:v3.7.6@sha256:7098a4726cbf7560de60712820f4a941b260a1c685ec8a4f7c54ba599415ee84
+    restart: on-failure
+    security_opt:
+      - no-new-privileges:true
+    stop_grace_period: 30s
+    depends_on:
+      ckpool:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "--timeout=5", "http://localhost:3001/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    volumes:
+      - ${APP_DATA_DIR}/data/ckpool/logs:/var/log/ckpool:ro
+      - ${APP_DATA_DIR}/data/ckpool/config:/etc/ckpool
+      - ${APP_DATA_DIR}/data/config:/app/config
+    environment:
+      - NODE_ENV=production
+      - CKPOOL_LOG_DIR=/var/log/ckpool
+      - CKPOOL_CONFIG_DIR=/etc/ckpool
+      - CONFIG_DIR=/app/config
+      - SS_REGISTRY_PUBKEY=5bf81c72c7e55ccf53698185691e55a47159a5cce6343fa1f558405ea623a362
+      - BITCOIN_RPC_HOST=${APP_BITCOIN_NODE_IP}
+      - BITCOIN_RPC_PORT=${APP_BITCOIN_RPC_PORT}
+      - BITCOIN_RPC_USER=${APP_BITCOIN_RPC_USER}
+      - BITCOIN_RPC_PASS=${APP_BITCOIN_RPC_PASS}
+      - BITCOIN_ZMQ_HASHBLOCK=tcp://${APP_BITCOIN_NODE_IP}:${APP_BITCOIN_ZMQ_HASHBLOCK_PORT}
+      - POOL_SIGNATURE=LoneStrike on Umbrel/
+      - START_DIFFICULTY=10000
+      - MIN_DIFFICULTY=1
+      - MAX_DIFFICULTY=0
+      - BLOCKPOLL=50
+      - UPDATE_INTERVAL=20
+      - STRATUM_PORT=32222
+      - STRATUM_PORT_HOBBY=32223
+      - STRATUM_PORT_NICEHASH=32225
+      - HIGH_DIFFICULTY=500000
+      - STRATUM_PORT_TLS=32224
+
+  ui:
+    image: ghcr.io/danhaus93-ops/solostrike-ui:v3.7.6@sha256:be99981206f0a67dc4b7dc016f9225fe176b4a5a3c997bd34e4808155ca6b440
+    restart: on-failure
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      - API_HOST=lonestrike_api_1
+    depends_on:
+      - api

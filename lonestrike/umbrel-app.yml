@@ -1,0 +1,65 @@
+manifestVersion: 1
+id: lonestrike
+storage:
+  dataRoot: data
+category: bitcoin
+name: LoneStrike
+version: "3.7.6"
+tagline: Zero-fee solo Bitcoin mining pool with a real-time dashboard
+description: >-
+  LoneStrike is a solo Bitcoin mining pool that runs on your Umbrel. It uses the ckpool-solo engine with your own Bitcoin node, so if one of your miners finds a block, the whole reward goes to your address. There are no pool fees and no middleman.
+
+
+  Point your ASICs, Bitaxes or rented hashrate at the stratum address shown in the app:
+
+  - **32222** for ASICs
+
+  - **32223** for low-hashrate hobby miners such as Bitaxe and NerdQaxe++
+
+  - **32225** for high-difficulty rented hashrate such as NiceHash
+
+  - **32224** for stratum over TLS
+
+
+  The dashboard shows live and historical hashrate, every worker with its best share, block odds and strike forecasts, network blocks and fees, and power-cost estimates. It detects common miner models and reads their temperatures and fans from your local network. You can also change a miner's pool and tuning settings from the app, which asks you to confirm first. CSV export, webhooks and a Prometheus /metrics endpoint are included.
+
+
+  **Network connections:** LoneStrike fetches fees, recent blocks and prices from mempool.space, and the interface loads its fonts from Google Fonts. On Umbrel, the Pulse community map and the developer's alias registry start turned off. You can turn them on under Settings > Privacy, which connects to public nostr relays (optionally through Tor) and lets you share your hashrate, worker count, miner models and benchmarks, the height of any block you find, and optionally a rough location, under a random identity. Private Mode stops all of these connections except the fonts.
+releaseNotes: ""
+developer: danhaus93-ops
+website: https://github.com/danhaus93-ops/solostrike-umbrel
+dependencies:
+  - bitcoin
+repo: https://github.com/danhaus93-ops/solostrike-umbrel
+support: https://github.com/danhaus93-ops/solostrike-umbrel/issues
+port: 32226
+gallery:
+  - 1.webp
+  - 2.webp
+  - 3.webp
+  - 4.webp
+path: ""
+defaultUsername: ""
+defaultPassword: ""
+submitter: danhaus93-ops
+submission: https://github.com/getumbrel/umbrel-apps/pull/5698
+widgets:
+  - id: "stats"
+    type: "four-stats"
+    name: "LoneStrike Stats"
+    link: ""
+    refresh: "10s"
+    endpoint: "ui:8080/api/widget/four-stats"
+    example:
+      type: "four-stats"
+      link: ""
+      items:
+        - title: "Pool Hashrate"
+          text: "542.8"
+          subtext: "GH/s"
+        - title: "Workers"
+          text: "3"
+        - title: "Blocks Found"
+          text: "0"
+        - title: "Best Diff"
+          text: "1.2B"
