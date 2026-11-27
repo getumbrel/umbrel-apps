@@ -1,0 +1,16 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: otp-shelter_app_1
+      APP_PORT: 3713
+
+  app:
+    image: ghcr.io/egzola/otp-shelter:1.0.0@sha256:b0b9c3551b9a8604edba4389cc725d1607f869f33846eca85b482eec8c86ae9a
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      PORT: 3713
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
