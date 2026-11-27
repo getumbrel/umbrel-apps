@@ -1,0 +1,75 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: foliowiki_server_1
+      APP_PORT: 4870
+      # Folio's MCP endpoint is called by AI agents that cannot send an Umbrel
+      # login cookie. It answers 401 without a Folio access token.
+      PROXY_AUTH_WHITELIST: "/mcp"
+
+  server:
+    image: ghcr.io/evergreen-it-dev/folio:v0.4.6@sha256:088cc953edfd38b540ff45664f953ef4f0f189213837ed797a624643e1aee0c0
+    # No `user:`. The image starts as root and writes Git repositories under /app/data.
+    init: true
+    restart: on-failure
+    stop_grace_period: 1m
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 4870
+      DATABASE_URL: postgresql://folio:${APP_FOLIOWIKI_POSTGRES_PASSWORD}@foliowiki_postgres_1:5432/folio
+      REDIS_URL: redis://foliowiki_redis_1:6379
+      # Must be the http address people open: with NODE_ENV=production Folio marks the
+      # session cookie Secure unless PUBLIC_URL is an explicit http:// URL.
+      PUBLIC_URL: http://${DEVICE_DOMAIN_NAME}:${APP_PROXY_PORT}
+      ASSET_BACKEND: local
+      FOLIO_SECRET: ${APP_FOLIOWIKI_SECRET}
+      CURSOR_AGENT_WORKSPACE_ROOT: /app/data/assistant/workspaces
+      CURSOR_AGENT_STATE_DIR: /app/data/assistant/state
+    volumes:
+      - ${APP_DATA_DIR}/data/folio:/app/data
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:4870/api/health').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+
+  postgres:
+    image: postgres:17.12-alpine@sha256:f9cf3e1f0066f0eb0c48707d864f0ac5941e9ff454a072077d97a4d278d07d73
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      POSTGRES_USER: folio
+      POSTGRES_PASSWORD: ${APP_FOLIOWIKI_POSTGRES_PASSWORD}
+      POSTGRES_DB: folio
+    volumes:
+      - ${APP_DATA_DIR}/data/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U folio -d folio"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  # Transient data only (presence, rate limits): persistence is off on purpose.
+  redis:
+    image: redis:7.4.12-alpine@sha256:7f7d30b7fdd09467bac58198a1f166dd69789d348d4fe859cccb20e0cf287fbe
+    user: "1000:1000"
+    restart: on-failure
+    command: redis-server --save '' --appendonly no
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
