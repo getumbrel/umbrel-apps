@@ -1,0 +1,16 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: christianpure-bible-search_web_1
+      APP_PORT: 8417
+
+  web:
+    user: "1000:1000"
+    image: ghcr.io/christianpure/bible-search:0.1.0@sha256:5ef35f9dcb85d6d919fdcf58a8bdd3e3181fc27503e745f86fa3be1fbe1bf837
+    restart: on-failure
+    environment:
+      STUDY_SOURCE: umbrel
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
