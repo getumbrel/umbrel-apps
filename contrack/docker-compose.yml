@@ -1,0 +1,19 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: contrack_web_1
+      APP_PORT: 3210
+
+  web:
+    image: ghcr.io/arvarik/contrack:2.0.6@sha256:8e45ad3aa30df38f6eb0897b368b2c8eb0647cf793d9ab1d562e267b848c325d
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 1m
+    volumes:
+      - ${APP_DATA_DIR}/data/app:/app/data
+    environment:
+      AUTH_REQUIRED: "true"
+      TRUST_PROXY_HOPS: "1"
+      ALLOWED_HOSTS: ".onion,.ts.net"
