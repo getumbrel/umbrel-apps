@@ -1,0 +1,86 @@
+manifestVersion: 1.1
+id: tunnelsats
+storage:
+  dataRoot: data
+category: bitcoin
+name: TunnelSats
+version: "3.6.0"
+tagline: Run your Lightning node on clearnet without exposing your home IP
+description: >-
+  ⚠️ TunnelSats is a paid service. You buy and renew a subscription with Lightning inside the app. After you activate it, the app shows the settings to add to your Lightning Node or Core Lightning config, and you restart that app yourself.
+
+
+  ⚠️ As soon as TunnelSats starts, it blocks your Lightning node's clearnet connections so your home IP can't leak, even before you subscribe. Tor connections keep working. To lift the block without a subscription, use Uninstall > Restore Node Networking in the app.
+
+
+  ⚠️ Before uninstalling, open Uninstall in the app and follow its steps. They undo your node config changes and lift the block. If you skip them, your node stays off clearnet until you restart your Umbrel. Uninstalling also deletes your WireGuard config, so download a backup in the app first if you want to restore your subscription later.
+
+
+  TunnelSats connects your Umbrel to a TunnelSats server over WireGuard and sends only your Lightning node's traffic through it. Other nodes reach you on the server's public IP address, so you get the speed and reliability of clearnet without revealing your home IP. The rest of your Umbrel's traffic is not touched.
+
+
+  It works with Lightning Node (LND) and Core Lightning, and is useful if you have a dynamic home IP, are behind CGNAT, or want clearnet peering without the latency of Tor. If the tunnel goes down, your node's traffic is blocked instead of falling back to your home connection.
+
+
+  - Buy and renew in the app with Lightning, or renew automatically with Nostr Wallet Connect
+
+  - Choose from exit servers around the world
+
+  - Home screen widgets for tunnel status, data used and days left
+releaseNotes: ""
+
+developer: TunnelSats Team
+website: https://tunnelsats.com
+dependencies: []
+repo: https://github.com/Tunnelsats/ts-umbrel-app
+support: https://tunnelsats.com/join-telegram
+
+port: 9739
+gallery:
+  - 1.webp
+  - 2.webp
+  - 3.webp
+  - 4.webp
+path: ""
+
+defaultUsername: ""
+defaultPassword: ""
+
+widgets:
+  - id: "status"
+    type: "four-stats"
+    refresh: "15s"
+    endpoint: "tunnelsats-web:9740/api/local/widgets/status"
+    link: ""
+    example:
+      type: "four-stats"
+      link: ""
+      items:
+        - title: "LND Shield"
+          text: "🟢 Active"
+          subtext: ""
+        - title: "Exit Node"
+          text: "🇺🇸 us3"
+          subtext: ""
+        - title: "Data Used"
+          text: "14.2"
+          subtext: "GB"
+        - title: "Expires ⚡"
+          text: "28"
+          subtext: "days"
+  - id: "overview"
+    type: "text-with-progress"
+    refresh: "15s"
+    endpoint: "tunnelsats-web:9740/api/local/widgets/overview"
+    link: ""
+    example:
+      type: "text-with-progress"
+      link: ""
+      title: "🟢 Active · LND · 🇺🇸 us3"
+      text: "28 days"
+      subtext: "left · ⚡ Auto"
+      progressLabel: "14.2 / 100 GB (14%)"
+      progress: 0.14
+
+submitter: Tunnelsats
+submission: https://github.com/getumbrel/umbrel-apps/pull/4919
