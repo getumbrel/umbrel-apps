@@ -1,0 +1,24 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: pigallery2_web_1
+      APP_PORT: 80
+
+  web:
+    image: bpatrik/pigallery2:3.8.0@sha256:290de6eb5216218b0be7561ec04d719260e551a213257300abeaba7d72c4a5f5
+    user: "1000:1000"
+    restart: on-failure
+    environment:
+      NODE_ENV: "production"
+      # Creates the admin with Umbrel's per-install password on the first start (deterministicPassword).
+      # An existing user is never overwritten, so a password changed in PiGallery2 stays.
+      Users-enforcedUsers: '[{"name":"admin","role":"Admin","password":"${APP_PASSWORD}"}]'
+    volumes:
+      - ${APP_DATA_DIR}/data/config:/app/data/config
+      - ${APP_DATA_DIR}/data/db:/app/data/db
+      # thumbnails and transcoded videos: regenerated when missing, so excluded from backups
+      - ${APP_DATA_DIR}/data/cache:/app/data/tmp
+      # default (empty) photo folder; users connect their own through the "Photos" folder access
+      - ${APP_DATA_DIR}/data/photos:/app/data/images:ro

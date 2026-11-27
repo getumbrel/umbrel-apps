@@ -1,0 +1,68 @@
+manifestVersion: 1
+id: pigallery2
+storage:
+  dataRoot: data
+folderAccess:
+  - id: photos
+    name: Photos
+    note: >-
+      Connect the folder that holds your photos and videos, and PiGallery2 shows its subfolders as albums.
+      Access is read-only: PiGallery2 never changes your files. Until a folder is connected, this version shows
+      "Error during listing the directory" instead of an empty gallery; the next PiGallery2 release fixes that.
+    mounts:
+      - service: web
+        targetPath: /app/data/images
+        readOnly: true
+category: files
+name: PiGallery2
+version: "3.8.0"
+tagline: Fast, directory-first photo gallery for low-resource servers
+description: >-
+  Log in with the username and password that Umbrel shows for PiGallery2. Then connect your photo folder in the
+  app's settings on Umbrel (Photos), and PiGallery2 indexes it the first time you open it. Until you connect it,
+  this version shows "Error during listing the directory" instead of an empty gallery; a nicer first screen comes
+  with the next PiGallery2 release.
+
+
+  PiGallery2 is a fast, lightweight photo gallery that shows your existing folder structure as it is. On Umbrel it
+  gets read-only access to your photos, so it's a safe way to browse a library you already keep in folders. It was
+  built to run well on a Raspberry Pi.
+
+
+  - Browse your folders as albums, with thumbnails generated on the fly
+
+  - Search by keyword, date, place, person, camera and more, and save searches as albums
+
+  - Map of your geotagged photos and GPX tracks
+
+  - Faces from your photo metadata (e.g. tagged in digiKam or Lightroom)
+
+  - Videos with automatic transcoding, live photos, HEIC and RAW (DNG, ARW)
+
+  - Share folders with a link, optionally with a password and expiry date
+
+  - Multiple users, each with their own allow and block lists of folders
+
+  - Photo frame and slideshow mode
+
+
+  Sharing links only work for people who can reach your Umbrel. With "Require Umbrel login" on (the default), they also need your Umbrel login, so turn it off in PiGallery2's settings on Umbrel if you share with others. PiGallery2's own login still protects the gallery.
+releaseNotes: ""
+
+developer: Patrik J. Braun
+website: https://bpatrik.github.io/pigallery2/
+dependencies: []
+repo: https://github.com/bpatrik/pigallery2
+support: https://github.com/bpatrik/pigallery2/discussions
+
+port: 8480
+gallery: []
+path: ""
+
+defaultUsername: "admin"
+deterministicPassword: true
+backupIgnore:
+  - data/cache/*
+
+submitter: Patrik J. Braun
+submission: https://github.com/getumbrel/umbrel-apps/pull/6409
