@@ -5,7 +5,7 @@ storage:
 name: BOLT12 Pay
 tagline: Self-hosted Lightning payments and identity with BOLT12, BIP353, LNURL, and Nostr
 category: bitcoin
-version: 0.3.30
+version: 0.3.32
 port: 8367
 description: |-
   BOLT12 Pay brings BOLT12 Offers to your LND node. You can connect an existing Phoenixd wallet as an additional payment backend.
@@ -84,23 +84,28 @@ submission: https://github.com/getumbrel/umbrel-apps/pull/5429
 repo: https://github.com/Alex71btc/lndk-pay
 support: https://github.com/Alex71btc/lndk-pay/issues
 releaseNotes: |
-  BOLT12 Pay 0.3.30
+  BOLT12 Pay 0.3.32 - Important Security Update
 
-  - Connect an existing Phoenixd wallet alongside LND + LNDK and switch backends without changing the wallet assigned to Offers, aliases or NWC connections.
-  - Filter Lightning Activity by wallet and export a selected date range as CSV. View channel liquidity from Pay.
-  - Use LNURL-auth and LNURL-withdraw by scanning or pasting a link. Updated QR controls, grouped Offer decoding and BOLT12 minimum-amount previews simplify payments.
-  - Android Companion 1.1.4 shows the receiving wallet and opens the matching payment. Historical Phoenixd imports no longer replay old notifications.
-  - Pause/reactivate a Phoenixd connection, optionally hide alias pages, or remove saved credentials while choosing whether to retain local history.
-  - Optionally clean up that wallet's Offers, aliases and matching Cloudflare publications without removing the public Setup address. Recognize chunked DNS TXT records.
-  - Restore a missing public BIP353 record with LND after removing its former Phoenixd connection.
-  - Umbrel still requires the Lightning Node app. Phoenixd is optional and may run on another server.
+  - Includes all security improvements from 0.3.31.
+  - Hardened API authentication, CSRF and browser security.
+  - Restored Nostr Zap receipts for LND and Phoenixd.
+  - Restored native Zap notifications.
+  - Hardened outgoing Zap receipt relay connections.
+  - Added NWC compatibility warnings in all five languages.
 
-  - On fresh installs, Umbrel supplies the initial app password and displays it under Default credentials. Existing passwords are preserved.
-  - Changing the app password signs out existing Pay sessions and locks NWC admin controls until you unlock them again.
+  All users are strongly encouraged to upgrade.
+
+  If an NWC connection is marked as incompatible, create a
+  new connection, reconnect your client and verify that it
+  works before deleting the old connection.
+
+  Do not downgrade to 0.3.30.
+
+  Special thanks to dritzps and Matt Hill (Start9).
 
   LNDK is unchanged.
 
-  https://github.com/Alex71btc/lndk-pay/releases/tag/v0.3.30
+  https://github.com/Alex71btc/lndk-pay/releases/tag/v0.3.32
 
 dependencies:
   - lightning

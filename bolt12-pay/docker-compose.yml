@@ -5,9 +5,11 @@ services:
     environment:
       APP_HOST: bolt12-pay_web_1
       APP_PORT: 8081
+      # Public payment pages and LNURL endpoints for outside visitors.
+      # "/" is an exact match: only the public links page at the root, not the whole app.
       PROXY_AUTH_WHITELIST: "/,/alias,/alias/*,/.well-known,/.well-known/*,/api/lnurl,/api/lnurl/*,/api/qr,/api/qr/*,/icon.svg,/icon.png,/service-worker.js,/public.webmanifest,/pay.webmanifest,/assets,/assets/*"
   web:
-    image: alex71btc/bolt12-pay:0.3.30@sha256:285153a7dc399c7ae53b46c7aaeeb746fd5b7db629d8a714be32d97c026f0589
+    image: alex71btc/bolt12-pay:0.3.32@sha256:a5d651d71f40a5e891b8f804aaea74670ec695c2cd2fbd92567b195352b59415
     restart: on-failure
     depends_on:
       - lndk
