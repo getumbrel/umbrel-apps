@@ -3,7 +3,7 @@ id: netbird
 name: NetBird
 tagline: An adaptive client for Zero Trust Networking
 category: networking
-version: "0.83.2"
+version: "0.84.0"
 port: 8479
 description: >-
   NetBird is a secure networking platform that creates private, peer-to-peer connections between devices using encrypted communication channels. It builds a trusted network layer that allows seamless and direct communication without exposing data to intermediaries. Every connection is protected with modern encryption standards and managed automatically through a zero trust security model that authenticates identities rather than networks.
@@ -30,13 +30,16 @@ gallery:
   - 2.webp
   - 3.webp
 releaseNotes: >-
-  This update fixes device registration when no device name is configured. NetBird now uses the system hostname instead of an empty name.
+  ⚠️ Advanced users: CLI flags and environment variables have changed. Pass setup keys and hostnames to `up` or `login`, and configure daemon settings through `run`, `install`, or `reconfigure`. TCP daemon connections are no longer supported; use the Unix socket. Review custom scripts before upgrading.
 
 
-  Advanced users: TCP daemon connections are no longer supported. Use the Unix socket for custom CLI integrations.
+  This update improves connection recovery when networks change, fixes relay reconnections and WireGuard handshake recovery, and improves DNS reliability.
 
 
-  Full release notes can be found at https://github.com/netbirdio/netbird/releases/tag/v0.83.2
+  Linux firewall fixes ensure deny rules take priority for published container ports. Review custom access policies if you previously relied on traffic passing through a deny rule. Rosenpass support is now deprecated.
+
+
+  Full release notes can be found at https://github.com/netbirdio/netbird/releases/tag/v0.84.0
 dependencies: []
 path: ""
 defaultUsername: ""
