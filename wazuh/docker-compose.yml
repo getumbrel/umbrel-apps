@@ -1,0 +1,145 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: wazuh_wazuh.dashboard_1
+      APP_PORT: 5601
+
+  wazuh.certs-generator:
+    image: wazuh/wazuh-certs-generator:0.0.5@sha256:1be9f9abfb6a37ac7bd3d6d707e1b43589c2b81b23c01a46992e93832795abf9
+    # Generate the certificates on first start only, so the stack keeps its identity.
+    entrypoint: sh -c "[ -f /certificates/root-ca.pem ] || /entrypoint.sh"
+    restart: on-failure
+    environment:
+      CERT_TOOL_VERSION: "4.14"
+    volumes:
+      - ${APP_DATA_DIR}/data/certs:/certificates
+      - ${APP_DATA_DIR}/certs.yml:/config/certs.yml:ro
+
+  wazuh.indexer:
+    image: wazuh/wazuh-indexer:4.14.11@sha256:6855bea0a883fda201cba1b9969a744d01559bb4ee05aa4703b937edee0c11e5
+    hostname: wazuh.indexer
+    restart: on-failure
+    depends_on:
+      wazuh.certs-generator:
+        condition: service_completed_successfully
+    environment:
+      OPENSEARCH_JAVA_OPTS: "-Xms1g -Xmx1g"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fks --cert config/certs/admin.pem --key config/certs/admin-key.pem https://localhost:9200/_cluster/health"]
+      interval: 20s
+      timeout: 10s
+      retries: 15
+      start_period: 60s
+    volumes:
+      - ${APP_DATA_DIR}/data/indexer:/var/lib/wazuh-indexer
+      - ${APP_DATA_DIR}/data/certs:/usr/share/wazuh-indexer/config/certs:ro
+      - ${APP_DATA_DIR}/opensearch.yml:/usr/share/wazuh-indexer/config/opensearch.yml:ro
+      - ${APP_DATA_DIR}/internal_users.yml:/usr/share/wazuh-indexer/config/opensearch-security/internal_users.yml:ro
+
+  # Sets the indexer passwords from the Umbrel-derived secrets on every start.
+  wazuh.indexer-users:
+    image: wazuh/wazuh-indexer:4.14.11@sha256:6855bea0a883fda201cba1b9969a744d01559bb4ee05aa4703b937edee0c11e5
+    restart: on-failure
+    depends_on:
+      wazuh.indexer:
+        condition: service_healthy
+    environment:
+      ADMIN_PASSWORD: ${APP_PASSWORD}
+      DASHBOARD_PASSWORD: ${APP_WAZUH_DASHBOARD_PASSWORD}
+    entrypoint:
+      - /bin/bash
+      - -c
+      - |
+        set -e
+        put_user() {
+          curl -fsS --cacert /certs/root-ca.pem --cert /certs/admin.pem --key /certs/admin-key.pem \
+            -X PUT -H "Content-Type: application/json" -d "$$2" \
+            "https://wazuh.indexer:9200/_plugins/_security/api/internalusers/$$1"
+          echo
+        }
+        put_user admin "{\"password\": \"$$ADMIN_PASSWORD\", \"backend_roles\": [\"admin\"]}"
+        put_user kibanaserver "{\"password\": \"$$DASHBOARD_PASSWORD\"}"
+    volumes:
+      - ${APP_DATA_DIR}/data/certs:/certs:ro
+
+  wazuh.manager:
+    image: wazuh/wazuh-manager:4.14.11@sha256:3d0e5752ea98cb3b036530074cd9851dce6ab1fa01122e0d939226b766389a6d
+    hostname: wazuh.manager
+    restart: on-failure
+    depends_on:
+      wazuh.indexer-users:
+        condition: service_completed_successfully
+    # Copy the packaged ossec.conf in on first start only, so changes made in the dashboard survive restarts.
+    entrypoint:
+      - /bin/bash
+      - -c
+      - |
+        if [ -e /var/ossec/etc/ossec.conf ]; then
+          rm -rf /wazuh-config-mount
+        else
+          mkdir -p /wazuh-config-mount/etc && cp /wazuh-default/ossec.conf /wazuh-config-mount/etc/ossec.conf
+        fi
+        exec /init
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 655360
+        hard: 655360
+    ports:
+      # Agent connection and enrollment
+      - "1514:1514"
+      - "1515:1515"
+    environment:
+      INDEXER_URL: https://wazuh.indexer:9200
+      INDEXER_USERNAME: admin
+      INDEXER_PASSWORD: ${APP_PASSWORD}
+      FILEBEAT_SSL_VERIFICATION_MODE: full
+      SSL_CERTIFICATE_AUTHORITIES: /etc/wazuh-certs/root-ca-manager.pem
+      SSL_CERTIFICATE: /etc/wazuh-certs/wazuh.manager.pem
+      SSL_KEY: /etc/wazuh-certs/wazuh.manager-key.pem
+      API_USERNAME: wazuh-wui
+      API_PASSWORD: ${APP_WAZUH_API_PASSWORD}
+    volumes:
+      - ${APP_DATA_DIR}/data/manager/api-configuration:/var/ossec/api/configuration
+      - ${APP_DATA_DIR}/data/manager/etc:/var/ossec/etc
+      - ${APP_DATA_DIR}/data/manager/logs:/var/ossec/logs
+      - ${APP_DATA_DIR}/data/manager/queue:/var/ossec/queue
+      - ${APP_DATA_DIR}/data/manager/multigroups:/var/ossec/var/multigroups
+      - ${APP_DATA_DIR}/data/manager/integrations:/var/ossec/integrations
+      - ${APP_DATA_DIR}/data/manager/active-response:/var/ossec/active-response/bin
+      - ${APP_DATA_DIR}/data/manager/agentless:/var/ossec/agentless
+      - ${APP_DATA_DIR}/data/manager/wodles:/var/ossec/wodles
+      - ${APP_DATA_DIR}/data/filebeat/etc:/etc/filebeat
+      - ${APP_DATA_DIR}/data/filebeat/var:/var/lib/filebeat
+      - ${APP_DATA_DIR}/data/certs:/etc/wazuh-certs:ro
+      - ${APP_DATA_DIR}/ossec.conf:/wazuh-default/ossec.conf:ro
+
+  wazuh.dashboard:
+    image: wazuh/wazuh-dashboard:4.14.11@sha256:38ad3289540e4c5d42a4e434c82299f092ae8aeb1e10bc28a472fdc268ffb752
+    hostname: wazuh.dashboard
+    restart: on-failure
+    depends_on:
+      wazuh.indexer-users:
+        condition: service_completed_successfully
+      wazuh.manager:
+        condition: service_started
+    environment:
+      WAZUH_API_URL: https://wazuh.manager
+      DASHBOARD_USERNAME: kibanaserver
+      DASHBOARD_PASSWORD: ${APP_WAZUH_DASHBOARD_PASSWORD}
+      API_USERNAME: wazuh-wui
+      API_PASSWORD: ${APP_WAZUH_API_PASSWORD}
+    volumes:
+      - ${APP_DATA_DIR}/data/dashboard/config:/usr/share/wazuh-dashboard/data/wazuh/config
+      - ${APP_DATA_DIR}/data/dashboard/custom:/usr/share/wazuh-dashboard/plugins/wazuh/public/assets/custom
+      - ${APP_DATA_DIR}/data/certs:/usr/share/wazuh-dashboard/certs:ro
+      - ${APP_DATA_DIR}/opensearch_dashboards.yml:/usr/share/wazuh-dashboard/config/opensearch_dashboards.yml:ro

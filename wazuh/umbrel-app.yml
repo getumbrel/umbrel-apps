@@ -1,0 +1,54 @@
+manifestVersion: 1
+id: wazuh
+storage:
+  dataRoot: data
+environment:
+  - name: OPENSEARCH_JAVA_OPTS
+    services:
+      - wazuh.indexer
+    default: "-Xms1g -Xmx1g"
+    note: >-
+      Memory for the Wazuh indexer. Raise both values together (for example "-Xms2g -Xmx2g") if you monitor many agents and have RAM to spare.
+category: networking
+name: Wazuh
+version: "4.14.11"
+tagline: Unified XDR and SIEM protection for endpoints and cloud workloads
+description: >-
+  Wazuh is a free and open source security platform that unifies XDR and SIEM protection for endpoints and cloud workloads.
+
+
+  On your Umbrel, Wazuh becomes the security hub for your home or small business. Install the lightweight Wazuh agent on your computers and servers, point it at your Umbrel, and they report back here for monitoring, alerting, and analysis.
+
+
+  - Intrusion and threat detection, with a rule set mapped to MITRE ATT&CK
+
+  - Log data analysis and file integrity monitoring
+
+  - Vulnerability detection on monitored endpoints
+
+  - Security configuration assessment against CIS benchmarks
+
+  - Regulatory compliance reports for PCI DSS, GDPR, HIPAA, and NIST 800-53
+
+
+  This app runs the full single-node stack: the Wazuh indexer, server, and dashboard. Agents connect to your Umbrel on ports 1514 and 1515.
+
+
+  ⚠️ Wazuh needs at least 4 GB of free RAM. The first start takes a few minutes while the indexer sets itself up.
+releaseNotes: ""
+developer: Wazuh
+website: https://wazuh.com
+dependencies: []
+repo: https://github.com/wazuh/wazuh
+support: https://wazuh.com/community/
+port: 8402
+gallery:
+  - 1.webp
+  - 2.webp
+  - 3.webp
+  - 4.webp
+path: ""
+defaultUsername: "admin"
+deterministicPassword: true
+submitter: gabrysh
+submission: https://github.com/getumbrel/umbrel-apps/pull/5715
