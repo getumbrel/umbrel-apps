@@ -1,0 +1,28 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: inkvoice_app_1
+      APP_PORT: 3000
+      # Inkvoice has its own login, and public invoice links and the mobile
+      # apps must reach it without an Umbrel session.
+      PROXY_AUTH_ADD: "false"
+
+  app:
+    image: ghcr.io/pigontech/inkvoice:0.3.8@sha256:b72b46858d76067c4e8d8f2bf5dd4f5358ae16f9790da50290ef234a633a5450
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      ADMIN_USER: "admin"
+      ADMIN_PASS: ${APP_PASSWORD}
+      JWT_SECRET: ${APP_SEED}
+      DATABASE_PATH: /app/data/invoice.db
+      PORT: "3000"
+      HOST: 0.0.0.0
+      # Umbrel serves apps over plain http on the local network.
+      COOKIE_SECURE: "false"
+      PUBLIC_BASE_URL: http://${DEVICE_DOMAIN_NAME}:3480
+    volumes:
+      - ${APP_DATA_DIR}/data:/app/data
