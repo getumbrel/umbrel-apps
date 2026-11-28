@@ -1,0 +1,35 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: excaliself_web_1
+      APP_PORT: 3000
+
+  web:
+    image: ghcr.io/maciekzygmunt/excaliself:0.12.0@sha256:e9b5d6948b945667da35fa78f8df43600b7e8742e460209364621f2a8ea2d3f8
+    restart: on-failure
+    environment:
+      DATABASE_URL: postgresql://excaliself:${APP_EXCALISELF_DB_PASSWORD}@excaliself_db_1:5432/excaliself
+      BETTER_AUTH_SECRET: ${APP_EXCALISELF_AUTH_SECRET}
+      BASE_URL: http://${DEVICE_DOMAIN_NAME}:${APP_EXCALISELF_PORT}
+      # Sign-in and live collaboration accept only these origins: the .local
+      # name, the device hostname, and each device IP, over http and https.
+      TRUSTED_ORIGINS: https://${DEVICE_DOMAIN_NAME}:${APP_EXCALISELF_PORT},http://${DEVICE_HOSTNAME}:${APP_EXCALISELF_PORT},https://${DEVICE_HOSTNAME}:${APP_EXCALISELF_PORT},${APP_EXCALISELF_LOCAL_URLS}
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:17.11-alpine@sha256:e5d2edd28b1f8d40a0a6c0c9cdc545b19b56a0d5d88f94bc11a97d970d4700d0
+    user: "1000:1000"
+    restart: on-failure
+    environment:
+      POSTGRES_USER: excaliself
+      POSTGRES_PASSWORD: ${APP_EXCALISELF_DB_PASSWORD}
+      POSTGRES_DB: excaliself
+    volumes:
+      - ${APP_DATA_DIR}/data/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U excaliself -d excaliself"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
