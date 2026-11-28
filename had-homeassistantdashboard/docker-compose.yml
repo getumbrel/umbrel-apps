@@ -1,0 +1,22 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: had-homeassistantdashboard_web_1
+      APP_PORT: 3000
+
+  web:
+    image: ghcr.io/samerberjawi/had-homeassistantdashboard:0.8.0@sha256:c2eeb4e1b172372752555289ddf61882f1fa2f7e6436586feef7330062f9f466
+    restart: on-failure
+    stop_grace_period: 30s
+    # Image runs as the bundled non-root "node" user (UID/GID 1000)
+    extra_hosts:
+      # Lets the server reach Home Assistant on this Umbrel by the same .local name the browser uses
+      - "${DEVICE_DOMAIN_NAME}:host-gateway"
+    volumes:
+      - ${APP_DATA_DIR}/data/app:/app/data
+    environment:
+      PORT: 3000
+      NODE_ENV: production
+      HASS_URL: http://${DEVICE_DOMAIN_NAME}:8123
