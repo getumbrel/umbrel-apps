@@ -1,0 +1,66 @@
+version: '3.7'
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: crystal_frontend_1
+      APP_PORT: 80
+
+  frontend:
+    image: ghcr.io/samerberjawi/crystal:frontend-v3.2.0@sha256:4b12321e62a292f9935168ed50ffed1e1796a306dc557d2cf65da13782e409a4
+    restart: on-failure
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      default:
+        aliases:
+          - frontend
+
+  backend:
+    image: ghcr.io/samerberjawi/crystal:backend-v3.2.0@sha256:9e94751ac590efb161bc8b60d4758e3601371fddd9505deda2b35f0fafc3f2a4
+    restart: on-failure
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:3001/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    environment:
+      NODE_ENV: production
+      AUTH_COOKIE_SECURE: "false"
+      JWT_SECRET: ${APP_CRYSTAL_JWT_SECRET}
+      DATABASE_HOST: crystal_db_1
+      DATABASE_PORT: 5432
+      DATABASE_USER: crystal
+      DATABASE_PASSWORD: ${APP_CRYSTAL_DB_PASSWORD}
+      DATABASE_NAME: crystal
+    volumes:
+      # Tax pack documents (encrypted) are kept here, outside the database.
+      - ${APP_DATA_DIR}/data/backend-config:/app/config
+    networks:
+      default:
+        aliases:
+          - backend
+
+  db:
+    image: postgres:15.19-alpine@sha256:aae6554de426ae1990f1a939ff183a0299146cf7142a6f4c379c3357af9cc2d8
+    restart: on-failure
+    environment:
+      POSTGRES_DB: crystal
+      POSTGRES_USER: crystal
+      POSTGRES_PASSWORD: ${APP_CRYSTAL_DB_PASSWORD}
+    volumes:
+      - ${APP_DATA_DIR}/data/db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U crystal -d crystal"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      default:
+        aliases:
+          - db
