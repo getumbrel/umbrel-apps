@@ -1,0 +1,32 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      APP_HOST: filex_server_1
+      APP_PORT: 5212
+      # Share and upload links, WebDAV, S3 and the desktop app cannot send
+      # Umbrel's login cookie. filex checks its own sign-in, token or link on
+      # every one of these routes.
+      PROXY_AUTH_WHITELIST: "/s/*,/d/*,/api/*,/dav,/dav/*,/s3,/s3/*"
+
+  server:
+    image: ghcr.io/brf-tech/filex:v0.62.1@sha256:3ac55bffc1313e391f386171315b99ff075cd628a76e0d3dd6ad75023fc21ed8
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      PUID: "1000"
+      PGID: "1000"
+      FILEX_PUBLIC_URL: http://${DEVICE_DOMAIN_NAME}:${APP_PROXY_PORT}
+      # umbrelOS forwards requests from the Umbrel network's gateway, so filex
+      # has to trust it to see each visitor's own address (sign-in limits, logs).
+      FILEX_TRUSTED_PROXIES: "auto, ${NETWORK_IP}/16"
+      FILEX_SECRET_KEY: ${APP_FILEX_SECRET_KEY}
+      FILEX_ADMIN_EMAIL: admin@local
+      FILEX_ADMIN_PASSWORD: ${APP_PASSWORD}
+      FILEX_DEFAULT_STORAGE_DRIVER: local
+      FILEX_DEFAULT_STORAGE_PATH: /srv/files
+    volumes:
+      - ${APP_DATA_DIR}/data/filex:/data
+      # Default for the Files folder setting in umbrel-app.yml.
+      - ${APP_DATA_DIR}/data/files:/srv/files

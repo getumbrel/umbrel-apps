@@ -1,0 +1,60 @@
+manifestVersion: 1
+id: filex
+storage:
+  dataRoot: data
+folderAccess:
+  - id: files
+    name: Files
+    note: >-
+      The folder filex shows as its Files storage. By default it's inside the app's own storage. Choose a folder in Home, on a drive or on a network share to manage those files with filex instead.
+    mounts:
+      - service: server
+        targetPath: /srv/files
+environment:
+  - name: FILEX_PUBLIC_URL
+    services:
+      - server
+    note: >-
+      The address share links, upload links and emails point to. By default it's this Umbrel's local address. Set it, for example to https://files.example.com, if people open filex through another address.
+category: files
+name: filex
+version: "0.62.1"
+tagline: Self-hosted file manager for all your storages
+description: >-
+  Sign in with the username and password Umbrel shows for the app. filex opens on a Files folder that is ready for uploads, and you can add more storages from its admin panel.
+
+
+  filex is a self-hosted file manager with a modern web UI. Browse, upload, preview, rename, search and share files, and keep local folders, S3-compatible buckets, SFTP, WebDAV, FTP and SMB shares side by side in one tree.
+
+
+  - Share links with a PIN, an expiry and a download limit, and upload links for collecting files from others
+
+  - Trash, file versions and end-to-end encrypted folders
+
+  - Full-text search, and thumbnails for photos, videos and PDFs
+
+  - Users, groups and roles, two-factor sign-in, and optional OIDC or LDAP sign-in
+
+  - The same files over WebDAV and S3, so tools such as rclone or a backup job can use them
+
+  - A desktop app for Windows, Linux and macOS with two-way folder sync
+releaseNotes: ""
+
+developer: BRF-Tech
+website: https://filex.sh
+dependencies: []
+repo: https://github.com/BRF-Tech/filex
+support: https://github.com/BRF-Tech/filex/issues
+
+port: 5212
+gallery: []
+path: ""
+
+defaultUsername: admin@local
+deterministicPassword: true
+backupIgnore:
+  - data/filex/thumbs/*
+  - data/filex/cache/*
+
+submitter: BRF-Tech
+submission: https://github.com/getumbrel/umbrel-apps/pull/6375
