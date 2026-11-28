@@ -1,0 +1,30 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: gathergate_web_1
+      APP_PORT: "3080"
+      PROXY_AUTH_WHITELIST: "/c/*,/assets/*,/favicon.svg,/site.webmanifest,/api/client/*,/api/public/*,/healthz,/mcp"
+
+  web:
+    image: ghcr.io/faas19/gathergate:1.1.1@sha256:92d57a4b3dea18e207ce7062be8d7b745a2ed929f4f5d93d38ad9f14c49dfe5f
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 30s
+    environment:
+      - NODE_ENV=production
+      - HOST=0.0.0.0
+      - PORT=3080
+      - DATA_DIR=/data
+      - BASE_URL=http://${DEVICE_DOMAIN_NAME}:${APP_PROXY_PORT}
+      - TRUST_PROXY=true
+      - MASTER_KEY=${APP_SEED}
+      - TZ=UTC
+    volumes:
+      - ${APP_DATA_DIR}/data:/data
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp:noexec,nosuid,size=64m
