@@ -1,0 +1,24 @@
+services:
+  app_proxy:
+    environment:
+      APP_HOST: gibsons-broadband-monitor_server_1
+      APP_PORT: 8765
+  server:
+    image: ghcr.io/gibbo1973/gibsons-broadband-monitor:v0.4.1@sha256:4bdeb8018f23f94c28bc152aab372f81579d5eab45a25e1b6472e4077f387712
+    restart: on-failure
+    init: true
+    environment:
+      TZ: ${TZ:-Etc/UTC}
+      DASHBOARD_PASSWORD: ${APP_PASSWORD}
+      SECRET_KEY: ${APP_SEED}
+    volumes:
+    - ${APP_DATA_DIR}/data/monitor:/data
+    - /proc/1/net:/host/proc/net:ro
+    security_opt:
+    - no-new-privileges:true
+    cap_drop:
+    - ALL
+    cap_add:
+    - CHOWN
+    - SETUID
+    - SETGID
