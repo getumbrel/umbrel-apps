@@ -1,0 +1,63 @@
+manifestVersion: 2.0
+id: open-wearables
+storage:
+  dataRoot: data
+environment:
+  - name: API_BASE_URL
+    services:
+      - app
+      - worker
+      - beat
+    note: Public API origin for provider OAuth callbacks. Defaults to http://your-umbrel-hostname:3494. Set your HTTPS API origin when using a reverse proxy.
+  - name: FRONTEND_URL
+    services:
+      - app
+      - worker
+      - beat
+    note: Public portal origin for invitation links. Defaults to HTTPS on your Umbrel hostname, port 3493.
+  - name: VITE_API_URL
+    services:
+      - frontend
+    note: API address displayed in the portal. Keep this equal to API_BASE_URL when using a public HTTPS API origin.
+category: developer
+name: Open Wearables
+version: "0.10.0"
+tagline: Your wearable health data, together on your server
+description: >-
+  Sign in with admin@admin.com and the password shown in Umbrel's app credentials.
+  Change the initial password in the developer portal after signing in.
+  Configure your wearable providers and create API keys from Settings.
+  The portal uses Open Wearables' own login; an additional Umbrel login is not required.
+
+
+  Open Wearables brings wearable data from supported providers into one
+  self-hosted platform. Explore sleep, activity, workouts, and health metrics,
+  manage connections, and use its unified API for your own applications.
+  Provider integrations can require developer credentials and a public HTTPS
+  callback URL. Apple Health XML imports require separately configured
+  S3-compatible storage. Outgoing webhook delivery is not enabled in this package.
+
+
+  A read-only MCP server runs on http://umbrel.local:3495/mcp. Connect an HTTP
+  MCP client using an Open Wearables API key as its bearer token. Each request
+  uses that key's API access; revoke the key in Settings to revoke MCP access.
+  The API is available on port 3494. These HTTP ports are for your trusted local
+  network; use an authenticated HTTPS reverse proxy for remote connections.
+
+
+  Your health data stays on your Umbrel. Anonymous usage reporting is disabled.
+releaseNotes: ""
+developer: Momentum
+website: https://openwearables.io
+dependencies: []
+repo: https://github.com/the-momentum/open-wearables
+support: https://github.com/the-momentum/open-wearables/issues
+port: 3493
+requiresHttps: true
+gallery: []
+path: ""
+defaultUsername: admin@admin.com
+deterministicPassword: true
+defaultPassword: ""
+submitter: dtrainych
+submission: https://github.com/getumbrel/umbrel-apps/pull/6272
